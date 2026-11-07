@@ -1,5 +1,7 @@
 # Compila tu propia VPK
 
+> **En desarrollo y en pruebas.** Por favor, reporta los errores que encuentres (ver el final de esta guía).
+
 Este repositorio no incluye los gráficos, sonidos ni datos binarios del juego, y no se
 distribuyen VPK compiladas. Tú haces tu propia VPK a partir de tu copia del juego:
 
@@ -15,6 +17,19 @@ distribuyen VPK compiladas. Tú haces tu propia VPK a partir de tu copia del jue
 No compartas la VPK ni los archivos descargados: contienen datos del juego de Nintendo.
 
 Versión en inglés: [BUILD_YOUR_OWN.md](BUILD_YOUR_OWN.md).
+
+## Forma rápida: un solo script
+
+Con MSYS2 instalado en `C:\msys64` (paso 1.1) y el repositorio descargado (paso 2), esto hace
+solo los pasos 1.2 a 4 (instala lo que falte) y deja `EmeraldVita.vpk` en la carpeta del
+repositorio:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File .\build_all.ps1 -Rom "C:\ruta\a\esmeralda.gba"
+```
+
+La ROM solo hace falta la primera vez. Después de actualizar el repositorio (`git pull`), vuelve
+a ejecutar `.\build_all.ps1`. Los pasos de abajo hacen lo mismo a mano.
 
 ## 1. Instala las herramientas (Windows, una vez)
 
@@ -97,3 +112,13 @@ que en `vita/sce_sys/` (PNG indexados de 8 bits); se usa en lugar de las imágen
 | `Python 3 with Pillow is needed` | Instala Python para Windows y ejecuta `pip install pillow`. |
 | `the game files are missing` | Haz el paso 3 antes de compilar. |
 | `convert the game graphics first` | Ejecuta `make -f vita/assets.mk -j8` (paso 4). |
+
+## Reportar errores
+
+Este port **está en desarrollo y en pruebas**. Si algo falla, abre un *issue* en GitHub con la
+plantilla *Bug report* e incluye:
+
+- qué estabas haciendo y qué pasó (una foto de la pantalla ayuda);
+- los archivos `perf_summary.txt`, `perf_frames.csv` y cualquier `*.log` de `ux0:data/POKEVITA/`;
+- si se cerró el juego, el archivo `.psp2dmp` de `ux0:data/` (ver [DEBUGGING.md](DEBUGGING.md));
+- el commit que compilaste (`git log -1 --oneline`).

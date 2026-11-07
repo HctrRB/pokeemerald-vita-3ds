@@ -27,7 +27,11 @@ hardware did. On top of it, the port brings the features of
 
 ## Status
 
-Under active development; full validation on hardware is the next milestone. Known open issues:
+> **Work in progress, in active testing.** Expect bugs, crashes and unfinished screens. If you
+> find one, please [open an issue](../../issues/new/choose) with the bug report template: what
+> you did, what happened, and the log files from `ux0:data/POKEVITA/`.
+
+Known open issues:
 
 - Intro and title screen margins at 16:9 are broken (sprites cut at the GBA edge, streaks
   beside Rayquaza); a replacement is designed in [docs/SCENES_16_9.md](docs/SCENES_16_9.md).
@@ -55,6 +59,18 @@ docs/                                technical documentation
 No builds are distributed: you make your own from your Pokémon Emerald cartridge. Full guide,
 with every command and the common errors: [docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md)
 (en español: [docs/COMPILA_TU_VPK.md](docs/COMPILA_TU_VPK.md)).
+
+**One step (Windows).** With [MSYS2](https://www.msys2.org) installed in `C:\msys64` and the
+repository cloned, one script installs what is missing (MSYS2 packages, VitaSDK, Python with
+Pillow), checks your dump, gets the game files, builds everything and leaves `EmeraldVita.vpk`
+in the repository folder:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File .\build_all.ps1 -Rom "C:\path\to\emerald.gba"
+```
+
+The ROM is only needed the first time; after `git pull`, run `.\build_all.ps1` again to rebuild.
+The steps it runs, one by one:
 
 1. **Dump your cartridge** to a `.gba` file (any language of Pokémon Emerald, 16 MB).
 2. **Install the tools** (Windows, once): [MSYS2](https://www.msys2.org) in `C:\msys64`,

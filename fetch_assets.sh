@@ -78,10 +78,10 @@ awk '{ print $2 }' "$MANIFEST" > "$WORK/.list"
 # ---------------------------------------------------------------- 3. port files made from them
 echo "=== Generating the port's files ==="
 PY=""
-for c in python3 python; do
-    if command -v "$c" >/dev/null && "$c" -c "import PIL" 2>/dev/null; then PY="$c"; break; fi
+for c in $(type -ap python3 python 2>/dev/null); do
+    if "$c" -c "import PIL" 2>/dev/null; then PY="$c"; break; fi
 done
-[ -n "$PY" ] || die "Python 3 with Pillow is needed (install Python, then: pip install pillow)"
+[ -n "$PY" ] || die "Python 3 with Pillow is needed (MSYS2: pacman -S mingw-w64-x86_64-python-pillow, or pip install pillow)"
 "$PY" design/stitch/_tools/export_assets.py > /dev/null
 "$PY" tools/ui2/build_atlas.py
 
