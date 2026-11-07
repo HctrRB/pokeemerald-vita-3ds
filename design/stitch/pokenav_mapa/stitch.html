@@ -1,0 +1,1482 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>PS Vita PokéNav UI - Hoenn Adventure</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Press Start 2P & VT323 for authentic GBA/Retro UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=VT323&amp;family=Plus+Jakarta+Sans:wght@400;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style data-purpose="retro-core-styles">
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-font-smoothing: none;
+  }
+  body {
+    background-color: #030708;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+  }
+  .font-pixel {
+    font-family: 'Press Start 2P', monospace;
+  }
+  .font-vt {
+    font-family: 'VT323', monospace;
+  }
+  .bevel-box-dark {
+    background: #09211d;
+    border: 3px solid #041210;
+    box-shadow: inset 1px 1px 0 #1b544b, inset -1px -1px 0 #051614, 0 3px 6px rgba(0,0,0,0.5);
+  }
+  .bevel-box-cream {
+    background: #f7f4e9;
+    border: 3px solid #1a3024;
+    box-shadow: inset 2px 2px 0 #ffffff, inset -2px -2px 0 #d1c8af, 0 4px 8px rgba(0,0,0,0.45);
+  }
+  .bevel-panel-inner {
+    border: 2px solid #204134;
+    box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #c7bfa6;
+  }
+  /* GBA Authentic Flashing Reticle Box */
+  @keyframes gba-box-blink {
+    0%, 100% {
+      border-color: #ef4444;
+      outline-color: #fef08a;
+      background-color: rgba(239, 68, 68, 0.28);
+    }
+    50% {
+      border-color: #ffffff;
+      outline-color: #ef4444;
+      background-color: rgba(254, 240, 138, 0.35);
+    }
+  }
+  .gba-cursor-box {
+    border: 2px solid #ef4444;
+    outline: 2px solid #fef08a;
+    box-shadow: 0 0 0 1px #000, inset 0 0 0 1px #000, 0 0 8px rgba(239, 68, 68, 0.8);
+    animation: gba-box-blink 0.6s steps(2, start) infinite;
+    transition: top 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), left 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #e2dbca;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1c4b3e;
+  }
+</style>
+<meta content="web_standard" name="shell-type">
+</head>
+<body>
+<!-- BEGIN: VitaScreenFrame (960x544) -->
+<div class="relative w-[960px] h-[544px] overflow-hidden bg-black shadow-2xl border-2 border-[#162923] flex flex-col justify-between select-none">
+<!-- Overworld Game Background (exact image_132) -->
+<div class="absolute inset-0 z-0">
+<img alt="Game Overworld" class="w-full h-full object-cover filter brightness-95" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRNydVYqEYW6vMTIgY_EbWF_Pel-4wLlXyUR9Mw4s9NRjfOCdmWXx3db84cTpUGnk2PpC8rq22LGX6lU32_LnqiTjeThJ_5S-X_3J4lSmAccSuzwZ3T0dLgyhphdkiG2p408p1KQ54vnu_65Trgsvg13IhUuZEEJdDaMc-R1aAqp-H1BfzVCGojMwF7P7lMg2V60TBfFrUSd937CscxDj975feUsycFHVfmfHHozUcU9pEQlq_5sKkog">
+<!-- Clean translucent console dark veil -->
+<div class="absolute inset-0 bg-[#0a1815]/85 backdrop-blur-[1px]"></div>
+</div>
+<!-- BEGIN: TopHeader -->
+<header class="relative z-10 w-full h-[54px] px-3 bg-[#0b1d19]/95 border-b-[3px] border-[#0c4036] flex items-center justify-between shadow-xl flex-shrink-0">
+<!-- Left Badge: Devon PokéNav System -->
+<div class="flex items-center space-x-2 flex-shrink-0 bg-[#163f35] border-2 border-[#2b5849] rounded-md px-2.5 py-1 shadow-inner">
+<div class="w-5 h-5 rounded-full bg-[#10b981] border border-[#a7f3d0] flex items-center justify-center relative overflow-hidden shadow">
+<div class="w-2.5 h-2.5 rounded-full bg-[#064e3b] border border-white"></div>
+</div>
+<div class="flex flex-col leading-tight">
+<span class="text-[9px] text-[#99f6e4] font-pixel font-bold tracking-wider">POKÉNAV NAVIGATOR</span>
+<span class="text-[7px] text-[#6ee7b7] font-pixel">DEVON SYSTEM v3.2</span>
+</div>
+</div>
+<!-- Center: Interactive Mode Tabs with Physical [L] / [R] Triggers -->
+<div class="flex items-center bg-[#041612] border-2 border-[#1c5547] rounded-md p-0.5 gap-1 shadow-inner select-none">
+<button class="px-2 py-1 bg-[#163f35] hover:bg-[#245244] border border-[#2b5849] rounded text-[#6ee7b7] font-bold text-[9px] font-pixel shadow cursor-pointer flex items-center justify-center leading-none" onclick="cycleNavMode(-1)">L</button>
+<div class="flex items-center gap-1" id="nav-tabs">
+<button class="bg-[#fde68a] text-[#16271c] font-bold text-[8px] px-2.5 py-1 rounded shadow-sm border border-[#b45309] font-pixel cursor-pointer tracking-wider leading-none" id="tab-btn-map" onclick="setNavMode('map')">HOENN MAP</button>
+<button class="px-2 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none" id="tab-btn-match" onclick="setNavMode('match')">MATCH CALL</button>
+<button class="px-2 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none" id="tab-btn-condition" onclick="setNavMode('condition')">CONDITION</button>
+<button class="px-2 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none" id="tab-btn-ribbons" onclick="setNavMode('ribbons')">RIBBONS</button>
+</div>
+<button class="px-2 py-1 bg-[#163f35] hover:bg-[#245244] border border-[#2b5849] rounded text-[#6ee7b7] font-bold text-[9px] font-pixel shadow cursor-pointer flex items-center justify-center leading-none" onclick="cycleNavMode(1)">R</button>
+</div>
+<!-- Right Header: Money & Trainer Badge -->
+<div class="flex items-center space-x-2 flex-shrink-0">
+<div class="h-[28px] bg-[#051310] border-2 border-[#1a4a3e] rounded px-2.5 flex items-center space-x-1.5 shadow-inner">
+<span class="text-[#f59e0b] font-pixel text-[10px] font-bold leading-none">₽</span>
+<span class="text-[#ecfdf5] font-pixel text-[10px] tracking-wider leading-none">142,500</span>
+</div>
+<div class="h-[28px] bg-[#1b4337] border border-[#2dd4bf]/40 rounded px-2.5 flex items-center text-[8px] font-pixel text-[#99f6e4] leading-none">
+        BRENDAN
+      </div>
+</div>
+</header>
+<!-- END: TopHeader -->
+<!-- BEGIN: MainContent -->
+<main class="relative z-10 w-full flex-1 px-3.5 py-2 flex gap-3 overflow-hidden">
+<!-- ======================================================== -->
+<!-- TAB 1: HOENN MAP & REGIONAL FIELD DATA                   -->
+<!-- ======================================================== -->
+<div class="w-full h-full flex gap-3" id="panel-mode-map">
+<!-- LEFT PANEL: Cartographic & Wild Encounter Dossier (340px) -->
+<div class="w-[340px] h-full bevel-box-cream rounded-lg p-2.5 flex flex-col justify-between overflow-hidden text-[#16271c]">
+<!-- Location Header Box -->
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex flex-col space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-[8px] text-[#5eead4] font-pixel tracking-wider" id="map-loc-sector">SEC: HOENN-04B</span>
+<span class="px-1.5 py-0.5 bg-[#14b8a6] text-[#042f2e] text-[7px] font-pixel font-bold rounded uppercase" id="map-loc-tag">METROPOLIS</span>
+</div>
+<div class="flex items-center justify-between">
+<h2 class="text-[11px] font-pixel text-[#fef08a] tracking-wide uppercase font-bold" id="map-loc-name">RUSTBORO CITY</h2>
+<span class="material-symbols-outlined text-[#5eead4] text-sm leading-none">location_on</span>
+</div>
+<p class="text-[8px] font-pixel text-[#ccfbf1] leading-relaxed line-clamp-2" id="map-loc-desc">
+            The city that probes the integration of nature and science. Devon Corporation Headquarters.
+          </p><div class="flex items-center space-x-1 pt-1 border-t border-[#163f35] text-[7px] font-pixel text-[#99f6e4]"><span class="text-[#fde68a] font-bold">LINKS:</span><span class="truncate" id="map-loc-connections">R104 (S), R116 (E), R115 (N)</span></div>
+</div>
+<!-- Biome Selector Sub-tabs -->
+<div class="flex flex-col space-y-1.5 my-1 flex-1 overflow-hidden">
+<div class="flex items-center justify-between px-0.5">
+<span class="text-[8px] font-pixel font-bold text-[#143228]">WILD HABITAT DATA</span>
+<span class="text-[7px] font-pixel bg-[#0f2d24] text-[#a7f3d0] px-1 py-0.5 rounded font-bold" id="map-loc-req">REQUIRES: HM01 CUT</span>
+</div>
+<!-- Sub-Biome Pill Buttons -->
+<div class="grid grid-cols-4 gap-1 p-0.5 bg-[#dfd6be] rounded border border-[#c3b99f]">
+<button class="py-1 text-center text-[7px] font-pixel font-bold rounded bg-[#13372c] text-[#a7f3d0] shadow" id="biome-btn-grass" onclick="setBiomeTab('grass')">GRASS</button>
+<button class="py-1 text-center text-[7px] font-pixel font-bold rounded text-[#224036] hover:bg-[#cfc5a9]" id="biome-btn-surf" onclick="setBiomeTab('surf')">SURF</button>
+<button class="py-1 text-center text-[7px] font-pixel font-bold rounded text-[#224036] hover:bg-[#cfc5a9]" id="biome-btn-fish" onclick="setBiomeTab('fish')">FISH</button>
+<button class="py-1 text-center text-[7px] font-pixel font-bold rounded text-[#224036] hover:bg-[#cfc5a9]" id="biome-btn-rock" onclick="setBiomeTab('rock')">SMASH</button>
+</div>
+<!-- Encounter List Rows -->
+<div class="flex-1 bg-[#ede8d5] rounded p-1.5 flex flex-col space-y-1 overflow-y-auto bevel-panel-inner" id="map-encounters-list">
+<!-- Dynamically populated via JS -->
+</div>
+</div>
+<!-- Action / Flight Bar -->
+<div class="bg-[#e4ddc5] border border-[#2b5142] p-1.5 rounded flex items-center justify-between">
+<div class="flex flex-col leading-tight">
+<span class="text-[7px] font-pixel text-[#3c574c]">TRAVEL STATUS</span>
+<span class="text-[8px] font-pixel font-bold text-[#065f46]" id="map-fly-status">FLY AUTHORIZED</span>
+</div>
+<button class="px-2.5 py-1 bg-[#143d31] hover:bg-[#1f5c4a] text-[#a7f3d0] text-[8px] font-pixel rounded border border-[#2e6e58] shadow flex items-center space-x-1 cursor-pointer" onclick="handleFlyAction()">
+<span class="material-symbols-outlined text-xs leading-none">flight</span>
+<span>FLY</span>
+</button>
+</div>
+</div>
+<!-- RIGHT PANEL: Clean Devon Hoenn Region Map with GBA Square Reticle Box -->
+<div class="flex-1 h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden">
+<!-- Map View Top Header Bar -->
+<div class="w-full h-6 px-2 bg-[#0d2820] text-[#a7f3d0] rounded flex items-center justify-between text-[8px] font-pixel mb-1.5 flex-shrink-0"><div class="flex items-center space-x-1.5"><span class="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span><span class="tracking-wide">HOENN MAP • GPS</span></div><div class="flex items-center space-x-1"><button class="px-1.5 py-0.5 bg-[#14b8a6] text-[#042f2e] text-[7px] font-pixel font-bold rounded" id="filter-btn-all" onclick="setMapFilter('all')">ALL</button><button class="px-1.5 py-0.5 text-[#a7f3d0] hover:bg-[#163f35] text-[7px] font-pixel rounded" id="filter-btn-cities" onclick="setMapFilter('cities')">CITIES</button><button class="px-1.5 py-0.5 text-[#a7f3d0] hover:bg-[#163f35] text-[7px] font-pixel rounded" id="filter-btn-routes" onclick="setMapFilter('routes')">ROUTES</button></div><span class="text-[7px] text-[#6ee7b7]" id="map-coords-display">LAT: 28.14 N | LON: 130.42 E</span></div>
+<!-- Canonical Map Image Container with CLEAN Art and Interactive Overlay Areas -->
+<div class="relative flex-1 w-full bg-[#8fb3dc] rounded border-2 border-[#163f35] overflow-hidden shadow-inner flex items-center justify-center cursor-crosshair" id="hoenn-map-viewport">
+<img alt="Hoenn Regional Map" class="w-full h-full object-fill pointer-events-none select-none" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDP53l2eDlsQHcPwwFsu5xagnMd5tISDmw1xqv5D8fXCv6Ewq4KB0WETy9vtBpsWlkcZaZi2DVlDUw9JOdpiV1G85jE0SA5AJUbxxWa-fUkuRhlw_ouGVnSjnExt3Zn3EVZVcmZzzsuVTrd7kRk-vhydxQyXL59bBJ9DVJ-5QE0e-2CZeHTkPcrLoSF6CBP2lbWrZ2oO87ONJMsycHVnCUvE9uZFlWRGFVGADT3n6z-5DJjWsWonf0Qeg">
+<!-- Authentic GBA Flashing Square Reticle Selector Box -->
+<div class="gba-cursor-box absolute w-6 h-6 pointer-events-none z-30 transform -translate-x-1/2 -translate-y-1/2" id="gba-reticle-cursor" style="top: 36%; left: 4.8%;"></div>
+<!-- Interactive Click Hotspots for Towns, Cities, & Routes (Clean, No Obstructive Pill Labels) -->
+<div class="absolute inset-0 z-20" id="map-hotspots-container">
+<!-- Interactive hotspots injected dynamically with clear hover highlights -->
+</div>
+</div>
+<!-- Clean Map Legend Bar -->
+<div class="w-full mt-1.5 px-2 py-1 bg-[#ded7c1] border border-[#224436] rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b] flex-shrink-0"><div class="flex items-center space-x-2.5"><span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-[#ef4444] inline-block border border-white"></span><span>GYM CITY</span></span><span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-[#3b82f6] inline-block border border-white"></span><span>TOWN</span></span><span class="flex items-center space-x-1"><span class="px-1 py-0.5 bg-[#b45309] text-white text-[6px] font-bold rounded-sm leading-none">104</span><span>ROUTES (101-134)</span></span></div><span class="text-[#2c4e3f] text-[7px]">CLICK ANY ROUTE / CITY TO SCAN</span></div>
+</div>
+</div>
+<!-- ======================================================== -->
+<!-- TAB 2: MATCH CALL TRAINER DATABASE                       -->
+<!-- ======================================================== -->
+<div class="w-full h-full hidden gap-3" id="panel-mode-match">
+<!-- Left Panel: Contact Profile & Call Transcript -->
+<div class="w-[340px] h-full bevel-box-cream rounded-lg p-2.5 flex flex-col justify-between overflow-hidden text-[#16271c]">
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex flex-col space-y-1">
+<div class="flex items-center justify-between">
+<span class="text-[7px] font-pixel text-[#5eead4] uppercase font-bold" id="call-role">DEVON CORP PRESIDENT</span>
+<span class="px-1.5 py-0.5 text-[7px] font-pixel rounded font-bold font-mono" id="call-rematch-badge">REMATCH: N/A</span>
+</div>
+<div class="flex items-center space-x-2 pt-0.5">
+<div class="w-8 h-8 rounded bg-[#071914] text-xl flex items-center justify-center border border-[#1b5042]" id="call-avatar">💼</div>
+<div>
+<h2 class="text-[11px] font-pixel text-[#fde68a] font-bold" id="call-name">MR. STONE</h2>
+<span class="text-[7px] font-pixel text-[#a7f3d0]" id="call-location">Rustboro City, Devon HQ</span>
+</div>
+</div>
+</div>
+<div class="flex-1 bg-[#ede8d5] rounded p-2 my-1.5 bevel-panel-inner flex flex-col space-y-2 overflow-y-auto">
+<span class="text-[8px] font-pixel text-[#163c30] font-bold">TACTICAL PROFILE</span>
+<p class="text-[8px] font-pixel text-[#243d32] leading-relaxed" id="call-strategy">
+            Invests in technological advancements for Pokémon wellbeing. Highly encourages young trainers traversing Hoenn.
+          </p>
+<span class="text-[8px] font-pixel text-[#163c30] font-bold pt-1">REGISTERED TEAM / SPECIALTY</span>
+<div class="flex flex-wrap gap-1" id="call-team-tags">
+<span class="px-1.5 py-0.5 bg-[#0b241d] text-[#99f6e4] text-[7px] font-pixel rounded">Castform Research</span>
+<span class="px-1.5 py-0.5 bg-[#0b241d] text-[#99f6e4] text-[7px] font-pixel rounded">Fossil Tech</span>
+</div>
+<span class="text-[8px] font-pixel text-[#163c30] font-bold pt-1">DEVON-NET AUDIO TRANSCRIPTION</span>
+<div class="bg-[#fcfaf3] border-l-2 border-[#10b981] p-2 rounded text-[8px] font-pixel text-[#16382b] italic leading-relaxed" id="call-transcript">
+            "Brendan! How is that PokéNav working out? Remember to deliver that letter to Steven in Dewford Island!"
+          </div>
+</div>
+<button class="w-full py-2 bg-[#143d31] hover:bg-[#1f5c4a] text-[#a7f3d0] text-[8px] font-pixel rounded border border-[#2e6e58] shadow flex items-center justify-center space-x-1 cursor-pointer" onclick="handleDialAction()">
+<span class="material-symbols-outlined text-xs leading-none">call</span>
+<span>TRANSMIT DEVON MATCH PING</span>
+</button>
+</div>
+<!-- Right Panel: Match Call Directory Ledger -->
+<div class="flex-1 h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden">
+<div class="w-full h-6 px-2 bg-[#0d2820] text-[#a7f3d0] rounded flex items-center justify-between text-[8px] font-pixel mb-1.5 flex-shrink-0">
+<span>MATCH CALL DIRECTORY • REGISTERED TRAINERS</span>
+<span class="text-[7px] text-[#6ee7b7]">DEVON-NET ONLINE</span>
+</div>
+<div class="flex-1 p-1 space-y-1.5 overflow-y-auto" id="match-contact-list">
+<!-- Dynamically populated via JS -->
+</div>
+<div class="w-full mt-1.5 px-2 py-1 bg-[#ded7c1] border border-[#224436] rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b] flex-shrink-0">
+<span>SELECT TRAINER TO ACCESS FREQUENCY</span>
+<span>DEVON CORP SECURE PROTOCOL</span>
+</div>
+</div>
+</div>
+<!-- ======================================================== -->
+<!-- TAB 3: CONDITION (CONTEST RADAR & STATS)                 -->
+<!-- ======================================================== -->
+<div class="w-full h-full hidden gap-3" id="panel-mode-condition">
+<!-- Left Panel: Party Roster -->
+<div class="w-[340px] h-full bevel-box-cream rounded-lg p-2.5 flex flex-col justify-between overflow-hidden text-[#16271c]">
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex flex-col space-y-1">
+<span class="text-[7px] font-pixel text-[#5eead4]">CONTEST ROSTER</span>
+<div class="flex items-center justify-between">
+<h2 class="text-[11px] font-pixel text-[#fde68a] font-bold" id="cond-name">MUDKIP</h2>
+<span class="text-[8px] font-pixel px-1.5 py-0.5 bg-[#14b8a6] text-[#042f2e] rounded" id="cond-nature">ADAMANT</span>
+</div>
+<span class="text-[7px] font-pixel text-[#a7f3d0]" id="cond-level">LV. 16 • HELD: SILK SCARF</span>
+</div>
+<div class="flex-1 my-1.5 flex flex-col space-y-1 overflow-y-auto">
+<span class="text-[8px] font-pixel font-bold text-[#143228]">SELECT POKÉMON:</span>
+<div class="space-y-1" id="cond-roster-list">
+<!-- Dynamically populated via JS -->
+</div>
+</div>
+<div class="bg-[#ded7c1] border border-[#264e3e] p-2 rounded flex flex-col space-y-1">
+<div class="flex items-center justify-between text-[7px] font-pixel font-bold text-[#16382b]">
+<span>POKÉBLOCK SHEEN:</span>
+<span id="cond-sheen-label">36 / 255</span>
+</div>
+<div class="w-full h-2 bg-[#b6ac93] rounded-full overflow-hidden">
+<div class="h-full bg-[#10b981]" id="cond-sheen-bar" style="width: 14%;"></div>
+</div>
+</div>
+</div>
+<!-- Right Panel: Radar Pentagon & Quantities -->
+<div class="flex-1 h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden">
+<div class="w-full h-6 px-2 bg-[#0d2820] text-[#a7f3d0] rounded flex items-center justify-between text-[8px] font-pixel mb-1.5 flex-shrink-0">
+<span>CONTEST CONDITION RADAR (GEN-3 CANONICAL)</span>
+<span class="text-[7px] text-[#6ee7b7]">CALIBRATED DIAGNOSTIC</span>
+</div>
+<div class="flex-1 flex p-2 items-center justify-center gap-4 bg-[#ede8d5] rounded bevel-panel-inner">
+<div class="relative w-52 h-52 flex items-center justify-center">
+<svg class="w-full h-full text-[#2c5b49]" viewBox="0 0 200 200">
+<polygon fill="none" points="100,20 176,75 147,165 53,165 24,75" stroke="currentColor" stroke-opacity="0.3" stroke-width="1.5"></polygon>
+<polygon fill="none" points="100,50 148,85 129,142 71,142 52,85" stroke="currentColor" stroke-opacity="0.4" stroke-width="1.2"></polygon>
+<polygon fill="none" points="100,75 124,93 115,121 85,121 76,93" stroke="currentColor" stroke-opacity="0.5" stroke-width="1"></polygon>
+<line stroke="currentColor" stroke-opacity="0.4" x1="100" x2="100" y1="100" y2="20"></line>
+<line stroke="currentColor" stroke-opacity="0.4" x1="100" x2="176" y1="100" y2="75"></line>
+<line stroke="currentColor" stroke-opacity="0.4" x1="100" x2="147" y1="100" y2="165"></line>
+<line stroke="currentColor" stroke-opacity="0.4" x1="100" x2="53" y1="100" y2="165"></line>
+<line stroke="currentColor" stroke-opacity="0.4" x1="100" x2="24" y1="100" y2="75"></line>
+<polygon fill="#10b981" fill-opacity="0.45" id="radar-pentagon" points="100,42 155,90 120,150 68,145 40,80" stroke="#047857" stroke-width="2.5"></polygon>
+</svg>
+<span class="absolute -top-1 text-[8px] font-pixel font-bold text-[#dc2626]">COOL</span>
+<span class="absolute top-[28%] -right-1 text-[8px] font-pixel font-bold text-[#2563eb]">BEAUTY</span>
+<span class="absolute bottom-1 right-7 text-[8px] font-pixel font-bold text-[#db2777]">CUTE</span>
+<span class="absolute bottom-1 left-7 text-[8px] font-pixel font-bold text-[#059669]">SMART</span>
+<span class="absolute top-[28%] -left-1 text-[8px] font-pixel font-bold text-[#d97706]">TOUGH</span>
+</div>
+<div class="flex-1 bg-[#ded7c1] p-2.5 rounded border border-[#214737] flex flex-col justify-between h-52 text-[8px] font-pixel">
+<span class="text-[#13392b] font-bold">CONTEST ATTRIBUTES</span>
+<div class="space-y-1.5">
+<div class="flex justify-between items-center bg-[#fdfbf6] px-2 py-1 rounded border border-[#ccc2a6]">
+<span class="text-[#dc2626] font-bold">COOL:</span>
+<span class="text-[#152e25] font-bold" id="stat-cool">64 / 255</span>
+</div>
+<div class="flex justify-between items-center bg-[#fdfbf6] px-2 py-1 rounded border border-[#ccc2a6]">
+<span class="text-[#2563eb] font-bold">BEAUTY:</span>
+<span class="text-[#152e25] font-bold" id="stat-beauty">32 / 255</span>
+</div>
+<div class="flex justify-between items-center bg-[#fdfbf6] px-2 py-1 rounded border border-[#ccc2a6]">
+<span class="text-[#db2777] font-bold">CUTE:</span>
+<span class="text-[#152e25] font-bold" id="stat-cute">25 / 255</span>
+</div>
+<div class="flex justify-between items-center bg-[#fdfbf6] px-2 py-1 rounded border border-[#ccc2a6]">
+<span class="text-[#059669] font-bold">SMART:</span>
+<span class="text-[#152e25] font-bold" id="stat-smart">48 / 255</span>
+</div>
+<div class="flex justify-between items-center bg-[#fdfbf6] px-2 py-1 rounded border border-[#ccc2a6]">
+<span class="text-[#d97706] font-bold">TOUGH:</span>
+<span class="text-[#152e25] font-bold" id="stat-tough">85 / 255</span>
+</div>
+</div>
+<span class="text-[7px] text-[#2c5344] text-center italic" id="cond-optimal-tag">OPTIMAL: TOUGH MASTER RANK</span>
+</div>
+</div>
+<div class="w-full mt-1.5 px-2 py-1 bg-[#ded7c1] border border-[#224436] rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b] flex-shrink-0">
+<span>POKÉBLOCK FEEDING INCREASES ATTRIBUTES</span>
+<span>MASTER RANK ADMISSION: HOENN HALLS</span>
+</div>
+</div>
+</div>
+<!-- ======================================================== -->
+<!-- TAB 4: RIBBONS ARCHIVE                                   -->
+<!-- ======================================================== -->
+<div class="w-full h-full hidden gap-3" id="panel-mode-ribbons">
+<!-- Left Panel: Ribbon Showcase -->
+<div class="w-[340px] h-full bevel-box-cream rounded-lg p-2.5 flex flex-col justify-between overflow-hidden text-[#16271c]">
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex flex-col space-y-1">
+<span class="text-[7px] font-pixel text-[#5eead4]">COMMENDATION DOSSIER</span>
+<h2 class="text-[10px] font-pixel text-[#fde68a] font-bold uppercase" id="ribbon-title">HOENN CHAMPION RIBBON</h2>
+<span class="text-[7px] font-pixel text-[#a7f3d0]" id="ribbon-location">AWARDED: EVER GRANDE HALL OF FAME</span>
+</div>
+<div class="flex-1 bg-[#ede8d5] rounded p-2.5 my-2 bevel-panel-inner flex flex-col items-center justify-center text-center space-y-2">
+<span class="text-4xl" id="ribbon-icon">🎖️</span>
+<h3 class="text-[9px] font-pixel text-[#0e2c24] font-bold" id="ribbon-heading">HOENN CHAMPION</h3>
+<p class="text-[8px] font-pixel text-[#243d32] leading-relaxed" id="ribbon-desc">
+            Ribbon awarded for clearing the Pokémon League and entering the Hall of Fame in Hoenn.
+          </p>
+</div>
+<div class="bg-[#ded7c1] border border-[#264e3e] p-2 rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b]">
+<span>TOTAL COMMENDATIONS:</span>
+<span class="font-bold text-[#047857]">04 / 32 RIBBONS</span>
+</div>
+</div>
+<!-- Right Panel: Ribbon Grid -->
+<div class="flex-1 h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden">
+<div class="w-full h-6 px-2 bg-[#0d2820] text-[#a7f3d0] rounded flex items-center justify-between text-[8px] font-pixel mb-1.5 flex-shrink-0">
+<span>RIBBON COLLECTION VAULT • BRENDAN</span>
+<span class="text-[7px] text-[#6ee7b7]">HALL OF FAME ARCHIVE</span>
+</div>
+<div class="flex-1 p-2 grid grid-cols-4 gap-2 overflow-y-auto bg-[#ede8d5] rounded bevel-panel-inner">
+<button class="bg-[#ded7c1] hover:bg-[#d0c7ab] p-2 rounded border border-[#214737] flex flex-col items-center justify-center space-y-1 cursor-pointer" onclick="selectRibbon('champion')">
+<span class="text-2xl">🎖️</span>
+<span class="text-[7px] font-pixel text-[#16382b] font-bold text-center">CHAMPION</span>
+</button>
+<button class="bg-[#ded7c1] hover:bg-[#d0c7ab] p-2 rounded border border-[#214737] flex flex-col items-center justify-center space-y-1 cursor-pointer" onclick="selectRibbon('cool')">
+<span class="text-2xl">🎗️</span>
+<span class="text-[7px] font-pixel text-[#16382b] font-bold text-center">COOL NORMAL</span>
+</button>
+<button class="bg-[#ded7c1] hover:bg-[#d0c7ab] p-2 rounded border border-[#214737] flex flex-col items-center justify-center space-y-1 cursor-pointer" onclick="selectRibbon('tough')">
+<span class="text-2xl">🎗️</span>
+<span class="text-[7px] font-pixel text-[#16382b] font-bold text-center">TOUGH SUPER</span>
+</button>
+<button class="bg-[#ded7c1] hover:bg-[#d0c7ab] p-2 rounded border border-[#214737] flex flex-col items-center justify-center space-y-1 cursor-pointer" onclick="selectRibbon('effort')">
+<span class="text-2xl">🎀</span>
+<span class="text-[7px] font-pixel text-[#16382b] font-bold text-center">EFFORT RIBBON</span>
+</button>
+<div class="bg-[#dfd7c3]/60 p-2 rounded border border-[#bab096] flex flex-col items-center justify-center space-y-1 opacity-50">
+<span class="text-xl">🔒</span>
+<span class="text-[7px] font-pixel text-[#706751] text-center">BEAUTY HYPER</span>
+</div>
+<div class="bg-[#dfd7c3]/60 p-2 rounded border border-[#bab096] flex flex-col items-center justify-center space-y-1 opacity-50">
+<span class="text-xl">🔒</span>
+<span class="text-[7px] font-pixel text-[#706751] text-center">CUTE MASTER</span>
+</div>
+<div class="bg-[#dfd7c3]/60 p-2 rounded border border-[#bab096] flex flex-col items-center justify-center space-y-1 opacity-50">
+<span class="text-xl">🔒</span>
+<span class="text-[7px] font-pixel text-[#706751] text-center">SMART MASTER</span>
+</div>
+<div class="bg-[#dfd7c3]/60 p-2 rounded border border-[#bab096] flex flex-col items-center justify-center space-y-1 opacity-50">
+<span class="text-xl">🔒</span>
+<span class="text-[7px] font-pixel text-[#706751] text-center">VICTORY RIBBON</span>
+</div>
+</div>
+<div class="w-full mt-1.5 px-2 py-1 bg-[#ded7c1] border border-[#224436] rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b] flex-shrink-0">
+<span>RIBBONS ARE PRESERVED ON POKÉMON DATA</span>
+<span>DEVON MEMORY BUS</span>
+</div>
+</div>
+</div>
+</main>
+<!-- END: MainContent -->
+<!-- BEGIN: ConsoleFooter (Strict PlayStation Vita Standard) -->
+<footer class="relative z-10 w-full h-[40px] px-3 bg-[#07131a] border-t-2 border-[#112933] flex items-center justify-between text-white text-[9px] font-pixel shadow-2xl flex-shrink-0">
+<!-- Official PlayStation Action Controls -->
+<div class="flex items-center space-x-3.5">
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-full bg-[#0066cc] border border-[#5eaaff] flex items-center justify-center text-[9px] font-bold text-white shadow">✕</span>
+<span class="text-[#ccd7e6] text-[8px]">SELECT / INSPECT</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center text-[9px] font-bold text-white shadow">○</span>
+<span class="text-[#ccd7e6] text-[8px]">BACK / EXIT</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-full bg-[#bb1188] border border-[#ff77cc] flex items-center justify-center text-[8px] font-bold text-white shadow">■</span>
+<span class="text-[#ccd7e6] text-[8px]">WILD DATA</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-full bg-[#009944] border border-[#66e699] flex items-center justify-center text-[8px] font-bold text-white shadow">▲</span>
+<span class="text-[#ccd7e6] text-[8px]">REGISTER</span>
+</div>
+</div>
+<!-- Right Console System Indicators -->
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-1.5 bg-[#0b1f26] px-2 py-0.5 rounded border border-[#163a47] text-[8px] text-[#7dd3fc]">
+<span class="font-bold text-white">L / R</span>
+<span class="text-[#94a3b8]">TABS</span>
+</div>
+<div class="flex items-center space-x-2 text-[8px]">
+<span class="bg-[#0b241c] px-1.5 py-0.5 rounded border border-[#144f3d] text-[#86efac]">[START] <span class="text-white">MENU</span></span>
+</div>
+<!-- Time -->
+<span class="text-[8px] text-[#cbd5e1] font-pixel">10:42</span>
+<!-- PS Vita Battery -->
+<div class="flex items-center space-x-1 pl-1 border-l border-[#1b3a47]">
+<div class="w-5 h-2.5 bg-[#05131a] border border-[#2b596d] rounded-sm p-[1px] flex items-center">
+<div class="w-full h-full bg-[#00dd66] rounded-[1px]"></div>
+</div>
+<span class="text-[8px] text-[#00dd66] font-pixel">100%</span>
+</div>
+</div>
+</footer>
+<!-- END: ConsoleFooter -->
+</div>
+<!-- END: VitaScreenFrame -->
+<!-- SCRIPT: POKENAV CLIENT INTERACTIONS -->
+<script>
+  // Navigation Modes
+  const NAV_MODES = ['map', 'match', 'condition', 'ribbons'];
+  let currentNavIndex = 0;
+
+  // Comprehensive Hoenn Cartographic Database (Cities, Towns, and Routes)
+  const HOENN_DATA = {
+    // === CITIES & TOWNS ===
+    rustboro: {
+      name: "RUSTBORO CITY",
+      sector: "SEC: HOENN-04B",
+      tag: "METROPOLIS",
+      desc: "The city that probes the integration of nature and science. Devon Corporation Headquarters.",
+      req: "REQUIRES: HM01 CUT",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 28.14 N | LON: 130.42 E",
+      pos: { x: "4.8%", y: "36%" },
+      type: "city",
+      biomes: {
+        grass: [
+          { name: "Taillow", lv: "Lv. 6-8", rate: "40%", icon: "🕊️" },
+          { name: "Wingull", lv: "Lv. 5-7", rate: "30%", icon: "🪶" },
+          { name: "Zigzagoon", lv: "Lv. 5-7", rate: "26%", icon: "🦝" },
+          { name: "Ralts", lv: "Lv. 4", rate: "4%", icon: "🔮" }
+        ],
+        surf: [
+          { name: "Wingull", lv: "Lv. 10-25", rate: "60%", icon: "🪶" },
+          { name: "Tentacool", lv: "Lv. 5-20", rate: "35%", icon: "🦑" },
+          { name: "Pelipper", lv: "Lv. 25-30", rate: "5%", icon: "🕊️" }
+        ],
+        fish: [
+          { name: "Magikarp", lv: "Lv. 5-10", rate: "70%", icon: "🐟" },
+          { name: "Goldeen", lv: "Lv. 5-10", rate: "30%", icon: "🐠" }
+        ],
+        rock: [
+          { name: "Geodude", lv: "Lv. 7-10", rate: "70%", icon: "🪨" },
+          { name: "Nosepass", lv: "Lv. 8", rate: "30%", icon: "🗿" }
+        ]
+      }
+    },
+    littleroot: {
+      name: "LITTLEROOT TOWN",
+      sector: "SEC: HOENN-01A",
+      tag: "ORIGIN POINT",
+      desc: "A town that cannot be shaded any color. Home to Professor Birch's Pokémon Laboratory.",
+      req: "REQUIRES: NONE",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 25.10 N | LON: 130.90 E",
+      pos: { x: "18.2%", y: "66.5%" },
+      type: "town",
+      biomes: {
+        grass: [
+          { name: "Zigzagoon", lv: "Lv. 2-3", rate: "45%", icon: "🦝" },
+          { name: "Poochyena", lv: "Lv. 2-3", rate: "45%", icon: "🐺" },
+          { name: "Wurmple", lv: "Lv. 2", rate: "10%", icon: "🐛" }
+        ],
+        surf: [{ name: "Tentacool", lv: "Lv. 5-15", rate: "100%", icon: "🦑" }],
+        fish: [{ name: "Magikarp", lv: "Lv. 5", rate: "100%", icon: "🐟" }],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    },
+    oldale: {
+      name: "OLDALE TOWN",
+      sector: "SEC: HOENN-01B",
+      tag: "RURAL CROSSROAD",
+      desc: "Where things start off scarce. A tranquil crossroad community linking Route 101, 102, and 103.",
+      req: "REQUIRES: NONE",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 25.90 N | LON: 130.85 E",
+      pos: { x: "18.2%", y: "54.5%" },
+      type: "town",
+      biomes: {
+        grass: [
+          { name: "Poochyena", lv: "Lv. 2-4", rate: "50%", icon: "🐺" },
+          { name: "Zigzagoon", lv: "Lv. 3-4", rate: "30%", icon: "🦝" },
+          { name: "Wurmple", lv: "Lv. 3", rate: "20%", icon: "🐛" }
+        ],
+        surf: [{ name: "Marill", lv: "Lv. 10-20", rate: "100%", icon: "🐭" }],
+        fish: [{ name: "Magikarp", lv: "Lv. 5-10", rate: "100%", icon: "🐟" }],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    },
+    petalburg: {
+      name: "PETALBURG CITY",
+      sector: "SEC: HOENN-03A",
+      tag: "GYM HEADQUARTERS",
+      desc: "A friendly town blending nature and foliage. Norman serves as the Petalburg Gym Leader.",
+      req: "REQUIRES: HM03 SURF",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 26.88 N | LON: 130.65 E",
+      pos: { x: "8.0%", y: "57.0%" },
+      type: "city",
+      biomes: {
+        grass: [
+          { name: "Poochyena", lv: "Lv. 3-5", rate: "40%", icon: "🐺" },
+          { name: "Wurmple", lv: "Lv. 3-4", rate: "35%", icon: "🐛" },
+          { name: "Marill", lv: "Lv. 4-6", rate: "25%", icon: "🐭" }
+        ],
+        surf: [{ name: "Marill", lv: "Lv. 20-30", rate: "100%", icon: "🐭" }],
+        fish: [
+          { name: "Magikarp", lv: "Lv. 5", rate: "80%", icon: "🐟" },
+          { name: "Corphish", lv: "Lv. 10", rate: "20%", icon: "🦞" }
+        ],
+        rock: [{ name: "Geodude", lv: "Lv. 5", rate: "100%", icon: "🪨" }]
+      }
+    },
+    dewford: {
+      name: "DEWFORD TOWN",
+      sector: "SEC: HOENN-02S",
+      tag: "ISLAND RESORT",
+      desc: "A tiny island community in the south sea famous for big waves, trendy phrases, and Granite Cave.",
+      req: "REQUIRES: HM05 FLASH",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 23.95 N | LON: 130.22 E",
+      pos: { x: "11.8%", y: "82.0%" },
+      type: "town",
+      biomes: {
+        grass: [
+          { name: "Wingull", lv: "Lv. 7-10", rate: "60%", icon: "🪶" },
+          { name: "Slakoth", lv: "Lv. 6", rate: "40%", icon: "🦥" }
+        ],
+        surf: [{ name: "Tentacool", lv: "Lv. 10-25", rate: "60%", icon: "🦑" }],
+        fish: [
+          { name: "Magikarp", lv: "Lv. 10", rate: "70%", icon: "🐟" },
+          { name: "Wailmer", lv: "Lv. 15", rate: "30%", icon: "🐋" }
+        ],
+        rock: [
+          { name: "Geodude", lv: "Lv. 9", rate: "80%", icon: "🪨" },
+          { name: "Nosepass", lv: "Lv. 10", rate: "20%", icon: "🗿" }
+        ]
+      }
+    },
+    slateport: {
+      name: "SLATEPORT CITY",
+      sector: "SEC: HOENN-05A",
+      tag: "HARBOR METROPOLIS",
+      desc: "A bustling coastal trading port featuring Stern's Shipyard, the Oceanic Museum, and open bazaar.",
+      req: "REQUIRES: NONE",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 26.20 N | LON: 131.25 E",
+      pos: { x: "31.5%", y: "65.0%" },
+      type: "city",
+      biomes: {
+        grass: [
+          { name: "Electrike", lv: "Lv. 12", rate: "40%", icon: "⚡" },
+          { name: "Gulpin", lv: "Lv. 12", rate: "40%", icon: "🟣" },
+          { name: "Plusle", lv: "Lv. 13", rate: "20%", icon: "🐭" }
+        ],
+        surf: [{ name: "Tentacool", lv: "Lv. 15", rate: "70%", icon: "🦑" }],
+        fish: [{ name: "Magikarp", lv: "Lv. 10", rate: "60%", icon: "🐟" }],
+        rock: [{ name: "Geodude", lv: "Lv. 12", rate: "100%", icon: "🪨" }]
+      }
+    },
+    mauville: {
+      name: "MAUVILLE CITY",
+      sector: "SEC: HOENN-06A",
+      tag: "TRANSIT HUB",
+      desc: "The central crossroads of the Hoenn region with Wattson's Electric Gym, Rydel's Bikes, and Game Corner.",
+      req: "REQUIRES: HM06 ROCK SMASH",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 28.50 N | LON: 131.35 E",
+      pos: { x: "33.0%", y: "42.0%" },
+      type: "city",
+      biomes: {
+        grass: [
+          { name: "Electrike", lv: "Lv. 13", rate: "50%", icon: "⚡" },
+          { name: "Voltorb", lv: "Lv. 14", rate: "30%", icon: "🔴" },
+          { name: "Magnemite", lv: "Lv. 14", rate: "20%", icon: "🧲" }
+        ],
+        surf: [{ name: "Goldeen", lv: "Lv. 20", rate: "80%", icon: "🐠" }],
+        fish: [{ name: "Barboach", lv: "Lv. 15", rate: "30%", icon: "🐟" }],
+        rock: [{ name: "Geodude", lv: "Lv. 14", rate: "100%", icon: "🪨" }]
+      }
+    },
+    fallarbor: {
+      name: "FALLARBOR TOWN",
+      sector: "SEC: HOENN-08A",
+      tag: "VOLCANIC COMMUNE",
+      desc: "A quaint farming community nestled under showers of soft soot and ash falling from Mt. Chimney.",
+      req: "REQUIRES: NONE",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 33.10 N | LON: 130.80 E",
+      pos: { x: "14.5%", y: "12.0%" },
+      type: "town",
+      biomes: {
+        grass: [
+          { name: "Spinda", lv: "Lv. 14-16", rate: "70%", icon: "🐼" },
+          { name: "Skitty", lv: "Lv. 15", rate: "20%", icon: "🐱" },
+          { name: "Swablu", lv: "Lv. 16", rate: "10%", icon: "🕊️" }
+        ],
+        surf: [{ name: "Marill", lv: "Lv. 20", rate: "100%", icon: "🐭" }],
+        fish: [{ name: "Barboach", lv: "Lv. 15", rate: "100%", icon: "🐟" }],
+        rock: [{ name: "Geodude", lv: "Lv. 16", rate: "100%", icon: "🪨" }]
+      }
+    },
+    lavaridge: {
+      name: "LAVARIDGE TOWN",
+      sector: "SEC: HOENN-07A",
+      tag: "VOLCANIC RETREAT",
+      desc: "A relaxing town famous for its medicinal volcanic thermal hot springs and Gym Leader Flannery.",
+      req: "REQUIRES: HM04 STRENGTH",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 31.80 N | LON: 131.10 E",
+      pos: { x: "45.0%", y: "12.0%" },
+      type: "town",
+      biomes: {
+        grass: [
+          { name: "Numel", lv: "Lv. 15-18", rate: "50%", icon: "🐪" },
+          { name: "Machop", lv: "Lv. 16", rate: "30%", icon: "🥊" },
+          { name: "Torkoal", lv: "Lv. 17", rate: "20%", icon: "🐢" }
+        ],
+        surf: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        fish: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        rock: [{ name: "Slugma", lv: "Lv. 16", rate: "100%", icon: "🐌" }]
+      }
+    },
+    fortree: {
+      name: "FORTREE CITY",
+      sector: "SEC: HOENN-09A",
+      tag: "ARBOREAL CANOPY",
+      desc: "A treetop settlement where treehouses are linked by rope ladders. Home to Flying Gym Leader Winona.",
+      req: "REQUIRES: DEVON SCOPE",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 32.40 N | LON: 131.90 E",
+      pos: { x: "66.0%", y: "27.0%" },
+      type: "city",
+      biomes: {
+        grass: [
+          { name: "Tropius", lv: "Lv. 25-27", rate: "30%", icon: "🦕" },
+          { name: "Absol", lv: "Lv. 27", rate: "10%", icon: "🐺" },
+          { name: "Linoone", lv: "Lv. 25", rate: "60%", icon: "🦝" }
+        ],
+        surf: [{ name: "Marill", lv: "Lv. 25", rate: "100%", icon: "🐭" }],
+        fish: [
+          { name: "Feebas", lv: "Lv. 20", rate: "5%", icon: "🐟" },
+          { name: "Magikarp", lv: "Lv. 20", rate: "95%", icon: "🐟" }
+        ],
+        rock: [{ name: "Geodude", lv: "Lv. 25", rate: "100%", icon: "🪨" }]
+      }
+    },
+    lilycove: {
+      name: "LILYCOVE CITY",
+      sector: "SEC: HOENN-10A",
+      tag: "CULTURAL HARBOR",
+      desc: "The ocean city where culture flourishes with a grand Department Store, Art Museum, and Team Aqua Hideout.",
+      req: "REQUIRES: HM08 DIVE",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 29.80 N | LON: 132.40 E",
+      pos: { x: "86.0%", y: "37.0%" },
+      type: "city",
+      biomes: {
+        grass: [
+          { name: "Wingull", lv: "Lv. 28", rate: "50%", icon: "🪶" },
+          { name: "Shuppet", lv: "Lv. 28", rate: "50%", icon: "👻" }
+        ],
+        surf: [{ name: "Tentacruel", lv: "Lv. 30", rate: "60%", icon: "🦑" }],
+        fish: [{ name: "Wailmer", lv: "Lv. 30", rate: "70%", icon: "🐋" }],
+        rock: [{ name: "Graveler", lv: "Lv. 30", rate: "100%", icon: "🪨" }]
+      }
+    },
+    mossdeep: {
+      name: "MOSSDEEP CITY",
+      sector: "SEC: HOENN-11A",
+      tag: "SPACE METROPOLIS",
+      desc: "An island town renowned for the high-tech Mossdeep Space Center and psychic twin leaders Tate & Liza.",
+      req: "REQUIRES: HM08 DIVE",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 29.90 N | LON: 133.20 E",
+      pos: { x: "95.0%", y: "55.0%" },
+      type: "city",
+      biomes: {
+        grass: [{ name: "Wingull", lv: "Lv. 32", rate: "100%", icon: "🪶" }],
+        surf: [{ name: "Sharpedo", lv: "Lv. 35", rate: "60%", icon: "🦈" }],
+        fish: [
+          { name: "Sharpedo", lv: "Lv. 35", rate: "60%", icon: "🦈" },
+          { name: "Wailmer", lv: "Lv. 35", rate: "40%", icon: "🐋" }
+        ],
+        rock: [{ name: "Graveler", lv: "Lv. 32", rate: "100%", icon: "🪨" }]
+      }
+    },
+    sootopolis: {
+      name: "SOOTOPOLIS CITY",
+      sector: "SEC: HOENN-12A",
+      tag: "CALDERA OASIS",
+      desc: "A mystical city built inside a sunken volcanic crater rising out of the ocean. Guardian of the Cave of Origin.",
+      req: "REQUIRES: HM07 WATERFALL",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 27.40 N | LON: 132.80 E",
+      pos: { x: "75.0%", y: "47.0%" },
+      type: "city",
+      biomes: {
+        grass: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        surf: [
+          { name: "Gyarados", lv: "Lv. 35", rate: "60%", icon: "🐉" },
+          { name: "Magikarp", lv: "Lv. 30", rate: "40%", icon: "🐟" }
+        ],
+        fish: [{ name: "Magikarp", lv: "Lv. 30", rate: "100%", icon: "🐟" }],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    },
+    pacifidlog: {
+      name: "PACIFIDLOG TOWN",
+      sector: "SEC: HOENN-14A",
+      tag: "WATERLOGGED HAVEN",
+      desc: "A floating township built entirely atop rafts and wooden logs anchored over a colony of Corsola in calm currents.",
+      req: "REQUIRES: HM03 SURF",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 24.30 N | LON: 132.30 E",
+      pos: { x: "69.0%", y: "55.0%" },
+      type: "town",
+      biomes: {
+        grass: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        surf: [
+          { name: "Tentacool", lv: "Lv. 25-35", rate: "60%", icon: "🦑" },
+          { name: "Wingull", lv: "Lv. 20-30", rate: "35%", icon: "🪶" },
+          { name: "Pelipper", lv: "Lv. 30-35", rate: "5%", icon: "🕊️" }
+        ],
+        fish: [
+          { name: "Horsea", lv: "Lv. 25-30", rate: "60%", icon: "🐴" },
+          { name: "Corsola", lv: "Lv. 20-30", rate: "30%", icon: "🪸" },
+          { name: "Sharpedo", lv: "Lv. 30-35", rate: "10%", icon: "🦈" }
+        ],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    },
+    evergrande: {
+      name: "EVER GRANDE CITY",
+      sector: "SEC: HOENN-13A",
+      tag: "POKÉMON LEAGUE",
+      desc: "The pinnacle peak of Hoenn where champions assemble after navigating perilous Victory Road.",
+      req: "REQUIRES: 8 GYM BADGES",
+      fly: "FLY AUTHORIZED",
+      coords: "LAT: 24.10 N | LON: 133.40 E",
+      pos: { x: "87.0%", y: "70.0%" },
+      type: "city",
+      biomes: {
+        grass: [
+          { name: "Lairon", lv: "Lv. 40", rate: "40%", icon: "🛡️" },
+          { name: "Hariyama", lv: "Lv. 40", rate: "40%", icon: "🥋" },
+          { name: "Mawile", lv: "Lv. 40", rate: "20%", icon: "🐊" }
+        ],
+        surf: [{ name: "Tentacruel", lv: "Lv. 40", rate: "100%", icon: "🦑" }],
+        fish: [{ name: "Corsola", lv: "Lv. 35", rate: "100%", icon: "🪸" }],
+        rock: [{ name: "Graveler", lv: "Lv. 42", rate: "100%", icon: "🪨" }]
+      }
+    },
+
+    // === ROUTES & FIELD PATHS ===
+    route101: {
+      name: "ROUTE 101",
+      sector: "SEC: HOENN-R101",
+      tag: "STARTING ROUTE",
+      desc: "The gentle path linking Littleroot Town to Oldale Town. Where Professor Birch is rescued from a wild Poochyena.",
+      req: "REQUIRES: NONE",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 25.40 N | LON: 130.88 E",
+      pos: { x: "18.2%", y: "60.5%" },
+      type: "route",
+      biomes: {
+        grass: [
+          { name: "Poochyena", lv: "Lv. 2-3", rate: "45%", icon: "🐺" },
+          { name: "Zigzagoon", lv: "Lv. 2-3", rate: "45%", icon: "🦝" },
+          { name: "Wurmple", lv: "Lv. 2", rate: "10%", icon: "🐛" }
+        ],
+        surf: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        fish: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    },
+    route102: {
+      name: "ROUTE 102",
+      sector: "SEC: HOENN-R102",
+      tag: "LAKESIDE TRAIL",
+      desc: "A pathway adorned with tranquil ponds connecting Oldale Town with Petalburg City. First trainer gauntlet.",
+      req: "REQUIRES: NONE",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 26.20 N | LON: 130.75 E",
+      pos: { x: "13.0%", y: "56.0%" },
+      type: "route",
+      biomes: {
+        grass: [
+          { name: "Zigzagoon", lv: "Lv. 3-4", rate: "30%", icon: "🦝" },
+          { name: "Poochyena", lv: "Lv. 3-4", rate: "30%", icon: "🐺" },
+          { name: "Wurmple", lv: "Lv. 3", rate: "20%", icon: "🐛" },
+          { name: "Lotad", lv: "Lv. 3-4", rate: "15%", icon: "🍃" },
+          { name: "Ralts", lv: "Lv. 4", rate: "5%", icon: "🔮" }
+        ],
+        surf: [{ name: "Marill", lv: "Lv. 15-20", rate: "100%", icon: "🐭" }],
+        fish: [
+          { name: "Magikarp", lv: "Lv. 5-10", rate: "70%", icon: "🐟" },
+          { name: "Goldeen", lv: "Lv. 5-10", rate: "30%", icon: "🐠" }
+        ],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    },
+    route104: {
+      name: "ROUTE 104",
+      sector: "SEC: HOENN-R104",
+      tag: "COASTAL FLORAL ROUTE",
+      desc: "A scenic seaside road separated by Petalburg Woods. Home to Mr. Briney's Cottage and the Pretty Petal Flower Shop.",
+      req: "REQUIRES: HM01 CUT",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 27.20 N | LON: 130.50 E",
+      pos: { x: "6.2%", y: "47.0%" },
+      type: "route",
+      biomes: {
+        grass: [
+          { name: "Taillow", lv: "Lv. 4-5", rate: "35%", icon: "🕊️" },
+          { name: "Wingull", lv: "Lv. 4-5", rate: "35%", icon: "🪶" },
+          { name: "Zigzagoon", lv: "Lv. 3-4", rate: "20%", icon: "🦝" },
+          { name: "Marill", lv: "Lv. 5", rate: "10%", icon: "🐭" }
+        ],
+        surf: [{ name: "Wingull", lv: "Lv. 10-20", rate: "60%", icon: "🪶" }, { name: "Tentacool", lv: "Lv. 10-15", rate: "40%", icon: "🦑" }],
+        fish: [{ name: "Magikarp", lv: "Lv. 5-10", rate: "100%", icon: "🐟" }],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    },
+    route110: {
+      name: "ROUTE 110",
+      sector: "SEC: HOENN-R110",
+      tag: "SEASIDE CYCLING ROAD",
+      desc: "Home to the elevated Seaside Cycling Road, Trick House, and power lines heading north toward Mauville.",
+      req: "REQUIRES: MACH/ACRO BIKE",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 27.40 N | LON: 131.30 E",
+      pos: { x: "32.0%", y: "53.5%" },
+      type: "route",
+      biomes: {
+        grass: [
+          { name: "Electrike", lv: "Lv. 11-13", rate: "40%", icon: "⚡" },
+          { name: "Gulpin", lv: "Lv. 12-13", rate: "30%", icon: "🟣" },
+          { name: "Minun", lv: "Lv. 12", rate: "15%", icon: "🐭" },
+          { name: "Plusle", lv: "Lv. 12", rate: "15%", icon: "🐭" }
+        ],
+        surf: [{ name: "Tentacool", lv: "Lv. 15-25", rate: "100%", icon: "🦑" }],
+        fish: [{ name: "Magikarp", lv: "Lv. 10", rate: "70%", icon: "🐟" }, { name: "Wailmer", lv: "Lv. 15", rate: "30%", icon: "🐋" }],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    },
+    route111: {
+      name: "ROUTE 111 (DESERT)",
+      sector: "SEC: HOENN-07D",
+      tag: "ARID WASTELAND",
+      desc: "A harsh desert route plagued by blinding sandstorms. Requires Go-Goggles to safely explore the Mirage Tower.",
+      req: "REQUIRES: GO-GOGGLES",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 30.15 N | LON: 131.10 E",
+      pos: { x: "21.5%", y: "28.0%" },
+      type: "route",
+      biomes: {
+        grass: [
+          { name: "Trapinch", lv: "Lv. 19-21", rate: "50%", icon: "🐜" },
+          { name: "Baltoy", lv: "Lv. 20", rate: "30%", icon: "🏺" },
+          { name: "Cacnea", lv: "Lv. 20-22", rate: "20%", icon: "🌵" }
+        ],
+        surf: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        fish: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        rock: [{ name: "Geodude", lv: "Lv. 20", rate: "100%", icon: "🪨" }]
+      }
+    },
+    route113: {
+      name: "ROUTE 113 (VOLCANIC ASH)",
+      sector: "SEC: HOENN-R113",
+      tag: "SOOT COVERED PASS",
+      desc: "Covered completely in powdery volcanic ash blowing east from Mt. Chimney. Home to the Glass Workshop.",
+      req: "REQUIRES: SOOT SACK",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 32.80 N | LON: 131.00 E",
+      pos: { x: "25.0%", y: "12.0%" },
+      type: "route",
+      biomes: {
+        grass: [
+          { name: "Spinda", lv: "Lv. 14-16", rate: "70%", icon: "🐼" },
+          { name: "Slugma", lv: "Lv. 15-16", rate: "25%", icon: "🐌" },
+          { name: "Skitty", lv: "Lv. 15", rate: "5%", icon: "🐱" }
+        ],
+        surf: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        fish: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        rock: [{ name: "Geodude", lv: "Lv. 15", rate: "100%", icon: "🪨" }]
+      }
+    },
+    route116: {
+      name: "ROUTE 116",
+      sector: "SEC: HOENN-R116",
+      tag: "TUNNEL HIGHWAY",
+      desc: "Runs east from Rustboro toward the incomplete Rusturf Tunnel. Infested with Whismur and tunneling miners.",
+      req: "REQUIRES: HM06 ROCK SMASH",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 28.30 N | LON: 130.60 E",
+      pos: { x: "10.0%", y: "33.0%" },
+      type: "route",
+      biomes: {
+        grass: [
+          { name: "Taillow", lv: "Lv. 6-8", rate: "35%", icon: "🕊️" },
+          { name: "Whismur", lv: "Lv. 6-7", rate: "30%", icon: "📢" },
+          { name: "Zigzagoon", lv: "Lv. 6-7", rate: "25%", icon: "🦝" },
+          { name: "Nincada", lv: "Lv. 7", rate: "10%", icon: "🪲" }
+        ],
+        surf: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        fish: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        rock: [{ name: "Geodude", lv: "Lv. 7-9", rate: "100%", icon: "🪨" }]
+      }
+    },
+    route119: {
+      name: "ROUTE 119",
+      sector: "SEC: HOENN-09R",
+      tag: "WEATHER INSTITUTE",
+      desc: "A vast wetlands route with towering grass and the Weather Institute. High precipitation zone.",
+      req: "REQUIRES: HM03 SURF",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 31.20 N | LON: 131.75 E",
+      pos: { x: "58.0%", y: "35.0%" },
+      type: "route",
+      biomes: {
+        grass: [
+          { name: "Oddish", lv: "Lv. 25", rate: "40%", icon: "🌱" },
+          { name: "Tropius", lv: "Lv. 26", rate: "30%", icon: "🦕" },
+          { name: "Linoone", lv: "Lv. 25", rate: "30%", icon: "🦝" }
+        ],
+        surf: [{ name: "Tentacool", lv: "Lv. 25", rate: "100%", icon: "🦑" }],
+        fish: [
+          { name: "Feebas", lv: "Lv. 20-25", rate: "10%", icon: "🐟" },
+          { name: "Carvanha", lv: "Lv. 25", rate: "60%", icon: "🦈" },
+          { name: "Magikarp", lv: "Lv. 20", rate: "30%", icon: "🐟" }
+        ],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    },
+    route120: {
+      name: "ROUTE 120",
+      sector: "SEC: HOENN-R120",
+      tag: "PUDDLE HIGHLANDS",
+      desc: "A misty route paved with large reflecting puddles and ancient ruins. Steven gives the Devon Scope here.",
+      req: "REQUIRES: DEVON SCOPE",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 30.80 N | LON: 132.10 E",
+      pos: { x: "69.0%", y: "35.0%" },
+      type: "route",
+      biomes: {
+        grass: [
+          { name: "Marill", lv: "Lv. 25-27", rate: "30%", icon: "🐭" },
+          { name: "Oddish", lv: "Lv. 25", rate: "30%", icon: "🌱" },
+          { name: "Absol", lv: "Lv. 27", rate: "10%", icon: "🐺" },
+          { name: "Kecleon", lv: "Lv. 30", rate: "30%", icon: "🦎" }
+        ],
+        surf: [{ name: "Marill", lv: "Lv. 25", rate: "100%", icon: "🐭" }],
+        fish: [{ name: "Barboach", lv: "Lv. 20-25", rate: "70%", icon: "🐟" }, { name: "Magikarp", lv: "Lv. 20", rate: "30%", icon: "🐟" }],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    },
+    route124: {
+      name: "ROUTE 124",
+      sector: "SEC: HOENN-R124",
+      tag: "DEEP SEA CHANNEL",
+      desc: "A wide ocean expanse west of Mossdeep. Features deep ocean trenches and the underwater Diving Treasure Hunter.",
+      req: "REQUIRES: HM08 DIVE",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 29.50 N | LON: 132.90 E",
+      pos: { x: "83.0%", y: "47.0%" },
+      type: "route",
+      biomes: {
+        grass: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        surf: [
+          { name: "Tentacruel", lv: "Lv. 30-35", rate: "60%", icon: "🦑" },
+          { name: "Wingull", lv: "Lv. 25-30", rate: "35%", icon: "🪶" },
+          { name: "Pelipper", lv: "Lv. 32", rate: "5%", icon: "🕊️" }
+        ],
+        fish: [
+          { name: "Sharpedo", lv: "Lv. 30-35", rate: "60%", icon: "🦈" },
+          { name: "Wailmer", lv: "Lv. 25-30", rate: "40%", icon: "🐋" }
+        ],
+        rock: [{ name: "Chinchou", lv: "Lv. 25-30", rate: "70%", icon: "🏮" }, { name: "Clamperl", lv: "Lv. 25-30", rate: "30%", icon: "🦪" }]
+      }
+    },
+    route131: {
+      name: "ROUTE 131",
+      sector: "SEC: HOENN-R131",
+      tag: "SKY PILLAR SEAWAY",
+      desc: "A rough ocean channel leading into Pacifidlog Town and the ancient towering monolith known as Sky Pillar.",
+      req: "REQUIRES: MACH BIKE",
+      fly: "UNAVAILABLE (ROUTE)",
+      coords: "LAT: 24.30 N | LON: 132.70 E",
+      pos: { x: "78.0%", y: "58.0%" },
+      type: "route",
+      biomes: {
+        grass: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }],
+        surf: [
+          { name: "Tentacruel", lv: "Lv. 30-35", rate: "65%", icon: "🦑" },
+          { name: "Wingull", lv: "Lv. 25-30", rate: "35%", icon: "🪶" }
+        ],
+        fish: [
+          { name: "Wailmer", lv: "Lv. 30-35", rate: "60%", icon: "🐋" },
+          { name: "Sharpedo", lv: "Lv. 35", rate: "40%", icon: "🦈" }
+        ],
+        rock: [{ name: "None", lv: "--", rate: "--", icon: "✖️" }]
+      }
+    }
+  };
+
+  let activeLocKey = 'rustboro';
+  let activeBiome = 'grass';
+
+  // MATCH CALL DATA
+  const MATCH_CONTACTS = [
+    {
+      id: "stone",
+      name: "MR. STONE",
+      role: "DEVON CORP PRESIDENT",
+      avatar: "💼",
+      location: "Rustboro City, Devon HQ",
+      rematch: "REMATCH: N/A",
+      rematchReady: false,
+      strategy: "Directs technological breakthroughs for Pokémon comfort and field equipment.",
+      team: ["Castform Research", "Fossil Tech"],
+      call: "Brendan! How is that PokéNav working out? Remember to deliver that letter to Steven in Dewford Island!"
+    },
+    {
+      id: "roxanne",
+      name: "ROXANNE",
+      role: "GYM LEADER #1",
+      avatar: "🪨",
+      location: "Rustboro Gym / Granite Cave",
+      rematch: "REMATCH: READY",
+      rematchReady: true,
+      strategy: "Employs high-defense Rock Tomb strategies and sturdy stone fortitude.",
+      team: ["Geodude Lv. 14", "Nosepass Lv. 15"],
+      call: "Hello Brendan! I am currently studying geological formations. When you are ready for a rematch, drop by!"
+    },
+    {
+      id: "brawly",
+      name: "BRAWLY",
+      role: "GYM LEADER #2",
+      avatar: "🌊",
+      location: "Dewford Gym",
+      rematch: "REMATCH: READY",
+      rematchReady: true,
+      strategy: "Rides massive waves with Fighting-type power. Uses Bulk Up to overpower opponents.",
+      team: ["Machop Lv. 17", "Makuhita Lv. 18"],
+      call: "Yo! Big waves churning today! Whenever you want another high-energy battle, catch a wave back to Dewford!"
+    },
+    {
+      id: "norman",
+      name: "NORMAN",
+      role: "DAD / GYM LEADER #5",
+      avatar: "👨‍👦",
+      location: "Petalburg Gym",
+      rematch: "REMATCH: SOON",
+      rematchReady: false,
+      strategy: "Commands balanced Normal-type champions with devastating Facade power.",
+      team: ["Slaking Lv. 28", "Vigoroth Lv. 27", "Slaking Lv. 31"],
+      call: "Brendan, keep training hard. Gather four gym badges, and I'll be waiting for our true battle in Petalburg."
+    },
+    {
+      id: "may",
+      name: "MAY",
+      role: "RIVAL TRAINER",
+      avatar: "🧢",
+      location: "Route 110 Cycling Road",
+      rematch: "REMATCH: READY",
+      rematchReady: true,
+      strategy: "Conducts field research for Professor Birch while matching types against my starter.",
+      team: ["Torchic Lv. 18", "Lombre Lv. 16", "Slugma Lv. 16"],
+      call: "Hey Brendan! I caught a few neat new Pokémon around Route 110! Let's meet up and test our teams soon!"
+    },
+    {
+      id: "scott",
+      name: "SCOTT",
+      role: "BATTLE FRONTIER SCOUT",
+      avatar: "🕶️",
+      location: "Roaming Hoenn",
+      rematch: "REMATCH: N/A",
+      rematchReady: false,
+      strategy: "Travels across Hoenn in dark sunglasses scouting trainers worthy of the Battle Frontier.",
+      team: ["Scouting Deck"],
+      call: "Keep training strong, kid! If you've got real grit, you'll hear from me at the Frontier!"
+    }
+  ];
+
+  let activeContactIdx = 0;
+
+  // CONTEST DATA
+  const CONTEST_PARTY = [
+    {
+      name: "MUDKIP",
+      nature: "ADAMANT",
+      level: "LV. 16 • HELD: SILK SCARF",
+      sheen: "36 / 255",
+      sheenPct: "14%",
+      cool: 64,
+      beauty: 32,
+      cute: 25,
+      smart: 48,
+      tough: 85,
+      points: "100,42 155,90 120,150 68,145 40,80",
+      opt: "OPTIMAL: TOUGH MASTER RANK"
+    },
+    {
+      name: "RALTS",
+      nature: "MODEST",
+      level: "LV. 14 • HELD: TWISTEDSPOON",
+      sheen: "78 / 255",
+      sheenPct: "30%",
+      cool: 20,
+      beauty: 88,
+      cute: 92,
+      smart: 75,
+      tough: 15,
+      points: "100,80 170,55 145,120 75,130 30,95",
+      opt: "OPTIMAL: BEAUTY & CUTE MASTER"
+    },
+    {
+      name: "TAILLOW",
+      nature: "JOLLY",
+      level: "LV. 15 • HELD: SHARP BEAK",
+      sheen: "50 / 255",
+      sheenPct: "19%",
+      cool: 95,
+      beauty: 40,
+      cute: 30,
+      smart: 35,
+      tough: 50,
+      points: "100,25 140,85 110,140 70,135 50,85",
+      opt: "OPTIMAL: COOL MASTER RANK"
+    }
+  ];
+
+  // RIBBONS DATA
+  const RIBBONS_DATA = {
+    champion: {
+      title: "HOENN CHAMPION RIBBON",
+      place: "AWARDED: EVER GRANDE HALL OF FAME",
+      icon: "🎖️",
+      sub: "HOENN CHAMPION",
+      desc: "Ribbon awarded for clearing the Pokémon League and entering the Hall of Fame in Hoenn."
+    },
+    cool: {
+      title: "COOL RIBBON NORMAL",
+      place: "AWARDED: VERDANTURF CONTEST HALL",
+      icon: "🎗️",
+      sub: "COOL CONTEST WINNER",
+      desc: "Awarded for winning the Normal Rank Cool Contest category in Verdanturf Town."
+    },
+    tough: {
+      title: "TOUGH RIBBON SUPER",
+      place: "AWARDED: FALLARBOR CONTEST HALL",
+      icon: "🎗️",
+      sub: "TOUGH SUPER RANK",
+      desc: "Awarded for prevailing in the Super Rank Tough Contest with high muscular presence."
+    },
+    effort: {
+      title: "EFFORT RIBBON",
+      place: "AWARDED: SLATEPORT ENERGY ROOT SHOP",
+      icon: "🎀",
+      sub: "MAXIMUM EFFORT (510 EVs)",
+      desc: "A prestigious ribbon given to a Pokémon that put in an exceptional amount of dedicated training effort."
+    }
+  };
+
+  // Build Interactive Map Hotspots (Completely label-free, clean art)
+  function initMapHotspots() {
+    const container = document.getElementById('map-hotspots-container');
+    container.innerHTML = "";
+
+    Object.keys(HOENN_DATA).forEach(key => {
+      const loc = HOENN_DATA[key];
+      const spot = document.createElement('button');
+      spot.setAttribute('title', loc.name);
+      spot.setAttribute('data-loc-key', key);
+      spot.onclick = () => selectHoennLocation(key);
+
+      // Clean invisible or subtle target region
+      spot.className = "absolute w-7 h-7 -translate-x-1/2 -translate-y-1/2 rounded cursor-pointer z-20 transition hover:bg-white/30 focus:outline-none";
+      spot.style.left = loc.pos.x;
+      spot.style.top = loc.pos.y;
+
+      container.appendChild(spot);
+    });
+  }
+
+  // Nav Mode Switcher
+  function setNavMode(mode) {
+    currentNavIndex = NAV_MODES.indexOf(mode);
+    NAV_MODES.forEach(m => {
+      const panel = document.getElementById(`panel-mode-${m}`);
+      const btn = document.getElementById(`tab-btn-${m}`);
+      if (m === mode) {
+        panel.classList.remove('hidden');
+        panel.classList.add('flex');
+        btn.className = "bg-[#fde68a] text-[#16271c] font-bold text-[8px] px-2.5 py-1 rounded shadow-sm border border-[#b45309] font-pixel cursor-pointer tracking-wider leading-none";
+      } else {
+        panel.classList.add('hidden');
+        panel.classList.remove('flex');
+        btn.className = "px-2 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none";
+      }
+    });
+  }
+
+  function cycleNavMode(dir) {
+    currentNavIndex += dir;
+    if (currentNavIndex < 0) currentNavIndex = NAV_MODES.length - 1;
+    if (currentNavIndex >= NAV_MODES.length) currentNavIndex = 0;
+    setNavMode(NAV_MODES[currentNavIndex]);
+  }
+
+  // Location Selection & GBA Flashing Reticle Box Positioning
+  function selectHoennLocation(key) {
+    if (!HOENN_DATA[key]) return;
+    activeLocKey = key;
+    const data = HOENN_DATA[key];
+
+    // Move GBA Reticle Crosshair Square
+    const cursor = document.getElementById('gba-reticle-cursor');
+    if (cursor) {
+      cursor.style.left = data.pos.x;
+      cursor.style.top = data.pos.y;
+    }
+
+    // Update Dossier Left Panel
+    document.getElementById('map-loc-name').innerText = data.name;
+    document.getElementById('map-loc-sector').innerText = data.sector;
+    document.getElementById('map-loc-tag').innerText = data.tag;
+    document.getElementById('map-loc-desc').innerText = data.desc;
+    document.getElementById('map-loc-req').innerText = data.req;
+    document.getElementById('map-fly-status').innerText = data.fly;
+    document.getElementById('map-coords-display').innerText = data.coords;
+
+    renderBiomeEncounters();
+  }
+
+  function setBiomeTab(biome) {
+    activeBiome = biome;
+    ['grass', 'surf', 'fish', 'rock'].forEach(b => {
+      const btn = document.getElementById(`biome-btn-${b}`);
+      if (b === biome) {
+        btn.className = "py-1 text-center text-[7px] font-pixel font-bold rounded bg-[#13372c] text-[#a7f3d0] shadow";
+      } else {
+        btn.className = "py-1 text-center text-[7px] font-pixel font-bold rounded text-[#224036] hover:bg-[#cfc5a9]";
+      }
+    });
+    renderBiomeEncounters();
+  }
+
+  function renderBiomeEncounters() {
+    const container = document.getElementById('map-encounters-list');
+    container.innerHTML = "";
+    const list = (HOENN_DATA[activeLocKey].biomes && HOENN_DATA[activeLocKey].biomes[activeBiome]) || [];
+
+    if (list.length === 0 || list[0].name === "None") {
+      const emptyRow = document.createElement('div');
+      emptyRow.className = "flex items-center justify-center p-3 text-[7px] font-pixel text-[#738276] italic";
+      emptyRow.innerText = "NO RECORDED ENCOUNTERS IN THIS TERRAIN";
+      container.appendChild(emptyRow);
+      return;
+    }
+
+    list.forEach(item => {
+      const row = document.createElement('div');
+      row.className = "flex items-center justify-between p-1 bg-[#fdfbf6] rounded border border-[#d6ccb2] text-[#143228]";
+      row.innerHTML = `
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">${item.icon}</span>
+          <span class="text-[8px] font-pixel font-bold">${item.name}</span>
+          <span class="text-[7px] font-pixel text-[#557568]">${item.lv}</span>
+        </div>
+        <span class="text-[7px] font-pixel px-1.5 py-0.5 bg-[#0f2d24] text-[#a7f3d0] rounded font-bold">${item.rate}</span>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function handleFlyAction() {
+    const loc = HOENN_DATA[activeLocKey];
+    if (loc.fly.includes("UNAVAILABLE")) {
+      alert(`[PS VITA NAVIGATION]\nUnable to Fly directly to ${loc.name}.\nDesignated as wild route territory.`);
+      return;
+    }
+    alert(`[PS VITA FLIGHT]\nBrendan summoned Altaria!\nCalibrated flight trajectory toward: ${loc.name}`);
+  }
+
+  // Match Call Mode Functions
+  function renderMatchList() {
+    const container = document.getElementById('match-contact-list');
+    container.innerHTML = "";
+
+    MATCH_CONTACTS.forEach((c, idx) => {
+      const isSel = idx === activeContactIdx;
+      const card = document.createElement('div');
+      card.onclick = () => selectContact(idx);
+      card.className = `p-2 rounded cursor-pointer border transition flex flex-col space-y-1 ${isSel ? 'bg-[#0f2d24] border-[#256350] text-[#a7f3d0] shadow-md' : 'bg-[#ede8d5] border-[#c7bfa6] text-[#16382b] hover:bg-[#e4ddc8]'}`;
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="text-base">${c.avatar}</span>
+            <span class="text-[8px] font-pixel font-bold">${c.name}</span>
+            <span class="text-[7px] font-pixel opacity-70">${c.role}</span>
+          </div>
+          <span class="text-[7px] font-pixel px-1.5 py-0.5 rounded font-bold ${c.rematchReady ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#2b4c40] text-[#a7f3d0]'}">${c.rematch}</span>
+        </div>
+        ${isSel ? `<p class="text-[7px] font-pixel text-[#ccfbf1] italic pl-6 border-l border-[#2e6e58]">${c.call}</p>` : ''}
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function selectContact(idx) {
+    activeContactIdx = idx;
+    const c = MATCH_CONTACTS[idx];
+
+    document.getElementById('call-role').innerText = c.role;
+    document.getElementById('call-name').innerText = c.name;
+    document.getElementById('call-avatar').innerText = c.avatar;
+    document.getElementById('call-location').innerText = c.location;
+    document.getElementById('call-strategy').innerText = c.strategy;
+    document.getElementById('call-transcript').innerText = `"${c.call}"`;
+
+    const badge = document.getElementById('call-rematch-badge');
+    badge.innerText = c.rematch;
+    badge.className = `px-1.5 py-0.5 text-[7px] font-pixel rounded font-bold font-mono ${c.rematchReady ? 'bg-[#10b981] text-[#022c22]' : 'bg-[#2b4c40] text-[#a7f3d0]'}`;
+
+    const teamContainer = document.getElementById('call-team-tags');
+    teamContainer.innerHTML = "";
+    c.team.forEach(t => {
+      const tag = document.createElement('span');
+      tag.className = "px-1.5 py-0.5 bg-[#0b241d] text-[#99f6e4] text-[7px] font-pixel rounded";
+      tag.innerText = t;
+      teamContainer.appendChild(tag);
+    });
+
+    renderMatchList();
+  }
+
+  function handleDialAction() {
+    const c = MATCH_CONTACTS[activeContactIdx];
+    alert(`[DEVON-NET AUDIO LINK]\nPinging frequency for: ${c.name}...\nConnection clear! Voice line connected.`);
+  }
+
+  // Condition Mode Functions
+  function renderConditionRoster() {
+    const container = document.getElementById('cond-roster-list');
+    container.innerHTML = "";
+
+    CONTEST_PARTY.forEach((poke, idx) => {
+      const btn = document.createElement('button');
+      btn.onclick = () => selectConditionPoke(idx);
+      btn.className = "w-full p-1.5 rounded flex items-center justify-between text-left text-[8px] font-pixel bg-[#ded7c1] hover:bg-[#143d31] hover:text-[#a7f3d0] transition cursor-pointer border border-[#c3b99f]";
+      btn.innerHTML = `
+        <span class="font-bold">${poke.name}</span>
+        <span class="text-[#047857] text-[7px]">${poke.nature}</span>
+      `;
+      container.appendChild(btn);
+    });
+  }
+
+  function selectConditionPoke(idx) {
+    const p = CONTEST_PARTY[idx];
+    document.getElementById('cond-name').innerText = p.name;
+    document.getElementById('cond-nature').innerText = p.nature;
+    document.getElementById('cond-level').innerText = p.level;
+    document.getElementById('cond-sheen-label').innerText = p.sheen;
+    document.getElementById('cond-sheen-bar').style.width = p.sheenPct;
+    document.getElementById('radar-pentagon').setAttribute('points', p.points);
+
+    document.getElementById('stat-cool').innerText = `${p.cool} / 255`;
+    document.getElementById('stat-beauty').innerText = `${p.beauty} / 255`;
+    document.getElementById('stat-cute').innerText = `${p.cute} / 255`;
+    document.getElementById('stat-smart').innerText = `${p.smart} / 255`;
+    document.getElementById('stat-tough').innerText = `${p.tough} / 255`;
+    document.getElementById('cond-optimal-tag').innerText = p.opt;
+  }
+
+  // Ribbons Mode Functions
+  function selectRibbon(key) {
+    const r = RIBBONS_DATA[key];
+    if (!r) return;
+    document.getElementById('ribbon-title').innerText = r.title;
+    document.getElementById('ribbon-location').innerText = r.place;
+    document.getElementById('ribbon-icon').innerText = r.icon;
+    document.getElementById('ribbon-heading').innerText = r.sub;
+    document.getElementById('ribbon-desc').innerText = r.desc;
+  }
+
+  // Direct map click fallback (clicks closest canonical hotspot)
+  const mapViewport = document.getElementById('hoenn-map-viewport');
+  if (mapViewport) {
+    mapViewport.addEventListener('click', (e) => {
+      // If directly clicked on child button, let that handler fire
+      if (e.target.tagName.toLowerCase() === 'button') return;
+      const rect = mapViewport.getBoundingClientRect();
+      const clickX = ((e.clientX - rect.left) / rect.width) * 100;
+      const clickY = ((e.clientY - rect.top) / rect.height) * 100;
+
+      // Find closest registered node
+      let nearestKey = 'rustboro';
+      let shortestDist = 999999;
+
+      Object.keys(HOENN_DATA).forEach(k => {
+        const item = HOENN_DATA[k];
+        const posX = parseFloat(item.pos.x);
+        const posY = parseFloat(item.pos.y);
+        const dist = Math.hypot(clickX - posX, clickY - posY);
+        if (dist < shortestDist) {
+          shortestDist = dist;
+          nearestKey = k;
+        }
+      });
+
+      selectHoennLocation(nearestKey);
+    });
+  }
+
+  // Physical Controller Shortcuts
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'q' || e.key === 'Q') {
+      cycleNavMode(-1);
+    } else if (e.key === 'e' || e.key === 'E') {
+      cycleNavMode(1);
+    }
+  });
+
+  // Init
+  initMapHotspots();
+  selectHoennLocation('rustboro');
+  renderBiomeEncounters();
+  renderMatchList();
+  selectContact(0);
+  renderConditionRoster();
+</script>
+</body></html>

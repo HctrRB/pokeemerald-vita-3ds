@@ -1,0 +1,1155 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>PS Vita PokéNav UI - System Options (960x544)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; user-select: none; -webkit-font-smoothing: none; }
+  body {
+    background-color: #030708;
+    margin: 0; padding: 0;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+  }
+  .font-pixel { font-family: 'Press Start 2P', monospace; }
+  .bevel-box-cream {
+    background: #f7f4e9;
+    border: 3px solid #1a3024;
+    box-shadow: inset 2px 2px 0 #ffffff, inset -2px -2px 0 #d1c8af, 0 4px 8px rgba(0,0,0,0.45);
+  }
+  .bevel-panel-inner {
+    border: 2px solid #204134;
+    box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #c7bfa6;
+  }
+  .pixel-art { image-rendering: pixelated; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: #ded7c1; }
+  ::-webkit-scrollbar-thumb { background: #1c4b3e; border-radius: 2px; }
+</style>
+</head>
+<body>
+<!-- Frame 960x544 -->
+<div class="relative w-[960px] h-[544px] overflow-hidden bg-black shadow-2xl border-2 border-[#162923] flex flex-col justify-between select-none">
+<!-- Background -->
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-[#0a1815]/95"></div>
+</div>
+<!-- Header (50px) -->
+<header class="relative z-10 w-full h-[50px] px-3 bg-[#0b1d19]/95 border-b-[3px] border-[#0c4036] flex items-center justify-between shadow-xl flex-shrink-0">
+<div class="flex items-center space-x-2 flex-shrink-0 bg-[#163f35] border-2 border-[#2b5849] rounded-md px-2.5 py-1 shadow-inner cursor-pointer select-none">
+<div class="w-5 h-5 rounded-full bg-[#10b981] border border-[#a7f3d0] flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-[#064e3b] border border-white"></div>
+</div>
+<div class="flex flex-col leading-tight">
+<span class="text-[9px] text-[#99f6e4] font-pixel font-bold tracking-wider">SYSTEM OPTIONS ▼</span>
+<span class="text-[7px] text-[#6ee7b7] font-pixel">NVRAM KERNEL v4.8</span>
+</div>
+</div>
+<div class="flex items-center bg-[#041612] border-2 border-[#1c5547] rounded-md p-0.5 gap-1 shadow-inner select-none">
+<button class="px-2 py-1 bg-[#163f35] hover:bg-[#245244] border border-[#2b5849] rounded text-[#6ee7b7] font-bold text-[9px] font-pixel cursor-pointer leading-none active:scale-95 transition" onclick="cycleOptTab(-1)">L</button>
+<div class="flex items-center gap-1" id="sys-tabs-bar">
+<button class="px-2.5 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none" id="sys-tab-0" onclick="switchOptTab(0)">GENERAL</button>
+<button class="px-2.5 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none" id="sys-tab-1" onclick="switchOptTab(1)">EXTRAS</button>
+<button class="px-2.5 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none" id="sys-tab-2" onclick="switchOptTab(2)">WORLD</button>
+<button class="bg-[#ded5b4] text-[#143228] font-bold text-[8px] px-2.5 py-1 rounded shadow-sm border border-[#1b5042] font-pixel cursor-pointer tracking-wider leading-none" id="sys-tab-3" onclick="switchOptTab(3)">SYSTEM</button>
+</div>
+<button class="px-2 py-1 bg-[#163f35] hover:bg-[#245244] border border-[#2b5849] rounded text-[#6ee7b7] font-bold text-[9px] font-pixel cursor-pointer leading-none active:scale-95 transition" onclick="cycleOptTab(1)">R</button>
+</div>
+<div class="flex items-center space-x-2 flex-shrink-0">
+
+
+</div>
+</header>
+<!-- Main View Area -->
+<main class="relative z-10 w-full flex-1 px-3 py-2 flex gap-3 overflow-hidden">
+<div class="w-full h-full flex gap-3 overflow-hidden select-none">
+<!-- Left Column: Overview Register & Inspector -->
+<div class="w-[310px] h-full flex flex-col gap-2.5 overflow-hidden flex-shrink-0">
+<div class="bevel-box-cream rounded-lg p-2.5 flex flex-col justify-between text-[#16271c] shadow-md">
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex flex-col space-y-1">
+<div class="flex items-center justify-between text-[7px] font-pixel">
+<span class="text-[#5eead4] flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-ping inline-block"></span>
+<span id="sys-cat-label" class="">KERNEL NVRAM IO</span>
+</span>
+<span class="px-1 py-0.5 bg-[#14b8a6] text-[#042f2e] font-bold rounded" id="sys-register-stat">REG: 04 / 04</span>
+</div>
+<div class="flex items-center justify-between">
+<h2 class="text-[10px] font-pixel text-[#fde68a] font-bold tracking-tight" id="sys-overview-title">NVRAM STORAGE REGISTER</h2>
+<span class="text-[7px] font-pixel px-1.5 py-0.5 rounded font-bold bg-[#163f35] text-[#a7f3d0] border border-[#245244]" id="sys-sync-tag">NVRAM SYNCED</span>
+</div>
+<div class="text-[6.5px] font-pixel text-[#ccfbf1] leading-tight pt-0.5 truncate" id="sys-mount-path">DIR: ux0:data/POKEVITA/sys_kernel.bin</div>
+</div>
+<div class="mt-2 bg-[#ded7c1] border border-[#c3b99f] rounded p-1.5 flex flex-col gap-1 text-[6.5px] font-pixel">
+<div class="flex items-center justify-between">
+<span class="text-[#557568]">STORAGE TARGET:</span>
+<span class="font-bold text-[#143228]" id="sys-storage-target">KERNEL MOUNT ux0:</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-[#557568]">CACHE STATUS:</span>
+<span class="text-[#059669] font-bold" id="sys-cache-status">WRITE BUFFER CLEAN</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-[#557568]">PROFILE CHECKSUM:</span>
+<span class="font-bold text-[#b45309]" id="sys-checksum">0x9FA2-BEEF</span>
+</div>
+</div>
+</div>
+<!-- Parameter Inspector -->
+<div class="flex-1 bevel-box-cream rounded-lg p-2.5 flex flex-col justify-between overflow-hidden text-[#16271c] shadow-md">
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="text-sm">🔍</span>
+<div class="truncate">
+<span class="text-[6.5px] text-[#5eead4] font-pixel leading-tight block truncate">PARAMETER INSPECTOR</span>
+<h3 class="text-[9px] font-pixel text-[#fde68a] font-bold truncate max-w-[180px]" id="insp-param-name">REMAP CONTROLS</h3>
+</div>
+</div>
+<span class="text-[6px] font-pixel bg-[#163f35] text-[#a7f3d0] px-1.5 py-0.5 rounded border border-[#245244] flex-shrink-0" id="insp-param-id">#20</span>
+</div>
+<div class="my-2 flex-1 bg-[#fdfbf6] rounded border border-[#d1c8af] p-2 flex flex-col justify-between overflow-hidden">
+<div class="space-y-1.5">
+<div class="text-[7.5px] font-pixel text-[#143228] font-bold leading-tight" id="insp-param-summary">Remap physical buttons: D-Pad, Cross, Circle, Square, Triangle, L, R, Start, Select.</div>
+<div class="text-[6.5px] font-pixel text-[#557568] leading-relaxed" id="insp-param-desc">Launches the interactive button configuration matrix tailored for PS Vita input.</div>
+</div>
+<div class="mt-2 pt-2 border-t border-[#ded7c1] flex flex-col gap-1 text-[6.5px] font-pixel">
+<div class="flex items-center justify-between">
+<span class="text-[#557568]">DEFAULT VALUE:</span>
+<span class="font-bold text-[#143228]" id="insp-param-default">STANDARD</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-[#557568]">ACTIVE VALUE:</span>
+<span class="font-bold text-[#b45309]" id="insp-param-current">STANDARD (9 KEYS)</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-[#557568]">BIT DEPTH:</span>
+<span class="font-bold text-[#059669]" id="insp-param-bitdepth">HARDWARE TABLE</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between gap-1 pt-1">
+<button class="flex-1 py-1 bg-[#163f35] hover:bg-[#245244] text-[#a7f3d0] border border-[#245244] rounded text-[6.5px] font-pixel font-bold cursor-pointer transition active:scale-95" onclick="handleApplyFocus()">✕ APPLY</button>
+<button class="flex-1 py-1 bg-[#ded7c1] hover:bg-[#ede8d5] text-[#143228] border border-[#b7ab91] rounded text-[6.5px] font-pixel font-bold cursor-pointer transition active:scale-95" onclick="handleResetFocus()">■ DEFAULT</button>
+<button class="px-2 py-1 bg-[#051310] hover:bg-[#0e2c24] text-[#7dd3fc] border border-[#1b3a47] rounded text-[6.5px] font-pixel font-bold cursor-pointer transition active:scale-95" onclick="handleHelpFocus()">▲ HELP</button>
+</div>
+</div>
+</div>
+<!-- Right Column: Interactive Options List -->
+<div class="flex-1 h-full bevel-box-cream rounded-lg p-2.5 flex flex-col justify-between overflow-hidden shadow-md">
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex items-center justify-between flex-shrink-0">
+<div>
+<span class="text-[6.5px] text-[#5eead4] font-pixel block" id="list-category-title">SYSTEM OPTIONS • CATEGORY 4/4</span>
+<h2 class="text-[9.5px] font-pixel text-[#fde68a] font-bold" id="list-tab-heading">STORAGE &amp; HARDWARE SUBSYSTEM</h2>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-[6.5px] font-pixel bg-[#163f35] px-2 py-0.5 rounded text-[#a7f3d0] border border-[#245244]" id="list-count-badge">04 / 04 REGISTERS</span>
+<span class="text-[6.5px] font-pixel bg-[#b45309] px-1.5 py-0.5 rounded text-white font-bold">PRESET: DEVON</span>
+</div>
+</div>
+<!-- Scrollable list of active options -->
+<div class="flex-1 my-2 overflow-y-auto pr-1 flex flex-col gap-1.5" id="sys-options-list-container" style="scrollbar-width: thin; max-height: 380px;"><div class="p-2 rounded border transition select-none flex items-center justify-between text-[7px] font-pixel cursor-pointer bg-[#fef3c7] border-[#d97706] shadow-sm ring-1 ring-[#d97706]">
+        <div class="flex items-center space-x-2 min-w-0">
+          <span class="w-3 text-center text-[#b45309] font-bold">▶</span>
+          <span class="font-bold text-[#143228] text-[7.5px] truncate max-w-[150px]">REMAP CONTROLS</span>
+          <span class="text-[6px] text-[#b45309]">#20</span>
+        </div>
+      
+          <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+            <button class="px-2.5 py-1 bg-[#163f35] hover:bg-[#245244] text-[#a7f3d0] border border-[#245244] rounded text-[6.5px] font-pixel font-bold cursor-pointer transition active:scale-95 shadow-sm" onclick="triggerAction('opt_remap_ctrl')">OPEN REMAPPER</button>
+          </div>
+        </div><div class="p-2 rounded border transition select-none flex items-center justify-between text-[7px] font-pixel cursor-pointer bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-2 min-w-0">
+          <span class="w-3 text-center opacity-0">▶</span>
+          <span class="font-bold text-[#143228] text-[7.5px] truncate max-w-[150px]">SAVE TO DISK</span>
+          <span class="text-[6px] text-[#557568]">#21</span>
+        </div>
+      
+          <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+            <button class="px-2.5 py-1 bg-[#163f35] hover:bg-[#245244] text-[#a7f3d0] border border-[#245244] rounded text-[6.5px] font-pixel font-bold cursor-pointer transition active:scale-95 shadow-sm" onclick="triggerAction('opt_save_disk')">WRITE NOW</button>
+          </div>
+        </div><div class="p-2 rounded border transition select-none flex items-center justify-between text-[7px] font-pixel cursor-pointer bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-2 min-w-0">
+          <span class="w-3 text-center opacity-0">▶</span>
+          <span class="font-bold text-[#143228] text-[7.5px] truncate max-w-[150px]">BACKUP CONFIG</span>
+          <span class="text-[6px] text-[#557568]">#22</span>
+        </div>
+      <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+            <button class="px-1.5 py-0.5 rounded text-[6px] font-bold border transition bg-[#163f35] text-[#a7f3d0] border-[#042f2e] shadow-sm" onclick="setEnumOption('opt_backup_cfg', 'SLOT 1')">SLOT 1</button>
+          
+            <button class="px-1.5 py-0.5 rounded text-[6px] font-bold border transition bg-[#cfc7b0] text-[#446356] border-[#b4a990] hover:bg-[#ded7c1]" onclick="setEnumOption('opt_backup_cfg', 'SLOT 2')">SLOT 2</button>
+          
+            <button class="px-1.5 py-0.5 rounded text-[6px] font-bold border transition bg-[#cfc7b0] text-[#446356] border-[#b4a990] hover:bg-[#ded7c1]" onclick="setEnumOption('opt_backup_cfg', 'SLOT 3')">SLOT 3</button>
+          </div></div><div class="p-2 rounded border transition select-none flex items-center justify-between text-[7px] font-pixel cursor-pointer bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-2 min-w-0">
+          <span class="w-3 text-center opacity-0">▶</span>
+          <span class="font-bold text-[#143228] text-[7.5px] truncate max-w-[150px]">LIVEAREA SHUTDOWN</span>
+          <span class="text-[6px] text-[#557568]">#23</span>
+        </div>
+      
+          <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+            <button class="px-2.5 py-1 bg-[#991b1b] hover:bg-[#b91c1c] text-white border border-[#7f1d1d] rounded text-[6.5px] font-pixel font-bold cursor-pointer transition active:scale-95 shadow-sm" onclick="triggerAction('opt_livearea_quit')">QUIT APP</button>
+          </div>
+        </div></div>
+<!-- Quick Status Bar -->
+<div class="bg-[#ded7c1] border border-[#c3b99f] rounded px-2.5 py-1.5 flex items-center justify-between text-[6.5px] font-pixel flex-shrink-0">
+<div class="flex items-center gap-2">
+<span class="text-[#059669] font-bold" id="footer-status-sync">● ONLINE SYNC READY</span>
+<span class="text-[#557568]" id="footer-status-desc">| ALL SETTINGS SAVED ON EXIT</span>
+</div>
+<div class="text-[#143228] font-bold cursor-pointer hover:underline" onclick="saveToDiskPrompt()">[START] INSTANT WRITE</div>
+</div>
+</div>
+</div>
+</main>
+<!-- PS Vita Footer (40px) -->
+<footer class="relative z-10 w-full h-[40px] px-3 bg-[#07131a] border-t-2 border-[#112933] flex items-center justify-between text-white text-[9px] font-pixel shadow-2xl flex-shrink-0">
+<div class="flex items-center space-x-3.5">
+<div class="flex items-center space-x-1 cursor-pointer hover:opacity-80 active:scale-95" onclick="handleCrossAction()">
+<span class="w-4 h-4 rounded-full bg-[#0066cc] border border-[#5eaaff] flex items-center justify-center text-[9px] font-bold text-white shadow leading-none">✕</span>
+<span class="text-[#ccd7e6] text-[7.5px]" id="footer-label-cross">CYCLE / SELECT</span>
+</div>
+<div class="flex items-center space-x-1 cursor-pointer hover:opacity-80 active:scale-95" onclick="handleCircleAction()">
+<span class="w-4 h-4 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center text-[9px] font-bold text-white shadow leading-none">○</span>
+<span class="text-[#ccd7e6] text-[7.5px]">BACK</span>
+</div>
+<div class="flex items-center space-x-1 cursor-pointer hover:opacity-80 active:scale-95" onclick="handleSquareAction()">
+<span class="w-4 h-4 rounded-sm bg-[#ec4899] border border-[#ff7788] flex items-center justify-center text-[8px] font-bold text-white shadow leading-none">■</span>
+<span class="text-[#ccd7e6] text-[7.5px]">RESTORE DEFAULTS</span>
+</div>
+<div class="flex items-center space-x-1 cursor-pointer hover:opacity-80 active:scale-95" onclick="handleTriangleAction()">
+<span class="w-4 h-4 rounded-full bg-[#10b981] border border-[#a7f3d0] flex items-center justify-center text-[8px] font-bold text-[#064e3b] shadow leading-none">▲</span>
+<span class="text-[#ccd7e6] text-[7.5px]">HELP / INFO</span>
+</div>
+</div>
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-1.5 bg-[#0b1f26] px-2 py-0.5 rounded border border-[#163a47] text-[7.5px] text-[#7dd3fc]">
+<span class="font-bold text-white">L / R</span>
+<span class="text-[#94a3b8]">TABS</span>
+</div>
+<div class="flex items-center space-x-2 text-[7.5px]">
+<span class="bg-[#0b241c] px-1.5 py-0.5 rounded border border-[#144f3d] text-[#86efac] cursor-pointer hover:text-white" onclick="saveToDiskPrompt()">[START] <span class="text-white">SAVE &amp; EXIT</span></span>
+</div>
+<span class="text-[8px] text-[#cbd5e1] font-pixel">14:32</span>
+<div class="flex items-center space-x-1 pl-1 border-l border-[#1b3a47]">
+<div class="w-5 h-2.5 bg-[#05131a] border border-[#2b596d] rounded-sm p-[1px] flex items-center">
+<div class="w-full h-full bg-[#00dd66] rounded-[1px]"></div>
+</div>
+<span class="text-[8px] text-[#00dd66] font-pixel">100%</span>
+</div>
+</div>
+</footer>
+</div>
+<!-- ==================== MODALS ==================== -->
+<!-- NOTIFICATION TOAST -->
+<div class="fixed top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 opacity-0 transform -translate-y-4" id="sys-toast">
+<div class="px-4 py-2 bg-[#0e2c24] border-2 border-[#10b981] rounded-lg shadow-2xl text-[#a7f3d0] text-[8px] font-pixel font-bold flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#10b981] animate-ping"></span>
+<span id="sys-toast-msg" class="">NVRAM FLUSHED TO DISK OK</span>
+</div>
+</div>
+<!-- CONFIRM / PROMPT MODAL -->
+<div class="absolute inset-0 z-50 bg-[#000000]/80 flex items-center justify-center p-3 select-none hidden" id="sys-confirm-modal" onclick="if(event.target === this) closeSysModal()">
+<div class="relative w-[520px] bg-[#f7f4e9] border-[3px] border-[#0a271f] rounded shadow-2xl flex flex-col overflow-hidden" onclick="event.stopPropagation()">
+<div class="h-9 px-3 bg-[#0a231b] border-b-2 border-[#125844] flex items-center justify-between text-white flex-shrink-0">
+<div class="flex items-center space-x-2">
+<span class="text-sm">⚙️</span>
+<span class="text-[9px] font-pixel text-[#fde68a] font-bold" id="sys-modal-title">SYSTEM PROMPT</span>
+</div>
+<button class="w-5 h-5 bg-[#cc2233] hover:bg-[#e11d48] text-white rounded flex items-center justify-center text-[10px] font-bold cursor-pointer transition border border-[#991b1b]" onclick="closeSysModal()">✕</button>
+</div>
+<div class="p-4 bg-[#ede8d5] flex flex-col gap-3">
+<div class="bg-white border-2 border-[#1a4a3c] rounded p-3 shadow-inner">
+<p class="text-[8px] font-pixel text-[#0f2d24] leading-relaxed" id="sys-modal-message">Are you sure you want to write NVRAM changes to memory?</p>
+</div>
+<div class="flex items-center justify-end gap-2 text-[7px] font-pixel">
+<button class="px-3 py-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] text-[#143228] border border-[#b7ab91] rounded font-bold cursor-pointer transition" onclick="closeSysModal()">[○] CANCEL</button>
+<button class="px-3 py-1.5 bg-[#163f35] hover:bg-[#245244] text-[#a7f3d0] border border-[#245244] rounded font-bold cursor-pointer transition" id="sys-modal-confirm-btn" onclick="confirmSysAction()">[✕] CONFIRM</button>
+</div>
+</div>
+</div>
+</div>
+<!-- REMAP CONTROLS MODAL (sRemapOpen) -->
+<div class="absolute inset-0 z-50 bg-[#000000]/85 flex items-center justify-center p-3 select-none hidden" id="remap-controls-modal" onclick="if(event.target === this) closeRemapModal()">
+<div class="relative w-[680px] bg-[#f7f4e9] border-[3px] border-[#0a271f] rounded shadow-2xl flex flex-col overflow-hidden" onclick="event.stopPropagation()">
+<div class="h-9 px-3 bg-[#0a231b] border-b-2 border-[#125844] flex items-center justify-between text-white flex-shrink-0">
+<div class="flex items-center space-x-2">
+<span class="text-sm">🎮</span>
+<span class="text-[9px] font-pixel text-[#fde68a] font-bold">PS VITA PHYSICAL CONTROL REMAPPER</span>
+</div>
+<div class="flex items-center space-x-2 text-[7px] font-pixel">
+<span class="text-[#6ee7b7] bg-[#163f35] px-1.5 py-0.5 rounded border border-[#2b5849]">vitaGL INPUT ENGINE</span>
+<button class="w-5 h-5 bg-[#cc2233] hover:bg-[#e11d48] text-white rounded flex items-center justify-center text-[10px] font-bold cursor-pointer transition border border-[#991b1b]" onclick="closeRemapModal()">✕</button>
+</div>
+</div>
+<div class="p-3 bg-[#ede8d5] flex flex-col gap-2.5">
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] flex items-center justify-between text-[7px] font-pixel">
+<span class="text-[#5eead4]">HARDWARE SCHEMA: PCH-2000 STANDARD LAYOUT</span>
+<span class="text-[#fde68a]">CLICK ANY KEY TO CYCLE MAPPING</span>
+</div>
+<!-- Grid of key mappings -->
+<div class="grid grid-cols-3 gap-2" id="remap-keys-grid">
+<!-- Rendered by renderRemapKeys() -->
+</div>
+<div class="flex items-center justify-between pt-1 border-t border-[#ded7c1] text-[7px] font-pixel">
+<button class="px-2.5 py-1 bg-[#ded7c1] hover:bg-[#ede8d5] text-[#143228] border border-[#b7ab91] rounded font-bold cursor-pointer" onclick="resetRemapDefaults()">RESTORE DEFAULT VITA MAP</button>
+<div class="flex items-center gap-2">
+<button class="px-2.5 py-1 bg-[#ded7c1] hover:bg-[#ede8d5] text-[#143228] border border-[#b7ab91] rounded font-bold cursor-pointer" onclick="closeRemapModal()">[○] DISCARD</button>
+<button class="px-3 py-1 bg-[#163f35] hover:bg-[#245244] text-[#a7f3d0] border border-[#245244] rounded font-bold cursor-pointer" onclick="saveRemapChanges()">[✕] APPLY REMAP</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- LIVEAREA SHUTDOWN CONFIRMATION MODAL (sQuitConfirmOpen) -->
+<div class="absolute inset-0 z-50 bg-[#000000]/90 flex items-center justify-center p-3 select-none hidden" id="quit-confirm-modal" onclick="if(event.target === this) closeQuitModal()">
+<div class="relative w-[480px] bg-[#f7f4e9] border-[3px] border-[#991b1b] rounded shadow-2xl flex flex-col overflow-hidden" onclick="event.stopPropagation()">
+<div class="h-9 px-3 bg-[#581c1c] border-b-2 border-[#991b1b] flex items-center justify-between text-white flex-shrink-0">
+<div class="flex items-center space-x-2">
+<span class="text-sm">⚠️</span>
+<span class="text-[9px] font-pixel text-[#fecaca] font-bold">QUIT TO PLAYSTATION® VITA LIVEAREA</span>
+</div>
+<button class="w-5 h-5 bg-[#cc2233] hover:bg-[#e11d48] text-white rounded flex items-center justify-center text-[10px] font-bold cursor-pointer transition border border-[#991b1b]" onclick="closeQuitModal()">✕</button>
+</div>
+<div class="p-4 bg-[#ede8d5] flex flex-col gap-3">
+<div class="bg-white border-2 border-[#7f1d1d] rounded p-3 shadow-inner">
+<p class="text-[8px] font-pixel text-[#450a0a] leading-relaxed">
+          Terminating PokéVita runtime and returning control to PlayStation® Vita LiveArea shell.<br><br>
+          Unsaved active state will be synced to internal NVRAM cache before exit. Proceed?
+        </p>
+</div>
+<div class="flex items-center justify-end gap-2 text-[7px] font-pixel">
+<button class="px-3 py-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] text-[#143228] border border-[#b7ab91] rounded font-bold cursor-pointer transition" onclick="closeQuitModal()">[○] CANCEL</button>
+<button class="px-3 py-1.5 bg-[#991b1b] hover:bg-[#b91c1c] text-white border border-[#7f1d1d] rounded font-bold cursor-pointer transition" onclick="executeShutdown()">[✕] CONFIRM EXIT</button>
+</div>
+</div>
+</div>
+</div>
+<!-- ==================== JAVASCRIPT LOGIC ==================== -->
+<script>
+  // ==================== SYSTEM OPTIONS DATA (DESIGN.md 4.8) ====================
+  const TABS_DATA = [
+    {
+      id: "general",
+      tabLabel: "1. GENERAL",
+      categoryTitle: "SYSTEM OPTIONS • CATEGORY 1/4",
+      tabHeading: "GENERAL CONFIGURATION",
+      overviewTitle: "GAMEPLAY REGISTER",
+      categoryLabel: "GENERAL PREFERENCES",
+      mountPath: "DIR: ux0:data/POKEVITA/settings.txt",
+      storageTarget: "INTERNAL NVRAM",
+      options: [
+        {
+          id: "opt_text_speed",
+          name: "TEXT SPEED",
+          code: "#01",
+          type: "enum",
+          values: ["SLOW", "MID", "FAST", "INSTANT"],
+          active: "FAST",
+          defaultVal: "FAST",
+          bitDepth: "2-BIT ENUM",
+          summary: "Adjusts dialog scroll speed in message boxes and battle notices.",
+          desc: "Higher speeds accelerate narrative pace. INSTANT reveals entire text string in 1 frame."
+        },
+        {
+          id: "opt_battle_scene",
+          name: "BATTLE SCENE",
+          code: "#02",
+          type: "toggle",
+          values: ["ON", "OFF"],
+          active: "ON",
+          defaultVal: "ON",
+          bitDepth: "1-BIT BOOLEAN",
+          summary: "Enables or disables visual Pokémon move attack animations in battles.",
+          desc: "Disabling animations significantly speeds up wild encounters and EV grinding sessions."
+        },
+        {
+          id: "opt_battle_style",
+          name: "BATTLE STYLE",
+          code: "#03",
+          type: "enum",
+          values: ["SHIFT", "SET"],
+          active: "SHIFT",
+          defaultVal: "SHIFT",
+          bitDepth: "1-BIT BOOLEAN",
+          summary: "Governs whether the trainer is prompted to switch when an opponent faints.",
+          desc: "SET style adheres strictly to competitive standard rules with zero free switch opportunism."
+        },
+        {
+          id: "opt_sound_mode",
+          name: "SOUND MODE",
+          code: "#04",
+          type: "enum",
+          values: ["STEREO", "MONO", "HEADPHONES"],
+          active: "STEREO",
+          defaultVal: "STEREO",
+          bitDepth: "2-BIT ENUM",
+          summary: "Audio routing and acoustic spatialization through PS Vita DAC.",
+          desc: "HEADPHONES profile optimizes dynamic binaural frequency curves for 3.5mm jack output."
+        },
+        {
+          id: "opt_master_volume",
+          name: "MASTER VOLUME",
+          code: "#05",
+          type: "slider",
+          values: [0, 25, 50, 75, 100],
+          active: 75,
+          defaultVal: "75%",
+          bitDepth: "7-BIT LINEAR",
+          summary: "Global amplitude attenuator for synthesized BGM and sound effects.",
+          desc: "Adjust volume levels smoothly in stepped intervals without clipping DAC buffers."
+        },
+        {
+          id: "opt_button_mode",
+          name: "BUTTON MODE",
+          code: "#06",
+          type: "enum",
+          values: ["NORMAL", "LR STYLE", "ONE-HANDED"],
+          active: "LR STYLE",
+          defaultVal: "NORMAL",
+          bitDepth: "2-BIT ENUM",
+          summary: "PlayStation Vita hardware button layout behavior presets.",
+          desc: "LR STYLE aliases L/R shoulder triggers to A and B confirm/cancel for relaxed gameplay."
+        }
+      ]
+    },
+    {
+      id: "extras",
+      tabLabel: "2. EXTRAS / QoL",
+      categoryTitle: "SYSTEM OPTIONS • CATEGORY 2/4",
+      tabHeading: "EXTRAS & QUALITY OF LIFE",
+      overviewTitle: "QoL OVERCLOCK REGISTER",
+      categoryLabel: "EXTRAS & PATCH REGISTERS",
+      mountPath: "DIR: ux0:data/POKEVITA/qol_flags.bin",
+      storageTarget: "PATCH TABLE RAM",
+      options: [
+        {
+          id: "opt_phys_spec",
+          name: "PHYS/SPEC SPLIT",
+          code: "#07",
+          type: "toggle",
+          values: ["ON", "OFF"],
+          active: "ON",
+          defaultVal: "ON",
+          bitDepth: "1-BIT TOGGLE",
+          summary: "Modern Generation IV+ damage classification by individual move category.",
+          desc: "Splits Physical and Special attributes per move rather than by elemental type definition."
+        },
+        {
+          id: "opt_infinite_tms",
+          name: "INFINITE TMS",
+          code: "#08",
+          type: "toggle",
+          values: ["ON", "OFF"],
+          active: "ON",
+          defaultVal: "OFF",
+          bitDepth: "1-BIT TOGGLE",
+          summary: "Prevents Technical Machines from consuming on teaching moves.",
+          desc: "Converts TMs into permanent reusable tutor items conforming to contemporary standards."
+        },
+        {
+          id: "opt_run_indoors",
+          name: "RUN INDOORS",
+          code: "#09",
+          type: "toggle",
+          values: ["ON", "OFF"],
+          active: "ON",
+          defaultVal: "ON",
+          bitDepth: "1-BIT TOGGLE",
+          summary: "Removes indoor sprint restrictions for Devon Running Shoes.",
+          desc: "Allows sprint velocity within Pokémon Centers, Marts, Devon facilities, and homes."
+        },
+        {
+          id: "opt_auto_run",
+          name: "AUTO-RUN",
+          code: "#10",
+          type: "toggle",
+          values: ["ON", "OFF"],
+          active: "OFF",
+          defaultVal: "OFF",
+          bitDepth: "1-BIT TOGGLE",
+          summary: "Permanent high-speed movement without holding the [B / ○] button.",
+          desc: "Inverts running shoe trigger so the character runs by default when moving the D-Pad."
+        },
+        {
+          id: "opt_repel_prompt",
+          name: "REPEL PROMPT",
+          code: "#11",
+          type: "toggle",
+          values: ["ON", "OFF"],
+          active: "ON",
+          defaultVal: "ON",
+          bitDepth: "1-BIT TOGGLE",
+          summary: "Prompts instant reuse when an active Repel spray expires.",
+          desc: "Avoids tedious inventory opening by allowing immediate next-canister re-application."
+        },
+        {
+          id: "opt_exp_catch",
+          name: "EXP ON CATCH",
+          code: "#12",
+          type: "toggle",
+          values: ["ON", "OFF"],
+          active: "ON",
+          defaultVal: "ON",
+          bitDepth: "1-BIT TOGGLE",
+          summary: "Awards battle experience points upon successful Pokémon capture.",
+          desc: "Ensures capture encounters yield experience progression identical to standard victory."
+        },
+        {
+          id: "opt_fast_egg",
+          name: "FAST EGG HATCH",
+          code: "#13",
+          type: "toggle",
+          values: ["ON", "OFF"],
+          active: "OFF",
+          defaultVal: "OFF",
+          bitDepth: "1-BIT TOGGLE",
+          summary: "Divides necessary egg cycle step count by 4 for rapid breeding.",
+          desc: "Accelerates competitive IV and shiny hatching without altering species parameters."
+        },
+        {
+          id: "opt_nuzlocke",
+          name: "NUZLOCKE MODE",
+          code: "#14",
+          type: "toggle",
+          values: ["ON", "OFF"],
+          active: "OFF",
+          defaultVal: "OFF",
+          bitDepth: "1-BIT HARDLOCK",
+          summary: "Enforces strict fainted-death and route capture rules in memory.",
+          desc: "Fainted monsters are locked from battle; only first encounter per area is catchable."
+        }
+      ]
+    },
+    {
+      id: "world",
+      tabLabel: "3. WORLD / VITA",
+      categoryTitle: "SYSTEM OPTIONS • CATEGORY 3/4",
+      tabHeading: "WORLD SIM & VITAGL ENGINE",
+      overviewTitle: "GRAPHICS & TIME REGISTER",
+      categoryLabel: "HARDWARE RENDER PIPELINE",
+      mountPath: "DIR: ux0:data/POKEVITA/vitagl.ini",
+      storageTarget: "GPU MEMORY VRAM",
+      options: [
+        {
+          id: "opt_day_night",
+          name: "DAY/NIGHT CYCLE",
+          code: "#15",
+          type: "enum",
+          values: ["1x", "4x", "12x", "60x", "120x"],
+          active: "1x",
+          defaultVal: "1x",
+          bitDepth: "3-BIT SPEED",
+          summary: "Multiplies real-time clock flow rate for dynamic solar lighting.",
+          desc: "1x syncs directly with PS Vita hardware RTC. 60x yields a full 24h cycle every 24 minutes."
+        },
+        {
+          id: "opt_vitagl_filter",
+          name: "VITAGL FILTER",
+          code: "#16",
+          type: "enum",
+          values: ["LINEAR", "NEAREST", "CRT SHADER", "LCD GRID"],
+          active: "LCD GRID",
+          defaultVal: "NEAREST",
+          bitDepth: "2-BIT SHADER",
+          summary: "Post-processing shader applied over 2D tiles and sprites.",
+          desc: "LCD GRID reproduces authentic pixel aperture subpixel grid on OLED/LCD screens."
+        },
+        {
+          id: "opt_ui_scale",
+          name: "UI SCALE",
+          code: "#17",
+          type: "enum",
+          values: ["2X PIXEL-PERFECT", "544P WIDESCREEN"],
+          active: "544P WIDESCREEN",
+          defaultVal: "544P WIDESCREEN",
+          bitDepth: "1-BIT ASPECT",
+          summary: "Display viewport mapping for PS Vita's 960x544 resolution panel.",
+          desc: "544P WIDESCREEN maximizes viewport across the full width without pixel distortion."
+        },
+        {
+          id: "opt_3d_shadows",
+          name: "3D SHADOWS",
+          code: "#18",
+          type: "enum",
+          values: ["HIGH", "MEDIUM", "OFF"],
+          active: "HIGH",
+          defaultVal: "MEDIUM",
+          bitDepth: "2-BIT RENDER",
+          summary: "Dynamic shadow projection beneath buildings, overworld NPCs and trees.",
+          desc: "HIGH activates multi-sample soft contact shadows rendered via Vita GPU shaders."
+        },
+        {
+          id: "opt_3d_weather",
+          name: "3D WEATHER",
+          code: "#19",
+          type: "enum",
+          values: ["VOLUMETRIC", "SPRITE", "OFF"],
+          active: "VOLUMETRIC",
+          defaultVal: "VOLUMETRIC",
+          bitDepth: "2-BIT PARTICLES",
+          summary: "Overworld weather particle system (Rain, Ashfall, Solar Drought).",
+          desc: "VOLUMETRIC enables 3D GPU instanced rain streaks and volcanic ash particle drift."
+        }
+      ]
+    },
+    {
+      id: "system",
+      tabLabel: "4. SYSTEM",
+      categoryTitle: "SYSTEM OPTIONS • CATEGORY 4/4",
+      tabHeading: "STORAGE & HARDWARE SUBSYSTEM",
+      overviewTitle: "NVRAM STORAGE REGISTER",
+      categoryLabel: "KERNEL NVRAM IO",
+      mountPath: "DIR: ux0:data/POKEVITA/sys_kernel.bin",
+      storageTarget: "KERNEL MOUNT ux0:",
+      options: [
+        {
+          id: "opt_remap_ctrl",
+          name: "REMAP CONTROLS",
+          code: "#20",
+          type: "action",
+          actionLabel: "OPEN REMAPPER",
+          active: "STANDARD (9 KEYS)",
+          defaultVal: "STANDARD",
+          bitDepth: "HARDWARE TABLE",
+          summary: "Remap physical buttons: D-Pad, Cross, Circle, Square, Triangle, L, R, Start, Select.",
+          desc: "Launches the interactive button configuration matrix tailored for PS Vita input."
+        },
+        {
+          id: "opt_save_disk",
+          name: "SAVE TO DISK",
+          code: "#21",
+          type: "action",
+          actionLabel: "WRITE NOW",
+          active: "DIRTY: 0 BYTES",
+          defaultVal: "CLEAN",
+          bitDepth: "SYNC I/O",
+          summary: "Flushes runtime options cache directly to ux0:data/POKEVITA/settings.txt.",
+          desc: "Guarantees permanent non-volatile write without needing game reboot."
+        },
+        {
+          id: "opt_backup_cfg",
+          name: "BACKUP CONFIG",
+          code: "#22",
+          type: "enum",
+          values: ["SLOT 1", "SLOT 2", "SLOT 3"],
+          active: "SLOT 1",
+          defaultVal: "SLOT 1",
+          bitDepth: "2-BIT SLOT",
+          summary: "Hardware profile configuration slot for multi-save isolation.",
+          desc: "Switch between independent layout and QoL presets for competitive or casual runs."
+        },
+        {
+          id: "opt_livearea_quit",
+          name: "LIVEAREA SHUTDOWN",
+          code: "#23",
+          type: "action-danger",
+          actionLabel: "QUIT APP",
+          active: "IDLE / RUNNING",
+          defaultVal: "N/A",
+          bitDepth: "SYS TERMINATE",
+          summary: "Safely terminates application and returns to PS Vita LiveArea.",
+          desc: "Opens defensive exit confirmation dialog to prevent accidental progress loss."
+        }
+      ]
+    }
+  ];
+
+  // Key mappings for Remapper
+  let REMAP_BINDINGS = [
+    { key: "D-PAD UP", map: "MOVE UP" },
+    { key: "D-PAD DOWN", map: "MOVE DOWN" },
+    { key: "D-PAD LEFT", map: "MOVE LEFT" },
+    { key: "D-PAD RIGHT", map: "MOVE RIGHT" },
+    { key: "CROSS (✕)", map: "CONFIRM / A" },
+    { key: "CIRCLE (○)", map: "CANCEL / B" },
+    { key: "SQUARE (■)", map: "MENU / X" },
+    { key: "TRIANGLE (▲)", map: "REGISTERED ITEM" },
+    { key: "L TRIGGER", map: "PAGE LEFT / PREV" },
+    { key: "R TRIGGER", map: "PAGE RIGHT / NEXT" },
+    { key: "START", map: "SYSTEM MENU" },
+    { key: "SELECT", map: "POKÉNAV QUICK-LINK" }
+  ];
+
+  const REMAP_POSSIBLE = [
+    "CONFIRM / A", "CANCEL / B", "MENU / X", "REGISTERED ITEM",
+    "MOVE UP", "MOVE DOWN", "MOVE LEFT", "MOVE RIGHT",
+    "PAGE LEFT / PREV", "PAGE RIGHT / NEXT", "SYSTEM MENU", "POKÉNAV QUICK-LINK", "UNBOUND"
+  ];
+
+  // Application State
+  let currentTabIndex = 0;
+  let selectedOptionIndex = 0;
+  let confirmCallback = null;
+
+  // ==================== TAB NAVIGATION ====================
+  function switchOptTab(idx) {
+    currentTabIndex = (idx + TABS_DATA.length) % TABS_DATA.length;
+    selectedOptionIndex = 0;
+
+    // Update tab bar buttons visual styles
+    TABS_DATA.forEach((tab, i) => {
+      const btn = document.getElementById(`sys-tab-${i}`);
+      if (btn) {
+        if (i === currentTabIndex) {
+          btn.className = "bg-[#ded5b4] text-[#143228] font-bold text-[8px] px-2.5 py-1 rounded shadow-sm border border-[#1b5042] font-pixel cursor-pointer tracking-wider leading-none";
+        } else {
+          btn.className = "px-2.5 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none";
+        }
+      }
+    });
+
+    updateOverviewHeader();
+    renderCurrentTabOptions();
+    updateInspector();
+  }
+
+  function cycleOptTab(dir) {
+    switchOptTab(currentTabIndex + dir);
+  }
+
+  function updateOverviewHeader() {
+    const curTab = TABS_DATA[currentTabIndex];
+    document.getElementById('sys-cat-label').innerText = curTab.categoryLabel;
+    document.getElementById('sys-register-stat').innerText = `REG: ${String(curTab.options.length).padStart(2, '0')} / ${String(curTab.options.length).padStart(2, '0')}`;
+    document.getElementById('sys-overview-title').innerText = curTab.overviewTitle;
+    document.getElementById('sys-mount-path').innerText = curTab.mountPath;
+    document.getElementById('sys-storage-target').innerText = curTab.storageTarget;
+
+    document.getElementById('list-category-title').innerText = curTab.categoryTitle;
+    document.getElementById('list-tab-heading').innerText = curTab.tabHeading;
+    document.getElementById('list-count-badge').innerText = `${String(curTab.options.length).padStart(2, '0')} / ${String(curTab.options.length).padStart(2, '0')} REGISTERS`;
+  }
+
+  // ==================== RENDERING OPTIONS LIST ====================
+  function renderCurrentTabOptions() {
+    const container = document.getElementById('sys-options-list-container');
+    container.innerHTML = "";
+    const curTab = TABS_DATA[currentTabIndex];
+
+    curTab.options.forEach((opt, idx) => {
+      const isSelected = (idx === selectedOptionIndex);
+      const row = document.createElement('div');
+      row.onclick = () => selectOption(idx);
+
+      const baseClasses = "p-2 rounded border transition select-none flex items-center justify-between text-[7px] font-pixel cursor-pointer";
+      const selectedClasses = isSelected
+        ? "bg-[#fef3c7] border-[#d97706] shadow-sm ring-1 ring-[#d97706]"
+        : "bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]";
+
+      row.className = `${baseClasses} ${selectedClasses}`;
+
+      // Left part: selector pointer + name + code
+      let leftHtml = `
+        <div class="flex items-center space-x-2 min-w-0">
+          <span class="w-3 text-center ${isSelected ? 'text-[#b45309] font-bold' : 'opacity-0'}">▶</span>
+          <span class="font-bold text-[#143228] text-[7.5px] truncate max-w-[150px]">${opt.name}</span>
+          <span class="text-[6px] ${isSelected ? 'text-[#b45309]' : 'text-[#557568]'}">${opt.code}</span>
+        </div>
+      `;
+
+      // Right part: Control based on option type
+      let rightHtml = "";
+
+      if (opt.type === "toggle") {
+        const isOn = opt.active === "ON";
+        rightHtml = `
+          <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+            <button class="px-2 py-0.5 rounded text-[6.5px] font-bold border transition ${
+              isOn
+                ? 'bg-[#10b981] text-[#022c22] border-[#047857] shadow-sm'
+                : 'bg-[#cfc7b0] text-[#557568] border-[#b4a990] hover:text-[#143228]'
+            }" onclick="toggleOption('${opt.id}', 'ON')">ON</button>
+            <button class="px-2 py-0.5 rounded text-[6.5px] font-bold border transition ${
+              !isOn
+                ? 'bg-[#ef4444] text-white border-[#b91c1c] shadow-sm'
+                : 'bg-[#cfc7b0] text-[#557568] border-[#b4a990] hover:text-[#143228]'
+            }" onclick="toggleOption('${opt.id}', 'OFF')">OFF</button>
+          </div>
+        `;
+      } else if (opt.type === "enum") {
+        const pills = opt.values.map(val => {
+          const isAct = (opt.active === val);
+          return `
+            <button class="px-1.5 py-0.5 rounded text-[6px] font-bold border transition ${
+              isAct
+                ? 'bg-[#163f35] text-[#a7f3d0] border-[#042f2e] shadow-sm'
+                : 'bg-[#cfc7b0] text-[#446356] border-[#b4a990] hover:bg-[#ded7c1]'
+            }" onclick="setEnumOption('${opt.id}', '${val}')">${val}</button>
+          `;
+        }).join('');
+        rightHtml = `<div class="flex items-center gap-1" onclick="event.stopPropagation()">${pills}</div>`;
+      } else if (opt.type === "slider") {
+        const pct = opt.active;
+        const steps = opt.values.map(st => {
+          const isStepActive = pct >= st;
+          return `
+            <button class="w-4 h-4 rounded text-[5.5px] font-bold flex items-center justify-center border transition ${
+              isStepActive
+                ? 'bg-[#10b981] text-[#022c22] border-[#047857]'
+                : 'bg-[#cfc7b0] text-[#6b7280] border-[#b4a990]'
+            }" onclick="setSliderOption('${opt.id}', ${st})">${st === 100 ? 'M' : st}</button>
+          `;
+        }).join('');
+        rightHtml = `
+          <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+            <span class="text-[6.5px] font-bold text-[#b45309] w-7 text-right">${pct}%</span>
+            <div class="flex items-center gap-0.5">${steps}</div>
+          </div>
+        `;
+      } else if (opt.type === "action") {
+        rightHtml = `
+          <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+            <button class="px-2.5 py-1 bg-[#163f35] hover:bg-[#245244] text-[#a7f3d0] border border-[#245244] rounded text-[6.5px] font-pixel font-bold cursor-pointer transition active:scale-95 shadow-sm" onclick="triggerAction('${opt.id}')">${opt.actionLabel}</button>
+          </div>
+        `;
+      } else if (opt.type === "action-danger") {
+        rightHtml = `
+          <div class="flex items-center gap-1" onclick="event.stopPropagation()">
+            <button class="px-2.5 py-1 bg-[#991b1b] hover:bg-[#b91c1c] text-white border border-[#7f1d1d] rounded text-[6.5px] font-pixel font-bold cursor-pointer transition active:scale-95 shadow-sm" onclick="triggerAction('${opt.id}')">${opt.actionLabel}</button>
+          </div>
+        `;
+      }
+
+      row.innerHTML = leftHtml + rightHtml;
+      container.appendChild(row);
+    });
+  }
+
+  function selectOption(idx) {
+    selectedOptionIndex = idx;
+    renderCurrentTabOptions();
+    updateInspector();
+  }
+
+  // ==================== PARAMETER INSPECTOR ====================
+  function updateInspector() {
+    const curTab = TABS_DATA[currentTabIndex];
+    const opt = curTab.options[selectedOptionIndex];
+    if (!opt) return;
+
+    document.getElementById('insp-param-name').innerText = opt.name;
+    document.getElementById('insp-param-id').innerText = opt.code;
+    document.getElementById('insp-param-summary').innerText = opt.summary;
+    document.getElementById('insp-param-desc').innerText = opt.desc;
+    document.getElementById('insp-param-default').innerText = String(opt.defaultVal);
+    document.getElementById('insp-param-current').innerText = String(opt.active);
+    document.getElementById('insp-param-bitdepth').innerText = opt.bitDepth;
+  }
+
+  // ==================== INTERACTION MUTATORS ====================
+  function toggleOption(optId, val) {
+    const curTab = TABS_DATA[currentTabIndex];
+    const opt = curTab.options.find(o => o.id === optId);
+    if (opt) {
+      opt.active = val;
+      renderCurrentTabOptions();
+      updateInspector();
+      showToast(`${opt.name} SET TO ${val}`);
+    }
+  }
+
+  function setEnumOption(optId, val) {
+    const curTab = TABS_DATA[currentTabIndex];
+    const opt = curTab.options.find(o => o.id === optId);
+    if (opt) {
+      opt.active = val;
+      renderCurrentTabOptions();
+      updateInspector();
+      showToast(`${opt.name} CHANGED TO ${val}`);
+    }
+  }
+
+  function setSliderOption(optId, val) {
+    const curTab = TABS_DATA[currentTabIndex];
+    const opt = curTab.options.find(o => o.id === optId);
+    if (opt) {
+      opt.active = val;
+      renderCurrentTabOptions();
+      updateInspector();
+      showToast(`${opt.name} SET TO ${val}%`);
+    }
+  }
+
+  function cycleCurrentOptionValue() {
+    const curTab = TABS_DATA[currentTabIndex];
+    const opt = curTab.options[selectedOptionIndex];
+    if (!opt) return;
+
+    if (opt.type === "toggle") {
+      opt.active = (opt.active === "ON") ? "OFF" : "ON";
+      showToast(`${opt.name} SET TO ${opt.active}`);
+    } else if (opt.type === "enum") {
+      const idx = opt.values.indexOf(opt.active);
+      const nextIdx = (idx + 1) % opt.values.length;
+      opt.active = opt.values[nextIdx];
+      showToast(`${opt.name} SET TO ${opt.active}`);
+    } else if (opt.type === "slider") {
+      const idx = opt.values.indexOf(opt.active);
+      const nextIdx = (idx + 1) % opt.values.length;
+      opt.active = opt.values[nextIdx];
+      showToast(`${opt.name} SET TO ${opt.active}%`);
+    } else if (opt.type.startsWith("action")) {
+      triggerAction(opt.id);
+      return;
+    }
+    renderCurrentTabOptions();
+    updateInspector();
+  }
+
+  function triggerAction(optId) {
+    if (optId === "opt_remap_ctrl") {
+      openRemapModal();
+    } else if (optId === "opt_save_disk") {
+      saveToDiskPrompt();
+    } else if (optId === "opt_livearea_quit") {
+      openQuitModal();
+    }
+  }
+
+  function saveToDiskPrompt() {
+    showToast("NVRAM FLUSHED TO DISK OK");
+    const syncStatus = document.getElementById('footer-status-sync');
+    if (syncStatus) {
+      syncStatus.innerText = "● NVRAM SYNCED (WRITE OK)";
+      setTimeout(() => {
+        syncStatus.innerText = "● ONLINE SYNC READY";
+      }, 3000);
+    }
+  }
+
+  function handleApplyFocus() {
+    const curTab = TABS_DATA[currentTabIndex];
+    const opt = curTab.options[selectedOptionIndex];
+    showToast(`APPLIED: ${opt.name} [${opt.active}]`);
+  }
+
+  function handleResetFocus() {
+    const curTab = TABS_DATA[currentTabIndex];
+    const opt = curTab.options[selectedOptionIndex];
+    if (opt) {
+      if (opt.type === "slider") {
+        opt.active = parseInt(opt.defaultVal) || 75;
+      } else {
+        opt.active = opt.defaultVal;
+      }
+      renderCurrentTabOptions();
+      updateInspector();
+      showToast(`${opt.name} RESET TO DEFAULT`);
+    }
+  }
+
+  function handleHelpFocus() {
+    const curTab = TABS_DATA[currentTabIndex];
+    const opt = curTab.options[selectedOptionIndex];
+    openSysPrompt(
+      `HELP: ${opt.name}`,
+      `${opt.summary}\n\nTechnical details:\n${opt.desc}\n\nBit allocation: ${opt.bitDepth}`,
+      () => closeSysModal()
+    );
+  }
+
+  // ==================== TOAST NOTIFICATIONS ====================
+  let toastTimer = null;
+  function showToast(msg) {
+    const toast = document.getElementById('sys-toast');
+    const msgEl = document.getElementById('sys-toast-msg');
+    msgEl.innerText = msg;
+    toast.classList.remove('opacity-0', '-translate-y-4');
+    toast.classList.add('opacity-100', 'translate-y-0');
+
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toast.classList.add('opacity-0', '-translate-y-4');
+      toast.classList.remove('opacity-100', 'translate-y-0');
+    }, 2200);
+  }
+
+  // ==================== REMAP CONTROLS MODAL ====================
+  function openRemapModal() {
+    renderRemapKeys();
+    document.getElementById('remap-controls-modal').classList.remove('hidden');
+  }
+
+  function closeRemapModal() {
+    document.getElementById('remap-controls-modal').classList.add('hidden');
+  }
+
+  function renderRemapKeys() {
+    const grid = document.getElementById('remap-keys-grid');
+    grid.innerHTML = "";
+
+    REMAP_BINDINGS.forEach((bind, idx) => {
+      const card = document.createElement('div');
+      card.onclick = () => cycleKeyMapping(idx);
+      card.className = "p-1.5 bg-[#fdfbf6] rounded border border-[#d1c8af] hover:border-[#10b981] flex flex-col justify-between cursor-pointer transition select-none";
+      card.innerHTML = `
+        <span class="text-[6.5px] font-bold text-[#143228] leading-tight block">${bind.key}</span>
+        <div class="mt-1 flex items-center justify-between">
+          <span class="text-[6px] text-[#557568]">ACTION:</span>
+          <span class="text-[6.5px] font-bold text-[#b45309] bg-[#ded7c1] px-1 py-0.5 rounded">${bind.map}</span>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function cycleKeyMapping(idx) {
+    const curMap = REMAP_BINDINGS[idx].map;
+    const currentIdx = REMAP_POSSIBLE.indexOf(curMap);
+    const nextIdx = (currentIdx + 1) % REMAP_POSSIBLE.length;
+    REMAP_BINDINGS[idx].map = REMAP_POSSIBLE[nextIdx];
+    renderRemapKeys();
+  }
+
+  function resetRemapDefaults() {
+    REMAP_BINDINGS = [
+      { key: "D-PAD UP", map: "MOVE UP" },
+      { key: "D-PAD DOWN", map: "MOVE DOWN" },
+      { key: "D-PAD LEFT", map: "MOVE LEFT" },
+      { key: "D-PAD RIGHT", map: "MOVE RIGHT" },
+      { key: "CROSS (✕)", map: "CONFIRM / A" },
+      { key: "CIRCLE (○)", map: "CANCEL / B" },
+      { key: "SQUARE (■)", map: "MENU / X" },
+      { key: "TRIANGLE (▲)", map: "REGISTERED ITEM" },
+      { key: "L TRIGGER", map: "PAGE LEFT / PREV" },
+      { key: "R TRIGGER", map: "PAGE RIGHT / NEXT" },
+      { key: "START", map: "SYSTEM MENU" },
+      { key: "SELECT", map: "POKÉNAV QUICK-LINK" }
+    ];
+    renderRemapKeys();
+    showToast("REMAP DEFAULTS RESTORED");
+  }
+
+  function saveRemapChanges() {
+    closeRemapModal();
+    showToast("VITA INPUT SCHEMA SAVED");
+  }
+
+  // ==================== QUIT / LIVEAREA MODAL ====================
+  function openQuitModal() {
+    document.getElementById('quit-confirm-modal').classList.remove('hidden');
+  }
+
+  function closeQuitModal() {
+    document.getElementById('quit-confirm-modal').classList.add('hidden');
+  }
+
+  function executeShutdown() {
+    closeQuitModal();
+    showToast("SHUTTING DOWN TO LIVEAREA...");
+    setTimeout(() => {
+      document.body.innerHTML = `
+        <div class="w-full h-full flex flex-col items-center justify-center bg-black text-[#5eead4] font-pixel text-center space-y-4">
+          <span class="text-3xl animate-pulse">⚡</span>
+          <div class="text-[12px] font-bold">PLAYSTATION® VITA LIVEAREA SHELL</div>
+          <div class="text-[8px] text-[#94a3b8]">POKÉVITA APPLICATION SAFELY TERMINATED</div>
+          <button onclick="location.reload()" class="mt-4 px-3 py-1.5 bg-[#163f35] text-[#a7f3d0] border border-[#245244] rounded text-[8px] font-pixel cursor-pointer hover:bg-[#245244]">RESTART APP</button>
+        </div>
+      `;
+    }, 1200);
+  }
+
+  // ==================== SYSTEM GENERIC MODAL ====================
+  function openSysPrompt(title, message, onConfirm) {
+    document.getElementById('sys-modal-title').innerText = title;
+    document.getElementById('sys-modal-message').innerText = message;
+    confirmCallback = onConfirm;
+    document.getElementById('sys-confirm-modal').classList.remove('hidden');
+  }
+
+  function closeSysModal() {
+    document.getElementById('sys-confirm-modal').classList.add('hidden');
+    confirmCallback = null;
+  }
+
+  function confirmSysAction() {
+    if (confirmCallback) confirmCallback();
+    closeSysModal();
+  }
+
+  // ==================== FOOTER HANDLERS ====================
+  function handleCrossAction() {
+    // Check if modals are open
+    if (!document.getElementById('quit-confirm-modal').classList.contains('hidden')) {
+      executeShutdown();
+      return;
+    }
+    if (!document.getElementById('remap-controls-modal').classList.contains('hidden')) {
+      saveRemapChanges();
+      return;
+    }
+    if (!document.getElementById('sys-confirm-modal').classList.contains('hidden')) {
+      confirmSysAction();
+      return;
+    }
+    cycleCurrentOptionValue();
+  }
+
+  function handleCircleAction() {
+    if (!document.getElementById('quit-confirm-modal').classList.contains('hidden')) {
+      closeQuitModal();
+      return;
+    }
+    if (!document.getElementById('remap-controls-modal').classList.contains('hidden')) {
+      closeRemapModal();
+      return;
+    }
+    if (!document.getElementById('sys-confirm-modal').classList.contains('hidden')) {
+      closeSysModal();
+      return;
+    }
+    showToast("EXITING PREFERENCES REGISTER");
+  }
+
+  function handleSquareAction() {
+    handleResetFocus();
+  }
+
+  function handleTriangleAction() {
+    handleHelpFocus();
+  }
+
+  // Keyboard navigation support (Arrow keys, L/R, Enter, Esc)
+  window.addEventListener('keydown', (e) => {
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      const curTab = TABS_DATA[currentTabIndex];
+      selectedOptionIndex = (selectedOptionIndex - 1 + curTab.options.length) % curTab.options.length;
+      renderCurrentTabOptions();
+      updateInspector();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      const curTab = TABS_DATA[currentTabIndex];
+      selectedOptionIndex = (selectedOptionIndex + 1) % curTab.options.length;
+      renderCurrentTabOptions();
+      updateInspector();
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      cycleOptTab(-1);
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      cycleOptTab(1);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleCrossAction();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      handleCircleAction();
+    } else if (e.key.toLowerCase() === "l") {
+      cycleOptTab(-1);
+    } else if (e.key.toLowerCase() === "r") {
+      cycleOptTab(1);
+    }
+  });
+
+  // App Initialization
+  window.addEventListener('DOMContentLoaded', () => {
+    switchOptTab(0);
+  });
+</script>
+
+
+</body></html>

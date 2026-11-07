@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pokédex</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Entry card: sprite in a bevelled well + data table, size row with the footprint, flavour box */
+  .entry { width: 400px; flex: none; display: flex; flex-direction: column; gap: 10px; }
+  .entry .top { display: flex; gap: 12px; }
+  .entry .pic { width: 156px; height: 156px; flex: none; }
+  .entry .top .kvs { flex: 1; min-width: 0; }
+  .entry .row2 { display: flex; gap: 12px; align-items: stretch; }
+  .entry .row2 .kvs { flex: 1; }
+  .entry .fp { width: 64px; flex: none; }
+  /* 3 whole lines, the full text is in the detail screen */
+  .entry .flavor { flex: 1; min-height: 0; overflow: hidden; }
+  .entry .flavor > div { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; }
+  .ball { width: 16px; height: 16px; flex: none; }
+  .num { width: 56px; color: var(--ink-soft); }
+  .row.on .num { color: var(--select-ink); }
+  .seen .grow { color: var(--ink-soft); }
+</style>
+</head>
+<body data-screen="pokedex">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="pokedex:hoenn">
+      <span class="spacer"></span>
+      <span class="capsule">SEEN 31 · OWN 14</span>
+    </div>
+    <div class="body">
+      <div class="panel entry"></div>
+      <div class="panel main">
+        <div class="panel-head"><span class="ps">HOENN LIST</span><span class="spacer"></span><span class="vt-sm soft">Search: <b>SELECT</b></span></div>
+        <div class="list">
+          <div class="row on" data-go="pokedex_detalle"><span class="num">001</span><img class="ball" src="../_assets/balls/poke.png" alt=""><div class="mon" style="background-image:url(../_assets/pokemon/treecko_icon.png)"></div><span class="grow">TREECKO</span></div>
+          <div class="row" data-go="pokedex_detalle"><span class="num">002</span><img class="ball" src="../_assets/balls/poke.png" alt=""><div class="mon" style="background-image:url(../_assets/pokemon/grovyle_icon.png)"></div><span class="grow">GROVYLE</span></div>
+          <div class="row seen"><span class="num">003</span><span class="ball"></span><div class="mon" style="background-image:url(../_assets/pokemon/sceptile_icon.png)"></div><span class="grow">SCEPTILE</span></div>
+          <div class="row seen"><span class="num">004</span><span class="ball"></span><div class="mon" style="background-image:url(../_assets/pokemon/torchic_icon.png)"></div><span class="grow">TORCHIC</span></div>
+          <div class="row seen"><span class="num">005</span><span class="ball"></span><div class="mon" style="background-image:url(../_assets/pokemon/combusken_icon.png)"></div><span class="grow">COMBUSKEN</span></div>
+          <div class="row"><span class="num">006</span><span class="ball"></span><span class="mon"></span><span class="grow soft">-----</span></div>
+          <div class="row" data-go="pokedex_detalle"><span class="num">007</span><img class="ball" src="../_assets/balls/poke.png" alt=""><div class="mon" style="background-image:url(../_assets/pokemon/mudkip_icon.png)"></div><span class="grow">MUDKIP</span></div>
+          <div class="row seen"><span class="num">008</span><span class="ball"></span><div class="mon" style="background-image:url(../_assets/pokemon/marshtomp_icon.png)"></div><span class="grow">MARSHTOMP</span></div>
+          <div class="row"><span class="num">009</span><span class="ball"></span><span class="mon"></span><span class="grow soft">-----</span></div>
+          <div class="row" data-go="pokedex_detalle"><span class="num">010</span><img class="ball" src="../_assets/balls/poke.png" alt=""><div class="mon" style="background-image:url(../_assets/pokemon/poochyena_icon.png)"></div><span class="grow">POOCHYENA</span></div>
+          <div class="row seen"><span class="num">011</span><span class="ball"></span><div class="mon" style="background-image:url(../_assets/pokemon/mightyena_icon.png)"></div><span class="grow">MIGHTYENA</span></div>
+          <div class="row" data-go="pokedex_detalle"><span class="num">012</span><img class="ball" src="../_assets/balls/poke.png" alt=""><div class="mon" style="background-image:url(../_assets/pokemon/zigzagoon_icon.png)"></div><span class="grow">ZIGZAGOON</span></div>
+          <div class="row seen"><span class="num">013</span><span class="ball"></span><div class="mon" style="background-image:url(../_assets/pokemon/linoone_icon.png)"></div><span class="grow">LINOONE</span></div>
+          <div class="row" data-go="pokedex_detalle"><span class="num">014</span><img class="ball" src="../_assets/balls/poke.png" alt=""><div class="mon" style="background-image:url(../_assets/pokemon/wurmple_icon.png)"></div><span class="grow">WURMPLE</span></div>
+          <div class="row" data-go="pokedex_detalle"><span class="num">015</span><img class="ball" src="../_assets/balls/poke.png" alt=""><div class="mon" style="background-image:url(../_assets/pokemon/silcoon_icon.png)"></div><span class="grow">SILCOON</span></div>
+          <div class="row seen"><span class="num">016</span><span class="ball"></span><div class="mon" style="background-image:url(../_assets/pokemon/beautifly_icon.png)"></div><span class="grow">BEAUTIFLY</span></div>
+          <div class="row"><span class="num">017</span><span class="ball"></span><span class="mon"></span><span class="grow soft">-----</span></div>
+          <div class="row"><span class="num">018</span><span class="ball"></span><span class="mon"></span><span class="grow soft">-----</span></div>
+          <div class="row" data-go="pokedex_detalle"><span class="num">019</span><img class="ball" src="../_assets/balls/poke.png" alt=""><div class="mon" style="background-image:url(../_assets/pokemon/lotad_icon.png)"></div><span class="grow">LOTAD</span></div>
+          <div class="row seen"><span class="num">020</span><span class="ball"></span><div class="mon" style="background-image:url(../_assets/pokemon/lombre_icon.png)"></div><span class="grow">LOMBRE</span></div>
+          <div class="row"><span class="num">021</span><span class="ball"></span><span class="mon"></span><span class="grow soft">-----</span></div>
+          <div class="row seen"><span class="num">022</span><span class="ball"></span><div class="mon" style="background-image:url(../_assets/pokemon/seedot_icon.png)"></div><span class="grow">SEEDOT</span></div>
+          <div class="row"><span class="num">023</span><span class="ball"></span><span class="mon"></span><span class="grow soft">-----</span></div>
+          <div class="row"><span class="num">024</span><span class="ball"></span><span class="mon"></span><span class="grow soft">-----</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Details</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="btn" data-btn="triangle"><span class="glyph triangle">△</span>Cry</span>
+      <span class="btn" data-btn="select"><span class="key">SELECT</span>Search</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+  <!-- Popup: SEARCH (GBA Pokédex search: name initial, type, order, mode). Missing in Stitch (plan 2.3). -->
+  <div class="modal" id="buscar"><div class="win" style="width:600px">
+    <div class="win-head"><span class="ps">SEARCH</span><span class="spacer"></span><span class="vt-sm">◀▶ change · ✕ search</span></div>
+    <div class="win-body list" id="searchopts"></div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Search</span><span class="btn" data-btn="circle"><span class="glyph circle">○</span>Cancel</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

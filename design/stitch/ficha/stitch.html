@@ -1,0 +1,485 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>PS Vita Trainer Card &amp; Dossier - Hoenn Adventure</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: VT323 & Press Start 2P for authentic GBA/Retro UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style data-purpose="retro-core-styles">
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-font-smoothing: none;
+    image-rendering: pixelated;
+  }
+  body {
+    background-color: #030708;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+  }
+  .font-vt {
+    font-family: 'VT323', monospace;
+  }
+  .font-pixel {
+    font-family: 'Press Start 2P', monospace;
+  }
+</style>
+<style data-purpose="beveled-borders">
+  .bevel-box-dark {
+    background: #09211d;
+    border: 3px solid #041210;
+    box-shadow: inset 1px 1px 0 #1b544b, inset -1px -1px 0 #051614, 0 3px 6px rgba(0,0,0,0.5);
+  }
+  .bevel-box-cream {
+    background: #f7f4e9;
+    border: 3px solid #1a3024;
+    box-shadow: inset 2px 2px 0 #ffffff, inset -2px -2px 0 #d1c8af, 0 4px 8px rgba(0,0,0,0.45);
+  }
+  .bevel-box-amber {
+    background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+    border-top: 2px solid #fffbeb;
+    border-bottom: 2px solid #d97706;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(0,0,0,0.15);
+  }
+  .bevel-row-normal {
+    background: #ebe4cf;
+    border-bottom: 2px solid #d8cfb7;
+  }
+  .bevel-row-normal:hover {
+    background: #fdfaf0;
+  }
+  .bevel-btn-action {
+    border: 2px solid #172a22;
+    box-shadow: inset 1px 1px 0 rgba(255,255,255,0.4), inset -1px -1px 0 rgba(0,0,0,0.4);
+    transition: all 0.1s ease;
+  }
+  .bevel-btn-action:active {
+    transform: translateY(1px);
+    box-shadow: inset -1px -1px 0 rgba(255,255,255,0.4), inset 1px 1px 0 rgba(0,0,0,0.4);
+  }
+  /* Physical Button Style for L / R triggers */
+  .retro-key-btn {
+    background: linear-gradient(180deg, #1b3a32 0%, #0c201a 100%);
+    border-top: 2px solid #366d5f;
+    border-left: 2px solid #366d5f;
+    border-right: 2px solid #061511;
+    border-bottom: 2px solid #061511;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
+  .retro-key-btn:active {
+    border-top: 2px solid #061511;
+    border-left: 2px solid #061511;
+    border-right: 2px solid #366d5f;
+    border-bottom: 2px solid #366d5f;
+    transform: translateY(1px);
+  }
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 14px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #d8cfb7;
+    border-left: 2px solid #b7ac8f;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #245244;
+    border: 2px solid #14352b;
+  }
+  @keyframes floatUpFade {
+    0% { transform: translateY(0px) scale(0.9); opacity: 0; }
+    20% { transform: translateY(-8px) scale(1.1); opacity: 1; }
+    80% { transform: translateY(-24px) scale(1); opacity: 1; }
+    100% { transform: translateY(-36px) scale(0.95); opacity: 0; }
+  }
+  .animate-float-money {
+    animation: floatUpFade 1.6s ease-out forwards;
+  }
+  @keyframes sparkleTwinkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.8) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.25) rotate(45deg); }
+  }
+  .animate-sparkle {
+    animation: sparkleTwinkle 0.8s ease-in-out infinite;
+  }
+  @keyframes retroPop {
+    0% { transform: scale(0.88); opacity: 0; }
+    70% { transform: scale(1.03); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .animate-retro-pop {
+    animation: retroPop 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  }
+</style>
+<style data-purpose="sprite-backpack">
+  .sprite-bag-container {
+    width: 64px;
+    height: 64px;
+    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAL_ayV2W4W92UZPJc_2lXacbrwGsxrpJZuvmZV-5M64Qi9u5FDtC08jZNUBqxRSkQkCFGfuPrzxKvOhbDeqRw_UfaWjEwqUfNsk_AVBNaxxQFTK0LIcE-TCo-ZlpqFlLBaOnbkHuGsJNxnlRwJEiQ5FwtAD4yHaURHByIrCSotZtV6Npj5wImVH5ovTITlZcCpWxpdsqi8IejLAa9IBZ2gEs3vyE4cTx_paAYiWJWOcP5NTRdXYIgPkQ');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    transform: scale(2.1);
+    transform-origin: center;
+  }
+</style>
+</head>
+<body>
+<!-- BEGIN: VitaScreenFrame (960x544) -->
+<div class="relative w-[960px] h-[544px] overflow-hidden bg-black shadow-2xl border-2 border-[#162923] flex flex-col justify-between select-none">
+<!-- Overworld Game Background -->
+<div class="absolute inset-0 z-0">
+
+<!-- Translucent Tint Overlay -->
+<div class="absolute inset-0 bg-[#061814]/75 backdrop-blur-[1px]"></div>
+</div>
+<!-- BEGIN: TopHeader (Party Screen 2 Standard) -->
+<header class="relative z-10 w-full h-[58px] px-3 bg-[#0b1d19]/95 border-b-[3px] border-[#0c4036] flex items-center justify-between shadow-xl"><div class="flex items-center space-x-2 flex-shrink-0 bg-[#163f35] border-2 border-[#2b5849] rounded-md px-2.5 py-1 shadow-inner"><div class="w-5 h-5 rounded bg-[#1c5547] border border-[#2dd4bf]/40 flex items-center justify-center text-[11px] shadow text-[#99f6e4]">⚡</div><div class="flex items-center space-x-1.5 leading-none"><span class="text-[9px] text-[#99f6e4] font-pixel font-bold tracking-wider">TRAINER CARD</span><span class="text-[8px] text-[#6ee7b7]">▶</span><span class="bg-[#c87a22] text-[#051310] px-1.5 py-0.5 rounded font-pixel font-bold text-[8px] uppercase tracking-wider ml-1">PASSPORT</span></div></div><div class="flex items-center space-x-1 font-pixel text-[8px]"></div><div class="flex items-center space-x-2 flex-shrink-0"></div></header>
+<!-- END: TopHeader -->
+<!-- BEGIN: MainContent (960x446 area) -->
+<main class="relative z-10 w-full flex-1 px-3.5 py-2 flex gap-3 overflow-hidden"><section class="w-[380px] flex flex-col gap-2 h-full"><div class="bevel-box-dark rounded-md p-2.5 flex flex-col justify-between border-2 border-[#194c40] bg-gradient-to-b from-[#0c2f27] to-[#071d18] gap-1"><div class="flex items-center justify-between border-b border-[#164338] pb-1"><div><div class="text-[8px] text-[#4dd4b0] tracking-widest uppercase font-pixel leading-none">OFFICIAL HOENN LEAGUE DOSSIER</div><h2 class="text-[10px] text-[#ffd56b] font-pixel mt-0.5 leading-tight tracking-wide font-bold">HOENN CHAMPION ★★★ 3-STAR GOLD TIER</h2></div><span class="text-[7px] bg-[#041612] border border-[#1c5547] text-[#99f6e4] px-1.5 py-0.5 rounded font-pixel">ACTIVE</span></div><div class="bg-[#041612] px-2 py-1 rounded border border-[#164338] text-left"><p class="font-vt text-[14px] text-[#95c5b4] leading-tight tracking-wide m-0">Registered at Ever Grande City HQ • Official Hoenn Pokémon League License</p></div></div><div class="bevel-box-cream flex-1 rounded-md p-2.5 flex flex-col justify-between text-[#1c2a22]"><div class="flex flex-col gap-1.5"><div class="flex items-center justify-between border-b-2 border-[#c5bba0] pb-1.5"><div class="flex items-center space-x-2.5"><div class="w-14 h-14 rounded bg-[#e8e0c8] border-2 border-[#a89c7c] flex items-center justify-center shadow-inner flex-shrink-0 overflow-hidden"><img alt="Brendan Trainer Sprite" class="w-12 h-12 object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBU2mxJUK9RzswpXyQtF9n9ypmh4Hmdy_MGaJHbCwMjgNHpevnvUcPApdwoW8uiLeu5iXf-UHk2Pr-bBpv7UWr5RqtqZngiqSyMlqyEGqGNVCn2nKnrkXwlscK0_Rg9j9yWIz983H2gnMFJ5FbD1JmAuHjNTa1Mj9eCf8s7MfWlKqR5CxmmMoka224n7Ge-a44YQzjqwCHbZ2bzE9XecAuNZbK9zBtcGNtlZHzfv_4YSRfc0U5BVLcJw" style="image-rendering: pixelated;"></div><div><div class="flex items-center space-x-1.5"><h3 class="text-[13px] font-pixel text-[#16271c] tracking-wide font-bold">BRENDAN</h3><span class="text-[8px] bg-[#245244] text-[#f2ede0] px-1 py-0.5 rounded font-pixel uppercase">MALE</span></div><div class="font-pixel text-[8px] text-[#4f6155] mt-0.5">IDNo. <span class="text-[#14261a] font-bold">24891</span> | SID: <span class="text-[#728277]">41029</span></div><div class="font-pixel text-[7px] text-[#854d0e] mt-0.5">HOMETOWN: LITTLEROOT TOWN</div></div></div><div class="text-right"><span class="text-[7px] text-[#65766a] block font-pixel uppercase">STARTED</span><span class="text-[8px] font-pixel font-bold text-[#b45309]">OCT 2002</span></div></div><div class="grid grid-cols-2 gap-1.5 text-[8px] font-pixel"><div class="bg-[#f0ebd9] p-1.5 rounded border border-[#d6ccb0]"><span class="text-[#728277] block text-[7px]">POKÉDOLLAR:</span><span class="text-[#0f5132] font-bold text-[9px]">₽ 142,500</span></div><div class="bg-[#f0ebd9] p-1.5 rounded border border-[#d6ccb0]"><span class="text-[#728277] block text-[7px]">BATTLE POINTS:</span><span class="text-[#b45309] font-bold text-[9px]">85 BP</span></div><div class="bg-[#f0ebd9] p-1.5 rounded border border-[#d6ccb0]"><span class="text-[#728277] block text-[7px]">TOTAL PLAY TIME:</span><span class="text-[#14261a] font-bold text-[9px]">42h 15m</span></div><div class="bg-[#f0ebd9] p-1.5 rounded border border-[#d6ccb0]"><span class="text-[#728277] block text-[7px]">BADGES HELD:</span><span class="text-[#096041] font-bold text-[9px]">8 / 8 CLEARED</span></div></div><div class="bg-[#ebe3cd] p-1.5 rounded border border-[#d3c8ab] text-[8px] font-pixel flex items-center justify-between"><div class="flex items-center space-x-1.5"><span class="text-[#65766a]">HOENN DEX:</span><span class="text-[#14261a] font-bold">128 / 202</span></div><div class="flex items-center space-x-1.5"><span class="text-[#65766a]">NATIONAL DEX:</span><span class="text-[#096041] font-bold">215 / 386</span></div></div></div><div class="pt-1"><button type="button" onclick="this.innerText='✓ SAVING...'; setTimeout(() =&gt; { this.innerText='💾 GAME SAVED!'; setTimeout(() =&gt; { this.innerText='💾 SAVE GAME'; }, 1500); }, 500);" class="w-full py-1.5 px-2 bg-[#163f35] hover:bg-[#1c5547] text-[#99f6e4] border-2 border-[#0c4036] rounded font-pixel text-[8px] uppercase tracking-wider shadow flex items-center justify-center gap-1.5 cursor-pointer transition"><span class="text-[10px] leading-none">💾</span><span class="">SAVE GAME</span></button></div></div></section><section class="flex-1 bevel-box-cream rounded-md flex flex-col overflow-hidden shadow-2xl"><div class="bg-[#1c382f] text-[#bdecdb] px-3.5 border-b-2 border-[#132720] flex items-center justify-between text-[9px] font-pixel py-1.5"><div class="flex items-center space-x-2"><span class="text-[#fcd34d]">HOENN LEAGUE BADGES:</span><span class="text-white">8 OF 8 CLEARED</span></div><div class="flex items-center space-x-3 text-[8px]"><div class="flex items-center space-x-1"><span class="text-[#95c5b4]">REGION:</span><span class="text-[#fde68a] font-bold">HOENN</span></div><div class="flex items-center space-x-1"><span class="text-[#95c5b4]">SORT:</span><span class="bg-[#0b1f19] px-2 py-0.5 rounded text-[#ffd56b] border border-[#2b5849]">GYM ORDER</span></div></div></div><div class="flex-1 overflow-y-auto overflow-x-hidden flex flex-col bg-[#e7dfc6]" id="badge-list-container"><div class="bevel-row-normal px-3 py-1 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]"><div class="flex items-center space-x-2.5 ml-3"><span class="text-[13px] leading-none">🪨</span><div><span class="font-pixel text-[9px] text-[#2c3d31] tracking-wide font-bold">STONE BADGE</span><span class="font-pixel text-[7px] text-[#65766a] block leading-tight">Leader: Roxanne (Rustboro City)</span></div></div><div class="flex items-center space-x-3"><span class="font-pixel text-[7px] text-[#8c826c]">Obeys Lv. 20</span><span class="font-pixel text-[8px] text-[#0f5132] font-bold">CLEARED ✓</span></div></div><div class="bevel-row-normal px-3 py-1 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]"><div class="flex items-center space-x-2.5 ml-3"><span class="text-[13px] leading-none">🥊</span><div><span class="font-pixel text-[9px] text-[#2c3d31] tracking-wide font-bold">KNUCKLE BADGE</span><span class="font-pixel text-[7px] text-[#65766a] block leading-tight">Leader: Brawly (Dewford Town)</span></div></div><div class="flex items-center space-x-3"><span class="font-pixel text-[7px] text-[#8c826c]">Obeys Lv. 30</span><span class="font-pixel text-[8px] text-[#0f5132] font-bold">CLEARED ✓</span></div></div><div class="bevel-row-normal px-3 py-1 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]"><div class="flex items-center space-x-2.5 ml-3"><span class="text-[13px] leading-none">⚡</span><div><span class="font-pixel text-[9px] text-[#2c3d31] tracking-wide font-bold">DYNAMO BADGE</span><span class="font-pixel text-[7px] text-[#65766a] block leading-tight">Leader: Wattson (Mauville City)</span></div></div><div class="flex items-center space-x-3"><span class="font-pixel text-[7px] text-[#8c826c]">Obeys Lv. 40</span><span class="font-pixel text-[8px] text-[#0f5132] font-bold">CLEARED ✓</span></div></div><div class="bevel-row-normal px-3 py-1 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]"><div class="flex items-center space-x-2.5 ml-3"><span class="text-[13px] leading-none">🔥</span><div><span class="font-pixel text-[9px] text-[#2c3d31] tracking-wide font-bold">HEAT BADGE</span><span class="font-pixel text-[7px] text-[#65766a] block leading-tight">Leader: Flannery (Lavaridge Town)</span></div></div><div class="flex items-center space-x-3"><span class="font-pixel text-[7px] text-[#8c826c]">Obeys Lv. 50</span><span class="font-pixel text-[8px] text-[#0f5132] font-bold">CLEARED ✓</span></div></div><div class="bevel-row-normal px-3 py-1 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]"><div class="flex items-center space-x-2.5 ml-3"><span class="text-[13px] leading-none">⚖️</span><div><span class="font-pixel text-[9px] text-[#2c3d31] tracking-wide font-bold">BALANCE BADGE</span><span class="font-pixel text-[7px] text-[#65766a] block leading-tight">Leader: Norman (Petalburg City)</span></div></div><div class="flex items-center space-x-3"><span class="font-pixel text-[7px] text-[#8c826c]">Obeys Lv. 60</span><span class="font-pixel text-[8px] text-[#0f5132] font-bold">CLEARED ✓</span></div></div><div class="bevel-row-normal px-3 py-1 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]"><div class="flex items-center space-x-2.5 ml-3"><span class="text-[13px] leading-none">🪶</span><div><span class="font-pixel text-[9px] text-[#2c3d31] tracking-wide font-bold">FEATHER BADGE</span><span class="font-pixel text-[7px] text-[#65766a] block leading-tight">Leader: Winona (Fortree City)</span></div></div><div class="flex items-center space-x-3"><span class="font-pixel text-[7px] text-[#8c826c]">Obeys Lv. 70</span><span class="font-pixel text-[8px] text-[#0f5132] font-bold">CLEARED ✓</span></div></div><div class="bevel-row-normal px-3 py-1 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]"><div class="flex items-center space-x-2.5 ml-3"><span class="text-[13px] leading-none">🔮</span><div><span class="font-pixel text-[9px] text-[#2c3d31] tracking-wide font-bold">MIND BADGE</span><span class="font-pixel text-[7px] text-[#65766a] block leading-tight">Leader: Tate &amp; Liza (Mossdeep City)</span></div></div><div class="flex items-center space-x-3"><span class="font-pixel text-[7px] text-[#8c826c]">Obeys Lv. 80</span><span class="font-pixel text-[8px] text-[#0f5132] font-bold">CLEARED ✓</span></div></div><div class="bevel-row-normal px-3 py-1 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]"><div class="flex items-center space-x-2.5 ml-3"><span class="text-[13px] leading-none">🌧️</span><div><span class="font-pixel text-[9px] text-[#2c3d31] tracking-wide font-bold">RAIN BADGE</span><span class="font-pixel text-[7px] text-[#65766a] block leading-tight">Leader: Juan (Sootopolis City)</span></div></div><div class="flex items-center space-x-3"><span class="font-pixel text-[7px] text-[#8c826c]">All Pokémon Obey</span><span class="font-pixel text-[8px] text-[#0f5132] font-bold">CLEARED ✓</span></div></div></div></section></main>
+<!-- END: MainContent -->
+<!-- BEGIN: Retro Pokémon Purchase Confirmation Modal Overlay -->
+<!-- END: Retro Pokémon Purchase Confirmation Modal Overlay -->
+<!-- BEGIN: ConsoleFooter (Sony PS Vita Bar Standard) -->
+<footer class="relative z-10 w-full h-[40px] px-3 bg-[#07131a] border-t-2 border-[#112933] flex items-center justify-between text-white text-[9px] font-pixel shadow-2xl"><div class="flex items-center space-x-3"><div class="flex items-center space-x-1"><span class="w-4 h-4 rounded-full bg-[#0066cc] border border-[#5eaaff] flex items-center justify-center text-[9px] font-bold text-white shadow">✕</span><span class="text-[#ccd7e6] text-[7px]">CONFIRM / INSPECT</span></div><div class="flex items-center space-x-1"><span class="w-4 h-4 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center text-[9px] font-bold text-white shadow">○</span><span class="text-[#ccd7e6] text-[7px]">BACK / EXIT</span></div><div class="flex items-center space-x-1 pl-1"></div></div><div class="flex items-center space-x-3"><span class="text-[8px] text-[#cbd5e1] font-mono font-bold">14:32</span></div></footer>
+<!-- END: ConsoleFooter -->
+</div>
+<!-- END: VitaScreenFrame -->
+<!-- SCRIPT: Bag Pocket & Item Management Logic -->
+<script>
+  let playerWallet = 142500;
+  let purchaseQuantity = 1;
+  let premierBallBagQty = 0;
+  let autoDismissTimer = null;
+
+  const MART_INVENTORY = [
+    {
+      id: "poke_ball",
+      name: "POKÉ BALL",
+      cat: "[ BALL / CAPTURE ]",
+      price: 200,
+      resale: 100,
+      bagQty: 14,
+      iconType: "img",
+      iconSrc: "https://lh3.googleusercontent.com/aida-public/AB6AXuDx_D0htzEmV2XGciLVKZFiKo9xl1AbmLBU1J8HatmQL2U2D6I_5lTUGWIVh_ZK_bCRWdF7RcW25H1oPuKBrRQSOUP-hlIrQz3fki9Xi5soyPGPmmRUgQ798agZbJDFClJ19yGFXARYcfvvL8EABHdYunRXgm5y1_lQUgxB5BA-tvflOlOWZkQboZ2u6sXd3agYmiTS4Kg1TnH8PnW_vaU4YHvboGS81U2GmO1VHEiaCr7frSsaa2rGwQ",
+      desc: "A device for catching wild Pokémon. It is thrown like a ball, comfortably encapsulating its target."
+    },
+    {
+      id: "great_ball",
+      name: "GREAT BALL",
+      cat: "[ BALL / CAPTURE ]",
+      price: 600,
+      resale: 300,
+      bagQty: 6,
+      iconType: "emoji",
+      emoji: "🔵",
+      desc: "A good, high-performance Ball that provides a higher Pokémon catch rate than a standard Poké Ball."
+    },
+    {
+      id: "ultra_ball",
+      name: "ULTRA BALL",
+      cat: "[ BALL / CAPTURE ]",
+      price: 1200,
+      resale: 600,
+      bagQty: 3,
+      iconType: "emoji",
+      emoji: "🟡",
+      desc: "An ultra-performance Ball that provides an even higher success rate than a Great Ball."
+    },
+    {
+      id: "potion",
+      name: "POTION",
+      cat: "[ RECOVERY / MEDICINE ]",
+      price: 300,
+      resale: 150,
+      bagQty: 5,
+      iconType: "emoji",
+      emoji: "🧪",
+      desc: "Restores the HP of a Pokémon by 20 points. A spray-type medicine designed to treat battle wounds."
+    },
+    {
+      id: "super_potion",
+      name: "SUPER POTION",
+      cat: "[ RECOVERY / MEDICINE ]",
+      price: 700,
+      resale: 350,
+      bagQty: 2,
+      iconType: "emoji",
+      emoji: "🧴",
+      desc: "A high-grade spray medicine. Restores the HP of a single Pokémon by 50 points."
+    },
+    {
+      id: "antidote",
+      name: "ANTIDOTE",
+      cat: "[ STATUS HEAL ]",
+      price: 100,
+      resale: 50,
+      bagQty: 3,
+      iconType: "emoji",
+      emoji: "💊",
+      desc: "A soothing medicinal spray that cures a Pokémon suffering from poison instantly."
+    },
+    {
+      id: "paralyze_heal",
+      name: "PARALYZE HEAL",
+      cat: "[ STATUS HEAL ]",
+      price: 200,
+      resale: 100,
+      bagQty: 2,
+      iconType: "emoji",
+      emoji: "⚡",
+      desc: "A spray that alleviates muscle stiffness and cures Pokémon of paralysis."
+    },
+    {
+      id: "repel",
+      name: "REPEL",
+      cat: "[ FIELD ITEM ]",
+      price: 350,
+      resale: 175,
+      bagQty: 6,
+      iconType: "emoji",
+      emoji: "💨",
+      desc: "An item that repels weak wild Pokémon for 100 steps in tall grass or caves."
+    }
+  ];
+
+  let selectedItemIndex = 0;
+
+  function formatMoney(amount) {
+    return Number(amount).toLocaleString('en-US');
+  }
+
+  function renderLedger() {
+    const container = document.getElementById("item-list-container");
+    container.innerHTML = "";
+
+    MART_INVENTORY.forEach((item, idx) => {
+      const isSelected = idx === selectedItemIndex;
+      const row = document.createElement("div");
+      row.onclick = () => selectItem(idx);
+
+      if (isSelected) {
+        row.className = "bevel-box-amber px-3.5 py-2.5 flex items-center justify-between cursor-pointer relative z-10";
+        row.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="text-[#b45309] text-[11px] animate-pulse">▶</span>
+            ${item.iconType === 'img' 
+              ? `<img src="${item.iconSrc}" class="w-4 h-4 object-contain" style="image-rendering: pixelated;">` 
+              : `<span class="text-[15px] leading-none">${item.emoji}</span>`
+            }
+            <span class="font-pixel text-[10px] text-[#16271c] font-bold tracking-wide">${item.name}</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="font-pixel text-[8px] text-[#854d0e]">IN BAG: <span class="font-bold text-[#14261a]">x${item.bagQty}</span></span>
+            <span class="font-pixel text-[11px] text-[#096041] font-bold">₽ ${formatMoney(item.price)}</span>
+          </div>
+        `;
+      } else {
+        row.className = "bevel-row-normal px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]";
+        row.innerHTML = `
+          <div class="flex items-center space-x-3 ml-4">
+            ${item.iconType === 'img' 
+              ? `<img src="${item.iconSrc}" class="w-4 h-4 object-contain opacity-80" style="image-rendering: pixelated;">` 
+              : `<span class="text-[14px] leading-none">${item.emoji}</span>`
+            }
+            <span class="font-pixel text-[9px] text-[#2c3d31] tracking-wide">${item.name}</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="font-pixel text-[8px] text-[#8c826c]">IN BAG: x${item.bagQty}</span>
+            <span class="font-pixel text-[10px] text-[#334637] font-bold">₽ ${formatMoney(item.price)}</span>
+          </div>
+        `;
+      }
+
+      container.appendChild(row);
+    });
+
+    updateDetailPanel();
+    updateWalletDisplays();
+  }
+
+  function updateDetailPanel() {
+    const item = MART_INVENTORY[selectedItemIndex];
+    if (!item) return;
+
+    document.getElementById("detail-item-name").innerText = item.name;
+    document.getElementById("detail-item-cat").innerText = item.cat;
+    document.getElementById("detail-item-bag-qty").innerText = `x ${item.bagQty}`;
+    document.getElementById("detail-item-price").innerText = `₽ ${formatMoney(item.price)}`;
+    document.getElementById("detail-item-resale").innerText = `RESALE: ₽ ${formatMoney(item.resale)}`;
+    document.getElementById("detail-item-desc").innerText = item.desc;
+
+    const iconBox = document.getElementById("selected-item-icon-box");
+    if (item.iconType === 'img') {
+      iconBox.innerHTML = `<img id="selected-item-img" alt="${item.name}" class="w-5 h-5 object-contain" src="${item.iconSrc}" style="image-rendering: pixelated;">`;
+    } else {
+      iconBox.innerHTML = `<span class="text-xl leading-none">${item.emoji}</span>`;
+    }
+
+    document.getElementById("purchase-qty-display").innerText = purchaseQuantity.toString().padStart(2, '0');
+    const subtotal = item.price * purchaseQuantity;
+    document.getElementById("purchase-subtotal-display").innerText = `₽ ${formatMoney(subtotal)}`;
+  }
+
+  function updateWalletDisplays() {
+    const formatted = formatMoney(playerWallet);
+    const headerDisplay = document.getElementById("header-wallet-display");
+    const ledgerDisplay = document.getElementById("ledger-wallet-display");
+    if (headerDisplay) headerDisplay.innerText = formatted;
+    if (ledgerDisplay) ledgerDisplay.innerText = `₽ ${formatted}`;
+  }
+
+  function selectItem(index) {
+    selectedItemIndex = index;
+    purchaseQuantity = 1;
+    renderLedger();
+  }
+
+  function adjustQty(delta) {
+    const next = purchaseQuantity + delta;
+    if (next >= 1 && next <= 99) {
+      purchaseQuantity = next;
+      updateDetailPanel();
+    }
+  }
+
+  function addTenQty() {
+    const next = purchaseQuantity + 10;
+    purchaseQuantity = next <= 99 ? next : 99;
+    updateDetailPanel();
+  }
+
+  function resetQty() {
+    purchaseQuantity = 1;
+    updateDetailPanel();
+  }
+
+  function triggerPurchase() {
+    const item = MART_INVENTORY[selectedItemIndex];
+    if (!item) return;
+
+    const subtotal = item.price * purchaseQuantity;
+    if (playerWallet < subtotal) {
+      alert("You don't have enough money!");
+      return;
+    }
+
+    // Deduct wallet and increase bag quantity
+    playerWallet -= subtotal;
+    item.bagQty += purchaseQuantity;
+
+    // Check Premier Ball condition (canonical 10+ standard Poké Balls)
+    let gotBonusPremierBall = false;
+    if (item.id === "poke_ball" && purchaseQuantity >= 10) {
+      const bonusCount = Math.floor(purchaseQuantity / 10);
+      premierBallBagQty += bonusCount;
+      gotBonusPremierBall = true;
+    }
+
+    // Update displays
+    updateWalletDisplays();
+    renderLedger();
+
+    // Prepare Confirmation Modal
+    const modal = document.getElementById("purchase-modal-overlay");
+    const dialogText = document.getElementById("modal-dialog-text");
+    const bonusSection = document.getElementById("modal-bonus-section");
+    const bonusText = document.getElementById("modal-bonus-text");
+    const receiptItem = document.getElementById("modal-receipt-item");
+    const receiptTotal = document.getElementById("modal-receipt-total");
+    const receiptInBag = document.getElementById("modal-receipt-inbag");
+    const floatingText = document.getElementById("floating-cash-text");
+
+    // Populate Receipt Details
+    receiptItem.innerText = `${purchaseQuantity}x ${item.name}`;
+    receiptTotal.innerText = `₽ ${formatMoney(subtotal)}`;
+    receiptInBag.innerText = `x ${item.bagQty}`;
+
+    // Floating money effect text
+    floatingText.innerHTML = `<span>-₽ ${formatMoney(subtotal)}</span><span class="text-[#f59e0b] animate-sparkle">✨</span>`;
+    // Restart animation
+    floatingText.classList.remove("animate-float-money");
+    void floatingText.offsetWidth; // trigger reflow
+    floatingText.classList.add("animate-float-money");
+
+    // Clerk speech variation
+    dialogText.innerText = `"Here you go! Thank you very much! Turn over ₽ ${formatMoney(subtotal)}? Thank you!"`;
+
+    if (gotBonusPremierBall) {
+      bonusSection.classList.remove("hidden");
+      const bonusCount = Math.floor(purchaseQuantity / 10);
+      bonusText.innerText = bonusCount > 1 
+        ? `And here are ${bonusCount} PREMIER BALLS as a special bonus!`
+        : `And here is a PREMIER BALL as a special bonus!`;
+    } else {
+      bonusSection.classList.add("hidden");
+    }
+
+    // Show modal
+    modal.classList.remove("hidden");
+
+    // Auto dismiss after 1.8 seconds returning to store catalog
+    if (autoDismissTimer) clearTimeout(autoDismissTimer);
+    autoDismissTimer = setTimeout(() => {
+      dismissPurchaseModal();
+    }, 1800);
+  }
+
+  function dismissPurchaseModal() {
+    if (autoDismissTimer) clearTimeout(autoDismissTimer);
+    const modal = document.getElementById("purchase-modal-overlay");
+    if (modal) {
+      modal.classList.add("hidden");
+    }
+    // Reset purchase quantity to 1 for next transaction
+    purchaseQuantity = 1;
+    updateDetailPanel();
+  }
+
+  // Keyboard navigation & PS Vita control mappings
+  window.addEventListener('keydown', (e) => {
+    const modal = document.getElementById("purchase-modal-overlay");
+    const isModalOpen = !modal.classList.contains("hidden");
+
+    if (isModalOpen) {
+      if (e.key === 'x' || e.key === 'X' || e.key === 'Enter' || e.key === 'Escape' || e.key === 'o' || e.key === 'O') {
+        dismissPurchaseModal();
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      if (selectedItemIndex > 0) {
+        selectItem(selectedItemIndex - 1);
+      }
+    } else if (e.key === 'ArrowDown') {
+      if (selectedItemIndex < MART_INVENTORY.length - 1) {
+        selectItem(selectedItemIndex + 1);
+      }
+    } else if (e.key === 'x' || e.key === 'X' || e.key === 'Enter') {
+      triggerPurchase();
+    } else if (e.key === '+' || e.key === '=') {
+      adjustQty(1);
+    } else if (e.key === '-') {
+      adjustQty(-1);
+    }
+  });
+
+  // Initial Load
+  renderLedger();
+</script>
+
+
+
+
+
+
+</body></html>

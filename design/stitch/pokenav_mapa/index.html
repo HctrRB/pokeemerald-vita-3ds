@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PokéNav · Mapa de Hoenn</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Decision D8: the GBA region map (224x120) at x3 = 672x360, zones from the game's own
+     28x15 MAPSEC grid (_assets/map/hoenn_zones.json, exported from region_map_layout.h and
+     region_map_sections.json). Each cell is 24 px. Click a cell: same lookup as
+     GetRegionMapSecIdAt(x + 1, y + 2). */
+  .mapwrap { position: relative; width: 672px; height: 360px; flex: none; background: url(../_assets/map/hoenn_224x120.png) 0 0 / 672px 360px; image-rendering: pixelated; border: 2px solid var(--line-dark); box-sizing: content-box; }
+  .cell { position: absolute; width: 24px; height: 24px; }
+  .zone-hl { position: absolute; outline: 3px solid var(--select); background: rgba(246, 207, 87, 0.28); pointer-events: none; }
+  .cursor { position: absolute; width: 24px; height: 24px; outline: 3px solid #fff; outline-offset: -1px; pointer-events: none; }
+  .head { position: absolute; width: 16px; height: 16px; zoom: 1.5; background: url(../_assets/map/brendan_head.png); image-rendering: pixelated; pointer-events: none; }
+  .fly { position: absolute; width: 8px; height: 8px; background: var(--hp-high); border: 2px solid #fff; pointer-events: none; }
+  .side { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .side .ps { line-height: 20px; }
+  /* Side: the zone name and the encounters of the current method in large rows; the full
+     table with its filters is the ENCOUNTERS popup (square) */
+  .enc { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .enc .list { flex: 1; }
+  .enc .row { height: 44px; padding-left: 8px; }
+  .enc .row::before { content: none; }
+  #enctable .row { height: 44px; }
+  #enctable .lv { width: 96px; text-align: right; }
+  #enctable .rod { width: 128px; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; }
+  .meth { display: flex; gap: 4px; flex-wrap: wrap; }
+  .meth .chip.on { background: var(--select); color: var(--select-ink); }
+</style>
+</head>
+<body data-screen="pokenav_mapa">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="pokenav:map">
+      <span class="spacer"></span>
+    </div>
+    <div class="body">
+      <div class="mapwrap" id="map"></div>
+      <div class="side">
+        <div class="panel">
+          <div class="ps zname" id="zname">-</div>
+          <!-- MAPSEC of the zone: read by the map component, not shown -->
+          <div id="ztype" hidden>-</div>
+        </div>
+        <div class="panel enc">
+          <div class="panel-head"><span class="ps" id="encwhat">GRASS · DAY</span></div>
+          <div class="list"></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Zoom</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="btn" data-btn="triangle"><span class="glyph triangle">△</span>Method</span>
+      <span class="btn" data-btn="square" data-action="openEnc"><span class="glyph square">□</span>Encounters</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+  <!-- Popup: all the wild POKéMON of the zone with their filters (method, time of day, rod) -->
+<div class="modal" id="encuentros"><div class="win" style="width:720px">
+  <div class="win-head"><span class="ps" id="enctitle">ENCOUNTERS</span><span class="spacer"></span><span class="vt-sm" id="enccount">-</span></div>
+  <div class="win-body">
+    <div class="subtabs" id="encmethods"></div>
+    <div class="subtabs" id="enctimes" style="margin-top:8px"></div>
+    <div class="list" id="enctable" style="height:264px; margin-top:10px"></div>
+  </div>
+  <div class="win-foot"><span class="btn" data-btn="triangle"><span class="glyph triangle">△</span>Method</span><span class="btn">◀▶ Time / rod</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Close</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+<script>
+const CELL = 24;
+const FLY_TOWNS = ['MAPSEC_LITTLEROOT_TOWN', 'MAPSEC_OLDALE_TOWN', 'MAPSEC_PETALBURG_CITY', 'MAPSEC_RUSTBORO_CITY', 'MAPSEC_DEWFORD_TOWN'];
+const map = document.getElementById('map');
+fetch('../_assets/map/hoenn_zones.json').then(r => r.json()).then(data => {
+  const hl = document.createElement('div'); hl.className = 'zone-hl'; map.appendChild(hl);
+  const cur = document.createElement('div'); cur.className = 'cursor'; map.appendChild(cur);
+  const kind = id => id === 'MAPSEC_NONE' ? 'NONE' : /_(TOWN|CITY)$/.test(id) ? 'CITY' : /^MAPSEC_ROUTE_/.test(id) ? 'ROUTE' : 'LANDMARK';
+  function select(x, y) {
+    const id = data.grid[y][x];
+    cur.style.left = x * CELL + 'px'; cur.style.top = y * CELL + 'px';
+    const z = data.zones[id];
+    document.getElementById('zname').textContent = z ? z.name : '—';
+    document.getElementById('ztype').textContent = id + ' · ' + kind(id);
+    if (z) { Object.assign(hl.style, { display: 'block', left: z.x * CELL + 'px', top: z.y * CELL + 'px', width: z.w * CELL + 'px', height: z.h * CELL + 'px' }); }
+    else hl.style.display = 'none';
+  }
+  for (let y = 0; y < data.height; y++) for (let x = 0; x < data.width; x++) {
+    const c = document.createElement('div'); c.className = 'cell'; c.dataset.mapsec = data.grid[y][x];
+    c.style.left = x * CELL + 'px'; c.style.top = y * CELL + 'px';
+    c.onclick = () => select(x, y); map.appendChild(c);
+  }
+  for (const id of FLY_TOWNS) { const z = data.zones[id]; if (!z) continue;
+    const f = document.createElement('div'); f.className = 'fly'; f.style.left = (z.x * CELL + 14) + 'px'; f.style.top = (z.y * CELL - 2) + 'px'; map.appendChild(f); }
+  const home = data.zones['MAPSEC_LITTLEROOT_TOWN'];
+  const head = document.createElement('div'); head.className = 'head';
+  head.style.left = (home.x * CELL + 4) / 1.5 + 'px'; head.style.top = (home.y * CELL + 4) / 1.5 + 'px'; map.appendChild(head);
+  const r101 = data.zones['MAPSEC_ROUTE_101']; select(r101.x, r101.y);
+});
+</script>
+</body>
+</html>

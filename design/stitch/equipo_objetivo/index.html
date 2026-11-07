@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Equipo · Usar objeto</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Party as the target of a bag item (BAG → USE). Missing in Stitch (plan 2.3).
+     Same cards as the party screen; the right panel previews the effect on the selected one. */
+  .party { width: 400px; flex: none; display: flex; flex-direction: column; gap: 6px; }
+  /* Reference card finish: bevelled cream card; selected = amber gradient with orange edge */
+  .card { height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 8px; position: relative; border-radius: 4px;
+    background: #FDFAF2; border: 2px solid #364253; box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #D6CCB6, 0 2px 0 rgba(0,0,0,0.35); }
+  .card.on { background: linear-gradient(#FFFBEB, #FDE68A); border-color: #A85800; color: var(--sel-ink);
+    box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #D49B20, 0 0 0 2px rgba(245, 158, 11, 0.55), 0 2px 0 rgba(0,0,0,0.35); }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; zoom: 1.5; }
+  .card .info { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .card .l1, .card .l2 { display: flex; align-items: center; gap: 8px; }
+  .card .name { flex: 1; }
+  .card .bar { flex: 1; }
+  .card .bar > i { transition: width .6s; }
+  .card .hp { font-size: var(--t-body-sm); width: 64px; text-align: right; }
+  .card .tag { font-size: var(--t-body-sm); }
+  .status { width: 32px; height: 8px; background: url(../_assets/ui_gba/status_icons.png) 0 0 / 32px 64px; image-rendering: pixelated; zoom: 2; }
+  .ico16 { width: 24px; height: 24px; flex: none; }
+  .preview { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+  .preview .top { display: flex; align-items: center; gap: 12px; }
+  .iconbox { width: 56px; height: 56px; background: var(--paper-1); display: flex; align-items: center; justify-content: center; flex: none; }
+  .effect { font-size: var(--t-body-lg); line-height: 34px; }
+</style>
+</head>
+<body data-screen="equipo_objetivo">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="target:use">
+      <span class="spacer"></span>
+      <span class="capsule" id="itemcap">-</span>
+    </div>
+    <div class="body">
+      <div class="party"></div>
+      <div class="panel preview">
+        <div class="top"><div class="iconbox"><img class="x2" id="itemimg" src="../_assets/items/potion.png" alt=""></div><div><div class="ps" id="itemname">-</div><div class="vt-sm soft" id="itemdesc" style="margin-top:6px">-</div></div></div>
+        <div class="sep"></div>
+        <div class="effect" id="effect">-</div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross" data-action="useOn"><span class="glyph cross">✕</span><span id="verb">Use</span></span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back to the bag</span>
+    </div>
+  </div>
+  <!-- Level-up card (PARTY_MODE_DELTA_CARD): stats before and after -->
+  <div class="modal" id="delta"><div class="win" style="width:480px">
+    <div class="win-head"><span class="ps" id="deltahead">LEVEL UP</span></div>
+    <div class="win-body" id="deltabody"></div>
+    <div class="win-foot"><span class="btn" data-btn="cross" data-close><span class="glyph cross">✕</span>OK</span></div></div></div>
+  <!-- Move select for PP items (PARTY_MODE_MOVE_SELECT) -->
+  <div class="modal" id="pp"><div class="win" style="width:480px">
+    <div class="win-head"><span class="ps">RESTORE PP</span><span class="spacer"></span><span class="vt-sm">Choose a move</span></div>
+    <div class="win-body list" id="ppmoves"></div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Restore</span><span class="btn" data-btn="circle"><span class="glyph circle">○</span>Cancel</span></div></div></div>
+</div>
+<!-- popups added after the stage closes -->
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

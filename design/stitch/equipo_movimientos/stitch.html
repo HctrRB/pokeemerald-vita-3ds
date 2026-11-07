@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+
+<html lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pokémon Vita UI - Pokémon Party &amp; Summary</title>
+<!-- Tailwind CSS CDN with forms and container plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts for Retro Pixel UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=VT323&amp;display=swap" rel="stylesheet"/>
+<!-- BEGIN: Custom Retro Styles -->
+<style data-purpose="pixel-rendering">
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: none;
+      -moz-osx-font-smoothing: grayscale;
+      font-smooth: never;
+      image-rendering: pixelated;
+      user-select: none;
+    }
+    
+    body {
+      background-color: #05080d;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .font-pixel {
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    .font-vt {
+      font-family: 'VT323', monospace;
+    }
+
+    /* Screen container locked strictly to native PS Vita resolution (960x544) */
+    .vita-viewport {
+      width: 960px;
+      height: 544px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.95), 0 0 0 2px #1f293d;
+    }
+
+    /* GBA / Vita retro bevels and inset borders matching Bag Menu */
+    .bevel-box-dark {
+      background: #09211d;
+      border: 2px solid #041210;
+      box-shadow: inset 1px 1px 0 #1b544b, inset -1px -1px 0 #051614, 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .bevel-box-cream {
+      background: #f7f4e9;
+      border: 2px solid #233728;
+      box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #d1c8af, 0 3px 6px rgba(0,0,0,0.45);
+    }
+
+    .bevel-card-lead {
+      background: linear-gradient(180deg, #fffbeb 0%, #fde68a 100%);
+      border: 2px solid #a85800;
+      box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #d49b20, 0 2px 4px rgba(0,0,0,0.4);
+    }
+
+    .bevel-card-normal {
+      background: #fdfaf2;
+      border: 1.5px solid #364253;
+      box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #d6ccb6;
+    }
+
+    .bevel-card-normal:hover {
+      background: #ffffff;
+      border-color: #2b7da1;
+    }
+
+    .bevel-tab-active {
+      background: linear-gradient(180deg, #fceda6 0%, #e2ab24 100%);
+      border: 1.5px solid #8c6006;
+      color: #1a2718;
+      box-shadow: inset 1px 1px 0 #fffbe0;
+    }
+
+    .bevel-tab-sub-active {
+      background: #1c382f;
+      color: #4ade80;
+      border: 1px solid #285447;
+    }
+
+    .bevel-tab-sub-inactive {
+      background: #efe7d3;
+      color: #64748b;
+      border: 1px solid #d4c7b0;
+    }
+
+    .bevel-tab-sub-inactive:hover {
+      background: #f7f0df;
+      color: #1e293b;
+    }
+
+    .bevel-btn-action {
+      border: 1.5px solid #172a22;
+      box-shadow: inset 1px 1px 0 rgba(255,255,255,0.35), inset -1px -1px 0 rgba(0,0,0,0.4);
+    }
+
+    /* PS Vita controller buttons */
+    .ps-btn {
+      width: 15px;
+      height: 15px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 1;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.6);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.4);
+    }
+
+    .ps-cross {
+      background: #005ce6;
+      border: 1.5px solid #66b0ff;
+      color: #ffffff;
+    }
+
+    .ps-circle {
+      background: #cc1b29;
+      border: 1.5px solid #ff7b88;
+      color: #ffffff;
+    }
+
+    .ps-triangle {
+      background: #009944;
+      border: 1.5px solid #55ea8d;
+      color: #ffffff;
+    }
+
+    .ps-square {
+      background: #c71585;
+      border: 1.5px solid #ff79ca;
+      color: #ffffff;
+    }
+
+    .ps-shoulder {
+      background: linear-gradient(180deg, #102a24 0%, #061713 100%);
+      border: 1px solid #165b4c;
+      color: #88ffd4;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+
+    /* Crisp pixelated sprites */
+    .pixel-art {
+      image-rendering: pixelated;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
+    }
+  </style>
+<!-- END: Custom Retro Styles -->
+</head>
+<body class="bg-[#05080d] min-h-screen flex items-center justify-center p-0 m-0 overflow-hidden font-pixel text-[#1e2631]">
+<!-- BEGIN: VitaScreenFrame (PS Vita 960x544 Resolution) -->
+<main class="vita-viewport flex flex-col justify-between" data-purpose="psvita-screen-wrapper">
+<!-- BEGIN: Overworld Game Background (Full-bleed canonical capture with dark blur tint) -->
+<div class="absolute inset-0 z-0 overflow-hidden pointer-events-none" data-purpose="background-layer">
+<img alt="Game Overworld Littleroot Town" class="w-full h-full object-cover scale-[1.02]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAV6VvzKNnQgoZ9XjXtV-l0AdKfPW339Ifr2i6N_p-blDrM60mOg1uyzc10_HQNeD1f1CT4KIly74M1Yf2mL2VFjyPtAYSi2sQasuQu8Y4H5KLspF4HvNmWBIYe8esPQ8ThpsbjNfcgEojrfBASWLj3be5b2r4sW26vEht8q76mhypWQpI70o4GQJEJklEDi77cwFFye1VAyn9AyaCWFjliAMosnB7Lb5jJbG09YFAazQzXT-PRxV6p0g"/>
+<!-- Subtle retro blur overlay matching Bag Screen 3 -->
+<div class="absolute inset-0 bg-[#06141a]/65 backdrop-blur-[2px]"></div>
+</div>
+<!-- END: Overworld Game Background -->
+<!-- BEGIN: Top Navigation Header (56px) -->
+<header class="relative z-10 w-full h-[56px] px-3 pt-2 bg-gradient-to-b from-[#082d26]/95 via-[#06201b]/95 to-[#041713]/95 border-b-[3px] border-[#0c4036] flex items-center justify-between shadow-lg" data-purpose="screen-header">
+<!-- Left: Navigation Badge & L/R Views -->
+<div class="flex items-center space-x-2 h-full">
+<!-- Title Badge -->
+<div class="bg-gradient-to-b from-[#1b685c] to-[#104840] border-2 border-[#09352e] px-2.5 py-1.5 rounded-md flex items-center gap-2 shadow-inner cursor-pointer" onclick="selectPokemon(0)">
+<!-- Pokeball SVG Icon -->
+<svg class="w-3.5 h-3.5 pixel-art" fill="none" viewbox="0 0 24 24">
+<circle cx="12" cy="12" fill="#e53e3e" r="10" stroke="#ffffff" stroke-width="2"></circle>
+<path d="M2 12H22" stroke="#1a202c" stroke-width="2.5"></path>
+<path d="M2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12" fill="#f7fafc"></path>
+<circle cx="12" cy="12" fill="#ffffff" r="3.5" stroke="#1a202c" stroke-width="2"></circle>
+<circle cx="12" cy="12" fill="#4a5568" r="1.5"></circle>
+</svg>
+<span class="text-[9px] tracking-wider text-[#d5fbe9] uppercase">PARTY</span>
+</div>
+<span class="text-[#59b89d] text-[10px] ml-1">▶</span>
+<!-- Tab Switcher -->
+<div class="flex items-center gap-1 bg-[#051713] p-0.5 rounded border border-[#14473c] ml-1">
+<button class="ps-shoulder px-1.5 py-0.5 text-[8px] rounded cursor-pointer" onclick="toggleNavTab('left')" title="L Trigger">L</button>
+<div class="flex items-center gap-0.5 text-[8px]">
+<span class="text-[#72a598] px-2 py-0.5 hover:text-white cursor-pointer text-[8px] rounded transition-all" id="header-tab-status" onclick="setMainTab('STATUS')">STATUS</span>
+<span class="bevel-tab-active px-2 py-0.5 rounded text-[8px] font-bold text-[#1c2a22] cursor-pointer transition-all" id="header-tab-moves" onclick="setMainTab('MOVES')">MOVES</span>
+</div>
+<button class="ps-shoulder px-1.5 py-0.5 text-[8px] rounded cursor-pointer" onclick="toggleNavTab('right')" title="R Trigger">R</button>
+</div>
+<!-- Header Active Pokemon Mini Summary Badge -->
+<div class="hidden sm:flex items-center gap-1.5 bg-[#082a22]/90 border border-[#145648] px-2 py-1 rounded ml-1 text-[7.5px]" id="header-poke-banner">
+<span class="text-[#88ffd4] font-bold" id="header-poke-name">MUDKIP</span>
+<span class="text-[#8edec9]" id="header-poke-level">Lv.7</span>
+<span class="text-[#5cbba2]">|</span>
+<span class="text-[#d5fbe9]" id="header-poke-hp">HP 24/24</span>
+</div>
+</div>
+<!-- Right: Party Count & Trainer Meta -->
+<div class="flex items-center space-x-3">
+<!-- Team status pills -->
+<div class="flex items-center gap-1.5 bg-[#07241e] border border-[#195648] px-2.5 py-1 rounded text-[#a6ecd8] text-[9px]">
+<div class="flex items-center gap-1 mr-1" id="team-status-dots">
+<span class="w-2 h-2 rounded-full bg-emerald-400 border border-emerald-200"></span>
+<span class="w-2 h-2 rounded-full bg-emerald-400 border border-emerald-200"></span>
+<span class="w-2 h-2 rounded-full bg-emerald-400 border border-emerald-200"></span>
+<span class="w-2 h-2 rounded-full bg-emerald-400 border border-emerald-200"></span>
+<span class="w-2 h-2 rounded-full bg-emerald-400 border border-emerald-200"></span>
+<span class="w-2 h-2 rounded-full bg-emerald-400 border border-emerald-200"></span>
+</div>
+<span class="text-[#64aa97] text-[8px]">TEAM:</span>
+<span class="text-white font-bold text-[9px]">6 / 6</span>
+</div>
+<!-- Trainer Badge -->
+<div class="bg-[#0e2c26] border border-[#1e6150] px-2.5 py-1 rounded flex items-center gap-1.5 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+<span class="text-[8px] text-cyan-200 uppercase tracking-wide">BRENDAN</span>
+</div>
+</div>
+</header>
+<!-- END: Top Navigation Header -->
+<!-- BEGIN: Main Interface Body (LEFT = Summary/Moves, RIGHT = Party Roster) -->
+<section class="relative z-10 flex-1 w-full px-4 py-2 flex gap-3 overflow-hidden" data-purpose="pokemon-menu-content">
+<!-- ================= LEFT COLUMN: DETAILED SUMMARY & ATTRIBUTES (Width: 472px) ================= -->
+<div class="w-[472px] flex flex-col h-full justify-between gap-1.5 pb-0.5" data-purpose="summary-detail-column" id="left-summary-column">
+<!-- Top Sub-Panel: Switches between Moves & Status based on active tab -->
+<div class="bevel-box-cream rounded-md p-1.5 shadow-md border-2 border-[#233728] flex-1 flex flex-col justify-between text-[#1c2a22] min-h-0" id="primary-left-panel">
+<!-- Dynamic Move/Status Header -->
+<div class="flex items-center justify-between border-b border-[#c2b59f] pb-0.5 shrink-0">
+<div class="flex items-center gap-1.5">
+<span class="text-[7.5px] font-bold text-[#1c2c3d]" id="panel-title-text">KNOWN BATTLE MOVES</span>
+<span class="bg-[#0d281e] text-[#88ffd4] text-[6px] px-1 py-0.2 rounded border border-[#195648]" id="panel-slots-badge">4 / 4 SLOTS</span>
+</div>
+<!-- Sub-tab filter when in STATUS view -->
+<div class="hidden items-center gap-1" id="status-view-filters">
+<button class="bevel-tab-sub-active px-1.5 py-0.2 text-[6px] rounded font-bold" id="tab-stat-base" onclick="setStatFilter('base')">BASE</button>
+<button class="bevel-tab-sub-inactive px-1.5 py-0.2 text-[6px] rounded" id="tab-stat-ev" onclick="setStatFilter('ev')">EVs</button>
+<button class="bevel-tab-sub-inactive px-1.5 py-0.2 text-[6px] rounded" id="tab-stat-iv" onclick="setStatFilter('iv')">IVs</button>
+</div>
+</div>
+<!-- Dynamic Content Container -->
+<div class="my-1 flex-1 flex flex-col justify-between" id="moves-container" style="gap: 6px;">
+<!-- Rendered dynamically via JavaScript -->
+</div>
+</div>
+<!-- Bottom Sub-Panel: Combat Traits & Tactical Breakdown -->
+<div class="bevel-box-cream rounded-md p-1.5 shadow-md border-2 border-[#233728] flex flex-col justify-between text-[#1c2a22] shrink-0" id="traits-tactical-panel" style="height: 144px;">
+<div class="flex items-center justify-between border-b border-[#c2b59f] pb-0.5">
+<span class="text-[7.5px] font-bold text-[#1c2c3d]">COMBAT TRAITS &amp; TACTICAL BREAKDOWN</span>
+<div class="flex items-center gap-1.5 text-[6.5px]">
+<span class="text-[#728277]">TARGET:</span>
+<span class="text-[#b45309] font-bold" id="trait-target">SINGLE FOE</span>
+<span class="text-[#728277] ml-1">CONTACT:</span>
+<span class="text-[#15803d] font-bold" id="trait-contact">YES</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-1.5 my-0.5 flex-1">
+<!-- Ability Card -->
+<div class="bg-[#efe8d5] border border-[#cbbeaa] rounded px-2 py-2 flex flex-col justify-between shadow-sm">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-[6.5px] text-[#728277]">COMBAT ABILITY</span>
+<span class="bg-[#0369a1] text-white text-[5.5px] px-1 py-0.2 rounded font-bold">ACTIVE</span>
+</div>
+<span class="text-[8.5px] font-bold text-[#0369a1] block mb-1" id="trait-ability-name">TORRENT</span>
+<p class="text-[6.5px] text-[#475569] leading-tight" id="trait-ability-desc">Powers up Water-type attacks by 50% when current HP is below 1/3 maximum.</p>
+</div>
+<div class="bg-[#fbf8ee] border border-[#dfd4bd] px-1.5 py-1 rounded text-[6px] text-[#096041] font-bold mt-1" id="trait-ability-status">STATUS: READY (HP at 100%)</div>
+</div>
+<!-- Held Battle Item Card -->
+<div class="bg-[#efe8d5] border border-[#cbbeaa] rounded px-2 py-2 flex flex-col justify-between shadow-sm">
+<div>
+<div class="flex items-center justify-between mb-1">
+<span class="text-[6.5px] text-[#728277]">HELD BATTLE ITEM</span>
+<span class="bg-[#d97706] text-white text-[5.5px] px-1 py-0.2 rounded font-bold" id="trait-item-badge">BERRY</span>
+</div>
+<span class="text-[8.5px] font-bold text-[#b45309] block mb-1" id="trait-item-name">ORAN BERRY</span>
+<p class="text-[6.5px] text-[#475569] leading-tight" id="trait-item-desc">Automatically consumed when Pokémon's HP falls below 50% to instantly restore 10 HP.</p>
+</div>
+<div class="bg-[#fbf8ee] border border-[#dfd4bd] px-1.5 py-1 rounded text-[6px] text-[#15803d] font-bold flex items-center justify-between mt-1">
+<span id="trait-item-sub">EQUIPPED &amp; UNUSED</span>
+<span class="text-[#ea580c]" id="trait-item-tag">● CONSUMABLE</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ================= RIGHT COLUMN: POKÉMON PARTY ROSTER (6 Pokémon, Width: ~456px) ================= -->
+<div class="flex-1 flex flex-col gap-1 h-[440px] pr-1 overflow-hidden justify-center" data-purpose="pokemon-party-roster-column">
+<!-- Slot 0: MUDKIP Lv.7 (Lead Card) -->
+<div class="bevel-card-lead rounded-md px-2 py-1.5 relative cursor-pointer shadow-md flex items-center gap-2 transition-all ring-2 ring-[#f59e0b]" data-purpose="roster-slot-1" id="roster-card-0" onclick="selectPokemon(0)">
+<span class="text-[#a85800] text-[10px] animate-pulse" id="roster-indicator-0">▶</span>
+<!-- 44x44 Mini Sprite Area (Mudkip Lead) -->
+<div class="w-[44px] h-[44px] bg-[#e0f2fe] border border-[#0284c7] rounded flex items-center justify-center shrink-0 shadow-inner" style="width: 44px; height: 44px; image-rendering: pixelated;"><img alt="Mudkip" class="w-[40px] h-[40px] object-contain pixel-art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDU0i8hHP11fuqYEVSCXc3NNsXZgajTx141NQQMHyBmgHxO7QTjf4rl0yjMM4ilot5ACPmqv5OxegiKJyFwDGbbO10rb7rYT4rG0ugwb5SePByBveqrXqNlnTO6l9R7zHdhBokqCu3IE-htfS6W0DISJbHIAj6mKf6F_1kQEjPyCUSMH-1fHc6rc61JysDtfWPE5h5jGMzOMwBaLztYaYQNo455E3USScELT-8iMBkQ" style="image-rendering: pixelated;"/></div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between mb-0.5">
+<div class="flex items-center gap-1.5">
+<span class="text-[9.5px] text-[#2c1d02] font-black" id="roster-name-0">MUDKIP</span>
+<span class="text-[#0052cc] font-bold text-[11px]">♂</span>
+<span class="bg-[#2a75d3] text-white px-1.5 py-0.2 rounded text-[7px] border border-[#164b91]">WATER</span>
+<span class="text-[6.5px] bg-[#d97706] text-white px-1 py-0.2 rounded font-bold uppercase">LEAD</span>
+</div>
+<span class="text-[8.5px] text-[#4d2d00] font-bold" id="roster-lvl-0">Lv.7</span>
+</div>
+<div class="mt-1 flex items-center justify-between gap-2">
+<div class="flex items-center gap-1.5 flex-1">
+<span class="text-[6.5px] text-[#b85a00] font-bold" id="roster-hplabel-0">HP</span>
+<div class="flex-1 h-3 bg-[#1e2630] rounded-xs p-0.5 border border-[#0f172a] shadow-inner">
+<div class="h-full bg-[#10b981] w-full rounded-xs shadow-sm"></div>
+</div>
+<span class="text-[7px] text-[#2c1d02] font-bold" id="roster-hpval-0">24/24</span>
+</div>
+<div class="flex items-center gap-1 text-[7px] text-[#854d0e]">
+<span class="text-[#ea580c]">●</span>
+<span class="">ORAN BERRY</span>
+<span class="text-[#15803d] font-bold ml-1">OK</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Slot 1: TORCHIC Lv.5 -->
+<div class="bevel-card-normal rounded-md px-2 py-1.5 cursor-pointer flex items-center gap-2 transition-all" data-purpose="roster-slot-2" id="roster-card-1" onclick="selectPokemon(1)">
+<span class="w-[10px] text-center text-[#94a3b8] text-[8px]" id="roster-indicator-1">●</span>
+<!-- 32x32 Mini Sprite Area (Torchic) -->
+<div class="w-[32px] h-[32px] bg-[#fff7ed] border border-[#ea580c] rounded flex items-center justify-center shrink-0 shadow-inner" style="width: 32px; height: 32px; image-rendering: pixelated;"><img alt="Torchic" class="w-[32px] h-[32px] object-contain pixel-art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBk5n2zOHmYw6RxPsmexKYUur2gIDzrwu-TfaBNLZDw65zWbpuTA4ZoDU7PbIkJ2mlPJ-zd7ix4bnI7VrDiUtAkcqxf5z6I6hzE9WRmYE-trBUDU9WrjvJz9PxH_JYuwdQ5aJC4_6WuWFJB86RCZj7srfD0OYNj3ejS9XztzssmkRxNlCeFK0ZfPCoUa943385eR7sEWIQhcADisPD4gIrq-EcAsgk3dgJxUprI8bZu" style="image-rendering: pixelated;"/></div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="text-[9px] text-[#1e2631] font-bold" id="roster-name-1">TORCHIC</span>
+<span class="text-[#0052cc] font-bold text-[9.5px]">♂</span>
+<span class="bg-[#ea580c] text-white px-1 py-0.2 rounded text-[6.5px]">FIRE</span>
+</div>
+<span class="text-[8px] text-[#475569] font-bold" id="roster-lvl-1">Lv.5</span>
+</div>
+<div class="mt-1 flex items-center justify-between gap-2">
+<div class="flex items-center gap-1 flex-1">
+<span class="text-[6.5px] text-[#64748b]" id="roster-hplabel-1">HP</span>
+<div class="flex-1 h-2.5 bg-[#1e2630] rounded-xs p-0.5 border border-[#0f172a] shadow-inner"><div class="h-full bg-[#10b981] w-full rounded-xs shadow-sm"></div></div>
+<span class="text-[7px] text-[#1e293b]" id="roster-hpval-1">20/20</span>
+</div>
+<div class="flex items-center gap-1 text-[6.5px] text-[#64748b]">
+<span class="text-slate-400">NONE</span>
+<span class="text-[#15803d] font-bold ml-1">OK</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Slot 2: RALTS Lv.5 -->
+<div class="bevel-card-normal rounded-md px-2 py-1.5 cursor-pointer flex items-center gap-2 transition-all" data-purpose="roster-slot-3" id="roster-card-2" onclick="selectPokemon(2)">
+<span class="w-[10px] text-center text-[#94a3b8] text-[8px]" id="roster-indicator-2">●</span>
+<!-- 32x32 Mini Sprite Area (Ralts) -->
+<div class="w-[32px] h-[32px] bg-[#f5f3ff] border border-[#9333ea] rounded flex items-center justify-center shrink-0 shadow-inner" style="width: 32px; height: 32px; image-rendering: pixelated;"><img alt="Ralts" class="w-[32px] h-[32px] object-contain pixel-art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAxicuYc9HtpcKYWbTHqTl73cEJ8mx_o8FBkRP98n6fmC80NaZ5Q6FvGVFCGUGyJifXnwPAE0UfeOHfnxONHZcwqal0sqaMcEeCjRdD_QJvz6_sCBS0RRqW7wkkWvAAMgk-kj2yDnc0h2Y2L1nINzzcWB1WIT4zvEpMhAs_0cH6cYNOjALFxkWam4v9hLHLTaDoEBjMKh4h0ze85UpEu58FCYTJDCEo6KxG-mQ860M0" style="image-rendering: pixelated;"/></div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="text-[9px] text-[#1e2631] font-bold" id="roster-name-2">RALTS</span>
+<span class="text-[#0052cc] font-bold text-[9.5px]">♂</span>
+<span class="bg-[#9333ea] text-white px-1 py-0.2 rounded text-[6.5px]">PSYCHIC</span>
+</div>
+<span class="text-[8px] text-[#475569] font-bold" id="roster-lvl-2">Lv.5</span>
+</div>
+<div class="mt-1 flex items-center justify-between gap-2">
+<div class="flex items-center gap-1 flex-1">
+<span class="text-[6.5px] text-[#64748b]" id="roster-hplabel-2">HP</span>
+<div class="flex-1 h-2.5 bg-[#1e2630] rounded-xs p-0.5 border border-[#0f172a] shadow-inner"><div class="h-full bg-[#10b981] w-full rounded-xs shadow-sm"></div></div>
+<span class="text-[7px] text-[#1e293b]" id="roster-hpval-2">19/19</span>
+</div>
+<div class="flex items-center gap-1 text-[6.5px] text-[#64748b]">
+<span class="text-slate-400">NONE</span>
+<span class="text-[#15803d] font-bold ml-1">OK</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Slot 3: TAILLOW Lv.6 -->
+<div class="bevel-card-normal rounded-md px-2 py-1.5 cursor-pointer flex items-center gap-2 transition-all" data-purpose="roster-slot-4" id="roster-card-3" onclick="selectPokemon(3)">
+<span class="w-[10px] text-center text-[#94a3b8] text-[8px]" id="roster-indicator-3">●</span>
+<!-- 32x32 Mini Sprite Area (Taillow) -->
+<div class="w-[32px] h-[32px] bg-[#e0f2fe] border border-[#0284c7] rounded flex items-center justify-center shrink-0 shadow-inner" style="width: 32px; height: 32px; image-rendering: pixelated;"><img alt="Taillow" class="w-[32px] h-[32px] object-contain pixel-art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAu9p9uCPwxIkTfI4HKdWjXojnxsNYxdvNbpqblyzN29gkFy3WgnPyEZiYt_I8a-mAntnSvT0L0eWtL14JIbFChmKkspPi5eVaf8Dmtm9fWzwBzYWSb49kc4cH9gQ4XWXM8j6NMRT49djmQnON9Oh4nfRlQjlHoMk7OWPbJanHFXCSEfYSw9_mawGbV8W_lbiModKgxKB0_-B8hmUTO89a8AHVUvWp_v4whUNp-CWy9" style="image-rendering: pixelated;"/></div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="text-[9px] text-[#1e2631] font-bold" id="roster-name-3">TAILLOW</span>
+<span class="text-[#d81b60] font-bold text-[9.5px]">♀</span>
+<span class="bg-[#0284c7] text-white px-1 py-0.2 rounded text-[6.5px]">FLYING</span>
+</div>
+<span class="text-[8px] text-[#475569] font-bold" id="roster-lvl-3">Lv.6</span>
+</div>
+<div class="mt-1 flex items-center justify-between gap-2">
+<div class="flex items-center gap-1 flex-1">
+<span class="text-[6.5px] text-[#64748b]" id="roster-hplabel-3">HP</span>
+<div class="flex-1 h-2.5 bg-[#1e2630] rounded-xs p-0.5 border border-[#0f172a] shadow-inner"><div class="h-full bg-[#10b981] w-full rounded-xs shadow-sm"></div></div>
+<span class="text-[7px] text-[#1e293b]" id="roster-hpval-3">21/21</span>
+</div>
+<div class="flex items-center gap-1 text-[6.5px] text-[#64748b]">
+<span class="text-slate-400">NONE</span>
+<span class="text-[#15803d] font-bold ml-1">OK</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Slot 4: ZIGZAGOON Lv.4 -->
+<div class="bevel-card-normal rounded-md px-2 py-1.5 cursor-pointer flex items-center gap-2 transition-all" data-purpose="roster-slot-5" id="roster-card-4" onclick="selectPokemon(4)">
+<span class="w-[10px] text-center text-[#94a3b8] text-[8px]" id="roster-indicator-4">●</span>
+<!-- 32x32 Mini Sprite Area (Zigzagoon) -->
+<div class="w-[32px] h-[32px] bg-[#f1f5f9] border border-[#64748b] rounded flex items-center justify-center shrink-0 shadow-inner" style="width: 32px; height: 32px; image-rendering: pixelated;"><img alt="Zigzagoon" class="w-[32px] h-[32px] object-contain pixel-art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBv2iIjtGvNWYChru4ODBFPj3c_xaee3B5qJ2IktzbQBzN76BpLn1rTbD7coKYJXBBOm0Xt3Vh-ZHykzroLS6NP6H8n_BHCjWbIgVDxQYaEZ3dn3wJRasHfwRa5hOoYkTSpAeP6Y0BPjkGh87G7Nwb69jjuHY5zRvcv2_HKyB-joCnHoJuUFFB7BxwF2GQ9RrvKZLnPxDxNsZpUfvOiaMFMlFfmZCZDdBG5JmENKMxT" style="image-rendering: pixelated;"/></div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="text-[9px] text-[#1e2631] font-bold" id="roster-name-4">ZIGZAGOON</span>
+<span class="text-[#d81b60] font-bold text-[9.5px]">♀</span>
+<span class="bg-[#64748b] text-white px-1 py-0.2 rounded text-[6.5px]">NORMAL</span>
+</div>
+<span class="text-[8px] text-[#475569] font-bold" id="roster-lvl-4">Lv.4</span>
+</div>
+<div class="mt-1 flex items-center justify-between gap-2">
+<div class="flex items-center gap-1 flex-1">
+<span class="text-[6.5px] text-[#64748b]" id="roster-hplabel-4">HP</span>
+<div class="flex-1 h-2.5 bg-[#1e2630] rounded-xs p-0.5 border border-[#0f172a] shadow-inner"><div class="h-full bg-[#10b981] w-full rounded-xs shadow-sm"></div></div>
+<span class="text-[7px] text-[#1e293b]" id="roster-hpval-4">17/17</span>
+</div>
+<div class="flex items-center gap-1 text-[6.5px] text-[#854d0e]">
+<span class="text-[#ea580c]">●</span>
+<span class="">POTION</span>
+<span class="text-[#15803d] font-bold ml-1">OK</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Slot 5: WURMPLE Lv.3 -->
+<div class="bevel-card-normal rounded-md px-2 py-1.5 cursor-pointer flex items-center gap-2 transition-all" data-purpose="roster-slot-6" id="roster-card-5" onclick="selectPokemon(5)">
+<span class="w-[10px] text-center text-[#94a3b8] text-[8px]" id="roster-indicator-5">●</span>
+<!-- 32x32 Mini Sprite Area (Wurmple) -->
+<div class="w-[32px] h-[32px] bg-[#f0fdf4] border border-[#16a34a] rounded flex items-center justify-center shrink-0 shadow-inner" style="width: 32px; height: 32px; image-rendering: pixelated;"><img alt="Wurmple" class="w-[32px] h-[32px] object-contain pixel-art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJ9J4peN7SIJ3FkW9VSsl58LmCia9Bwgx_qfJQEz6rtdHiQxqp6Mo89mRcqR3TOgqmU4Te71lQfZh6ty1atD3fUP1cu4Ws6f8QI4R50QhCiIaviZLRmnFkPwjKo_sZgXepCxdJU3Q0AroNxh-n52d_skqE0-BdYw76EQ7Neha2Lois6YReADsTUZMjnWSoUi4GJJ1-v2-_C92RzCCUgffoVvsUVCwqEfo_520Zp2kz" style="image-rendering: pixelated;"/></div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="text-[9px] text-[#1e2631] font-bold" id="roster-name-5">WURMPLE</span>
+<span class="text-[#0052cc] font-bold text-[9.5px]">♂</span>
+<span class="bg-[#16a34a] text-white px-1 py-0.2 rounded text-[6.5px]">BUG</span>
+</div>
+<span class="text-[8px] text-[#475569] font-bold" id="roster-lvl-5">Lv.3</span>
+</div>
+<div class="mt-1 flex items-center justify-between gap-2">
+<div class="flex items-center gap-1 flex-1">
+<span class="text-[6.5px] text-[#64748b]" id="roster-hplabel-5">HP</span>
+<div class="flex-1 h-2.5 bg-[#1e2630] rounded-xs p-0.5 border border-[#0f172a] shadow-inner"><div class="h-full bg-[#10b981] w-full rounded-xs shadow-sm"></div></div>
+<span class="text-[7px] text-[#1e293b]" id="roster-hpval-5">15/15</span>
+</div>
+<div class="flex items-center gap-1 text-[6.5px] text-[#64748b]">
+<span class="text-slate-400">NONE</span>
+<span class="text-[#15803d] font-bold ml-1">OK</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Main Interface Body -->
+<!-- BEGIN: ConsoleFooter (Strict 1:1 PS Vita Canonical Bottom Bar) -->
+<footer class="relative z-10 w-full h-[40px] px-3 bg-[#0b1526] border-t border-[#1b2a40] flex items-center justify-between text-white text-[9px] font-pixel shadow-2xl" data-purpose="console-footer"><!-- Left Controls: PlayStation Face Buttons -->
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-1 cursor-pointer" onclick="toggleNavTab('right')">
+<span class="ps-btn ps-cross">✕</span>
+<span class="text-[#ccd7e6] text-[8px]">SELECT / DETAILS</span>
+</div>
+<div class="flex items-center space-x-1 cursor-pointer" onclick="selectPokemon(0)">
+<span class="ps-btn ps-circle">○</span>
+<span class="text-[#ccd7e6] text-[8px]">BACK</span>
+</div>
+<div class="flex items-center space-x-1 cursor-pointer" onclick="cyclePokemon()">
+<span class="ps-btn ps-triangle">▲</span>
+<span class="text-[#ccd7e6] text-[8px]">NEXT POKÉMON</span>
+</div>
+<div class="flex items-center space-x-1 cursor-pointer" onclick="toggleNavTab('toggle')">
+<span class="ps-btn ps-square">■</span>
+<span class="text-[#ccd7e6] text-[8px]">SWITCH TAB</span>
+</div>
+</div>
+<!-- Right Controls: L/R tabs, Select, Start, Clock & Battery -->
+<div class="flex items-center space-x-2.5">
+<div class="flex items-center space-x-1 bg-[#101e33] px-1.5 py-0.5 rounded border border-[#203759] text-[7.5px] text-[#9bb7df] cursor-pointer" onclick="toggleNavTab('toggle')">
+<span class="font-bold text-[#e1edff]">L / R</span>
+<span class="text-[#647c9f]">TABS</span>
+</div>
+<div class="flex items-center space-x-1 text-[7.5px] text-[#7d93b3]">
+<span class="bg-[#0d281e] px-1.5 py-0.5 rounded border border-[#195648] text-[#88ffd4]">[START] <span class="text-[#a6ecd8]">MENU</span></span>
+</div>
+<span class="text-[8px] text-[#9bb7df] font-mono pl-1 border-l border-[#203759]">10:42</span>
+<div class="flex items-center space-x-1 pl-1">
+<div class="w-4 h-2.5 bg-[#0a1829] border border-[#3b5d8c] rounded-sm p-[1px] flex items-center">
+<div class="w-full h-full bg-[#00dd66] rounded-[1px]"></div>
+</div>
+<span class="text-[7.5px] text-[#00dd66] font-mono font-bold">100%</span>
+</div>
+</div></footer>
+<!-- END: ConsoleFooter -->
+</main>
+<!-- END: VitaScreenFrame -->
+<!-- BEGIN: Interactive Pokemon Dataset & Controller Logic -->
+<script>
+const pokemonData = [
+  {
+    id: 0,
+    dex: "No. 258",
+    name: "MUDKIP",
+    gender: "♂",
+    genderColor: "text-[#0052cc]",
+    level: 7,
+    hp: "24/24",
+    type: "WATER",
+    typeBg: "bg-[#2a75d3]",
+    typeBorder: "border-[#164b91]",
+    isLead: true,
+    heldItem: "ORAN BERRY",
+    itemBadge: "BERRY",
+    itemDesc: "Automatically consumed when Pokémon's HP falls below 50% to instantly restore 10 HP.",
+    itemSub: "EQUIPPED & UNUSED",
+    itemTag: "● CONSUMABLE",
+    targetInfo: "SINGLE FOE",
+    contactInfo: "YES",
+    ability: "TORRENT",
+    abilityDesc: "Powers up Water-type attacks by 50% when current HP is below 1/3 maximum.",
+    abilityStatus: "STATUS: READY (HP at 100%)",
+    stats: {
+      hp: { base: "24 / 24", ev: 0, iv: 31, val: "24 / 24" },
+      atk: { label: "ATK ▲", base: 16, ev: 252, iv: 31, val: 16, boost: true },
+      def: { label: "DEF", base: 14, ev: 4, iv: 28, val: 14 },
+      spAtk: { label: "SP.ATK ▼", base: 12, ev: 0, iv: 15, val: 12, penalty: true },
+      spDef: { label: "SP.DEF", base: 13, ev: 0, iv: 29, val: 13 },
+      speed: { label: "SPEED", base: 11, ev: 252, iv: 31, val: 11 }
+    },
+    moves: [
+      { name: "TACKLE", type: "NORMAL", cat: "PHYSICAL", typeBg: "bg-[#78828a]", catBg: "bg-[#ea580c]", desc: "A physical charge made with the entire body.", pwr: "40", acc: "100%", pp: "35/35" },
+      { name: "GROWL", type: "NORMAL", cat: "STATUS", typeBg: "bg-[#78828a]", catBg: "bg-[#64748b]", desc: "Growls cutely to reduce foe's Attack by 1 stage.", pwr: "---", acc: "100%", pp: "40/40" },
+      { name: "MUD-SLAP", type: "GROUND", cat: "SPECIAL", typeBg: "bg-[#ab7a3d]", catBg: "bg-[#2a75d3]", desc: "Hurls mud in foe's eyes, reducing its accuracy.", pwr: "20", acc: "100%", pp: "10/10" },
+      { name: "WATER GUN", type: "WATER", cat: "SPECIAL", typeBg: "bg-[#2a75d3]", catBg: "bg-[#2a75d3]", desc: "Squirts water forcefully to strike the opponent.", pwr: "40", acc: "100%", pp: "25/25" }
+    ]
+  },
+  {
+    id: 1,
+    dex: "No. 255",
+    name: "TORCHIC",
+    gender: "♂",
+    genderColor: "text-[#0052cc]",
+    level: 5,
+    hp: "20/20",
+    type: "FIRE",
+    typeBg: "bg-[#ea580c]",
+    typeBorder: "border-[#c2410c]",
+    isLead: false,
+    heldItem: "NONE",
+    itemBadge: "ITEM",
+    itemDesc: "No item is currently held by this Pokémon. Items can be given from the Bag.",
+    itemSub: "SLOT EMPTY",
+    itemTag: "○ NO EFFECT",
+    targetInfo: "SINGLE FOE",
+    contactInfo: "YES",
+    ability: "BLAZE",
+    abilityDesc: "Powers up Fire-type attacks by 50% when current HP is below 1/3 maximum.",
+    abilityStatus: "STATUS: READY (HP at 100%)",
+    stats: {
+      hp: { base: "20 / 20", ev: 0, iv: 28, val: "20 / 20" },
+      atk: { label: "ATK", base: 14, ev: 180, iv: 31, val: 14 },
+      def: { label: "DEF", base: 10, ev: 0, iv: 20, val: 10 },
+      spAtk: { label: "SP.ATK ▼", base: 15, ev: 76, iv: 30, val: 15, penalty: true },
+      spDef: { label: "SP.DEF", base: 11, ev: 0, iv: 22, val: 11 },
+      speed: { label: "SPEED ▲", base: 13, ev: 252, iv: 31, val: 13, boost: true }
+    },
+    moves: [
+      { name: "SCRATCH", type: "NORMAL", cat: "PHYSICAL", typeBg: "bg-[#78828a]", catBg: "bg-[#ea580c]", desc: "Hard, pointed, sharp claws rake the target.", pwr: "40", acc: "100%", pp: "35/35" },
+      { name: "GROWL", type: "NORMAL", cat: "STATUS", typeBg: "bg-[#78828a]", catBg: "bg-[#64748b]", desc: "Growls cutely to reduce foe's Attack by 1 stage.", pwr: "---", acc: "100%", pp: "40/40" },
+      { name: "FOCUS ENERGY", type: "NORMAL", cat: "STATUS", typeBg: "bg-[#78828a]", catBg: "bg-[#64748b]", desc: "Takes a deep breath to raise its critical-hit ratio.", pwr: "---", acc: "---", pp: "30/30" },
+      { name: "EMBER", type: "FIRE", cat: "SPECIAL", typeBg: "bg-[#ea580c]", catBg: "bg-[#2a75d3]", desc: "A weak fire attack that may inflict a burn on foe.", pwr: "40", acc: "100%", pp: "25/25" }
+    ]
+  },
+  {
+    id: 2,
+    dex: "No. 280",
+    name: "RALTS",
+    gender: "♂",
+    genderColor: "text-[#0052cc]",
+    level: 5,
+    hp: "19/19",
+    type: "PSYCHIC",
+    typeBg: "bg-[#9333ea]",
+    typeBorder: "border-[#7e22ce]",
+    isLead: false,
+    heldItem: "NONE",
+    itemBadge: "ITEM",
+    itemDesc: "No item is currently held by this Pokémon. Items can be given from the Bag.",
+    itemSub: "SLOT EMPTY",
+    itemTag: "○ NO EFFECT",
+    targetInfo: "SINGLE FOE",
+    contactInfo: "NO",
+    ability: "SYNCHRONIZE",
+    abilityDesc: "Passes poison, paralyze, or burn status ailments back onto the attacking opponent.",
+    abilityStatus: "STATUS: READY (HP at 100%)",
+    stats: {
+      hp: { base: "19 / 19", ev: 0, iv: 29, val: "19 / 19" },
+      atk: { label: "ATK ▼", base: 8, ev: 0, iv: 14, val: 8, penalty: true },
+      def: { label: "DEF", base: 8, ev: 0, iv: 25, val: 8 },
+      spAtk: { label: "SP.ATK ▲", base: 16, ev: 252, iv: 31, val: 16, boost: true },
+      spDef: { label: "SP.DEF", base: 12, ev: 4, iv: 31, val: 12 },
+      speed: { label: "SPEED", base: 11, ev: 252, iv: 30, val: 11 }
+    },
+    moves: [
+      { name: "GROWL", type: "NORMAL", cat: "STATUS", typeBg: "bg-[#78828a]", catBg: "bg-[#64748b]", desc: "Growls cutely to reduce foe's Attack by 1 stage.", pwr: "---", acc: "100%", pp: "40/40" },
+      { name: "CONFUSION", type: "PSYCHIC", cat: "SPECIAL", typeBg: "bg-[#9333ea]", catBg: "bg-[#2a75d3]", desc: "A telekinetic attack that may leave the foe confused.", pwr: "50", acc: "100%", pp: "25/25" },
+      { name: "DOUBLE TEAM", type: "NORMAL", cat: "STATUS", typeBg: "bg-[#78828a]", catBg: "bg-[#64748b]", desc: "Creates illusory copies to sharply raise evasiveness.", pwr: "---", acc: "---", pp: "15/15" },
+      { name: "TELEPORT", type: "PSYCHIC", cat: "STATUS", typeBg: "bg-[#9333ea]", catBg: "bg-[#64748b]", desc: "Uses psychic power to switch out or flee wild battle.", pwr: "---", acc: "---", pp: "20/20" }
+    ]
+  },
+  {
+    id: 3,
+    dex: "No. 276",
+    name: "TAILLOW",
+    gender: "♀",
+    genderColor: "text-[#d81b60]",
+    level: 6,
+    hp: "21/21",
+    type: "FLYING",
+    typeBg: "bg-[#0284c7]",
+    typeBorder: "border-[#0369a1]",
+    isLead: false,
+    heldItem: "NONE",
+    itemBadge: "ITEM",
+    itemDesc: "No item is currently held by this Pokémon. Items can be given from the Bag.",
+    itemSub: "SLOT EMPTY",
+    itemTag: "○ NO EFFECT",
+    targetInfo: "SINGLE FOE",
+    contactInfo: "YES",
+    ability: "GUTS",
+    abilityDesc: "Boosts the Attack stat by 50% if the Pokémon suffers from a major status condition.",
+    abilityStatus: "STATUS: READY (HP at 100%)",
+    stats: {
+      hp: { base: "21 / 21", ev: 4, iv: 31, val: "21 / 21" },
+      atk: { label: "ATK ▲", base: 15, ev: 252, iv: 31, val: 15, boost: true },
+      def: { label: "DEF", base: 9, ev: 0, iv: 26, val: 9 },
+      spAtk: { label: "SP.ATK ▼", base: 8, ev: 0, iv: 10, val: 8, penalty: true },
+      spDef: { label: "SP.DEF", base: 9, ev: 0, iv: 24, val: 9 },
+      speed: { label: "SPEED", base: 18, ev: 252, iv: 31, val: 18 }
+    },
+    moves: [
+      { name: "PECK", type: "FLYING", cat: "PHYSICAL", typeBg: "bg-[#0284c7]", catBg: "bg-[#ea580c]", desc: "The target is jabbed with a sharply pointed beak.", pwr: "35", acc: "100%", pp: "35/35" },
+      { name: "GROWL", type: "NORMAL", cat: "STATUS", typeBg: "bg-[#78828a]", catBg: "bg-[#64748b]", desc: "Growls cutely to reduce foe's Attack by 1 stage.", pwr: "---", acc: "100%", pp: "40/40" },
+      { name: "FOCUS ENERGY", type: "NORMAL", cat: "STATUS", typeBg: "bg-[#78828a]", catBg: "bg-[#64748b]", desc: "Takes a deep breath to raise its critical-hit ratio.", pwr: "---", acc: "---", pp: "30/30" },
+      { name: "QUICK ATTACK", type: "NORMAL", cat: "PHYSICAL", typeBg: "bg-[#78828a]", catBg: "bg-[#ea580c]", desc: "An almost invisible, blindingly fast priority strike.", pwr: "40", acc: "100%", pp: "30/30" }
+    ]
+  },
+  {
+    id: 4,
+    dex: "No. 263",
+    name: "ZIGZAGOON",
+    gender: "♀",
+    genderColor: "text-[#d81b60]",
+    level: 4,
+    hp: "17/17",
+    type: "NORMAL",
+    typeBg: "bg-[#64748b]",
+    typeBorder: "border-[#475569]",
+    isLead: false,
+    heldItem: "POTION",
+    itemBadge: "MEDICINE",
+    itemDesc: "A spray-type medicine for treating wounds. Restores 20 HP to a single Pokémon.",
+    itemSub: "HELD BATTLE ITEM",
+    itemTag: "● CONSUMABLE",
+    targetInfo: "SINGLE FOE",
+    contactInfo: "YES",
+    ability: "PICKUP",
+    abilityDesc: "Has a 10% chance to forage and hold random items after battle if not holding anything.",
+    abilityStatus: "STATUS: READY (HP at 100%)",
+    stats: {
+      hp: { base: "17 / 17", ev: 252, iv: 30, val: "17 / 17" },
+      atk: { label: "ATK", base: 9, ev: 0, iv: 22, val: 9 },
+      def: { label: "DEF ▲", base: 11, ev: 252, iv: 31, val: 11, boost: true },
+      spAtk: { label: "SP.ATK ▼", base: 7, ev: 0, iv: 15, val: 7, penalty: true },
+      spDef: { label: "SP.DEF", base: 10, ev: 4, iv: 28, val: 10 },
+      speed: { label: "SPEED", base: 14, ev: 0, iv: 25, val: 14 }
+    },
+    moves: [
+      { name: "TACKLE", type: "NORMAL", cat: "PHYSICAL", typeBg: "bg-[#78828a]", catBg: "bg-[#ea580c]", desc: "A physical charge made with the entire body.", pwr: "40", acc: "100%", pp: "35/35" },
+      { name: "GROWL", type: "NORMAL", cat: "STATUS", typeBg: "bg-[#78828a]", catBg: "bg-[#64748b]", desc: "Growls cutely to reduce foe's Attack by 1 stage.", pwr: "---", acc: "100%", pp: "40/40" },
+      { name: "TAIL WHIP", type: "NORMAL", cat: "STATUS", typeBg: "bg-[#78828a]", catBg: "bg-[#64748b]", desc: "Wags tail cutely to drop the target's Defense by 1.", pwr: "---", acc: "100%", pp: "30/30" },
+      { name: "HEADBUTT", type: "NORMAL", cat: "PHYSICAL", typeBg: "bg-[#78828a]", catBg: "bg-[#ea580c]", desc: "A fierce head attack that may cause foe to flinch.", pwr: "70", acc: "100%", pp: "15/15" }
+    ]
+  },
+  {
+    id: 5,
+    dex: "No. 265",
+    name: "WURMPLE",
+    gender: "♂",
+    genderColor: "text-[#0052cc]",
+    level: 3,
+    hp: "15/15",
+    type: "BUG",
+    typeBg: "bg-[#16a34a]",
+    typeBorder: "border-[#15803d]",
+    isLead: false,
+    heldItem: "NONE",
+    itemBadge: "ITEM",
+    itemDesc: "No item is currently held by this Pokémon. Items can be given from the Bag.",
+    itemSub: "SLOT EMPTY",
+    itemTag: "○ NO EFFECT",
+    targetInfo: "SINGLE FOE",
+    contactInfo: "YES",
+    ability: "SHIELD DUST",
+    abilityDesc: "Blocks and negates the additional secondary effects of incoming damaging attacks.",
+    abilityStatus: "STATUS: READY (HP at 100%)",
+    stats: {
+      hp: { base: "15 / 15", ev: 100, iv: 25, val: "15 / 15" },
+      atk: { label: "ATK", base: 8, ev: 0, iv: 18, val: 8 },
+      def: { label: "DEF", base: 8, ev: 100, iv: 20, val: 8 },
+      spAtk: { label: "SP.ATK ▼", base: 6, ev: 0, iv: 12, val: 6, penalty: true },
+      spDef: { label: "SP.DEF ▲", base: 8, ev: 100, iv: 22, val: 8, boost: true },
+      speed: { label: "SPEED", base: 6, ev: 0, iv: 19, val: 6 }
+    },
+    moves: [
+      { name: "TACKLE", type: "NORMAL", cat: "PHYSICAL", typeBg: "bg-[#78828a]", catBg: "bg-[#ea580c]", desc: "A physical charge made with the entire body.", pwr: "40", acc: "100%", pp: "35/35" },
+      { name: "STRING SHOT", type: "BUG", cat: "STATUS", typeBg: "bg-[#16a34a]", catBg: "bg-[#64748b]", desc: "Silk binds foes to harshly lower their Speed stat.", pwr: "---", acc: "95%", pp: "40/40" },
+      { name: "POISON STING", type: "POISON", cat: "PHYSICAL", typeBg: "bg-[#a855f7]", catBg: "bg-[#ea580c]", desc: "Barbs attack the foe. May also poison the target.", pwr: "15", acc: "100%", pp: "35/35" },
+      { name: "BUG BITE", type: "BUG", cat: "PHYSICAL", typeBg: "bg-[#16a34a]", catBg: "bg-[#ea580c]", desc: "Bites foe. Steals and eats target's held Berry.", pwr: "60", acc: "100%", pp: "20/20" }
+    ]
+  }
+];
+
+let currentSelectedIndex = 0;
+let currentMainTab = 'MOVES'; // 'MOVES' or 'STATUS'
+let currentStatFilter = 'base'; // 'base', 'ev', or 'iv'
+
+function renderMoves(pokemon) {
+  const container = document.getElementById('moves-container');
+  if (!container) return;
+
+  let html = '';
+  pokemon.moves.forEach((m, idx) => {
+    const isFirst = idx === 0;
+    const cardClass = isFirst
+      ? 'bg-[#fffbeb] border-2 border-[#ea580c] px-2.5 py-2.5 rounded flex items-center justify-between cursor-pointer shadow-sm relative ring-1 ring-[#f59e0b] min-h-[46px]'
+      : 'bg-[#efe8d5] border border-[#beb199] px-2.5 py-2.5 rounded flex items-center justify-between hover:bg-[#f7f0df] cursor-pointer transition-all min-h-[46px]';
+
+    const indicator = isFirst
+      ? '<span class="text-[#ea580c] text-[8.5px] animate-pulse leading-none shrink-0">▶</span>'
+      : '<span class="w-[8px] text-center text-[#94a3b8] text-[7.5px] leading-none shrink-0">●</span>';
+
+    const ppClass = isFirst
+      ? 'bg-[#0d281e] border border-[#195648] px-2 py-1.5 rounded text-center shrink-0'
+      : 'bg-[#efe8d5] border border-[#cbbeaa] px-2 py-1.5 rounded text-center shrink-0';
+
+    const ppValColor = isFirst ? 'text-[#88ffd4]' : 'text-[#1e293b]';
+    const ppLabelColor = isFirst ? 'text-[#72a598]' : 'text-[#64748b]';
+
+    html += `
+      <div class="${cardClass}">
+        <div class="flex items-center gap-2 min-w-0">
+          ${indicator}
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5 leading-none">
+              <span class="text-[9.5px] font-bold text-[#1e293b]">${m.name}</span>
+              <span class="${m.typeBg} text-white text-[6px] px-1.5 py-0.5 rounded uppercase font-bold leading-tight">${m.type}</span>
+              <span class="${m.catBg} text-white text-[6px] px-1.5 py-0.5 rounded uppercase font-bold leading-tight">${m.cat}</span>
+            </div>
+            <span class="text-[7px] text-[#728277] block mt-1 leading-none truncate">${m.desc}</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 text-right shrink-0">
+          <div class="flex flex-col text-[7.5px] leading-tight">
+            <span class="text-[#64748b]">PWR <strong class="text-[#1e293b]">${m.pwr}</strong></span>
+            <span class="text-[#64748b]">ACC <strong class="text-[#1e293b]">${m.acc}</strong></span>
+          </div>
+          <div class="${ppClass}">
+            <span class="text-[6px] ${ppLabelColor} block leading-none">PP</span>
+            <span class="text-[8.5px] font-bold ${ppValColor} block leading-tight">${m.pp}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function renderStatus(pokemon) {
+  const container = document.getElementById('moves-container');
+  if (!container) return;
+
+  const statKeys = ['hp', 'atk', 'def', 'spAtk', 'spDef', 'speed'];
+  let html = '';
+
+  statKeys.forEach(key => {
+    const s = pokemon.stats[key];
+    const isHp = key === 'hp';
+    
+    let labelClass = 'text-[#475569]';
+    let rowBg = 'bg-[#efe8d5] border-[#cbbeaa]';
+    if (s.boost) {
+      labelClass = 'text-[#b45309] font-bold';
+      rowBg = 'bg-[#fef3c7] border-[#f59e0b]';
+    } else if (s.penalty) {
+      labelClass = 'text-[#2563eb]';
+    }
+
+    let valDisplay = '';
+    if (currentStatFilter === 'base') {
+      valDisplay = `<div class="flex items-center gap-2">
+        <span class="text-[6.5px] text-[#0d9488]">EV:${s.ev}</span>
+        <span class="text-[6.5px] text-[#2563eb]">IV:${s.iv}</span>
+        <span class="${isHp ? 'text-[#15803d]' : (s.boost ? 'text-[#b45309]' : 'text-[#1e293b]')} font-bold text-[8.5px]">${s.val}</span>
+      </div>`;
+    } else if (currentStatFilter === 'ev') {
+      const evPercent = Math.min(100, Math.round((s.ev / 252) * 100));
+      valDisplay = `<div class="flex items-center gap-1.5 flex-1 max-w-[150px] justify-end">
+        <div class="w-20 h-2 bg-[#cbd5e1] rounded-xs overflow-hidden border border-[#94a3b8]">
+          <div class="h-full bg-[#0d9488]" style="width: ${evPercent}%"></div>
+        </div>
+        <span class="text-[#0d9488] font-bold text-[7.5px] w-12 text-right">${s.ev} / 252</span>
+      </div>`;
+    } else if (currentStatFilter === 'iv') {
+      const ivPercent = Math.min(100, Math.round((s.iv / 31) * 100));
+      valDisplay = `<div class="flex items-center gap-1.5 flex-1 max-w-[150px] justify-end">
+        <div class="w-20 h-2 bg-[#cbd5e1] rounded-xs overflow-hidden border border-[#94a3b8]">
+          <div class="h-full ${s.iv >= 30 ? 'bg-[#2563eb]' : 'bg-[#60a5fa]'}" style="width: ${ivPercent}%"></div>
+        </div>
+        <span class="text-[#2563eb] font-bold text-[7.5px] w-10 text-right">${s.iv} / 31</span>
+      </div>`;
+    }
+
+    html += `
+      <div class="flex items-center justify-between ${rowBg} px-2.5 py-1.5 rounded border shadow-sm">
+        <span class="${labelClass} text-[8px]">${s.label || (isHp ? 'HP' : key.toUpperCase())}</span>
+        ${valDisplay}
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function updateLeftPanel(pokemon) {
+  const titleEl = document.getElementById('panel-title-text');
+  const slotsBadge = document.getElementById('panel-slots-badge');
+  const statusFilters = document.getElementById('status-view-filters');
+
+  if (currentMainTab === 'MOVES') {
+    titleEl.textContent = 'KNOWN BATTLE MOVES';
+    slotsBadge.textContent = '4 / 4 SLOTS';
+    slotsBadge.className = 'bg-[#0d281e] text-[#88ffd4] text-[6px] px-1 py-0.2 rounded border border-[#195648]';
+    statusFilters.classList.add('hidden');
+    statusFilters.classList.remove('flex');
+    renderMoves(pokemon);
+  } else {
+    titleEl.textContent = `${pokemon.name} BASE STATS & EFFORT`;
+    slotsBadge.textContent = pokemon.dex;
+    slotsBadge.className = 'bg-[#0369a1] text-white text-[6px] px-1 py-0.2 rounded font-bold';
+    statusFilters.classList.remove('hidden');
+    statusFilters.classList.add('flex');
+    renderStatus(pokemon);
+  }
+
+  // Update Combat Traits & Tactical Breakdown
+  document.getElementById('trait-target').textContent = pokemon.targetInfo;
+  document.getElementById('trait-contact').textContent = pokemon.contactInfo;
+  document.getElementById('trait-contact').className = pokemon.contactInfo === 'YES' ? 'text-[#15803d] font-bold' : 'text-[#b45309] font-bold';
+
+  document.getElementById('trait-ability-name').textContent = pokemon.ability;
+  document.getElementById('trait-ability-desc').textContent = pokemon.abilityDesc;
+  document.getElementById('trait-ability-status').textContent = pokemon.abilityStatus;
+
+  document.getElementById('trait-item-badge').textContent = pokemon.itemBadge;
+  document.getElementById('trait-item-name').textContent = pokemon.heldItem;
+  document.getElementById('trait-item-desc').textContent = pokemon.itemDesc;
+  document.getElementById('trait-item-sub').textContent = pokemon.itemSub;
+  document.getElementById('trait-item-tag').textContent = pokemon.itemTag;
+
+  // Update Top mini summary banner
+  document.getElementById('header-poke-name').textContent = pokemon.name;
+  document.getElementById('header-poke-level').textContent = `Lv.${pokemon.level}`;
+  document.getElementById('header-poke-hp').textContent = `HP ${pokemon.hp}`;
+}
+
+function selectPokemon(index) {
+  currentSelectedIndex = index;
+  const targetPokemon = pokemonData[index];
+
+  // Update Roster Highlights
+  pokemonData.forEach((p, idx) => {
+    const card = document.getElementById(`roster-card-${idx}`);
+    const indicator = document.getElementById(`roster-indicator-${idx}`);
+    const nameEl = document.getElementById(`roster-name-${idx}`);
+    const lvlEl = document.getElementById(`roster-lvl-${idx}`);
+    const hpLabel = document.getElementById(`roster-hplabel-${idx}`);
+    const hpVal = document.getElementById(`roster-hpval-${idx}`);
+
+    if (idx === index) {
+      // Active styling
+      card.className = "bevel-card-lead rounded-md px-2 py-1.5 relative cursor-pointer shadow-md flex items-center gap-2 transition-all ring-2 ring-[#f59e0b]";
+      indicator.className = "text-[#a85800] text-[10px] animate-pulse";
+      indicator.textContent = "▶";
+      nameEl.className = "text-[9.5px] text-[#2c1d02] font-black";
+      lvlEl.className = "text-[8.5px] text-[#4d2d00] font-bold";
+      hpLabel.className = "text-[6.5px] text-[#b85a00] font-bold";
+      hpVal.className = "text-[7px] text-[#2c1d02] font-bold";
+    } else {
+      // Inactive styling
+      card.className = "bevel-card-normal rounded-md px-2 py-1.5 cursor-pointer flex items-center gap-2 transition-all";
+      indicator.className = "w-[10px] text-center text-[#94a3b8] text-[8px]";
+      indicator.textContent = "●";
+      nameEl.className = "text-[9px] text-[#1e2631] font-bold";
+      lvlEl.className = "text-[8px] text-[#475569] font-bold";
+      hpLabel.className = "text-[6.5px] text-[#64748b]";
+      hpVal.className = "text-[7px] text-[#1e293b]";
+    }
+  });
+
+  updateLeftPanel(targetPokemon);
+}
+
+function setMainTab(tab) {
+  currentMainTab = tab;
+  const statusBtn = document.getElementById('header-tab-status');
+  const movesBtn = document.getElementById('header-tab-moves');
+
+  if (tab === 'MOVES') {
+    movesBtn.className = "bevel-tab-active px-2 py-0.5 rounded text-[8px] font-bold text-[#1c2a22] cursor-pointer transition-all";
+    statusBtn.className = "text-[#72a598] px-2 py-0.5 hover:text-white cursor-pointer text-[8px] rounded transition-all";
+  } else {
+    statusBtn.className = "bevel-tab-active px-2 py-0.5 rounded text-[8px] font-bold text-[#1c2a22] cursor-pointer transition-all";
+    movesBtn.className = "text-[#72a598] px-2 py-0.5 hover:text-white cursor-pointer text-[8px] rounded transition-all";
+  }
+
+  updateLeftPanel(pokemonData[currentSelectedIndex]);
+}
+
+function setStatFilter(mode) {
+  currentStatFilter = mode;
+  ['base', 'ev', 'iv'].forEach(m => {
+    const btn = document.getElementById(`tab-stat-${m}`);
+    if (!btn) return;
+    if (m === mode) {
+      btn.className = "bevel-tab-sub-active px-1.5 py-0.2 text-[6px] rounded font-bold";
+    } else {
+      btn.className = "bevel-tab-sub-inactive px-1.5 py-0.2 text-[6px] rounded";
+    }
+  });
+
+  renderStatus(pokemonData[currentSelectedIndex]);
+}
+
+function toggleNavTab(direction) {
+  if (direction === 'toggle') {
+    setMainTab(currentMainTab === 'MOVES' ? 'STATUS' : 'MOVES');
+  } else if (direction === 'left') {
+    setMainTab('STATUS');
+  } else if (direction === 'right') {
+    setMainTab('MOVES');
+  }
+}
+
+function cyclePokemon() {
+  const nextIdx = (currentSelectedIndex + 1) % pokemonData.length;
+  selectPokemon(nextIdx);
+}
+
+// Initial hydration on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  selectPokemon(0);
+});
+</script>
+<!-- END: Interactive Pokemon Dataset & Controller Logic -->
+</body></html>

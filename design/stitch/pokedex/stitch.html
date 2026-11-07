@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PS Vita Pokédex UI - Hoenn &amp; National Dex</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: VT323, Press Start 2P & Courier Prime for authentic GBA/Retro UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Press+Start+2P&amp;family=VT323&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style data-purpose="retro-core-styles">
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-font-smoothing: none;
+  }
+  body {
+    background-color: #030708;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', 'Courier Prime', monospace;
+    overflow: hidden;
+  }
+  .font-pixel {
+    font-family: 'Press Start 2P', monospace;
+  }
+  .font-courier {
+    font-family: 'Courier Prime', monospace;
+  }
+</style>
+<style data-purpose="beveled-borders">
+  .bevel-box-dark {
+    background: #09211d;
+    border: 2px solid #041210;
+    box-shadow: inset 1px 1px 0 #1b544b, inset -1px -1px 0 #051614, 0 3px 6px rgba(0,0,0,0.5);
+  }
+  .bevel-box-cream {
+    background: #fdf9ec;
+    border: 2px solid #1a3024;
+    box-shadow: inset 2px 2px 0 #ffffff, inset -2px -2px 0 #d9d2be, 0 4px 8px rgba(0,0,0,0.45);
+  }
+  .bevel-box-amber {
+    background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+    border-top: 2px solid #fffbeb;
+    border-bottom: 2px solid #d97706;
+    border-left: 2px solid #fef3c7;
+    border-right: 2px solid #d97706;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(0,0,0,0.15);
+  }
+  .bevel-row-normal {
+    background: #f4eedb;
+    border-bottom: 1.5px solid #ded6be;
+    border-top: 1px solid #ffffff;
+  }
+  .bevel-row-normal:hover {
+    background: #fdfaf0;
+  }
+  /* Physical Button Style for L / R triggers */
+  .retro-key-btn {
+    background: linear-gradient(180deg, #1b3a32 0%, #0c201a 100%);
+    border-top: 2px solid #366d5f;
+    border-left: 2px solid #366d5f;
+    border-right: 2px solid #061511;
+    border-bottom: 2px solid #061511;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
+  .retro-key-btn:active {
+    border-top: 2px solid #061511;
+    border-left: 2px solid #061511;
+    border-right: 2px solid #366d5f;
+    border-bottom: 2px solid #366d5f;
+    transform: translateY(1px);
+  }
+  /* Slider Tab Switcher styling */
+  .tab-slider-btn {
+    transition: all 0.15s ease-in-out;
+  }
+  .tab-slider-active {
+    background: #fde68a;
+    color: #16271c;
+    border-color: #b45309;
+    box-shadow: inset 0 1px 0 #ffffff, 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .tab-slider-inactive {
+    background: #10322b;
+    color: #8ce4d2;
+    border-color: #1f4e42;
+  }
+  .tab-slider-inactive:hover {
+    background: #174238;
+    color: #ffffff;
+  }
+</style>
+<meta content="web_standard" name="shell-type"/></head>
+<body>
+<!-- BEGIN: VitaScreenFrame (Exact 960x544) -->
+<div class="relative w-[960px] h-[544px] overflow-hidden bg-[#0c1626] shadow-2xl border-2 border-[#162923] flex flex-col justify-between select-none">
+<!-- Overworld Game Background Tint -->
+<div class="absolute inset-0 z-0 bg-[#091b17]/95">
+<div class="absolute inset-0 bg-[radial-gradient(#1b4d3e_1px,transparent_1px)] [background-size:16px_16px] opacity-40"></div>
+</div>
+<!-- BEGIN: TopHeader -->
+<header class="relative z-10 w-full h-[54px] px-3.5 bg-[#071714] border-b-2 border-[#13493e] flex items-center justify-between shadow-xl">
+<!-- Left Badge: Dex Identity -->
+<div class="flex items-center space-x-2.5 flex-shrink-0 bg-[#12362e] border-2 border-[#205245] rounded px-2.5 py-1 shadow-inner">
+<div class="w-5 h-5 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center relative overflow-hidden shadow">
+<div class="absolute bottom-0 w-full h-1/2 bg-white"></div>
+<div class="absolute w-full h-[2px] bg-[#16271c] top-[9px]"></div>
+<div class="w-2 h-2 rounded-full bg-white border border-[#16271c] z-10"></div>
+</div>
+<div class="flex items-center space-x-1.5 leading-none">
+<span class="text-[9px] text-[#99f6e4] font-pixel font-bold tracking-wider" id="header-title">POKÉDEX LEDGER</span>
+<span class="text-[8px] text-[#34d399]">▶</span>
+<span class="text-[8px] text-[#fef08a] font-pixel font-bold" id="header-region-badge">HOENN</span>
+</div>
+</div>
+<!-- Center: Prominent Interactive Dex Slider Switcher -->
+<div class="flex items-center space-x-2 bg-[#051411] px-2.5 py-1 rounded border-2 border-[#1b4d3e] shadow-inner">
+<button class="retro-key-btn px-2 py-1 rounded text-[8px] font-pixel text-[#99f6e4] hover:text-white cursor-pointer active:scale-95 flex items-center gap-1" onclick="cycleLedger(-1)" title="Switch to previous Dex [L]">
+<span>◀</span> <span class="bg-[#0c241e] px-1 py-0.2 rounded border border-[#2b5849] text-[7px] text-[#6ee7b7]">L</span>
+</button>
+<!-- Visual Pill Slider Container -->
+<div class="flex items-center bg-[#0a201b] p-0.5 rounded border border-[#184639]">
+<button class="tab-slider-btn tab-slider-active px-3 py-1 rounded text-[8px] font-pixel font-bold tracking-wider cursor-pointer" id="slider-btn-hoenn" onclick="switchLedger('hoenn')">
+        HOENN DEX
+      </button>
+<button class="tab-slider-btn tab-slider-inactive px-3 py-1 rounded text-[8px] font-pixel font-bold tracking-wider cursor-pointer" id="slider-btn-national" onclick="switchLedger('national')">
+        NATIONAL DEX
+      </button>
+</div>
+<button class="retro-key-btn px-2 py-1 rounded text-[8px] font-pixel text-[#99f6e4] hover:text-white cursor-pointer active:scale-95 flex items-center gap-1" onclick="cycleLedger(1)" title="Switch to next Dex [R]">
+<span class="bg-[#0c241e] px-1 py-0.2 rounded border border-[#2b5849] text-[7px] text-[#6ee7b7]">R</span> <span>▶</span>
+</button>
+</div>
+<!-- Right Header: Money & Trainer Badge -->
+<div class="flex items-center space-x-2 flex-shrink-0">
+<div class="h-[28px] bg-[#051310] border-2 border-[#1a4a3e] rounded px-2.5 flex items-center space-x-1.5 shadow-inner">
+<span class="text-[#f59e0b] font-pixel text-[10px] font-bold leading-none">₽</span>
+<span class="text-[#ecfdf5] font-pixel text-[10px] tracking-wider leading-none">142,500</span>
+</div>
+<div class="h-[28px] bg-[#163f35] border border-[#2dd4bf]/40 rounded px-2 flex items-center text-[8px] font-pixel text-[#99f6e4] leading-none">
+      BRENDAN
+    </div>
+</div>
+</header>
+<!-- END: TopHeader -->
+<!-- BEGIN: MainContent (960x450 area) -->
+<main class="relative z-10 w-full flex-1 px-3 py-2 flex gap-2.5 overflow-hidden">
+<div class="flex flex-col w-full h-full">
+<div class="flex-1 flex gap-2.5 w-full h-full">
+<!-- Left Pane: Selected Pokémon Sprite & Dossier -->
+<div class="w-[48%] flex flex-col justify-between bevel-box-cream p-3 relative select-none">
+<!-- Top Title & Caught Status -->
+<div class="flex items-center justify-between border-b-2 border-[#1a3024] pb-2 mb-1.5">
+<div class="flex items-center space-x-2">
+<span class="font-pixel text-[10px] text-[#1a3024] font-bold" id="pokedex-num">#001</span>
+<span class="font-pixel text-[11px] text-[#245244] font-bold tracking-wider" id="pokedex-name">TREECKO</span>
+</div>
+<div class="flex items-center space-x-1 bg-[#163f35] px-2 py-0.5 rounded border border-[#2dd4bf]/50 shadow-inner">
+<span class="text-[8px] font-pixel text-[#86efac]" id="pokedex-status">CAUGHT 🗹</span>
+</div>
+</div>
+<!-- Center Sprite & Type Badges Area -->
+<div class="flex gap-3 items-center my-auto bg-[#eae3cd] border-2 border-[#d1c8af] p-2.5 rounded shadow-inner relative overflow-hidden">
+<!-- Sprite Preview Box -->
+<div class="w-[124px] h-[124px] bg-[#fdf9ec] border-2 border-[#b7ac8f] flex flex-col items-center justify-center relative flex-shrink-0 shadow-inner">
+<div class="w-20 h-20 flex items-center justify-center text-5xl transition-transform duration-150" id="pokedex-sprite-container">
+<span id="pokedex-icon">🦎</span>
+</div>
+<div class="absolute bottom-1 right-1 text-[7px] font-pixel text-[#7a705b]" id="pokedex-origin-tag">HOENN #001</div>
+</div>
+<div class="flex flex-col justify-between h-full flex-1 space-y-2">
+<div>
+<div class="text-[8px] font-pixel text-[#7a705b] mb-1">TYPE CLASSIFICATION</div>
+<div class="flex gap-1.5" id="pokedex-types-container">
+<span class="px-2 py-0.5 font-pixel text-[8px] font-bold rounded border bg-[#34d399] text-[#051a14] border-[#065f46]" id="pokedex-type1">GRASS</span>
+<span class="px-2 py-0.5 font-pixel text-[8px] font-bold rounded border bg-[#c084fc] text-[#3b0764] border-[#7e22ce] hidden" id="pokedex-type2">POISON</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="bg-[#fdf9ec] p-1.5 border border-[#d1c8af] rounded">
+<div class="text-[7px] font-pixel text-[#7a705b]">HEIGHT</div>
+<div class="font-pixel text-[9px] text-[#1a3024] font-bold mt-0.5" id="pokedex-height">0.5 m</div>
+</div>
+<div class="bg-[#fdf9ec] p-1.5 border border-[#d1c8af] rounded">
+<div class="text-[7px] font-pixel text-[#7a705b]">WEIGHT</div>
+<div class="font-pixel text-[9px] text-[#1a3024] font-bold mt-0.5" id="pokedex-weight">5.0 kg</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Description Dossier -->
+<div class="bg-[#fdf9ec] border-2 border-[#d1c8af] p-2.5 rounded shadow-inner mt-1">
+<div class="flex justify-between items-center mb-1">
+<div class="text-[7px] font-pixel text-[#7a705b]" id="pokedex-desc-label">HOENN POKÉDEX ENTRY</div>
+<div class="text-[7px] font-pixel text-[#164e63]" id="pokedex-stat-sub">DATABASE RECORD</div>
+</div>
+<p class="font-pixel text-[9px] text-[#2c3d31] leading-relaxed min-h-[50px]" id="pokedex-desc">
+            The forest's guardian. It makes its nest in a giant tree in the forest. It subjugates foes with quick agile leaps.
+          </p>
+</div>
+</div>
+<!-- Right Pane: Ledger List with Region Sub-Tabs -->
+<div class="w-[52%] flex flex-col bevel-box-cream p-3 select-none">
+<!-- Interactive Sub Header: Mode Badge + Counters -->
+<div class="flex items-center justify-between border-b-2 border-[#1a3024] pb-2 mb-2">
+<div class="flex items-center space-x-1.5">
+<button class="font-pixel text-[8px] px-2.5 py-1 bg-[#fde68a] text-[#16271c] font-bold rounded border border-[#b45309] shadow-sm cursor-pointer hover:brightness-105 transition" id="tab-hoenn" onclick="switchLedger('hoenn')">
+              HOENN
+            </button>
+<button class="font-pixel text-[8px] px-2.5 py-1 bg-[#163f35] text-[#99f6e4] font-bold rounded border border-[#2b5849] hover:text-white cursor-pointer transition" id="tab-nat" onclick="switchLedger('national')">
+              NATIONAL
+            </button>
+</div>
+<div class="flex items-center space-x-2">
+<div class="font-pixel text-[9px] text-[#1b4d3e] font-bold bg-[#ede6cf] px-2 py-0.5 rounded border border-[#d1c8af]" id="ledger-title-count">
+              CAUGHT: 128 / SEEN: 202
+            </div>
+</div>
+</div>
+<!-- Scrollable List Container -->
+<div class="flex-1 flex gap-1.5 overflow-hidden min-h-0 relative">
+<!-- Pokédex items list -->
+<div class="flex-1 overflow-y-auto space-y-1.5 pr-1 select-none" id="dex-list-container" style="scrollbar-width: none; -ms-overflow-style: none;">
+<!-- Dynamically populated rows -->
+</div>
+<!-- Retro Stepped Scrollbar -->
+<div class="w-5 flex flex-col items-center bg-[#051310] border-2 border-[#16271c] rounded p-0.5 shadow-inner select-none flex-shrink-0" id="retro-scrollbar-track-wrap">
+<button class="w-4 h-4 bg-[#163f35] border border-[#2b5849] hover:bg-[#1f5649] active:scale-95 text-[#6ee7b7] text-[7px] font-pixel flex items-center justify-center rounded cursor-pointer mb-0.5" id="scroll-btn-up" title="Scroll Up">▲</button>
+<div class="flex-1 w-full bg-[#081814] border border-[#1a3024] rounded-sm relative cursor-pointer overflow-hidden" id="retro-scroll-track">
+<div class="w-full bg-[#fde68a] border border-[#b45309] rounded-[1px] absolute top-0 left-0 shadow cursor-grab active:cursor-grabbing transition-all" id="retro-scroll-thumb" style="height: 36px; top: 0px;">
+<div class="w-full h-full flex flex-col items-center justify-center gap-[2px]">
+<div class="w-2.5 h-[1.5px] bg-[#b45309]"></div>
+<div class="w-2.5 h-[1.5px] bg-[#b45309]"></div>
+<div class="w-2.5 h-[1.5px] bg-[#b45309]"></div>
+</div>
+</div>
+</div>
+<button class="w-4 h-4 bg-[#163f35] border border-[#2b5849] hover:bg-[#1f5649] active:scale-95 text-[#6ee7b7] text-[7px] font-pixel flex items-center justify-center rounded cursor-pointer mt-0.5" id="scroll-btn-down" title="Scroll Down">▼</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- END: MainContent -->
+<!-- BEGIN: ConsoleFooter (Sony PS Vita Bar Standard) -->
+<footer class="relative z-10 w-full h-[40px] px-3.5 bg-[#07131a] border-t-2 border-[#112933] flex items-center justify-between text-white text-[9px] font-pixel shadow-2xl">
+<!-- Action Controls -->
+<div class="flex items-center space-x-3.5">
+<div class="flex items-center space-x-1.5 cursor-pointer" onclick="handleInspectClick()">
+<span class="w-4 h-4 rounded-full bg-[#0066cc] border border-[#5eaaff] flex items-center justify-center text-[9px] font-bold text-white shadow">✕</span>
+<span class="text-[#ccd7e6] text-[8px]">SELECT / INSPECT</span>
+</div>
+<div class="flex items-center space-x-1.5 cursor-pointer" onclick="cycleLedger(1)">
+<span class="w-4 h-4 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center text-[9px] font-bold text-white shadow">○</span>
+<span class="text-[#ccd7e6] text-[8px]">SWITCH DEX</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-full bg-[#bb1188] border border-[#ff77cc] flex items-center justify-center text-[8px] font-bold text-white shadow">□</span>
+<span class="text-[#ccd7e6] text-[8px]">MODE INFO</span>
+</div>
+<div class="flex items-center space-x-1.5 cursor-pointer" onclick="playCryEffect()">
+<span class="w-4 h-4 rounded-full bg-[#009944] border border-[#66e699] flex items-center justify-center text-[8px] font-bold text-white shadow">△</span>
+<span class="text-[#ccd7e6] text-[8px]" id="cry-label">CRY ♫</span>
+</div>
+</div>
+<!-- Right System Indicators -->
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-1.5 bg-[#0b1f26] px-2 py-0.5 rounded border border-[#163a47] text-[8px] text-[#7dd3fc]">
+<span class="font-bold text-white">[L] / [R]</span>
+<span class="text-[#94a3b8]">DEX SWITCH</span>
+</div>
+<div class="flex items-center space-x-2 text-[8px] cursor-pointer" onclick="cycleLedger(1)">
+<span class="bg-[#0b241c] px-1.5 py-0.5 rounded border border-[#144f3d] text-[#86efac]">[START] <span class="text-white">TOGGLE</span></span>
+</div>
+<!-- Clock -->
+<span class="text-[8px] text-[#cbd5e1] font-pixel font-bold">14:32</span>
+<!-- Vita Battery -->
+<div class="flex items-center space-x-1 pl-1 border-l border-[#1b3a47]">
+<div class="w-5 h-2.5 bg-[#05131a] border border-[#2b596d] rounded-sm p-[1px] flex items-center">
+<div class="w-full h-full bg-[#00dd66] rounded-[1px]"></div>
+</div>
+<span class="text-[8px] text-[#00dd66] font-pixel font-bold">100%</span>
+</div>
+</div>
+</footer>
+<!-- END: ConsoleFooter -->
+</div>
+<!-- END: VitaScreenFrame -->
+<!-- Pokédex Data and Switcher Script -->
+<script>
+  const TYPE_COLORS = {
+    GRASS: "bg-[#34d399] text-[#051a14] border-[#065f46]",
+    FIRE: "bg-[#f87171] text-[#450a0a] border-[#b91c1c]",
+    WATER: "bg-[#60a5fa] text-[#082f49] border-[#1d4ed8]",
+    POISON: "bg-[#c084fc] text-[#3b0764] border-[#7e22ce]",
+    FLYING: "bg-[#93c5fd] text-[#1e3a8a] border-[#3b82f6]",
+    FIGHTING: "bg-[#fb923c] text-[#431407] border-[#c2410c]",
+    GROUND: "bg-[#fcd34d] text-[#451a03] border-[#b45309]",
+    PSYCHIC: "bg-[#f472b6] text-[#500724] border-[#be185d]",
+    ELECTRIC: "bg-[#fde047] text-[#713f12] border-[#ca8a04]",
+    BUG: "bg-[#a3e635] text-[#1a2e05] border-[#4d7c0f]",
+    NORMAL: "bg-[#cbd5e1] text-[#1e293b] border-[#64748b]",
+    NONE: "hidden"
+  };
+
+  const DEX_DATA = {
+    hoenn: {
+      name: "HOENN",
+      fullName: "HOENN REGIONAL DEX",
+      seenCount: "CAUGHT: 128 / SEEN: 202",
+      labelDesc: "HOENN POKÉDEX ENTRY",
+      tagPrefix: "HOENN",
+      entries: [
+        { id: "001", name: "TREECKO", icon: "🦎", type1: "GRASS", type2: "NONE", height: "0.5 m", weight: "5.0 kg", status: "CAUGHT 🗹", desc: "The forest's guardian. It makes its nest in a giant tree in the forest. It subjugates foes with quick agile leaps." },
+        { id: "002", name: "GROVYLE", icon: "🦖", type1: "GRASS", type2: "NONE", height: "0.9 m", weight: "21.6 kg", status: "CAUGHT 🗹", desc: "Leaves out of its body provide camouflage in jungles. It agilely flies between branches with uncanny grace." },
+        { id: "003", name: "SCEPTILE", icon: "🐉", type1: "GRASS", type2: "NONE", height: "1.7 m", weight: "52.2 kg", status: "SEEN 👁", desc: "The leaves growing on its forelegs can slice down thick trees. It is without peer in jungle combat." },
+        { id: "004", name: "TORCHIC", icon: "🐥", type1: "FIRE", type2: "NONE", height: "0.4 m", weight: "2.5 kg", status: "CAUGHT 🗹", desc: "A fire burns inside, so it feels very warm to hug. It tosses off fiery fireballs of 1,800 degrees Fahrenheit." },
+        { id: "005", name: "COMBUSKEN", icon: "🐓", type1: "FIRE", type2: "FIGHTING", height: "0.9 m", weight: "19.5 kg", status: "SEEN 👁", desc: "It lashes out with fierce kicks that shatter rocks. During battle, its hot cry intimidates opponents." },
+        { id: "006", name: "BLAZIKEN", icon: "🔥", type1: "FIRE", type2: "FIGHTING", height: "1.9 m", weight: "52.0 kg", status: "CAUGHT 🗹", desc: "Flames spouting from its wrists scorch foes to cinders. It can easily clear a 30-story building in a single leap." },
+        { id: "007", name: "MUDKIP", icon: "🐟", type1: "WATER", type2: "NONE", height: "0.4 m", weight: "7.6 kg", status: "CAUGHT 🗹", desc: "The fin on its head acts as sensitive radar. Using it to sense movements in water, it detects danger." },
+        { id: "008", name: "MARSHTOMP", icon: "🦦", type1: "WATER", type2: "GROUND", height: "0.7 m", weight: "28.0 kg", status: "SEEN 👁", desc: "Its hindquarters are strong, allowing it to stand on two legs and walk over muddy shores without slowing." },
+        { id: "009", name: "SWAMPERT", icon: "🦈", type1: "WATER", type2: "GROUND", height: "1.5 m", weight: "81.9 kg", status: "CAUGHT 🗹", desc: "It can effortlessly tow large vessels through torrential storms. Its vision cuts through murky depths." },
+        { id: "029", name: "RALTS", icon: "🔮", type1: "PSYCHIC", type2: "NONE", height: "0.4 m", weight: "6.6 kg", status: "CAUGHT 🗹", desc: "It senses the emotions of people with the horns on its head. It rarely appears before hostile trainers." },
+        { id: "030", name: "KIRLIA", icon: "💃", type1: "PSYCHIC", type2: "NONE", height: "0.8 m", weight: "20.2 kg", status: "CAUGHT 🗹", desc: "It dances gracefully when feeling happy. Its cheerful spirit amplifies its psychic telekinetic energy." },
+        { id: "031", name: "GARDEVOIR", icon: "✨", type1: "PSYCHIC", type2: "NONE", height: "1.6 m", weight: "48.4 kg", status: "SEEN 👁", desc: "To protect its trainer, it will expend all its psychokinetic power to create a localized small black hole." }
+      ]
+    },
+    national: {
+      name: "NATIONAL",
+      fullName: "NATIONAL SYSTEM DEX",
+      seenCount: "CAUGHT: 215 / SEEN: 386",
+      labelDesc: "NATIONAL POKÉDEX ENTRY",
+      tagPrefix: "NAT",
+      entries: [
+        { id: "001", name: "BULBASAUR", icon: "🌱", type1: "GRASS", type2: "POISON", height: "0.7 m", weight: "6.9 kg", status: "CAUGHT 🗹", desc: "A strange seed was planted on its back at birth. The plant sprouts and grows alongside this Pokémon." },
+        { id: "002", name: "IVYSAUR", icon: "🌿", type1: "GRASS", type2: "POISON", height: "1.0 m", weight: "13.0 kg", status: "CAUGHT 🗹", desc: "When the bud on its back starts swelling, a sweet aroma wafts to indicate the flower's coming bloom." },
+        { id: "003", name: "VENUSAUR", icon: "🌺", type1: "GRASS", type2: "POISON", height: "2.0 m", weight: "100.0 kg", status: "CAUGHT 🗹", desc: "By spreading the broad petals of its flower and absorbing the sun's rays, it fills its body with energy." },
+        { id: "004", name: "CHARMANDER", icon: "🔥", type1: "FIRE", type2: "NONE", height: "0.6 m", weight: "8.5 kg", status: "CAUGHT 🗹", desc: "From the time it is born, a flame burns at the tip of its tail. It burns brightest when it is agitated." },
+        { id: "005", name: "CHARMELEON", icon: "🦎", type1: "FIRE", type2: "NONE", height: "1.1 m", weight: "19.0 kg", status: "SEEN 👁", desc: "It has a barbaric nature. In battle, it whips its fiery tail around and slashes away with sharp claws." },
+        { id: "006", name: "CHARIZARD", icon: "🐉", type1: "FIRE", type2: "FLYING", height: "1.7 m", weight: "90.5 kg", status: "CAUGHT 🗹", desc: "It spits fire hot enough to melt boulders. It breathes intense white flames when encountering fierce opponents." },
+        { id: "007", name: "SQUIRTLE", icon: "🐢", type1: "WATER", type2: "NONE", height: "0.5 m", weight: "9.0 kg", status: "CAUGHT 🗹", desc: "When it retracts its long neck into its shell, it squirts water with vigorous, pinpoint force." },
+        { id: "008", name: "WARTORTLE", icon: "🌊", type1: "WATER", type2: "NONE", height: "1.0 m", weight: "22.5 kg", status: "SEEN 👁", desc: "It is recognized by its large, furry ears and tail. To swim swiftly, it moves its ears to maintain balance." },
+        { id: "009", name: "BLASTOISE", icon: "🛡️", type1: "WATER", type2: "NONE", height: "1.6 m", weight: "85.5 kg", status: "CAUGHT 🗹", desc: "The rocket cannons on its shell fire water jets capable of punching holes through thick reinforced steel plates." },
+        { id: "025", name: "PIKACHU", icon: "⚡", type1: "ELECTRIC", type2: "NONE", height: "0.4 m", weight: "6.0 kg", status: "CAUGHT 🗹", desc: "When several of these Pokémon gather, their electricity could build and cause lightning storms." }
+      ]
+    }
+  };
+
+  let activeLedger = 'hoenn';
+  let activeIndex = 0;
+
+  function switchLedger(ledgerKey) {
+    if (activeLedger === ledgerKey) return;
+    activeLedger = ledgerKey;
+    activeIndex = 0; // reset to first entry on switch
+    updateTabButtons();
+    renderDex();
+  }
+
+  function cycleLedger(delta) {
+    const keys = ['hoenn', 'national'];
+    let currentIdx = keys.indexOf(activeLedger);
+    let nextIdx = (currentIdx + delta + keys.length) % keys.length;
+    switchLedger(keys[nextIdx]);
+  }
+
+  function updateTabButtons() {
+    // 1. Update top pill slider buttons
+    const sHoenn = document.getElementById('slider-btn-hoenn');
+    const sNat = document.getElementById('slider-btn-national');
+
+    // 2. Update right-pane sub-tabs
+    const tabHoenn = document.getElementById('tab-hoenn');
+    const tabNat = document.getElementById('tab-nat');
+
+    // 3. Header title / badge
+    const headerBadge = document.getElementById('header-region-badge');
+
+    if (activeLedger === 'hoenn') {
+      sHoenn.className = "tab-slider-btn tab-slider-active px-3 py-1 rounded text-[8px] font-pixel font-bold tracking-wider cursor-pointer";
+      sNat.className = "tab-slider-btn tab-slider-inactive px-3 py-1 rounded text-[8px] font-pixel font-bold tracking-wider cursor-pointer";
+
+      tabHoenn.className = "font-pixel text-[8px] px-2.5 py-1 bg-[#fde68a] text-[#16271c] font-bold rounded border border-[#b45309] shadow-sm cursor-pointer hover:brightness-105 transition";
+      tabNat.className = "font-pixel text-[8px] px-2.5 py-1 bg-[#163f35] text-[#99f6e4] font-bold rounded border border-[#2b5849] hover:text-white cursor-pointer transition";
+
+      headerBadge.innerText = "HOENN";
+      headerBadge.className = "text-[8px] text-[#fef08a] font-pixel font-bold";
+    } else {
+      sNat.className = "tab-slider-btn tab-slider-active px-3 py-1 rounded text-[8px] font-pixel font-bold tracking-wider cursor-pointer";
+      sHoenn.className = "tab-slider-btn tab-slider-inactive px-3 py-1 rounded text-[8px] font-pixel font-bold tracking-wider cursor-pointer";
+
+      tabNat.className = "font-pixel text-[8px] px-2.5 py-1 bg-[#fde68a] text-[#16271c] font-bold rounded border border-[#b45309] shadow-sm cursor-pointer hover:brightness-105 transition";
+      tabHoenn.className = "font-pixel text-[8px] px-2.5 py-1 bg-[#163f35] text-[#99f6e4] font-bold rounded border border-[#2b5849] hover:text-white cursor-pointer transition";
+
+      headerBadge.innerText = "NATIONAL";
+      headerBadge.className = "text-[8px] text-[#93c5fd] font-pixel font-bold";
+    }
+  }
+
+  function renderDex() {
+    const ledger = DEX_DATA[activeLedger];
+    document.getElementById('ledger-title-count').innerText = ledger.seenCount;
+
+    const container = document.getElementById('dex-list-container');
+    container.innerHTML = '';
+
+    ledger.entries.forEach((poke, idx) => {
+      const isSelected = idx === activeIndex;
+      const row = document.createElement('div');
+      row.onclick = () => selectPokemon(idx);
+
+      if (isSelected) {
+        row.className = 'bevel-box-amber px-3 py-2 flex items-center justify-between cursor-pointer relative z-10 transition-transform';
+        row.innerHTML = `
+          <div class="flex items-center space-x-2.5">
+            <span class="text-[#b45309] text-[10px] animate-pulse">▶</span>
+            <span class="text-[14px] leading-none">${poke.icon}</span>
+            <span class="font-pixel text-[10px] text-[#16271c] font-bold">#${poke.id} ${poke.name}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#854d0e] bg-[#fef08a] px-1.5 py-0.5 rounded border border-[#d97706]">${poke.status}</span>
+          </div>
+        `;
+      } else {
+        row.className = 'bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]';
+        row.innerHTML = `
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">${poke.icon}</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#${poke.id} ${poke.name}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">${poke.status}</span>
+          </div>
+        `;
+      }
+      container.appendChild(row);
+    });
+
+    updateDetailPane();
+
+    // Trigger retro scrollbar update if present
+    if (window.updateRetroScrollbar) {
+      window.updateRetroScrollbar();
+    }
+  }
+
+  function selectPokemon(index) {
+    activeIndex = index;
+    renderDex();
+  }
+
+  function updateDetailPane() {
+    const ledger = DEX_DATA[activeLedger];
+    const poke = ledger.entries[activeIndex];
+    if (!poke) return;
+
+    document.getElementById('pokedex-num').innerText = `#${poke.id}`;
+    document.getElementById('pokedex-name').innerText = poke.name;
+    document.getElementById('pokedex-status').innerText = poke.status;
+    document.getElementById('pokedex-icon').innerText = poke.icon;
+    document.getElementById('pokedex-origin-tag').innerText = `${ledger.tagPrefix} #${poke.id}`;
+    document.getElementById('pokedex-height').innerText = poke.height;
+    document.getElementById('pokedex-weight').innerText = poke.weight;
+    document.getElementById('pokedex-desc-label').innerText = ledger.labelDesc;
+    document.getElementById('pokedex-desc').innerText = poke.desc;
+
+    // Type pills
+    const t1El = document.getElementById('pokedex-type1');
+    const t2El = document.getElementById('pokedex-type2');
+
+    t1El.innerText = poke.type1;
+    t1El.className = `px-2 py-0.5 font-pixel text-[8px] font-bold rounded border ${TYPE_COLORS[poke.type1] || 'bg-[#34d399] text-[#051a14] border-[#065f46]'}`;
+
+    if (poke.type2 && poke.type2 !== 'NONE') {
+      t2El.innerText = poke.type2;
+      t2El.className = `px-2 py-0.5 font-pixel text-[8px] font-bold rounded border ${TYPE_COLORS[poke.type2] || 'bg-[#475569] text-white border-[#1e293b]'}`;
+      t2El.classList.remove('hidden');
+    } else {
+      t2El.classList.add('hidden');
+    }
+
+    // Play subtle animation bounce on sprite
+    const spriteBox = document.getElementById('pokedex-sprite-container');
+    if (spriteBox) {
+      spriteBox.style.transform = 'scale(1.15)';
+      setTimeout(() => {
+        spriteBox.style.transform = 'scale(1.0)';
+      }, 120);
+    }
+  }
+
+  function handleInspectClick() {
+    const ledger = DEX_DATA[activeLedger];
+    const poke = ledger.entries[activeIndex];
+    if (poke) {
+      alert(`[PS VITA LEDGER] Inspecting entry: #${poke.id} ${poke.name} (${poke.type1} type).`);
+    }
+  }
+
+  function playCryEffect() {
+    const cryLabel = document.getElementById('cry-label');
+    const originalText = cryLabel.innerText;
+    cryLabel.innerText = 'PLAYING ♪';
+    cryLabel.classList.add('text-[#86efac]');
+
+    const sprite = document.getElementById('pokedex-sprite-container');
+    if (sprite) {
+      sprite.style.transform = 'rotate(-10deg) scale(1.2)';
+      setTimeout(() => {
+        sprite.style.transform = 'rotate(10deg) scale(1.2)';
+      }, 100);
+      setTimeout(() => {
+        sprite.style.transform = 'rotate(0deg) scale(1.0)';
+      }, 200);
+    }
+
+    setTimeout(() => {
+      cryLabel.innerText = originalText;
+      cryLabel.classList.remove('text-[#86efac]');
+    }, 600);
+  }
+
+  // Keyboard navigation for Vita controls
+  window.addEventListener('keydown', (e) => {
+    const ledger = DEX_DATA[activeLedger];
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (activeIndex > 0) {
+        selectPokemon(activeIndex - 1);
+        scrollSelectedIntoView();
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (activeIndex < ledger.entries.length - 1) {
+        selectPokemon(activeIndex + 1);
+        scrollSelectedIntoView();
+      }
+    } else if (e.key === 'l' || e.key === 'L' || e.key === 'q' || e.key === 'Q' || e.key === 'PageUp') {
+      e.preventDefault();
+      cycleLedger(-1);
+    } else if (e.key === 'r' || e.key === 'R' || e.key === 'e' || e.key === 'E' || e.key === 'PageDown') {
+      e.preventDefault();
+      cycleLedger(1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      cycleLedger(1);
+    }
+  });
+
+  function scrollSelectedIntoView() {
+    const container = document.getElementById('dex-list-container');
+    const selectedItem = container.children[activeIndex];
+    if (selectedItem) {
+      selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  // Initial render
+  updateTabButtons();
+  renderDex();
+</script>
+<script id="custom-retro-scrollbar-logic">
+  (function initRetroScrollbar() {
+    const container = document.getElementById('dex-list-container');
+    const track = document.getElementById('retro-scroll-track');
+    const thumb = document.getElementById('retro-scroll-thumb');
+    const btnUp = document.getElementById('scroll-btn-up');
+    const btnDown = document.getElementById('scroll-btn-down');
+
+    if (!container || !track || !thumb) return;
+
+    window.updateRetroScrollbar = function() {
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+      const scrollTop = container.scrollTop;
+
+      if (scrollHeight <= clientHeight) {
+        thumb.style.height = '100%';
+        thumb.style.top = '0px';
+        thumb.style.opacity = '0.5';
+        return;
+      }
+      thumb.style.opacity = '1';
+
+      const trackHeight = track.clientHeight;
+      const thumbHeight = Math.max(24, Math.floor((clientHeight / scrollHeight) * trackHeight));
+      thumb.style.height = thumbHeight + 'px';
+
+      const maxScrollTop = scrollHeight - clientHeight;
+      const maxThumbTop = trackHeight - thumbHeight;
+      const thumbTop = Math.floor((scrollTop / maxScrollTop) * maxThumbTop);
+      thumb.style.top = thumbTop + 'px';
+    };
+
+    container.addEventListener('scroll', window.updateRetroScrollbar);
+
+    let isDragging = false;
+    let startY = 0;
+    let startScrollTop = 0;
+
+    thumb.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startY = e.clientY;
+      startScrollTop = container.scrollTop;
+      document.body.style.userSelect = 'none';
+      e.stopPropagation();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const deltaY = e.clientY - startY;
+      const trackHeight = track.clientHeight;
+      const thumbHeight = thumb.offsetHeight;
+      const maxThumbTop = trackHeight - thumbHeight;
+      const maxScrollTop = container.scrollHeight - container.clientHeight;
+
+      if (maxThumbTop > 0) {
+        const scrollDelta = (deltaY / maxThumbTop) * maxScrollTop;
+        container.scrollTop = startScrollTop + scrollDelta;
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.userSelect = '';
+      }
+    });
+
+    track.addEventListener('click', (e) => {
+      if (e.target === thumb || thumb.contains(e.target)) return;
+      const rect = track.getBoundingClientRect();
+      const clickY = e.clientY - rect.top;
+      const trackHeight = track.clientHeight;
+      const thumbHeight = thumb.offsetHeight;
+      const maxThumbTop = trackHeight - thumbHeight;
+      const maxScrollTop = container.scrollHeight - container.clientHeight;
+
+      const targetThumbTop = Math.max(0, Math.min(clickY - thumbHeight / 2, maxThumbTop));
+      if (maxThumbTop > 0) {
+        container.scrollTop = (targetThumbTop / maxThumbTop) * maxScrollTop;
+      }
+    });
+
+    if (btnUp) {
+      btnUp.addEventListener('click', () => {
+        container.scrollBy({ top: -48, behavior: 'smooth' });
+      });
+    }
+
+    if (btnDown) {
+      btnDown.addEventListener('click', () => {
+        container.scrollBy({ top: 48, behavior: 'smooth' });
+      });
+    }
+
+    setTimeout(window.updateRetroScrollbar, 50);
+  })();
+</script>
+</body></html>

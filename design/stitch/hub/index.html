@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hub START</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Emerald location ribbon (reference .gba-emerald-box) */
+  .loc { position: absolute; left: 16px; top: 16px; width: 360px; padding: 10px 14px; border-radius: 4px; color: #FFFFFF;
+    background: linear-gradient(#2D8A6B, #175E47); box-shadow: inset 2px 2px 0 #5EEAD4, inset -2px -2px 0 #0D382B, 0 0 0 2px #0F231B, 0 4px 0 rgba(0,0,0,0.4); }
+  .loc .ps { color: #FFFFFF; }
+  .loc .zone { display: flex; align-items: center; gap: 8px; }
+  .loc .sub { margin-top: 6px; color: #C9F5E6; }
+  .status { position: absolute; left: 16px; top: 124px; width: 520px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .status .run { cursor: pointer; flex-basis: 100%; max-width: 200px; } /* AUTO RUN on its own line under the capsules */
+  .status .run.on { color: var(--gold); }
+  .menu { position: absolute; right: 16px; top: 16px; width: 272px; padding: 6px; }
+  .menu .row { height: 40px; font-size: var(--t-body); }
+  /* START menu icons: original GBA sprites (decision D11), 32 px slot, integer scale */
+  .ico { width: 32px; height: 32px; flex: none; display: flex; align-items: center; justify-content: center; }
+  .ico .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; }
+  .menu .badge { margin-left: auto; }
+  /* Informative only: small box, at most 2 lines */
+  .hint { position: absolute; right: 16px; bottom: 56px; width: 300px; line-height: 30px; padding: 6px 14px; }
+  .party { position: absolute; left: 16px; bottom: 56px; width: 332px; padding: 6px; }
+  .party .row { height: 36px; padding-left: 8px; gap: 6px; }
+  .party .row.on::before { content: none; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; background-position: 0 0; image-rendering: pixelated; flex: none; }
+  .party .lv { width: 58px; flex: none; text-align: right; }
+  .party .bar { width: 56px; flex: none; }
+  .legend { position: absolute; left: 0; right: 0; bottom: 0; }
+</style>
+</head>
+<body data-screen="hub">
+<div class="stage">
+  <!-- Location card: map name popup style, kept while START is open -->
+  <div class="loc">
+    <div class="zone ps">LITTLEROOT TOWN</div>
+    <div class="sub">A town that can't be shaded any hue.</div>
+  </div>
+  <!-- Status bar (vita_ui.c header): built by screens.js -->
+  <div class="status"></div>
+
+  <!-- START menu (3D CAM capsule removed: decision D5) -->
+  <div class="panel menu list">
+    <div class="row" data-go="pokedex"><span class="ico"><img src="../_assets/balls/poke.png" alt="" style="zoom:2"></span><span class="grow">POKéDEX</span></div>
+    <div class="row on" data-go="equipo"><span class="ico"><div class="mon" style="background-image:url(../_assets/pokemon/mudkip_icon.png)"></div></span><span class="grow">POKéMON</span></div>
+    <div class="row" data-go="mochila"><span class="ico"><img src="../_assets/start/bag.png" alt=""></span><span class="grow">BAG</span></div>
+    <div class="row" data-go="pokenav_mapa"><span class="ico"><img src="../_assets/start/pokenav.png" alt=""></span><span class="grow">POKéNAV</span></div>
+    <div class="row" data-go="ficha"><span class="ico"><img src="../_assets/map/brendan_head.png" alt="" style="zoom:2"></span><span class="grow">BRENDAN</span></div>
+    <div class="row" data-open="guardar"><span class="ico"><img src="../_assets/items/letter.png" alt=""></span><span class="grow">SAVE</span></div>
+    <div class="row" data-go="opciones"><span class="ico"><img src="../_assets/items/card_key.png" alt=""></span><span class="grow">OPTION</span></div>
+    <div class="row" style="border-bottom:0"><span class="ico"></span><span class="grow">EXIT</span></div>
+  </div>
+  <div class="panel-dark hint">Check the condition and items of your POKéMON.</div>
+
+  <!-- Party strip (kept as in the canonical design) -->
+  <div class="panel party list">
+    <div class="row on"><div class="mon" style="background-image:url(../_assets/pokemon/mudkip_icon.png)"></div><span class="grow">MUDKIP</span><span class="lv">Lv15</span><div class="bar"><i style="width:100%"></i></div></div>
+    <div class="row"><div class="mon" style="background-image:url(../_assets/pokemon/taillow_icon.png)"></div><span class="grow">TAILLOW</span><span class="lv">Lv12</span><div class="bar"><i style="width:84%"></i></div></div>
+    <div class="row"><div class="mon" style="background-image:url(../_assets/pokemon/ralts_icon.png)"></div><span class="grow">RALTS</span><span class="lv">Lv10</span><div class="bar mid"><i style="width:45%"></i></div></div>
+    <div class="row"><div class="mon" style="background-image:url(../_assets/pokemon/zigzagoon_icon.png)"></div><span class="grow">ZIGZAGOON</span><span class="lv">Lv9</span><div class="bar"><i style="width:100%"></i></div></div>
+    <div class="row"><div class="mon" style="background-image:url(../_assets/pokemon/lotad_icon.png)"></div><span class="grow">LOTAD</span><span class="lv">Lv8</span><div class="bar low"><i style="width:15%"></i></div></div>
+    <div class="row" style="border-bottom:0"><div class="mon" style="background-image:url(../_assets/pokemon/wurmple_icon.png)"></div><span class="grow">WURMPLE</span><span class="lv">Lv7</span><div class="bar"><i style="width:70%"></i></div></div>
+  </div>
+
+  <div class="footer legend">
+    <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Open</span>
+    <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Close</span>
+    <span class="spacer"></span>
+    <span class="btn" data-btn="start"><span class="key">START</span>Close menu</span>
+  </div>
+  <div class="modal" id="retirar"><div class="win" style="width:480px"><div class="win-head"><span class="ps">RETIRE</span></div>
+    <div class="win-body vt-lg">Would you like to leave the SAFARI ZONE right now?<div class="choice-row"><div class="row on" data-close>YES</div><div class="row" data-close>NO</div></div></div></div></div>
+  <!-- Popup: save (GBA flow: summary + YES / NO). Design missing in Stitch (plan 2.3). -->
+  <div class="modal" id="guardar"><div class="win" style="width:520px">
+    <div class="win-head"><span class="ps">SAVE</span></div>
+    <div class="win-body">
+      <div style="line-height:30px">LITTLEROOT TOWN · BRENDAN<br>BADGES 4 · POKéDEX 14 · TIME 12:47</div>
+      <div class="vt-lg" style="margin-top:8px">Would you like to save the game?</div>
+      <div class="choice-row"><div class="row on" data-open="guardado">YES</div><div class="row" data-close>NO</div></div>
+    </div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Confirm</span><span class="btn" data-btn="circle"><span class="glyph circle">○</span>Cancel</span></div></div></div>
+  <div class="modal" id="guardado" style="background:none"><div class="toast" style="left:336px; top:240px" data-close>BRENDAN saved the game.</div></div>
+  <!-- Popup: field moves from START (use a field move without opening POKéMON) -->
+  <div class="modal" id="mo-campo"><div class="win" style="width:560px">
+    <div class="win-head"><span class="ps">FIELD MOVES</span><span class="spacer"></span><span class="vt-sm">Badges 4/8</span></div>
+    <div class="win-body list">
+      <div class="row on" data-open="toast-mo"><div class="mon" style="background-image:url(../_assets/pokemon/mudkip_icon.png)"></div><span class="grow">ROCK SMASH · MUDKIP</span><span class="chip lead">USABLE</span></div>
+      <div class="row" data-open="toast-mo"><div class="mon" style="background-image:url(../_assets/pokemon/zigzagoon_icon.png)"></div><span class="grow">CUT · ZIGZAGOON</span><span class="chip lead">USABLE</span></div>
+      <div class="row" style="border-bottom:0"><div class="mon" style="background-image:url(../_assets/pokemon/ralts_icon.png)"></div><span class="grow">FLASH · RALTS</span><span class="chip lead">USABLE</span></div>
+    </div>
+    <div class="win-foot"><span class="btn" data-btn="cross" data-open="toast-mo"><span class="glyph cross">✕</span>Use</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Cancel</span></div></div></div>
+  <div class="modal" id="toast-mo" style="background:none"><div class="toast" style="left:316px; top:240px" data-close>MUDKIP used ROCK SMASH!</div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

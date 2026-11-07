@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vuelo</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Fly mode of the Hoenn map component (D8): same map, same 28x15 zones; only visited towns
+     (MAPSECTYPE_CITY_CANFLY) can be chosen. Opened from POKéMON → FLY. Missing in Stitch (plan 2.3). */
+  .mapwrap { position: relative; width: 672px; height: 360px; flex: none; background: url(../_assets/map/hoenn_224x120.png) 0 0 / 672px 360px; image-rendering: pixelated; border: 2px solid var(--line-dark); box-sizing: content-box; }
+  .cell { position: absolute; width: 24px; height: 24px; }
+  .fly { position: absolute; width: 24px; height: 24px; outline: 4px solid #1F9E52; outline-offset: -2px; background: rgba(63, 183, 107, 0.45); pointer-events: none; }
+  .zone-hl { position: absolute; outline: 3px solid var(--select); background: rgba(246, 207, 87, 0.28); pointer-events: none; }
+  .cursor { position: absolute; width: 24px; height: 24px; outline: 3px solid #fff; outline-offset: -1px; pointer-events: none; }
+  .head { position: absolute; width: 16px; height: 16px; zoom: 1.5; background: url(../_assets/map/brendan_head.png); image-rendering: pixelated; pointer-events: none; }
+  .side { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .side .ps { line-height: 20px; }
+  .who { display: flex; align-items: center; gap: 8px; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; }
+</style>
+</head>
+<body data-screen="vuelo">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="fly:map">
+      <span class="spacer"></span>
+      <span class="capsule">Destinations: <span id="ndest">0</span></span>
+    </div>
+    <div class="body">
+      <div class="mapwrap" id="map"></div>
+      <div class="side">
+        <div class="panel">
+          <div class="ps" id="zname">-</div>
+          <div class="vt-sm soft" id="zinfo" style="margin-top:6px">-</div>
+        </div>
+        <div class="panel">
+          <div class="who"><div class="mon" style="background-image:url(../_assets/pokemon/taillow_icon.png)"></div><span>TAILLOW will FLY</span></div>
+          <div class="vt-sm soft" style="margin-top:8px">Green frames: towns you can fly to.</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Fly here</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Cancel</span>
+      <span class="spacer"></span>
+      <span class="btn">✚ Move cursor</span>
+    </div>
+  </div>
+  <div class="modal" id="volar"><div class="win" style="width:520px">
+    <div class="win-head"><span class="ps">FLY</span></div>
+    <div class="win-body"><div class="vt-lg" id="flytext">Fly to ?</div>
+      <div class="choice-row"><div class="row on" data-action="flyYes">YES</div><div class="row" data-close>NO</div></div></div>
+    <div class="win-foot"><span class="btn" data-btn="cross" data-action="flyYes"><span class="glyph cross">✕</span>Fly</span><span class="btn" data-btn="circle"><span class="glyph circle">○</span>Cancel</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

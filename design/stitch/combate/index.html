@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Combate</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Battle HUD of the new UI (docs/VITA_UI.md). Structure and colours from
+     TEST UI/UI COMBATE, drawn with the current kit (PS2P 16 / VT323 32, rounded bevelled boxes).
+     The world, the POKéMON, trainers, move animations and weather stay the game's (pass 6);
+     only the HUD below is ours. */
+  body { background: #05080c; }
+  .stage { background: #3a7a4e url(../_assets/fondo_mundo.png) center / cover; overflow: hidden; }
+  .mon3d { position: absolute; image-rendering: pixelated; width: 192px; height: 192px; object-fit: cover; object-position: top; }
+  .mon3d.foe { filter: drop-shadow(0 6px 0 rgba(0,0,0,.25)); }
+  .mon3d.target { animation: blink .5s steps(2) infinite; }
+  @keyframes blink { 50% { filter: brightness(1.7) drop-shadow(0 0 6px #fff); } }
+
+  /* Plates: paper box with bevel; dark outer frame, mint inner line (design). Fixed sizes so every
+     slot (singles and doubles) has the same bar length: foe 300x68, own 300x100. */
+  .plate { position: absolute; width: 300px; height: 68px; padding: 8px 12px 0; border-radius: 4px; color: var(--ink);
+    background: linear-gradient(#FBF8EE, #EFE8D5); border: 3px solid #0C1626;
+    box-shadow: inset 2px 2px 0 #FFFFFF, inset -2px -2px 0 #C5BEAA, 0 0 0 1px #34D399, 0 4px 0 rgba(0,0,0,.45); }
+  .plate.mine { height: 100px; }
+  /* Doubles, player's side: 240x66, HP numbers beside the bar */
+  .plate.compact { width: 240px; height: 66px; padding-top: 6px; }
+  .plate.compact .nm { font-size: 12px; } .plate.compact .lv { font-size: 10px; } .plate.compact .lv b { font-size: 12px; }
+  .plate.compact .gly { width: 22px; height: 22px; }
+  .plate.compact .l2 { margin-top: 4px; }
+  .plate.compact .gauge { width: 112px; }
+  .plate.compact .stslot { width: 0; }
+  .plate.compact .hpn { margin-left: auto; font-size: 28px; line-height: 22px; }
+  .plate.compact .exp { bottom: 4px; height: 4px; }
+  .plate.turn { box-shadow: inset 2px 2px 0 #FFFFFF, inset -2px -2px 0 #C5BEAA, 0 0 0 3px #FCD34D, 0 4px 0 rgba(0,0,0,.45); }
+  .plate.turn::before { content: '▶'; position: absolute; left: -28px; top: 20px; color: #FCD34D; font-size: 20px; text-shadow: 2px 2px 0 #0C1626; }
+  .plate .l1 { display: flex; align-items: center; gap: 6px; height: 22px; }
+  .plate .nm { font-family: 'Press Start 2P'; font-size: 16px; white-space: nowrap; }
+  .plate .lv { margin-left: auto; font-family: 'Press Start 2P'; font-size: 12px; color: #574500; }
+  .plate .lv b { font-size: 16px; color: var(--ink); }
+  .gly { width: 28px; height: 28px; image-rendering: pixelated; }
+  .plate .l2 { display: flex; align-items: center; gap: 6px; height: 22px; margin-top: 8px; }
+  .hpchip { width: 28px; text-align: center; font-family: 'Press Start 2P'; font-size: 10px; color: #fff; background: #D97706; border: 2px solid #7C3A00; padding: 2px 0; border-radius: 2px; flex: none; }
+  .gauge { width: 176px; flex: none; height: 12px; background: #0C1626; border: 2px solid #0C1626; border-radius: 2px; box-shadow: inset 0 1px 0 rgba(255,255,255,.1); }
+  .gauge i { display: block; height: 100%; background: linear-gradient(#6EE7B7, #34D399); transition: width .6s; }
+  .gauge.mid i { background: linear-gradient(#FDE68A, #FED65B); } .gauge.low i { background: linear-gradient(#F59C9C, #E85252); }
+  .stslot { width: 64px; height: 16px; flex: none; }
+  .status { display: block; width: 32px; height: 8px; background: url(../_assets/ui_gba/status_icons.png) 0 0 / 32px 64px; image-rendering: pixelated; zoom: 2; }
+  .plate .l3 { display: flex; justify-content: flex-end; height: 30px; margin-top: 2px; }
+  .plate .hpn { font-size: 32px; line-height: 30px; }
+  .exp { position: absolute; left: 12px; right: 12px; bottom: 6px; height: 6px; background: #0C1626; border-radius: 1px; }
+  .exp i { display: block; height: 100%; background: linear-gradient(#7CC0F2, #2F7DC2); }
+  .caught { width: 8px; height: 8px; background: url(../_assets/ui_gba/ball_caught.png); image-rendering: pixelated; zoom: 2.5; }
+  .safari { font-size: 32px; line-height: 30px; margin-top: 6px; }
+
+  /* Party POKé BALLS of trainer battles (CreatePartyStatusSummarySprites): a dark strip with 6 balls */
+  .balls { position: absolute; display: flex; gap: 6px; padding: 6px 10px; border-radius: 4px;
+    background: rgba(12,22,38,.92); border: 2px solid #34D399; box-shadow: 0 3px 0 rgba(0,0,0,.45); }
+  .balls i { width: 8px; height: 8px; background: url(../_assets/ui_gba/ball_display.png) 0 0 / 32px 8px; image-rendering: pixelated; zoom: 2.5; }
+  .balls i.empty { background-position: -8px 0; } .balls i.fnt { background-position: -16px 0; } .balls i.st { background-position: -24px 0; }
+
+  /* Bottom box as the GBA (B_WIN_MSG band, GBA y 112-160 -> 381-544 at x3.4): full width, flush with
+     the bottom and the sides, tall enough that the player's back sprite peeks out right above it.
+     Left: the message (VT323 40). Right, inside the same box: the 2x2 commands (GBA layout,
+     colours of the design). No footers in battle. */
+  .box { position: absolute; left: 0; right: 0; bottom: 0; height: 163px; border-radius: 6px 6px 0 0;
+    background: linear-gradient(#FBFAF2, #EBE7D3); color: var(--ink);
+    box-shadow: inset 2px 2px 0 #FFFFFF, inset -2px 0 0 #9E9784, 0 0 0 3px #26272D, 0 -4px 0 rgba(0,0,0,.35); }
+  .msg { position: absolute; left: 28px; top: 22px; width: 520px; font-size: 40px; line-height: 50px; }
+  .box.wide .msg { width: 900px; }
+  .msg em { font-style: normal; color: #B45309; }
+  .more { position: absolute; right: 22px; bottom: 16px; font-size: 20px; color: #D64D1F; animation: blink .8s steps(2) infinite; }
+  .cmds { position: absolute; right: 16px; top: 16px; width: 400px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .cmd { height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 32px; position: relative; cursor: pointer;
+    font-family: 'Press Start 2P'; font-size: 16px; color: #fff; border-radius: 4px; border: 3px solid #0C1626;
+    box-shadow: inset 2px 2px 0 rgba(255,255,255,.4), inset -2px -2px 0 rgba(0,0,0,.35), 0 3px 0 rgba(0,0,0,.4); }
+  .cmd .ic { margin-left: auto; width: 28px; height: 28px; image-rendering: pixelated; }
+  .cmd.fight { background: linear-gradient(#F07070, #D94444); } .cmd.mon { background: linear-gradient(#2D6B57, #1B4D3E); }
+  .cmd.bag { background: linear-gradient(#F59E2B, #D97706); } .cmd.run { background: linear-gradient(#9B6BF2, #7C3AED); }
+  .cmd.on { box-shadow: inset 2px 2px 0 rgba(255,255,255,.5), inset -2px -2px 0 rgba(0,0,0,.35), 0 0 0 3px #FCD34D, 0 3px 0 rgba(0,0,0,.4); }
+  .cmd.on::before { content: '▶'; position: absolute; left: 10px; font-size: 14px; color: #FCD34D; }
+  .cmd.dim { filter: saturate(.3) brightness(.75); }
+
+  /* FIGHT: the bottom box turns into the move menu, as the GBA: 2x2 moves on the left, PP and TYPE
+     on the right (doubles: the target there too) */
+  .moves { position: absolute; left: 16px; top: 16px; width: 600px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .mv { height: 56px; display: flex; align-items: center; padding: 0 12px 0 30px; border-radius: 4px; position: relative; font-size: 40px; cursor: pointer;
+    background: linear-gradient(#FFFFFF, #F1ECDD); color: var(--ink); box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #C5BEAA, 0 0 0 2px #26272D; }
+  .mv.on { background: linear-gradient(var(--sel-top), var(--sel-bot)); box-shadow: inset 2px 2px 0 #fff, 0 0 0 3px #D97706; }
+  .mv.on::before { content: '▶'; position: absolute; left: 10px; font-size: 14px; color: var(--sel-edge); }
+  .mv.swap { outline: 3px dashed #2F9E58; outline-offset: 2px; }
+  .mvinfo { position: absolute; right: 16px; top: 16px; width: 312px; height: 131px; padding: 10px 14px; border-radius: 4px;
+    background: linear-gradient(#0E2B25, #061A16); color: #fff; box-shadow: inset 1px 1px 0 #1B544B, 0 0 0 2px #041210; }
+  .mvinfo .k { display: flex; align-items: center; justify-content: space-between; height: 40px; font-size: 40px; }
+  .mvinfo .k small { font-family: 'Press Start 2P'; font-size: 12px; color: var(--mint); }
+  .mvinfo img { width: 64px; height: 32px; image-rendering: pixelated; }
+  .pp.half { color: #F5D162; } .pp.warn { color: #F59E2B; } .pp.zero { color: #F07A6E; }  /* GBA: <=1/2, <=1/4, 0 */
+  .tchips { display: flex; gap: 6px; margin-top: 6px; }
+  .tchip { font-family: 'Press Start 2P'; font-size: 10px; padding: 5px 6px; border-radius: 2px; color: #fff; opacity: .4; cursor: pointer; }
+  .tchip.on { opacity: 1; box-shadow: 0 0 0 2px #FCD34D; }
+
+  /* YES / NO and level-up box: right side, above the bottom box (where the GBA puts them) */
+  .yn { position: absolute; right: 16px; bottom: 179px; width: 180px; }
+  /* Level up: a pop-up that only appears when a POKéMON levels up (after the EXP of a knocked-out foe),
+     right after "X grew to Lv. N!" (GBA B_WIN_LEVEL_UP_BOX). Battle-style dark panel above the
+     player's plate, so the plate (new level, HP) stays visible. Two pages as the GBA: the gains,
+     then the new values (X turns the page, X again closes it). */
+  .lvup { position: absolute; width: 300px; padding: 8px 12px; border-radius: 4px; color: #fff;
+    background: linear-gradient(#0E2B25, #061A16); box-shadow: inset 1px 1px 0 #1B544B, 0 0 0 3px #041210, 0 0 0 4px #34D399, 0 4px 0 rgba(0,0,0,.45); }
+  .lvup .hd { font-family: 'Press Start 2P'; font-size: 12px; color: var(--mint); height: 22px; }
+  .lvup .grid { display: grid; grid-template-columns: 1fr 1fr; column-gap: 16px; }
+  .lvup .k { display: flex; justify-content: space-between; height: 32px; align-items: center; font-size: 32px; border-bottom: 1px solid #1B544B; }
+  .lvup .k small { font-family: 'Press Start 2P'; font-size: 10px; color: var(--on-frame-soft); }
+  .lvup .k b { color: #6EE7B7; font-weight: normal; }
+
+  /* Battle Arena (Battle Frontier): if 3 turns pass without a KO, the referee judges */
+  .judge { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); width: 520px; padding: 10px 16px; border-radius: 4px; color: #fff;
+    background: linear-gradient(#0E2B25, #061A16); box-shadow: inset 1px 1px 0 #1B544B, 0 0 0 3px #041210, 0 0 0 4px #34D399, 0 4px 0 rgba(0,0,0,.45); }
+  .judge .t { font-family: 'Press Start 2P'; font-size: 16px; color: var(--mint); text-align: center; height: 28px; }
+  .judge .vs { display: grid; grid-template-columns: 1fr 80px 1fr; text-align: center; font-size: 32px; height: 40px; align-items: center; }
+  .judge .row3 { display: grid; grid-template-columns: 1fr 160px 1fr; text-align: center; align-items: center; height: 44px; border-top: 1px solid #1B544B; }
+  .judge .row3 span:nth-child(2) { font-family: 'Press Start 2P'; font-size: 12px; color: var(--on-frame-soft); }
+  .judge .mk { font-size: 36px; } .judge .mk.o { color: #6EE7B7; } .judge .mk.t { color: #FCD34D; } .judge .mk.x { color: #F07A6E; }
+  .judge .tot { display: grid; grid-template-columns: 1fr 160px 1fr; text-align: center; height: 40px; align-items: center; font-size: 36px; border-top: 2px solid #34D399; }
+
+  /* Mock-only state switcher (outside the 960x544 stage) */
+  .dev { width: 960px; margin: 10px auto; display: flex; flex-wrap: wrap; gap: 6px; font: 14px monospace; color: #9fb; }
+  .dev button { font: 13px monospace; background: #13261f; color: #cfe; border: 1px solid #2b5849; padding: 4px 8px; cursor: pointer; }
+  .dev button.on { background: #2b5849; color: #fff; }
+</style>
+</head>
+<body data-screen="combate">
+<div class="stage" id="stage"></div>
+<div class="dev" id="dev"></div>
+<script>
+// ---- Mock data ----
+const T = t => `../_assets/types/${t}.png`;
+const MOVES = [['THUNDERBOLT', 'electric', 15, 15], ['WATER GUN', 'water', 22, 25], ['MUD-SLAP', 'ground', 3, 10], ['GROWL', 'normal', 0, 40]];
+const BATTLES = {
+  wild:    { foes: [['ZIGZAGOON', 'zigzagoon', '♂', 4, 13, 16, null, true]], mine: [['MUDKIP', 'mudkip', '♂', 7, 24, 24, null, 62]] },
+  trainer: { foes: [['POOCHYENA', 'poochyena', '♂', 6, 9, 20, 'PSN']], mine: [['MARSHTOMP', 'marshtomp', '♂', 16, 41, 52, null, 30]],
+             foeBalls: ['ok', 'ok', 'fnt', 'empty', 'empty', 'empty'], myBalls: ['ok', 'st', 'ok', 'ok', 'fnt', 'empty'] },
+  double:  { foes: [['ZIGZAGOON', 'zigzagoon', '♂', 4, 16, 16], ['POOCHYENA', 'poochyena', '♀', 3, 5, 14]],
+             mine: [['TORCHIC', 'torchic', '♀', 7, 24, 24, null, 40], ['MUDKIP', 'mudkip', '♂', 7, 25, 25, null, 75]],
+             foeBalls: ['ok', 'ok', 'empty', 'empty', 'empty', 'empty'], myBalls: ['ok', 'ok', 'ok', 'empty', 'empty', 'empty'] },
+  safari:  { foes: [['RALTS', 'ralts', '♀', 9, 20, 20, null, false]], mine: [], safari: 27 },
+};
+let S = { judge: 0, battle: 'wild', mode: 'cmd', cmd: 0, mv: 0, target: 0, yn: 0, active: 0, hpNum: false, swapFrom: -1 };
+const MODES = { cmd: 'Commands', fight: 'FIGHT', target: 'FIGHT · target (doubles)', msg: 'Message', yesno: 'YES / NO', lvup: 'Level up', judge: 'Battle Arena judge (X: next)' };
+
+const pct = (h, m) => Math.round(100 * h / m), cls = p => p > 50 ? '' : p > 20 ? ' mid' : ' low';
+const gly = g => g === '♂' ? '<img class="gly" src="../_assets/ui_gba/gender_male.png">' : g === '♀' ? '<img class="gly" src="../_assets/ui_gba/gender_female.png">' : '';
+const statusOff = { PSN: 0, PAR: 1, SLP: 2, FRZ: 3, BRN: 4 };
+
+function plate(m, x, y, mine, act, compact) {
+  const [name, , g, lv, hp, max, st, extra] = m, p = pct(hp, max);
+  const stIcon = st ? `<span class="status" style="background-position:0 -${statusOff[st] * 8}px"></span>` : '';
+  const c = mine && compact;
+  return `<div class="plate${mine ? ' mine' : ''}${c ? ' compact' : ''}${act ? ' turn' : ''}" style="left:${x}px;top:${y}px">
+    <div class="l1"><span class="nm">${name}</span>${gly(g)}${!mine && extra === true ? '<span class="caught" title="Already caught"></span>' : ''}<span class="lv">Lv<b>${lv}</b></span></div>
+    <div class="l2"><span class="hpchip">HP</span><div class="gauge${cls(p)}"><i style="width:${p}%"></i></div><span class="stslot">${c ? '' : stIcon}</span>${c ? `<span class="hpn">${hp}/${max}</span>` : ''}</div>
+    ${mine && !c ? `<div class="l3"><span class="hpn">${hp}/${max}</span></div>` : ''}${mine ? `<div class="exp"><i style="width:${extra}%"></i></div>` : ''}
+  </div>`;
+}
+const balls = (arr, x, y) => `<div class="balls" style="left:${x}px;top:${y}px">${arr.map(b => `<i class="${b === 'ok' ? '' : b}"></i>`).join('')}</div>`;
+
+function render() {
+  const B = BATTLES[S.battle], dbl = B.foes.length > 1, st = document.getElementById('stage');
+  const me = B.mine[S.active] || B.mine[0], BOX = 381;
+  if (S.mode === 'lvup') { const a = S.active || 0; S.lvDone = S.lvDone || {}; if (B.mine[a] && !S.lvDone[S.battle + a]) { B.mine[a] = B.mine[a].slice(); B.mine[a][3]++; B.mine[a][4] += 3; B.mine[a][5] += 3; B.mine[a][7] = 4; S.lvDone[S.battle + a] = true; } }     // top of the bottom box (GBA y 112)
+  let h = '';
+  // The game's own picture (stand-ins at the GBA positions, x3.4): foes' front sprites on their
+  // platform, the player's back sprite standing on the box so only its top half shows
+  B.foes.forEach((f, i) => h += `<img class="mon3d foe${S.mode === 'target' && S.target === i ? ' target' : ''}" src="../_assets/pokemon/${f[1]}_front.png" style="left:${dbl ? 440 + i * 190 : 590}px;top:${dbl ? 6 + i * 20 : 50}px;width:${dbl ? 190 : 218}px;height:${dbl ? 190 : 218}px">`);
+  B.mine.forEach((f, i) => h += `<img class="mon3d${S.mode === 'target' && S.target === 2 && i !== S.active ? ' target' : ''}" src="../_assets/pokemon/${f[1]}_back.png" style="left:${dbl ? 60 + i * 200 : 150}px;top:${BOX - 218 + 12}px;width:218px;height:218px">`);
+  // Plates: one size for every slot; doubles stack them with the same left edge and bar length
+  // (foes top left, mine right above the bottom box, where the GBA healthboxes are)
+  const foeY = i => 16 + i * (dbl ? 84 : 0), myY = i => BOX - 10 - (B.mine.length - i) * (dbl ? 74 : 112), myX = dbl ? 704 : 644;
+  B.foes.forEach((f, i) => h += plate(f, 16, foeY(i), false, false, dbl));
+  if (B.foeBalls) h += balls(B.foeBalls, 16, foeY(B.foes.length - 1) + (dbl ? 82 : 84));
+  B.mine.forEach((f, i) => h += plate(f, myX, myY(i), true, S.mode !== 'msg' && i === S.active && dbl, dbl));
+  if (B.myBalls) h += balls(B.myBalls, myX, myY(0) - 44);
+  if (B.safari != null) h += `<div class="plate" style="left:644px;top:${BOX - 124}px"><div class="l1"><span class="nm">SAFARI BALLS</span></div><div class="safari">Left: ${B.safari}</div></div>`;
+
+  const fight = S.mode === 'fight' || S.mode === 'target', cmdShown = S.mode === 'cmd';
+  h += `<div class="box${cmdShown || fight ? '' : ' wide'}">`;
+  if (fight) {
+    const m = MOVES[S.mv], tgt = ['FOE 1', 'FOE 2', 'ALLY'], tcol = ['#D94444', '#D94444', '#2D6B57'];
+    const ppc = m[2] === 0 ? ' zero' : m[2] <= m[3] / 4 ? ' warn' : m[2] <= m[3] / 2 ? ' half' : '';
+    h += `<div class="moves">${MOVES.map((mv, i) => `<div class="mv${S.mv === i ? ' on' : ''}${S.swapFrom === i ? ' swap' : ''}" data-mv="${i}">${mv[0]}</div>`).join('')}</div>
+      <div class="mvinfo"><div class="k"><small>PP</small><span class="pp${ppc}">${m[2]}/${m[3]}</span></div>
+        <div class="k"><small>TYPE</small><img src="${T(m[1])}"></div>
+        ${dbl ? `<div class="tchips">${tgt.map((t, i) => `<span class="tchip${S.mode === 'target' && S.target === i ? ' on' : ''}" style="background:${tcol[i]}" data-t="${i}">${t}</span>`).join('')}</div>` : ''}</div>`;
+  } else {
+    const text = S.mode === 'msg' ? `Wild <em>ZIGZAGOON</em> used TACKLE!` : S.mode === 'yesno' ? `Will you change<br>POKéMON?` : S.mode === 'lvup' ? `<em>${me[0]}</em> grew to<br>Lv. ${(B.mine[S.active] || B.mine[0])[3]}!`
+               : S.mode === 'judge' ? (['REFEREE: That\'s it! We will now<br>go to judging!', 'Judging category 1, Mind!<br>The POKéMON showing the most guts!', 'Judging category 2, Skill!<br>The POKéMON using moves the best!', 'Judging category 3, Body!<br>The POKéMON with the most vitality!', `Judgment: 5 to 3! The winner is<br>BRENDAN\'s ${me[0]}!`][S.judge || 0]) : B.safari != null ? `What will<br><em>BRENDAN</em> do?` : `What will<br><em>${me[0]}</em> do?`;
+    h += `<div class="msg">${text}</div>${S.mode !== 'cmd' ? '<span class="more">▼</span>' : ''}`;
+    if (cmdShown) {
+      // GBA order: FIGHT BAG / POKéMON RUN (Safari: BALL POKéBLOCK / GO NEAR RUN)
+      const C = B.safari != null ? [['BALL', 'fight', 'balls/safari.png'], ['POKéBLOCK', 'bag', 'ui_gba/pokeblock.png'], ['GO NEAR', 'mon', ''], ['RUN', 'run', '']]
+                                 : [['FIGHT', 'fight', ''], ['BAG', 'bag', 'items/potion.png'], ['POKéMON', 'mon', 'balls/poke.png'], ['RUN', 'run', '']];
+      const lock = S.mode !== 'cmd';
+      h += `<div class="cmds">${C.map((c, i) => `<div class="cmd ${c[1]}${S.cmd === i && !lock ? ' on' : ''}${lock ? ' dim' : ''}" data-cmd="${i}">${c[0]}${c[2] ? `<img class="ic" src="../_assets/${c[2]}">` : ''}</div>`).join('')}</div>`;
+    }
+  }
+  h += `</div>`;
+  if (S.mode === 'yesno')
+    h += `<div class="choice yn"><div class="row${S.yn === 0 ? ' on' : ''}" data-yn="0">YES</div><div class="row${S.yn === 1 ? ' on' : ''}" data-yn="1">NO</div></div>`;
+  if (S.mode === 'lvup') {
+    const sts = [['HP', 3, 27], ['ATK', 2, 14], ['DEF', 2, 13], ['SP.A', 1, 12], ['SP.D', 2, 13], ['SPE', 1, 12]];
+    const plateTop = myY(0);   // above the whole stack of the player's plates
+    h += `<div class="lvup" style="left:644px;top:${plateTop - 12 - 136}px"><div class="hd">${S.lvPage ? 'NEW STATS' : 'LEVEL UP!'}</div><div class="grid">${sts.map(([k, v, t]) =>
+      `<div class="k"><small>${k}</small>${S.lvPage ? `<span>${t}</span>` : `<b>+${v}</b>`}</div>`).join('')}</div></div>`;
+  }
+  if (S.mode === 'judge') {
+    const cats = [['MIND', 'o', 't'], ['SKILL', 'o', 'x'], ['BODY', 't', 'o']], pts = { o: 2, t: 1, x: 0 }, sym = { o: '○', t: '△', x: '×' };
+    const shown = Math.min(S.judge, 3), pl = cats.slice(0, shown).reduce((a, c) => a + pts[c[1]], 0), op = cats.slice(0, shown).reduce((a, c) => a + pts[c[2]], 0);
+    h += `<div class="judge"><div class="t">JUDGMENT</div><div class="vs"><span>${me[0]}</span><span>VS</span><span>${B.foes[0][0]}</span></div>
+      ${cats.map((c, i) => `<div class="row3"><span class="mk ${i < shown ? c[1] : ''}">${i < shown ? sym[c[1]] : ''}</span><span>${c[0]}</span><span class="mk ${i < shown ? c[2] : ''}">${i < shown ? sym[c[2]] : ''}</span></div>`).join('')}
+      <div class="tot"><span>${pl}</span><span></span><span>${op}</span></div></div>`;
+  }
+  st.innerHTML = h;
+  st.querySelectorAll('[data-cmd]').forEach(e => e.onclick = () => { const i = +e.dataset.cmd; if (S.cmd === i) { if (i === 0 && B.safari == null) S.mode = 'fight'; } else S.cmd = i; render(); });
+  st.querySelectorAll('[data-mv]').forEach(e => e.onclick = () => { const i = +e.dataset.mv; if (S.mv === i) S.mode = dbl && S.mode === 'fight' ? 'target' : 'msg'; else S.mv = i; render(); });
+  st.querySelectorAll('[data-t]').forEach(e => e.onclick = () => { S.target = +e.dataset.t; S.mode = 'target'; render(); });
+  st.querySelectorAll('[data-yn]').forEach(e => e.onclick = () => { S.yn = +e.dataset.yn; render(); });
+  dev();
+}
+
+function dev() {
+  const d = document.getElementById('dev');
+  d.innerHTML = 'BATTLE: ' + Object.keys(BATTLES).map(k => `<button class="${S.battle === k ? 'on' : ''}" data-b="${k}">${k}</button>`).join('')
+    + ' &nbsp; STATE: ' + Object.entries(MODES).map(([k, v]) => `<button class="${S.mode === k ? 'on' : ''}" data-m="${k}">${v}</button>`).join('')
+    + '<span style="width:100%">Mock controls, not part of the screen. Keys: arrows · X confirm · O back · S = SELECT (reorder moves) · A = other POKéMON (doubles)</span>';
+  d.querySelectorAll('[data-b]').forEach(e => e.onclick = () => { S.battle = e.dataset.b; S.active = 0; if (S.mode === 'target' && S.battle !== 'double') S.mode = 'fight'; render(); });
+  d.querySelectorAll('[data-m]').forEach(e => e.onclick = () => { S.mode = e.dataset.m; if (S.mode === 'target') S.battle = 'double'; render(); });
+}
+
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase(), B = BATTLES[S.battle], dbl = B.foes.length > 1;
+  if (S.mode === 'cmd') {
+    if (k === 'arrowleft' || k === 'arrowright') S.cmd ^= 1; if (k === 'arrowup' || k === 'arrowdown') S.cmd ^= 2;
+    if (k === 'x' && S.cmd === 0 && B.safari == null) S.mode = 'fight';
+    if (k === 'o' && dbl && S.active === 1) S.active = 0;               // back to the first POKéMON (B_ACTION_CANCEL_PARTNER)
+    if (k === 'a' && dbl) S.active = 1 - S.active;
+  } else if (S.mode === 'fight' || S.mode === 'target') {
+    if (S.mode === 'fight') {
+      if (k === 'arrowright' || k === 'arrowleft') S.mv ^= 1; if (k === 'arrowdown' || k === 'arrowup') S.mv ^= 2;
+      if (k === 's') { if (S.swapFrom < 0) S.swapFrom = S.mv; else { const t = MOVES[S.swapFrom]; MOVES[S.swapFrom] = MOVES[S.mv]; MOVES[S.mv] = t; S.swapFrom = -1; } }
+      if (k === 'x') { if (dbl) S.mode = 'target'; else S.mode = 'msg'; }
+    } else {
+      if (k === 'arrowright') S.target = (S.target + 1) % 3; if (k === 'arrowleft') S.target = (S.target + 2) % 3;
+      if (k === 'x') S.mode = 'msg';
+    }
+    if (k === 'o') { S.mode = S.mode === 'target' ? 'fight' : 'cmd'; S.swapFrom = -1; }
+  } else if (S.mode === 'yesno') {
+    if (k === 'arrowdown' || k === 'arrowup') S.yn ^= 1; if (k === 'x' || k === 'o') S.mode = 'msg';
+  } else if (S.mode === 'judge' && k === 'x' && S.judge < 4) S.judge++;
+  else if (S.mode === 'lvup' && k === 'x' && !S.lvPage) S.lvPage = 1;
+  else if (k === 'x') { S.mode = 'cmd'; S.judge = 0; S.lvPage = 0; }
+  render();
+});
+render();
+</script>
+</body>
+</html>

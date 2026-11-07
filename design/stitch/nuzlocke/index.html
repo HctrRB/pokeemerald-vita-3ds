@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nuzlocke</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Nuzlocke tracker (only when the extra is on). Missing in Stitch (plan 2.3).
+     Rules and states as vita_nuzlocke.c: AVAILABLE, CAUGHT, FAILED (fled / fainted), BLOCKED (dupes). */
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .side { width: 300px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+  .st { width: 120px; text-align: center; padding: 2px 0; font-size: var(--t-body-sm); }
+  .st.AVAILABLE { background: var(--paper-2); }
+  .st.CAUGHT { background: var(--hp-high); color: #fff; }
+  .st.FAILED { background: var(--danger); color: #fff; }
+  .st.BLOCKED { background: var(--frame-2); color: var(--on-frame); }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; }
+  .count { display: flex; justify-content: space-between; height: 32px; align-items: center; border-bottom: 2px solid var(--paper-1); }
+</style>
+</head>
+<body data-screen="nuzlocke">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="nuzlocke:routes">
+      <span class="spacer"></span>
+      <span class="capsule" id="nzsum">-</span>
+    </div>
+    <div class="body">
+      <div class="panel main"><div class="panel-head"><span class="ps" id="nztitle">ENCOUNTERS</span><span class="spacer"></span><span class="vt-sm soft">✕ / tap: change state</span></div><div class="list" id="nzlist"></div></div>
+      <div class="side">
+        <div class="panel" id="nzdetail"></div>
+        <div class="panel" id="nzcount"></div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Change state</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

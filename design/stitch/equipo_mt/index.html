@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Equipo · Enseñar MT</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Party as the target of a TM / HM (BAG → TMs & HMs → USE), with the "forget a move" popup.
+     Missing in Stitch (plan 2.3). */
+  .party { width: 400px; flex: none; display: flex; flex-direction: column; gap: 6px; }
+  /* Reference card finish: bevelled cream card; selected = amber gradient with orange edge */
+  .card { height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 8px; position: relative; border-radius: 4px;
+    background: #FDFAF2; border: 2px solid #364253; box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #D6CCB6, 0 2px 0 rgba(0,0,0,0.35); }
+  .card.on { background: linear-gradient(#FFFBEB, #FDE68A); border-color: #A85800; color: var(--sel-ink);
+    box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #D49B20, 0 0 0 2px rgba(245, 158, 11, 0.55), 0 2px 0 rgba(0,0,0,0.35); }
+  .card.no { color: var(--ink-soft); }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; zoom: 1.5; }
+  .card .name { flex: 1; }
+  .able { padding: 2px 8px; background: var(--hp-high); color: #fff; font-size: var(--t-body-sm); }
+  .card.no .able { background: var(--paper-2); color: var(--ink-soft); }
+  .preview { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .kv { display: flex; justify-content: space-between; height: 32px; align-items: center; border-bottom: 2px solid var(--paper-1); }
+  .mvs .row { height: 40px; }
+  .mvs .row img { zoom: 2; }
+</style>
+</head>
+<body data-screen="equipo_mt">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="target_tm:tm">
+      <span class="spacer"></span>
+      <span class="capsule" id="tmcap">-</span>
+    </div>
+    <div class="body">
+      <div class="party"></div>
+      <div class="panel preview" id="tmpanel"></div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross" data-action="teach"><span class="glyph cross">✕</span>Teach</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back to the bag</span>
+    </div>
+  </div>
+  <!-- Popup: forget a move (party already knows 4) -->
+  <div class="modal" id="olvidar"><div class="win" style="width:600px">
+    <div class="win-head"><span class="ps">FORGET A MOVE</span><span class="spacer"></span><span class="vt-sm" id="forgethead">-</span></div>
+    <div class="win-body"><div class="vt-sm" id="forgettext" style="margin-bottom:8px">-</div><div class="list mvs" id="forgetlist"></div></div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Forget</span><span class="btn" data-btn="circle"><span class="glyph circle">○</span>Stop learning</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Equipo · Elegir</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* "Choose a POKéMON" opened by game scripts instead of the GBA party screen (ui_scr_choose.c):
+     move tutor (ABLE / NOT ABLE / LEARNED tags; four moves → forget popup), DAY CARE (EGG tag) and
+     ChoosePartyMon. Only the buttons each case needs, no tabs. The first POKéMON starts selected. */
+  .party { width: 320px; flex: none; display: flex; flex-direction: column; gap: 4px; }
+  .card { height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 8px; border-radius: 4px;
+    background: #FDFAF2; border: 2px solid #364253; box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #D6CCB6, 0 2px 0 rgba(0,0,0,0.35); }
+  .card.on { background: linear-gradient(#FFFBEB, #FDE68A); border-color: #A85800; color: var(--sel-ink); }
+  .card .info { flex: 1; display: flex; flex-direction: column; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; }
+  .help { flex: 1; display: flex; flex-direction: column; }
+  .help .btns { margin-top: auto; display: flex; gap: 16px; }
+</style>
+</head>
+<body data-screen="equipo_elegir">
+<div class="stage">
+  <div class="frame">
+    <div class="header"><span class="ps">POKéMON</span><span class="tab on">CHOOSE A POKéMON</span><span class="spacer"></span><span class="capsule">TEACH · DOUBLE-EDGE</span></div>
+    <div class="body">
+      <div class="panel party list">
+        <div class="card on"><div class="mon" style="background-image:url(../_assets/pokemon/mudkip_icon.png)"></div><div class="info"><span>MUDKIP</span><span class="soft">Lv15</span></div><span class="chip lead">ABLE</span></div>
+        <div class="card"><div class="mon" style="background-image:url(../_assets/pokemon/taillow_icon.png)"></div><div class="info"><span>TAILLOW</span><span class="soft">Lv12</span></div><span class="chip lead">ABLE</span></div>
+        <div class="card"><div class="mon" style="background-image:url(../_assets/pokemon/ralts_icon.png)"></div><div class="info"><span>RALTS</span><span class="soft">Lv10</span></div><span class="chip">NOT ABLE</span></div>
+        <div class="card"><div class="mon" style="background-image:url(../_assets/pokemon/zigzagoon_icon.png)"></div><div class="info"><span>ZIGZAGOON</span><span class="soft">Lv9</span></div><span class="chip">LEARNED</span></div>
+      </div>
+      <div class="panel help">
+        <div style="line-height:30px">Choose who will learn the move. Those marked ABLE can learn it.</div>
+        <div class="btns"><span class="button red">BACK</span><span class="button green">TEACH</span></div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Teach</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Cancel</span>
+    </div>
+  </div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

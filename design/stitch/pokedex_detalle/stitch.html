@@ -1,0 +1,1375 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>PS Vita Pokédex UI - Hoenn &amp; National Dex</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: VT323, Press Start 2P & Courier Prime for authentic GBA/Retro UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&amp;family=Press+Start+2P&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style data-purpose="retro-core-styles">
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-font-smoothing: none;
+  }
+  body {
+    background-color: #030708;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', 'Courier Prime', monospace;
+    overflow: hidden;
+  }
+  .font-pixel {
+    font-family: 'Press Start 2P', monospace;
+  }
+  .font-courier {
+    font-family: 'Courier Prime', monospace;
+  }
+</style>
+<style data-purpose="beveled-borders">
+  .bevel-box-dark {
+    background: #09211d;
+    border: 2px solid #041210;
+    box-shadow: inset 1px 1px 0 #1b544b, inset -1px -1px 0 #051614, 0 3px 6px rgba(0,0,0,0.5);
+  }
+  .bevel-box-cream {
+    background: #fdf9ec;
+    border: 2px solid #1a3024;
+    box-shadow: inset 2px 2px 0 #ffffff, inset -2px -2px 0 #d9d2be, 0 4px 8px rgba(0,0,0,0.45);
+  }
+  .bevel-box-amber {
+    background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+    border-top: 2px solid #fffbeb;
+    border-bottom: 2px solid #d97706;
+    border-left: 2px solid #fef3c7;
+    border-right: 2px solid #d97706;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(0,0,0,0.15);
+  }
+  .bevel-row-normal {
+    background: #f4eedb;
+    border-bottom: 1.5px solid #ded6be;
+    border-top: 1px solid #ffffff;
+  }
+  .bevel-row-normal:hover {
+    background: #fdfaf0;
+  }
+  /* Physical Button Style for L / R triggers */
+  .retro-key-btn {
+    background: linear-gradient(180deg, #1b3a32 0%, #0c201a 100%);
+    border-top: 2px solid #366d5f;
+    border-left: 2px solid #366d5f;
+    border-right: 2px solid #061511;
+    border-bottom: 2px solid #061511;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
+  .retro-key-btn:active {
+    border-top: 2px solid #061511;
+    border-left: 2px solid #061511;
+    border-right: 2px solid #366d5f;
+    border-bottom: 2px solid #366d5f;
+    transform: translateY(1px);
+  }
+  /* Slider Tab Switcher styling */
+  .tab-slider-btn {
+    transition: all 0.15s ease-in-out;
+  }
+  .tab-slider-active {
+    background: #fde68a;
+    color: #16271c;
+    border-color: #b45309;
+    box-shadow: inset 0 1px 0 #ffffff, 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .tab-slider-inactive {
+    background: #10322b;
+    color: #8ce4d2;
+    border-color: #1f4e42;
+  }
+  .tab-slider-inactive:hover {
+    background: #174238;
+    color: #ffffff;
+  }
+</style>
+<meta content="web_standard" name="shell-type"></head>
+<body>
+<!-- BEGIN: VitaScreenFrame (Exact 960x544) -->
+<div class="relative w-[960px] h-[544px] overflow-hidden bg-[#0c1626] shadow-2xl border-2 border-[#162923] flex flex-col justify-between select-none">
+<!-- Overworld Game Background Tint -->
+<div class="absolute inset-0 z-0 bg-[#091b17]/95">
+<div class="absolute inset-0 bg-[radial-gradient(#1b4d3e_1px,transparent_1px)] [background-size:16px_16px] opacity-40"></div>
+</div>
+<!-- BEGIN: TopHeader -->
+<header class="relative z-10 w-full h-10 px-3 border-b border-[#1b4d3e] flex items-center justify-between select-none shadow-md bg-[#09211d]">
+  <!-- Left Badge: Dex Identity -->
+  <div class="flex items-center space-x-2">
+    <!-- PokeDex Badge Pill -->
+    <div class="flex items-center space-x-1.5 px-2 py-1 rounded bg-[#1b4d3e] border border-[#2b5849] shadow-sm">
+      <div class="w-3.5 h-3.5 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center relative overflow-hidden flex-shrink-0">
+        <div class="absolute bottom-0 w-full h-1/2 bg-white"></div>
+        <div class="absolute w-full h-[1.5px] bg-[#16271c] top-[6px]"></div>
+        <div class="w-1.5 h-1.5 rounded-full bg-white border border-[#16271c] z-10"></div>
+      </div>
+      <span class="font-pixel text-[8px] font-bold text-[#86efac] tracking-wider" id="header-title">POKÉDEX</span>
+      <span class="text-[7px] text-[#34d399]" id="header-region-badge">▶</span>
+      <span class="font-pixel text-[7px] font-bold text-[#fde68a]" id="header-region-badge">NATIONAL</span>
+    </div>
+
+    <!-- [L] / [R] Tab Switcher styled with sunken recessed slot -->
+    <div class="flex items-center bg-[#071714] p-0.5 rounded border border-[#162923] shadow-inner">
+      <button class="px-1.5 py-0.5 rounded text-[7px] font-pixel text-[#99f6e4] hover:text-white cursor-pointer active:scale-95 flex items-center gap-0.5 hover:bg-[#12362e] transition" onclick="cycleLedger(-1)" title="Switch Dex [L]">
+        <span class="text-[#6ee7b7]">◀</span>
+        <span class="bg-[#0c241e] px-1 py-0.2 rounded border border-[#2b5849] text-[6.5px] text-[#6ee7b7] font-bold">L</span>
+      </button>
+      <div class="flex items-center mx-1 gap-1">
+        <button class="tab-slider-btn tab-slider-inactive px-2 py-0.5 rounded text-[7px] font-pixel font-bold tracking-wider cursor-pointer" id="slider-btn-hoenn" onclick="switchLedger('hoenn')">
+          HOENN
+        </button>
+        <button class="tab-slider-btn tab-slider-active px-2 py-0.5 rounded text-[7px] font-pixel font-bold tracking-wider cursor-pointer" id="slider-btn-national" onclick="switchLedger('national')">
+          NATIONAL
+        </button>
+      </div>
+      <button class="px-1.5 py-0.5 rounded text-[7px] font-pixel text-[#99f6e4] hover:text-white cursor-pointer active:scale-95 flex items-center gap-0.5 hover:bg-[#12362e] transition" onclick="cycleLedger(1)" title="Switch Dex [R]">
+        <span class="bg-[#0c241e] px-1 py-0.2 rounded border border-[#2b5849] text-[6.5px] text-[#6ee7b7] font-bold">R</span>
+        <span class="text-[#6ee7b7]">▶</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Center: Prominent Interactive Dex Slider Switcher -->
+  <div class="flex items-center space-x-2">
+    <!-- Money Badge Pill -->
+    
+
+    <!-- Visual Pill Slider Container -->
+    
+  </div>
+</header>
+<!-- END: TopHeader -->
+<!-- BEGIN: MainContent (960x450 area) -->
+<main class="relative z-10 w-full flex-1 px-3 py-2 flex gap-2.5 overflow-hidden">
+<div class="flex flex-col w-full h-full">
+<div class="flex-1 flex gap-2.5 w-full h-full">
+<!-- Left Pane: Selected Pokémon Sprite & Dossier -->
+<div class="w-[48%] flex flex-col justify-between bevel-box-cream p-3 relative select-none">
+<!-- Top Title & Caught Status -->
+<div class="flex items-center justify-between border-b-2 border-[#1a3024] pb-2 mb-1.5">
+<div class="flex items-center space-x-2">
+<span class="font-pixel text-[10px] text-[#1a3024] font-bold" id="pokedex-num">#001</span>
+<span class="font-pixel text-[11px] text-[#245244] font-bold tracking-wider" id="pokedex-name">TREECKO</span>
+</div>
+<div class="flex items-center space-x-1 bg-[#163f35] px-2 py-0.5 rounded border border-[#2dd4bf]/50 shadow-inner">
+<span class="text-[8px] font-pixel text-[#86efac]" id="pokedex-status">CAUGHT 🗹</span>
+</div>
+</div>
+<!-- Center Sprite & Type Badges Area -->
+<div class="flex gap-2.5 bg-[#eae3cd] border-2 border-[#d1c8af] p-2 rounded shadow-inner relative overflow-hidden items-start mb-2">
+<!-- Sprite & Gen 3 Footprint Inset Box -->
+<div class="flex flex-col gap-1.5 flex-shrink-0">
+<div class="w-[130px] h-[145px] bg-[#fdf9ec] border-2 border-[#b7ac8f] flex flex-col items-center justify-center relative shadow-inner flex-shrink-0"><div class="w-24 h-24 flex items-center justify-center text-6xl transition-transform duration-150 select-none pb-1" id="pokedex-sprite-container" style="transform: rotate(0deg) scale(1); image-rendering: pixelated;"><span class="transform scale-125 select-none text-6xl" id="pokedex-icon">🦎</span></div><div class="absolute bottom-1 right-1 text-[6.5px] font-pixel text-[#7a705b]" id="pokedex-origin-tag">HOENN #001</div></div>
+<!-- Gen 3 Canonical Footprint Box -->
+<div class="w-[130px] h-[34px] bg-[#f4ebd0] border-2 border-[#b7ac8f] rounded-sm px-1.5 py-0.5 flex items-center justify-between shadow-inner">
+<div class="flex flex-col">
+<span class="text-[6px] font-pixel text-[#7a705b] tracking-tighter">FOOTPRINT</span>
+<span class="text-[6px] font-pixel text-[#1a3024] font-bold" id="pokedex-footprint-label">RECORDED</span>
+</div>
+<div class="w-6 h-6 bg-[#fdf9ec] border border-[#cfc6ac] rounded-sm flex items-center justify-center overflow-hidden" id="pokedex-footprint-box"><svg viewBox="0 0 16 16" class="w-4 h-4 text-[#1a3024]" fill="currentColor"><rect x="3" y="2" width="2" height="3"></rect><rect x="7" y="1" width="2" height="4"></rect><rect x="11" y="2" width="2" height="3"></rect><rect x="5" y="6" width="6" height="5"></rect><rect x="6" y="11" width="4" height="3"></rect><rect x="7" y="14" width="2" height="1"></rect></svg></div>
+</div>
+</div>
+<div class="flex flex-col justify-between h-[185px] flex-1"><div><div class="text-[7.5px] font-pixel text-[#7a705b] mb-1">TYPE CLASSIFICATION</div><div class="flex gap-1.5" id="pokedex-types-container"><span class="px-2 py-0.5 font-pixel text-[8px] font-bold rounded border bg-[#34d399] text-[#051a14] border-[#065f46]" id="pokedex-type1">GRASS</span><span class="px-2 py-0.5 font-pixel text-[8px] font-bold rounded border bg-[#c084fc] text-[#3b0764] border-[#7e22ce] hidden" id="pokedex-type2">POISON</span></div></div><div class="grid grid-cols-2 gap-1.5"><div class="bg-[#fdf9ec] p-1.5 border border-[#d1c8af] rounded"><div class="text-[6.5px] font-pixel text-[#7a705b]">HEIGHT</div><div class="font-pixel text-[8.5px] text-[#1a3024] font-bold mt-0.5" id="pokedex-height">0.5 m</div></div><div class="bg-[#fdf9ec] p-1.5 border border-[#d1c8af] rounded"><div class="text-[6.5px] font-pixel text-[#7a705b]">WEIGHT</div><div class="font-pixel text-[8.5px] text-[#1a3024] font-bold mt-0.5" id="pokedex-weight">5.0 kg</div></div></div><div class="grid grid-cols-2 gap-1.5"><button class="flex items-center justify-between px-1.5 py-1.5 bg-[#12362e] hover:bg-[#1a4a3e] active:scale-[0.98] border border-[#205245] hover:border-[#34d399] rounded text-left transition shadow cursor-pointer group" onclick="openHabitatModal()" title="Open Hoenn Habitat Area Map"><div class="flex items-center space-x-1"><span class="w-3 h-3 rounded-sm bg-[#bb1188] border border-[#ff77cc] flex items-center justify-center text-[6px] font-bold text-white font-pixel">□</span><span class="text-[7px] font-pixel text-[#99f6e4] group-hover:text-white font-bold tracking-tight">HABITAT</span></div><span class="text-[6px] font-pixel text-[#34d399] group-hover:translate-x-0.5 transition-transform">▶</span></button><button class="flex items-center justify-between px-1.5 py-1.5 bg-[#252818] hover:bg-[#343822] active:scale-[0.98] border border-[#4d5229] hover:border-[#fde68a] rounded text-left transition shadow cursor-pointer group" onclick="openHeightModal()" title="Compare height with Trainer Brendan"><div class="flex items-center space-x-1"><span class="w-3 h-3 rounded-sm bg-[#ca8a04] border border-[#fef08a] flex items-center justify-center text-[6.5px] font-bold text-white font-pixel leading-none">📏</span><span class="text-[7px] font-pixel text-[#fde68a] group-hover:text-white font-bold tracking-tight">SIZE CMP</span></div><span class="text-[6px] font-pixel text-[#fde047] group-hover:translate-x-0.5 transition-transform">▶</span></button></div></div>
+</div><div class="w-full bg-[#081814] border-2 border-[#16271c] rounded p-1.5 shadow-inner mb-2 select-none flex flex-col justify-between"><div class="flex items-center justify-between border-b border-[#144f3d] pb-1 mb-1"><div class="flex items-center space-x-1.5"><button onclick="playCryEffect()" class="w-4 h-4 rounded bg-[#163f35] border border-[#34d399]/40 hover:bg-[#205245] active:scale-95 flex items-center justify-center text-[7px] text-[#34d399] cursor-pointer transition shadow" title="Test Play Audio Cry">♪</button><span class="font-pixel text-[7px] text-[#99f6e4] font-bold tracking-wider">VOCAL FREQ // CRY SPECTROGRAM</span></div><div class="flex items-center space-x-1"><span class="text-[6px] font-pixel text-[#86efac] bg-[#0c241e] px-1 py-0.5 rounded border border-[#2dd4bf]/40">8.0 kHz</span><span class="text-[6px] font-pixel text-[#fde68a] bg-[#1a3024] px-1 py-0.5 rounded border border-[#b45309]">0.82s</span></div></div><div class="w-full h-7 bg-[#051411] border border-[#184639] rounded-sm px-1.5 flex items-end justify-between gap-[2px] relative overflow-hidden shadow-inner"><div class="absolute inset-0 bg-[radial-gradient(#1b4d3e_1px,transparent_1px)] [background-size:16px_16px] opacity-25 pointer-events-none"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-2"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-3.5"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-5"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-6 animate-pulse"></div><div class="w-1.5 bg-[#86efac] rounded-[1px] h-4.5"></div><div class="w-1.5 bg-[#86efac] rounded-[1px] h-5.5"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-3"></div><div class="w-1.5 bg-[#2b5849] rounded-[1px] h-2"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-4"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-5.5"></div><div class="w-1.5 bg-[#86efac] rounded-[1px] h-6"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-4"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-2.5"></div><div class="w-1.5 bg-[#2b5849] rounded-[1px] h-1.5"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-3"></div><div class="w-1.5 bg-[#34d399] rounded-[1px] h-5"></div><div class="w-1.5 bg-[#86efac] rounded-[1px] h-4"></div><div class="w-1.5 bg-[#2b5849] rounded-[1px] h-2"></div><div class="w-1.5 bg-[#1b4d3e] rounded-[1px] h-1"></div></div></div>
+<!-- Bottom Description Dossier -->
+<div class="bg-[#fdf9ec] border-2 border-[#d1c8af] rounded shadow-inner mt-1 p-2 flex-1 flex flex-col justify-between">
+<div class="flex justify-between items-center mb-1">
+<div class="text-[7px] font-pixel text-[#7a705b]" id="pokedex-desc-label">HOENN POKÉDEX ENTRY</div>
+<div class="text-[7px] font-pixel text-[#164e63]" id="pokedex-stat-sub">DATABASE RECORD</div>
+</div>
+<p class="font-pixel text-[9px] text-[#2c3d31] leading-relaxed flex-1" id="pokedex-desc">The forest's guardian. It makes its nest in a giant tree in the forest. It subjugates foes with quick agile leaps.</p>
+</div>
+</div>
+<!-- Right Pane: Ledger List with Region Sub-Tabs -->
+<div class="w-[52%] flex flex-col bevel-box-cream p-3 select-none">
+<!-- Interactive Sub Header: Mode Badge + Counters -->
+<div class="flex items-center justify-between border-b-2 border-[#1a3024] pb-2 mb-2">
+<div class="flex items-center space-x-1.5">
+<button class="font-pixel text-[8px] px-2.5 py-1 bg-[#fde68a] text-[#16271c] font-bold rounded border border-[#b45309] shadow-sm cursor-pointer hover:brightness-105 transition" id="tab-hoenn" onclick="switchLedger('hoenn')">
+              HOENN
+            </button>
+<button class="font-pixel text-[8px] px-2.5 py-1 bg-[#163f35] text-[#99f6e4] font-bold rounded border border-[#2b5849] hover:text-white cursor-pointer transition" id="tab-nat" onclick="switchLedger('national')">
+              NATIONAL
+            </button>
+</div>
+<div class="flex items-center space-x-2">
+<div class="font-pixel text-[9px] text-[#1b4d3e] font-bold bg-[#ede6cf] px-2 py-0.5 rounded border border-[#d1c8af]" id="ledger-title-count">CAUGHT: 128 / SEEN: 202</div>
+</div>
+</div>
+<!-- Scrollable List Container -->
+<div class="flex-1 flex gap-1.5 overflow-hidden min-h-0 relative">
+<!-- Pokédex items list -->
+<div class="flex-1 overflow-y-auto space-y-1.5 pr-1 select-none" id="dex-list-container" style="scrollbar-width: none; -ms-overflow-style: none;"><div class="bevel-box-amber px-3 py-2 flex items-center justify-between cursor-pointer relative z-10 transition-transform">
+          <div class="flex items-center space-x-2.5">
+            <span class="text-[#b45309] text-[10px] animate-pulse">▶</span>
+            <span class="text-[14px] leading-none">🦎</span>
+            <span class="font-pixel text-[10px] text-[#16271c] font-bold">#001 TREECKO</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#854d0e] bg-[#fef08a] px-1.5 py-0.5 rounded border border-[#d97706]">CAUGHT 🗹</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">🦖</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#002 GROVYLE</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">CAUGHT 🗹</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">🐉</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#003 SCEPTILE</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">SEEN 👁</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">🐥</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#004 TORCHIC</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">CAUGHT 🗹</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">🐓</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#005 COMBUSKEN</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">SEEN 👁</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">🔥</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#006 BLAZIKEN</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">CAUGHT 🗹</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">🐟</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#007 MUDKIP</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">CAUGHT 🗹</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">🦦</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#008 MARSHTOMP</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">SEEN 👁</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">🦈</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#009 SWAMPERT</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">CAUGHT 🗹</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">🔮</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#029 RALTS</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">CAUGHT 🗹</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">💃</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#030 KIRLIA</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">CAUGHT 🗹</span>
+          </div>
+        </div><div class="bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">✨</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#031 GARDEVOIR</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">SEEN 👁</span>
+          </div>
+        </div></div>
+<!-- Retro Stepped Scrollbar -->
+<div class="w-5 flex flex-col items-center bg-[#051310] border-2 border-[#16271c] rounded p-0.5 shadow-inner select-none flex-shrink-0" id="retro-scrollbar-track-wrap">
+<button class="w-4 h-4 bg-[#163f35] border border-[#2b5849] hover:bg-[#1f5649] active:scale-95 text-[#6ee7b7] text-[7px] font-pixel flex items-center justify-center rounded cursor-pointer mb-0.5" id="scroll-btn-up" title="Scroll Up">▲</button>
+<div class="flex-1 w-full bg-[#081814] border border-[#1a3024] rounded-sm relative cursor-pointer overflow-hidden" id="retro-scroll-track">
+<div class="w-full bg-[#fde68a] border border-[#b45309] rounded-[1px] absolute top-0 left-0 shadow cursor-grab active:cursor-grabbing transition-all" id="retro-scroll-thumb" style="height: 259px; top: 0px; opacity: 1;">
+<div class="w-full h-full flex flex-col items-center justify-center gap-[2px]">
+<div class="w-2.5 h-[1.5px] bg-[#b45309]"></div>
+<div class="w-2.5 h-[1.5px] bg-[#b45309]"></div>
+<div class="w-2.5 h-[1.5px] bg-[#b45309]"></div>
+</div>
+</div>
+</div>
+<button class="w-4 h-4 bg-[#163f35] border border-[#2b5849] hover:bg-[#1f5649] active:scale-95 text-[#6ee7b7] text-[7px] font-pixel flex items-center justify-center rounded cursor-pointer mt-0.5" id="scroll-btn-down" title="Scroll Down">▼</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- END: MainContent -->
+<!-- BEGIN: ConsoleFooter (Sony PS Vita Bar Standard) -->
+<footer class="relative z-10 w-full h-[40px] px-3.5 bg-[#07131a] border-t-2 border-[#112933] flex items-center justify-between text-white text-[9px] font-pixel shadow-2xl">
+<!-- Action Controls -->
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-1 cursor-pointer" onclick="handleInspectClick()">
+<span class="w-3.5 h-3.5 rounded-full bg-[#0066cc] border border-[#5eaaff] flex items-center justify-center text-[8px] font-bold text-white shadow">✕</span>
+<span class="text-[#ccd7e6] text-[7.5px]">INSPECT</span>
+</div>
+<div class="flex items-center space-x-1 cursor-pointer" onclick="cycleLedger(1)">
+<span class="w-3.5 h-3.5 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center text-[8px] font-bold text-white shadow">○</span>
+<span class="text-[#ccd7e6] text-[7.5px]">BACK</span>
+</div>
+
+<div class="flex items-center space-x-1 cursor-pointer" onclick="openHeightModal()">
+
+
+</div>
+<div class="flex items-center space-x-1 cursor-pointer" onclick="playCryEffect()">
+<span class="w-3.5 h-3.5 rounded-full bg-[#009944] border border-[#66e699] flex items-center justify-center text-[7.5px] font-bold text-white shadow">♪</span>
+<span class="text-[#ccd7e6] text-[7.5px]" id="cry-label">CRY</span>
+</div>
+</div>
+<!-- Right System Indicators -->
+<div class="flex items-center space-x-2.5">
+<div class="flex items-center space-x-1 bg-[#0b1f26] px-1.5 py-0.5 rounded border border-[#163a47] text-[7.5px] text-[#7dd3fc]">
+<span class="font-bold text-white">[L]/[R]</span>
+<span class="text-[#94a3b8]">DEX</span>
+</div>
+<div class="flex items-center space-x-1 text-[7.5px] cursor-pointer" onclick="cycleLedger(1)">
+
+</div>
+<!-- Clock -->
+<span class="text-[8px] text-[#cbd5e1] font-pixel font-bold">14:32</span>
+<!-- Vita Battery -->
+
+</div>
+</footer>
+<!-- END: ConsoleFooter -->
+<!-- BEGIN: Trainer Height Comparison Modal Overlay -->
+<div class="absolute inset-0 z-50 bg-[#04090d]/85 backdrop-blur-[2px] items-center justify-center p-4 hidden" id="height-modal-overlay" onclick="handleHeightBackdropClick(event)">
+<div class="relative w-[720px] max-h-[460px] bg-[#fdf9ec] border-4 border-[#0c1626] rounded-sm shadow-[0_10px_35px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden" onclick="event.stopPropagation()">
+<!-- Header -->
+<div class="h-10 bg-[#16271c] border-b-2 border-[#2b5849] px-3.5 flex items-center justify-between select-none">
+<div class="flex items-center space-x-2">
+<span class="text-yellow-400 font-pixel text-[9px]">📏</span>
+<span class="text-[9px] font-pixel text-[#fde68a] font-bold tracking-wider">SIZE COMPARISON // BRENDAN vs <span id="comp-modal-pokemon-name" class="">BULBASAUR</span></span>
+</div>
+<div class="flex items-center space-x-3">
+<span class="text-[7px] font-pixel text-[#99f6e4] bg-[#0c241e] px-1.5 py-0.5 rounded border border-[#2b5849]">[ESC / ○ TO EXIT]</span>
+<button class="flex items-center space-x-1 px-2 py-0.5 rounded bg-[#2b5849] hover:bg-[#346b59] border border-[#34d399]/40 text-[#fdf9ec] text-[8px] font-pixel cursor-pointer transition active:scale-95" onclick="closeHeightModal()">
+<span class="w-3 h-3 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center text-[7px] text-white">○</span>
+<span class="">CLOSE</span>
+</button>
+</div>
+</div>
+<!-- Comparison Stage -->
+<div class="p-4 bg-[#f4eedb] flex flex-col gap-3">
+<!-- Grid & Metric Scale View -->
+<div class="relative w-full h-[260px] bg-[#0c1c17] border-2 border-[#1a382e] rounded shadow-inner overflow-hidden flex items-end justify-center px-12 pb-3">
+<!-- Background Metric Grid Lines -->
+<div class="absolute inset-0 bg-[linear-gradient(to_bottom,#183b31_1px,transparent_1px)] [background-size:100%_28px] opacity-35 pointer-events-none"></div>
+<div class="absolute inset-0 bg-[linear-gradient(to_right,#183b31_1px,transparent_1px)] [background-size:28px_100%] opacity-25 pointer-events-none"></div>
+<!-- Metric Height Level Labels on the left edge -->
+<div class="absolute left-2 top-3 bottom-8 flex flex-col justify-between text-[7px] font-pixel text-[#5eead4]/70 pointer-events-none select-none">
+<div class="">2.0 m</div>
+<div class="">1.5 m</div>
+<div class="">1.0 m</div>
+<div class="">0.5 m</div>
+</div>
+<!-- Ground Baseline -->
+<div class="absolute left-0 right-0 bottom-7 h-[2px] bg-[#34d399] shadow-[0_0_8px_#34d399]"></div>
+<div class="absolute left-3 bottom-2 text-[6.5px] font-pixel text-[#99f6e4]/80">GROUND LEVEL (0.0 m)</div>
+<!-- Visual comparison silhouettes side by side -->
+<div class="relative z-10 w-full flex items-end justify-around px-8" style="height: 210px;">
+<!-- Trainer Silhouette (Fixed 1.45m) -->
+<div class="flex flex-col items-center justify-end h-full">
+<!-- Height Marker Pill -->
+<div class="mb-1 px-1.5 py-0.5 rounded bg-[#092b23] border border-[#2dd4bf]/50 text-[7px] font-pixel text-[#a7f3d0]">
+      1.45 m
+    </div>
+<!-- Visual Silhouette Trainer Art (scaled ~145px) -->
+<div class="w-16 h-[145px] flex flex-col items-center justify-end relative group">
+<svg class="w-full h-full text-[#38bdf8] drop-shadow-[0_0_6px_rgba(56,189,248,0.4)]" fill="currentColor" viewBox="0 0 48 110">
+<!-- Trainer Brendan silhouette stylized pixel vector -->
+<!-- Cap & Hair -->
+<path d="M16 4 h16 v6 h-16 z M14 10 h20 v8 h-20 z M18 18 h12 v4 h-12 z"></path>
+<path d="M12 8 h6 v4 h-6 z" opacity="0.9"></path>
+<!-- Torso & Jacket -->
+<path d="M14 22 h20 v28 h-20 z M10 24 h6 v22 h-6 z M32 24 h6 v22 h-6 z"></path>
+<!-- Belt & Shorts -->
+<path d="M14 50 h20 v16 h-20 z"></path>
+<!-- Legs & Sneakers -->
+<path d="M14 66 h8 v32 h-8 z M26 66 h8 v32 h-8 z M12 98 h10 v8 h-10 z M26 98 h10 v8 h-10 z"></path>
+</svg>
+</div>
+<div class="mt-2 text-[7.5px] font-pixel text-[#93c5fd] font-bold">BRENDAN (TRAINER)</div>
+</div>
+<!-- VS Divider Badge -->
+<div class="flex flex-col items-center justify-center self-center mb-6">
+<span class="w-7 h-7 rounded-full bg-[#163f35] border-2 border-[#34d399] flex items-center justify-center text-[8px] font-pixel text-[#fde68a] shadow-lg">VS</span>
+</div>
+<!-- Pokemon Silhouette (Dynamically Height-Scaled) -->
+<div class="flex flex-col items-center justify-end h-full">
+<!-- Height Marker Pill -->
+<div class="mb-1 px-1.5 py-0.5 rounded bg-[#3b2505] border border-[#f59e0b]/50 text-[7px] font-pixel text-[#fde68a]" id="comp-modal-pokemon-height">0.7 m</div>
+<!-- Dynamically sized container according to Pokemon Height -->
+<div class="w-24 flex items-end justify-center transition-all duration-300" id="comp-modal-pokemon-silhouette-box" style="height: 70px;">
+<div class="text-center transition-all duration-200 select-none flex items-center justify-center w-full h-full" id="comp-modal-pokemon-graphic" style="font-size: 44px;">🌱</div>
+</div>
+<div class="mt-2 text-[7.5px] font-pixel text-[#fde047] font-bold" id="comp-modal-pokemon-tag">#001 BULBASAUR</div>
+</div>
+</div>
+</div>
+<!-- Comparison Summary Footer Dossier -->
+<div class="bg-[#fdf9ec] border-2 border-[#d9d2be] rounded p-2.5 flex items-center justify-between shadow-inner">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded bg-[#163f35] border border-[#2dd4bf]/40 flex items-center justify-center text-sm" id="comp-modal-footer-icon">🌱</div>
+<div class="flex flex-col">
+<span class="text-[7.5px] font-pixel text-[#16271c] font-bold" id="comp-modal-summary-title">BULBASAUR SCALE ANALYSIS</span>
+<span class="text-[7px] font-pixel text-[#7a705b]" id="comp-modal-summary-desc">Trainer Brendan (1.45 m) towers over BULBASAUR (approx. 2.1× larger).</span>
+</div>
+</div>
+<button class="px-2.5 py-1 bg-[#163f35] hover:bg-[#205245] border border-[#2dd4bf]/50 rounded text-[7.5px] font-pixel text-[#86efac] cursor-pointer" onclick="closeHeightModal()">
+    DONE
+  </button>
+</div>
+</div>
+</div>
+</div>
+<!-- END: Trainer Height Comparison Modal Overlay -->
+<!-- BEGIN: Habitat Modal Overlay -->
+<div class="absolute inset-0 z-50 bg-[#04090d]/85 backdrop-blur-[2px] items-center justify-center p-4 hidden" id="habitat-modal-overlay" onclick="handleBackdropClick(event)">
+<!-- Modal Window Shell -->
+<div class="relative w-[780px] max-h-[480px] bg-[#fdf9ec] border-4 border-[#0c1626] rounded-sm shadow-[0_10px_35px_rgba(0,0,0,0.85)] flex flex-col overflow-hidden" id="habitat-modal-box" onclick="event.stopPropagation()">
+<!-- Modal Header -->
+<div class="h-10 bg-[#071714] border-b-2 border-[#13493e] px-3.5 flex items-center justify-between select-none">
+<div class="flex items-center space-x-2">
+<span class="w-3.5 h-3.5 rounded-sm bg-[#bb1188] border border-[#ff77cc] flex items-center justify-center text-[7px] font-bold text-white font-pixel">□</span>
+<span class="text-[9px] font-pixel text-[#99f6e4] font-bold tracking-wider">HOENN HABITAT ARCHIVE / AREA MAP</span>
+</div>
+<div class="flex items-center space-x-3">
+
+<button class="flex items-center space-x-1 px-2 py-0.5 rounded bg-[#163f35] hover:bg-[#205245] border border-[#2dd4bf]/40 text-[#99f6e4] text-[8px] font-pixel cursor-pointer transition active:scale-95" onclick="closeHabitatModal()">
+<span class="w-3 h-3 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center text-[7px] text-white">○</span>
+<span class="">CLOSE</span>
+</button>
+</div>
+</div>
+<!-- Modal Content Grid -->
+<div class="p-3 bg-[#fdf9ec] flex gap-3 text-[#1a3024] overflow-hidden">
+<!-- Left Map Section (450px) -->
+<div class="w-[450px] flex flex-col gap-2">
+<div class="flex items-center justify-between bg-[#ece5d1] px-2 py-1 rounded border border-[#cfc6ac]">
+<div class="flex items-center space-x-2">
+<span class="text-base leading-none" id="modal-poke-icon">🌱</span>
+<span class="font-pixel text-[10px] font-bold text-[#16271c]" id="modal-poke-title">#001 BULBASAUR</span>
+</div>
+<span class="font-pixel text-[8px] bg-[#450a0a] text-[#fca5a5] px-2 py-0.5 rounded border border-[#b91c1c]" id="modal-poke-region">FOREIGN / IMPORT</span>
+</div>
+<!-- Authentic Map Canvas Container -->
+<div class="relative w-[450px] h-[280px] bg-[#09211d] border-2 border-[#1a3024] rounded overflow-hidden shadow-inner flex items-center justify-center">
+<img alt="Hoenn Region Habitat Map" class="w-full h-full object-cover select-none pointer-events-none" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXPbgrCWoESstdEKDhi6seZ_j-eP4j3LeLsrkLx-8MPyiWkK-Hm6GQxZO79-9CnCJM-vAyneiy0orazKkJ9UYAx-BBbmdgYlGo9kYgdMb1ppMrWeo9ufApjpKOugzD_xSxRQHmQtP_DVf7Tt6DfnR_pQj0xdni_8cQDtB70WYEcocvB3EAvFw7NWV8mZIjZr1sdozr2_y418VUvcYDdW6GlVor7oQBBpNkfcNFRniN7WrHeh-k-OFFmA" style="image-rendering: pixelated;">
+<!-- Route Pin Overlay Container (Populated via JS) -->
+<div class="absolute inset-0 pointer-events-none" id="modal-map-pins"></div>
+<!-- Radar Scanline / Reticle HUD Over Map -->
+<div class="absolute inset-0 border border-[#34d399]/20 pointer-events-none">
+<div class="absolute top-2 left-2 px-1.5 py-0.5 bg-[#051411]/80 rounded border border-[#1b4d3e] text-[7px] font-pixel text-[#99f6e4]">
+              HOENN RADAR GRID
+            </div>
+<div class="absolute bottom-2 right-2 px-1.5 py-0.5 bg-[#051411]/80 rounded border border-[#1b4d3e] text-[7px] font-pixel text-[#fde68a]" id="modal-pin-count">0 HABITATS</div>
+</div>
+</div>
+<div class="text-[7px] font-pixel text-[#7a705b] flex items-center justify-between px-1">
+<span class="">● FLASHING NODES INDICATE ACTIVE NESTS</span>
+<span class="">COORDINATES: ROUTE NETWORK</span>
+</div>
+</div>
+<!-- Right Dossier & Zone Encounters Section -->
+<div class="flex-1 flex flex-col justify-between bg-[#f4eedb] border-2 border-[#d9d2be] rounded p-2.5 shadow-inner">
+<div>
+<div class="border-b border-[#cfc6ac] pb-1.5 mb-2 flex items-center justify-between">
+<span class="font-pixel text-[8px] text-[#7a705b] font-bold">HABITAT DOSSIER</span>
+<span class="font-pixel text-[8px] text-[#1b4d3e]" id="modal-encounter-type">NO SIGNAL DETECTED</span>
+</div>
+<!-- Encounter Route List or Area Unknown Alert -->
+<div class="space-y-1.5 max-h-[265px] overflow-y-auto pr-1" id="modal-habitats-container" style="scrollbar-width: none;">
+        <div class="h-[210px] flex flex-col items-center justify-center text-center p-3 border-2 border-dashed border-[#b91c1c]/40 bg-[#fef2f2] rounded">
+          <div class="w-10 h-10 rounded-full bg-[#fee2e2] border-2 border-[#ef4444] flex items-center justify-center text-[#dc2626] font-pixel text-base mb-2">
+            ✕
+          </div>
+          <div class="font-pixel text-[9px] text-[#991b1b] font-bold mb-1">
+            AREA UNKNOWN
+          </div>
+          <div class="font-pixel text-[7px] text-[#7f1d1d] max-w-[210px] leading-relaxed">
+            CANNOT BE FOUND IN HOENN OVERWORLD WILDLIFE MATRIX.
+          </div>
+          <div class="mt-3 px-2 py-1 bg-[#fff] border border-[#fca5a5] text-[7px] font-pixel text-[#991b1b] rounded">
+            ORIGIN: KANTO / TRADE ONLY
+          </div>
+        </div>
+      </div>
+</div>
+<!-- Bottom Modal Footer Note -->
+<div class="bg-[#e9e2cb] border border-[#d1c8af] rounded p-2 mt-2">
+<div class="text-[7px] font-pixel text-[#6a5e4b] uppercase" id="modal-habitat-tip">TRANSFER OR TRADE REQUIRED. THIS SPECIMEN HAS NO OVERWORLD HABITAT IN HOENN.</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- END: Habitat Modal Overlay -->
+</div>
+<!-- END: VitaScreenFrame -->
+<!-- Pokédex Data and Switcher Script -->
+<script>
+  const TYPE_COLORS = {
+    GRASS: "bg-[#34d399] text-[#051a14] border-[#065f46]",
+    FIRE: "bg-[#f87171] text-[#450a0a] border-[#b91c1c]",
+    WATER: "bg-[#60a5fa] text-[#082f49] border-[#1d4ed8]",
+    POISON: "bg-[#c084fc] text-[#3b0764] border-[#7e22ce]",
+    FLYING: "bg-[#93c5fd] text-[#1e3a8a] border-[#3b82f6]",
+    FIGHTING: "bg-[#fb923c] text-[#431407] border-[#c2410c]",
+    GROUND: "bg-[#fcd34d] text-[#451a03] border-[#b45309]",
+    PSYCHIC: "bg-[#f472b6] text-[#500724] border-[#be185d]",
+    ELECTRIC: "bg-[#fde047] text-[#713f12] border-[#ca8a04]",
+    BUG: "bg-[#a3e635] text-[#1a2e05] border-[#4d7c0f]",
+    NORMAL: "bg-[#cbd5e1] text-[#1e293b] border-[#64748b]",
+    NONE: "hidden"
+  };
+
+  // Pixel footprint SVG generators
+  const FOOTPRINT_SVGS = {
+    // 3-toed reptile/gecko footprint
+    reptile: `<svg viewBox="0 0 16 16" class="w-4 h-4 text-[#1a3024]" fill="currentColor"><rect x="3" y="2" width="2" height="3"/><rect x="7" y="1" width="2" height="4"/><rect x="11" y="2" width="2" height="3"/><rect x="5" y="6" width="6" height="5"/><rect x="6" y="11" width="4" height="3"/><rect x="7" y="14" width="2" height="1"/></svg>`,
+    // Bird / Talon footprint
+    talon: `<svg viewBox="0 0 16 16" class="w-4 h-4 text-[#1a3024]" fill="currentColor"><rect x="2" y="2" width="2" height="5"/><rect x="7" y="1" width="2" height="8"/><rect x="12" y="2" width="2" height="5"/><rect x="6" y="8" width="4" height="4"/><rect x="7" y="12" width="2" height="4"/></svg>`,
+    // Webbed / Amphibian footprint
+    webbed: `<svg viewBox="0 0 16 16" class="w-4 h-4 text-[#1a3024]" fill="currentColor"><rect x="2" y="3" width="3" height="4"/><rect x="6" y="2" width="4" height="4"/><rect x="11" y="3" width="3" height="4"/><rect x="4" y="6" width="8" height="3"/><rect x="5" y="9" width="6" height="4"/><rect x="6" y="13" width="4" height="2"/></svg>`,
+    // Humanoid / dancer sole print
+    humanoid: `<svg viewBox="0 0 16 16" class="w-4 h-4 text-[#1a3024]" fill="currentColor"><rect x="2" y="2" width="2" height="2"/><rect x="5" y="1" width="2" height="2"/><rect x="8" y="1" width="2" height="2"/><rect x="11" y="2" width="2" height="2"/><rect x="4" y="5" width="8" height="5"/><rect x="5" y="10" width="6" height="3"/><rect x="6" y="13" width="4" height="2"/></svg>`,
+    // Quadruped claw/paw print
+    paw: `<svg viewBox="0 0 16 16" class="w-4 h-4 text-[#1a3024]" fill="currentColor"><circle cx="4" cy="4" r="1.5"/><circle cx="8" cy="3" r="1.5"/><circle cx="12" cy="4" r="1.5"/><ellipse cx="8" cy="10" rx="4.5" ry="3.5"/></svg>`,
+    // Unknown dashed silhouette
+    unknown: `<svg viewBox="0 0 16 16" class="w-4 h-4 text-[#9ca3af]" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2,2"><rect x="4" y="3" width="8" height="10" rx="4"/><path d="M8 6v2m0 2h.01"/></svg>`
+  };
+
+  const DEX_DATA = {
+    hoenn: {
+      name: "HOENN",
+      fullName: "HOENN REGIONAL DEX",
+      seenCount: "CAUGHT: 128 / SEEN: 202",
+      labelDesc: "HOENN POKÉDEX ENTRY",
+      tagPrefix: "HOENN",
+      entries: [
+        { 
+          id: "001", name: "TREECKO", icon: "🦎", type1: "GRASS", type2: "NONE", height: "0.5 m", heightVal: 0.5, weight: "5.0 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "reptile",
+          desc: "The forest's guardian. It makes its nest in a giant tree in the forest. It subjugates foes with quick agile leaps.",
+          habitat: {
+            known: true,
+            statusBadge: "STARTER / ROUTE 101",
+            tip: "Prof. Birch gift in Littleroot / rare deep canopy sightings.",
+            locations: [
+              { area: "ROUTE 101", method: "TALL GRASS", rate: "STARTER CHOICE", time: "ALL DAY", pin: { x: 26, y: 72 } },
+              { area: "PETALBURG WOODS", method: "CANOPY FORAGE", rate: "RARE (5%)", time: "MORNING", pin: { x: 19, y: 58 } },
+              { area: "ROUTE 119", method: "TALL JUNGLE GRASS", rate: "UNCOMMON", time: "DAY", pin: { x: 44, y: 32 } }
+            ]
+          }
+        },
+        { 
+          id: "002", name: "GROVYLE", icon: "🦖", type1: "GRASS", type2: "NONE", height: "0.9 m", heightVal: 0.9, weight: "21.6 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "reptile",
+          desc: "Leaves out of its body provide camouflage in jungles. It agilely flies between branches with uncanny grace.",
+          habitat: {
+            known: true,
+            statusBadge: "EVOLUTION / WOODS",
+            tip: "Prefers dense vegetation with high branches.",
+            locations: [
+              { area: "PETALBURG WOODS", method: "HIGH CANOPY", rate: "EVOLVE LV.16", time: "ALL DAY", pin: { x: 19, y: 58 } },
+              { area: "ROUTE 119", method: "DENSE TALL GRASS", rate: "VERY RARE (1%)", time: "DAY", pin: { x: 44, y: 32 } }
+            ]
+          }
+        },
+        { 
+          id: "003", name: "SCEPTILE", icon: "🐉", type1: "GRASS", type2: "NONE", height: "1.7 m", heightVal: 1.7, weight: "52.2 kg", status: "SEEN 👁", isCaught: false,
+          footprint: "reptile",
+          desc: "The leaves growing on its forelegs can slice down thick trees. It is without peer in jungle combat.",
+          habitat: {
+            known: true,
+            statusBadge: "EVOLUTION EXCLUSIVE",
+            tip: "Rarely seen in the wild; dominates deep rainforests.",
+            locations: [
+              { area: "ROUTE 119", method: "RAINFOREST INTERIOR", rate: "EVOLVE LV.36", time: "ALL DAY", pin: { x: 44, y: 32 } },
+              { area: "SAFARI ZONE AREA 4", method: "EXPANSION GRASS", rate: "RARE ENCOUNTER", time: "AFTERNOON", pin: { x: 57, y: 34 } }
+            ]
+          }
+        },
+        { 
+          id: "004", name: "TORCHIC", icon: "🐥", type1: "FIRE", type2: "NONE", height: "0.4 m", heightVal: 0.4, weight: "2.5 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "talon",
+          desc: "A fire burns inside, so it feels very warm to hug. It tosses off fiery fireballs of 1,800 degrees Fahrenheit.",
+          habitat: {
+            known: true,
+            statusBadge: "STARTER / VOLCANIC",
+            tip: "Prof. Birch gift / observed near warm thermal terrain.",
+            locations: [
+              { area: "ROUTE 101", method: "STARTER GIFT", rate: "UNIQUE", time: "ALL DAY", pin: { x: 26, y: 72 } },
+              { area: "ROUTE 112", method: "FOOTHILLS GRASS", rate: "RARE (4%)", time: "DAY", pin: { x: 28, y: 35 } },
+              { area: "JAGGED PASS", method: "VOLCANIC ASH", rate: "RARE (2%)", time: "MORNING", pin: { x: 30, y: 28 } }
+            ]
+          }
+        },
+        { 
+          id: "005", name: "COMBUSKEN", icon: "🐓", type1: "FIRE", type2: "FIGHTING", height: "0.9 m", heightVal: 0.9, weight: "19.5 kg", status: "SEEN 👁", isCaught: false,
+          footprint: "talon",
+          desc: "It lashes out with fierce kicks that shatter rocks. During battle, its hot cry intimidates opponents.",
+          habitat: {
+            known: true,
+            statusBadge: "EVOLUTION / FOOTHILLS",
+            tip: "Trains legs on rocky slopes around Mt. Chimney.",
+            locations: [
+              { area: "ROUTE 112", method: "EVOLVE LV.16", rate: "UNCOMMON", time: "ALL DAY", pin: { x: 28, y: 35 } },
+              { area: "FIERY PATH", method: "CAVE INTERIOR", rate: "RARE (3%)", time: "ALL DAY", pin: { x: 29, y: 24 } }
+            ]
+          }
+        },
+        { 
+          id: "006", name: "BLAZIKEN", icon: "🔥", type1: "FIRE", type2: "FIGHTING", height: "1.9 m", heightVal: 1.9, weight: "52.0 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "talon",
+          desc: "Flames spouting from its wrists scorch foes to cinders. It can easily clear a 30-story building in a single leap.",
+          habitat: {
+            known: true,
+            statusBadge: "CHAMPION / VOLCANO",
+            tip: "Leaps across volcanic crags at blazing speeds.",
+            locations: [
+              { area: "MT. CHIMNEY CRATER", method: "SUMMIT CRAGS", rate: "EVOLVE LV.36", time: "ALL DAY", pin: { x: 25, y: 22 } },
+              { area: "MAGMA HIDEOUT", method: "LAVA LEDGE", rate: "VERY RARE", time: "ALL DAY", pin: { x: 33, y: 25 } }
+            ]
+          }
+        },
+        { 
+          id: "007", name: "MUDKIP", icon: "🐟", type1: "WATER", type2: "NONE", height: "0.4 m", heightVal: 0.4, weight: "7.6 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "webbed",
+          desc: "The fin on its head acts as sensitive radar. Using it to sense movements in water, it detects danger.",
+          habitat: {
+            known: true,
+            statusBadge: "STARTER / WETLANDS",
+            tip: "Burrows into mud near fresh estuaries.",
+            locations: [
+              { area: "ROUTE 101", method: "STARTER GIFT", rate: "UNIQUE", time: "ALL DAY", pin: { x: 26, y: 72 } },
+              { area: "ROUTE 102", method: "POND SURF / GRASS", rate: "UNCOMMON (10%)", time: "DAY", pin: { x: 22, y: 64 } },
+              { area: "ROUTE 120", method: "RIVER SHALLOWS", rate: "RARE (5%)", time: "ALL DAY", pin: { x: 48, y: 36 } }
+            ]
+          }
+        },
+        { 
+          id: "008", name: "MARSHTOMP", icon: "🦦", type1: "WATER", type2: "GROUND", height: "0.7 m", heightVal: 0.7, weight: "28.0 kg", status: "SEEN 👁", isCaught: false,
+          footprint: "webbed",
+          desc: "Its hindquarters are strong, allowing it to stand on two legs and walk over muddy shores without slowing.",
+          habitat: {
+            known: true,
+            statusBadge: "EVOLUTION / ESTUARY",
+            tip: "Muddy terrain doesn't impede its powerful legs.",
+            locations: [
+              { area: "ROUTE 120", method: "PUDDLE / MUD SLICK", rate: "EVOLVE LV.16", time: "ALL DAY", pin: { x: 48, y: 36 } },
+              { area: "SAFARI ZONE AREA 2", method: "MARSH LAKE", rate: "RARE (8%)", time: "DAY", pin: { x: 55, y: 38 } }
+            ]
+          }
+        },
+        { 
+          id: "009", name: "SWAMPERT", icon: "🦈", type1: "WATER", type2: "GROUND", height: "1.5 m", heightVal: 1.5, weight: "81.9 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "webbed",
+          desc: "It can effortlessly tow large vessels through torrential storms. Its vision cuts through murky depths.",
+          habitat: {
+            known: true,
+            statusBadge: "EVOLUTION EXCLUSIVE",
+            tip: "Powerful swimmer able to navigate stormy seas.",
+            locations: [
+              { area: "ROUTE 120 MARSHES", method: "DEEP POOLS", rate: "EVOLVE LV.36", time: "ALL DAY", pin: { x: 48, y: 36 } },
+              { area: "ROUTE 123", method: "ESTUARY SURF", rate: "VERY RARE", time: "NIGHT", pin: { x: 42, y: 52 } }
+            ]
+          }
+        },
+        { 
+          id: "029", name: "RALTS", icon: "🔮", type1: "PSYCHIC", type2: "NONE", height: "0.4 m", heightVal: 0.4, weight: "6.6 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "humanoid",
+          desc: "It senses the emotions of people with the horns on its head. It rarely appears before hostile trainers.",
+          habitat: {
+            known: true,
+            statusBadge: "PETALBURG ROUTE",
+            tip: "Appears only to trainers with cheerful demeanor.",
+            locations: [
+              { area: "ROUTE 102", method: "TALL GRASS", rate: "RARE (4%)", time: "MORNING / DAY", pin: { x: 22, y: 64 } },
+              { area: "ROUTE 104", method: "SOUTHERN GRASS", rate: "VERY RARE (2%)", time: "DAY", pin: { x: 17, y: 68 } }
+            ]
+          }
+        },
+        { 
+          id: "030", name: "KIRLIA", icon: "💃", type1: "PSYCHIC", type2: "NONE", height: "0.8 m", heightVal: 0.8, weight: "20.2 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "humanoid",
+          desc: "It dances gracefully when feeling happy. Its cheerful spirit amplifies its psychic telekinetic energy.",
+          habitat: {
+            known: true,
+            statusBadge: "EVOLUTION / ROUTE 102",
+            tip: "Spotted dancing on sunny days in clearings.",
+            locations: [
+              { area: "ROUTE 102", method: "EVOLVE LV.20", rate: "UNCOMMON", time: "DAY", pin: { x: 22, y: 64 } },
+              { area: "ROUTE 117", method: "FLOWER BEDS", rate: "RARE (5%)", time: "AFTERNOON", pin: { x: 30, y: 44 } }
+            ]
+          }
+        },
+        { 
+          id: "031", name: "GARDEVOIR", icon: "✨", type1: "PSYCHIC", type2: "NONE", height: "1.6 m", heightVal: 1.6, weight: "48.4 kg", status: "SEEN 👁", isCaught: false,
+          footprint: "humanoid",
+          desc: "To protect its trainer, it will expend all its psychokinetic power to create a localized small black hole.",
+          habitat: {
+            known: true,
+            statusBadge: "PSYCHIC SANCTUARY",
+            tip: "Loyal protector found near calm shrines.",
+            locations: [
+              { area: "MT. PYRE SUMMIT", method: "MIST FIELDS", rate: "EVOLVE LV.30", time: "ALL DAY", pin: { x: 57, y: 48 } },
+              { area: "ROUTE 117 MEADOWS", method: "SPECIAL ENCOUNTER", rate: "VERY RARE", time: "NIGHT", pin: { x: 30, y: 44 } }
+            ]
+          }
+        }
+      ]
+    },
+    national: {
+      name: "NATIONAL",
+      fullName: "NATIONAL SYSTEM DEX",
+      seenCount: "CAUGHT: 215 / SEEN: 386",
+      labelDesc: "NATIONAL POKÉDEX ENTRY",
+      tagPrefix: "NAT",
+      entries: [
+        { 
+          id: "001", name: "BULBASAUR", icon: "🌱", type1: "GRASS", type2: "POISON", height: "0.7 m", heightVal: 0.7, weight: "6.9 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "paw",
+          desc: "A strange seed was planted on its back at birth. The plant sprouts and grows alongside this Pokémon.",
+          habitat: { known: false }
+        },
+        { 
+          id: "002", name: "IVYSAUR", icon: "🌿", type1: "GRASS", type2: "POISON", height: "1.0 m", heightVal: 1.0, weight: "13.0 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "paw",
+          desc: "When the bud on its back starts swelling, a sweet aroma wafts to indicate the flower's coming bloom.",
+          habitat: { known: false }
+        },
+        { 
+          id: "003", name: "VENUSAUR", icon: "🌺", type1: "GRASS", type2: "POISON", height: "2.0 m", heightVal: 2.0, weight: "100.0 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "paw",
+          desc: "By spreading the broad petals of its flower and absorbing the sun's rays, it fills its body with energy.",
+          habitat: { known: false }
+        },
+        { 
+          id: "004", name: "CHARMANDER", icon: "🔥", type1: "FIRE", type2: "NONE", height: "0.6 m", heightVal: 0.6, weight: "8.5 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "reptile",
+          desc: "From the time it is born, a flame burns at the tip of its tail. It burns brightest when it is agitated.",
+          habitat: { known: false }
+        },
+        { 
+          id: "005", name: "CHARMELEON", icon: "🦎", type1: "FIRE", type2: "NONE", height: "1.1 m", heightVal: 1.1, weight: "19.0 kg", status: "SEEN 👁", isCaught: false,
+          footprint: "reptile",
+          desc: "It has a barbaric nature. In battle, it whips its fiery tail around and slashes away with sharp claws.",
+          habitat: { known: false }
+        },
+        { 
+          id: "006", name: "CHARIZARD", icon: "🐉", type1: "FIRE", type2: "FLYING", height: "1.7 m", heightVal: 1.7, weight: "90.5 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "reptile",
+          desc: "It spits fire hot enough to melt boulders. It breathes intense white flames when encountering fierce opponents.",
+          habitat: { known: false }
+        },
+        { 
+          id: "007", name: "SQUIRTLE", icon: "🐢", type1: "WATER", type2: "NONE", height: "0.5 m", heightVal: 0.5, weight: "9.0 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "webbed",
+          desc: "When it retracts its long neck into its shell, it squirts water with vigorous, pinpoint force.",
+          habitat: { known: false }
+        },
+        { 
+          id: "008", name: "WARTORTLE", icon: "🌊", type1: "WATER", type2: "NONE", height: "1.0 m", heightVal: 1.0, weight: "22.5 kg", status: "SEEN 👁", isCaught: false,
+          footprint: "webbed",
+          desc: "It is recognized by its large, furry ears and tail. To swim swiftly, it moves its ears to maintain balance.",
+          habitat: { known: false }
+        },
+        { 
+          id: "009", name: "BLASTOISE", icon: "🛡️", type1: "WATER", type2: "NONE", height: "1.6 m", heightVal: 1.6, weight: "85.5 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "webbed",
+          desc: "The rocket cannons on its shell fire water jets capable of punching holes through thick reinforced steel plates.",
+          habitat: { known: false }
+        },
+        { 
+          id: "025", name: "PIKACHU", icon: "⚡", type1: "ELECTRIC", type2: "NONE", height: "0.4 m", heightVal: 0.4, weight: "6.0 kg", status: "CAUGHT 🗹", isCaught: true,
+          footprint: "paw",
+          desc: "When several of these Pokémon gather, their electricity could build and cause lightning storms.",
+          habitat: {
+            known: true,
+            statusBadge: "SAFARI ZONE HOENN",
+            tip: "Found running in tall grass inside Hoenn Safari Zone.",
+            locations: [
+              { area: "SAFARI ZONE AREA 1", method: "TALL GRASS", rate: "UNCOMMON (5%)", time: "DAY", pin: { x: 54, y: 35 } },
+              { area: "SAFARI ZONE AREA 2", method: "SAVANNA GRASS", rate: "RARE (4%)", time: "ALL DAY", pin: { x: 57, y: 34 } }
+            ]
+          }
+        }
+      ]
+    }
+  };
+
+  let activeLedger = 'hoenn';
+  let activeIndex = 0;
+  let isModalOpen = false;
+  let isHeightModalOpen = false;
+
+  function switchLedger(ledgerKey) {
+    if (activeLedger === ledgerKey) return;
+    activeLedger = ledgerKey;
+    activeIndex = 0; // reset to first entry on switch
+    updateTabButtons();
+    renderDex();
+    if (isModalOpen) {
+      updateHabitatModal();
+    }
+    if (isHeightModalOpen) {
+      updateHeightModal();
+    }
+  }
+
+  function cycleLedger(delta) {
+    const keys = ['hoenn', 'national'];
+    let currentIdx = keys.indexOf(activeLedger);
+    let nextIdx = (currentIdx + delta + keys.length) % keys.length;
+    switchLedger(keys[nextIdx]);
+  }
+
+  function updateTabButtons() {
+    const sHoenn = document.getElementById('slider-btn-hoenn');
+    const sNat = document.getElementById('slider-btn-national');
+    const tabHoenn = document.getElementById('tab-hoenn');
+    const tabNat = document.getElementById('tab-nat');
+    const headerBadge = document.getElementById('header-region-badge');
+
+    if (activeLedger === 'hoenn') {
+      sHoenn.className = "tab-slider-btn tab-slider-active px-3 py-1 rounded text-[8px] font-pixel font-bold tracking-wider cursor-pointer";
+      sNat.className = "tab-slider-btn tab-slider-inactive px-3 py-1 rounded text-[8px] font-pixel font-bold tracking-wider cursor-pointer";
+
+      tabHoenn.className = "font-pixel text-[8px] px-2.5 py-1 bg-[#fde68a] text-[#16271c] font-bold rounded border border-[#b45309] shadow-sm cursor-pointer hover:brightness-105 transition";
+      tabNat.className = "font-pixel text-[8px] px-2.5 py-1 bg-[#163f35] text-[#99f6e4] font-bold rounded border border-[#2b5849] hover:text-white cursor-pointer transition";
+
+      headerBadge.innerText = "HOENN";
+      headerBadge.className = "text-[8px] text-[#fef08a] font-pixel font-bold";
+    } else {
+      sNat.className = "tab-slider-btn tab-slider-active px-3 py-1 rounded text-[8px] font-pixel font-bold tracking-wider cursor-pointer";
+      sHoenn.className = "tab-slider-btn tab-slider-inactive px-3 py-1 rounded text-[8px] font-pixel font-bold tracking-wider cursor-pointer";
+
+      tabNat.className = "font-pixel text-[8px] px-2.5 py-1 bg-[#fde68a] text-[#16271c] font-bold rounded border border-[#b45309] shadow-sm cursor-pointer hover:brightness-105 transition";
+      tabHoenn.className = "font-pixel text-[8px] px-2.5 py-1 bg-[#163f35] text-[#99f6e4] font-bold rounded border border-[#2b5849] hover:text-white cursor-pointer transition";
+
+      headerBadge.innerText = "NATIONAL";
+      headerBadge.className = "text-[8px] text-[#93c5fd] font-pixel font-bold";
+    }
+  }
+
+  function renderDex() {
+    const ledger = DEX_DATA[activeLedger];
+    document.getElementById('ledger-title-count').innerText = ledger.seenCount;
+
+    const container = document.getElementById('dex-list-container');
+    container.innerHTML = '';
+
+    ledger.entries.forEach((poke, idx) => {
+      const isSelected = idx === activeIndex;
+      const row = document.createElement('div');
+      row.onclick = () => selectPokemon(idx);
+
+      if (isSelected) {
+        row.className = 'bevel-box-amber px-3 py-2 flex items-center justify-between cursor-pointer relative z-10 transition-transform';
+        row.innerHTML = `
+          <div class="flex items-center space-x-2.5">
+            <span class="text-[#b45309] text-[10px] animate-pulse">▶</span>
+            <span class="text-[14px] leading-none">${poke.icon}</span>
+            <span class="font-pixel text-[10px] text-[#16271c] font-bold">#${poke.id} ${poke.name}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#854d0e] bg-[#fef08a] px-1.5 py-0.5 rounded border border-[#d97706]">${poke.status}</span>
+          </div>
+        `;
+      } else {
+        row.className = 'bevel-row-normal px-3 py-2 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]';
+        row.innerHTML = `
+          <div class="flex items-center space-x-2.5 ml-3">
+            <span class="text-[13px] leading-none">${poke.icon}</span>
+            <span class="font-pixel text-[9px] text-[#2c3d31]">#${poke.id} ${poke.name}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#7a705b]">${poke.status}</span>
+          </div>
+        `;
+      }
+      container.appendChild(row);
+    });
+
+    updateDetailPane();
+
+    if (isModalOpen) {
+      updateHabitatModal();
+    }
+    if (isHeightModalOpen) {
+      updateHeightModal();
+    }
+
+    if (window.updateRetroScrollbar) {
+      window.updateRetroScrollbar();
+    }
+  }
+
+  function selectPokemon(index) {
+    activeIndex = index;
+    renderDex();
+  }
+
+  function updateDetailPane() {
+    const ledger = DEX_DATA[activeLedger];
+    const poke = ledger.entries[activeIndex];
+    if (!poke) return;
+
+    document.getElementById('pokedex-num').innerText = `#${poke.id}`;
+    document.getElementById('pokedex-name').innerText = poke.name;
+    document.getElementById('pokedex-status').innerText = poke.status;
+    document.getElementById('pokedex-icon').innerText = poke.icon;
+    document.getElementById('pokedex-origin-tag').innerText = `${ledger.tagPrefix} #${poke.id}`;
+    document.getElementById('pokedex-height').innerText = poke.height;
+    document.getElementById('pokedex-weight').innerText = poke.weight;
+    document.getElementById('pokedex-desc-label').innerText = ledger.labelDesc;
+    document.getElementById('pokedex-desc').innerText = poke.desc;
+
+    // Footprint Gen 3 logic: only visible when CAUGHT
+    const footprintBox = document.getElementById('pokedex-footprint-box');
+    const footprintLabel = document.getElementById('pokedex-footprint-label');
+    if (poke.isCaught) {
+      footprintLabel.innerText = "RECORDED";
+      footprintLabel.className = "text-[6px] font-pixel text-[#1a3024] font-bold";
+      footprintBox.innerHTML = FOOTPRINT_SVGS[poke.footprint] || FOOTPRINT_SVGS.reptile;
+    } else {
+      footprintLabel.innerText = "UNKNOWN";
+      footprintLabel.className = "text-[6px] font-pixel text-[#9ca3af]";
+      footprintBox.innerHTML = FOOTPRINT_SVGS.unknown;
+    }
+
+    // Type pills
+    const t1El = document.getElementById('pokedex-type1');
+    const t2El = document.getElementById('pokedex-type2');
+
+    t1El.innerText = poke.type1;
+    t1El.className = `px-2 py-0.5 font-pixel text-[8px] font-bold rounded border ${TYPE_COLORS[poke.type1] || 'bg-[#34d399] text-[#051a14] border-[#065f46]'}`;
+
+    if (poke.type2 && poke.type2 !== 'NONE') {
+      t2El.innerText = poke.type2;
+      t2El.className = `px-2 py-0.5 font-pixel text-[8px] font-bold rounded border ${TYPE_COLORS[poke.type2] || 'bg-[#475569] text-white border-[#1e293b]'}`;
+      t2El.classList.remove('hidden');
+    } else {
+      t2El.classList.add('hidden');
+    }
+
+    const spriteBox = document.getElementById('pokedex-sprite-container');
+    if (spriteBox) {
+      spriteBox.style.transform = 'scale(1.15)';
+      setTimeout(() => {
+        spriteBox.style.transform = 'scale(1.0)';
+      }, 120);
+    }
+  }
+
+  function handleInspectClick() {
+    const ledger = DEX_DATA[activeLedger];
+    const poke = ledger.entries[activeIndex];
+    if (poke) {
+      alert(`[PS VITA LEDGER] Inspecting entry: #${poke.id} ${poke.name} (${poke.type1} type).`);
+    }
+  }
+
+  function playCryEffect() {
+    const cryLabel = document.getElementById('cry-label');
+    const originalText = cryLabel.innerText;
+    cryLabel.innerText = 'PLAYING ♪';
+    cryLabel.classList.add('text-[#86efac]');
+
+    const sprite = document.getElementById('pokedex-sprite-container');
+    if (sprite) {
+      sprite.style.transform = 'rotate(-10deg) scale(1.2)';
+      setTimeout(() => {
+        sprite.style.transform = 'rotate(10deg) scale(1.2)';
+      }, 100);
+      setTimeout(() => {
+        sprite.style.transform = 'rotate(0deg) scale(1.0)';
+      }, 200);
+    }
+
+    setTimeout(() => {
+      cryLabel.innerText = originalText;
+      cryLabel.classList.remove('text-[#86efac]');
+    }, 600);
+  }
+
+  /* TRAINER HEIGHT COMPARISON MODAL LOGIC */
+  function openHeightModal() {
+    isHeightModalOpen = true;
+    const modal = document.getElementById('height-modal-overlay');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    updateHeightModal();
+  }
+
+  function closeHeightModal() {
+    isHeightModalOpen = false;
+    const modal = document.getElementById('height-modal-overlay');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  function handleHeightBackdropClick(e) {
+    if (e.target.id === 'height-modal-overlay') {
+      closeHeightModal();
+    }
+  }
+
+  function updateHeightModal() {
+    const ledger = DEX_DATA[activeLedger];
+    const poke = ledger.entries[activeIndex];
+    if (!poke) return;
+
+    document.getElementById('comp-modal-pokemon-name').innerText = poke.name;
+    document.getElementById('comp-modal-pokemon-tag').innerText = `#${poke.id} ${poke.name}`;
+    document.getElementById('comp-modal-pokemon-height').innerText = poke.height;
+    document.getElementById('comp-modal-pokemon-graphic').innerText = poke.icon;
+    document.getElementById('comp-modal-footer-icon').innerText = poke.icon;
+
+    // Brendan height: 1.45m -> mapped to 145px
+    // Pokemon height (in meters) scaled proportionally: heightVal * 100 px (clamped between 32px and 200px)
+    const scaledHeightPx = Math.max(34, Math.min(200, Math.round((poke.heightVal || 0.5) * 100)));
+    const silBox = document.getElementById('comp-modal-pokemon-silhouette-box');
+    silBox.style.height = `${scaledHeightPx}px`;
+
+    // Dynamic icon font sizing
+    const graphicEl = document.getElementById('comp-modal-pokemon-graphic');
+    if (scaledHeightPx > 140) {
+      graphicEl.style.fontSize = '88px';
+    } else if (scaledHeightPx > 90) {
+      graphicEl.style.fontSize = '62px';
+    } else if (scaledHeightPx > 50) {
+      graphicEl.style.fontSize = '44px';
+    } else {
+      graphicEl.style.fontSize = '30px';
+    }
+
+    const titleEl = document.getElementById('comp-modal-summary-title');
+    const descEl = document.getElementById('comp-modal-summary-desc');
+    titleEl.innerText = `${poke.name} SCALE ANALYSIS`;
+
+    const trainerH = 1.45;
+    const pokeH = poke.heightVal || 0.5;
+    if (pokeH > trainerH) {
+      const diff = (pokeH / trainerH).toFixed(1);
+      descEl.innerText = `${poke.name} stands taller than Brendan at ${poke.height} (approx. ${diff}× Brendan's height).`;
+    } else if (Math.abs(pokeH - trainerH) < 0.15) {
+      descEl.innerText = `${poke.name} is nearly equivalent in stature to Trainer Brendan (1.45 m / 4'09").`;
+    } else {
+      const diff = (trainerH / pokeH).toFixed(1);
+      descEl.innerText = `Trainer Brendan (1.45 m) towers over ${poke.name} (approx. ${diff}× larger).`;
+    }
+  }
+
+  /* HABITAT MODAL LOGIC */
+  function openHabitatModal() {
+    isModalOpen = true;
+    const modal = document.getElementById('habitat-modal-overlay');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    updateHabitatModal();
+  }
+
+  function closeHabitatModal() {
+    isModalOpen = false;
+    const modal = document.getElementById('habitat-modal-overlay');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  function handleBackdropClick(e) {
+    if (e.target.id === 'habitat-modal-overlay') {
+      closeHabitatModal();
+    }
+  }
+
+  function updateHabitatModal() {
+    const ledger = DEX_DATA[activeLedger];
+    const poke = ledger.entries[activeIndex];
+    if (!poke) return;
+
+    document.getElementById('modal-poke-title').innerText = `#${poke.id} ${poke.name}`;
+    document.getElementById('modal-poke-icon').innerText = poke.icon;
+
+    const regionBadge = document.getElementById('modal-poke-region');
+    const pinContainer = document.getElementById('modal-map-pins');
+    const pinCount = document.getElementById('modal-pin-count');
+    const habitatsContainer = document.getElementById('modal-habitats-container');
+    const habitatTip = document.getElementById('modal-habitat-tip');
+    const encounterTypeHeader = document.getElementById('modal-encounter-type');
+
+    pinContainer.innerHTML = '';
+    habitatsContainer.innerHTML = '';
+
+    if (poke.habitat && poke.habitat.known) {
+      regionBadge.innerText = poke.habitat.statusBadge || "HOENN NATIVE";
+      regionBadge.className = "font-pixel text-[8px] bg-[#163f35] text-[#86efac] px-2 py-0.5 rounded border border-[#2dd4bf]/40";
+      pinCount.innerText = `${poke.habitat.locations.length} HABITATS`;
+      encounterTypeHeader.innerText = "HOENN KNOWN LOCATIONS";
+      habitatTip.innerText = poke.habitat.tip || "OBSERVE WILD POKÉMON MOVEMENTS IN TALL GRASS AND WATER.";
+
+      poke.habitat.locations.forEach((loc, i) => {
+        const pin = document.createElement('div');
+        pin.className = 'absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center';
+        pin.style.left = `${loc.pin.x}%`;
+        pin.style.top = `${loc.pin.y}%`;
+        pin.innerHTML = `
+          <div class="relative flex items-center justify-center">
+            <span class="absolute w-6 h-6 rounded-full bg-[#ef4444] opacity-75 animate-ping"></span>
+            <div class="w-3.5 h-3.5 rounded-full bg-[#dc2626] border-2 border-white shadow-lg flex items-center justify-center z-10">
+              <div class="w-1 h-1 rounded-full bg-yellow-300"></div>
+            </div>
+            <div class="absolute -bottom-3 px-1 py-0.2 bg-[#0c1626]/90 border border-[#fde68a] text-[6px] font-pixel text-white whitespace-nowrap shadow z-20">
+              ${loc.area}
+            </div>
+          </div>
+        `;
+        pinContainer.appendChild(pin);
+
+        const card = document.createElement('div');
+        card.className = "bg-[#fdf9ec] border border-[#d1c8af] rounded p-2 text-left shadow-sm";
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-[#ded7c0] pb-1 mb-1">
+            <span class="font-pixel text-[8px] text-[#1b4d3e] font-bold">📍 ${loc.area}</span>
+            <span class="font-pixel text-[7px] text-[#854d0e] bg-[#fef08a] px-1 py-0.2 rounded border border-[#d97706]">${loc.rate}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-[7px] font-pixel text-[#4b5563]">
+            <div>METHOD: <span class="text-[#16271c] font-bold">${loc.method}</span></div>
+            <div>TIME: <span class="text-[#16271c] font-bold">${loc.time}</span></div>
+          </div>
+        `;
+        habitatsContainer.appendChild(card);
+      });
+
+    } else {
+      regionBadge.innerText = "FOREIGN / IMPORT";
+      regionBadge.className = "font-pixel text-[8px] bg-[#450a0a] text-[#fca5a5] px-2 py-0.5 rounded border border-[#b91c1c]";
+      pinCount.innerText = "0 HABITATS";
+      encounterTypeHeader.innerText = "NO SIGNAL DETECTED";
+      habitatTip.innerText = "TRANSFER OR TRADE REQUIRED. THIS SPECIMEN HAS NO OVERWORLD HABITAT IN HOENN.";
+
+      habitatsContainer.innerHTML = `
+        <div class="h-[210px] flex flex-col items-center justify-center text-center p-3 border-2 border-dashed border-[#b91c1c]/40 bg-[#fef2f2] rounded">
+          <div class="w-10 h-10 rounded-full bg-[#fee2e2] border-2 border-[#ef4444] flex items-center justify-center text-[#dc2626] font-pixel text-base mb-2">
+            ✕
+          </div>
+          <div class="font-pixel text-[9px] text-[#991b1b] font-bold mb-1">
+            AREA UNKNOWN
+          </div>
+          <div class="font-pixel text-[7px] text-[#7f1d1d] max-w-[210px] leading-relaxed">
+            CANNOT BE FOUND IN HOENN OVERWORLD WILDLIFE MATRIX.
+          </div>
+          <div class="mt-3 px-2 py-1 bg-[#fff] border border-[#fca5a5] text-[7px] font-pixel text-[#991b1b] rounded">
+            ORIGIN: KANTO / TRADE ONLY
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Keyboard navigation for Vita controls
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (isModalOpen) {
+        closeHabitatModal();
+        return;
+      }
+      if (isHeightModalOpen) {
+        closeHeightModal();
+        return;
+      }
+    }
+
+    if (e.key === 'x' || e.key === 'X') {
+      if (isModalOpen) {
+        closeHabitatModal();
+      } else {
+        openHabitatModal();
+      }
+      return;
+    }
+
+    if (e.key === 't' || e.key === 'T') {
+      if (isHeightModalOpen) {
+        closeHeightModal();
+      } else {
+        openHeightModal();
+      }
+      return;
+    }
+
+    const ledger = DEX_DATA[activeLedger];
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (activeIndex > 0) {
+        selectPokemon(activeIndex - 1);
+        scrollSelectedIntoView();
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (activeIndex < ledger.entries.length - 1) {
+        selectPokemon(activeIndex + 1);
+        scrollSelectedIntoView();
+      }
+    } else if (e.key === 'l' || e.key === 'L' || e.key === 'q' || e.key === 'Q' || e.key === 'PageUp') {
+      e.preventDefault();
+      cycleLedger(-1);
+    } else if (e.key === 'r' || e.key === 'R' || e.key === 'e' || e.key === 'E' || e.key === 'PageDown') {
+      e.preventDefault();
+      cycleLedger(1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      cycleLedger(1);
+    }
+  });
+
+  function scrollSelectedIntoView() {
+    const container = document.getElementById('dex-list-container');
+    const selectedItem = container.children[activeIndex];
+    if (selectedItem) {
+      selectedItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  // Initial render
+  updateTabButtons();
+  renderDex();
+</script>
+<script id="custom-retro-scrollbar-logic">
+  (function initRetroScrollbar() {
+    const container = document.getElementById('dex-list-container');
+    const track = document.getElementById('retro-scroll-track');
+    const thumb = document.getElementById('retro-scroll-thumb');
+    const btnUp = document.getElementById('scroll-btn-up');
+    const btnDown = document.getElementById('scroll-btn-down');
+
+    if (!container || !track || !thumb) return;
+
+    window.updateRetroScrollbar = function() {
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+      const scrollTop = container.scrollTop;
+
+      if (scrollHeight <= clientHeight) {
+        thumb.style.height = '100%';
+        thumb.style.top = '0px';
+        thumb.style.opacity = '0.5';
+        return;
+      }
+      thumb.style.opacity = '1';
+
+      const trackHeight = track.clientHeight;
+      const thumbHeight = Math.max(24, Math.floor((clientHeight / scrollHeight) * trackHeight));
+      thumb.style.height = thumbHeight + 'px';
+
+      const maxScrollTop = scrollHeight - clientHeight;
+      const maxThumbTop = trackHeight - thumbHeight;
+      const thumbTop = Math.floor((scrollTop / maxScrollTop) * maxThumbTop);
+      thumb.style.top = thumbTop + 'px';
+    };
+
+    container.addEventListener('scroll', window.updateRetroScrollbar);
+
+    let isDragging = false;
+    let startY = 0;
+    let startScrollTop = 0;
+
+    thumb.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      startY = e.clientY;
+      startScrollTop = container.scrollTop;
+      document.body.style.userSelect = 'none';
+      e.stopPropagation();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const deltaY = e.clientY - startY;
+      const trackHeight = track.clientHeight;
+      const thumbHeight = thumb.offsetHeight;
+      const maxThumbTop = trackHeight - thumbHeight;
+      const maxScrollTop = container.scrollHeight - container.clientHeight;
+
+      if (maxThumbTop > 0) {
+        const scrollDelta = (deltaY / maxThumbTop) * maxScrollTop;
+        container.scrollTop = startScrollTop + scrollDelta;
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.userSelect = '';
+      }
+    });
+
+    track.addEventListener('click', (e) => {
+      if (e.target === thumb || thumb.contains(e.target)) return;
+      const rect = track.getBoundingClientRect();
+      const clickY = e.clientY - rect.top;
+      const trackHeight = track.clientHeight;
+      const thumbHeight = thumb.offsetHeight;
+      const maxThumbTop = trackHeight - thumbHeight;
+      const maxScrollTop = container.scrollHeight - container.clientHeight;
+
+      const targetThumbTop = Math.max(0, Math.min(clickY - thumbHeight / 2, maxThumbTop));
+      if (maxThumbTop > 0) {
+        container.scrollTop = (targetThumbTop / maxThumbTop) * maxScrollTop;
+      }
+    });
+
+    if (btnUp) {
+      btnUp.addEventListener('click', () => {
+        container.scrollBy({ top: -48, behavior: 'smooth' });
+      });
+    }
+
+    if (btnDown) {
+      btnDown.addEventListener('click', () => {
+        container.scrollBy({ top: 48, behavior: 'smooth' });
+      });
+    }
+
+    setTimeout(window.updateRetroScrollbar, 50);
+  })();
+</script>
+
+
+</body></html>

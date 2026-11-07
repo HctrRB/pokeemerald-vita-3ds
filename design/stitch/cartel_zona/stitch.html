@@ -1,0 +1,693 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokémon Hoenn - Thematic Town &amp; City Signs Showcase (PS Vita Style)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=Plus+Jakarta+Sans:wght@600;700;800;900&amp;family=JetBrains+Mono:wght@700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    .font-pixel { font-family: 'Press Start 2P', monospace; }
+    .font-ui { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* Custom textures & gradients */
+    .tex-leaves {
+      background-color: #0d3826;
+      background-image: 
+        radial-gradient(#155e3b 15%, transparent 16%),
+        radial-gradient(#10492e 15%, transparent 16%);
+      background-size: 16px 16px;
+      background-position: 0 0, 8px 8px;
+    }
+    .tex-floral {
+      background-color: #3b2818;
+      background-image: radial-gradient(#6d4c2d 20%, transparent 20%), radial-gradient(#8f6336 20%, transparent 20%);
+      background-size: 12px 12px;
+      background-position: 0 0, 6px 6px;
+    }
+    .tex-petals {
+      background-color: #5c1d34;
+      background-image: linear-gradient(135deg, #7a2646 25%, transparent 25%), linear-gradient(225deg, #7a2646 25%, transparent 25%), linear-gradient(45deg, #7a2646 25%, transparent 25%), linear-gradient(315deg, #7a2646 25%, #5c1d34 25%);
+      background-size: 14px 14px;
+    }
+    .tex-stone {
+      background-color: #2b3036;
+      background-image: 
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 6px),
+        repeating-linear-gradient(-45deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 2px, transparent 2px, transparent 6px);
+    }
+    .tex-island-sand {
+      background-color: #1a3c40;
+      background-image: radial-gradient(#2a5c61 15%, transparent 16%), radial-gradient(#16484e 15%, transparent 16%);
+      background-size: 14px 14px;
+    }
+    .tex-ocean {
+      background-color: #0f2c4d;
+      background-image: repeating-linear-gradient(0deg, #133963, #133963 2px, #0f2c4d 2px, #0f2c4d 6px);
+    }
+    .tex-electric {
+      background-color: #423204;
+      background-image: linear-gradient(45deg, #594406 25%, transparent 25%), linear-gradient(-45deg, #594406 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #594406 75%), linear-gradient(-45deg, transparent 75%, #594406 75%);
+      background-size: 10px 10px;
+    }
+    .tex-meadow {
+      background-color: #1c3b1e;
+      background-image: radial-gradient(#2d572f 25%, transparent 25%);
+      background-size: 10px 10px;
+    }
+    .tex-ash {
+      background-color: #3b2a1a;
+      background-image: 
+        radial-gradient(#543d26 10%, transparent 12%),
+        radial-gradient(#2a1e12 15%, transparent 16%);
+      background-size: 12px 12px;
+      background-position: 0 0, 6px 6px;
+    }
+    .tex-hotsprings {
+      background-color: #521808;
+      background-image: repeating-linear-gradient(45deg, #661e0a, #661e0a 3px, #521808 3px, #521808 8px);
+    }
+    .tex-treehouse {
+      background-color: #213318;
+      background-image: repeating-linear-gradient(90deg, #2b421f, #2b421f 2px, #213318 2px, #213318 8px);
+    }
+    .tex-harbor-sunset {
+      background-color: #3b1940;
+      background-image: linear-gradient(135deg, #522259 25%, transparent 25%), linear-gradient(225deg, #522259 25%, transparent 25%);
+      background-size: 12px 12px;
+    }
+    .tex-cosmic-space {
+      background-color: #161b3d;
+      background-image: 
+        radial-gradient(white 1px, transparent 1px),
+        radial-gradient(#4050a1 1px, transparent 1px);
+      background-size: 18px 18px, 9px 9px;
+      background-position: 0 0, 9px 9px;
+    }
+    .tex-crater-water {
+      background-color: #0b374d;
+      background-image: radial-gradient(#155473 20%, transparent 20%), radial-gradient(#082a3b 20%, transparent 20%);
+      background-size: 14px 14px;
+      background-position: 0 0, 7px 7px;
+    }
+    .tex-driftwood {
+      background-color: #17383a;
+      background-image: repeating-linear-gradient(0deg, #1f4a4d, #1f4a4d 2px, #17383a 2px, #17383a 10px);
+    }
+    .tex-champion-gold {
+      background-color: #42300b;
+      background-image: 
+        repeating-linear-gradient(45deg, #5e4612, #5e4612 2px, #42300b 2px, #42300b 8px),
+        repeating-linear-gradient(-45deg, #5e4612, #5e4612 1px, transparent 1px, transparent 8px);
+    }
+
+    /* Bevel and 3D PlayStation Vita retro styles */
+    .sign-frame {
+      box-shadow: 
+        0 8px 20px rgba(0, 0, 0, 0.65),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.5);
+    }
+
+    .pixel-text-shadow {
+      text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.9), -1px -1px 0px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen py-10 px-4 md:px-10 font-ui selection:bg-emerald-500 selection:text-black">
+
+  <!-- Top Showcase Header -->
+  <header class="max-w-6xl mx-auto mb-10 border-b border-slate-800 pb-6">
+    
+  </header>
+
+  <!-- Signs Grid -->
+  <main class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- 1. Littleroot Town -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-emerald-400 font-bold">#01 · STARTER TOWN</span>
+        <span class="text-slate-500">CANON: "A town that can't be shaded any hue."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#1e613f] tex-leaves p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-900/90 border border-emerald-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🌱
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-emerald-200 pixel-text-shadow">LITTLEROOT TOWN</h3>
+              </div>
+              <p class="font-mono text-[11px] text-emerald-300/90 mt-0.5 tracking-tight font-medium">
+                A town that can't be shaded any hue.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-900/80 border border-emerald-500/40 text-emerald-300">
+              HOENN
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Oldale Town -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-amber-400 font-bold">#02 · CROSSROADS</span>
+        <span class="text-slate-500">CANON: "Where things start off scarce."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#82542a] tex-floral p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-amber-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-900/90 border border-amber-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🌾
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-amber-200 pixel-text-shadow">OLDALE TOWN</h3>
+              </div>
+              <p class="font-mono text-[11px] text-amber-300/90 mt-0.5 tracking-tight font-medium">
+                Where things start off scarce.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-900/80 border border-amber-500/40 text-amber-300">
+              CROSSROADS
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Petalburg City -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-pink-400 font-bold">#03 · NORMAN'S GYM</span>
+        <span class="text-slate-500">CANON: "All mingle with nature."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#a3325c] tex-petals p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-rose-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-rose-900/90 border border-pink-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🌸
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-pink-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-pink-200 pixel-text-shadow">PETALBURG CITY</h3>
+              </div>
+              <p class="font-mono text-[11px] text-pink-300/90 mt-0.5 tracking-tight font-medium">
+                Where people mingle with nature.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-rose-900/80 border border-pink-500/40 text-pink-300">
+              GYM #5
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Rustboro City -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-stone-400 font-bold">#04 · DEVON CORP &amp; STONE</span>
+        <span class="text-slate-500">CANON: "Follows nature's trial."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#545e69] tex-stone p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-slate-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-stone-800/95 border border-stone-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🏛️
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-stone-300"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-stone-200 pixel-text-shadow">RUSTBORO CITY</h3>
+              </div>
+              <p class="font-mono text-[11px] text-stone-300/90 mt-0.5 tracking-tight font-medium">
+                The city probing the science of progress.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-stone-800/80 border border-stone-500/40 text-stone-300">
+              GYM #1
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Dewford Town -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-cyan-400 font-bold">#05 · ISLAND GYM &amp; CAVE</span>
+        <span class="text-slate-500">CANON: "A tiny island in a blue sea."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#1f737d] tex-island-sand p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-cyan-950/90 border border-cyan-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🏝️
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-300"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-cyan-200 pixel-text-shadow">DEWFORD TOWN</h3>
+              </div>
+              <p class="font-mono text-[11px] text-cyan-300/90 mt-0.5 tracking-tight font-medium">
+                A tiny island community in a blue sea.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">
+              GYM #2
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Slateport City -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-blue-400 font-bold">#06 · PORT &amp; MARKETPLACE</span>
+        <span class="text-slate-500">CANON: "Where people and Pokémon cross paths."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#1c5594] tex-ocean p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-blue-900/90 border border-blue-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              ⚓
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-blue-200 pixel-text-shadow">SLATEPORT CITY</h3>
+              </div>
+              <p class="font-mono text-[11px] text-blue-300/90 mt-0.5 tracking-tight font-medium">
+                The port where people and Pokémon cross paths.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-blue-950/80 border border-blue-400/40 text-sky-300">
+              PORT &amp; DOCK
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Mauville City -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-yellow-400 font-bold">#07 · ELECTRIC CROSSROADS</span>
+        <span class="text-slate-500">CANON: "The bright city of fun and games."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#b58b14] tex-electric p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-yellow-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-950/90 border border-yellow-400/60 flex items-center justify-center text-xl shadow-inner shrink-0">
+              ⚡
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-yellow-200 pixel-text-shadow">MAUVILLE CITY</h3>
+              </div>
+              <p class="font-mono text-[11px] text-yellow-300/90 mt-0.5 tracking-tight font-medium">
+                The bright and energetic crossroads of fun.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-950/80 border border-yellow-400/40 text-yellow-300">
+              GYM #3
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. Verdanturf Town -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-lime-400 font-bold">#08 · PURE AIR &amp; MEADOWS</span>
+        <span class="text-slate-500">CANON: "The windswept highlands with sweet scents."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#39783c] tex-meadow p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-emerald-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-950/90 border border-lime-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🍃
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-lime-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-lime-200 pixel-text-shadow">VERDANTURF TOWN</h3>
+              </div>
+              <p class="font-mono text-[11px] text-lime-300/90 mt-0.5 tracking-tight font-medium">
+                Highlands with the sweet scent of grass.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-950/80 border border-lime-500/40 text-lime-300">
+              CLEAN AIR
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. Fallarbor Town -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-orange-400 font-bold">#09 · VOLCANIC ASH</span>
+        <span class="text-slate-500">CANON: "A farm community with small gardens."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#82542a] tex-ash p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-orange-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-950/90 border border-orange-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🌋
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-orange-200 pixel-text-shadow">FALLARBOR TOWN</h3>
+              </div>
+              <p class="font-mono text-[11px] text-orange-300/90 mt-0.5 tracking-tight font-medium">
+                A farm community surrounded by volcanic ash.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-950/80 border border-orange-500/40 text-orange-300">
+              CRATER FIELD
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. Lavaridge Town -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-red-400 font-bold">#10 · HOT SPRINGS &amp; FLANNIE</span>
+        <span class="text-slate-500">CANON: "Pokémon Center Hot Springs."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#a33215] tex-hotsprings p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-red-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-red-950/90 border border-red-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              ♨️
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-red-200 pixel-text-shadow">LAVARIDGE TOWN</h3>
+              </div>
+              <p class="font-mono text-[11px] text-red-300/90 mt-0.5 tracking-tight font-medium">
+                Center for soothing hot springs and relaxation.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-red-950/80 border border-red-500/40 text-red-300">
+              GYM #4
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11. Fortree City -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-emerald-400 font-bold">#11 · TREEHOUSES &amp; WINONA</span>
+        <span class="text-slate-500">CANON: "The treetop city that plays with nature."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#3d632b] tex-treehouse p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-green-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-green-950/90 border border-emerald-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🌲
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-emerald-200 pixel-text-shadow">FORTREE CITY</h3>
+              </div>
+              <p class="font-mono text-[11px] text-emerald-300/90 mt-0.5 tracking-tight font-medium">
+                The treetop city that lives nestled in nature.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-green-950/80 border border-emerald-500/40 text-emerald-300">
+              GYM #6
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12. Lilycove City -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-purple-400 font-bold">#12 · ART MUSEUM &amp; CONTESTS</span>
+        <span class="text-slate-500">CANON: "Where the land ends and the sea begins."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#80318c] tex-harbor-sunset p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-purple-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-purple-950/90 border border-purple-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🎨
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-purple-200 pixel-text-shadow">LILYCOVE CITY</h3>
+              </div>
+              <p class="font-mono text-[11px] text-purple-300/90 mt-0.5 tracking-tight font-medium">
+                Where the land ends and the sea begins.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-purple-950/80 border border-purple-500/40 text-purple-300">
+              CONTEST HALL
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 13. Mossdeep City -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-indigo-400 font-bold">#13 · SPACE CENTER &amp; TATE/LIZA</span>
+        <span class="text-slate-500">CANON: "Our slogan: Cherish Pokémon."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#334694] tex-cosmic-space p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-indigo-950/90 border border-indigo-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🚀
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-indigo-200 pixel-text-shadow">MOSSDEEP CITY</h3>
+              </div>
+              <p class="font-mono text-[11px] text-indigo-300/90 mt-0.5 tracking-tight font-medium">
+                Island city reaching outward for the stars.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-indigo-950/80 border border-indigo-500/40 text-indigo-300">
+              GYM #7
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 14. Sootopolis City -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-teal-400 font-bold">#14 · CRATER CITY &amp; JUAN/WALLACE</span>
+        <span class="text-slate-500">CANON: "The city risen from a crater."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#166c7a] tex-crater-water p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-teal-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-teal-950/90 border border-teal-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🌊
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-teal-300"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-teal-200 pixel-text-shadow">SOOTOPOLIS CITY</h3>
+              </div>
+              <p class="font-mono text-[11px] text-teal-300/90 mt-0.5 tracking-tight font-medium">
+                The mystic white city risen from a deep crater.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-teal-950/80 border border-teal-500/40 text-teal-300">
+              GYM #8
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 15. Pacifidlog Town -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-cyan-400 font-bold">#15 · FLOATING DRIFTWOOD</span>
+        <span class="text-slate-500">CANON: "Floating upon the morning sun."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#2b6d73] tex-driftwood p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-cyan-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-cyan-950/90 border border-cyan-400/50 flex items-center justify-center text-xl shadow-inner shrink-0">
+              🪵
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-cyan-200 pixel-text-shadow">PACIFIDLOG TOWN</h3>
+              </div>
+              <p class="font-mono text-[11px] text-cyan-300/90 mt-0.5 tracking-tight font-medium">
+                The peaceful village floating upon wooden rafts.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">
+              OCEAN VILLAGE
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 16. Ever Grande City -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2.5">
+      <div class="flex items-center justify-between text-xs font-mono text-slate-400 px-1">
+        <span class="text-amber-400 font-bold">#16 · POKÉMON LEAGUE</span>
+        <span class="text-slate-500">CANON: "The paradise of flowers and sea."</span>
+      </div>
+
+      <!-- Sign Element -->
+      <div class="sign-frame relative rounded-xl border-2 border-[#d4af37] tex-champion-gold p-3 text-white overflow-hidden shadow-lg">
+        <div class="absolute inset-0 bg-gradient-to-r from-amber-950/70 via-transparent to-black/50 pointer-events-none"></div>
+        <div class="relative z-10 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-yellow-950/90 border border-amber-300/60 flex items-center justify-center text-xl shadow-inner shrink-0">
+              👑
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-yellow-300"></span>
+                <h3 class="font-pixel text-xs tracking-wider text-amber-200 pixel-text-shadow">EVER GRANDE CITY</h3>
+              </div>
+              <p class="font-mono text-[11px] text-amber-300/90 mt-0.5 tracking-tight font-medium">
+                Paradise where flowers bloom and champions rise.
+              </p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-950/90 border border-amber-400 text-yellow-300 shadow-sm">
+              LEAGUE
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- PS Vita Footer Control Note -->
+  <footer class="max-w-6xl mx-auto mt-10 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 font-mono gap-4">
+    <div class="flex items-center gap-3">
+      
+      
+    </div>
+    <div class="text-slate-500">
+      Native 960×544 proportion components · Retro GBA / Vita aesthetic
+    </div>
+  </footer>
+
+
+
+
+
+
+
+
+
+</body></html>

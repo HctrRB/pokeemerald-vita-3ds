@@ -1,0 +1,26 @@
+# Code style for the PS Vita platform layer (src/platform/**, include/platform/**).
+# The pokeemerald decompilation (src/*.c outside platform/) keeps its own upstream style
+# and must not be reformatted.
+#
+# Usage: clang-format -i <file>   (format only files you are already changing)
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c++03
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 110
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AlwaysBreakAfterReturnType: None
+PointerAlignment: Right
+AlignConsecutiveMacros: Consecutive
+AlignTrailingComments: true
+SpaceBeforeParens: ControlStatements
+IndentCaseLabels: true
+SortIncludes: Never
+ReflowComments: false
+MaxEmptyLinesToKeep: 1

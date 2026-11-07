@@ -1,0 +1,264 @@
+/* Pokémon Emerald Vita — UI design tokens and components (source of truth, decision D6).
+   Everything is in whole pixels on a 960x544 stage. The runtime UI (src/platform/ui/) implements
+   exactly these tokens and components; see docs/VITA_UI.md.
+
+   Finish of the Stitch reference, kept within what the runtime draws cheaply:
+   - bevels = 1-3 px borders + inner highlight (top-left) and inner shade (bottom-right);
+   - gradients = two colours, vertical only (two vertex colours per quad);
+   - shadows = hard offset, no blur; rounded corners = baked 9-slices (radius 4 px).
+   No scanline overlay (removed on request).
+   Type (decision D2, chosen on the console): Press Start 2P 16 / 24, VT323 28 / 32. */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=block');
+
+:root {
+  /* Frame (dark, translucent over the 3D world — decision D3) */
+  --frame-0: #041410;
+  --frame-0-a: rgba(4, 20, 16, 0.80);
+  --frame-1: #09211D;
+  --frame-2: #1C382F;
+  --frame-top: #0E2B25;      /* bar gradient */
+  --frame-bot: #061A16;
+  --line-dark: #2B5849;
+  --edge-dark: #041210;      /* outer border of dark boxes */
+  --hi-dark: #1B544B;        /* inner highlight of dark boxes */
+  --on-frame: #FFFFFF;
+  --on-frame-soft: #7EA69C;
+  --mint: #99F6E4;           /* titles on dark */
+  --mint-2: #6EE7B7;
+  /* Paper (opaque panels) */
+  --paper-0: #F7F4E9;
+  --paper-1: #EBE4CF;
+  --paper-2: #DFD7BF;
+  --paper-strip: #E7DFC6;    /* panel head strip */
+  --paper-edge: #1A3024;     /* outer border of paper boxes */
+  --paper-shade: #D1C8AF;    /* inner shade */
+  --row-line: #D8CFB7;
+  --ink: #16271C;
+  --ink-soft: #728277;
+  --accent: #B45309;         /* amber labels on paper */
+  /* Selection (amber) */
+  --sel-top: #FFF7D6;
+  --sel-bot: #FDE68A;
+  --sel-edge: #D97706;
+  --sel-ink: #3A2A00;
+  --tab-top: #FCEDA6;
+  --tab-bot: #E2AB24;
+  --tab-edge: #8C6006;
+  /* Kept for older rules */
+  --select: #F6CF57;
+  --select-ink: #3A2A00;
+  --accent-money: #E07A1F;
+  --gold: #FCD34D;
+  --hp-high: #3FB76B;
+  --hp-mid: #E8B730;
+  --hp-low: #D9483B;
+  --exp: #4A9FE0;
+  --danger: #B5352B;
+  /* Type scale (D2) */
+  --t-title: 16px;    /* Press Start 2P: titles, labels, buttons */
+  --t-display: 24px;  /* Press Start 2P */
+  --t-body: 32px;     /* VT323: all reading text (28 is not legible on the Vita: dropped) */
+  --t-body-lg: 32px;  /* VT323: dialogue, big values */
+  --t-body-sm: 32px;  /* kept as an alias: VT323 has only one reading size, 32 */
+  /* Spacing (8 px rhythm) */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s6: 24px;
+  --row-h: 40px;
+  --r: 4px;           /* corner radius of boxes (baked 9-slices) */
+}
+
+* { box-sizing: border-box; -webkit-font-smoothing: none; }
+html, body { margin: 0; background: #000; }
+img { image-rendering: pixelated; display: block; }
+
+/* 960x544 stage with the 3D world behind */
+.stage {
+  position: relative; width: 960px; height: 544px; overflow: hidden;
+  background: #000 url('../_assets/fondo_mundo.png') center / 960px 544px no-repeat;
+  font-family: 'VT323', monospace; font-size: var(--t-body); line-height: 1; color: var(--ink);
+}
+.ps { font-family: 'Press Start 2P', monospace; font-size: var(--t-title); line-height: 16px; text-transform: uppercase; }
+.ps-lg { font-family: 'Press Start 2P', monospace; font-size: var(--t-display); line-height: 24px; }
+.vt-lg { font-size: var(--t-body-lg); }
+.vt-sm { font-size: var(--t-body-sm); }
+.soft { color: var(--ink-soft); }
+.money { color: var(--accent-money); }
+.accent { color: var(--accent); }
+
+/* Pixel scaling helpers for original GBA sprites */
+.x2 { zoom: 2; } .x3 { zoom: 3; }
+
+/* ---------- Full-screen frame: header + body + footer ---------- */
+.frame { position: absolute; inset: 0; background: var(--frame-0-a); display: flex; flex-direction: column; }
+.header { height: 48px; flex: none; display: flex; align-items: center; gap: var(--s3); padding: 0 var(--s4);
+  background: linear-gradient(var(--frame-top), var(--frame-bot)); border-bottom: 2px solid var(--line-dark);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45); color: var(--on-frame); position: relative; z-index: 2; }
+.header .title { display: flex; align-items: center; gap: var(--s2); }
+.header .spacer { flex: 1; }
+.footer { height: 40px; flex: none; display: flex; align-items: center; gap: var(--s4); padding: 0 var(--s4);
+  background: linear-gradient(var(--frame-bot), var(--frame-top)); border-top: 2px solid var(--line-dark);
+  box-shadow: 0 -2px 0 rgba(0, 0, 0, 0.45); color: var(--on-frame); font-size: var(--t-body); position: relative; z-index: 2; }
+.footer .spacer { flex: 1; }
+/* Footer type: Press Start 2P 16 (VT323 32 is too big for the 40 px footer, smaller VT323 is not sharp) */
+.footer, .footer .key { font-family: 'Press Start 2P', monospace; font-size: var(--t-title); }
+.footer .fstat { display: flex; gap: var(--s2); margin-right: -8px; }
+.footer .fstat .capsule { height: 30px; font-size: var(--t-title); }
+.footer .fstat .clock { color: var(--on-frame); }
+.body { flex: 1; display: flex; gap: var(--s3); padding: var(--s3) var(--s4); min-height: 0; }
+
+/* Dark bevelled capsule (title, money, name…) */
+.capsule, .nav-title { height: 32px; display: inline-flex; align-items: center; gap: var(--s2); padding: 0 var(--s3); white-space: nowrap;
+  background: linear-gradient(#123A31, #0A241E); border: 2px solid var(--edge-dark); border-radius: var(--r);
+  box-shadow: inset 1px 1px 0 #2E6B5B, inset -1px -1px 0 #051614, 0 2px 0 rgba(0, 0, 0, 0.5); color: var(--on-frame); font-size: var(--t-body); }
+.nav-title { color: var(--mint); font-family: 'Press Start 2P', monospace; font-size: var(--t-title); }
+.nav-title .ball { width: 16px; height: 16px; flex: none; }
+.capsule .money, .money-cap { color: var(--gold); }
+
+/* Tab rail: sunken, with an amber active tab and bevelled L / R keys */
+.tabs { display: flex; align-items: center; gap: 2px; padding: 2px; background: #041612; border: 2px solid #1C5547; border-radius: var(--r);
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.5); }
+.tab { height: 30px; display: inline-flex; align-items: center; gap: 6px; padding: 0 var(--s3); white-space: nowrap; color: var(--on-frame-soft); font-size: var(--t-body); border: 2px solid transparent; border-radius: 3px; }
+.tab.on { background: linear-gradient(var(--tab-top), var(--tab-bot)); border-color: var(--tab-edge); color: var(--ink); box-shadow: inset 1px 1px 0 #FFFBE0; }
+.tab, .nav-lr { cursor: pointer; }
+.key { height: 24px; min-width: 24px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; font-size: var(--t-body); line-height: 1;
+  color: var(--mint-2); background: linear-gradient(#1B3A32, #0C201A); border: 2px solid; border-color: #366D5F #061511 #061511 #366D5F; border-radius: 3px;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.6); }
+
+/* ---------- Popups / modals ---------- */
+.modal { display: none; position: absolute; inset: 0; z-index: 20; background: rgba(4, 20, 16, 0.6); }
+.modal.open { display: block; }
+.modal .win { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: var(--paper-0);
+  border: 3px solid var(--paper-edge); border-radius: var(--r); overflow: hidden;
+  box-shadow: inset 2px 2px 0 #FFFFFF, inset -2px -2px 0 var(--paper-shade), 0 6px 0 rgba(0, 0, 0, 0.45); color: var(--ink); }
+.modal .win-head { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--mint);
+  background: linear-gradient(#1C382F, #0B231D); border-bottom: 2px solid var(--edge-dark); box-shadow: inset 0 1px 0 #2E6B5B; }
+.modal .win-head .spacer { flex: 1; }
+.modal .win-head .vt-sm { color: var(--on-frame-soft); }
+.modal .win-body { padding: 12px 16px; }
+.modal .win-foot { height: 40px; display: flex; align-items: center; gap: 16px; padding: 0 16px; background: var(--paper-strip); border-top: 2px solid var(--paper-shade); font-size: var(--t-body); }
+.modal .win.at { transform: none; }
+.dropdown { display: none; position: absolute; z-index: 15; }
+.dropdown.open { display: block; }
+[data-open] { cursor: pointer; }
+
+/* ---------- Touch ---------- */
+.footer, .win-foot { cursor: default; user-select: none; }      /* guides for physical buttons */
+.row, .card, .mv, .opt { cursor: pointer; }
+.panel > .list { flex: 1 1 auto; min-height: 0; }
+.list > * { flex-shrink: 0; }
+.list.scrolls { overflow: hidden; position: relative; touch-action: none; padding-right: 10px; }
+.list .scrollbar { position: absolute; right: 2px; width: 6px; background: linear-gradient(#94A39A, #5E6E64); border: 1px solid #3E4A43; pointer-events: none; }
+
+/* Quantity stepper: bevelled keys and a sunken counter */
+.stepper { display: flex; align-items: center; gap: 8px; }
+.stepper .step { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: var(--t-body-lg); cursor: pointer; user-select: none; touch-action: none;
+  color: var(--mint-2); background: linear-gradient(#1B3A32, #0C201A); border: 2px solid; border-color: #366D5F #061511 #061511 #366D5F; border-radius: var(--r); box-shadow: 0 2px 0 rgba(0,0,0,0.5); }
+.stepper .step:active { background: linear-gradient(var(--tab-top), var(--tab-bot)); color: var(--ink); }
+.stepper .n { min-width: 72px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: var(--t-body-lg);
+  background: var(--paper-1); border: 2px solid var(--paper-shade); border-radius: var(--r); box-shadow: inset 0 2px 0 rgba(0,0,0,0.12); }
+.choice-row { display: flex; gap: 8px; margin-top: 12px; }
+.choice-row .row { flex: 1; border: 2px solid var(--row-line); border-radius: var(--r); justify-content: center; padding: 0 28px; }
+
+/* Second-level tabs inside a panel (touch only) */
+.subtabs { background: transparent; border: 0; box-shadow: none; padding: 0; }
+.subtabs .tab { height: 28px; color: var(--ink-soft); border-color: var(--row-line); background: var(--paper-1); }
+.subtabs .tab.on { background: linear-gradient(#1C382F, #0B231D); color: var(--mint); border-color: var(--edge-dark); box-shadow: none; }
+
+/* PlayStation button glyphs (UI chrome, a 22 px sprite each at runtime) */
+.btn { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.glyph { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; flex: none;
+  font-family: system-ui, sans-serif; font-weight: 900; font-size: 13px; line-height: 1; background: radial-gradient(circle at 35% 30%, #3A404C, #14171D 70%);
+  border: 2px solid; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.6); }
+.glyph.cross { color: #8FB4FF; border-color: #5B7FD6; } .glyph.circle { color: #FF7A7A; border-color: #D65151; }
+.glyph.triangle { color: #5FE0B0; border-color: #2FA77E; } .glyph.square { color: #F49BD8; border-color: #C266A8; }
+
+/* ---------- Paper panel: double bevel, dark outer edge, hard drop shadow ---------- */
+.panel { background: var(--paper-0); border: 3px solid var(--paper-edge); border-radius: var(--r);
+  box-shadow: inset 2px 2px 0 #FFFFFF, inset -2px -2px 0 var(--paper-shade), 0 4px 0 rgba(0, 0, 0, 0.40);
+  padding: var(--s3); min-height: 0; }
+.panel-dark { background: linear-gradient(#0C2F27, #071D18); border: 3px solid var(--edge-dark); border-radius: var(--r);
+  box-shadow: inset 1px 1px 0 var(--hi-dark), inset -1px -1px 0 #051614, 0 4px 0 rgba(0, 0, 0, 0.45); color: var(--on-frame); padding: var(--s3); }
+.panel-dark .ps { color: var(--mint); }
+/* Head strip of a paper panel ("LEDGER: 05 / 12 ITEMS") */
+.panel-head { display: flex; align-items: center; gap: var(--s2); margin: calc(-1 * var(--s3)) calc(-1 * var(--s3)) var(--s2); padding: 8px 12px;
+  background: var(--paper-strip); border-bottom: 2px solid var(--paper-shade); border-radius: 2px 2px 0 0; }
+.panel-head .spacer { flex: 1; }
+.panel-head .ps { color: var(--ink); }
+.sep { height: 2px; background: var(--paper-shade); box-shadow: 0 1px 0 #FFFFFF; margin: var(--s2) 0; }
+
+/* ---------- List rows ---------- */
+.list { display: flex; flex-direction: column; }
+.row { height: var(--row-h); display: flex; align-items: center; gap: var(--s2); padding: 0 var(--s2) 0 28px; position: relative;
+  background: var(--paper-1); border-bottom: 2px solid var(--row-line); }
+.row:nth-child(even) { background: #F1EBD8; }
+.row .grow { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.row.on { background: linear-gradient(var(--sel-top), var(--sel-bot)); color: var(--sel-ink); border-bottom-color: var(--sel-edge); box-shadow: inset 0 1px 0 #FFFFFF; }
+.row.on::before { content: '▶'; position: absolute; left: 8px; font-size: 18px; color: var(--sel-edge); }
+.row .val { text-align: right; }
+
+/* ---------- Chips, bars, buttons ---------- */
+.chip { height: 24px; display: inline-flex; align-items: center; padding: 0 8px; font-size: var(--t-body); white-space: nowrap;
+  background: linear-gradient(#245244, #163A30); color: #D1FAE5; border: 2px solid #0B2E26; border-radius: 3px; box-shadow: inset 1px 1px 0 #3C7A68; }
+.chip.lead { background: linear-gradient(var(--tab-top), var(--tab-bot)); color: var(--ink); border-color: var(--tab-edge); box-shadow: inset 1px 1px 0 #FFFBE0; }
+.bar { height: 10px; background: #2C3A33; border: 2px solid #1A2620; border-radius: 2px; flex: none; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10); }
+.bar > i { display: block; height: 100%; background: linear-gradient(#6EDB97, #2F9E58); }
+.bar.mid > i { background: linear-gradient(#F5D162, #C99A1C); } .bar.low > i { background: linear-gradient(#F07A6E, #B8362B); } .bar.exp > i { background: linear-gradient(#7CC0F2, #2F7DC2); }
+/* Coloured action buttons (USE / GIVE / TOSS…) */
+.act { height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 14px; font-family: 'Press Start 2P', monospace; font-size: 16px; color: #FFFFFF;
+  border: 2px solid #172A22; border-radius: var(--r); box-shadow: inset 1px 1px 0 rgba(255,255,255,0.4), inset -1px -1px 0 rgba(0,0,0,0.4), 0 2px 0 rgba(0,0,0,0.4); cursor: pointer; }
+.act.green { background: linear-gradient(#2F7A5C, #1D5A43); } .act.amber { background: linear-gradient(#E08A2A, #B8661A); } .act.red { background: linear-gradient(#A83A3A, #7A2626); }
+/* Three-column data strip (HOLDABLE / IN-BATTLE / FIELD USE) */
+.strip3 { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--paper-1); border: 2px solid var(--row-line); border-radius: var(--r); }
+.strip3 > div { padding: 4px 6px; text-align: center; border-right: 2px solid var(--row-line); }
+.strip3 > div:last-child { border-right: 0; }
+.strip3 .ps { font-size: 16px; color: var(--ink-soft); }
+.iconbox { background: var(--paper-1); border: 2px solid var(--paper-shade); border-radius: var(--r); box-shadow: inset 0 2px 0 rgba(0,0,0,0.10); }
+
+/* ---------- Field overlays (GBA box finish: double bevel, dark ring, drop shadow) ---------- */
+.dialog { position: absolute; left: 48px; right: 48px; bottom: 24px; height: 124px; padding: 20px 28px; font-size: 40px; line-height: 40px; /* VT323 40 on the console */
+  background: linear-gradient(#FBFAF2, #EBE7D3); border-radius: var(--r);
+  box-shadow: inset 2px 2px 0 #FFFFFF, inset -2px -2px 0 #9E9784, 0 0 0 3px #26272D, 0 6px 0 rgba(0, 0, 0, 0.5); }
+.dialog .name { position: absolute; left: 20px; top: -34px; height: 32px; padding: 0 var(--s3); display: flex; align-items: center; color: #FFFFFF; border-radius: var(--r) var(--r) 0 0;
+  background: linear-gradient(#2D8A6B, #175E47); box-shadow: inset 2px 2px 0 #5EEAD4, inset -2px 0 0 #0D382B, 0 0 0 2px #0F231B; }
+.dialog .phone { position: absolute; right: 64px; top: 30px; width: 64px; height: 64px; image-rendering: pixelated;
+  background: url(../_assets/ui_gba/phone_strip.png) 0 0 / 512px 64px; animation: phone-ring 0.8s steps(8) infinite; }
+@keyframes phone-ring { to { background-position: -512px 0; } }
+.dialog .more { position: absolute; right: 20px; bottom: 12px; font-size: 18px; color: #D64D1F; }
+.choice { position: absolute; padding: 6px; min-width: 180px; border-radius: var(--r);
+  background: linear-gradient(#FBFAF2, #EBE7D3); box-shadow: inset 2px 2px 0 #FFFFFF, inset -2px -2px 0 #9E9784, 0 0 0 3px #26272D, 0 6px 0 rgba(0, 0, 0, 0.5); }
+.choice .row { border-bottom: 0; font-size: var(--t-body-lg); background: transparent; border-radius: 3px; }
+.choice .row.on { background: linear-gradient(#FFFAE0, #FED87B); box-shadow: inset 1px 1px 0 #FFFFFF, 0 0 0 2px #D64D1F; }
+.toast { position: absolute; display: flex; align-items: center; gap: var(--s3); color: var(--on-frame); padding: var(--s2) var(--s3); white-space: nowrap;
+  background: linear-gradient(#0C2F27, #071D18); border: 3px solid var(--edge-dark); border-radius: var(--r); box-shadow: inset 1px 1px 0 var(--hi-dark), 0 4px 0 rgba(0, 0, 0, 0.45); }
+
+/* Summary helpers */
+.kv2 { display: flex; justify-content: space-between; gap: 12px; height: 34px; align-items: center; border-bottom: 2px solid var(--row-line); white-space: nowrap; }
+.shiny { color: #E8B730; }
+.hearts { display: inline-flex; gap: 2px; vertical-align: middle; }
+.hearts i { width: 10px; height: 10px; background: var(--paper-2); box-shadow: inset 0 0 0 1px var(--paper-shade); }
+.hearts i.f { background: #D9483B; box-shadow: inset 0 0 0 1px #8E2219, inset 2px 2px 0 #F28A7D; }
+.hearts.jam i.f { background: #3A3A3A; box-shadow: inset 0 0 0 1px #111, inset 2px 2px 0 #777; }
+
+/* Group header inside a list (options groups: GAMEPLAY, AUDIO…) */
+.list .grp { height: 30px; flex-shrink: 0; display: flex; align-items: flex-end; padding: 0 12px 4px; color: var(--accent); background: var(--paper-0); }
+
+/* Sunken bevelled box for sprites and footprints: shade top-left, light bottom-right, framed */
+.well { display: flex; align-items: center; justify-content: center; border-radius: var(--r);
+  background: radial-gradient(circle at 50% 42%, #FFFDF4 0%, var(--paper-1) 72%);
+  border: 2px solid #B4A985; box-shadow: inset 3px 3px 0 rgba(0, 0, 0, 0.13), inset -2px -2px 0 #FFFFFF, 0 0 0 2px var(--paper-0), 0 0 0 4px var(--paper-shade); }
+/* Data table: boxed rows, each a small label (Press Start 2P 16) over its value (VT323 32) */
+.kvs { display: flex; flex-direction: column; border: 2px solid var(--paper-shade); border-radius: var(--r);
+  background: var(--paper-1); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.08), 0 1px 0 #FFFFFF; }
+.kvs > div { padding: 4px 10px; border-top: 2px solid var(--paper-shade); box-shadow: inset 0 1px 0 #FFFFFF; }
+.kvs > div:first-child { border-top: 0; }
+.kvs .k { font-family: 'Press Start 2P', monospace; font-size: var(--t-title); color: var(--ink-soft); line-height: 18px; }
+.kvs .v { line-height: 30px; display: flex; align-items: center; gap: 8px; }
+.kvs.h { flex-direction: row; }
+.kvs.h > div { flex: 1; border-top: 0; border-left: 2px solid var(--paper-shade); }
+.kvs.h > div:first-child { border-left: 0; }
+/* Inset text box (descriptions, flavour text) */
+.inset { background: var(--paper-1); border: 2px solid var(--paper-shade); border-radius: var(--r);
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.10); padding: 6px 14px; line-height: 30px; }
+
+/* Gender / shiny glyphs (pixel art, x2) */
+.gly { width: 28px; height: 28px; image-rendering: pixelated; vertical-align: middle; }

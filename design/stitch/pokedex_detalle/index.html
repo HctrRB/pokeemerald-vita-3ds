@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pokédex · Detalle</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Sprite well | data table | footprint and size boxes; flavour text box below */
+  .card { flex: 1; display: grid; grid-template-columns: 232px 1fr 272px; grid-template-rows: auto 1fr; gap: 14px; }
+  .pic { width: 232px; height: 232px; }
+  .facts .v .type img, .facts .v img { zoom: 2; }
+  .side { display: flex; flex-direction: column; gap: 10px; }
+  .side .fprow { display: flex; align-items: center; gap: 12px; }
+  .side .print { width: 64px; height: 64px; flex: none; }
+  .size { height: 136px; display: flex; align-items: flex-end; justify-content: center; gap: 28px; padding-bottom: 6px; }
+  .flavor { grid-column: 1 / 4; }
+  #wave { height: 160px; display: flex; align-items: center; gap: 3px; background: linear-gradient(#0C2F27, #071D18); border: 3px solid var(--edge-dark); border-radius: 4px; padding: 0 10px; }
+  #wave i { flex: 1; background: linear-gradient(#6EDB97, #2F9E58); animation: wv .5s ease-out both; }
+  @keyframes wv { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+</style>
+</head>
+<body data-screen="pokedex_detalle">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="pokedex_detail:info">
+      <span class="spacer"></span>
+      <span class="capsule"><img src="../_assets/balls/poke.png" alt=""><span id="dexcap">No.001 TREECKO</span></span>
+    </div>
+    <div class="body">
+      <div class="panel card">
+        <div class="well pic"><img class="x3" src="../_assets/pokemon/treecko_front.png" alt=""></div>
+        <div class="kvs facts">
+          <div><div class="k">NAME</div><div class="v ps" id="dexname">TREECKO</div></div>
+          <div><div class="k">SPECIES</div><div class="v" id="dexspecies">WOOD GECKO POKéMON</div></div>
+          <div><div class="k">TYPE</div><div class="v" id="dextype"></div></div>
+          <div><div class="k">HEIGHT · WEIGHT</div><div class="v" id="dexhw">1'08" · 11.0 lbs</div></div>
+        </div>
+        <div class="side">
+          <div class="kvs"><div class="fprow"><div class="well print"><img class="x3" src="../_assets/pokemon/treecko_footprint.png" alt=""></div><div><div class="k">FOOTPRINT</div></div></div></div>
+          <div class="kvs"><div><div class="k" id="sizecap">SIZE vs BRENDAN</div>
+            <div class="size well">
+              <img src="../_assets/trainers/brendan.png" alt="" style="height:128px">
+              <img src="../_assets/pokemon/treecko_front.png" alt="" style="height:44px">
+            </div></div></div>
+        </div>
+        <div class="inset flavor">TREECKO has small hooks on the bottom of its feet that enable it to scale vertical walls. This POKéMON attacks by slamming foes with its thick tail.</div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="btn" data-btn="triangle"><span class="glyph triangle">△</span>Cry</span>
+      <span class="spacer"></span>
+      <span class="btn">▲▼ Previous / next</span>
+    </div>
+  </div>
+  <!-- Popup: AREA (habitat): the same Hoenn map component as the PokéNav (D8), with area markers -->
+  <div class="modal" id="area"><div class="win" style="width:720px">
+    <div class="win-head"><span class="ps">AREA · TREECKO</span><span class="spacer"></span><span class="vt-sm">Tall grass</span></div>
+    <div class="win-body" style="padding:12px 20px"><div id="areamap" style="position:relative; width:672px; height:360px; background:url(../_assets/map/hoenn_224x120.png) 0 0/672px 360px; image-rendering:pixelated"></div></div>
+    <div class="win-foot"><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Close</span><span class="soft">Markers: zones of the encounter tables</span></div></div></div>
+  <!-- Popup: CRY (DEX_TAB_CRY): plays the cry and draws its waveform -->
+  <div class="modal" id="grito"><div class="win" style="width:600px">
+    <div class="win-head"><span class="ps">CRY</span><span class="spacer"></span><span class="vt-sm">-</span></div>
+    <div class="win-body"><div id="wave"></div></div>
+    <div class="win-foot"><span class="btn" data-btn="cross" data-action="cry2"><span class="glyph cross">✕</span>Play again</span><span class="btn" data-btn="circle"><span class="glyph circle">○</span>Close</span></div></div></div>
+  <!-- Popup: SIZE comparison with the player -->
+  <div class="modal" id="tamano"><div class="win" style="width:560px">
+    <div class="win-head"><span class="ps">SIZE</span><span class="spacer"></span><span class="vt-sm">BRENDAN vs TREECKO</span></div>
+    <div class="win-body" style="display:flex; align-items:flex-end; justify-content:center; gap:48px; height:300px; background:var(--paper-1)">
+      <div style="text-align:center"><img src="../_assets/trainers/brendan.png" alt="" style="height:240px"><div class="vt-sm">4'07"</div></div>
+      <div style="text-align:center"><img src="../_assets/pokemon/treecko_front.png" alt="" style="height:88px"><div class="vt-sm">1'08"</div></div>
+    </div>
+    <div class="win-foot"><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Close</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+<script>
+  // AREA / SIZE tabs open their popup; area markers come from the zone table
+  document.addEventListener('ui-tab', e => { if (e.detail === 'area') UI_MODALS.open('area'); if (e.detail === 'size') UI_MODALS.open('tamano'); });
+  fetch('../_assets/map/hoenn_zones.json').then(r => r.json()).then(d => {
+    for (const id of ['MAPSEC_ROUTE_119', 'MAPSEC_ROUTE_120']) { const z = d.zones[id]; if (!z) continue;
+      const m = document.createElement('div');
+      Object.assign(m.style, { position: 'absolute', left: z.x * 24 + 'px', top: z.y * 24 + 'px', width: z.w * 24 + 'px', height: z.h * 24 + 'px', background: 'rgba(217,72,59,.55)', outline: '2px solid #fff' });
+      document.getElementById('areamap').appendChild(m); }
+  });
+</script>
+</body>
+</html>
