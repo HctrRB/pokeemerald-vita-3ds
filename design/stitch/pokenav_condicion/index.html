@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PokéNav · Condición</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  .party { width: 280px; flex: none; }
+  .party .row { height: 44px; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; }
+  .radar { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .stats { width: 260px; flex: none; display: flex; flex-direction: column; gap: 6px; }
+  .st { display: flex; align-items: center; gap: 8px; height: 36px; }
+  .st img { zoom: 2; }
+  .st .bar { flex: 1; }
+  .sheen { margin-top: auto; }
+  .blocks { display: flex; gap: 6px; align-items: center; }
+  .blocks img { zoom: 3; }
+</style>
+</head>
+<body data-screen="pokenav_condicion">
+<!-- The pentagon is geometry (5 coloured triangles), not an image. Contest icons and Pokéblock are GBA originals. -->
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="pokenav:condition">
+    </div>
+    <div class="body">
+      <div class="panel party list">
+        <div class="row on"><div class="mon" style="background-image:url(../_assets/pokemon/mudkip_icon.png)"></div><span class="grow">MUDKIP</span><span>Lv15</span></div>
+        <div class="row"><div class="mon" style="background-image:url(../_assets/pokemon/taillow_icon.png)"></div><span class="grow">TAILLOW</span><span>Lv12</span></div>
+        <div class="row"><div class="mon" style="background-image:url(../_assets/pokemon/ralts_icon.png)"></div><span class="grow">RALTS</span><span>Lv10</span></div>
+        <div class="row"><div class="mon" style="background-image:url(../_assets/pokemon/zigzagoon_icon.png)"></div><span class="grow">ZIGZAGOON</span><span>Lv9</span></div>
+        <div class="row"><div class="mon" style="background-image:url(../_assets/pokemon/lotad_icon.png)"></div><span class="grow">LOTAD</span><span>Lv8</span></div>
+        <div class="row" style="border-bottom:0"><div class="mon" style="background-image:url(../_assets/pokemon/wurmple_icon.png)"></div><span class="grow">WURMPLE</span><span>Lv7</span></div>
+      </div>
+      <div class="panel radar">
+        <svg width="340" height="300" viewBox="-170 -150 340 300" shape-rendering="crispEdges">
+          <polygon points="0,-120 114,-37 71,97 -71,97 -114,-37" fill="#EBE4CF" stroke="#DFD7BF" stroke-width="2"/>
+          <!-- Reference rings (25/50/75 %) and the axes from the centre to each vertex -->
+          <polygon points="0,-30 29,-9 18,24 -18,24 -29,-9" fill="none" stroke="#D1C8AF" stroke-width="2"/>
+          <polygon points="0,-60 57,-19 35,49 -35,49 -57,-19" fill="none" stroke="#D1C8AF" stroke-width="2"/>
+          <polygon points="0,-90 86,-28 53,73 -53,73 -86,-28" fill="none" stroke="#D1C8AF" stroke-width="2"/>
+          <line x1="0" y1="0" x2="0" y2="-120" stroke="#C7BC9E" stroke-width="2"/>
+          <line x1="0" y1="0" x2="114" y2="-37" stroke="#C7BC9E" stroke-width="2"/>
+          <line x1="0" y1="0" x2="71" y2="97" stroke="#C7BC9E" stroke-width="2"/>
+          <line x1="0" y1="0" x2="-71" y2="97" stroke="#C7BC9E" stroke-width="2"/>
+          <line x1="0" y1="0" x2="-114" y2="-37" stroke="#C7BC9E" stroke-width="2"/>
+          <polygon id="cond-shape" points="0,-84 74,-24 30,41 -50,68 -40,-13" fill="#3FB76B" fill-opacity="0.75" stroke="#16271C" stroke-width="2"/>
+          <g id="cond-dots" fill="#16271C"></g>
+          <circle cx="0" cy="0" r="3" fill="#7A6F55"/>
+          <text x="0" y="-128" text-anchor="middle" font-family="VT323" font-size="32">COOL</text>
+          <text x="114" y="-48" text-anchor="middle" font-family="VT323" font-size="32">BEAUTY</text>
+          <text x="74" y="118" font-family="VT323" font-size="32">CUTE</text>
+          <text x="-120" y="118" font-family="VT323" font-size="32">SMART</text>
+          <text x="-114" y="-48" text-anchor="middle" font-family="VT323" font-size="32">TOUGH</text>
+        </svg>
+      </div>
+      <div class="panel stats">
+        <div class="st"><img src="../_assets/types/contest_cool.png" alt=""><div class="bar"><i style="width:70%; background:#D9483B"></i></div></div>
+        <div class="st"><img src="../_assets/types/contest_beauty.png" alt=""><div class="bar"><i style="width:65%; background:#4A9FE0"></i></div></div>
+        <div class="st"><img src="../_assets/types/contest_cute.png" alt=""><div class="bar"><i style="width:40%; background:#F49BD8"></i></div></div>
+        <div class="st"><img src="../_assets/types/contest_smart.png" alt=""><div class="bar"><i style="width:55%; background:#3FB76B"></i></div></div>
+        <div class="st"><img src="../_assets/types/contest_tough.png" alt=""><div class="bar"><i style="width:30%; background:#E8B730"></i></div></div>
+        <div class="sheen"><div class="kv vt-sm">SHEEN 12 / 255</div><div class="bar exp"><i style="width:5%"></i></div></div>
+        <div class="blocks vt-sm"><img src="../_assets/ui_gba/pokeblock.png" alt=""> POKéBLOCK CASE: 3</div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross" data-open="pokecubos"><span class="glyph cross">✕</span>Feed POKéBLOCK</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+  <!-- Popup: Pokéblock case (feed) -->
+  <div class="modal" id="pokecubos"><div class="win" style="width:640px">
+    <div class="win-head"><span class="ps">POKéBLOCK CASE</span><span class="spacer"></span><span class="vt-sm">Feed MUDKIP · SHEEN 12/255</span></div>
+    <div class="win-body list">
+      <div class="row on" data-close><img src="../_assets/ui_gba/pokeblock.png" alt="" style="zoom:3"><span class="grow">RED POKéBLOCK Lv3</span><span class="vt-sm">COOL +3 · FEEL 21</span></div>
+      <div class="row"><img src="../_assets/ui_gba/pokeblock.png" alt="" style="zoom:3; filter:hue-rotate(200deg)"><span class="grow">BLUE POKéBLOCK Lv2</span><span class="vt-sm">BEAUTY +2 · FEEL 22</span></div>
+      <div class="row" style="border-bottom:0"><img src="../_assets/ui_gba/pokeblock.png" alt="" style="zoom:3; filter:hue-rotate(300deg)"><span class="grow">PINK POKéBLOCK Lv4</span><span class="vt-sm">CUTE +4 · FEEL 20</span></div>
+    </div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Feed</span><span class="btn" data-btn="triangle"><span class="glyph triangle">△</span>Toss</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Close</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

@@ -1,0 +1,549 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>PS Vita Bag UI - Hoenn Adventure</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: VT323 & Press Start 2P for authentic GBA/Retro UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<style data-purpose="retro-core-styles">
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-font-smoothing: none;
+    image-rendering: pixelated;
+  }
+  body {
+    background-color: #030708;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+  }
+  .font-vt {
+    font-family: 'VT323', monospace;
+  }
+  .font-pixel {
+    font-family: 'Press Start 2P', monospace;
+  }
+</style>
+<style data-purpose="beveled-borders">
+  .bevel-box-dark {
+    background: #09211d;
+    border: 3px solid #041210;
+    box-shadow: inset 1px 1px 0 #1b544b, inset -1px -1px 0 #051614, 0 3px 6px rgba(0,0,0,0.5);
+  }
+  .bevel-box-cream {
+    background: #f7f4e9;
+    border: 3px solid #1a3024;
+    box-shadow: inset 2px 2px 0 #ffffff, inset -2px -2px 0 #d1c8af, 0 4px 8px rgba(0,0,0,0.45);
+  }
+  .bevel-box-amber {
+    background: linear-gradient(180deg, #fef3c7 0%, #fde68a 100%);
+    border-top: 2px solid #fffbeb;
+    border-bottom: 2px solid #d97706;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(0,0,0,0.15);
+  }
+  .bevel-row-normal {
+    background: #ebe4cf;
+    border-bottom: 2px solid #d8cfb7;
+  }
+  .bevel-row-normal:hover {
+    background: #fdfaf0;
+  }
+  .bevel-btn-action {
+    border: 2px solid #172a22;
+    box-shadow: inset 1px 1px 0 rgba(255,255,255,0.4), inset -1px -1px 0 rgba(0,0,0,0.4);
+    transition: all 0.1s ease;
+  }
+  .bevel-btn-action:active {
+    transform: translateY(1px);
+    box-shadow: inset -1px -1px 0 rgba(255,255,255,0.4), inset 1px 1px 0 rgba(0,0,0,0.4);
+  }
+  /* Physical Button Style for L / R triggers */
+  .retro-key-btn {
+    background: linear-gradient(180deg, #1b3a32 0%, #0c201a 100%);
+    border-top: 2px solid #366d5f;
+    border-left: 2px solid #366d5f;
+    border-right: 2px solid #061511;
+    border-bottom: 2px solid #061511;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6);
+  }
+  .retro-key-btn:active {
+    border-top: 2px solid #061511;
+    border-left: 2px solid #061511;
+    border-right: 2px solid #366d5f;
+    border-bottom: 2px solid #366d5f;
+    transform: translateY(1px);
+  }
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 14px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #d8cfb7;
+    border-left: 2px solid #b7ac8f;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #245244;
+    border: 2px solid #14352b;
+  }
+</style>
+<style data-purpose="sprite-backpack">
+  .sprite-bag-container {
+    width: 64px;
+    height: 64px;
+    background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAL_ayV2W4W92UZPJc_2lXacbrwGsxrpJZuvmZV-5M64Qi9u5FDtC08jZNUBqxRSkQkCFGfuPrzxKvOhbDeqRw_UfaWjEwqUfNsk_AVBNaxxQFTK0LIcE-TCo-ZlpqFlLBaOnbkHuGsJNxnlRwJEiQ5FwtAD4yHaURHByIrCSotZtV6Npj5wImVH5ovTITlZcCpWxpdsqi8IejLAa9IBZ2gEs3vyE4cTx_paAYiWJWOcP5NTRdXYIgPkQ');
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    transform: scale(2.1);
+    transform-origin: center;
+  }
+</style>
+</head>
+<body>
+<!-- BEGIN: VitaScreenFrame (960x544) -->
+<div class="relative w-[960px] h-[544px] overflow-hidden bg-black shadow-2xl border-2 border-[#162923] flex flex-col justify-between select-none">
+<!-- Overworld Game Background -->
+<div class="absolute inset-0 z-0">
+<img alt="Game Overworld" class="w-full h-full object-cover filter blur-[2px] brightness-90" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAC_d0RFztR2sD3hfvT1J4vXo4-bROWeoAn65-__l92qqIrWUxL_OltrQLdXcXG_ggYNDAVm00yTgZ0DYgPGPqkSGFsZ3IL0vRt8UjKpYxIRryLN3lTwz9UgR0dFTMRr1OvqiA8JMLMwYUtMGkuXVJnZgefGEQH6uiq3SN-yd78EQxjR-2VCitQjgQZ_tpLnXrQKTvDseFgK9dCZBlvYXpi_KG1cQdHbztMN-ZFLBEdqt0dxJKKKqZDXg">
+<!-- Translucent Tint Overlay -->
+<div class="absolute inset-0 bg-[#061814]/75 backdrop-blur-[1px]"></div>
+</div>
+<!-- BEGIN: TopHeader (Party Screen 2 Standard) -->
+<header class="relative z-10 w-full h-[58px] px-3 bg-[#0b1d19]/95 border-b-[3px] border-[#0c4036] flex items-center justify-between shadow-xl"><!-- Left Badge: Bag Identity -->
+<div class="flex items-center space-x-2 flex-shrink-0 bg-[#163f35] border-2 border-[#2b5849] rounded-md px-2.5 py-1 shadow-inner"><div class="w-5 h-5 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center relative overflow-hidden shadow"><div class="absolute bottom-0 w-full h-1/2 bg-white"></div><div class="absolute w-full h-[2px] bg-[#16271c] top-[9px]"></div><div class="w-2 h-2 rounded-full bg-white border border-[#16271c] z-10"></div></div><div class="flex items-center space-x-1.5 leading-none"><span class="text-[9px] text-[#99f6e4] font-pixel font-bold tracking-wider">EXPEDITION BAG</span><span class="text-[8px] text-[#6ee7b7]">▶</span></div></div>
+<!-- Center: Interactive Tab System with Physical L / R Triggers -->
+<div class="flex items-center bg-[#041612] border-2 border-[#1c5547] rounded-md p-0.5 gap-1 shadow-inner select-none" id="tabs-container"><button class="px-1.5 py-0.5 bg-[#163f35] border border-[#2b5849] rounded text-[#6ee7b7] font-bold text-[9px] font-pixel shadow cursor-pointer hover:bg-[#245244] flex items-center justify-center leading-none" id="btn-trigger-l" onclick="cycleTab(-1)" title="Previous Pocket (L)">L</button><div class="flex items-center gap-1" id="tab-buttons"><button class="px-2 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none">ITEMS</button><button class="px-2 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none">MEDICINE</button><button class="bg-[#fde68a] text-[#16271c] font-bold text-[8px] px-2.5 py-1 rounded shadow-sm border border-[#b45309] font-pixel cursor-pointer tracking-wider leading-none">BALLS</button><button class="px-2 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none">TMs &amp; HMs</button><button class="px-2 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none">BERRIES</button><button class="px-2 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none">KEY ITEMS</button></div><button class="px-1.5 py-0.5 bg-[#163f35] border border-[#2b5849] rounded text-[#6ee7b7] font-bold text-[9px] font-pixel shadow cursor-pointer hover:bg-[#245244] flex items-center justify-center leading-none" id="btn-trigger-r" onclick="cycleTab(1)" title="Next Pocket (R)">R</button></div>
+<!-- Right Header: Money & Trainer Badge -->
+<div class="flex items-center space-x-2 flex-shrink-0">
+<div class="h-[28px] bg-[#051310] border-2 border-[#1a4a3e] rounded px-2.5 flex items-center space-x-1.5 shadow-inner">
+<span class="text-[#f59e0b] font-pixel text-[10px] font-bold leading-none">₽</span>
+<span class="text-[#ecfdf5] font-pixel text-[10px] tracking-wider leading-none">142,500</span>
+</div>
+
+</div></header>
+<!-- END: TopHeader -->
+<!-- BEGIN: MainContent (960x446 area) -->
+<main class="relative z-10 w-full flex-1 px-3.5 py-2 flex gap-3 overflow-hidden">
+<!-- LEFT PANEL: Satchel Display & Item Card (Width: 380px) -->
+<section class="w-[380px] flex flex-col gap-2 h-full">
+<!-- Upper Showcase: Backpack & Pocket Info -->
+<div class="bevel-box-dark rounded-md p-2.5 flex items-center justify-between border-2 border-[#194c40] bg-gradient-to-b from-[#0c2f27] to-[#071d18]">
+<!-- Satchel Sprite Showcase Frame -->
+<div class="w-[96px] h-[96px] bg-[#041410] border-2 border-[#1c5547] rounded flex items-center justify-center relative shadow-inner overflow-hidden flex-shrink-0">
+<div class="absolute inset-0 bg-radial from-[#1e6150]/40 to-transparent"></div>
+<div class="sprite-bag-container"></div>
+</div>
+<!-- Bag & Trainer Context -->
+<div class="flex-1 ml-3 flex flex-col justify-between h-[96px] py-0.5 text-left">
+<div>
+<div class="text-[8px] text-[#4dd4b0] tracking-widest uppercase font-pixel leading-none">POCKET OVERVIEW</div>
+<h2 class="text-[12px] text-white font-pixel mt-0.5 leading-tight tracking-wide font-bold" id="pocket-display-title">POKÉ BALLS POCKET</h2>
+</div>
+<div class="space-y-1">
+<div class="flex items-center justify-between text-[9px] bg-[#041612] px-2 py-1 rounded border border-[#164338]">
+<span class="text-[#7ea69c]">POCKET SLOTS:</span>
+<span class="text-[#fde68a] font-pixel font-bold" id="pocket-slots-counter">05 / 12</span>
+</div>
+<div class="flex items-center justify-between text-[8px] text-[#639286] px-1">
+<span class="">CAPACITY LIMIT:</span>
+<span class="text-[#99f6e4]">99 PER ITEM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Lower Showcase: Selected Item Detailed Inspector Box -->
+<div class="bevel-box-cream flex-1 rounded-md p-3 flex flex-col justify-between text-[#1c2a22]"><div>
+<div class="flex items-center justify-between border-b-2 border-[#c5bba0] pb-2 mb-2">
+<div class="flex items-center space-x-2.5">
+<div class="w-10 h-10 rounded bg-[#e8e0c8] border-2 border-[#a89c7c] flex items-center justify-center text-2xl shadow-inner flex-shrink-0" id="inspector-icon">🔴</div>
+<div>
+<h3 class="text-[13px] font-pixel text-[#16271c] tracking-wide font-bold" id="inspector-name">POKÉ BALL</h3>
+<span class="text-[8px] bg-[#245244] text-[#f2ede0] px-1.5 py-0.5 rounded font-pixel uppercase tracking-tight inline-block mt-0.5" id="inspector-category">BALL / CAPTURE</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-[8px] text-[#65766a] block font-pixel uppercase tracking-wider">IN BAG</span>
+<span class="text-[14px] font-pixel font-bold text-[#b45309] leading-tight" id="inspector-qty">x 14</span>
+</div>
+</div>
+<div class="flex items-center justify-between px-1 mb-2 text-[9px] text-[#4f6155] font-pixel">
+<span class="tracking-wide">RESALE VALUE:</span>
+<span class="text-[#0f5132] font-bold tracking-wide" id="inspector-price">₽ 100</span>
+</div>
+<div class="bg-[#f0ebd9] p-2 rounded border border-[#d6ccb0] min-h-[76px] flex items-center">
+<p class="font-vt text-[20px] text-[#1c2b22] leading-[22px] tracking-wide m-0 text-left" id="inspector-desc">A device for catching wild Pokémon. It is thrown like a ball, comfortably encapsulating its target.</p>
+</div>
+</div>
+<div class="space-y-2 mt-auto pt-2">
+<div class="grid grid-cols-3 gap-1 bg-[#ebe3cd] p-1.5 rounded border border-[#d3c8ab] text-[8px] text-center font-pixel">
+<div>
+<span class="text-[#728277] block text-[7px] tracking-tight">HOLDABLE</span>
+<span class="text-[#096041] font-bold" id="attr-hold">YES</span>
+</div>
+<div class="border-x border-[#c9be9e]">
+<span class="text-[#728277] block text-[7px] tracking-tight">IN-BATTLE</span>
+<span class="text-[#096041] font-bold" id="attr-battle">YES</span>
+</div>
+<div>
+<span class="text-[#728277] block text-[7px] tracking-tight">FIELD USE</span>
+<span class="text-[#096041] font-bold" id="attr-field">NO</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2 pt-0.5">
+<button class="bevel-btn-action bg-[#246953] hover:bg-[#2e8267] text-[#effbf7] text-[8px] py-2 rounded font-pixel flex items-center justify-center space-x-1 cursor-pointer">
+<span class="text-[10px] text-[#93f5d5]">✕</span>
+<span class="">USE</span>
+</button>
+<button class="bevel-btn-action bg-[#c87a22] hover:bg-[#de8c2d] text-white text-[8px] py-2 rounded font-pixel flex items-center justify-center space-x-1 cursor-pointer">
+<span class="text-[10px] text-[#ffe7ab]">■</span>
+<span class="">GIVE</span>
+</button>
+<button class="bevel-btn-action bg-[#7c3030] hover:bg-[#963c3c] text-[#fee] text-[8px] py-2 rounded font-pixel flex items-center justify-center space-x-1 cursor-pointer">
+<span class="text-[10px] text-[#ffa3a3]">▲</span>
+<span class="">TOSS</span>
+</button>
+</div>
+</div></div>
+</section>
+<!-- RIGHT PANEL: Inventory Item Ledger (Width: ~540px) -->
+<section class="flex-1 bevel-box-cream rounded-md flex flex-col overflow-hidden shadow-2xl">
+<!-- Ledger Header Bar -->
+<div class="bg-[#1c382f] text-[#bdecdb] px-3.5 py-2 border-b-2 border-[#132720] flex items-center justify-between text-[9px] font-pixel">
+<div class="flex items-center space-x-2">
+<span class="text-[#fcd34d]">LEDGER:</span>
+<span class="text-white" id="ledger-title-count">05 / 12 ITEMS</span>
+</div>
+<div class="flex items-center space-x-2 text-[8px]">
+<span class="text-[#95c5b4]">SORT:</span>
+<span class="bg-[#0b1f19] px-2 py-0.5 rounded text-[#ffd56b] border border-[#2b5849]">DEFAULT [■]</span>
+</div>
+</div>
+<!-- Item List Container (Scrollable) -->
+<div class="flex-1 overflow-y-auto overflow-x-hidden flex flex-col bg-[#e7dfc6]" id="item-list-container"><div class="bevel-box-amber px-3.5 py-2.5 flex items-center justify-between cursor-pointer relative z-10">
+          <div class="flex items-center space-x-3">
+            <span class="text-[#b45309] text-[11px] animate-pulse">▶</span>
+            <span class="text-[17px] leading-none">🔴</span>
+            <span class="font-pixel text-[11px] text-[#16271c] font-bold tracking-wide">POKÉ BALL</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[9px] text-[#854d0e]">QTY</span>
+            <span class="font-pixel text-[12px] text-[#14261a] font-bold">x 14</span>
+          </div>
+        </div><div class="bevel-row-normal px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-3 ml-4">
+            <span class="text-[15px] leading-none">🔵</span>
+            <span class="font-pixel text-[10px] text-[#2c3d31] tracking-wide">GREAT BALL</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#8c826c]">QTY</span>
+            <span class="font-pixel text-[10px] text-[#334637] font-bold">x 06</span>
+          </div>
+        </div><div class="bevel-row-normal px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-3 ml-4">
+            <span class="text-[15px] leading-none">🟡</span>
+            <span class="font-pixel text-[10px] text-[#2c3d31] tracking-wide">ULTRA BALL</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#8c826c]">QTY</span>
+            <span class="font-pixel text-[10px] text-[#334637] font-bold">x 03</span>
+          </div>
+        </div><div class="bevel-row-normal px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-3 ml-4">
+            <span class="text-[15px] leading-none">🕸️</span>
+            <span class="font-pixel text-[10px] text-[#2c3d31] tracking-wide">NET BALL</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#8c826c]">QTY</span>
+            <span class="font-pixel text-[10px] text-[#334637] font-bold">x 04</span>
+          </div>
+        </div><div class="bevel-row-normal px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]">
+          <div class="flex items-center space-x-3 ml-4">
+            <span class="text-[15px] leading-none">🌊</span>
+            <span class="font-pixel text-[10px] text-[#2c3d31] tracking-wide">DIVE BALL</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#8c826c]">QTY</span>
+            <span class="font-pixel text-[10px] text-[#334637] font-bold">x 02</span>
+          </div>
+        </div></div>
+<!-- Ledger Footer Info Bar -->
+<div class="bg-[#dfd7bf] px-3.5 py-1.5 border-t-2 border-[#c2b697] flex items-center justify-between text-[8px] font-pixel text-[#4d5e54]">
+<div class="flex items-center space-x-2">
+<span class="text-[#0f5132] font-bold">▲▼</span>
+<span class="">SELECT ITEM</span>
+</div>
+<div class="flex items-center space-x-2">
+<span class="">PRESS <span class="text-[#152a1d] font-bold">[✕]</span> FOR ACTIONS</span>
+</div>
+</div>
+</section>
+</main>
+<!-- END: MainContent -->
+<!-- BEGIN: ConsoleFooter (Sony PS Vita Bar Standard) -->
+<footer class="relative z-10 w-full h-[40px] px-3 bg-[#07131a] border-t-2 border-[#112933] flex items-center justify-between text-white text-[9px] font-pixel shadow-2xl">
+<!-- Action Controls matching SCREEN_2 / SCREEN_39 -->
+<div class="flex items-center space-x-3.5">
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-full bg-[#0066cc] border border-[#5eaaff] flex items-center justify-center text-[9px] font-bold text-white shadow">✕</span>
+<span class="text-[#ccd7e6] text-[8px]">SELECT / USE</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center text-[9px] font-bold text-white shadow">○</span>
+<span class="text-[#ccd7e6] text-[8px]">BACK</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-full bg-[#bb1188] border border-[#ff77cc] flex items-center justify-center text-[8px] font-bold text-white shadow">■</span>
+<span class="text-[#ccd7e6] text-[8px]">TOSS / SORT</span>
+</div>
+<div class="flex items-center space-x-1.5">
+<span class="w-4 h-4 rounded-full bg-[#009944] border border-[#66e699] flex items-center justify-center text-[8px] font-bold text-white shadow">▲</span>
+<span class="text-[#ccd7e6] text-[8px]">REGISTER</span>
+</div>
+</div>
+<!-- Right System Indicators -->
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-1.5 bg-[#0b1f26] px-2 py-0.5 rounded border border-[#163a47] text-[8px] text-[#7dd3fc]">
+<span class="font-bold text-white">L / R</span>
+<span class="text-[#94a3b8]">TABS</span>
+</div>
+<div class="flex items-center space-x-2 text-[8px]">
+<span class="bg-[#0b241c] px-1.5 py-0.5 rounded border border-[#144f3d] text-[#86efac]">[START] <span class="text-white">MENU</span></span>
+</div>
+<!-- Clock -->
+<span class="text-[8px] text-[#cbd5e1] font-mono font-bold">14:32</span>
+<!-- Vita Battery -->
+
+</div>
+</footer>
+<!-- END: ConsoleFooter -->
+</div>
+<!-- END: VitaScreenFrame -->
+<!-- SCRIPT: Bag Pocket & Item Management Logic -->
+<script>
+  const POCKETS = [
+    {
+      id: "items",
+      name: "ITEMS",
+      count: "18",
+      fullName: "ITEMS POCKET",
+      items: [
+        { id: "escape_rope", name: "ESCAPE ROPE", icon: "🪢", qty: "02", price: "275", cat: "FIELD UTILITY", desc: "A long, durable rope. Use it to escape instantly from caves and dungeons back to the entrance.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "repel", name: "REPEL", icon: "💨", qty: "06", price: "175", cat: "FIELD ITEM", desc: "An item that repels weak wild Pokémon for 100 steps in tall grass or caves.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "super_repel", name: "SUPER REPEL", icon: "💨", qty: "04", price: "250", cat: "FIELD ITEM", desc: "A stronger spray that repels weak wild Pokémon for 200 steps.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "nugget", name: "NUGGET", icon: "✨", qty: "02", price: "5000", cat: "VALUABLE", desc: "A nugget of pure, sparkling gold. Can be sold at a very high price in shops.", hold: "NO", battle: "NO", field: "NO" },
+        { id: "poke_doll", name: "POKÉ DOLL", icon: "🧸", qty: "01", price: "500", cat: "BATTLE ITEM", desc: "An attractive doll of a cute Pokémon. Use it to flee without fail from any wild battle.", hold: "YES", battle: "YES", field: "NO" },
+        { id: "leaf_stone", name: "LEAF STONE", icon: "🍃", qty: "01", price: "1050", cat: "EVO STONE", desc: "A peculiar stone that induces evolution in certain species of grass Pokémon.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "rare_candy", name: "RARE CANDY", icon: "🍬", qty: "02", price: "2400", cat: "ENHANCER", desc: "A miraculous candy that raises a Pokémon's level by exactly one point.", hold: "YES", battle: "NO", field: "YES" }
+      ]
+    },
+    {
+      id: "medicine",
+      name: "MEDICINE",
+      count: "08",
+      fullName: "MEDICINE POCKET",
+      items: [
+        { id: "potion", name: "POTION", icon: "🧪", qty: "05", price: "150", cat: "RECOVERY / MEDICINE", desc: "Restores the HP of a Pokémon by 20 points. A spray-type medicine designed to treat battle wounds.", hold: "YES", battle: "YES", field: "YES" },
+        { id: "super_potion", name: "SUPER POTION", icon: "🧴", qty: "02", price: "350", cat: "RECOVERY / MEDICINE", desc: "A high-grade spray medicine. Restores the HP of a single Pokémon by 50 points.", hold: "YES", battle: "YES", field: "YES" },
+        { id: "hyper_potion", name: "HYPER POTION", icon: "🍶", qty: "01", price: "600", cat: "RECOVERY / MEDICINE", desc: "An advanced spray remedy. Restores the HP of a wounded Pokémon by a full 200 points.", hold: "YES", battle: "YES", field: "YES" },
+        { id: "antidote", name: "ANTIDOTE", icon: "💊", qty: "03", price: "50", cat: "STATUS HEAL", desc: "A soothing medicinal spray that cures a Pokémon suffering from poison instantly.", hold: "YES", battle: "YES", field: "YES" },
+        { id: "paralyze_heal", name: "PARALYZE HEAL", icon: "⚡", qty: "02", price: "100", cat: "STATUS HEAL", desc: "A spray that alleviates muscle stiffness and cures Pokémon of paralysis.", hold: "YES", battle: "YES", field: "YES" },
+        { id: "revive", name: "REVIVE", icon: "✨", qty: "02", price: "750", cat: "REVIVAL", desc: "A medicinal compound that revives a fainted Pokémon, restoring half of its maximum HP.", hold: "YES", battle: "YES", field: "YES" }
+      ]
+    },
+    {
+      id: "balls",
+      name: "BALLS",
+      count: "12",
+      fullName: "POKÉ BALLS POCKET",
+      items: [
+        { id: "poke_ball", name: "POKÉ BALL", icon: "🔴", qty: "14", price: "100", cat: "BALL / CAPTURE", desc: "A device for catching wild Pokémon. It is thrown like a ball, comfortably encapsulating its target.", hold: "YES", battle: "YES", field: "NO" },
+        { id: "great_ball", name: "GREAT BALL", icon: "🔵", qty: "06", price: "300", cat: "BALL / CAPTURE", desc: "A good, high-performance Ball that provides a higher Pokémon catch rate than a standard Poké Ball.", hold: "YES", battle: "YES", field: "NO" },
+        { id: "ultra_ball", name: "ULTRA BALL", icon: "🟡", qty: "03", price: "600", cat: "BALL / CAPTURE", desc: "An ultra-performance Ball that provides an even higher success rate than a Great Ball.", hold: "YES", battle: "YES", field: "NO" },
+        { id: "net_ball", name: "NET BALL", icon: "🕸️", qty: "04", price: "500", cat: "SPECIAL BALL", desc: "A somewhat different Ball that works especially well on Water- and Bug-type Pokémon.", hold: "YES", battle: "YES", field: "NO" },
+        { id: "dive_ball", name: "DIVE BALL", icon: "🌊", qty: "02", price: "500", cat: "SPECIAL BALL", desc: "A special Ball that makes it easier to catch Pokémon found underwater with Dive.", hold: "YES", battle: "YES", field: "NO" }
+      ]
+    },
+    {
+      id: "tms",
+      name: "TMs & HMs",
+      count: "06",
+      fullName: "TMs & HMs CASE",
+      items: [
+        { id: "tm03", name: "TM03 WATER PULSE", icon: "💿", qty: "01", price: "1500", cat: "TECHNICAL MACHINE", desc: "Attacks with ultrasonic water pulses. May confuse the target foe.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "tm13", name: "TM13 ICE BEAM", icon: "💿", qty: "01", price: "2000", cat: "TECHNICAL MACHINE", desc: "Blasts the target with an icy-cold beam. Has a chance of freezing the target solid.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "tm26", name: "TM26 EARTHQUAKE", icon: "💿", qty: "01", price: "3000", cat: "TECHNICAL MACHINE", desc: "An epic quake that strikes every Pokémon around the user. Does massive physical ground damage.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "hm01", name: "HM01 CUT", icon: "💾", qty: "01", price: "--", cat: "HIDDEN MACHINE", desc: "Cuts small trees to open paths. Also inflicts normal physical damage in battle.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "hm03", name: "HM03 SURF", icon: "💾", qty: "01", price: "--", cat: "HIDDEN MACHINE", desc: "Allows travel across water bodies. Hits all surrounding foes with a huge tidal wave.", hold: "NO", battle: "NO", field: "YES" }
+      ]
+    },
+    {
+      id: "berries",
+      name: "BERRIES",
+      count: "24",
+      fullName: "BERRIES POUCH",
+      items: [
+        { id: "oran_berry", name: "ORAN BERRY", icon: "🫐", qty: "12", price: "10", cat: "NATURAL BERRY", desc: "A peculiar berry. When held by a Pokémon, it automatically restores 10 HP in a pinch.", hold: "YES", battle: "YES", field: "YES" },
+        { id: "sitrus_berry", name: "SITRUS BERRY", icon: "🍊", qty: "06", price: "20", cat: "NATURAL BERRY", desc: "Restores 30 HP when held by a Pokémon during battle, or can be directly fed from the bag.", hold: "YES", battle: "YES", field: "YES" },
+        { id: "cheri_berry", name: "CHERI BERRY", icon: "🍒", qty: "04", price: "10", cat: "NATURAL BERRY", desc: "This berry cures paralysis instantly if held by a Pokémon during combat.", hold: "YES", battle: "YES", field: "YES" },
+        { id: "pecha_berry", name: "PECHA BERRY", icon: "🍑", qty: "08", price: "10", cat: "NATURAL BERRY", desc: "A sweet peach-like berry. If held by a Pokémon, it cures poison status immediately.", hold: "YES", battle: "YES", field: "YES" }
+      ]
+    },
+    {
+      id: "key_items",
+      name: "KEY ITEMS",
+      count: "04",
+      fullName: "KEY ITEMS POCKET",
+      items: [
+        { id: "acro_bike", name: "ACRO BIKE", icon: "🚲", qty: "01", price: "--", cat: "KEY ITEM", desc: "A folding bicycle that performs wheelies and bunny hops. Great for crossing narrow bridges.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "old_rod", name: "OLD ROD", icon: "🎣", qty: "01", price: "--", cat: "FISHING GEAR", desc: "Use it near any water body to fish for wild Pokémon like Magikarp.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "dowsing_machine", name: "ITEMFINDER", icon: "📡", qty: "01", price: "--", cat: "DETECTOR", desc: "A machine that beeps and signals when unseeable hidden items are buried nearby.", hold: "NO", battle: "NO", field: "YES" },
+        { id: "devon_scope", name: "DEVON SCOPE", icon: "👓", qty: "01", price: "--", cat: "DEVICE", desc: "An optical device made by Devon Corp that reveals unseeable camouflaged Kecleon.", hold: "NO", battle: "NO", field: "YES" }
+      ]
+    }
+  ];
+
+  let currentPocketIndex = 2; // Default to BALLS to match initial screen
+  let selectedItemIndex = 0;
+
+  function renderTabs() {
+    const tabButtonsEl = document.getElementById("tab-buttons");
+    tabButtonsEl.innerHTML = "";
+
+    POCKETS.forEach((pocket, idx) => {
+      const isActive = idx === currentPocketIndex;
+      const btn = document.createElement("button");
+      btn.onclick = () => selectPocket(idx);
+
+      if (isActive) {
+        // Active Tab Style: Warm golden amber background, small 8px pixel font, no count badges
+        btn.className = "bg-[#fde68a] text-[#16271c] font-bold text-[8px] px-2.5 py-1 rounded shadow-sm border border-[#b45309] font-pixel cursor-pointer tracking-wider leading-none";
+        btn.textContent = pocket.name;
+      } else {
+        // Inactive Tab Style: Integrated dark teal background, 8px pixel font with hover state, no count badges
+        btn.className = "px-2 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none";
+        btn.textContent = pocket.name;
+      }
+
+      tabButtonsEl.appendChild(btn);
+    });
+  }
+
+  function renderItemsList() {
+    const container = document.getElementById("item-list-container");
+    container.innerHTML = "";
+
+    const pocket = POCKETS[currentPocketIndex];
+    document.getElementById("pocket-display-title").innerText = pocket.fullName;
+    document.getElementById("pocket-slots-counter").innerText = `${pocket.items.length.toString().padStart(2, '0')} / ${pocket.count}`;
+    document.getElementById("ledger-title-count").innerText = `${pocket.items.length.toString().padStart(2, '0')} / ${pocket.count} ITEMS`;
+
+    pocket.items.forEach((item, idx) => {
+      const isSelected = idx === selectedItemIndex;
+      const row = document.createElement("div");
+      row.onclick = () => selectItem(idx);
+
+      if (isSelected) {
+        row.className = "bevel-box-amber px-3.5 py-2.5 flex items-center justify-between cursor-pointer relative z-10";
+        row.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="text-[#b45309] text-[11px] animate-pulse">▶</span>
+            <span class="text-[17px] leading-none">${item.icon}</span>
+            <span class="font-pixel text-[11px] text-[#16271c] font-bold tracking-wide">${item.name}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[9px] text-[#854d0e]">QTY</span>
+            <span class="font-pixel text-[12px] text-[#14261a] font-bold">x ${item.qty}</span>
+          </div>
+        `;
+      } else {
+        row.className = "bevel-row-normal px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition hover:bg-[#fffcee]";
+        row.innerHTML = `
+          <div class="flex items-center space-x-3 ml-4">
+            <span class="text-[15px] leading-none">${item.icon}</span>
+            <span class="font-pixel text-[10px] text-[#2c3d31] tracking-wide">${item.name}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-pixel text-[8px] text-[#8c826c]">QTY</span>
+            <span class="font-pixel text-[10px] text-[#334637] font-bold">x ${item.qty}</span>
+          </div>
+        `;
+      }
+
+      container.appendChild(row);
+    });
+
+    updateInspector();
+  }
+
+  function updateInspector() {
+    const pocket = POCKETS[currentPocketIndex];
+    const item = pocket.items[selectedItemIndex] || pocket.items[0];
+    if (!item) return;
+
+    document.getElementById("inspector-name").innerText = item.name;
+    document.getElementById("inspector-icon").innerText = item.icon;
+    document.getElementById("inspector-category").innerText = item.cat;
+    document.getElementById("inspector-qty").innerText = `x ${item.qty}`;
+    document.getElementById("inspector-price").innerText = item.price === "--" ? "NOT FOR SALE" : `₽ ${item.price}`;
+    document.getElementById("inspector-desc").innerText = item.desc;
+    document.getElementById("attr-hold").innerText = item.hold;
+    document.getElementById("attr-battle").innerText = item.battle;
+    document.getElementById("attr-field").innerText = item.field;
+  }
+
+  function selectPocket(index) {
+    currentPocketIndex = index;
+    selectedItemIndex = 0;
+    renderTabs();
+    renderItemsList();
+  }
+
+  function selectItem(index) {
+    selectedItemIndex = index;
+    renderItemsList();
+  }
+
+  function cycleTab(direction) {
+    let next = currentPocketIndex + direction;
+    if (next < 0) next = POCKETS.length - 1;
+    if (next >= POCKETS.length) next = 0;
+    selectPocket(next);
+  }
+
+  // Keyboard navigation support for L & R triggers
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'q' || e.key === 'Q' || e.key === 'PageUp') {
+      cycleTab(-1);
+    } else if (e.key === 'e' || e.key === 'E' || e.key === 'PageDown') {
+      cycleTab(1);
+    } else if (e.key === 'ArrowUp') {
+      if (selectedItemIndex > 0) {
+        selectItem(selectedItemIndex - 1);
+      }
+    } else if (e.key === 'ArrowDown') {
+      const pocket = POCKETS[currentPocketIndex];
+      if (selectedItemIndex < pocket.items.length - 1) {
+        selectItem(selectedItemIndex + 1);
+      }
+    }
+  });
+
+  // Initial Load
+  renderTabs();
+  renderItemsList();
+</script>
+
+
+
+
+
+
+</body></html>

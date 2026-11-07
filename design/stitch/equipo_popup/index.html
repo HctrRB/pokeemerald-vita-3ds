@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Equipo · Acciones</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  iframe { position: absolute; inset: 0; width: 960px; height: 544px; border: 0; pointer-events: none; }
+  .dim { position: absolute; inset: 0; background: rgba(4, 20, 16, 0.55); }
+  .pop { position: absolute; left: 424px; top: 64px; width: 248px; }
+  .pop .row { height: 40px; }
+  .pop .hm { color: #1B6E9A; }
+  .pop .row.on.hm { color: var(--select-ink); }
+</style>
+</head>
+<body>
+<!-- Modal over the party screen. Field moves appear only when the badge allows them; picking one
+     closes the UI and runs the game's own field-move animation (kept as is). -->
+<div class="stage">
+  <iframe src="../equipo/index.html" title="party"></iframe>
+  <div class="dim"></div>
+  <div class="choice list pop">
+    <div class="row">SUMMARY</div>
+    <div class="row">SWITCH</div>
+    <div class="row">ITEM</div>
+    <div class="row on hm">CUT</div>
+    <div class="row hm">ROCK SMASH</div>
+    <div class="row">CANCEL</div>
+  </div>
+</div>
+</body>
+</html>

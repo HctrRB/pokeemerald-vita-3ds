@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pokémon Vita UI - Poké Mart Dialogue &amp; Action Menu</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts for Retro Pixel Aesthetic -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=VT323&amp;display=swap" rel="stylesheet"/>
+<style data-purpose="base-viewport">
+    /* Exact PS Vita Native Resolution Canvas */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #050b0a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      font-family: 'Press Start 2P', monospace;
+      -webkit-font-smoothing: none;
+      -moz-osx-font-smoothing: grayscale;
+      image-rendering: pixelated;
+    }
+
+    #vita-canvas {
+      width: 960px;
+      height: 544px;
+      min-width: 960px;
+      min-height: 544px;
+      max-width: 960px;
+      max-height: 544px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+      user-select: none;
+    }
+  </style>
+<style data-purpose="retro-components">
+    /* Dialogue Box Styling */
+    .retro-dialogue-frame {
+      background: #F7FAF6;
+      border: 4px solid #1C3A34;
+      box-shadow: 0 4px 0px rgba(0,0,0,0.35);
+      border-radius: 12px;
+    }
+
+    .retro-inner-border {
+      border: 2px solid #82B29A;
+      border-radius: 6px;
+    }
+
+    /* Name Pill Badge */
+    .retro-badge-header {
+      background: #1C3A34;
+      color: #A7D8C4;
+      border: 2px solid #142824;
+      border-bottom: none;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+
+    /* Blinking Caret & Arrow */
+    @keyframes retro-blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    @keyframes retro-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(3px); }
+    }
+
+    .cursor-blinker {
+      animation: retro-blink 0.9s infinite;
+    }
+
+    .arrow-bouncing {
+      animation: retro-bounce 0.7s infinite ease-in-out;
+    }
+
+    /* Menu Choice Row Styling */
+    .menu-row {
+      transition: background-color 0.1s ease, transform 0.05s ease;
+    }
+
+    .menu-row.active {
+      background-color: #DAEEE4;
+      color: #0E2922;
+      border-left: 4px solid #1F6B54;
+    }
+
+    .menu-row:not(.active):hover {
+      background-color: #EDF5F0;
+    }
+
+    /* Hardware Buttons Style */
+    .vita-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #1C3A34;
+      color: #9DE4C4;
+      font-weight: bold;
+      border: 1px solid #336156;
+      width: 16px;
+      height: 16px;
+      font-size: 8px;
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+<!-- BEGIN: VitaDisplayFrame -->
+<main class="relative bg-black" data-purpose="game-screen-viewport" id="vita-canvas">
+<!-- Overworld Background Image (Crisp, 960x544) -->
+<img alt="Petalburg Overworld" class="absolute inset-0 w-full h-full object-cover pointer-events-none" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1NVfzQIASL9EM1kypUSLPm0xbHf2Z8-YXECZZZd1Qig6tw6yxdpeLVWa-TfeINZIb6Uk1m8aDpM-YI05ey9DDsitKusXtnN1n32_1IZ2-iK-qNUfDKWxV4UM9l9TKNV1uW4p39B7OMOJmilDc61CgaexsP2HeDkPBm7vK7K34NASrO9A_WjsSlnZsyquQ509SVXeGn1yczmMfEnLEge8UhgJXVGvUL2qKf9j_CA4fu8NnFjNwltl4Gw" style="image-rendering: pixelated;"/>
+<!-- BEGIN: TopBarHud -->
+<!-- Top HUD: Location Info & Cash Wallet -->
+<header class="absolute top-3 left-4 right-4 flex justify-between items-center z-20 pointer-events-none" data-purpose="top-status-bar">
+<!-- Location Badge -->
+<div class="flex items-center gap-2 bg-[#1C3A34]/95 text-[#A7D8C4] border-2 border-[#122622] px-3.5 py-1.5 rounded-md shadow-md">
+<!-- Store Icon -->
+<span class="inline-block w-2.5 h-2.5 bg-[#4ADE80] rounded-sm mr-1"></span>
+<span class="text-[10px] tracking-wider text-white">PETALBURG MART</span>
+<span class="text-[8px] text-[#71A694]">• COUNTER</span>
+</div>
+<!-- Wallet & Clock Display -->
+<div class="flex items-center gap-3">
+<!-- Money Box -->
+<div class="bg-[#F7FAF6]/95 border-2 border-[#1C3A34] text-[#1C2826] px-3 py-1.5 rounded-md shadow-md flex items-center gap-2">
+<span class="text-[9px] text-[#2D6A4F] font-bold">MONEY</span>
+<span class="text-[11px] tracking-wider font-bold">¥142,500</span>
+</div>
+<!-- Vita System Time & Battery -->
+<div class="bg-[#1C3A34]/95 border-2 border-[#122622] text-[#A7D8C4] px-2.5 py-1.5 rounded-md text-[8px] flex items-center gap-2">
+<span>10:42</span>
+<span class="text-white">100%</span>
+</div>
+</div>
+</header>
+<!-- END: TopBarHud -->
+<!-- BEGIN: MartSelectionMenu -->
+<!-- Vertical Action Selection Box (Gen 3 Canonical Style) -->
+<section class="absolute right-10 bottom-[146px] z-30 w-72 retro-dialogue-frame bg-[#F7FAF6] p-1.5 shadow-2xl" data-purpose="clerk-action-menu" id="mart-action-menu">
+<!-- Menu Header -->
+<div class="bg-[#1C3A34] text-[#A7D8C4] px-3 py-1.5 rounded-t-sm flex items-center justify-between border-b-2 border-[#142824]">
+<span class="text-[9px] tracking-wide text-white font-bold">MART MENU</span>
+<span class="text-[7px] text-[#86C5AF]">SELECT</span>
+</div>
+<!-- Choices List -->
+<div class="retro-inner-border bg-[#FBFDFB] p-1 flex flex-col gap-1 mt-1">
+<!-- Option 1: BUY -->
+<div class="menu-row active cursor-pointer px-2.5 py-2 rounded flex items-center justify-between" id="menu-opt-buy" onclick="selectMenuOption(0)" onmouseenter="selectMenuOption(0)">
+<div class="flex items-center gap-2">
+<span class="pointer-symbol text-[#D9381E] text-[10px]">▶</span>
+<span class="item-title text-[10px] font-bold">BUY</span>
+</div>
+<span class="text-[8px] text-[#52796F] font-sans font-semibold uppercase tracking-tight">Supplies</span>
+</div>
+<!-- Option 2: SELL -->
+<div class="menu-row cursor-pointer px-2.5 py-2 rounded flex items-center justify-between" id="menu-opt-sell" onclick="selectMenuOption(1)" onmouseenter="selectMenuOption(1)">
+<div class="flex items-center gap-2">
+<span class="pointer-symbol text-transparent text-[10px]">▶</span>
+<span class="item-title text-[10px] font-bold">SELL</span>
+</div>
+<span class="text-[8px] text-[#52796F] font-sans font-semibold uppercase tracking-tight">Items</span>
+</div>
+<!-- Option 3: EXIT -->
+<div class="menu-row cursor-pointer px-2.5 py-2 rounded flex items-center justify-between" id="menu-opt-exit" onclick="selectMenuOption(2)" onmouseenter="selectMenuOption(2)">
+<div class="flex items-center gap-2">
+<span class="pointer-symbol text-transparent text-[10px]">▶</span>
+<span class="item-title text-[10px] font-bold">SEE YA</span>
+</div>
+<span class="text-[8px] text-[#A8422B] font-sans font-semibold uppercase tracking-tight">Leave</span>
+</div>
+</div>
+<!-- Action Description / Dynamic Hint Bar -->
+<div class="mt-1 px-2 py-1 bg-[#E8EFEA] rounded text-[7px] leading-tight text-[#2D3E39] border border-[#CCD8D1]">
+<p id="action-hint-text">Purchase battle supplies &amp; Poké Balls.</p>
+</div>
+</section>
+<!-- END: MartSelectionMenu -->
+<!-- BEGIN: DialogueBoxSection -->
+<!-- Canonical Dialogue Window Bottom-Centered -->
+<section class="absolute bottom-6 left-1/2 -translate-x-1/2 w-[890px] z-20" data-purpose="dialogue-box">
+<!-- Clerk Name Badge Attachment -->
+<div class="inline-block retro-badge-header px-4 py-1.5 ml-4">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-[#4ADE80] mr-1.5"></span>
+<span class="text-[9px] tracking-wider text-white font-bold">CLERK</span>
+</div>
+<!-- Main Dialogue Body Frame -->
+<div class="retro-dialogue-frame p-2.5">
+<div class="retro-inner-border bg-[#F7FAF6] px-6 py-4 min-h-[92px] flex flex-col justify-between relative">
+<!-- Dialogue Text Line -->
+<div class="text-[#1C2826] text-[12px] leading-relaxed tracking-wide">
+<span id="dialogue-typed-text">Hi there! May I help you with something today?</span>
+<span class="inline-block w-2.5 h-3 bg-[#6C9A8B] ml-1.5 align-middle cursor-blinker"></span>
+</div>
+<!-- Bottom Status Inside Dialogue (PS Advance Prompt) -->
+<div class="flex justify-end items-center gap-2 pt-2">
+<div class="flex items-center text-[7px] text-[#476A60] tracking-wide font-sans font-bold uppercase mr-1">
+<span class="vita-key">✕</span> ADVANCE
+            </div>
+<!-- Pulsing/bouncing prompt arrow -->
+<div class="w-4 h-4 bg-[#1C3A34] text-[#A7D8C4] rounded-full flex items-center justify-center arrow-bouncing">
+<span class="text-[8px] mb-[1px]">▼</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: DialogueBoxSection -->
+<!-- BEGIN: ControlsFooter -->
+<!-- PS Vita Native Control Guide Footer Strip -->
+<footer class="absolute bottom-0 inset-x-0 h-6 bg-[#0E1B18]/95 border-t border-[#1C3A34] px-5 flex justify-between items-center text-[#7DAEA0] text-[7px] z-30 pointer-events-none" data-purpose="vita-controls-bar">
+<!-- Action Commands -->
+<div class="flex items-center gap-4">
+<span class="flex items-center"><span class="vita-key">✕</span> CONFIRM / SELECT</span>
+<span class="flex items-center"><span class="vita-key">○</span> CANCEL</span>
+<span class="flex items-center"><span class="vita-key">▲</span> MART INFO</span>
+</div>
+<!-- Navigation & System Prompts -->
+<div class="flex items-center gap-4">
+<span class="text-[#4E756B]">[D-PAD / L-STICK] NAVIGATE</span>
+<span class="text-[#4E756B]">[START] CLOSE MENU</span>
+<span class="text-[#9DE4C4] font-bold">PS VITA</span>
+</div>
+</footer>
+<!-- END: ControlsFooter -->
+</main>
+<!-- END: VitaDisplayFrame -->
+<!-- BEGIN: InteractiveScript -->
+<script data-purpose="menu-interaction">
+    const menuOptions = [
+      { id: 'menu-opt-buy', desc: 'Purchase battle supplies, items & Poké Balls.' },
+      { id: 'menu-opt-sell', desc: 'Exchange collected treasures & items for cash.' },
+      { id: 'menu-opt-exit', desc: 'Say goodbye and leave the store counter.' }
+    ];
+
+    let currentSelectedIndex = 0;
+
+    function selectMenuOption(index) {
+      currentSelectedIndex = index;
+      menuOptions.forEach((opt, idx) => {
+        const el = document.getElementById(opt.id);
+        const pointer = el.querySelector('.pointer-symbol');
+        if (idx === index) {
+          el.classList.add('active');
+          pointer.classList.remove('text-transparent');
+          pointer.classList.add('text-[#D9381E]');
+          document.getElementById('action-hint-text').innerText = opt.desc;
+        } else {
+          el.classList.remove('active');
+          pointer.classList.add('text-transparent');
+          pointer.classList.remove('text-[#D9381E]');
+        }
+      });
+    }
+
+    // Keyboard support for authentic console control testing (Arrow keys + Enter / Escape)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        const next = (currentSelectedIndex + 1) % menuOptions.length;
+        selectMenuOption(next);
+      } else if (e.key === 'ArrowUp') {
+        const prev = (currentSelectedIndex - 1 + menuOptions.length) % menuOptions.length;
+        selectMenuOption(prev);
+      } else if (e.key === 'Enter' || e.key === 'x' || e.key === 'X') {
+        const selected = menuOptions[currentSelectedIndex];
+        const dialogue = document.getElementById('dialogue-typed-text');
+        if (currentSelectedIndex === 0) {
+          dialogue.innerText = 'Taking you to the Mart Item Catalog...';
+        } else if (currentSelectedIndex === 1) {
+          dialogue.innerText = 'What would you like to sell to the Mart?';
+        } else {
+          dialogue.innerText = 'Please come again whenever you need supplies!';
+        }
+      } else if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
+        selectMenuOption(2);
+      }
+    });
+  </script>
+<!-- END: InteractiveScript -->
+</body></html>

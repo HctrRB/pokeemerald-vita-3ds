@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tienda · Vender</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  .side { width: 320px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+  .detail .top { display: flex; align-items: center; gap: 12px; }
+  .iconbox { width: 56px; height: 56px; background: var(--paper-1); display: flex; align-items: center; justify-content: center; flex: none; }
+  .desc { font-size: var(--t-body-sm); line-height: 30px; }
+  .qty { display: flex; align-items: center; justify-content: space-between; }
+  .qty .stepper { display: flex; align-items: center; gap: 8px; }
+  .qty .n { width: 56px; height: 32px; background: var(--paper-1); display: flex; align-items: center; justify-content: center; }
+  .total { display: flex; justify-content: space-between; font-size: var(--t-body-lg); }
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .item-ico { width: 24px; height: 24px; flex: none; }
+  .price { width: 96px; text-align: right; }
+  .owned { width: 72px; text-align: right; }
+  .nosell .grow, .nosell .price { color: var(--ink-soft); }
+</style>
+</head>
+<body data-screen="tienda_vender">
+<!-- Bag pockets in sell mode: sell price = half the buy price, key items cannot be sold. -->
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="mart:sell" data-money>
+      <span class="spacer"></span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="panel detail">
+          <div class="top"><div class="iconbox"><img class="x2" src="../_assets/items/nugget.png" alt=""></div>
+            <div><div class="ps">NUGGET</div><div style="margin-top:6px">In bag: <b>x1</b></div></div></div>
+          <div class="sep"></div>
+          <div class="desc">A nugget of pure gold that gives off a lustrous gleam. It can be sold at a high price to shops.</div>
+        </div>
+        <div class="panel">
+          <div class="qty"><span>Quantity</span><div class="stepper" data-min="1" data-max="99" data-value="1" data-unit="5000" data-total="#total"><span class="step" data-step="-1">−</span><span class="n"></span><span class="step" data-step="1">+</span></div></div>
+          <div class="sep"></div>
+          <div class="total"><span>You get</span><span class="money" id="total">₽ 5,000</span></div>
+        </div>
+      </div>
+      <div class="panel main">
+        <div class="panel-head"><div class="tabs subtabs"><span class="tab on">ITEMS</span><span class="tab">BALLS</span><span class="tab">TMs</span><span class="tab">BERRIES</span></div><span class="spacer"></span><span class="vt-sm soft">Sell price</span></div>
+        <div class="list">
+          <div class="row on" data-open="venta"><img class="item-ico" src="../_assets/items/nugget.png" alt=""><span class="grow">NUGGET</span><span class="owned">x1</span><span class="price">₽ 5,000</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/potion.png" alt=""><span class="grow">POTION</span><span class="owned">x3</span><span class="price">₽ 150</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/super_potion.png" alt=""><span class="grow">SUPER POTION</span><span class="owned">x2</span><span class="price">₽ 350</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/antidote.png" alt=""><span class="grow">ANTIDOTE</span><span class="owned">x1</span><span class="price">₽ 50</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/repel.png" alt=""><span class="grow">REPEL</span><span class="owned">x2</span><span class="price">₽ 175</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/revive.png" alt=""><span class="grow">REVIVE</span><span class="owned">x1</span><span class="price">₽ 750</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/awakening.png" alt=""><span class="grow">AWAKENING</span><span class="owned">x2</span><span class="price">₽ 125</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/full_heal.png" alt=""><span class="grow">FULL HEAL</span><span class="owned">x1</span><span class="price">₽ 300</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/ether.png" alt=""><span class="grow">ETHER</span><span class="owned">x1</span><span class="price">₽ 600</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/rare_candy.png" alt=""><span class="grow">RARE CANDY</span><span class="owned">x1</span><span class="price">₽ 2,400</span></div>
+          <div class="row" style="border-bottom:0"><span class="item-ico"></span><span class="grow soft">QUIT</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross" data-open="venta"><span class="glyph cross">✕</span>Sell</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="btn">◀▶ / − + Quantity</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+  <!-- Popup: sale confirmation -->
+  <div class="modal" id="venta"><div class="win" style="width:560px">
+    <div class="win-head"><span class="ps">SELL</span><span class="spacer"></span><span class="money">+₽ 5,000</span></div>
+    <div class="win-body" style="display:flex; gap:16px; align-items:center">
+      <img class="x3" src="../_assets/items/nugget.png" alt="">
+      <div class="vt-lg" style="line-height:34px">I can pay ₽5,000.<br>Would that be okay?</div>
+    </div>
+    <div class="win-body" style="padding-top:0"><div class="choice-row"><div class="row on" data-close>YES</div><div class="row" data-close>NO</div></div></div>
+    <div class="win-foot"><span class="btn" data-btn="cross" data-close><span class="glyph cross">✕</span>YES</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>NO</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

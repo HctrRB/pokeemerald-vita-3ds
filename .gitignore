@@ -1,0 +1,97 @@
+*.exe
+*.dll
+*.o
+*.i
+*.elf
+*.gba
+*.sgm
+*.sa1
+*.ss[0-9]
+*.sg1
+*.1bpp
+*.4bpp
+*.8bpp
+*.gbapal
+*.lz
+*.rl
+*.latfont
+*.hwjpnfont
+*.fwjpnfont
+sound/**/*.bin
+sound/songs/midi/*.s
+tools/agbcc
+*.map
+*.bat
+*.dump
+*.sa*
+Thumbs.db
+build/
+.cxx/
+/pokeemerald
+/pokeemerald.sav
+.DS_Store
+*.ddump
+.idea/
+porymap.*.cfg
+prefabs.json
+.vscode/
+*.a
+.fuse_hidden*
+*.sna
+*.diff
+*.sym
+*.js
+!/design/stitch/_shared/*.js
+/pokeemerald-*.png
+/pokeemerald_modern-*.png
+/pc-border-template-1280x720.png
+/pokeemerald.cfg
+
+# PS Vita build output
+cmake-build-*/
+build-vita/
+*.vpk
+*.velf
+*.self
+eboot.bin
+param.sfo
+*.sav
+
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# Telemetry logs and coredumps
+logs/
+
+# Stale CMake build trees
+build-ninja/
+
+# Python bytecode caches
+__pycache__/
+*.pyc
+
+# Local design exports, AI session files
+/TEST UI/
+/.trail/
+/.claude/
+/handoff.yaml
+/memory.yaml
+# Game files: not in this repository. fetch_assets.sh downloads them (tools/assets/manifest.txt)
+# after checking the user's Pokémon Emerald dump, and generates the port files made from them.
+/graphics/**/*.png
+/graphics/**/*.pal
+/graphics/**/*.bin
+/graphics/pokedex/cry_screen_bg
+/sound/**/*.aif
+/sound/**/*.pcm
+/sound/songs/midi/*.mid
+/data/**/*.pal
+/data/**/*.bin
+/data/**/*.png
+/design/stitch/_assets/
+/assets/ui2/ui_atlas.bin
+/assets/ui/intro_margins.bin
+/.assets_src/
+/.assets_ok
+/vita/sce_sys_custom/

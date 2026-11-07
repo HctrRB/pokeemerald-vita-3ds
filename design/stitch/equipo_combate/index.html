@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Equipo · combate</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  .party { width: 400px; flex: none; display: flex; flex-direction: column; gap: 6px; }
+  /* Reference card finish: bevelled cream card; selected = amber gradient with orange edge */
+  .card { height: 64px; display: flex; align-items: center; gap: 10px; padding: 0 12px 0 8px; position: relative; border-radius: 4px;
+    background: #FDFAF2; border: 2px solid #364253; box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #D6CCB6, 0 2px 0 rgba(0,0,0,0.35); }
+  .card.on { background: linear-gradient(#FFFBEB, #FDE68A); border-color: #A85800; color: var(--sel-ink);
+    box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #D49B20, 0 0 0 2px rgba(245, 158, 11, 0.55), 0 2px 0 rgba(0,0,0,0.35); }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; zoom: 1.5; }
+  .card .info { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .card .l1, .card .l2 { display: flex; align-items: center; gap: 8px; }
+  .card .name { flex: 1; }
+  .card .bar { flex: 1; }
+  .card .hp { font-size: var(--t-body-sm); width: 64px; text-align: right; }
+  .ico16 { width: 16px; height: 16px; flex: none; }
+  .status { width: 32px; height: 8px; background: url(../_assets/ui_gba/status_icons.png) 0 0 / 32px 64px; image-rendering: pixelated; zoom: 2; }
+  .summary { flex: 1; display: grid; grid-template-columns: 136px 1fr; grid-template-rows: auto 1fr; gap: 8px 16px; }
+  .pic { width: 136px; height: 136px; background: var(--paper-1); display: flex; align-items: center; justify-content: center; }
+  .head .types { display: flex; gap: 6px; margin: 8px 0; }
+  .head .types img { zoom: 2; }
+  .facts { font-size: var(--t-body-sm); line-height: 30px; }
+  .stats { grid-column: 1 / 3; }
+  .stats table { width: 100%; border-collapse: collapse; }
+  .stats td { height: 30px; border-bottom: 2px solid var(--paper-1); }
+  .stats td:not(:first-child) { text-align: right; width: 72px; }
+  .stats .h td { color: var(--ink-soft); font-size: var(--t-body-sm); height: 24px; }
+</style>
+</head>
+<body data-screen="equipo_combate">
+<!-- POKéMON opened from the battle (PlayerHandleChoosePokemon): SHIFT / SUMMARY, or the target of a bag item. -->
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="party_battle:status">
+      <span class="spacer"></span>
+      <span class="capsule" id="battlecap">-</span>
+    </div>
+    <div class="body">
+      <div class="party">
+        <div class="card on" data-open="acciones"><div class="mon" style="background-image:url(../_assets/pokemon/mudkip_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">MUDKIP ♂</span><img class="ico16" src="../_assets/items/oran_berry.png" alt="" style="width:24px;height:24px"><span>Lv15</span></div>
+          <div class="l2"><div class="bar"><i style="width:100%"></i></div><span class="hp">46/46</span></div></div></div>
+        <div class="card"><div class="mon" style="background-image:url(../_assets/pokemon/taillow_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">TAILLOW ♀</span><span>Lv12</span></div>
+          <div class="l2"><div class="bar"><i style="width:84%"></i></div><span class="hp">27/32</span></div></div></div>
+        <div class="card"><div class="mon" style="background-image:url(../_assets/pokemon/ralts_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">RALTS ♂</span><span class="status" title="status_icons.png (PSN)"></span><span>Lv10</span></div>
+          <div class="l2"><div class="bar mid"><i style="width:45%"></i></div><span class="hp">12/27</span></div></div></div>
+        <div class="card"><div class="mon" style="background-image:url(../_assets/pokemon/zigzagoon_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">ZIGZAGOON ♀</span><span>Lv9</span></div>
+          <div class="l2"><div class="bar"><i style="width:100%"></i></div><span class="hp">29/29</span></div></div></div>
+        <div class="card"><div class="mon" style="background-image:url(../_assets/pokemon/lotad_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">LOTAD ♂</span><span>Lv8</span></div>
+          <div class="l2"><div class="bar low"><i style="width:15%"></i></div><span class="hp">4/26</span></div></div></div>
+        <div class="card"><div class="mon" style="background-image:url(../_assets/pokemon/wurmple_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">WURMPLE ♀</span><span>Lv7</span></div>
+          <div class="l2"><div class="bar"><i style="width:70%"></i></div><span class="hp">17/24</span></div></div></div>
+      </div>
+
+      <div class="panel summary">
+        <div class="pic"><img class="x2" src="../_assets/pokemon/mudkip_front.png" alt=""></div>
+        <div class="head">
+          <div class="ps">MUDKIP</div>
+          <div class="types"><img src="../_assets/types/water.png" alt=""></div>
+          <div class="facts">No.258 · OT BRENDAN · ID 24891<br>Nature <b>ADAMANT</b> · Ability <b>TORRENT</b><br>Item <b>ORAN BERRY</b></div>
+        </div>
+        <div class="stats">
+          <table>
+            <tr class="h"><td>STAT</td><td>VALUE</td><td>EV</td><td>IV</td></tr>
+            <tr><td>HP</td><td>46/46</td><td>12</td><td>31</td></tr>
+            <tr><td>ATTACK ▲</td><td>27</td><td>20</td><td>24</td></tr>
+            <tr><td>DEFENSE</td><td>21</td><td>4</td><td>18</td></tr>
+            <tr><td>SP. ATK ▼</td><td>18</td><td>0</td><td>9</td></tr>
+            <tr><td>SP. DEF</td><td>20</td><td>0</td><td>27</td></tr>
+            <tr><td>SPEED</td><td>19</td><td>8</td><td>14</td></tr>
+          </table>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:8px"><span class="vt-sm">EXP to Lv16: 312</span><div class="bar exp" style="flex:1"><i style="width:62%"></i></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross" data-open="acciones"><span class="glyph cross">✕</span>Shift / use item</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back to the battle</span>
+    </div>
+  </div>
+  <!-- Popup: party actions (anchored next to the selected card). Field moves only with the badge. -->
+  <div class="modal" id="acciones"><div class="win at" style="left:424px; top:62px; width:256px">
+    <div class="win-head"><span class="ps">MUDKIP</span><span class="spacer"></span><span class="vt-sm">Lv15</span></div>
+    <div class="list" style="padding:6px">
+      <div class="row on" data-close>SUMMARY</div>
+      <div class="row" data-close>SWITCH</div>
+      <div class="row" data-open="objeto">ITEM</div>
+      <div class="row" style="color:#1B6E9A" data-open="mo">ROCK SMASH</div>
+      <div class="row" style="border-bottom:0" data-close>CANCEL</div>
+    </div></div></div>
+  <!-- Popup: held item (give / take / swap) -->
+  <div class="modal" id="objeto"><div class="win" style="width:520px">
+    <div class="win-head"><span class="ps">HELD ITEM</span><span class="spacer"></span><span class="vt-sm">MUDKIP Lv15</span></div>
+    <div class="win-body">
+      <div style="display:flex; align-items:center; gap:12px; height:48px"><img class="x2" src="../_assets/items/oran_berry.png" alt=""><div><b>ORAN BERRY</b><div class="vt-sm soft">Holding now. Restores 10 HP in battle.</div></div></div>
+      <div class="sep"></div>
+      <div class="list">
+        <div class="row on" data-close><img src="../_assets/items/pecha_berry.png" alt="" style="width:24px"><span class="grow">GIVE: PECHA BERRY</span><span class="vt-sm">x2</span></div>
+        <div class="row" data-close><img src="../_assets/items/soothe_bell.png" alt="" style="width:24px"><span class="grow">GIVE: SOOTHE BELL</span><span class="vt-sm">x1</span></div>
+        <div class="row" data-close style="border-bottom:0"><span style="width:24px"></span><span class="grow">TAKE ORAN BERRY</span></div>
+      </div>
+    </div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Give</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Close</span></div></div></div>
+  <!-- Popup: field moves of the whole party (HMs and field moves, usable or not) -->
+  <div class="modal" id="mo"><div class="win" style="width:560px">
+    <div class="win-head"><span class="ps">FIELD MOVES</span><span class="spacer"></span><span class="vt-sm">Badges 4/8</span></div>
+    <div class="win-body list">
+      <div class="row on"><span class="grow">ROCK SMASH · MUDKIP</span><span class="chip lead">USABLE</span></div>
+      <div class="row"><span class="grow">CUT · ZIGZAGOON</span><span class="chip lead">USABLE</span></div>
+      <div class="row"><span class="grow">FLASH · RALTS</span><span class="chip lead">USABLE</span></div>
+      <div class="row" style="border-bottom:0"><span class="grow soft">SURF · MUDKIP</span><span class="chip">NEEDS BALANCE BADGE</span></div>
+    </div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Use (closes the menu, HM animation plays)</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Close</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

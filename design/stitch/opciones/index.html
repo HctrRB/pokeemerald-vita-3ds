@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Opciones</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .opt { height: 44px; display: grid; grid-template-columns: 1fr 440px; align-items: center; padding: 0 12px 0 28px; position: relative; background: var(--paper-1); border-bottom: 2px solid var(--row-line); }
+  .opt:nth-child(even) { background: #F1EBD8; }
+  .opt.on { background: linear-gradient(var(--sel-top), var(--sel-bot)); color: var(--sel-ink); border-bottom-color: var(--sel-edge); box-shadow: inset 0 1px 0 #FFFFFF; }
+  .opt.on::before { content: '▶'; position: absolute; left: 8px; font-size: 18px; color: var(--sel-edge); }
+  .seg { display: flex; gap: 4px; justify-content: flex-end; }
+  .seg span { padding: 0 10px; height: 30px; display: inline-flex; align-items: center; white-space: nowrap; color: var(--ink-soft); border: 2px solid transparent; border-radius: 3px; }
+  .seg span.v { background: linear-gradient(#1C382F, #0B231D); color: var(--mint); border-color: var(--edge-dark); box-shadow: inset 1px 1px 0 #2E6B5B; }
+  .opt.on .seg span { color: var(--select-ink); }
+  .opt.on .seg span.v { color: var(--mint); }
+  .slider { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .slider .bar { width: 200px; height: 12px; }
+  .help { height: 56px; display: flex; align-items: center; padding: 0 16px; font-size: var(--t-body-sm); }
+</style>
+</head>
+<body data-screen="opciones">
+<!-- Help text moves to one line under the list (plan 2.2). Same screen from the main menu (standalone). -->
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="options:general">
+    </div>
+    <div class="body" style="flex-direction:column">
+      <div class="panel main">
+        <div class="opt on"><span>TEXT SPEED</span><div class="seg"><span>SLOW</span><span>MID</span><span class="v">FAST</span></div></div>
+        <div class="opt"><span>BATTLE SCENE</span><div class="seg"><span class="v">ON</span><span>OFF</span></div></div>
+        <div class="opt"><span>BATTLE STYLE</span><div class="seg"><span class="v">SHIFT</span><span>SET</span></div></div>
+        <div class="opt"><span>SOUND</span><div class="seg"><span>MONO</span><span class="v">STEREO</span></div></div>
+        <div class="opt"><span>MASTER VOLUME</span><div class="slider"><div class="bar exp"><i style="width:80%"></i></div><span>80%</span></div></div>
+        <div class="opt"><span>BUTTON MODE</span><div class="seg"><span class="v">NORMAL</span><span>LR</span><span>L=A</span></div></div>
+        <div class="opt" style="border-bottom:0"><span>FRAME</span><div class="seg"><span>◀</span><span class="v">TYPE 1</span><span>▶</span></div></div>
+      </div>
+      <div class="panel-dark help">How fast messages are printed in dialogue and battle.</div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Change</span>
+      <span class="btn" data-btn="circle" data-open="confirmar"><span class="glyph circle">○</span>Save</span><span class="btn" data-btn="select" data-open="remapeo"><span class="key">SELECT</span>Remap</span><span class="btn" data-btn="start" data-open="salir"><span class="key">START</span>Quit</span>
+      <span class="btn">◀▶ Value</span>
+
+    </div>
+  </div>
+  <!-- Popup: generic confirmation (save settings, reset defaults...) -->
+  <div class="modal" id="confirmar"><div class="win" style="width:520px">
+    <div class="win-head"><span class="ps">OPTIONS</span></div>
+    <div class="win-body vt-lg" style="line-height:34px">Save these settings to the memory card?<div class="choice-row"><div class="row on" data-open="aviso">YES</div><div class="row" data-close>NO</div></div></div>
+    <div class="win-foot"><span class="btn" data-btn="cross" data-open="aviso"><span class="glyph cross">✕</span>YES</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>NO</span></div></div></div>
+  <!-- Popup: button remapper -->
+  <div class="modal" id="remapeo"><div class="win" style="width:600px">
+    <div class="win-head"><span class="ps">BUTTON REMAP</span><span class="spacer"></span><span class="vt-sm">PS Vita</span></div>
+    <div class="win-body list">
+      <div class="row on"><span class="grow">GBA A</span><span class="glyph cross">✕</span></div>
+      <div class="row"><span class="grow">GBA B</span><span class="glyph circle">○</span></div>
+      <div class="row"><span class="grow">MENU (Options)</span><span class="glyph triangle">△</span></div>
+      <div class="row"><span class="grow">RUN TOGGLE</span><span class="glyph square">□</span></div>
+      <div class="row" style="border-bottom:0"><span class="grow">FAST FORWARD</span><span>R + SELECT</span></div>
+    </div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Press new button</span><span class="btn" data-btn="triangle"><span class="glyph triangle">△</span>Defaults</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Discard</span></div></div></div>
+  <!-- Popup: quit to LiveArea -->
+  <div class="modal" id="salir"><div class="win" style="width:520px">
+    <div class="win-head" style="background:var(--danger)"><span class="ps">QUIT GAME</span></div>
+    <div class="win-body vt-lg" style="line-height:34px">Quit to the LiveArea?<br><span class="vt-sm soft">Unsaved progress will be lost.</span><div class="choice-row"><div class="row on" data-close>QUIT</div><div class="row" data-close>CANCEL</div></div></div>
+    <div class="win-foot"><span class="btn" data-btn="cross" data-close><span class="glyph cross">✕</span>QUIT</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>CANCEL</span></div></div></div>
+  <div class="modal" id="aviso" style="background:none"><div class="toast" style="left:376px; top:440px" data-close>Settings saved.</div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

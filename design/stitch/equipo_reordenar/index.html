@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Equipo · Reordenar</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  iframe { position: absolute; inset: 0; width: 960px; height: 544px; border: 0; pointer-events: none; }
+  /* Switch state: the picked card keeps a dashed outline, the cursor card is yellow. */
+  .picked { position: absolute; left: 16px; top: 62px; width: 400px; height: 64px; outline: 4px dashed var(--select); outline-offset: -2px; }
+  .target { position: absolute; left: 16px; top: 278px; width: 400px; height: 64px; outline: 4px solid #fff; outline-offset: -2px; }
+  .toast { left: 440px; top: 470px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <iframe src="../equipo/index.html" title="party"></iframe>
+  <div class="picked"></div>
+  <div class="target"></div>
+  <div class="toast">Move MUDKIP to where? <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Swap</span> <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Cancel</span></div>
+</div>
+</body>
+</html>

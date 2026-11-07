@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Font bake</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=block" rel="stylesheet">
+</head>
+<body>
+<!-- Rasterises the UI fonts into 1-bit glyph bitmaps for tools/ui2/build_atlas.py.
+     Open through the design server and call bakeFonts(); it returns JSON with every glyph's
+     bitmap (rows of '0'/'1'), bearing and advance. Pixel fonts at their grid sizes, alpha
+     thresholded at 50 %, so the runtime draws them with nearest filtering and no blur. -->
+<script>
+const FACES = [
+  { id: 0, family: 'Press Start 2P', sizes: [16, 24] },
+  { id: 1, family: 'VT323', sizes: [18, 20, 24, 28, 32, 40] },
+];
+// Latin-1 subset the UI needs now; game strings are converted from the GBA charmap to these.
+const CHARS = (() => { let s = ''; for (let c = 32; c < 127; c++) s += String.fromCharCode(c); return s + 'éÉ·×'; })();
+
+async function bakeFonts() {
+  await document.fonts.load('16px "Press Start 2P"');
+  await document.fonts.load('20px "VT323"');
+  await document.fonts.ready;
+  const out = [];
+  const cv = document.createElement('canvas'); cv.width = 96; cv.height = 96;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  for (const face of FACES) for (const px of face.sizes) {
+    ctx.font = `${px}px "${face.family}"`;
+    const m = ctx.measureText('Hg');
+    const ascent = Math.round(m.fontBoundingBoxAscent), descent = Math.round(m.fontBoundingBoxDescent);
+    const glyphs = [];
+    for (const ch of CHARS) {
+      ctx.clearRect(0, 0, 96, 96);
+      ctx.fillStyle = '#fff'; ctx.textBaseline = 'alphabetic';
+      const ox = 16, oy = 64;
+      ctx.fillText(ch, ox, oy);
+      const adv = Math.round(ctx.measureText(ch).width);
+      const img = ctx.getImageData(0, 0, 96, 96).data;
+      let x0 = 96, y0 = 96, x1 = -1, y1 = -1;
+      for (let y = 0; y < 96; y++) for (let x = 0; x < 96; x++) if (img[(y * 96 + x) * 4 + 3] >= 128) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+      const rows = [];
+      if (x1 >= 0) for (let y = y0; y <= y1; y++) { let r = ''; for (let x = x0; x <= x1; x++) r += img[(y * 96 + x) * 4 + 3] >= 128 ? '1' : '0'; rows.push(r); }
+      glyphs.push({ cp: ch.codePointAt(0), adv, xoff: x1 >= 0 ? x0 - ox : 0, yoff: x1 >= 0 ? y0 - oy : 0, rows });
+    }
+    out.push({ face: face.id, family: face.family, px, ascent, descent, lineH: ascent + descent, glyphs });
+  }
+  return JSON.stringify(out);
+}
+</script>
+</body>
+</html>

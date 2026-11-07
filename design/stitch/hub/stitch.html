@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pokémon Emerald Vita HUD &amp; Menu</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: VT323 for authentic GBA retro-pixel style typography -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=VT323&amp;family=Rajdhani:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- BEGIN: StyleConfigurations -->
+<style data-purpose="retro-theme-and-borders">
+    /* Base retro styling and crisp pixel rendering */
+    body {
+      background-color: #080a0f;
+      font-family: 'VT323', monospace;
+      image-rendering: pixelated;
+      user-select: none;
+      -webkit-font-smoothing: none;
+    }
+
+    /* Classic GBA dialogue and box frame: double bevel with high contrast */
+    .gba-panel-box {
+      background: linear-gradient(180deg, #fbfaf2 0%, #ebe7d3 100%);
+      box-shadow: 
+        inset 2px 2px 0px #ffffff,
+        inset -2px -2px 0px #9e9784,
+        0 0 0 2px #26272d,
+        0 4px 12px rgba(0, 0, 0, 0.55);
+    }
+
+    /* Emerald/RSE stylized location ribbon */
+    .gba-emerald-box {
+      background: linear-gradient(180deg, #2d8a6b 0%, #175e47 100%);
+      box-shadow: 
+        inset 2px 2px 0px #5eead4,
+        inset -2px -2px 0px #0d382b,
+        0 0 0 2px #0f231b,
+        0 3px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Button elements mimicking GBA/RSE UI items */
+    .gba-menu-item {
+      background: linear-gradient(180deg, #ffffff 0%, #ede8d4 100%);
+      border: 2px solid #50483f;
+      box-shadow: inset 1px 1px 0px #fff, inset -1px -1px 0px #bcad93;
+      transition: all 0.1s ease-in-out;
+    }
+
+    .gba-menu-item:hover, .gba-menu-item.active {
+      background: linear-gradient(180deg, #fffae0 0%, #fed87b 100%);
+      border-color: #d64d1f;
+      transform: translateX(-3px);
+      box-shadow: inset 1px 1px 0px #fff, 0 0 6px rgba(214, 77, 31, 0.65);
+    }
+
+    /* Party card interactive styles */
+    .party-card-btn {
+      transition: all 0.12s ease-in-out;
+      cursor: pointer;
+    }
+    .party-card-btn:hover {
+      transform: translateX(4px);
+      box-shadow: inset 1px 1px 0px #fff, 0 0 8px rgba(16, 185, 129, 0.75);
+      border-color: #059669;
+      background: linear-gradient(180deg, #f0fdf4 0%, #dcfce7 100%);
+    }
+
+    /* PlayStation Vita Geometry Button Badges */
+    .ps-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.25rem;
+      height: 1.25rem;
+      border-radius: 9999px;
+      font-family: system-ui, -apple-system, sans-serif;
+      font-weight: 900;
+      font-size: 11px;
+      line-height: 1;
+      background: #1b1e24;
+      border: 1.5px solid #3c424f;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .ps-cross {
+      color: #38bdf8;
+      text-shadow: 0 0 3px #0284c7;
+    }
+
+    .ps-circle {
+      color: #f87171;
+      text-shadow: 0 0 3px #dc2626;
+    }
+
+    .ps-triangle {
+      color: #4ade80;
+      text-shadow: 0 0 3px #16a34a;
+      font-size: 9px;
+    }
+
+    .ps-square {
+      color: #f472b6;
+      text-shadow: 0 0 3px #db2777;
+      font-size: 10px;
+    }
+
+    .ps-shoulder {
+      background: linear-gradient(180deg, #333a46 0%, #1e222a 100%);
+      border: 1.5px solid #5a6475;
+      border-radius: 6px;
+      padding: 1px 6px;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 11px;
+      color: #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+
+    .ps-pill {
+      background: linear-gradient(180deg, #242a35 0%, #14171d 100%);
+      border: 1.5px solid #434c5b;
+      border-radius: 9999px;
+      padding: 0px 7px;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      color: #cbd5e1;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    }
+
+    /* Subtle PS Vita OLED subpixel grid / scanlines overlay */
+    .vita-display-overlay {
+      background: linear-gradient(
+        rgba(255, 255, 255, 0) 50%, 
+        rgba(0, 0, 0, 0.12) 50%
+      );
+      background-size: 100% 2px;
+      pointer-events: none;
+    }
+  </style>
+<!-- END: StyleConfigurations -->
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-4 text-slate-800">
+<!-- BEGIN: VitaViewportContainer -->
+<!-- Strict PS Vita native resolution 960x544 px container -->
+<main class="relative w-[960px] h-[544px] max-w-full overflow-hidden rounded-md border-4 border-slate-900 shadow-2xl bg-black select-none" data-purpose="ps-vita-screen-container">
+<!-- Native Game Overworld Capture from DataStore -->
+<img alt="Pokémon Emerald 3D Overworld - Littleroot Town" class="absolute inset-0 w-full h-full object-cover pointer-events-none" data-purpose="overworld-background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0RbtRvErt6Tu66adWgC78jFRwfbutzb4Tm3rJ4hjT6Kx-XZJIPpDeaVUcJVeiyDLq62cmKfl9Qd62HOpOym5LOE8CfY-LTNI6TU8yetK5LxV1LpZQr4rhi6Ehe9meWE5btLDEpZo15vS0xj7l_mAuuSvazJnMMQ6jcWVNV1LoOSdvqqiH25a2aEvlyXUSBD1td7jrfYjK5wlpVTfvMYiBvzrR44J2PMKU3zO0_JFZ-IUXxjXTZgWEzA"/>
+<!-- Subtle PS Vita Display Scanlines Effect -->
+<div class="absolute inset-0 vita-display-overlay opacity-50 pointer-events-none z-10" data-purpose="crt-scanline-effect"></div>
+<!-- BEGIN: TopLeftInfoHUD -->
+<!-- Location Banner, Time, and PokéDollars Display -->
+<header class="absolute top-3.5 left-4 z-20 flex flex-col gap-1.5" data-purpose="hud-top-left-status"><!-- Location Banner Container with Multi-City Theme Switcher -->
+<div class="relative flex flex-col gap-1" id="hoenn-location-container">
+<!-- Active Town/Route GBA Signboard Banner -->
+<div class="relative px-3 py-1.5 rounded text-white flex items-center justify-between gap-3 shadow-2xl transition-all duration-200 border-2 border-amber-600" id="active-location-card" style="background: linear-gradient(180deg, #1b4d3e 0%, #0d3024 100%), repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 4px); box-shadow: inset 1px 1px 0px rgba(110,231,183,0.5), inset -1px -1px 0px rgba(6,78,59,0.9), 0 0 0 1px #38240d, 0 4px 10px rgba(0,0,0,0.6);"><div class="flex items-center gap-2"><div class="w-6 h-6 rounded flex items-center justify-center bg-gradient-to-b from-emerald-600 to-emerald-950 border border-amber-400 text-xs shadow-inner"><span class="text-emerald-200 text-xs">🍃</span></div><div class="flex flex-col leading-none"><div class="flex items-center gap-1.5"><span class="text-xl leading-none font-bold uppercase tracking-wider text-emerald-100 drop-shadow" id="loc-name" style="text-shadow: 1px 1px 0 #062b1e, -1px -1px 0 #062b1e, 1px -1px 0 #062b1e, -1px 1px 0 #062b1e, 0 2px 4px rgba(0,0,0,0.8);">LITTLEROOT TOWN</span><span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse shadow-sm"></span></div><span class="text-[10px] text-emerald-200/90 tracking-wide font-mono mt-0.5" style="text-shadow: 1px 1px 0 #021a12;">A town that can't be shaded any hue.</span></div></div><div class="flex items-center gap-1 ml-1"><div class="px-1.5 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/50 flex items-center gap-1 text-[9px] text-emerald-300 font-bold"><span class="w-1 h-1 rounded-full bg-emerald-400"></span><span class="">HOENN</span></div></div></div>
+<!-- Dropdown / Selectable Grid of Hoenn Cities & Routes -->
+<div class="hidden absolute top-full left-0 mt-1 w-72 max-h-64 overflow-y-auto gba-panel-box rounded-md p-1.5 shadow-2xl z-30 flex flex-col gap-1 border-2 border-stone-800" id="hoenn-location-dropdown">
+<div class="px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest border-b border-stone-300 flex justify-between items-center">
+<span class="">Hoenn Regions &amp; Signs</span>
+<span class="text-[9px] text-emerald-700 font-mono">17 DESTINATIONS</span>
+</div>
+<div class="flex flex-col gap-0.5" id="hoenn-location-options">
+<!-- Location buttons will be populated or selectable live -->
+</div>
+</div>
+</div>
+<!-- Clock & Balance Box -->
+<div class="gba-panel-box rounded px-3 py-1 flex items-center gap-4 text-lg text-slate-800">
+<!-- Clock -->
+<div class="flex items-center gap-1.5 font-bold">
+<svg class="w-4 h-4 text-emerald-800" fill="currentColor" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M10 18a8 8 0 100-16 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" fill-rule="evenodd"></path>
+</svg>
+<span class="tracking-wide">10:42</span>
+</div>
+<div class="w-[2px] h-3.5 bg-stone-300"></div>
+<!-- Money Currency -->
+<div class="flex items-center gap-1 font-bold">
+<span class="text-amber-700 text-xl font-black">₽</span>
+<span class="tracking-widest text-slate-900">3,000</span>
+</div>
+</div></header>
+<!-- END: TopLeftInfoHUD -->
+<!-- BEGIN: TopCenterCameraTelemetry -->
+<!-- PS Vita 3D Diorama Camera Debug HUD -->
+<aside class="absolute top-3.5 left-1/2 -translate-x-1/2 z-20 hidden md:flex items-center gap-2" data-purpose="camera-specifications-indicator">
+<div class="gba-panel-box rounded px-3 py-1 text-sm font-bold flex items-center gap-3.5 text-slate-700 shadow-lg">
+<span class="text-emerald-800 uppercase flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+<span class="">3D CAM</span>
+</span>
+<span class="">TILT: <strong class="text-slate-900 font-black">40°</strong></span>
+<span class="">FOV: <strong class="text-slate-900 font-black">35°</strong></span>
+</div>
+</aside>
+<!-- END: TopCenterCameraTelemetry -->
+<!-- BEGIN: StartSideMenu -->
+<!-- Classic GBA Beveled Right START Menu -->
+<nav class="absolute top-3 right-4 bottom-13 w-56 z-20 flex flex-col justify-between" data-purpose="classic-start-menu">
+<!-- List of Main Menu Action Items -->
+<div class="gba-panel-box p-2 rounded-md flex flex-col gap-1 shadow-2xl">
+<!-- POKÉDEX Item -->
+<button class="gba-menu-item px-2.5 py-1 rounded flex items-center justify-between text-left group" data-desc="A high-tech encyclopedia that records Pokémon data." onmouseenter="document.getElementById('menu-description-text').textContent=this.getAttribute('data-desc')">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded bg-red-600 border border-red-900 flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-cyan-300 border border-cyan-800"></span>
+</span>
+<span class="text-lg font-bold text-slate-800 group-hover:text-red-700 tracking-wider">POKÉDEX</span>
+</div>
+<span class="text-xs text-slate-400 group-hover:text-red-700 font-mono">▶</span>
+</button>
+<!-- POKÉMON Team Item (Selected) -->
+<button class="gba-menu-item px-2.5 py-1 rounded flex items-center justify-between text-left group" data-desc="Check and organize Pokémon in party." onmouseenter="document.getElementById('menu-description-text').textContent=this.getAttribute('data-desc')">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-full border border-slate-900 bg-gradient-to-b from-red-500 from-50% to-white to-50% relative flex items-center justify-center">
+<span class="w-1.5 h-1.5 bg-white border border-slate-900 rounded-full"></span>
+</span>
+<span class="text-lg font-bold text-red-950 tracking-wider">POKÉMON</span>
+</div>
+<span class="text-xs px-1.5 py-0.5 rounded bg-amber-400 font-bold border border-amber-600 text-amber-950">6/6</span>
+</button>
+<!-- BAG Item -->
+<button class="gba-menu-item px-2.5 py-1 rounded flex items-center justify-between text-left group" data-desc="Equipped backpack for items, balls, and key tools." onmouseenter="document.getElementById('menu-description-text').textContent=this.getAttribute('data-desc')">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-sm bg-amber-600 border border-amber-900 flex items-center justify-center text-[10px] text-white font-bold">🎒</span>
+<span class="text-lg font-bold text-slate-800 group-hover:text-amber-800 tracking-wider">BAG</span>
+</div>
+</button>
+<!-- POKÉNAV Item -->
+<button class="gba-menu-item px-2.5 py-1 rounded flex items-center justify-between text-left group" data-desc="Check the Hoenn region map, trainers, and ribbons." onmouseenter="document.getElementById('menu-description-text').textContent=this.getAttribute('data-desc')">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-sm bg-emerald-600 border border-emerald-900 flex items-center justify-center text-[10px] text-white">📟</span>
+<span class="text-lg font-bold text-slate-800 group-hover:text-emerald-800 tracking-wider">POKÉNAV</span>
+</div>
+</button>
+<!-- TRAINER CARD (BRENDAN) Item -->
+<button class="gba-menu-item px-2.5 py-1 rounded flex items-center justify-between text-left group" data-desc="Trainer Card showing badges, play time, and money." onmouseenter="document.getElementById('menu-description-text').textContent=this.getAttribute('data-desc')">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-full bg-cyan-700 border border-cyan-900 flex items-center justify-center text-[10px] text-white">🧢</span>
+<span class="text-lg font-bold text-slate-800 group-hover:text-cyan-800 tracking-wider">BRENDAN</span>
+</div>
+</button>
+<!-- SAVE Item -->
+<button class="gba-menu-item px-2.5 py-1 rounded flex items-center justify-between text-left group" data-desc="Save game progress to memory card." onmouseenter="document.getElementById('menu-description-text').textContent=this.getAttribute('data-desc')">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-sm bg-stone-500 border border-stone-800 flex items-center justify-center text-[10px] text-white font-bold">💾</span>
+<span class="text-lg font-bold text-slate-800 group-hover:text-slate-950 tracking-wider">SAVE</span>
+</div>
+</button>
+<!-- OPTION Item -->
+<button class="gba-menu-item px-2.5 py-1 rounded flex items-center justify-between text-left group" data-desc="Adjust text speed, sound, and battle animation." onmouseenter="document.getElementById('menu-description-text').textContent=this.getAttribute('data-desc')">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-sm bg-purple-600 border border-purple-900 flex items-center justify-center text-[10px] text-white">⚙</span>
+<span class="text-lg font-bold text-slate-800 group-hover:text-purple-800 tracking-wider">OPTION</span>
+</div>
+</button>
+<!-- 3D CAMERA Item -->
+<button class="gba-menu-item px-2.5 py-1 rounded flex items-center justify-between text-left group bg-teal-50 border-teal-800" data-desc="Configure perspective, angle, tilt, and field of view." onmouseenter="document.getElementById('menu-description-text').textContent=this.getAttribute('data-desc')">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-sm bg-teal-600 border border-teal-900 flex items-center justify-center text-[10px] text-white">📐</span>
+<span class="text-lg font-bold text-teal-900 tracking-wider">3D CAMERA</span>
+</div>
+<span class="text-xs px-1 rounded bg-teal-300 border border-teal-600 font-bold text-teal-950">ON</span>
+</button>
+<!-- EXIT Item -->
+<button class="gba-menu-item px-2.5 py-1 rounded flex items-center justify-between text-left group active" data-desc="Close the START menu and return to overworld." onmouseenter="document.getElementById('menu-description-text').textContent=this.getAttribute('data-desc')">
+<div class="flex items-center gap-2">
+<span class="w-4 h-4 rounded-sm bg-rose-600 border border-rose-900 flex items-center justify-center text-[10px] text-white">✖</span>
+<span class="text-lg font-bold text-slate-800 group-hover:text-rose-700 tracking-wider">EXIT</span>
+</div>
+</button>
+</div>
+<!-- Quick Context Tooltip at bottom of side menu -->
+<div class="gba-panel-box rounded px-2.5 py-1 text-xs text-slate-700 text-center font-bold tracking-tight" id="menu-description-box"><span class="" id="menu-description-text">A high-tech encyclopedia that records Pokémon data.</span></div>
+</nav>
+<!-- END: StartSideMenu -->
+<!-- BEGIN: QuickTeamPartyBar -->
+<!-- Mini party status overlay on left -->
+<aside class="absolute bottom-11 left-3 z-20 flex flex-col gap-0.5" data-purpose="quick-party-preview">
+<div class="flex items-center gap-1.5 mb-0.5">
+<div class="gba-emerald-box px-2 py-0.5 rounded text-[10px] text-white font-bold flex items-center gap-1 tracking-wider">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"></span>
+<span class="">PARTY (6/6)</span>
+</div>
+<div class="gba-panel-box px-2 py-0.5 rounded flex items-center gap-1 text-[10px] font-bold text-slate-800 shadow-md">
+<span class="leading-none">🧪</span>
+<span class="">POTION x5</span>
+</div>
+<span class="text-[9px] text-amber-200 drop-shadow font-bold tracking-tight bg-slate-900/80 px-1.5 py-0.5 rounded border border-amber-500/40">SELECT FOR HM</span>
+</div>
+<div class="flex flex-col gap-0.5" id="party-list-container">
+<!-- Card 1: Wurmple -->
+<button class="party-card-btn gba-panel-box px-2 py-0.5 rounded flex items-center justify-between w-48 shadow-md opacity-90 text-left" data-pkmn="wurmple" title="Click to view field moves" type="button">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full border border-slate-900 bg-gradient-to-b from-red-500 from-50% to-white to-50%"></span>
+<span class="text-[11px] font-bold text-slate-900">WURMPLE</span>
+<span class="text-blue-600 font-black text-[9px]">♂</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[9px] text-emerald-800 font-bold">Lv. 3</span>
+<div class="flex flex-col items-end">
+<div class="w-12 h-1 bg-stone-300 rounded-full border border-stone-500 overflow-hidden"><div class="h-full bg-emerald-500 w-full"></div></div>
+<span class="text-[9px] text-slate-600 font-bold leading-none mt-0.5">15/15</span>
+</div>
+</div>
+</button>
+<!-- Card 2: Ralts -->
+<button class="party-card-btn gba-panel-box px-2 py-0.5 rounded flex items-center justify-between w-48 shadow-md opacity-90 text-left" data-pkmn="ralts" title="Click to view field moves" type="button">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full border border-slate-900 bg-gradient-to-b from-red-500 from-50% to-white to-50%"></span>
+<span class="text-[11px] font-bold text-slate-900">RALTS</span>
+<span class="text-blue-600 font-black text-[9px]">♂</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[9px] text-emerald-800 font-bold">Lv. 5</span>
+<div class="flex flex-col items-end">
+<div class="w-12 h-1 bg-stone-300 rounded-full border border-stone-500 overflow-hidden"><div class="h-full bg-emerald-500 w-full"></div></div>
+<span class="text-[9px] text-slate-600 font-bold leading-none mt-0.5">19/19</span>
+</div>
+</div>
+</button>
+<!-- Card 3: Taillow -->
+<button class="party-card-btn gba-panel-box px-2 py-0.5 rounded flex items-center justify-between w-48 shadow-md opacity-90 text-left" data-pkmn="taillow" title="Click to view field moves" type="button">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full border border-slate-900 bg-gradient-to-b from-red-500 from-50% to-white to-50%"></span>
+<span class="text-[11px] font-bold text-slate-900">TAILLOW</span>
+<span class="text-rose-600 font-black text-[9px]">♀</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[9px] text-emerald-800 font-bold">Lv. 6</span>
+<div class="flex flex-col items-end">
+<div class="w-12 h-1 bg-stone-300 rounded-full border border-stone-500 overflow-hidden"><div class="h-full bg-emerald-500 w-full"></div></div>
+<span class="text-[9px] text-slate-600 font-bold leading-none mt-0.5">21/21</span>
+</div>
+</div>
+</button>
+<!-- Card 4: Zigzagoon -->
+<button class="party-card-btn gba-panel-box px-2 py-0.5 rounded flex items-center justify-between w-48 shadow-md opacity-90 text-left" data-pkmn="zigzagoon" title="Click to view field moves" type="button">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full border border-slate-900 bg-gradient-to-b from-red-500 from-50% to-white to-50%"></span>
+<span class="text-[11px] font-bold text-slate-900">ZIGZAGOON</span>
+<span class="text-rose-600 font-black text-[9px]">♀</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[9px] text-emerald-800 font-bold">Lv. 4</span>
+<div class="flex flex-col items-end">
+<div class="w-12 h-1 bg-stone-300 rounded-full border border-stone-500 overflow-hidden"><div class="h-full bg-emerald-500 w-full"></div></div>
+<span class="text-[9px] text-slate-600 font-bold leading-none mt-0.5">17/17</span>
+</div>
+</div>
+</button>
+<!-- Card 5: Torchic -->
+<button class="party-card-btn gba-panel-box px-2 py-0.5 rounded flex items-center justify-between w-48 shadow-md opacity-90 text-left" data-pkmn="torchic" title="Click to view field moves" type="button">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full border border-slate-900 bg-gradient-to-b from-red-500 from-50% to-white to-50%"></span>
+<span class="text-[11px] font-bold text-slate-900">TORCHIC</span>
+<span class="text-blue-600 font-black text-[9px]">♂</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[9px] text-emerald-800 font-bold">Lv. 5</span>
+<div class="flex flex-col items-end">
+<div class="w-12 h-1 bg-stone-300 rounded-full border border-stone-500 overflow-hidden"><div class="h-full bg-emerald-500 w-full"></div></div>
+<span class="text-[9px] text-slate-600 font-bold leading-none mt-0.5">20/20</span>
+</div>
+</div>
+</button>
+<!-- Card 6: Mudkip (Lead) -->
+<button class="party-card-btn gba-panel-box px-2 py-1 rounded flex items-center justify-between w-48 shadow-lg border-2 border-amber-600 text-left" data-pkmn="mudkip" title="Click to view field moves" type="button">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded bg-emerald-100 border border-emerald-500 flex items-center justify-center shadow-inner">
+<span class="text-[10px] font-bold text-emerald-800">Lv.7</span>
+</div>
+<div class="flex flex-col leading-none">
+<div class="flex items-center gap-1">
+<span class="font-bold text-slate-900 text-xs">MUDKIP</span>
+<span class="text-blue-600 font-black text-[10px]">♂</span>
+</div>
+<span class="text-[9px] text-slate-600 font-bold mt-0.5">HP 24/24</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-[9px] px-1 py-0.2 rounded bg-amber-400 font-bold border border-amber-600 text-amber-950 mb-0.5">LEAD</span>
+<div class="w-14 h-1.5 bg-stone-300 rounded-full border border-stone-500 overflow-hidden"><div class="h-full bg-emerald-500 w-full"></div></div>
+</div>
+</button>
+</div>
+</aside>
+<!-- END: QuickTeamPartyBar -->
+<!-- BEGIN: FieldMovesModal -->
+<!-- Retro GBA / Vita HM Action Modal Dialog -->
+<div class="hidden absolute inset-0 z-40 bg-black/60 backdrop-blur-[1px] flex items-center justify-center p-4" id="field-moves-modal">
+<div class="relative w-80 gba-panel-box rounded-lg p-3 flex flex-col gap-2.5 shadow-2xl border-2 border-stone-800 animate-in fade-in zoom-in-95 duration-100" onclick="event.stopPropagation()">
+<!-- Header: Pokémon summary badge & Close button -->
+<div class="gba-emerald-box rounded p-2 text-white flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded bg-emerald-950 border border-amber-400 flex items-center justify-center text-sm shadow-inner" id="modal-pkmn-badge">
+🌊
+</div>
+<div class="flex flex-col leading-tight">
+<div class="flex items-center gap-1.5">
+<span class="text-lg font-bold uppercase tracking-wider text-emerald-100 leading-none" id="modal-pkmn-name">MUDKIP</span>
+<span class="text-xs font-black text-cyan-300" id="modal-pkmn-gender">♂</span>
+</div>
+<span class="text-[10px] text-emerald-200/90 font-mono" id="modal-pkmn-sub">Lv. 7 • HP 24/24 • Water/Ground</span>
+</div>
+</div>
+<!-- Close Circle Button -->
+<button class="w-6 h-6 rounded flex items-center justify-center bg-stone-900/80 hover:bg-rose-700 text-stone-200 border border-stone-600 transition-colors text-xs font-bold" id="modal-close-btn" title="Close [Circle]">
+✕
+</button>
+</div>
+<!-- Modal Title Banner -->
+<div class="flex items-center justify-between px-1 text-slate-700 text-xs font-bold border-b border-stone-300 pb-1">
+<span class="tracking-widest uppercase flex items-center gap-1 text-emerald-900">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span> FIELD MOVES &amp; HMs
+</span>
+<span class="text-[10px] font-mono text-slate-500">SELECT ACTION</span>
+</div>
+<!-- Field Moves List Container -->
+<div class="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-0.5" id="modal-moves-list">
+<!-- Dynamically populated via JS -->
+</div>
+<!-- Footer with Vita controller tips -->
+<div class="pt-1 border-t border-stone-300 flex items-center justify-between text-[11px] text-slate-600 font-bold px-1">
+<div class="flex items-center gap-1">
+<span class="ps-btn ps-cross !w-4 !h-4 !text-[9px]">✕</span>
+<span>EXECUTE HM</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="ps-btn ps-circle !w-4 !h-4 !text-[9px]">○</span>
+<span>CANCEL / CLOSE</span>
+</div>
+</div>
+</div>
+</div>
+<!-- END: FieldMovesModal -->
+<!-- BEGIN: ActionFeedbackToast -->
+<div class="hidden absolute top-14 left-1/2 -translate-x-1/2 z-50 pointer-events-none" id="hm-action-toast">
+<div class="gba-panel-box px-4 py-1.5 rounded-md border-2 border-emerald-700 shadow-2xl flex items-center gap-2">
+<span class="text-base" id="toast-icon">🌊</span>
+<span class="text-base font-bold text-slate-900 tracking-wider" id="toast-text">MUDKIP used SURF!</span>
+</div>
+</div>
+<!-- END: ActionFeedbackToast -->
+<!-- BEGIN: BottomNavigationControls -->
+<!-- PS Vita Native Control Guide Bar with Sony PlayStation Button Glyphs -->
+<footer class="absolute bottom-0 inset-x-0 h-10 bg-slate-950/95 border-t-2 border-slate-700 z-30 px-5 flex items-center justify-between text-stone-200" data-purpose="gamepad-controls-toolbar">
+<!-- Primary Sony PlayStation Buttons (X, O, Triangle, Square) -->
+<div class="flex items-center gap-4">
+<!-- [X] Cross Button: Confirm / Open -->
+<div class="flex items-center gap-1.5">
+<span class="ps-btn ps-cross">✕</span>
+<span class="font-bold tracking-wider text-xs text-stone-200">CONFIRM / OPEN</span>
+</div>
+<!-- [O] Circle Button: Cancel / Close -->
+<div class="flex items-center gap-1.5">
+<span class="ps-btn ps-circle">○</span>
+<span class="font-bold tracking-wider text-xs text-stone-200">CANCEL / CLOSE</span>
+</div>
+<!-- [▲] Triangle Button: 3D Diorama / View -->
+<div class="flex items-center gap-1.5">
+<span class="ps-btn ps-triangle">▲</span>
+<span class="font-bold tracking-wider text-xs text-stone-200">3D DIORAMA / 2D</span>
+</div>
+<!-- [■] Square Button: Quick Bag -->
+<div class="flex items-center gap-1.5">
+<span class="ps-btn ps-square">■</span>
+<span class="font-bold tracking-wider text-xs text-stone-200">BAG</span>
+</div>
+</div>
+<!-- Secondary Vita Handheld Buttons (L/R Bumpers, SELECT, START) -->
+<div class="flex items-center gap-3.5">
+<!-- L/R Shoulder Triggers -->
+<div class="hidden sm:flex items-center gap-1">
+<span class="ps-shoulder">L</span>
+<span class="ps-shoulder">R</span>
+<span class="font-bold tracking-wider text-xs text-stone-300 ml-1">+/- Tilt</span>
+</div>
+<!-- SELECT Button -->
+<div class="flex items-center gap-1.5">
+<span class="ps-pill">SELECT</span>
+<span class="font-bold tracking-wider text-xs text-stone-300">MAP / DIORAMA</span>
+</div>
+<!-- START Button -->
+<div class="flex items-center gap-1.5">
+<span class="ps-pill !border-emerald-500/60 !text-emerald-300">START</span>
+<span class="font-bold tracking-wider text-xs text-emerald-300">MENU</span>
+</div>
+</div>
+</footer>
+<!-- END: BottomNavigationControls -->
+<div class="hidden" id="menu-desc-controller" onmouseover="const t=event.target.closest('.gba-menu-item'); if(t &amp;&amp; t.dataset.desc){ const d=document.getElementById('menu-description-text'); if(d) d.textContent=t.dataset.desc; }"></div></main>
+<!-- END: VitaViewportContainer -->
+<!-- BEGIN: InteractiveMenuHandler -->
+<script data-purpose="menu-keyboard-interactivity">
+    // Allows keyboard navigation through the retro START menu
+    document.addEventListener('DOMContentLoaded', () => {
+      const menuItems = Array.from(document.querySelectorAll('.gba-menu-item'));
+      let currentIndex = menuItems.findIndex(el => el.classList.contains('active'));
+      if (currentIndex === -1) currentIndex = 1; // Default to Pokémon option
+
+      const setActive = (index) => {
+        menuItems.forEach((item, idx) => {
+          if (idx === index) {
+            item.classList.add('active');
+            item.scrollIntoView({ block: 'nearest' });
+          } else {
+            item.classList.remove('active');
+          }
+        });
+      };
+
+      // Arrow navigation
+      window.addEventListener('keydown', (e) => {
+        const modal = document.getElementById('field-moves-modal');
+        if (modal && !modal.classList.contains('hidden')) {
+          if (e.key === 'Escape' || e.key === 'o' || e.key === 'O' || e.key === 'c' || e.key === 'C') {
+            closeHMModal();
+          }
+          return;
+        }
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          currentIndex = (currentIndex + 1) % menuItems.length;
+          setActive(currentIndex);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          currentIndex = (currentIndex - 1 + menuItems.length) % menuItems.length;
+          setActive(currentIndex);
+        }
+      });
+
+      // Mouse hover interaction
+      menuItems.forEach((item, idx) => {
+        item.addEventListener('mouseenter', () => {
+          currentIndex = idx;
+          setActive(currentIndex);
+        });
+      });
+
+      // ==========================================
+      // POKÉMON PARTY HM / FIELD MOVES POPUP LOGIC
+      // ==========================================
+      const partyData = {
+        mudkip: {
+          name: 'MUDKIP',
+          gender: '♂',
+          level: 'Lv. 7',
+          hp: 'HP 24/24',
+          type: 'Water / Ground',
+          icon: '🌊',
+          moves: [
+            { name: 'SURF', hm: 'HM03', icon: '🌊', desc: 'Travel across water bodies and sea routes.', usable: true },
+            { name: 'WATERFALL', hm: 'HM07', icon: '💦', desc: 'Charge up waterfalls with powerful currents.', usable: true },
+            { name: 'DIVE', hm: 'HM08', icon: '🤿', desc: 'Explore deep underwater trenches.', usable: true },
+            { name: 'ROCK SMASH', hm: 'HM06', icon: '🪨', desc: 'Break cracked boulders blocking your path.', usable: true }
+          ]
+        },
+        zigzagoon: {
+          name: 'ZIGZAGOON',
+          gender: '♀',
+          level: 'Lv. 4',
+          hp: 'HP 17/17',
+          type: 'Normal',
+          icon: '🦝',
+          moves: [
+            { name: 'CUT', hm: 'HM01', icon: '✂️', desc: 'Clears obstructing small trees and tall grass.', usable: true },
+            { name: 'ROCK SMASH', hm: 'HM06', icon: '🪨', desc: 'Break cracked boulders blocking paths.', usable: true },
+            { name: 'DIG', hm: 'FIELD', icon: '⛏️', desc: 'Dig out of caves instantly back to entrance.', usable: true },
+            { name: 'HEADBUTT', hm: 'FIELD', icon: '💥', desc: 'Shake trees to startle wild forest Pokémon.', usable: true }
+          ]
+        },
+        taillow: {
+          name: 'TAILLOW',
+          gender: '♀',
+          level: 'Lv. 6',
+          hp: 'HP 21/21',
+          type: 'Normal / Flying',
+          icon: '🦅',
+          moves: [
+            { name: 'FLY', hm: 'HM02', icon: '🪽', desc: 'Soar through the sky to any visited Hoenn town.', usable: true }
+          ]
+        },
+        ralts: {
+          name: 'RALTS',
+          gender: '♂',
+          level: 'Lv. 5',
+          hp: 'HP 19/19',
+          type: 'Psychic / Fairy',
+          icon: '🔮',
+          moves: [
+            { name: 'TELEPORT', hm: 'FIELD', icon: '🌀', desc: 'Warp instantly back to the last Pokémon Center.', usable: true },
+            { name: 'FLASH', hm: 'HM05', icon: '💡', desc: 'Illuminate dark caves like Granite Cave.', usable: true }
+          ]
+        },
+        torchic: {
+          name: 'TORCHIC',
+          gender: '♂',
+          level: 'Lv. 5',
+          hp: 'HP 20/20',
+          type: 'Fire',
+          icon: '🔥',
+          moves: [
+            { name: 'CUT', hm: 'HM01', icon: '✂️', desc: 'Cut away thorny bushes and obstacles.', usable: true },
+            { name: 'STRENGTH', hm: 'HM04', icon: '💪', desc: 'Push massive heavy boulders in puzzles.', usable: true },
+            { name: 'ROCK SMASH', hm: 'HM06', icon: '🪨', desc: 'Smash cracked stones in your way.', usable: true }
+          ]
+        },
+        wurmple: {
+          name: 'WURMPLE',
+          gender: '♂',
+          level: 'Lv. 3',
+          hp: 'HP 15/15',
+          type: 'Bug',
+          icon: '🐛',
+          moves: [
+            { name: 'STRING SHOT', hm: 'SKILL', icon: '🕸️', desc: 'Spins sticky silk. No field effect in this area.', usable: false },
+            { name: 'POISON STING', hm: 'SKILL', icon: '💉', desc: 'Injects barb. Battle only move.', usable: false }
+          ]
+        }
+      };
+
+      const modal = document.getElementById('field-moves-modal');
+      const modalCloseBtn = document.getElementById('modal-close-btn');
+      const badgeEl = document.getElementById('modal-pkmn-badge');
+      const nameEl = document.getElementById('modal-pkmn-name');
+      const genderEl = document.getElementById('modal-pkmn-gender');
+      const subEl = document.getElementById('modal-pkmn-sub');
+      const movesListEl = document.getElementById('modal-moves-list');
+      const toast = document.getElementById('hm-action-toast');
+      const toastText = document.getElementById('toast-text');
+      const toastIcon = document.getElementById('toast-icon');
+
+      let toastTimer = null;
+      const showToast = (text, icon = '✨') => {
+        if (!toast || !toastText) return;
+        toastText.textContent = text;
+        if (toastIcon) toastIcon.textContent = icon;
+        toast.classList.remove('hidden');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.add('hidden');
+        }, 2200);
+      };
+
+      const openHMModal = (pkmnKey) => {
+        const pkmn = partyData[pkmnKey];
+        if (!pkmn) return;
+
+        badgeEl.textContent = pkmn.icon;
+        nameEl.textContent = pkmn.name;
+        genderEl.textContent = pkmn.gender;
+        genderEl.className = pkmn.gender === '♀' ? 'text-xs font-black text-rose-300' : 'text-xs font-black text-cyan-300';
+        subEl.textContent = `${pkmn.level} • ${pkmn.hp} • ${pkmn.type}`;
+
+        // Populate move list
+        movesListEl.innerHTML = '';
+        if (!pkmn.moves || pkmn.moves.length === 0) {
+          movesListEl.innerHTML = `<div class="gba-panel-box p-3 rounded text-center text-slate-500 font-bold text-sm">No usable field moves.</div>`;
+        } else {
+          pkmn.moves.forEach(move => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = `gba-menu-item w-full px-2.5 py-1.5 rounded flex items-center justify-between text-left group ${!move.usable ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`;
+            btn.innerHTML = `
+              <div class="flex items-center gap-2">
+                <span class="text-base">${move.icon}</span>
+                <div class="flex flex-col leading-none">
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-base font-bold text-slate-900 group-hover:text-emerald-800 tracking-wider">${move.name}</span>
+                    <span class="text-[9px] px-1 py-0.5 rounded ${move.usable ? 'bg-emerald-600 text-white' : 'bg-stone-300 text-stone-700'} font-bold font-mono">${move.hm}</span>
+                  </div>
+                  <span class="text-[10px] text-slate-500 mt-0.5">${move.desc}</span>
+                </div>
+              </div>
+              <span class="text-xs text-slate-400 group-hover:text-emerald-700 font-mono">▶</span>
+            `;
+
+            btn.addEventListener('click', () => {
+              if (move.usable) {
+                showToast(`${pkmn.name} used ${move.name}!`, move.icon);
+                closeHMModal();
+              } else {
+                showToast(`${move.name} cannot be used in the field!`, '⚠️');
+              }
+            });
+
+            movesListEl.appendChild(btn);
+          });
+        }
+
+        modal.classList.remove('hidden');
+      };
+
+      const closeHMModal = () => {
+        if (modal) modal.classList.add('hidden');
+      };
+
+      // Attach click events to party cards
+      const partyBtns = document.querySelectorAll('.party-card-btn');
+      partyBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const pkmnKey = btn.getAttribute('data-pkmn');
+          openHMModal(pkmnKey);
+        });
+      });
+
+      // Modal dismiss handlers
+      if (modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', closeHMModal);
+      }
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            closeHMModal();
+          }
+        });
+      }
+    });
+  </script>
+<!-- END: InteractiveMenuHandler -->
+</body></html>

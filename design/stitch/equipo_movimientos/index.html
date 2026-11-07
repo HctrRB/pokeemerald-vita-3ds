@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Equipo · Movimientos</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  .moves { flex: 1; display: flex; flex-direction: column; }
+  .mv { height: 56px; display: grid; grid-template-columns: 1fr 72px 96px; align-items: center; gap: 12px; padding: 0 12px 0 28px; border-bottom: 2px solid var(--paper-1); position: relative; }
+  .mv.on { background: var(--select); color: var(--select-ink); }
+  .mv.on::before { content: '▶'; position: absolute; left: 8px; font-size: 18px; }
+  .mv img { zoom: 2; }
+  .mv .pp { text-align: right; display: flex; justify-content: flex-end; }
+  .detail { width: 336px; flex: none; display: flex; flex-direction: column; gap: 8px; }
+  .kv { display: flex; justify-content: space-between; height: 32px; align-items: center; border-bottom: 2px solid var(--paper-1); }
+  .desc { font-size: var(--t-body-sm); line-height: 30px; }
+  .who { display: flex; align-items: center; gap: 12px; }
+</style>
+</head>
+<body data-screen="equipo_movimientos">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="party:moves">
+      <span class="spacer"></span>
+      <span class="capsule">MUDKIP Lv15</span>
+    </div>
+    <div class="body">
+      <div class="panel moves">
+        <div class="panel-head"><span class="ps">BATTLE MOVES</span><span class="spacer"></span><span class="vt-sm soft">TYPE · PP</span></div>
+        <div class="mv on" data-open="movimiento"><span>TACKLE</span><img src="../_assets/types/normal.png" alt=""><span class="pp">35/35</span></div>
+        <div class="mv"><span>GROWL</span><img src="../_assets/types/normal.png" alt=""><span class="pp">40/40</span></div>
+        <div class="mv"><span>MUD-SLAP</span><img src="../_assets/types/ground.png" alt=""><span class="pp">8/10</span></div>
+        <div class="mv" style="border-bottom:0"><span>WATER GUN</span><img src="../_assets/types/water.png" alt=""><span class="pp">21/25</span></div>
+      </div>
+      <div class="panel detail">
+        <div class="who"><img src="../_assets/pokemon/mudkip_front.png" alt="" style="width:64px"><div><div class="ps">TACKLE</div><img src="../_assets/types/normal.png" alt="" style="zoom:2; margin-top:6px"></div></div>
+        <div class="kv"><span>POWER</span><span>35</span></div>
+        <div class="kv"><span>ACCURACY</span><span>95</span></div>
+        <div class="kv"><span>CONTEST</span><img src="../_assets/types/contest_tough.png" alt="" style="zoom:2"></div>
+        <div class="desc">A full-body charge attack.</div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross" data-open="movimiento"><span class="glyph cross">✕</span>Details</span><span class="btn" data-btn="square"><span class="glyph square">□</span>Reorder</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="spacer"></span>
+      <span class="btn">▲▼ Move</span>
+    </div>
+  </div>
+  <!-- Popup: move details (opens on ✕ / tap over a move) -->
+  <div class="modal" id="movimiento"><div class="win" style="width:560px">
+    <div class="win-head"><span class="ps">TACKLE</span><span class="spacer"></span><img src="../_assets/types/normal.png" alt="" style="zoom:2"></div>
+    <div class="win-body">
+      <div style="display:flex;justify-content:space-between;height:32px;align-items:center;border-bottom:2px solid var(--paper-1)"><span>CATEGORY</span><span>PHYSICAL (extra P/S split)</span></div>
+      <div style="display:flex;justify-content:space-between;height:32px;align-items:center;border-bottom:2px solid var(--paper-1)"><span>POWER</span><span>35</span></div>
+      <div style="display:flex;justify-content:space-between;height:32px;align-items:center;border-bottom:2px solid var(--paper-1)"><span>ACCURACY</span><span>95</span></div>
+      <div style="display:flex;justify-content:space-between;height:32px;align-items:center;border-bottom:2px solid var(--paper-1)"><span>PP</span><span>35 / 35</span></div>
+      <div class="vt-sm" style="margin-top:10px; line-height:24px">A full-body charge attack.</div>
+    </div>
+    <div class="win-foot"><span class="btn" data-btn="square"><span class="glyph square">□</span>Reorder</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Close</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

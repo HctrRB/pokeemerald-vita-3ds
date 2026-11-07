@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PokéNav · Cintas</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  .party { width: 280px; flex: none; }
+  .party .row { height: 44px; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; }
+  .ribbons { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(8, 64px); gap: 8px; }
+  .rb { width: 64px; height: 64px; background: var(--paper-1); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .rb div { width: 16px; height: 16px; zoom: 3; background: url(../_assets/ui_gba/ribbons.png); image-rendering: pixelated; }
+  .rb.on { outline: 3px solid var(--select); outline-offset: -3px; }
+  .rb.empty div { visibility: hidden; }
+</style>
+</head>
+<body data-screen="pokenav">
+<!-- PokéNav root = tabs. This page shows the RIBBONS tab (missing in Stitch, plan 2.3). Ribbon art: graphics/pokenav/ribbons/icons.png -->
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="pokenav:ribbons">
+    </div>
+    <div class="body">
+      <div class="panel party list">
+        <div class="row on"><div class="mon" style="background-image:url(../_assets/pokemon/mudkip_icon.png)"></div><span class="grow">MUDKIP</span><span>3</span></div>
+        <div class="row"><div class="mon" style="background-image:url(../_assets/pokemon/taillow_icon.png)"></div><span class="grow">TAILLOW</span><span>1</span></div>
+        <div class="row" style="border-bottom:0"><div class="mon" style="background-image:url(../_assets/pokemon/ralts_icon.png)"></div><span class="grow">RALTS</span><span>0</span></div>
+      </div>
+      <div class="panel ribbons">
+        <div class="panel-head"><span class="ps">MUDKIP · RIBBONS</span></div>
+        <div class="grid">
+          <div class="rb on"><div style="background-position:0 0"></div></div>
+          <div class="rb"><div style="background-position:-16px 0"></div></div>
+          <div class="rb"><div style="background-position:-32px 0"></div></div>
+          <div class="rb empty"><div></div></div><div class="rb empty"><div></div></div><div class="rb empty"><div></div></div><div class="rb empty"><div></div></div><div class="rb empty"><div></div></div>
+        </div>
+        <div class="sep"></div>
+        <div><div class="ps">COOL RIBBON</div><div class="vt-sm" style="margin-top:8px">HOENN COOL CONTEST Normal Rank winner!</div></div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Details</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

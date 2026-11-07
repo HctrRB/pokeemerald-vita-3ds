@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mochila</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  .side { width: 304px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+  .bagart { height: 136px; display: flex; align-items: center; gap: 16px; }
+  .bagimg { width: 128px; height: 128px; background: url(../_assets/bag/bag_male.png) 0 -256px / 128px 768px; image-rendering: pixelated; flex: none; }
+  .detail { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .detail .acts { display: flex; gap: 6px; margin-top: auto; }
+  .detail .acts .act { flex: 1; padding: 0 6px; }
+  .detail .top { display: flex; align-items: center; gap: 12px; }
+  .iconbox { width: 56px; height: 56px; background: var(--paper-1); display: flex; align-items: center; justify-content: center; flex: none; }
+  .desc { line-height: 30px; flex: 1; min-height: 0; overflow: hidden; }
+  /* 5 pockets + money in the header: tighter tabs; the count never wraps */
+  .header .tab { padding: 0 8px; }
+  .detail .top > div > div { white-space: nowrap; }
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .main .list { overflow: hidden; }
+  .item-ico { width: 24px; height: 24px; flex: none; }
+  .count { color: var(--ink-soft); }
+  .row.on .count { color: var(--select-ink); }
+</style>
+</head>
+<body data-screen="mochila">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="bag:balls" data-money>
+      <span class="spacer"></span>
+    </div>
+
+    <div class="body">
+      <div class="side">
+        <div class="panel-dark bagart">
+          <div class="bagimg" title="graphics/bag/bag_male.png, POKé BALLS frame"></div>
+          <div><div class="ps">POKé BALLS</div><div class="vt-sm" style="color:var(--on-frame-soft); margin-top:8px">11 kinds</div></div>
+        </div>
+        <div class="panel detail">
+          <div class="top">
+            <div class="iconbox"><img class="x2" src="../_assets/items/poke_ball.png" alt=""></div>
+            <div><div class="ps">POKé BALL</div><div style="margin-top:6px">In bag: <b>x14</b></div></div>
+          </div>
+          <div class="sep"></div>
+          <div class="desc">A tool used for catching wild POKéMON.</div>
+        </div>
+      </div>
+
+      <div class="panel main">
+        <div class="panel-head"><span class="ps">POKé BALLS POCKET</span><span class="spacer"></span><span class="vt-sm soft">Sort: <b>SELECT</b></span></div>
+        <div class="list">
+          <div class="row on" data-open="acciones"><img class="item-ico" src="../_assets/items/poke_ball.png" alt=""><span class="grow">POKé BALL</span><span class="count">x14</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/great_ball.png" alt=""><span class="grow">GREAT BALL</span><span class="count">x6</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/ultra_ball.png" alt=""><span class="grow">ULTRA BALL</span><span class="count">x3</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/net_ball.png" alt=""><span class="grow">NET BALL</span><span class="count">x4</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/dive_ball.png" alt=""><span class="grow">DIVE BALL</span><span class="count">x2</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/timer_ball.png" alt=""><span class="grow">TIMER BALL</span><span class="count">x2</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/repeat_ball.png" alt=""><span class="grow">REPEAT BALL</span><span class="count">x5</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/nest_ball.png" alt=""><span class="grow">NEST BALL</span><span class="count">x3</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/luxury_ball.png" alt=""><span class="grow">LUXURY BALL</span><span class="count">x1</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/premier_ball.png" alt=""><span class="grow">PREMIER BALL</span><span class="count">x1</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/master_ball.png" alt=""><span class="grow">MASTER BALL</span><span class="count">x1</span></div>
+          <div class="row" style="border-bottom:0"><span class="item-ico"></span><span class="grow soft">CLOSE BAG</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="btn" data-btn="cross" data-open="acciones"><span class="glyph cross">✕</span>Options</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="btn" data-btn="select"><span class="key">SELECT</span>Sort</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+  <!-- Popup: item actions (anchored next to the row) -->
+  <div class="modal" id="acciones"><div class="win at" style="left:648px; top:150px; width:232px">
+    <div class="win-head"><span class="ps">POKé BALL</span></div>
+    <div class="list" style="padding:6px">
+      <div class="row on" data-close>USE</div>
+      <div class="row" data-close>GIVE</div>
+      <div class="row" data-open="cantidad">TOSS</div>
+      <div class="row" data-close>REGISTER</div>
+      <div class="row" style="border-bottom:0" data-close>CANCEL</div>
+    </div></div></div>
+  <!-- Popup: quantity (toss; same component as buy / sell) -->
+  <div class="modal" id="cantidad"><div class="win" style="width:440px">
+    <div class="win-head"><span class="ps">TOSS</span><span class="spacer"></span><span class="vt-sm">In bag x14</span></div>
+    <div class="win-body" style="display:flex; align-items:center; justify-content:center; gap:16px; height:96px">
+      <img class="x2" src="../_assets/items/poke_ball.png" alt=""><div class="stepper" data-min="1" data-max="14" data-value="3" data-unit="0"><span class="step" data-step="-1">−</span><span class="n"></span><span class="step" data-step="1">+</span></div></div>
+    <div class="win-body" style="padding-top:0"><div class="choice-row"><div class="row on" data-close>TOSS</div><div class="row" data-close>CANCEL</div></div></div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Toss</span><span class="btn">▲▼ ±1 · ◀▶ ±10 · − +</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Cancel</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

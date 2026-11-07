@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Llamada PokéNav</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  .caller { position:absolute; left:48px; bottom:160px; display:flex; gap:12px; align-items:flex-end; }
+  .pic { width:96px; height:96px; background:var(--paper-0); border:4px solid var(--frame-1); display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .pic img { zoom: 1.5; }
+</style>
+</head>
+<body data-screen="llamada">
+<!-- Match Call in the field: dialogue box (VT323 40, no speaker tab: the game has no speaker data),
+     the caller's trainer pic and the animated POKENAV phone (GBA nav_icon frames) right of the text. -->
+<div class="stage">
+  <div class="caller">
+    <div class="pic"><img src="../_assets/trainers/may.png" alt=""></div>
+    <div class="capsule">POKéNAV · MATCH CALL</div>
+  </div>
+  <div class="dialog">
+    Hi, BRENDAN! How's your POKéDEX coming<br>along? I just caught a ZIGZAGOON!
+    <div class="phone"></div>
+    <span class="more">▼</span>
+  </div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cartel de zona</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* One 9-slice tinted per zone through the vertex colour: only --tint changes per town. */
+  .sign { position:absolute; left:16px; width:360px; height:56px; display:flex; align-items:center; gap:12px; padding:0 16px; background:var(--frame-1); border:2px solid var(--line-dark); border-left:8px solid var(--tint); color:var(--on-frame); }
+  /* Zone with a description: the name on its strip, the description in its own box below
+     (the height follows the text) */
+  .zsign { position:absolute; left:16px; width:400px; background:var(--frame-1); border:2px solid var(--line-dark);
+           border-left:8px solid var(--tint); color:var(--on-frame); box-shadow:0 3px 0 rgba(0,0,0,.45); }
+  .zsign .zname { height:48px; display:flex; align-items:center; padding:0 16px;
+                  background:linear-gradient(#123A31, #0A241E); box-shadow:inset 0 1px 0 #2E6B5B; }
+  /* Console (ui_sign.c): the town's GBA sign text drops down under the name strip, on a
+     half-transparent box, one size smaller than the body text */
+  .zsign { overflow:hidden; }
+  .zsign .zdesc { padding:6px 16px 8px; line-height:26px; font-size:26px; color:var(--on-frame-soft);
+                  border-top:2px solid var(--line-dark); background:rgba(4,20,16,.5);
+                  transform-origin:top; animation:zdrop .35s ease-out .6s both; }
+  @keyframes zdrop { from { transform:scaleY(0); opacity:0; } to { transform:scaleY(1); opacity:1; } }
+  .grid { position:absolute; left:400px; top:16px; display:grid; grid-template-columns:repeat(2, 264px); gap:8px; }
+  .grid .sign { position:static; width:264px; height:40px; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <!-- In game: only the first one, sliding in from the top-left on entering the zone -->
+  <div class="zsign" style="--tint:#4FB27A; top:16px;">
+    <div class="zname ps">LITTLEROOT TOWN</div>
+    <div class="zdesc">A town that can't be shaded any hue.</div>
+  </div>
+  <!-- Zone without a description: the name alone -->
+  <div class="sign" style="--tint:#C9A55A; top:160px;"><div class="ps">ROUTE 101</div></div>
+
+  <!-- Tint per zone type / town (one asset) -->
+  <div class="grid">
+    <div class="sign" style="--tint:#6FB0E0"><span class="ps">OLDALE TOWN</span></div>
+    <div class="sign" style="--tint:#E07A1F"><span class="ps">PETALBURG</span></div>
+    <div class="sign" style="--tint:#9C8B7A"><span class="ps">RUSTBORO</span></div>
+    <div class="sign" style="--tint:#58A7C9"><span class="ps">DEWFORD</span></div>
+    <div class="sign" style="--tint:#4A9FE0"><span class="ps">SLATEPORT</span></div>
+    <div class="sign" style="--tint:#E8B730"><span class="ps">MAUVILLE</span></div>
+    <div class="sign" style="--tint:#D9483B"><span class="ps">LAVARIDGE</span></div>
+    <div class="sign" style="--tint:#B8A27C"><span class="ps">FALLARBOR</span></div>
+  </div>
+</div>
+</body>
+</html>

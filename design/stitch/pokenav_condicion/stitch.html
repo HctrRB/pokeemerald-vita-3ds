@@ -1,0 +1,1366 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>PS Vita PokéNav UI - Dynamic Match Call Rosters (960x544)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; user-select: none; -webkit-font-smoothing: none; }
+  body {
+    background-color: #030708;
+    margin: 0; padding: 0;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', monospace;
+    overflow: hidden;
+  }
+  .font-pixel { font-family: 'Press Start 2P', monospace; }
+  .bevel-box-cream {
+    background: #f7f4e9;
+    border: 3px solid #1a3024;
+    box-shadow: inset 2px 2px 0 #ffffff, inset -2px -2px 0 #d1c8af, 0 4px 8px rgba(0,0,0,0.45);
+  }
+  .bevel-panel-inner {
+    border: 2px solid #204134;
+    box-shadow: inset 1px 1px 0 #ffffff, inset -1px -1px 0 #c7bfa6;
+  }
+  @keyframes pin-pulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(255,255,255,0.8)); }
+    50% { transform: scale(1.25); filter: drop-shadow(0 0 5px rgba(253,230,138,1)); }
+  }
+  .animate-pin-active { animation: pin-pulse 0.8s ease-in-out infinite; }
+  .pixel-art { image-rendering: pixelated; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: #ded7c1; }
+  ::-webkit-scrollbar-thumb { background: #1c4b3e; border-radius: 2px; }
+</style>
+</head>
+<body>
+<!-- Frame 960x544 -->
+<div class="relative w-[960px] h-[544px] overflow-hidden bg-black shadow-2xl border-2 border-[#162923] flex flex-col justify-between select-none">
+<!-- Background -->
+<div class="absolute inset-0 z-0">
+<div class="absolute inset-0 bg-[#0a1815]/95"></div>
+</div>
+<!-- Header (50px) -->
+<header class="relative z-10 w-full h-[50px] px-3 bg-[#0b1d19]/95 border-b-[3px] border-[#0c4036] flex items-center justify-between shadow-xl flex-shrink-0">
+<div class="flex items-center space-x-2 flex-shrink-0 bg-[#163f35] border-2 border-[#2b5849] rounded-md px-2.5 py-1 shadow-inner">
+<div class="w-5 h-5 rounded-full bg-[#10b981] border border-[#a7f3d0] flex items-center justify-center">
+<div class="w-2.5 h-2.5 rounded-full bg-[#064e3b] border border-white"></div>
+</div>
+<div class="flex flex-col leading-tight">
+<span class="text-[9px] text-[#99f6e4] font-pixel font-bold tracking-wider">POKÉNAV NAVIGATOR</span>
+<span class="text-[7px] text-[#6ee7b7] font-pixel">DEVON SYSTEM v3.2</span>
+</div>
+</div>
+<!-- Center 4 Tabs -->
+<div class="flex items-center bg-[#041612] border-2 border-[#1c5547] rounded-md p-0.5 gap-1 shadow-inner">
+<button class="px-2 py-1 bg-[#163f35] hover:bg-[#245244] border border-[#2b5849] rounded text-[#6ee7b7] font-bold text-[9px] font-pixel cursor-pointer leading-none active:scale-95" onclick="cycleNavMode(-1)">L</button>
+<div class="flex items-center gap-1" id="nav-tabs-bar">
+<button class="px-2.5 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none" id="tab-btn-map" onclick="setNavMode('map')">HOENN MAP</button>
+<button class="px-2.5 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none" id="tab-btn-match" onclick="setNavMode('match')">MATCH CALL</button>
+<button class="bg-[#fde68a] text-[#16271c] font-bold text-[8px] px-2.5 py-1 rounded shadow-sm border border-[#b45309] font-pixel cursor-pointer tracking-wider leading-none" id="tab-btn-condition" onclick="setNavMode('condition')">CONDITION</button>
+<button class="px-2.5 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none" id="tab-btn-ribbons" onclick="setNavMode('ribbons')">RIBBONS</button>
+</div>
+<button class="px-2 py-1 bg-[#163f35] hover:bg-[#245244] border border-[#2b5849] rounded text-[#6ee7b7] font-bold text-[9px] font-pixel cursor-pointer leading-none active:scale-95" onclick="cycleNavMode(1)">R</button>
+</div>
+<div class="flex items-center space-x-2 flex-shrink-0">
+<div class="h-[28px] bg-[#051310] border-2 border-[#1a4a3e] rounded px-2.5 flex items-center space-x-1.5 shadow-inner">
+<span class="text-[#f59e0b] font-pixel text-[10px] font-bold leading-none">₽</span>
+<span class="text-[#ecfdf5] font-pixel text-[10px] tracking-wider leading-none">142,500</span>
+</div>
+<div class="h-[28px] bg-[#1b4337] border border-[#2dd4bf]/40 rounded px-2.5 flex items-center text-[8px] font-pixel text-[#99f6e4] leading-none">BRENDAN</div>
+</div>
+</header>
+<!-- Main View Area -->
+<main class="relative z-10 w-full flex-1 px-3 py-2 flex gap-3 overflow-hidden">
+<!-- ==================== TAB 1: HOENN MAP ==================== -->
+<div class="w-full h-full gap-2.5 hidden" id="panel-mode-map">
+<!-- Left Panel: Inspector -->
+<div class="w-[310px] h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden text-[#16271c] flex-shrink-0">
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex flex-col space-y-1">
+<div class="flex items-center justify-between text-[7px] font-pixel">
+<span class="text-[#5eead4] flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-ping inline-block"></span>
+<span class="" id="map-loc-type">CITY / GYM (1)</span>
+</span>
+<span class="px-1 py-0.5 bg-[#14b8a6] text-[#042f2e] font-bold rounded" id="map-loc-coords">COORD: X:05 Y:40</span>
+</div>
+<div class="flex items-center justify-between">
+<h2 class="text-[11px] font-pixel text-[#fde68a] font-bold tracking-tight" id="map-loc-name">RUSTBORO CITY</h2>
+<span class="text-[8px] font-pixel px-1.5 py-0.5 rounded font-bold bg-[#163f35] text-[#a7f3d0] border border-[#245244]" id="map-loc-tag">STONE BADGE</span>
+</div>
+<p class="text-[6.5px] font-pixel text-[#ccfbf1] leading-tight pt-0.5" id="map-loc-desc">The city probing the integration of nature and science. Home of Devon Corporation &amp; Roxanne.</p>
+</div>
+<div class="flex-1 my-1.5 bg-[#ede8d5] rounded p-1.5 border border-[#c3b99f] flex flex-col overflow-hidden">
+<div class="flex items-center justify-between pb-1 border-b border-[#c3b99f]">
+<span class="text-[7px] font-pixel font-bold text-[#143228]">WILD HABITATS:</span>
+<div class="flex gap-1">
+<button class="px-1.5 py-0.5 bg-[#0e2c24] text-[#a7f3d0] rounded text-[6.5px] font-pixel font-bold cursor-pointer" id="hab-btn-grass" onclick="switchHabitatTab('grass')">GRASS</button>
+<button class="px-1.5 py-0.5 bg-[#ded7c1] text-[#244234] rounded text-[6.5px] font-pixel cursor-pointer" id="hab-btn-surf" onclick="switchHabitatTab('surf')">SURF</button>
+<button class="px-1.5 py-0.5 bg-[#ded7c1] text-[#244234] rounded text-[6.5px] font-pixel cursor-pointer" id="hab-btn-fish" onclick="switchHabitatTab('fish')">FISH</button>
+<button class="px-1.5 py-0.5 bg-[#ded7c1] text-[#244234] rounded text-[6.5px] font-pixel cursor-pointer" id="hab-btn-smash" onclick="switchHabitatTab('smash')">SMASH</button>
+</div>
+</div>
+<div class="space-y-1 mt-1.5 overflow-y-auto pr-0.5 flex-1" id="map-habitat-list"><div class="flex items-center justify-between p-1 bg-[#fdfbf6] rounded border border-[#d1c8af] text-[7px] font-pixel">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🕊️</span>
+          <span class="font-bold text-[#143228]">TAILLOW</span>
+          <span class="text-[6px] text-[#557568]">LV. 5-7</span>
+        </div>
+        <span class="px-1 py-0.5 bg-[#10b981] text-[#022c22] font-bold rounded text-[6.5px]">40%</span>
+      </div><div class="flex items-center justify-between p-1 bg-[#fdfbf6] rounded border border-[#d1c8af] text-[7px] font-pixel">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🪲</span>
+          <span class="font-bold text-[#143228]">NINCADA</span>
+          <span class="text-[6px] text-[#557568]">LV. 6-8</span>
+        </div>
+        <span class="px-1 py-0.5 bg-[#10b981] text-[#022c22] font-bold rounded text-[6.5px]">30%</span>
+      </div></div>
+</div>
+<div class="bg-[#ded7c1] border border-[#264e3e] p-1.5 rounded flex flex-col space-y-1">
+<div class="flex items-center justify-between text-[6.5px] font-pixel text-[#16382b] font-bold">
+<span class="">CONNECTED ROUTES &amp; PORTS:</span>
+<span class="text-[#047857]" id="map-conn-count">4 LINKS</span>
+</div>
+<div class="flex flex-wrap gap-1 text-[6.5px] font-pixel" id="map-connections-tags"><span class="px-1.5 py-0.5 bg-[#ede8d5] text-[#133c2e] border border-[#a89d81] rounded font-bold">ROUTE 104</span><span class="px-1.5 py-0.5 bg-[#ede8d5] text-[#133c2e] border border-[#a89d81] rounded font-bold">ROUTE 115</span><span class="px-1.5 py-0.5 bg-[#ede8d5] text-[#133c2e] border border-[#a89d81] rounded font-bold">ROUTE 116</span><span class="px-1.5 py-0.5 bg-[#ede8d5] text-[#133c2e] border border-[#a89d81] rounded font-bold">RUSTURF TUNNEL</span></div>
+</div>
+</div>
+<!-- Right Panel: Map -->
+<div class="flex-1 h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden relative">
+<div class="w-full h-6 px-2 bg-[#0d2820] text-[#a7f3d0] rounded flex items-center justify-between text-[8px] font-pixel mb-1.5 flex-shrink-0">
+<div class="flex items-center space-x-2">
+<span class="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
+<span class="">HOENN CARTOGRAPHY v3.2 • DEVON SAT-LINK</span>
+</div>
+<div class="flex items-center space-x-2 text-[7px]">
+<span class="text-[#ef4444]">● GYM</span>
+<span class="text-[#3b82f6]">● TOWN</span>
+</div>
+</div>
+<div class="relative flex-1 rounded bevel-panel-inner overflow-hidden border border-[#234d3f] flex items-center justify-center bg-[#5ba0e6]">
+<img alt="Hoenn Cartography Map" class="w-full h-full object-fill select-none pointer-events-none" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCr9u2Y0HCz7rDKIkaSV5SQjO294y2OZ7lKscO2REJHT_3_3iLk2Hcpr008zXitsz_FlEc3V43raNmuFJ-xJjuwpNM2xHiDX60jWCC_pKo96NYnP8TxPlVUVB_--Zb7DsIWZAFbUYGQf0d-yYKrO07e3y7Sqz7WesMJMIFG8TEu5AEX-P3KFG1vHMlJL2SU3fmZRcUDVVlvYGipzH2oUihMzscyYomD2xeP17IlWw2lgy8F15kM7pVjHw">
+<div class="absolute inset-0 pointer-events-auto" id="hoenn-pins-layer"><button class="absolute transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 flex items-center justify-center cursor-pointer shadow-md transition-all hover:scale-125 bg-[#ef4444] border-[#991b1b] ring-2 ring-[#fde68a] scale-125 animate-pin-active z-20" style="left: 5%; top: 40%;"><span class="w-1.5 h-1.5 rounded-full bg-white"></span></button><button class="absolute transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 flex items-center justify-center cursor-pointer shadow-md transition-all hover:scale-125 bg-[#3b82f6] border-[#1d4ed8] z-10" style="left: 18%; top: 68%;"><span class="w-1.5 h-1.5 rounded-full bg-white"></span></button></div>
+</div>
+<div class="w-full mt-1.5 px-2 py-1 bg-[#ded7c1] border border-[#224436] rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b] flex-shrink-0">
+<span class="">CLICK PINS OR TOWNS TO INSPECT HABITATS &amp; CONNECTIONS</span>
+<div class="flex items-center space-x-2">
+<button class="bg-[#124235] text-[#99f6e4] px-1.5 py-0.5 rounded border border-[#2dd4bf] text-[6.5px] cursor-pointer" onclick="selectMapLocation('littleroot')">LITTLEROOT</button>
+<button class="bg-[#124235] text-[#99f6e4] px-1.5 py-0.5 rounded border border-[#2dd4bf] text-[6.5px] cursor-pointer" onclick="selectMapLocation('rustboro')">DEVON HQ</button>
+</div>
+</div>
+</div>
+</div>
+<!-- ==================== TAB 2: MATCH CALL (DYNAMIC ROSTERS) ==================== -->
+<div class="w-full h-full gap-2.5 hidden" id="panel-mode-match">
+<!-- Left Panel: Contacts List -->
+<div class="w-[280px] h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden text-[#16271c] flex-shrink-0">
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex items-center justify-between">
+<div>
+<span class="text-[7px] text-[#5eead4] font-pixel">DEVON MATCH CALL</span>
+<h2 class="text-[9.5px] font-pixel text-[#fde68a] font-bold" id="match-dir-count">DIRECTORY (10)</h2>
+</div>
+<span class="text-[6.5px] font-pixel bg-[#163f35] px-1.5 py-0.5 rounded text-[#a7f3d0] border border-[#245244]" id="match-ready-counter">6 READY</span>
+</div>
+<div class="flex-1 my-1.5 flex flex-col overflow-hidden">
+<div class="flex items-center justify-between pb-1 px-0.5 border-b border-[#c3b99f] text-[7.5px] font-pixel text-[#143228] font-bold">
+<span class="">REGISTERED CONTACTS</span>
+<div class="flex items-center space-x-1 text-[6.5px] text-[#2b5849]">
+<span class="px-1 py-0.5 bg-[#ede8d5] border border-[#a89d81] rounded text-[6px] text-[#143228] font-bold">▲▼ SCROLL</span>
+</div>
+</div>
+<div class="space-y-1 mt-1 overflow-y-auto pr-0.5 flex-1" id="match-contacts-list" style="scrollbar-width: thin; max-height: 280px;"><div class="p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">🏡</span>
+          <div>
+            <div class="font-bold text-[#143228]">MOM</div>
+            <div class="text-[6px] text-[#557568]">HOMECARE / LITTLEROOT</div>
+          </div>
+        </div>
+        <span class="text-[6px] text-[#716a56]">STANDBY</span>
+      </div><div class="p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">🔬</span>
+          <div>
+            <div class="font-bold text-[#143228]">PROF. BIRCH</div>
+            <div class="text-[6px] text-[#557568]">POKÉMON RESEARCHER</div>
+          </div>
+        </div>
+        <span class="text-[6px] text-[#716a56]">STANDBY</span>
+      </div><div class="p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel bg-[#fef3c7] border-[#d97706] shadow-sm ring-1 ring-[#d97706]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">🪨</span>
+          <div>
+            <div class="font-bold text-[#143228]">ROXANNE</div>
+            <div class="text-[6px] text-[#b45309] font-bold">RUSTBORO GYM LEADER</div>
+          </div>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] font-bold px-1.5 py-0.5 rounded animate-pulse border border-[#047857]">REMATCH</span>
+      </div><div class="p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">🏄</span>
+          <div>
+            <div class="font-bold text-[#143228]">BRAWLY</div>
+            <div class="text-[6px] text-[#557568]">DEWFORD GYM LEADER</div>
+          </div>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] font-bold px-1.5 py-0.5 rounded animate-pulse border border-[#047857]">REMATCH</span>
+      </div><div class="p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">⚡</span>
+          <div>
+            <div class="font-bold text-[#143228]">WATTSON</div>
+            <div class="text-[6px] text-[#557568]">MAUVILLE GYM LEADER</div>
+          </div>
+        </div>
+        <span class="text-[6px] text-[#716a56]">STANDBY</span>
+      </div><div class="p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">🔥</span>
+          <div>
+            <div class="font-bold text-[#143228]">FLANNERY</div>
+            <div class="text-[6px] text-[#557568]">LAVARIDGE GYM LEADER</div>
+          </div>
+        </div>
+        <span class="text-[6px] text-[#716a56]">STANDBY</span>
+      </div><div class="p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">🥋</span>
+          <div>
+            <div class="font-bold text-[#143228]">NORMAN</div>
+            <div class="text-[6px] text-[#557568]">PETALBURG GYM LEADER</div>
+          </div>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] font-bold px-1.5 py-0.5 rounded animate-pulse border border-[#047857]">REMATCH</span>
+      </div><div class="p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">🎀</span>
+          <div>
+            <div class="font-bold text-[#143228]">MAY</div>
+            <div class="text-[6px] text-[#557568]">TRAINER &amp; RIVAL</div>
+          </div>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] font-bold px-1.5 py-0.5 rounded animate-pulse border border-[#047857]">REMATCH</span>
+      </div><div class="p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">🌱</span>
+          <div>
+            <div class="font-bold text-[#143228]">WALLY</div>
+            <div class="text-[6px] text-[#557568]">RIVAL / VERDANTURF</div>
+          </div>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] font-bold px-1.5 py-0.5 rounded animate-pulse border border-[#047857]">REMATCH</span>
+      </div><div class="p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]">
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">💎</span>
+          <div>
+            <div class="font-bold text-[#143228]">STEVEN STONE</div>
+            <div class="text-[6px] text-[#557568]">HOENN CHAMPION / DEVON</div>
+          </div>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] font-bold px-1.5 py-0.5 rounded animate-pulse border border-[#047857]">REMATCH</span>
+      </div></div>
+</div>
+<div class="bg-[#ded7c1] border border-[#264e3e] p-1.5 rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b]">
+<div class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-[#10b981] animate-ping inline-block"></span>
+<span class="">DEVON-NET OK</span>
+</div>
+<span class="text-[#047857] font-bold" id="match-freq-tag">105.1 MHz</span>
+</div>
+</div>
+<!-- Right Panel: Dossier & Dynamic Roster -->
+<div class="flex-1 h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden relative">
+<div class="w-full h-6 px-2 bg-[#0d2820] text-[#a7f3d0] rounded flex items-center justify-between text-[8px] font-pixel mb-1.5 flex-shrink-0">
+<div class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
+<span class="" id="match-dossier-title">DOSSIER: ROXANNE • RUSTBORO GYM LEADER</span>
+</div>
+<span class="text-[7px] text-[#6ee7b7]">SECURE DEVON LINE</span>
+</div>
+<div class="flex-1 flex gap-2 overflow-hidden">
+<!-- Bio / Transmission Log Card -->
+<div class="w-[230px] bg-[#ede8d5] rounded p-2 border border-[#c3b99f] flex flex-col justify-between overflow-hidden flex-shrink-0">
+<div class="flex items-center justify-between border-b border-[#c3b99f] pb-1">
+<span class="text-[8px] font-pixel font-bold text-[#13392b]">TRANSMISSION LOG</span>
+<span class="text-[6px] font-pixel text-[#047857] bg-[#a7f3d0] px-1 py-0.5 rounded font-bold" id="match-log-freq">105.1 MHz</span>
+</div>
+<div class="space-y-1.5 my-1.5 flex-1 overflow-y-auto pr-0.5" id="match-dialogue-history" style="scrollbar-width: thin; max-height: 250px;"><div class="p-1.5 bg-[#fdfbf6] rounded border border-[#ccc2a6] flex flex-col space-y-1">
+        <div class="flex items-center justify-between text-[6px] font-pixel text-[#557568]">
+          <span class="font-bold text-[#143228] flex items-center gap-1"><span class="">🪨</span> ROXANNE</span>
+          <span class="">09:00 AM</span>
+        </div>
+        <p class="text-[6.5px] font-pixel text-[#0f2d24] leading-relaxed">"Greetings Brendan! I have been reviewing our first battle at Rustboro Gym."</p>
+      </div><div class="p-1.5 bg-[#fef3c7] rounded border border-[#d97706] flex flex-col space-y-1">
+        <div class="flex items-center justify-between text-[6px] font-pixel text-[#b45309]">
+          <span class="font-bold text-[#b45309] flex items-center gap-1"><span class="">⚔️</span> REMATCH ALERT</span>
+          <span class="">JUST NOW</span>
+        </div>
+        <p class="text-[6.5px] font-pixel text-[#0f2d24] leading-relaxed">"Geodude and Nosepass have refined their Rock Tomb defense! Whenever you're ready, let us duel!"</p>
+      </div><div class="p-1 bg-[#ded7c1] rounded border border-[#bab096] text-[6px] font-pixel text-[#446859] text-center">── ENCRYPTED DEVON LOG SECURED ──</div></div>
+<div class="bg-[#ded7c1] p-1.5 rounded border border-[#bab096] flex items-center justify-between text-[6.5px] font-pixel text-[#3c574c]">
+<span class="text-[#143228] font-bold">STATUS:</span>
+<span class="text-[#047857] font-bold truncate max-w-[145px]" id="match-log-status">RUSTBORO GYM / LEADER</span>
+</div>
+</div>
+<!-- Dynamic Combat Team Panel (Up to 6 Pokémon!) -->
+<div class="flex-1 bg-[#ded7c1] rounded p-2 border border-[#214737] flex flex-col justify-between overflow-hidden">
+<div class="flex items-center justify-between border-b border-[#c3b99f] pb-1">
+<span class="text-[#13392b] font-bold text-[8px] font-pixel">REGISTERED COMBAT TEAM</span>
+<span class="text-[6.5px] font-pixel text-[#065f46] bg-[#a7f3d0] px-1.5 py-0.5 rounded font-bold border border-[#047857]" id="match-team-count">ROSTER: 3 POKÉMON</span>
+</div>
+<!-- Dynamic Combat Cards Grid (Scrollable for 1-6 Pokémon) -->
+<div class="my-1.5 flex-1 overflow-y-auto pr-0.5" id="match-team-container" style="scrollbar-width: thin; max-height: 255px;">
+<div class="grid grid-cols-2 gap-1.5" id="match-team-grid"><div class="col-span-1 p-1.5 rounded border bg-[#fdfbf6] border-[#ccc2a6] shadow-sm flex items-center space-x-2 text-[7px] font-pixel transition hover:scale-[1.01]">
+        <div class="w-9 h-9 rounded bg-[#ede8d5] border border-[#c3b99f] flex items-center justify-center flex-shrink-0 p-0.5 shadow-inner">
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/74.png" alt="GEODUDE" class="w-full h-full object-contain pixel-art">
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[#143228] text-[7.5px] truncate">GEODUDE</span>
+            
+          </div>
+          <div class="flex items-center gap-1 my-0.5">
+            <span class="text-[6px] text-[#b45309] font-bold">LV. 21</span>
+            <div class="flex gap-0.5"><span class="px-1 py-[1px] rounded text-[5px] font-pixel font-bold bg-[#b45309] text-white">ROCK</span> <span class="px-1 py-[1px] rounded text-[5px] font-pixel font-bold bg-[#d97706] text-white">GROUND</span></div>
+          </div>
+          <div class="text-[5.5px] text-[#557568] truncate leading-tight">ROCK HEAD • ROCK THROW</div>
+        </div>
+      </div><div class="col-span-1 p-1.5 rounded border bg-[#fdfbf6] border-[#ccc2a6] shadow-sm flex items-center space-x-2 text-[7px] font-pixel transition hover:scale-[1.01]">
+        <div class="w-9 h-9 rounded bg-[#ede8d5] border border-[#c3b99f] flex items-center justify-center flex-shrink-0 p-0.5 shadow-inner">
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/74.png" alt="GEODUDE" class="w-full h-full object-contain pixel-art">
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[#143228] text-[7.5px] truncate">GEODUDE</span>
+            
+          </div>
+          <div class="flex items-center gap-1 my-0.5">
+            <span class="text-[6px] text-[#b45309] font-bold">LV. 21</span>
+            <div class="flex gap-0.5"><span class="px-1 py-[1px] rounded text-[5px] font-pixel font-bold bg-[#b45309] text-white">ROCK</span> <span class="px-1 py-[1px] rounded text-[5px] font-pixel font-bold bg-[#d97706] text-white">GROUND</span></div>
+          </div>
+          <div class="text-[5.5px] text-[#557568] truncate leading-tight">STURDY • DEFENSE CURL</div>
+        </div>
+      </div><div class="col-span-2 p-1.5 rounded border bg-[#fef3c7] border-[#d97706] shadow-sm flex items-center space-x-2 text-[7px] font-pixel transition hover:scale-[1.01]">
+        <div class="w-9 h-9 rounded bg-[#ede8d5] border border-[#c3b99f] flex items-center justify-center flex-shrink-0 p-0.5 shadow-inner">
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/299.png" alt="NOSEPASS" class="w-full h-full object-contain pixel-art">
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[#143228] text-[7.5px] truncate">NOSEPASS</span>
+            <span class="px-1 py-[1px] bg-[#cc2233] text-white font-bold rounded text-[5px]">ACE</span>
+          </div>
+          <div class="flex items-center gap-1 my-0.5">
+            <span class="text-[6px] text-[#b45309] font-bold">LV. 23</span>
+            <div class="flex gap-0.5"><span class="px-1 py-[1px] rounded text-[5px] font-pixel font-bold bg-[#b45309] text-white">ROCK</span></div>
+          </div>
+          <div class="text-[5.5px] text-[#557568] truncate leading-tight">MAGNET PULL • ROCK TOMB</div>
+        </div>
+      </div></div>
+</div>
+<div class="bg-[#ede8d5] p-1.5 rounded border border-[#bab096] text-[6.5px] font-pixel text-[#3c574c] flex items-center justify-between">
+<span class="">CALL FREQUENCY LOGGED</span>
+<span class="text-[#047857] font-bold" id="match-call-logged-stat">12 CALLS EXCHANGED</span>
+</div>
+</div>
+</div>
+<div class="w-full mt-1.5 px-2 py-1 bg-[#ded7c1] border border-[#224436] rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b] flex-shrink-0">
+<div class="flex items-center space-x-2">
+<span class="px-1.5 py-0.5 bg-[#10b981] text-[#022c22] rounded font-bold text-[6.5px] animate-pulse border border-[#047857]" id="match-status-badge">REMATCH READY</span>
+<span class="text-[#16382b] font-bold" id="match-status-chline">CH: 105.1 MHz • SECURE DEVON LINE</span>
+</div>
+<div class="flex items-center space-x-2">
+<button class="bg-[#10b981] hover:bg-[#059669] active:scale-95 text-[#022c22] font-pixel font-bold px-2 py-1 rounded border-2 border-[#047857] shadow text-[7px] cursor-pointer flex items-center gap-1.5 transition" id="btn-initiate-call" onclick="triggerTransceiverCall()">
+<span class="animate-ping w-1.5 h-1.5 rounded-full bg-[#022c22] inline-block"></span>
+<span class="">📞 INITIATE MATCH CALL [✕]</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- ==================== TAB 3: CONDITION ==================== -->
+<div class="w-full h-full gap-2.5 relative flex" id="panel-mode-condition">
+<!-- Left Column: Contest Roster -->
+<div class="w-[270px] h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden text-[#16271c] flex-shrink-0">
+<div class="relative bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex flex-col space-y-1">
+<div class="flex items-center justify-between text-[7px] font-pixel">
+<span class="text-[#5eead4] flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-ping inline-block"></span>
+              ACTIVE CONTESTANT
+            </span>
+<span class="px-1 py-0.5 bg-[#14b8a6] text-[#042f2e] font-bold rounded" id="card-nature">ADAMANT</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-1.5">
+<div class="w-8 h-8 flex items-center justify-center bg-[#071f18] rounded border border-[#1b5042] p-0.5">
+<img alt="POKÉMON" class="w-full h-full object-contain pixel-art" id="card-sprite" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDC4V0hBkxspt7jt3et2hfhfHNOnnhhpJXgOEX3M9WRGlaHTrsRa6zTJ4wMn7NZs4S5n4k8MWEf8tIbxLR143eFFiURCzyjW0PBgfZr8GXTlja9u0x7BqTaXLNmntx7uz2fbsIA9yIZA8EVCfmTWn7xL-3N4y9kQrxK6Z5eDTCv_LFey1nuEL9Rq3_kj8Cp50XegagiWHQU7AKkAh4d-SgILZbex4RJRy2m2Ijx0BNm">
+</div>
+<div>
+<h2 class="text-[10px] font-pixel text-[#fde68a] font-bold" id="card-name">MUDKIP</h2>
+<span class="text-[7px] font-pixel text-[#a7f3d0]" id="card-level">LV. 7</span>
+</div>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="text-[6.5px] font-pixel text-[#99f6e4] opacity-80">HELD ITEM</span>
+<span class="text-[7px] font-pixel text-white font-bold truncate max-w-[80px]" id="card-item">SILK SCARF</span>
+</div>
+</div>
+</div>
+<div class="flex-1 my-1.5 flex flex-col overflow-hidden">
+<div class="flex items-center justify-between pb-1 px-0.5 border-b border-[#c3b99f]">
+<span class="text-[7.5px] font-pixel font-bold text-[#143228]">PARTY ROSTER (6)</span>
+<span class="text-[6px] font-pixel text-[#047857] bg-[#ede8d5] px-1 py-0.5 rounded border border-[#a89d81]">SELECT TO INSPECT</span>
+</div>
+<div class="space-y-1 mt-1 overflow-y-auto pr-0.5 flex-1" id="cond-roster-list" style="scrollbar-width: thin;"><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🌊</span>
+          <span class="font-bold text-[#143228]">MUDKIP</span>
+        </div>
+        <span class="text-[6.5px] text-[#047857] font-bold">LV. 7</span>
+      </div><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🔥</span>
+          <span class="font-bold text-[#143228]">TORCHIC</span>
+        </div>
+        <span class="text-[6.5px] text-[#047857] font-bold">LV. 5</span>
+      </div><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🔮</span>
+          <span class="font-bold text-[#143228]">RALTS</span>
+        </div>
+        <span class="text-[6.5px] text-[#047857] font-bold">LV. 5</span>
+      </div><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🕊️</span>
+          <span class="font-bold text-[#143228]">TAILLOW</span>
+        </div>
+        <span class="text-[6.5px] text-[#047857] font-bold">LV. 6</span>
+      </div><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🦝</span>
+          <span class="font-bold text-[#143228]">ZIGZAGOON</span>
+        </div>
+        <span class="text-[6.5px] text-[#047857] font-bold">LV. 4</span>
+      </div><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🐛</span>
+          <span class="font-bold text-[#143228]">WURMPLE</span>
+        </div>
+        <span class="text-[6.5px] text-[#047857] font-bold">LV. 3</span>
+      </div></div>
+</div>
+<div class="bg-[#ded7c1] border border-[#264e3e] p-1.5 rounded flex flex-col space-y-1">
+<div class="flex items-center justify-between text-[7px] font-pixel font-bold text-[#16382b]">
+<div class="flex items-center gap-1"><span class="">🍬</span> <span class="">POKÉBLOCK CASE:</span></div>
+<button class="bg-[#047857] hover:bg-[#059669] active:scale-95 text-[#fde68a] px-1.5 py-0.5 rounded text-[6.5px] font-pixel font-bold border border-[#10b981] shadow-sm cursor-pointer transition flex items-center gap-1" id="btn-quick-feed" onclick="openPokeblockModal()">
+<span class="">▲ FEED</span>
+</button>
+</div>
+<div class="flex items-center justify-between text-[6.5px] font-pixel text-[#244234]">
+<span class="">CONTEST SHEEN:</span>
+<span class="font-bold text-[#065f46]" id="cond-sheen-label">95 / 255</span>
+</div>
+<div class="w-full h-2 bg-[#b6ac93] rounded-full overflow-hidden p-0.5 border border-[#8f856f]">
+<div class="h-full bg-gradient-to-r from-[#10b981] to-[#34d399] rounded-full transition-all duration-500" id="cond-sheen-bar" style="width: 37%;"></div>
+</div>
+</div>
+</div>
+<!-- Right Column: Radar & Stats -->
+<div class="flex-1 h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden relative">
+<div class="w-full h-6 px-2 bg-[#0d2820] text-[#a7f3d0] rounded flex items-center justify-between text-[8px] font-pixel mb-1.5 flex-shrink-0">
+<div class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
+<span id="cond-header-title" class="">CONTEST CONDITION RADAR (GEN-3 CANONICAL)</span>
+</div>
+<span class="text-[7px] text-[#6ee7b7]">DEVON CALIBRATED • 5 ATTRIBUTES</span>
+</div>
+<div class="flex-1 flex gap-2 items-stretch overflow-hidden relative">
+<!-- Flash reaction container -->
+<div class="absolute inset-0 pointer-events-none z-30 hidden flex items-center justify-center" id="feed-particle-fx">
+<div class="bg-[#fde68a] text-[#143228] px-3 py-1.5 rounded-lg border-2 border-[#b45309] font-pixel text-[8px] shadow-2xl animate-bounce flex items-center gap-1.5">
+<span class="text-sm">✨</span> <span id="fx-message-text" class="">SHEEN &amp; ATTRIBUTES RAISED!</span> <span class="text-sm">⭐</span>
+</div>
+</div>
+<div class="relative w-[340px] h-full bg-[#ede8d5] rounded bevel-panel-inner flex items-center justify-center select-none overflow-hidden">
+<div class="relative w-[280px] h-[280px] flex items-center justify-center">
+<svg class="w-full h-full" id="radar-svg" viewBox="0 0 280 280">
+<polygon fill="#faf7ee" fill-opacity="0.6" points="140,40 235,109 199,221 81,221 45,109" stroke="#254d3e" stroke-width="2.2"></polygon>
+<polygon fill="none" points="140,62 214,116 186,203 94,203 66,116" stroke="#254d3e" stroke-dasharray="3,2" stroke-opacity="0.55" stroke-width="1.2"></polygon>
+<polygon fill="none" points="140,81 196,122 175,188 105,188 84,122" stroke="#254d3e" stroke-dasharray="2,2" stroke-opacity="0.45" stroke-width="1.1"></polygon>
+<polygon fill="none" points="140,101 177,128 163,172 117,172 103,128" stroke="#254d3e" stroke-dasharray="2,2" stroke-opacity="0.4" stroke-width="1"></polygon>
+<line stroke="#e74c3c" stroke-opacity="0.65" stroke-width="1.5" x1="140" x2="140" y1="140" y2="40"></line>
+<line stroke="#3498db" stroke-opacity="0.65" stroke-width="1.5" x1="140" x2="235" y1="140" y2="109"></line>
+<line stroke="#e84393" stroke-opacity="0.65" stroke-width="1.5" x1="140" x2="199" y1="140" y2="221"></line>
+<line stroke="#2ecc71" stroke-opacity="0.65" stroke-width="1.5" x1="140" x2="81" y1="140" y2="221"></line>
+<line stroke="#f39c12" stroke-opacity="0.65" stroke-width="1.5" x1="140" x2="45" y1="140" y2="109"></line>
+<polygon fill="#10b981" fill-opacity="0.55" id="radar-pentagon" points="140,114.5 156.9,127.7 186.2,203.2 110.8,179.9 71.2,117.8" stroke="#047857" stroke-width="2.5" style="transition: all 0.5s ease-out;"></polygon>
+</svg>
+<div class="absolute -top-1 left-1/2 -translate-x-1/2 text-[7.5px] font-pixel font-bold text-[#e74c3c] bg-[#fdfbf6] px-1 rounded border border-[#e74c3c]">COOL</div>
+<div class="absolute top-[28%] -right-2 text-[7.5px] font-pixel font-bold text-[#2980b9] bg-[#fdfbf6] px-1 rounded border border-[#3498db]">BEAUTY</div>
+<div class="absolute -bottom-1 right-2 text-[7.5px] font-pixel font-bold text-[#d63031] bg-[#fdfbf6] px-1 rounded border border-[#e84393]">CUTE</div>
+<div class="absolute -bottom-1 left-2 text-[7.5px] font-pixel font-bold text-[#27ae60] bg-[#fdfbf6] px-1 rounded border border-[#2ecc71]">SMART</div>
+<div class="absolute top-[28%] -left-2 text-[7.5px] font-pixel font-bold text-[#d35400] bg-[#fdfbf6] px-1 rounded border border-[#f39c12]">TOUGH</div>
+</div>
+</div>
+<div class="flex-1 bg-[#ded7c1] p-2 rounded border border-[#214737] flex flex-col justify-between overflow-hidden">
+<div class="flex items-center justify-between border-b border-[#c3b99f] pb-1">
+<span class="text-[#13392b] font-bold text-[8px] font-pixel">CONTEST ATTRIBUTES</span>
+<span class="text-[6.5px] font-pixel text-[#065f46] bg-[#a7f3d0] px-1 rounded font-bold">MAX 255</span>
+</div>
+<div class="space-y-1 my-1">
+<div class="flex flex-col space-y-0.5 bg-[#fdfbf6] px-1.5 py-0.5 rounded border border-[#ccc2a6]">
+<div class="flex justify-between items-center leading-none"><span class="text-[#e74c3c] font-bold text-[7px]">COOL:</span><span class="text-[7px]" id="stat-cool">65 / 255</span></div>
+<div class="w-full h-1 bg-[#ded7c1] rounded-full overflow-hidden"><div class="h-full bg-[#e74c3c] transition-all duration-500" id="bar-cool" style="width: 25%;"></div></div>
+</div>
+<div class="flex flex-col space-y-0.5 bg-[#fdfbf6] px-1.5 py-0.5 rounded border border-[#ccc2a6]">
+<div class="flex justify-between items-center leading-none"><span class="text-[#3498db] font-bold text-[7px]">BEAUTY:</span><span class="text-[7px]" id="stat-beauty">45 / 255</span></div>
+<div class="w-full h-1 bg-[#ded7c1] rounded-full overflow-hidden"><div class="h-full bg-[#3498db] transition-all duration-500" id="bar-beauty" style="width: 17%;"></div></div>
+</div>
+<div class="flex flex-col space-y-0.5 bg-[#fdfbf6] px-1.5 py-0.5 rounded border border-[#ccc2a6]">
+<div class="flex justify-between items-center leading-none"><span class="text-[#e84393] font-bold text-[7px]">CUTE:</span><span class="text-[7px]" id="stat-cute">130 / 255</span></div>
+<div class="w-full h-1 bg-[#ded7c1] rounded-full overflow-hidden"><div class="h-full bg-[#e84393] transition-all duration-500" id="bar-cute" style="width: 50%;"></div></div>
+</div>
+<div class="flex flex-col space-y-0.5 bg-[#fdfbf6] px-1.5 py-0.5 rounded border border-[#ccc2a6]">
+<div class="flex justify-between items-center leading-none"><span class="text-[#2ecc71] font-bold text-[7px]">SMART:</span><span class="text-[7px]" id="stat-smart">80 / 255</span></div>
+<div class="w-full h-1 bg-[#ded7c1] rounded-full overflow-hidden"><div class="h-full bg-[#2ecc71] transition-all duration-500" id="bar-smart" style="width: 31%;"></div></div>
+</div>
+<div class="flex flex-col space-y-0.5 bg-[#fdfbf6] px-1.5 py-0.5 rounded border border-[#ccc2a6]">
+<div class="flex justify-between items-center leading-none"><span class="text-[#f39c12] font-bold text-[7px]">TOUGH:</span><span class="text-[7px]" id="stat-tough">185 / 255</span></div>
+<div class="w-full h-1 bg-[#ded7c1] rounded-full overflow-hidden"><div class="h-full bg-[#f39c12] transition-all duration-500" id="bar-tough" style="width: 72%;"></div></div>
+</div>
+</div>
+<div class="bg-[#ede8d5] p-1.5 rounded border border-[#bab096] flex items-center justify-between text-[7px] font-pixel">
+<span class="text-[#3c574c] font-bold">TASTE:</span>
+<span class="text-[#0e2c24] font-bold truncate max-w-[145px]" id="cond-taste-pref">LIKES SPICY / DISLIKES DRY</span>
+</div>
+<div class="bg-[#0e2c24] text-[#a7f3d0] px-2 py-1 rounded text-[7px] text-center font-bold tracking-wider font-pixel truncate" id="cond-optimal-tag">QUALIFIED: TOUGH SUPER RANK</div>
+</div>
+</div>
+<div class="w-full mt-1.5 px-2 py-1 bg-[#ded7c1] border border-[#224436] rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b] flex-shrink-0">
+<span class="">CLICK POKÉMON TO SWITCH • FEED POKÉBLOCKS TO BOOST</span>
+<div class="flex items-center space-x-2">
+<button class="bg-[#124235] hover:bg-[#245244] text-[#99f6e4] px-2 py-0.5 rounded border border-[#2dd4bf] text-[6.5px] cursor-pointer flex items-center gap-1 active:scale-95 transition" onclick="openPokeblockModal()">
+<span class="">🍬 POKÉBLOCK CASE</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- ==================== TAB 4: RIBBONS ==================== -->
+<div class="w-full h-full gap-2.5 hidden" id="panel-mode-ribbons">
+<div class="w-[260px] h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden text-[#16271c] flex-shrink-0">
+<div class="bg-[#0e2c24] text-white p-2 rounded border border-[#1b5042] shadow-sm flex items-center justify-between">
+<div>
+<span class="text-[7px] text-[#5eead4] font-pixel">HOENN ARCHIVE</span>
+<h2 class="text-[10px] font-pixel text-[#fde68a] font-bold">CONTESTANTS</h2>
+</div>
+<span class="text-xl">🌊</span>
+</div>
+<div class="flex-1 my-1.5 overflow-hidden flex flex-col">
+<div class="flex items-center justify-between pb-1 px-0.5 border-b border-[#c3b99f] text-[7.5px] font-pixel text-[#143228]">
+<span class="">PARTY MEMBERS</span>
+</div>
+<div class="space-y-1 mt-1 overflow-y-auto pr-0.5 flex-1" id="ribbon-pokemon-list"><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🌊</span>
+          <span class="font-bold text-[#143228]">MUDKIP</span>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] px-1 rounded font-bold">LV. 7</span>
+      </div><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🔥</span>
+          <span class="font-bold text-[#143228]">TORCHIC</span>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] px-1 rounded font-bold">LV. 5</span>
+      </div><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🔮</span>
+          <span class="font-bold text-[#143228]">RALTS</span>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] px-1 rounded font-bold">LV. 5</span>
+      </div><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🕊️</span>
+          <span class="font-bold text-[#143228]">TAILLOW</span>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] px-1 rounded font-bold">LV. 6</span>
+      </div><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🦝</span>
+          <span class="font-bold text-[#143228]">ZIGZAGOON</span>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] px-1 rounded font-bold">LV. 4</span>
+      </div><div class="flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer">
+        <div class="flex items-center space-x-1.5">
+          <span class="">🐛</span>
+          <span class="font-bold text-[#143228]">WURMPLE</span>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] px-1 rounded font-bold">LV. 3</span>
+      </div></div>
+</div>
+<div class="bg-[#ded7c1] border border-[#264e3e] p-1.5 rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b]">
+<span class="font-bold">HONORS:</span>
+<span class="bg-[#10b981] text-[#022c22] font-bold px-1.5 py-0.5 rounded">05 RIBBONS</span>
+</div>
+</div>
+<div class="flex-1 h-full bevel-box-cream rounded-lg p-2 flex flex-col justify-between overflow-hidden relative">
+<div class="w-full h-6 px-2 bg-[#0d2820] text-[#a7f3d0] rounded flex items-center justify-between text-[8px] font-pixel mb-1.5 flex-shrink-0">
+<span class="text-[#a7f3d0]">RIBBON CASE: MUDKIP (LV. 7)</span>
+<span class="text-[7px] text-[#6ee7b7]">DEVON CERTIFIED HONORS</span>
+</div>
+<div class="flex-1 flex gap-2 overflow-hidden">
+<div class="flex-1 bg-[#ede8d5] rounded p-2 border border-[#c3b99f] flex flex-col justify-between overflow-hidden">
+<div class="flex items-center justify-between pb-1 border-b border-[#c3b99f] text-[7.5px] font-pixel text-[#143228]">
+<span class="">COMMENDATIONS EARNED</span>
+<span class="text-[6.5px] text-[#047857]">5 / 12 UNLOCKED</span>
+</div>
+<div class="grid grid-cols-4 gap-2 my-1.5 flex-1 overflow-y-auto pr-0.5" id="ribbons-grid-container"><div class="p-1.5 bg-[#fdfbf6] rounded border border-[#ccc2a6] flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#10b981]"><span class="text-xl mb-1">🎗️</span><span class="text-[5.5px] font-bold text-[#143228]">TOUGH RIBBON</span></div><div class="p-1.5 bg-[#fdfbf6] rounded border border-[#ccc2a6] flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#10b981]"><span class="text-xl mb-1">🎗️</span><span class="text-[5.5px] font-bold text-[#143228]">TOUGH SUPER</span></div><div class="p-1.5 bg-[#fdfbf6] rounded border border-[#ccc2a6] flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#10b981]"><span class="text-xl mb-1">🎀</span><span class="text-[5.5px] font-bold text-[#143228]">CUTE RIBBON</span></div><div class="p-1.5 bg-[#fdfbf6] rounded border border-[#ccc2a6] flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#10b981]"><span class="text-xl mb-1">🏅</span><span class="text-[5.5px] font-bold text-[#143228]">EFFORT RIBBON</span></div><div class="p-1.5 bg-[#fdfbf6] rounded border border-[#ccc2a6] flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#10b981]"><span class="text-xl mb-1">👑</span><span class="text-[5.5px] font-bold text-[#143228]">CHAMPION RIBBON</span></div></div>
+<div class="text-[6px] font-pixel text-[#557568] bg-[#ded7c1] p-1 rounded border border-[#c3b99f]">
+              Ribbons awarded in Hoenn Contests stay permanently.
+            </div>
+</div>
+<div class="w-[230px] bg-[#ded7c1] rounded p-2 border border-[#214737] flex flex-col justify-between flex-shrink-0 overflow-hidden">
+<div class="bg-[#0b241c] text-white p-2 rounded border border-[#1b5545] flex flex-col items-center text-center">
+<div class="w-12 h-12 rounded-lg bg-[#051610] border-2 border-[#2b6d58] flex items-center justify-center text-2xl mb-1">🎗️</div>
+<h4 class="text-[8px] font-pixel text-[#fde68a] font-bold" id="inspect-ribbon-name">TOUGH RIBBON</h4>
+<span class="text-[6.5px] font-pixel text-[#5eead4]">VERDANTURF HALL</span>
+</div>
+<div class="bg-[#ede8d5] p-2 rounded border border-[#bab096] text-[7px] font-pixel text-[#16382b] flex-1 my-1.5 flex flex-col justify-between">
+<p class="text-[6.5px] text-[#2d4d3e] leading-relaxed" id="inspect-ribbon-desc">"Awarded for clearing Normal Rank Tough Contest in Verdanturf Town."</p>
+<div class="pt-1.5 border-t border-[#c3b99f] flex justify-between text-[6.5px]">
+<span class="text-[#557568]">DATE:</span>
+<span class="font-bold text-[#047857]">MAY 12, 2003</span>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full mt-1.5 px-2 py-1 bg-[#ded7c1] border border-[#224436] rounded flex items-center justify-between text-[7px] font-pixel text-[#16382b] flex-shrink-0">
+<span class="">SELECT ANY RIBBON TO READ HALL RECORDS</span>
+<span class="text-[#047857] font-bold">HOENN REGISTRY</span>
+</div>
+</div>
+</div>
+</main>
+<!-- MATCH CALL DIALOGUE MODAL -->
+<div class="absolute inset-0 z-50 bg-[#000000]/80 flex items-center justify-center p-3 select-none hidden" id="transceiver-dialogue-modal" onclick="if(event.target === this) closeTransceiverCall()" style="backdrop-filter: none;">
+<div class="relative w-[680px] bg-[#f7f4e9] border-[3px] border-[#0a271f] rounded shadow-2xl flex flex-col overflow-hidden" onclick="event.stopPropagation()">
+<div class="h-9 px-3 bg-[#0a231b] border-b-2 border-[#125844] flex items-center justify-between text-white flex-shrink-0">
+<div class="flex items-center space-x-2">
+<span class="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-ping"></span>
+<span class="text-[9px] font-pixel text-[#fde68a] font-bold">DEVON TRANSCEIVER LINK ESTABLISHED</span>
+</div>
+<div class="flex items-center space-x-2 text-[7.5px] font-pixel">
+<span class="text-[#6ee7b7] bg-[#163f35] px-1.5 py-0.5 rounded border border-[#2b5849]" id="transceiver-freq-pill">CH: 105.1 MHz</span>
+<button class="ml-2 w-5 h-5 bg-[#cc2233] hover:bg-[#e11d48] text-white rounded flex items-center justify-center text-[10px] font-bold cursor-pointer transition border border-[#991b1b]" onclick="closeTransceiverCall()">✕</button>
+</div>
+</div>
+<div class="p-3 bg-[#ede8d5] flex gap-3 items-stretch">
+<div class="w-24 bg-[#071f18] border-2 border-[#2b6d58] rounded p-2 flex flex-col items-center justify-between shadow-inner flex-shrink-0">
+<div class="w-14 h-14 rounded-full bg-[#0d2820] border-2 border-[#10b981] flex items-center justify-center shadow-md relative overflow-hidden">
+<span class="text-3xl" id="transceiver-avatar">🪨</span>
+</div>
+<div class="text-center mt-1">
+<div class="text-[7.5px] font-pixel text-[#fde68a] font-bold truncate max-w-[80px]" id="transceiver-caller-id">ROXANNE</div>
+<span class="text-[6px] font-pixel text-[#6ee7b7]" id="transceiver-caller-sub">RUSTBORO</span>
+</div>
+<div class="w-full flex items-end justify-center gap-1 h-4 bg-[#051310] rounded p-0.5 border border-[#1b5042]">
+<span class="w-1 bg-[#10b981] rounded-full animate-pulse h-2"></span>
+<span class="w-1 bg-[#10b981] rounded-full animate-pulse h-3.5"></span>
+<span class="w-1 bg-[#22c55e] rounded-full animate-pulse h-2.5"></span>
+<span class="w-1 bg-[#10b981] rounded-full animate-pulse h-4"></span>
+</div>
+</div>
+<div class="flex-1 bg-white border-2 border-[#1a4a3c] rounded p-3 shadow-inner flex flex-col justify-between min-h-[140px]">
+<div>
+<div class="flex items-center justify-between text-[7px] font-pixel text-[#065f46] font-bold mb-1.5 border-b border-[#ded7c1] pb-1">
+<span class="text-[#143228] text-[7.5px]" id="transceiver-caller-name">ROXANNE (RUSTBORO GYM LEADER)</span>
+<span class="text-[#059669] bg-[#a7f3d0] px-1 py-0.5 rounded text-[6px]">VOICE SIGNAL 100%</span>
+</div>
+<div class="bg-[#fdfbf6] p-2.5 rounded border border-[#d1c8af] my-1">
+<p class="text-[8px] font-pixel text-[#0f2d24] leading-relaxed" id="transceiver-dialogue-text">"Greetings Brendan! I have been reviewing our first battle at Rustboro Gym. My team is prepared for a rematch!"</p>
+</div>
+</div>
+<div class="flex items-center justify-between text-[6.5px] font-pixel pt-1 border-t border-[#ded7c1]">
+<span class="text-[#557568]">SECURE DEVON RELAY ACTIVE</span>
+<button class="px-2.5 py-1 bg-[#cc2233] hover:bg-[#dc2626] border border-[#991b1b] text-white rounded font-bold cursor-pointer transition" onclick="closeTransceiverCall()">[○] END CALL</button>
+</div>
+</div>
+</div>
+</div>
+</div> <!-- POKÉBLOCK CASE MODAL (FEED SYSTEM) -->
+<div class="absolute inset-0 z-50 bg-[#000000]/80 flex items-center justify-center p-3 select-none hidden" id="pokeblock-case-modal" onclick="if(event.target === this) closePokeblockModal()">
+<div class="relative w-[680px] bg-[#f7f4e9] border-[3px] border-[#0a271f] rounded shadow-2xl flex flex-col overflow-hidden" onclick="event.stopPropagation()">
+<div class="h-9 px-3 bg-[#0a231b] border-b-2 border-[#125844] flex items-center justify-between text-white flex-shrink-0">
+<div class="flex items-center space-x-2">
+<span class="text-sm">🍬</span>
+<span class="text-[9px] font-pixel text-[#fde68a] font-bold">DEVON POKÉBLOCK CASE • FEED CONTESTANT</span>
+</div>
+<div class="flex items-center space-x-2 text-[7.5px] font-pixel">
+<span class="text-[#6ee7b7] bg-[#163f35] px-1.5 py-0.5 rounded border border-[#2b5849]" id="pb-modal-target-label">TARGET: MUDKIP</span>
+<button class="ml-2 w-5 h-5 bg-[#cc2233] hover:bg-[#e11d48] text-white rounded flex items-center justify-center text-[10px] font-bold cursor-pointer transition border border-[#991b1b]" onclick="closePokeblockModal()">✕</button>
+</div>
+</div>
+<div class="p-3 bg-[#ede8d5] flex gap-3 items-stretch">
+<!-- Current recipient brief -->
+<div class="w-24 bg-[#071f18] border-2 border-[#2b6d58] rounded p-2 flex flex-col items-center justify-between shadow-inner flex-shrink-0">
+<div class="w-14 h-14 rounded-full bg-[#0d2820] border-2 border-[#10b981] flex items-center justify-center shadow-md relative overflow-hidden p-1">
+<img alt="REC" class="w-full h-full object-contain pixel-art" id="pb-recipient-img" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjhSGZaszR439RDtc1wBKE3anNLDlnzuQ5WlQi-bd9JPPVVmHHafyGp0ENJal8ZbMLRU91XpRI8jz6MOyUu3f3mUvfKzEz-vbWS84RWUWLku3th6uPB5-xKrztkL0H1KtL1aqMr3SzN44H0EwlyTrGZvdkfCmEQ2YkACT8Y7qbIRyVASv262XpTOXbcsNbssA3Lg7M9ELNloF4c-qGZRxb3VjoWMGF0cTU0sUfxrFz">
+</div>
+<div class="text-center mt-1">
+<div class="text-[7.5px] font-pixel text-[#fde68a] font-bold truncate max-w-[80px]" id="pb-recipient-name">MUDKIP</div>
+<span class="text-[6px] font-pixel text-[#6ee7b7]" id="pb-recipient-nature">ADAMANT</span>
+</div>
+<div class="w-full bg-[#051310] rounded p-1 border border-[#1b5042] text-center">
+<span class="text-[5.5px] font-pixel text-[#a7f3d0] leading-none block">SHEEN</span>
+<span class="text-[6.5px] font-pixel font-bold text-[#fde68a]" id="pb-recipient-sheen">95/255</span>
+</div>
+</div>
+<!-- Pokéblocks Grid -->
+<div class="flex-1 bg-white border-2 border-[#1a4a3c] rounded p-2.5 shadow-inner flex flex-col justify-between min-h-[140px]">
+<div>
+<div class="flex items-center justify-between text-[7px] font-pixel text-[#065f46] font-bold mb-1.5 border-b border-[#ded7c1] pb-1">
+<span class="text-[#143228] text-[7.5px]">SELECT BLEND FROM CASE</span>
+<span class="text-[#059669] bg-[#a7f3d0] px-1 py-0.5 rounded text-[6px]">TOUCH / CLICK TO FEED</span>
+</div>
+<div class="grid grid-cols-3 gap-2 my-1" id="pb-blocks-grid">
+<!-- Populated by JavaScript -->
+</div>
+</div>
+<div class="flex items-center justify-between text-[6.5px] font-pixel pt-1 border-t border-[#ded7c1]">
+<span class="text-[#557568]">DEVON FLAVOR INTEGRATION ENGINE</span>
+<button class="px-2.5 py-1 bg-[#cc2233] hover:bg-[#dc2626] border border-[#991b1b] text-white rounded font-bold cursor-pointer transition" onclick="closePokeblockModal()">[○] CLOSE CASE</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- PS Vita Footer (40px) -->
+<footer class="relative z-10 w-full h-[40px] px-3 bg-[#07131a] border-t-2 border-[#112933] flex items-center justify-between text-white text-[9px] font-pixel shadow-2xl flex-shrink-0">
+<div class="flex items-center space-x-3.5"><div class="flex items-center space-x-1 cursor-pointer hover:opacity-80" onclick="handleCrossAction()">
+<span class="w-4 h-4 rounded-full bg-[#0066cc] border border-[#5eaaff] flex items-center justify-center text-[9px] font-bold text-white shadow leading-none">✕</span>
+<span class="text-[#ccd7e6] text-[7.5px]" id="footer-label-cross">NEXT POKÉMON</span>
+</div>
+<div class="flex items-center space-x-1 cursor-pointer hover:opacity-80" onclick="handleCircleAction()">
+<span class="w-4 h-4 rounded-full bg-[#cc2233] border border-[#ff7788] flex items-center justify-center text-[9px] font-bold text-white shadow leading-none">○</span>
+<span class="text-[#ccd7e6] text-[7.5px]">BACK / EXIT</span>
+</div>
+<div class="flex items-center space-x-1 cursor-pointer hover:opacity-80" onclick="handleTriangleAction()">
+
+
+</div>
+<div class="flex items-center space-x-1 cursor-pointer hover:opacity-80" onclick="handleSquareAction()">
+
+
+</div></div>
+<div class="flex items-center space-x-3">
+<div class="flex items-center space-x-1.5 bg-[#0b1f26] px-2 py-0.5 rounded border border-[#163a47] text-[7.5px] text-[#7dd3fc]">
+<span class="font-bold text-white">L / R</span>
+<span class="text-[#94a3b8]">TABS</span>
+</div>
+<div class="flex items-center space-x-2 text-[7.5px]">
+<span class="bg-[#0b241c] px-1.5 py-0.5 rounded border border-[#144f3d] text-[#86efac]">[START] <span class="text-white">MENU</span></span>
+</div>
+<span class="text-[8px] text-[#cbd5e1] font-pixel">10:42</span>
+<div class="flex items-center space-x-1 pl-1 border-l border-[#1b3a47]">
+<div class="w-5 h-2.5 bg-[#05131a] border border-[#2b596d] rounded-sm p-[1px] flex items-center">
+<div class="w-full h-full bg-[#00dd66] rounded-[1px]"></div>
+</div>
+<span class="text-[8px] text-[#00dd66] font-pixel">100%</span>
+</div>
+</div>
+</footer>
+</div>
+<script>
+  // ==================== COMPREHENSIVE MATCH CALL CONTACTS DIRECTORY (0 to 6 POKEMON) ====================
+  const MATCH_CONTACTS = [
+    {
+      id: "mom", name: "MOM", title: "HOMECARE / LITTLEROOT", location: "LITTLEROOT TOWN",
+      avatar: "🏡", freq: "101.2 MHz", readyRematch: false, callCount: "14 CALLS EXCHANGED",
+      statusText: "HOME TRANSCEIVER",
+      messages: [
+        { sender: "MOM", icon: "🏡", time: "09:15 AM", text: "Brendan, honey! Are you wearing your Running Shoes properly? Don't forget to rest!", highlight: false },
+        { sender: "INCOMING TRANSMISSION", icon: "📡", time: "JUST NOW", text: "Norman said your Pokémon are growing stronger by the day. Littleroot is cheering for you!", highlight: true }
+      ],
+      team: [] // 0 Pokémon - Non Combatant
+    },
+    {
+      id: "birch", name: "PROF. BIRCH", title: "POKÉMON RESEARCHER", location: "HOENN FIELD LAB",
+      avatar: "🔬", freq: "102.8 MHz", readyRematch: false, callCount: "09 CALLS EXCHANGED",
+      statusText: "FIELD LAB RELAY",
+      messages: [
+        { sender: "PROF. BIRCH", icon: "🔬", time: "07:30 AM", text: "Brendan! I was just taking habitat surveys in the tall grass on Route 101!", highlight: false },
+        { sender: "FIELD LAB", icon: "📡", time: "JUST NOW", text: "Check your Hoenn Map habitats tab often to fill your Pokédex records!", highlight: true }
+      ],
+      team: [] // 0 Pokémon - Non Combatant
+    },
+    {
+      id: "roxanne", name: "ROXANNE", title: "RUSTBORO GYM LEADER", location: "RUSTBORO GYM",
+      avatar: "🪨", freq: "105.1 MHz", readyRematch: true, callCount: "12 CALLS EXCHANGED",
+      statusText: "RUSTBORO GYM / LEADER",
+      messages: [
+        { sender: "ROXANNE", icon: "🪨", time: "09:00 AM", text: "Greetings Brendan! I have been reviewing our first battle at Rustboro Gym.", highlight: false },
+        { sender: "REMATCH ALERT", icon: "⚔️", time: "JUST NOW", text: "Geodude and Nosepass have refined their Rock Tomb defense! Whenever you're ready, let us duel!", highlight: true }
+      ],
+      team: [
+        { name: "GEODUDE", level: "LV. 21", types: ["ROCK", "GROUND"], ability: "ROCK HEAD • ROCK THROW", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/74.png" },
+        { name: "GEODUDE", level: "LV. 21", types: ["ROCK", "GROUND"], ability: "STURDY • DEFENSE CURL", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/74.png" },
+        { name: "NOSEPASS", level: "LV. 23", types: ["ROCK"], ability: "MAGNET PULL • ROCK TOMB", isAce: true, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/299.png" }
+      ] // 3 Pokémon
+    },
+    {
+      id: "brawly", name: "BRAWLY", title: "DEWFORD GYM LEADER", location: "DEWFORD GYM",
+      avatar: "🏄", freq: "106.3 MHz", readyRematch: true, callCount: "08 CALLS EXCHANGED",
+      statusText: "DEWFORD SAT-LINK",
+      messages: [
+        { sender: "BRAWLY", icon: "🏄", time: "08:15 AM", text: "Yo Brendan! We just finished morning training riding the big swells at Dewford!", highlight: false },
+        { sender: "BRAWLY", icon: "🥊", time: "JUST NOW", text: "Makuhita's Bulk Up form is at maximum power! You won't knock us down easily!", highlight: true }
+      ],
+      team: [
+        { name: "MACHOP", level: "LV. 16", types: ["FIGHTING"], ability: "GUTS • KARATE CHOP", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/66.png" },
+        { name: "MEDITITE", level: "LV. 16", types: ["FIGHTING", "PSYCHIC"], ability: "PURE POWER • FOCUS PUNCH", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/307.png" },
+        { name: "MAKUHITA", level: "LV. 19", types: ["FIGHTING"], ability: "THICK FAT • BULK UP ACE", isAce: true, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/296.png" }
+      ] // 3 Pokémon
+    },
+    {
+      id: "wattson", name: "WATTSON", title: "MAUVILLE GYM LEADER", location: "MAUVILLE GYM",
+      avatar: "⚡", freq: "107.0 MHz", readyRematch: false, callCount: "11 CALLS EXCHANGED",
+      statusText: "MAUVILLE GYM NET",
+      messages: [
+        { sender: "WATTSON", icon: "⚡", time: "10:24 AM", text: "Wahahaha! Brendan, my boy! Electric sparks are flying high at New Mauville today!", highlight: false },
+        { sender: "MAUVILLE GYM", icon: "⚡", time: "JUST NOW", text: "Voltorb and Manectric are charged to 100,000 Volts! Don't get short-circuited!", highlight: true }
+      ],
+      team: [
+        { name: "VOLTORB", level: "LV. 20", types: ["ELECTRIC"], ability: "SOUNDPROOF • SPARK", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/100.png" },
+        { name: "ELECTRIKE", level: "LV. 20", types: ["ELECTRIC"], ability: "STATIC • QUICK ATTACK", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/309.png" },
+        { name: "MAGNETON", level: "LV. 22", types: ["ELECTRIC", "STEEL"], ability: "MAGNET PULL • SONIC BOOM", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/82.png" },
+        { name: "MANECTRIC", level: "LV. 24", types: ["ELECTRIC"], ability: "LIGHTNING ROD • THUNDER", isAce: true, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/310.png" }
+      ] // 4 Pokémon
+    },
+    {
+      id: "flannery", name: "FLANNERY", title: "LAVARIDGE GYM LEADER", location: "LAVARIDGE GYM",
+      avatar: "🔥", freq: "108.2 MHz", readyRematch: false, callCount: "06 CALLS EXCHANGED",
+      statusText: "LAVARIDGE HOT SPRINGS",
+      messages: [
+        { sender: "FLANNERY", icon: "🔥", time: "08:50 AM", text: "Hello Brendan! The Lavaridge hot springs are steaming hot today!", highlight: false },
+        { sender: "FLANNERY", icon: "🔥", time: "JUST NOW", text: "I am practicing my fierce Gym Leader demeanor. Torkoal and I are ready to ignite!", highlight: true }
+      ],
+      team: [
+        { name: "SLUGMA", level: "LV. 26", types: ["FIRE"], ability: "FLAME BODY • SMOG", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/218.png" },
+        { name: "SLUGMA", level: "LV. 26", types: ["FIRE"], ability: "MAGMA ARMOR • OVERHEAT", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/218.png" },
+        { name: "TORKOAL", level: "LV. 28", types: ["FIRE"], ability: "WHITE SMOKE • FLAMETHROWER", isAce: true, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/324.png" }
+      ] // 3 Pokémon
+    },
+    {
+      id: "norman", name: "NORMAN", title: "PETALBURG GYM LEADER", location: "PETALBURG GYM",
+      avatar: "🥋", freq: "109.5 MHz", readyRematch: true, callCount: "15 CALLS EXCHANGED",
+      statusText: "PETALBURG GYM / DAD",
+      messages: [
+        { sender: "NORMAN", icon: "🥋", time: "07:15 AM", text: "Brendan, I hear word of your travels from trainers passing through Petalburg.", highlight: false },
+        { sender: "BALANCE ALERT", icon: "⚔️", time: "JUST NOW", text: "Slaking's power has reached peak form. True strength comes from inner harmony.", highlight: true }
+      ],
+      team: [
+        { name: "SPINDA", level: "LV. 27", types: ["NORMAL"], ability: "OWN TEMPO • TEETER DANCE", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/327.png" },
+        { name: "VIGOROTH", level: "LV. 27", types: ["NORMAL"], ability: "VITAL SPIRIT • SLASH", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/288.png" },
+        { name: "LINOONE", level: "LV. 29", types: ["NORMAL"], ability: "PICKUP • BELLY DRUM", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/264.png" },
+        { name: "SLAKING", level: "LV. 31", types: ["NORMAL"], ability: "TRUANT • HYPER BEAM ACE", isAce: true, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/289.png" }
+      ] // 4 Pokémon
+    },
+    {
+      id: "may", name: "MAY", title: "TRAINER & RIVAL", location: "ROUTE 119 BRIDGES",
+      avatar: "🎀", freq: "103.4 MHz", readyRematch: true, callCount: "18 CALLS EXCHANGED",
+      statusText: "ROUTE 119 RELAY",
+      messages: [
+        { sender: "MAY", icon: "🎀", time: "09:20 AM", text: "Brendan! I was just practicing Pokéblock blending over in Fallarbor Town!", highlight: false },
+        { sender: "REMATCH READY", icon: "⚔️", time: "JUST NOW", text: "Let's meet at Route 119 bridges! Be ready for an intense showdown with my team!", highlight: true }
+      ],
+      team: [
+        { name: "SWELLOW", level: "LV. 31", types: ["NORMAL", "FLYING"], ability: "GUTS • AERIAL ACE", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/277.png" },
+        { name: "WAILORD", level: "LV. 32", types: ["WATER"], ability: "WATER VEIL • WATER SPOUT", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/321.png" },
+        { name: "BRELOOM", level: "LV. 32", types: ["GRASS", "FIGHTING"], ability: "EFFECT SPORE • MACH PUNCH", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/286.png" },
+        { name: "GROVYLE", level: "LV. 34", types: ["GRASS"], ability: "OVERGROW • LEAF BLADE ACE", isAce: true, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/253.png" }
+      ] // 4 Pokémon
+    },
+    {
+      id: "wally", name: "WALLY", title: "RIVAL / VERDANTURF", location: "VICTORY ROAD ENTRANCE",
+      avatar: "🌱", freq: "104.8 MHz", readyRematch: true, callCount: "07 CALLS EXCHANGED",
+      statusText: "VICTORY ROAD SAT-LINK",
+      messages: [
+        { sender: "WALLY", icon: "🌱", time: "08:10 AM", text: "Brendan! Thanks to you and your dad, I've grown strong alongside Ralts!", highlight: false },
+        { sender: "WALLY", icon: "✨", time: "JUST NOW", text: "Ralts evolved into Gardevoir! My full team of 5 Pokémon is ready for any challenge!", highlight: true }
+      ],
+      team: [
+        { name: "ALTARIA", level: "LV. 44", types: ["DRAGON", "FLYING"], ability: "NATURAL CURE • DRAGON DANCE", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/334.png" },
+        { name: "DELCATTY", level: "LV. 43", types: ["NORMAL"], ability: "CUTE CHARM • SING", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/301.png" },
+        { name: "ROSELIA", level: "LV. 44", types: ["GRASS", "POISON"], ability: "POISON POINT • GIGA DRAIN", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/315.png" },
+        { name: "MAGNETON", level: "LV. 45", types: ["ELECTRIC", "STEEL"], ability: "MAGNET PULL • THUNDERBOLT", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/82.png" },
+        { name: "GARDEVOIR", level: "LV. 47", types: ["PSYCHIC"], ability: "SYNCHRONIZE • PSYCHIC ACE", isAce: true, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/282.png" }
+      ] // 5 Pokémon
+    },
+    {
+      id: "steven", name: "STEVEN STONE", title: "HOENN CHAMPION / DEVON", location: "METEOR FALLS INNER VAULT",
+      avatar: "💎", freq: "110.0 MHz", readyRematch: true, callCount: "21 CALLS EXCHANGED",
+      statusText: "CHAMPION SAT-COMM",
+      messages: [
+        { sender: "STEVEN", icon: "💎", time: "06:50 AM", text: "Brendan, I'm currently excavating rare ancient meteors deep within Meteor Falls.", highlight: false },
+        { sender: "CHAMPION ALERT", icon: "👑", time: "JUST NOW", text: "Metagross and my full 6-Pokémon formation have attained maximum battle resilience!", highlight: true }
+      ],
+      team: [
+        { name: "SKARMORY", level: "LV. 77", types: ["STEEL", "FLYING"], ability: "STURDY • SPIKES / TOXIC", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/227.png" },
+        { name: "CLAYDOL", level: "LV. 75", types: ["GROUND", "PSYCHIC"], ability: "LEVITATE • REFLECT / EQ", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/344.png" },
+        { name: "AGGRON", level: "LV. 76", types: ["STEEL", "ROCK"], ability: "ROCK HEAD • DOUBLE-EDGE", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/306.png" },
+        { name: "CRADILY", level: "LV. 76", types: ["ROCK", "GRASS"], ability: "SUCTION CUPS • ANCIENT POWER", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/346.png" },
+        { name: "ARMALDO", level: "LV. 76", types: ["ROCK", "BUG"], ability: "BATTLE ARMOR • X-SCISSOR", isAce: false, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/348.png" },
+        { name: "METAGROSS", level: "LV. 78", types: ["STEEL", "PSYCHIC"], ability: "CLEAR BODY • METEOR MASH ACE", isAce: true, sprite: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/376.png" }
+      ] // Full 6 Pokémon Roster!
+    }
+  ];
+
+  const TYPE_COLORS = {
+    NORMAL: "bg-[#94a3b8] text-[#0f172a]",
+    FIRE: "bg-[#ef4444] text-white",
+    WATER: "bg-[#3b82f6] text-white",
+    GRASS: "bg-[#10b981] text-[#064e3b]",
+    ELECTRIC: "bg-[#f59e0b] text-[#451a03]",
+    ROCK: "bg-[#b45309] text-white",
+    GROUND: "bg-[#d97706] text-white",
+    FIGHTING: "bg-[#dc2626] text-white",
+    PSYCHIC: "bg-[#ec4899] text-white",
+    STEEL: "bg-[#64748b] text-white",
+    FLYING: "bg-[#60a5fa] text-[#0c2340]",
+    DRAGON: "bg-[#6366f1] text-white",
+    POISON: "bg-[#a855f7] text-white",
+    BUG: "bg-[#84cc16] text-[#14532d]"
+  };
+
+  const HOENN_LOCATIONS = {
+    rustboro: {
+      name: "RUSTBORO CITY", type: "CITY / GYM (1)", coords: "COORD: X:05 Y:40", tag: "STONE BADGE",
+      desc: "The city probing the integration of nature and science. Home of Devon Corporation & Roxanne.",
+      pin: { x: 5, y: 40, type: "gym" },
+      connections: ["ROUTE 104", "ROUTE 115", "ROUTE 116", "RUSTURF TUNNEL"],
+      habitats: {
+        grass: [{ name: "TAILLOW", rate: "40%", icon: "🕊️", level: "LV. 5-7" }, { name: "NINCADA", rate: "30%", icon: "🪲", level: "LV. 6-8" }],
+        surf: [{ name: "WINGULL", rate: "60%", icon: "🌊", level: "LV. 10-20" }],
+        fish: [{ name: "MAGIKARP", rate: "70%", icon: "🐟", level: "LV. 10" }],
+        smash: [{ name: "GEODUDE", rate: "70%", icon: "🪨", level: "LV. 8-12" }]
+      }
+    },
+    littleroot: {
+      name: "LITTLEROOT TOWN", type: "HOMETOWN", coords: "COORD: X:18 Y:68", tag: "BIRCH LAB",
+      desc: "A town that can't be shaded by any hue. Starting point of Brendan's Hoenn adventure.",
+      pin: { x: 18, y: 68, type: "town" },
+      connections: ["ROUTE 101"],
+      habitats: {
+        grass: [{ name: "POOCHYENA", rate: "45%", icon: "🐺", level: "LV. 2-3" }, { name: "ZIGZAGOON", rate: "45%", icon: "🦝", level: "LV. 2-3" }],
+        surf: [{ name: "NONE", rate: "0%", icon: "🚫", level: "N/A" }],
+        fish: [{ name: "MAGIKARP", rate: "100%", icon: "🐟", level: "LV. 5" }],
+        smash: [{ name: "NONE", rate: "0%", icon: "🚫", level: "N/A" }]
+      }
+    }
+  };
+
+  const PARTY_ROSTER = [
+    { id: "mudkip", name: "MUDKIP", level: "LV. 7", nature: "ADAMANT", item: "SILK SCARF", icon: "🌊", cool: 65, beauty: 45, cute: 130, smart: 80, tough: 185, sheen: 95, taste: "LIKES SPICY / DISLIKES DRY", opt: "QUALIFIED: TOUGH SUPER RANK" },
+    { id: "torchic", name: "TORCHIC", level: "LV. 5", nature: "JOLLY", item: "CHARCOAL", icon: "🔥", cool: 180, beauty: 120, cute: 90, smart: 55, tough: 70, sheen: 110, taste: "LIKES SWEET / DISLIKES DRY", opt: "QUALIFIED: COOL SUPER RANK" },
+    { id: "ralts", name: "RALTS", level: "LV. 5", nature: "MODEST", item: "TWISTEDSPOON", icon: "🔮", cool: 40, beauty: 195, cute: 160, smart: 210, tough: 35, sheen: 140, taste: "LIKES BITTER / DISLIKES SPICY", opt: "QUALIFIED: SMART HYPER RANK" },
+    { id: "taillow", name: "TAILLOW", level: "LV. 6", nature: "BRAVE", item: "SHARP BEAK", icon: "🕊️", cool: 220, beauty: 85, cute: 50, smart: 95, tough: 130, sheen: 125, taste: "LIKES SPICY / DISLIKES SWEET", opt: "QUALIFIED: COOL HYPER RANK" },
+    { id: "zigzagoon", name: "ZIGZAGOON", level: "LV. 4", nature: "PICKUP", item: "ORAN BERRY", icon: "🦝", cool: 75, beauty: 60, cute: 190, smart: 115, tough: 120, sheen: 80, taste: "NO PREFERENCE (NEUTRAL)", opt: "QUALIFIED: CUTE SUPER RANK" },
+    { id: "wurmple", name: "WURMPLE", level: "LV. 3", nature: "TIMID", item: "PECHA BERRY", icon: "🐛", cool: 45, beauty: 70, cute: 145, smart: 60, tough: 90, sheen: 50, taste: "LIKES SWEET / DISLIKES SPICY", opt: "QUALIFIED: NORMAL RANK" }
+  ];
+
+  // State
+  const NAV_MODES = ['map', 'match', 'condition', 'ribbons'];
+  let currentNavIndex = 1; // Default to MATCH CALL
+  let selectedContactIndex = 2; // Roxanne default
+  let selectedMapLocId = 'rustboro';
+  let activeHabitatTab = 'grass';
+
+  // Navigation Switcher
+  function setNavMode(mode) {
+    currentNavIndex = NAV_MODES.indexOf(mode);
+    NAV_MODES.forEach(m => {
+      const panel = document.getElementById(`panel-mode-${m}`);
+      const btn = document.getElementById(`tab-btn-${m}`);
+      if (m === mode) {
+        panel.classList.remove('hidden');
+        panel.classList.add('flex');
+        btn.className = "bg-[#fde68a] text-[#16271c] font-bold text-[8px] px-2.5 py-1 rounded shadow-sm border border-[#b45309] font-pixel cursor-pointer tracking-wider leading-none";
+      } else {
+        panel.classList.add('hidden');
+        panel.classList.remove('flex');
+        btn.className = "px-2.5 py-1 text-[#7ea69c] hover:text-white font-bold text-[8px] rounded transition font-pixel cursor-pointer tracking-wider leading-none";
+      }
+    });
+
+    const crossLabel = document.getElementById('footer-label-cross');
+    const squareLabel = document.getElementById('footer-label-square');
+    if (mode === 'match') {
+      crossLabel.innerText = "CALL CONTACT";
+      squareLabel.innerText = "CYCLE CONTACT";
+    } else if (mode === 'map') {
+      crossLabel.innerText = "INSPECT TOWN";
+      squareLabel.innerText = "CYCLE HABITAT";
+    } else if (mode === 'condition') {
+      crossLabel.innerText = "NEXT POKÉMON";
+      squareLabel.innerText = "FEED POKÉBLOCK";
+    } else {
+      crossLabel.innerText = "INSPECT RIBBON";
+      squareLabel.innerText = "SWITCH MON";
+    }
+  }
+
+  function cycleNavMode(dir) {
+    currentNavIndex += dir;
+    if (currentNavIndex < 0) currentNavIndex = NAV_MODES.length - 1;
+    if (currentNavIndex >= NAV_MODES.length) currentNavIndex = 0;
+    setNavMode(NAV_MODES[currentNavIndex]);
+  }
+
+  // ==================== DYNAMIC MATCH CALL & COMBAT TEAM CONTROLLER ====================
+  function initMatchCall() {
+    renderMatchContactsList();
+    renderContactDossier();
+  }
+
+  function renderMatchContactsList() {
+    const list = document.getElementById('match-contacts-list');
+    list.innerHTML = "";
+
+    const readyCount = MATCH_CONTACTS.filter(c => c.readyRematch).length;
+    document.getElementById('match-dir-count').innerText = `DIRECTORY (${MATCH_CONTACTS.length})`;
+    document.getElementById('match-ready-counter').innerText = `${readyCount} READY`;
+
+    MATCH_CONTACTS.forEach((c, idx) => {
+      const isSel = idx === selectedContactIndex;
+      const item = document.createElement('div');
+      item.onclick = () => selectContact(idx);
+      item.className = `p-1.5 rounded border cursor-pointer transition flex items-center justify-between text-[7px] font-pixel ${
+        isSel
+          ? 'bg-[#fef3c7] border-[#d97706] shadow-sm ring-1 ring-[#d97706]'
+          : 'bg-[#ded7c1] border-[#c3b99f] hover:bg-[#ede8d5]'
+      }`;
+      item.innerHTML = `
+        <div class="flex items-center space-x-1.5">
+          <span class="text-sm">${c.avatar}</span>
+          <div>
+            <div class="font-bold text-[#143228]">${c.name}</div>
+            <div class="text-[6px] ${isSel ? 'text-[#b45309] font-bold' : 'text-[#557568]'}">${c.title}</div>
+          </div>
+        </div>
+        ${c.readyRematch 
+          ? '<span class="text-[6px] bg-[#10b981] text-[#022c22] font-bold px-1.5 py-0.5 rounded animate-pulse border border-[#047857]">REMATCH</span>' 
+          : '<span class="text-[6px] text-[#716a56]">STANDBY</span>'}
+      `;
+      list.appendChild(item);
+    });
+  }
+
+  function selectContact(idx) {
+    selectedContactIndex = idx;
+    renderMatchContactsList();
+    renderContactDossier();
+  }
+
+  function renderContactDossier() {
+    const c = MATCH_CONTACTS[selectedContactIndex];
+    if (!c) return;
+
+    // Dossier header & labels
+    document.getElementById('match-dossier-title').innerText = `DOSSIER: ${c.name} • ${c.title}`;
+    document.getElementById('match-freq-tag').innerText = c.freq;
+    document.getElementById('match-log-freq').innerText = c.freq;
+    document.getElementById('match-log-status').innerText = c.statusText || c.location;
+    document.getElementById('match-call-logged-stat').innerText = c.callCount || "10 CALLS EXCHANGED";
+
+    // Bottom banner
+    const statusBadge = document.getElementById('match-status-badge');
+    const chline = document.getElementById('match-status-chline');
+    chline.innerText = `CH: ${c.freq} • SECURE DEVON LINE`;
+
+    if (c.readyRematch) {
+      statusBadge.className = "px-1.5 py-0.5 bg-[#10b981] text-[#022c22] rounded font-bold text-[6.5px] animate-pulse border border-[#047857]";
+      statusBadge.innerText = "REMATCH READY";
+    } else {
+      statusBadge.className = "px-1.5 py-0.5 bg-[#d1c8af] text-[#4b5563] rounded font-bold text-[6.5px] border border-[#a89d81]";
+      statusBadge.innerText = "STANDBY RECORD";
+    }
+
+    // Transmission Log History
+    const logCont = document.getElementById('match-dialogue-history');
+    logCont.innerHTML = "";
+    c.messages.forEach(msg => {
+      const block = document.createElement('div');
+      block.className = msg.highlight
+        ? 'p-1.5 bg-[#fef3c7] rounded border border-[#d97706] flex flex-col space-y-1'
+        : 'p-1.5 bg-[#fdfbf6] rounded border border-[#ccc2a6] flex flex-col space-y-1';
+      block.innerHTML = `
+        <div class="flex items-center justify-between text-[6px] font-pixel ${msg.highlight ? 'text-[#b45309]' : 'text-[#557568]'}">
+          <span class="font-bold ${msg.highlight ? 'text-[#b45309]' : 'text-[#143228]'} flex items-center gap-1"><span>${msg.icon}</span> ${msg.sender}</span>
+          <span>${msg.time}</span>
+        </div>
+        <p class="text-[6.5px] font-pixel text-[#0f2d24] leading-relaxed">"${msg.text}"</p>
+      `;
+      logCont.appendChild(block);
+    });
+    const footerNote = document.createElement('div');
+    footerNote.className = 'p-1 bg-[#ded7c1] rounded border border-[#bab096] text-[6px] font-pixel text-[#446859] text-center';
+    footerNote.innerText = '── ENCRYPTED DEVON LOG SECURED ──';
+    logCont.appendChild(footerNote);
+
+    // ==================== DYNAMIC COMBAT TEAM (1 to 6 POKEMON OR NON-COMBATANT) ====================
+    const teamCountEl = document.getElementById('match-team-count');
+    const teamGrid = document.getElementById('match-team-grid');
+    teamGrid.innerHTML = "";
+
+    const team = c.team || [];
+    teamCountEl.innerText = `ROSTER: ${team.length} POKÉMON`;
+
+    if (team.length === 0) {
+      // Non-combatant empty state
+      teamGrid.className = "w-full flex items-center justify-center p-3";
+      teamGrid.innerHTML = `
+        <div class="w-full bg-[#fdfbf6] border-2 border-dashed border-[#b7ab91] rounded-lg p-5 flex flex-col items-center justify-center text-center space-y-2">
+          <span class="text-3xl">📋</span>
+          <span class="text-[8px] font-pixel font-bold text-[#143228]">NON-COMBATANT DIRECTORY</span>
+          <p class="text-[6.5px] font-pixel text-[#557568] max-w-[240px] leading-relaxed">
+            No combat Pokémon registered on Devon Battle Network. Contact registered for sat-link transmissions.
+          </p>
+          <span class="text-[6px] font-pixel bg-[#ded7c1] px-2 py-0.5 rounded text-[#2d4d3e] font-bold">STATUS: CIVILIAN / RESEARCH</span>
+        </div>
+      `;
+      return;
+    }
+
+    // Grid layout dynamically adjusts based on roster count (up to 6 Pokémon)
+    teamGrid.className = "grid grid-cols-2 gap-1.5";
+
+    team.forEach((mon, monIdx) => {
+      const card = document.createElement('div');
+      
+      // Full width spanning logic for single odd ace when total count is odd (3 or 5)
+      const isOddLast = (team.length % 2 === 1) && (monIdx === team.length - 1);
+      const spanClass = isOddLast ? "col-span-2" : "col-span-1";
+
+      const bgBorder = mon.isAce
+        ? 'bg-[#fef3c7] border-[#d97706] shadow-sm'
+        : 'bg-[#fdfbf6] border-[#ccc2a6] shadow-sm';
+
+      // Type Pills
+      const typePills = mon.types.map(t => {
+        const cStyle = TYPE_COLORS[t] || "bg-[#64748b] text-white";
+        return `<span class="px-1 py-[1px] rounded text-[5px] font-pixel font-bold ${cStyle}">${t}</span>`;
+      }).join(' ');
+
+      // Card structure with official pixel-art sprite
+      card.className = `${spanClass} p-1.5 rounded border ${bgBorder} flex items-center space-x-2 text-[7px] font-pixel transition hover:scale-[1.01]`;
+      card.innerHTML = `
+        <div class="w-9 h-9 rounded bg-[#ede8d5] border border-[#c3b99f] flex items-center justify-center flex-shrink-0 p-0.5 shadow-inner">
+          <img src="${mon.sprite}" alt="${mon.name}" class="w-full h-full object-contain pixel-art">
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-[#143228] text-[7.5px] truncate">${mon.name}</span>
+            ${mon.isAce ? '<span class="px-1 py-[1px] bg-[#cc2233] text-white font-bold rounded text-[5px]">ACE</span>' : ''}
+          </div>
+          <div class="flex items-center gap-1 my-0.5">
+            <span class="text-[6px] text-[#b45309] font-bold">${mon.level}</span>
+            <div class="flex gap-0.5">${typePills}</div>
+          </div>
+          <div class="text-[5.5px] text-[#557568] truncate leading-tight">${mon.ability}</div>
+        </div>
+      `;
+      teamGrid.appendChild(card);
+    });
+  }
+
+  // Dialogue Modal popup controls
+  function triggerTransceiverCall() {
+    const c = MATCH_CONTACTS[selectedContactIndex];
+    document.getElementById('transceiver-avatar').innerText = c.avatar;
+    document.getElementById('transceiver-caller-id').innerText = c.name;
+    document.getElementById('transceiver-caller-sub').innerText = c.location.split(' ')[0];
+    document.getElementById('transceiver-caller-name').innerText = `${c.name} (${c.title})`;
+    document.getElementById('transceiver-freq-pill').innerText = `CH: ${c.freq}`;
+    
+    const quote = (c.messages && c.messages[c.messages.length - 1] && c.messages[c.messages.length - 1].text) 
+      || `Greetings Brendan! This is ${c.name} on Devon secure line ${c.freq}.`;
+    document.getElementById('transceiver-dialogue-text').innerText = `"${quote}"`;
+
+    const modal = document.getElementById('transceiver-dialogue-modal');
+    modal.classList.remove('hidden');
+  }
+
+  function closeTransceiverCall() {
+    document.getElementById('transceiver-dialogue-modal').classList.add('hidden');
+  }
+
+  // Physical Button Actions
+  function handleCrossAction() {
+    if (NAV_MODES[currentNavIndex] === 'match') {
+      triggerTransceiverCall();
+    }
+  }
+
+  function handleCircleAction() {
+    const modal = document.getElementById('transceiver-dialogue-modal');
+    if (!modal.classList.contains('hidden')) {
+      closeTransceiverCall();
+    } else {
+      setNavMode('map');
+    }
+  }
+
+  function handleSquareAction() {
+    if (NAV_MODES[currentNavIndex] === 'match') {
+      selectedContactIndex = (selectedContactIndex + 1) % MATCH_CONTACTS.length;
+      renderMatchContactsList();
+      renderContactDossier();
+    }
+  }
+
+  // ==================== TAB 1: HOENN MAP ====================
+  function initHoennMap() {
+    const layer = document.getElementById('hoenn-pins-layer');
+    layer.innerHTML = "";
+    Object.keys(HOENN_LOCATIONS).forEach(key => {
+      const loc = HOENN_LOCATIONS[key];
+      const btn = document.createElement('button');
+      btn.onclick = () => selectMapLocation(key);
+      const isGym = loc.pin.type === 'gym';
+      const bg = isGym ? 'bg-[#ef4444] border-[#991b1b]' : 'bg-[#3b82f6] border-[#1d4ed8]';
+      btn.className = `absolute transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 flex items-center justify-center cursor-pointer shadow-md transition-all hover:scale-125 ${bg} ${key === selectedMapLocId ? 'ring-2 ring-[#fde68a] scale-125 animate-pin-active z-20' : 'z-10'}`;
+      btn.style.left = `${loc.pin.x}%`;
+      btn.style.top = `${loc.pin.y}%`;
+      btn.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-white"></span>`;
+      layer.appendChild(btn);
+    });
+    renderMapDetails();
+  }
+
+  function selectMapLocation(key) {
+    selectedMapLocId = key;
+    initHoennMap();
+  }
+
+  function renderMapDetails() {
+    const loc = HOENN_LOCATIONS[selectedMapLocId];
+    if (!loc) return;
+    document.getElementById('map-loc-name').innerText = loc.name;
+    document.getElementById('map-loc-type').innerText = loc.type;
+    document.getElementById('map-loc-coords').innerText = loc.coords;
+    document.getElementById('map-loc-tag').innerText = loc.tag;
+    document.getElementById('map-loc-desc').innerText = loc.desc;
+
+    const connBox = document.getElementById('map-connections-tags');
+    connBox.innerHTML = "";
+    document.getElementById('map-conn-count').innerText = `${loc.connections.length} LINKS`;
+    loc.connections.forEach(c => {
+      const sp = document.createElement('span');
+      sp.className = "px-1.5 py-0.5 bg-[#ede8d5] text-[#133c2e] border border-[#a89d81] rounded font-bold";
+      sp.innerText = c;
+      connBox.appendChild(sp);
+    });
+
+    renderHabitatList();
+  }
+
+  function switchHabitatTab(hab) {
+    activeHabitatTab = hab;
+    ['grass', 'surf', 'fish', 'smash'].forEach(h => {
+      const b = document.getElementById(`hab-btn-${h}`);
+      if (b) {
+        b.className = h === hab 
+          ? "px-1.5 py-0.5 bg-[#0e2c24] text-[#a7f3d0] rounded text-[6.5px] font-pixel font-bold cursor-pointer"
+          : "px-1.5 py-0.5 bg-[#ded7c1] text-[#244234] rounded text-[6.5px] font-pixel cursor-pointer";
+      }
+    });
+    renderHabitatList();
+  }
+
+  function renderHabitatList() {
+    const loc = HOENN_LOCATIONS[selectedMapLocId];
+    const list = document.getElementById('map-habitat-list');
+    list.innerHTML = "";
+    const entries = (loc.habitats && loc.habitats[activeHabitatTab]) || [];
+    if (entries.length === 0 || entries[0].name === 'NONE') {
+      list.innerHTML = `<div class="p-2 text-center text-[7px] text-[#6b7280]">NO WILD HABITAT DETECTED.</div>`;
+      return;
+    }
+    entries.forEach(e => {
+      const row = document.createElement('div');
+      row.className = "flex items-center justify-between p-1 bg-[#fdfbf6] rounded border border-[#d1c8af] text-[7px] font-pixel";
+      row.innerHTML = `
+        <div class="flex items-center space-x-1.5">
+          <span>${e.icon}</span>
+          <span class="font-bold text-[#143228]">${e.name}</span>
+          <span class="text-[6px] text-[#557568]">${e.level}</span>
+        </div>
+        <span class="px-1 py-0.5 bg-[#10b981] text-[#022c22] font-bold rounded text-[6.5px]">${e.rate}</span>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  // ==================== TAB 3 & 4 INIT ====================
+  function initConditionAndRibbons() {
+    const condList = document.getElementById('cond-roster-list');
+    const ribList = document.getElementById('ribbon-pokemon-list');
+    const ribGrid = document.getElementById('ribbons-grid-container');
+
+    condList.innerHTML = "";
+    ribList.innerHTML = "";
+    ribGrid.innerHTML = "";
+
+    PARTY_ROSTER.forEach((p, idx) => {
+      // Condition list
+      const cRow = document.createElement('div');
+      cRow.className = "flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer";
+      cRow.innerHTML = `
+        <div class="flex items-center space-x-1.5">
+          <span>${p.icon}</span>
+          <span class="font-bold text-[#143228]">${p.name}</span>
+        </div>
+        <span class="text-[6.5px] text-[#047857] font-bold">${p.level}</span>
+      `;
+      condList.appendChild(cRow);
+
+      // Ribbon list
+      const rRow = document.createElement('div');
+      rRow.className = "flex items-center justify-between p-1.5 bg-[#ded7c1] hover:bg-[#ede8d5] rounded border border-[#c3b99f] text-[7px] cursor-pointer";
+      rRow.innerHTML = `
+        <div class="flex items-center space-x-1.5">
+          <span>${p.icon}</span>
+          <span class="font-bold text-[#143228]">${p.name}</span>
+        </div>
+        <span class="text-[6px] bg-[#10b981] text-[#022c22] px-1 rounded font-bold">${p.level}</span>
+      `;
+      ribList.appendChild(rRow);
+    });
+
+    // Ribbons sample icons
+    const sampleRibbons = [
+      { name: "TOUGH RIBBON", icon: "🎗️" },
+      { name: "TOUGH SUPER", icon: "🎗️" },
+      { name: "CUTE RIBBON", icon: "🎀" },
+      { name: "EFFORT RIBBON", icon: "🏅" },
+      { name: "CHAMPION RIBBON", icon: "👑" }
+    ];
+    sampleRibbons.forEach(r => {
+      const box = document.createElement('div');
+      box.className = "p-1.5 bg-[#fdfbf6] rounded border border-[#ccc2a6] flex flex-col items-center justify-center text-center cursor-pointer hover:border-[#10b981]";
+      box.innerHTML = `<span class="text-xl mb-1">${r.icon}</span><span class="text-[5.5px] font-bold text-[#143228]">${r.name}</span>`;
+      ribGrid.appendChild(box);
+    });
+  }
+
+  // Window onload initialization
+  window.addEventListener('DOMContentLoaded', () => {
+    initHoennMap();
+    initMatchCall();
+    initConditionAndRibbons();
+    setNavMode('match');
+  });
+</script>
+
+
+</body></html>

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PokéNav · Match Call</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  .main { width: 460px; flex: none; display: flex; flex-direction: column; }
+  .detail { flex: 1; display: grid; grid-template-columns: 136px 1fr; gap: 12px 16px; align-content: start; }
+  .pic { width: 136px; height: 136px; background: var(--paper-1); display: flex; align-items: center; justify-content: center; }
+  .kv { display: flex; justify-content: space-between; height: 32px; align-items: center; border-bottom: 2px solid var(--paper-1); }
+  .wide { grid-column: 1 / 3; font-size: var(--t-body-sm); line-height: 30px; }
+  .rem { color: var(--danger); }
+  .chip.rem { color: #fff; background: var(--danger); min-width: 28px; text-align: center; margin-left: 8px; } /* compact "!" so the row never overflows */
+</style>
+</head>
+<body data-screen="pokenav_match_call">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="pokenav:call">
+    </div>
+    <div class="body">
+      <div class="panel main">
+        <div class="panel-head"><span class="ps">REGISTERED</span><span class="spacer"></span><span class="vt-sm soft">12 trainers</span></div>
+        <div class="list">
+          <div class="row on"><span class="grow">MOM</span><span class="vt-sm">LITTLEROOT</span></div>
+          <div class="row" data-open="llamada"><span class="grow">MAY</span><span class="vt-sm">ROUTE 104</span></div>
+          <div class="row"><span class="grow">MR. STONE</span><span class="vt-sm">RUSTBORO</span></div>
+          <div class="row"><span class="grow">ROSE (AROMA LADY)</span><span class="vt-sm rem">REMATCH</span></div>
+          <div class="row"><span class="grow">ANDRES (RUIN MANIAC)</span><span class="vt-sm">ROUTE 105</span></div>
+          <div class="row"><span class="grow">ROXANNE (LEADER)</span><span class="vt-sm">RUSTBORO</span></div>
+          <div class="row"><span class="grow">BRAWLY (LEADER)</span><span class="vt-sm">DEWFORD</span></div>
+          <div class="row"><span class="grow">WATTSON (LEADER)</span><span class="vt-sm">MAUVILLE</span></div>
+          <div class="row"><span class="grow">FLANNERY (LEADER)</span><span class="vt-sm">LAVARIDGE</span></div>
+          <div class="row"><span class="grow">ISABEL (POKéFAN)</span><span class="vt-sm">ROUTE 110</span></div>
+          <div class="row"><span class="grow">KALEB (POKéFAN)</span><span class="vt-sm">ROUTE 110</span></div>
+          <div class="row"><span class="grow">JOSE (BUG CATCHER)</span><span class="vt-sm">ROUTE 104</span></div>
+          
+        </div>
+      </div>
+      <div class="panel detail">
+        <div class="pic"></div>
+        <div><div class="ps">MOM</div><div class="kv" style="margin-top:12px"><span>LOCATION</span><span>LITTLEROOT</span></div><div class="kv"><span>STATUS</span><span>AT HOME</span></div></div>
+        <div class="wide">Mom has no trainer picture in the GBA: the slot stays empty (plan 2.4). Trainers with a front pic (MAY, ROXANNE…) show it here.</div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross" data-open="llamada"><span class="glyph cross">✕</span>Call</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="btn" data-btn="triangle"><span class="glyph triangle">△</span>Show on map</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+  <!-- Popup: Match Call in progress (same dialogue component as the field call) -->
+  <div class="modal" id="llamada"><div class="win" style="width:760px">
+    <div class="win-head"><span class="ps">MATCH CALL</span><span class="spacer"></span><span class="vt-sm">MAY · ROUTE 104</span></div>
+    <div class="win-body" style="display:flex; gap:16px" data-close>
+      <div style="width:112px;height:112px;background:var(--paper-1);display:flex;align-items:center;justify-content:center;flex:none"><img src="../_assets/trainers/may.png" alt="" style="zoom:1.5"></div>
+      <div class="vt-lg" style="line-height:36px">Hi, BRENDAN! How's your POKéDEX coming along? I just caught a ZIGZAGOON!</div>
+    </div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Next</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>Hang up</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>
