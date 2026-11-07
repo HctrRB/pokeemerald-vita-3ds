@@ -50,27 +50,44 @@ tools/                               pret host tools and the UI art generators (
 docs/                                technical documentation
 ```
 
-## Build
+## Build your own VPK
 
-Step-by-step guide for users: [docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md)
-(en español: [docs/COMPILA_TU_VPK.md](docs/COMPILA_TU_VPK.md)). In short, with MSYS2, VitaSDK,
-Git and Python 3 + Pillow installed:
+No builds are distributed: you make your own from your Pokémon Emerald cartridge. Full guide,
+with every command and the common errors: [docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md)
+(en español: [docs/COMPILA_TU_VPK.md](docs/COMPILA_TU_VPK.md)).
 
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File .\fetch_assets.ps1 -Rom "C:\path\to\emerald.gba"   # once
-```
+1. **Dump your cartridge** to a `.gba` file (any language of Pokémon Emerald, 16 MB).
+2. **Install the tools** (Windows, once): [MSYS2](https://www.msys2.org) in `C:\msys64`,
+   [VitaSDK](https://vitasdk.org) with SDL2, [Git](https://git-scm.com) and
+   [Python 3](https://www.python.org) with Pillow (`pip install pillow`). Exact commands:
+   [docs/BUILD.md](docs/BUILD.md#requirements-windows).
+3. **Get the repository**:
+   ```powershell
+   git clone https://github.com/HctrRB/pokeemerald-vita-3ds.git
+   cd pokeemerald-vita-3ds
+   ```
+4. **Get the game files** (once). The script checks that your dump is Pokémon Emerald, then
+   downloads the decompilation's graphics, sounds and data and checks each file
+   ([tools/assets/manifest.txt](tools/assets/manifest.txt)). Nothing is copied from the ROM.
+   ```powershell
+   powershell.exe -ExecutionPolicy Bypass -File .\fetch_assets.ps1 -Rom "C:\path\to\emerald.gba"
+   ```
+5. **Build the host tools and convert the game files** (once), in the *MSYS2 MINGW64* shell:
+   ```sh
+   make -f make_tools.mk -j8 CC="gcc -static" CXX="g++ -static"
+   make -f vita/assets.mk -j8
+   ```
+6. **Build the VPK**, in PowerShell:
+   ```powershell
+   powershell.exe -ExecutionPolicy Bypass -File .\build_vita.ps1
+   ```
+   The result is `build-vita\pokeemerald.vpk`.
+7. **Install it** with VitaShell (*Enable unsafe homebrew* on in HENkaku settings). The game
+   appears as **Emerald Vita** (title ID `PKEM00001`); saves and settings live in
+   `ux0:data/POKEVITA/`.
 
-```sh
-make -f make_tools.mk -j8 CC="gcc -static" CXX="g++ -static"   # once, MINGW64 shell
-make -f vita/assets.mk -j8                                      # once, and after asset edits
-```
-
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File .\build_vita.ps1   # produces build-vita\pokeemerald.vpk
-```
-
-Install the VPK with VitaShell (title ID `PKEM00001`, *Enable Unsafe Homebrew* on). Vita3K runs
-it for functional testing; measure performance on hardware.
+Do not share the VPK or the downloaded files: they contain Nintendo's game data. Vita3K runs the
+VPK for functional testing; measure performance on hardware.
 
 ## Controls
 
@@ -90,8 +107,22 @@ Buttons can be remapped in Options. Settings and saves live in `ux0:data/POKEVIT
 
 ## Documentation
 
-- [docs/README.md](docs/README.md): index of the technical documentation.
-- [CONTRIBUTING.md](CONTRIBUTING.md): code standards and workflow.
+| Document | Covers |
+|---|---|
+| [docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md) ([español](docs/COMPILA_TU_VPK.md)) | Make your own VPK from your cartridge, step by step |
+| [docs/BUILD.md](docs/BUILD.md) | Toolchain, build steps, CMake options, installing and testing |
+| [docs/README.md](docs/README.md) | Index of the technical documentation |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, boot, one frame, where things are, runtime files |
+| [docs/THREADS.md](docs/THREADS.md) | Cores, pacing, who owns which data |
+| [docs/RENDERING.md](docs/RENDERING.md) | Presentation paths, voxel passes, GBA overlay, GPU rules |
+| [docs/VITA_UI.md](docs/VITA_UI.md) | The new UI and the original Vita UI |
+| [docs/VOXEL_ENGINE.md](docs/VOXEL_ENGINE.md) | The 3D overworld |
+| [docs/SCENES_16_9.md](docs/SCENES_16_9.md) | How GBA screens fill 16:9 |
+| [docs/ASSETS.md](docs/ASSETS.md) | Where every data file comes from |
+| [docs/DEBUGGING.md](docs/DEBUGGING.md) | Logs, per-frame telemetry, crash dumps |
+| [design/stitch/README.md](design/stitch/README.md) | Design mocks of the new UI (Spanish) |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Code standards and workflow |
+| [NOTICE.md](NOTICE.md) | Licences of the ported code and credits |
 
 ## Credits
 
