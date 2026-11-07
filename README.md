@@ -30,6 +30,7 @@ hardware did. On top of it, the port brings the features of
 > **Work in progress, in active testing.** Expect bugs, crashes and unfinished screens. If you
 > find one, please [open an issue](../../issues/new/choose) with the bug report template: what
 > you did, what happened, and the log files from `ux0:data/POKEVITA/`.
+> 60fps with drops to 55 at 333/166.
 
 Known open issues:
 
@@ -37,6 +38,9 @@ Known open issues:
   beside Rayquaza); a replacement is designed in [docs/SCENES_16_9.md](docs/SCENES_16_9.md).
 - The shop buy/sell flow over the 3D world still has visual glitches.
 - Occasional frame drops in dense areas of the 3D overworld.
+- Missing some UI screens, give feedback.
+- Terrain generation bugs (came from Emerald 3DS)
+- Menu can freeze sometimes
 
 ## Repository layout
 
