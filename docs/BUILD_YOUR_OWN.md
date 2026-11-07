@@ -1,5 +1,7 @@
 # Build your own VPK
 
+> **Work in progress, in active testing.** Please report the bugs you find (see the end of this guide).
+
 This repository does not contain the game's graphics, sounds or binary data, and it does not
 distribute builds. You make your own VPK from your own copy of the game:
 
@@ -14,6 +16,19 @@ distribute builds. You make your own VPK from your own copy of the game:
 Do not share the VPK or the downloaded files: they contain Nintendo's game data.
 
 Spanish version: [COMPILA_TU_VPK.md](COMPILA_TU_VPK.md).
+
+## Quick way: one script
+
+With MSYS2 installed in `C:\msys64` (step 1.1) and the repository cloned (step 2), this does
+steps 1.2 to 4 by itself (it installs what is missing) and leaves `EmeraldVita.vpk` in the
+repository folder:
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File .\build_all.ps1 -Rom "C:\path\to\emerald.gba"
+```
+
+The ROM is only needed the first time. After updating the repository (`git pull`), run
+`.\build_all.ps1` again. The steps below do the same by hand.
 
 ## 1. Install the tools (Windows, once)
 
@@ -94,3 +109,13 @@ Your own LiveArea art can go in `vita/sce_sys_custom/` with the same file names 
 | `Python 3 with Pillow is needed` | Install Python for Windows and run `pip install pillow`. |
 | `the game files are missing` | Run step 3 before building. |
 | `convert the game graphics first` | Run `make -f vita/assets.mk -j8` (step 4). |
+
+## Reporting bugs
+
+This port is a **work in progress in active testing**. When something goes wrong, open an issue
+on GitHub with the *Bug report* template and include:
+
+- what you were doing and what happened (a photo of the screen helps);
+- the files `perf_summary.txt`, `perf_frames.csv` and any `*.log` from `ux0:data/POKEVITA/`;
+- for a crash, the `.psp2dmp` file from `ux0:data/` (see [DEBUGGING.md](DEBUGGING.md));
+- the commit you built (`git log -1 --oneline`).
