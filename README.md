@@ -41,6 +41,9 @@ Known open issues:
 - Missing some UI screens, give feedback.
 - Terrain generation bugs (came from Emerald 3DS)
 - Menu can freeze sometimes
+- Evolutions and some screens are not tested.
+
+- Give feedback!!
 
 ## Repository layout
 
