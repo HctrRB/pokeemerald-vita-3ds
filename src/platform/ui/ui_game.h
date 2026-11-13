@@ -136,6 +136,8 @@ typedef enum { UI_BUSE_FAIL, UI_BUSE_CLOSE, UI_BUSE_TARGET } UiBattleUse;
 bool UiGame_InBattleMenu(void);
 void UiGame_BattleMenuEnd(void);       // ui_core.c, when the UI closes
 bool UiGame_MonIsInBattle(int32_t slot);
+bool UiGame_IsMultiPartner(int32_t slot);
+bool UiGame_InPyramid(void);    // Battle Pyramid: the BAG is the 10-slot PYRAMID BAG   // multi battle: the partner's POKéMON (slots 3-5)
 const char *UiGame_BattleSwitch(int32_t slot);
 bool UiGame_BattlePartyCanCancel(void);
 bool UiGame_BattleItemUsable(uint16_t item);

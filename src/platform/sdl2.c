@@ -958,8 +958,8 @@ static void ReadConfigFile(void)
             sPlatformSettings[PLATFORM_SETTING_EXP_MULTIPLIER] = value;
         else if (sscanf(line, "uiScale=%u", &value) == 1)
             sPlatformSettings[PLATFORM_SETTING_UI_SCALE] = value != 0;
-        else if (sscanf(line, "voxelRes=%u", &value) == 1 && value <= 1)
-            sPlatformSettings[PLATFORM_SETTING_VOXEL_RES] = value;
+        else if (sscanf(line, "voxelRes=%u", &value) == 1)
+            ;   // no longer an option: the 3D world always renders at 960x544
         else if (sscanf(line, "voxelFps=%u", &value) == 1 && value <= 1)
             sPlatformSettings[PLATFORM_SETTING_VOXEL_FPS] = value;
         else

@@ -11,12 +11,14 @@
 
 #include "global.h"
 #include "event_data.h"
+#include "palette.h"
 #include "party_menu.h"
 #include "pokemon.h"
 #include "script.h"
 #include "sound.h"
 #include "constants/moves.h"
 #include "constants/party_menu.h"
+#include "constants/rgb.h"
 #include "constants/songs.h"
 
 extern u8 PartyMenu_TutorStatusForUi(u8 slot, u8 tutor);
@@ -33,6 +35,10 @@ static uint32_t sFrame;
 
 static void Resume(void)
 {
+    // The scripts fade to black before opening the party menu, which fades back in on its way out
+    // (CB2_FadeFromPartyMenu): do the same, or the field stays black
+    if (gPaletteFade.y != 0 && !gPaletteFade.active)
+        BeginNormalPaletteFade(PALETTES_ALL, 0, 16, 0, RGB_BLACK);
     ScriptContext_Enable();
 }
 
@@ -135,6 +141,7 @@ static bool Update(const UiInput *in)
     {
         PlaySE(SE_SELECT);
         gSpecialVar_0x8004 = (u16)slot;
+        gPartyMenu.slotId = (s8)slot;                // GetCursorSelectionMonId (StoreSelectedPokemonInDaycare...)
         return false;
     }
     struct Pokemon *mon = &gPlayerParty[slot];

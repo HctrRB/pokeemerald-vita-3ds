@@ -221,7 +221,7 @@ void UiKit_HeaderMoney(void)
 {
     char money[16];
     snprintf(money, sizeof(money), "$%u", (unsigned)UiGame_Money());
-    UiW_HeaderValue(money, UI_RGBA(245, 209, 98, 255));
+    UiW_HeaderValue(money, UI_COL_GOLD);
 }
 
 // Gender symbol and shiny star after a name (x2 sprites, 28 px); returns the width used

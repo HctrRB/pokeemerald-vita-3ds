@@ -43,6 +43,7 @@
 #include "constants/event_objects.h"
 #include "constants/game_stat.h"
 #include "constants/items.h"
+#include "constants/rgb.h"
 #include "constants/songs.h"
 #include "constants/map_types.h"
 #include "constants/trainers.h"
@@ -348,6 +349,23 @@ static const u16 sBadgeFlags[NUM_BADGES] =
 
 #define tState data[0]
 #define tTransition data[1]
+#define tSmooth data[2]
+
+// Vita, 3D world: the GBA wild transitions (grey blinks, then mosaic / swirl / shuffle effects on
+// the 2D field BGs) don't show over the 3D world, which was left blinking and then cut to black.
+// Wild encounters there get their own: a soft white flash, then an eased fade to black. Trainers,
+// legendaries and the 2D maps keep the game's transitions.
+extern bool gUiVoxelFrame;
+static bool8 sWildTransition;   // set by GetWildBattleTransition, taken by CreateBattleStartTask
+
+static void StartBattleFromField(u8 taskId)
+{
+    CleanupOverworldWindowsAndTilemaps();
+    SetMainCallback2(CB2_InitBattle);
+    RestartWildEncounterImmunitySteps();
+    ClearPoisonStepCounter();
+    DestroyTask(taskId);
+}
 
 static void Task_BattleStart(u8 taskId)
 {
@@ -358,20 +376,49 @@ static void Task_BattleStart(u8 taskId)
     case 0:
         if (!FldEffPoison_IsActive()) // is poison not active?
         {
-            BattleTransition_StartOnField(tTransition);
             ClearMirageTowerPulseBlendEffect();
+            if (tSmooth && __atomic_load_n(&gUiVoxelFrame, __ATOMIC_RELAXED))
+            {
+                BattleTransition_StartSmoothOnField();
+                BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 10, RGB_WHITE);   // flash up: 5 frames
+                tState = 10;
+                break;
+            }
+            BattleTransition_StartOnField(tTransition);
             tState++; // go to case 1.
         }
         break;
     case 1:
         if (IsBattleTransitionDone() == TRUE)
+            StartBattleFromField(taskId);
+        break;
+    case 10:
+        if (!gPaletteFade.active)
         {
-            CleanupOverworldWindowsAndTilemaps();
-            SetMainCallback2(CB2_InitBattle);
-            RestartWildEncounterImmunitySteps();
-            ClearPoisonStepCounter();
-            DestroyTask(taskId);
+            BeginNormalPaletteFade(PALETTES_ALL, 1, 10, 0, RGB_WHITE);   // back down: 10 frames
+            tState++;
         }
+        break;
+    case 11:
+        if (!gPaletteFade.active)
+        {
+            BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 6, RGB_BLACK);    // ease in: 6 frames
+            tState++;
+        }
+        break;
+    case 12:
+        if (!gPaletteFade.active)
+        {
+            BeginNormalPaletteFade(PALETTES_ALL, 2, 6, 16, RGB_BLACK);   // then slower: 15 frames
+            tState++;
+        }
+        break;
+    case 13:
+        if (!gPaletteFade.active)
+            tState++;                                                     // one frame fully black
+        break;
+    case 14:
+        StartBattleFromField(taskId);
         break;
     }
 }
@@ -381,11 +428,14 @@ static void CreateBattleStartTask(u8 transition, u16 song)
     u8 taskId = CreateTask(Task_BattleStart, 1);
 
     gTasks[taskId].tTransition = transition;
+    gTasks[taskId].tSmooth = sWildTransition;
+    sWildTransition = FALSE;
     PlayMapChosenOrBattleBGM(song);
 }
 
 #undef tState
 #undef tTransition
+#undef tSmooth
 
 void BattleSetup_StartWildBattle(void)
 {
@@ -790,6 +840,7 @@ static u8 GetSumOfEnemyPartyLevel(u16 opponentId, u8 numMons)
 
 static u8 GetWildBattleTransition(void)
 {
+    sWildTransition = TRUE;
     u8 transitionType = GetBattleTransitionTypeByMap();
     u8 enemyLevel = GetMonData(&gEnemyParty[0], MON_DATA_LEVEL);
     u8 playerLevel = GetSumOfPlayerPartyLevel(1);

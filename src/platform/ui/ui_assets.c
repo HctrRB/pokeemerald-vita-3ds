@@ -7,7 +7,7 @@
 #include "ui_internal.h"
 #include "../vita/vita_platform.h"
 
-#define UI_MAX_FONTS 8
+#define UI_MAX_FONTS 24
 #define UI_MAX_SPRITES 256   // must cover UI_SPR_COUNT (ui_sprite_ids.h); a bigger atlas is rejected and the new UI turns off
 
 typedef struct
@@ -141,8 +141,16 @@ void UiAssets_White(uint16_t *x, uint16_t *y)
     *y = sWhiteY;
 }
 
+// The two faces the screens ask for are roles: Press Start 2P = titles, VT323 = text. Each menu
+// theme maps them to its own faces (ui_theme.c, fonts baked by tools/ui2/bake_theme_fonts.py).
+static uint8_t ThemeFace(uint8_t face)
+{
+    return face == UI_FACE_PS2P ? gUiTheme->faceTitle : face == UI_FACE_VT323 ? gUiTheme->faceBody : face;
+}
+
 static const UiFont *FindFont(uint8_t face, uint8_t px)
 {
+    face = ThemeFace(face);
     const UiFont *best = NULL;
     for (uint32_t i = 0; i < sFontCount; i++)
     {

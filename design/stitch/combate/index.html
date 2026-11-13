@@ -171,7 +171,10 @@ function render() {
   // The game's own picture (stand-ins at the GBA positions, x3.4): foes' front sprites on their
   // platform, the player's back sprite standing on the box so only its top half shows
   B.foes.forEach((f, i) => h += `<img class="mon3d foe${S.mode === 'target' && S.target === i ? ' target' : ''}" src="../_assets/pokemon/${f[1]}_front.png" style="left:${dbl ? 440 + i * 190 : 590}px;top:${dbl ? 6 + i * 20 : 50}px;width:${dbl ? 190 : 218}px;height:${dbl ? 190 : 218}px">`);
-  B.mine.forEach((f, i) => h += `<img class="mon3d${S.mode === 'target' && S.target === 2 && i !== S.active ? ' target' : ''}" src="../_assets/pokemon/${f[1]}_back.png" style="left:${dbl ? 60 + i * 200 : 150}px;top:${BOX - 218 + 12}px;width:218px;height:218px">`);
+  // Back sprites as the GBA places them: centre y 80 + the species' y_offset (back_pic_coordinates.h),
+  // so the feet stand on the box's top edge (GBA y 112) and the empty rows below go under the box
+  const BACK_Y = { mudkip: 5, marshtomp: 4, torchic: 5 };
+  B.mine.forEach((f, i) => h += `<img class="mon3d${S.mode === 'target' && S.target === 2 && i !== S.active ? ' target' : ''}" src="../_assets/pokemon/${f[1]}_back.png" style="left:${dbl ? 60 + i * 200 : 150}px;top:${Math.round(BOX - 218 + (BACK_Y[f[1]] || 0) * 3.4)}px;width:218px;height:218px">`);
   // Plates: one size for every slot; doubles stack them with the same left edge and bar length
   // (foes top left, mine right above the bottom box, where the GBA healthboxes are)
   const foeY = i => 16 + i * (dbl ? 84 : 0), myY = i => BOX - 10 - (B.mine.length - i) * (dbl ? 74 : 112), myX = dbl ? 704 : 644;
@@ -261,5 +264,6 @@ document.addEventListener('keydown', e => {
 });
 render();
 </script>
+<script src="themes.js"></script>
 </body>
 </html>

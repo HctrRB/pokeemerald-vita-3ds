@@ -56,9 +56,9 @@ static const struct { const char *key, *help; } sExtraHelp[] = {
     { "speed", "Game speed while fast forward is active." },
     { "ff_button", "Hold the button, or press it once to toggle." },
     { "filter", "How the 2D screens are scaled to the Vita display." },
+    { "ui_theme", "Colour and style of the menus." },
     { "voxel_3d", "Draw the overworld as a 3D voxel diorama." },
     { "voxel_blur", "Blur the far background of the diorama." },
-    { "voxel_res", "Render resolution of the 3D world." },
     { "voxel_fps", "Frame rate of the 3D world. 60 uses more battery." },
     { "day_night", "Light changes with the clock." },
     { "timed_encounters", "Some POKEMON appear only by day or by night." },
@@ -297,7 +297,7 @@ static void Build(void)
         const int32_t vw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf);
         const int32_t vx = LIST_X + LIST_W - 60 - vw;
         UiW_Capsule(vx - 12, y + 4, vw + 24, 32);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, vx, y + 4, buf, UI_RGBA(153, 246, 228, 255));
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, vx, y + 4, buf, UI_COL_TITLE);
         if (on && (row->kind == ROW_CORE || (row->kind == ROW_EXTRA && row->ex->count > 1)))
         {
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, vx - 40, y + 4, "<", ink);

@@ -45,6 +45,22 @@ const UI_NAV = {
       tabs: [{ id: 'items', label: 'ITEMS' }, { id: 'balls', label: 'POKé BALLS' }, { id: 'berries', label: 'BERRIES' }] },
     { id: 'party_battle', label: 'POKéMON', home: 'equipo_combate', hidden: true, back: 'battle',
       tabs: [{ id: 'status', label: 'CHOOSE A POKéMON' }] },
+    // Screens still on the GBA UI (2026-11-13 designs): PC, naming, mail, Battle Pyramid bag,
+    // contest appeals and Berry Blender. The multi battle party is equipo_combate in multi mode.
+    // PC: the mode (WITHDRAW / DEPOSIT / MOVE POKéMON / MOVE ITEMS) is chosen in the PC menu
+    // before entering, as in the game; L / R change the box. ○ goes back to the PC menu.
+    { id: 'pc', label: 'PC', home: 'pc_cajas', hidden: true, back: 'screen', lr: 'screen',
+      tabs: [{ id: 'move', label: 'MOVE POKéMON' }] },
+    { id: 'naming', label: 'NAME', home: 'teclado_nombre', hidden: true, back: 'screen',
+      tabs: [{ id: 'upper', label: 'ABC' }, { id: 'lower', label: 'abc' }, { id: 'others', label: '?!·' }] },
+    { id: 'mail', label: 'MAIL', home: 'correo', hidden: true, back: 'screen',
+      tabs: [{ id: 'groups', label: 'GROUPS' }, { id: 'abc', label: 'A-Z' }] },
+    { id: 'bag_pyramid', label: 'BATTLE BAG', home: 'mochila_piramide', hidden: true, back: 'screen',
+      tabs: [{ id: 'items', label: 'ITEMS' }] },
+    { id: 'contest', label: 'CONTEST', home: 'concurso', hidden: true, back: 'screen',
+      tabs: [{ id: 'appeal', label: 'APPEAL' }] },
+    { id: 'blender', label: 'BERRY BLENDER', home: 'batidora', hidden: true, back: 'screen',
+      tabs: [{ id: 'berry', label: 'CHOOSE A BERRY' }] },
   ],
 };
 
@@ -225,14 +241,14 @@ document.addEventListener('keydown', e => {
   tabs.className = 'tabs';
   const keyL = Object.assign(document.createElement('span'), { className: 'key nav-lr', textContent: 'L' });
   const keyR = Object.assign(document.createElement('span'), { className: 'key nav-lr', textContent: 'R' });
-  tabs.appendChild(keyL);
+  if (sec.lr !== 'screen') tabs.appendChild(keyL);
   const els = sec.tabs.map((t, i) => {
     const el = Object.assign(document.createElement('span'), { className: 'tab', textContent: t.label });
     el.onclick = () => select(i);
     tabs.appendChild(el);
     return el;
   });
-  tabs.appendChild(keyR);
+  if (sec.lr !== 'screen') tabs.appendChild(keyR);
   function paint() { els.forEach((el, i) => el.classList.toggle('on', i === cur)); }
   function select(i) {
     const n = sec.tabs.length;
@@ -247,10 +263,15 @@ document.addEventListener('keydown', e => {
   document.addEventListener('keydown', e => {
     const k = e.key.toLowerCase();
     if (UI_MODALS.stack.length) return;   // modal open: L/R and B belong to it
-    if (k === 'q' || k === 'l') select(cur - 1);
-    if (k === 'e' || k === 'r') select(cur + 1);
+    // lr: 'screen' → the shoulders belong to the screen (PC boxes), the rail shows no L / R keys
+    const lr = k === 'q' || k === 'l' ? -1 : k === 'e' || k === 'r' ? 1 : 0;
+    if (lr && sec.lr === 'screen') document.dispatchEvent(new CustomEvent('ui-lr', { detail: lr }));
+    else if (lr) select(cur + lr);
     if (k === 'escape' || k === 'b') {
+      // back: 'screen' → ○ is the screen's own key (delete a letter, ask before quitting...)
+      if (sec.back === 'screen') { document.dispatchEvent(new CustomEvent('ui-back')); return; }
       if (sec.back === 'battle') { if (window.UI) UI.toast('Back to the battle (current battle UI).'); return; }
+      if (sec.back === 'field') { if (window.UI) UI.toast('Back to the field.'); return; }
       location.href = '../' + (sec.parent ? UI_NAV.sections.find(s => s.id === sec.parent).home : 'hub') + '/index.html';
     }
   });

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Theme font bake</title>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@700;800&family=M+PLUS+Rounded+1c:wght@500;800&family=Fredoka:wght@500;600&family=Exo+2:ital,wght@0,700;1,800&display=block" rel="stylesheet">
+</head>
+<body>
+<!-- Rasterises the fonts of the menu themes (src/platform/ui/ui_theme.c) into 1-bit glyph bitmaps
+     for tools/ui2/bake_theme_fonts.py. Each face is baked for the four type roles of the UI: "px"
+     is the role (16 / 24 = Press Start 2P titles, 32 / 40 = VT323 text and dialogue) and "size"
+     the real font size that fills the same box. Run headless with --dump-dom: the JSON ends up in
+     output element. -->
+<pre id="out">baking</pre>
+<script>
+// face ids: 2 / 3 RED, 4 / 5 CRYSTAL, 6 / 7 TROPICAL, 8 / 9 ROYAL (title face, text face)
+const FACES = [
+  { id: 2, css: '800 SIZEpx "Saira Condensed"',       roles: { 16: 20, 24: 29 } },
+  { id: 3, css: '700 SIZEpx "Saira Condensed"',       roles: { 32: 26, 40: 32 } },
+  { id: 4, css: '800 SIZEpx "M PLUS Rounded 1c"',     roles: { 16: 20, 24: 28 } },
+  { id: 5, css: '800 SIZEpx "M PLUS Rounded 1c"',     roles: { 32: 20, 40: 25 } },
+  // TROPICAL: 600 / 500, not 700 / 600: bold Fredoka clogs up as 1-bit glyphs at these sizes
+  { id: 6, css: '600 SIZEpx "Fredoka"',               roles: { 16: 20, 24: 31 } },
+  { id: 7, css: '500 SIZEpx "Fredoka"',               roles: { 32: 24, 40: 29 } },
+  { id: 8, css: 'italic 800 SIZEpx "Exo 2"',          roles: { 16: 20, 24: 30 } },
+  { id: 9, css: '700 SIZEpx "Exo 2"',                 roles: { 32: 22, 40: 26 } },
+];
+const CHARS = (() => { let s = ''; for (let c = 32; c < 127; c++) s += String.fromCharCode(c); return s + 'éÉ·×'; })();
+
+async function bake() {
+  for (const f of FACES) for (const size of Object.values(f.roles)) await document.fonts.load(f.css.replace('SIZE', size));
+  await document.fonts.ready;
+  const out = [];
+  const N = 128;
+  const cv = document.createElement('canvas'); cv.width = N; cv.height = N;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  for (const f of FACES) for (const [role, size] of Object.entries(f.roles)) {
+    ctx.font = f.css.replace('SIZE', size);
+    const glyphs = [];
+    for (const ch of CHARS) {
+      ctx.clearRect(0, 0, N, N);
+      ctx.fillStyle = '#fff'; ctx.textBaseline = 'alphabetic';
+      const ox = 24, oy = 88;
+      ctx.fillText(ch, ox, oy);
+      const adv = Math.round(ctx.measureText(ch).width);
+      const img = ctx.getImageData(0, 0, N, N).data;
+      let x0 = N, y0 = N, x1 = -1, y1 = -1;
+      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (img[(y * N + x) * 4 + 3] >= 128) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+      const rows = [];
+      if (x1 >= 0) for (let y = y0; y <= y1; y++) { let r = ''; for (let x = x0; x <= x1; x++) r += img[(y * N + x) * 4 + 3] >= 128 ? '1' : '0'; rows.push(r); }
+      glyphs.push({ cp: ch.codePointAt(0), adv, xoff: x1 >= 0 ? x0 - ox : 0, yoff: x1 >= 0 ? y0 - oy : 0, rows });
+    }
+    out.push({ face: f.id, px: Number(role), size, glyphs });
+  }
+  document.getElementById('out').textContent = JSON.stringify(out);
+}
+bake();
+</script>
+</body>
+</html>

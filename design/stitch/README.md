@@ -58,7 +58,14 @@ configuración `design-stitch` de `.claude/launch.json` hace lo mismo.
 | Mochila en combate | `mochila_combate` | Nueva (misma pantalla, modo combate) |
 | Equipo en combate | `equipo_combate` | Nueva (misma pantalla, modo combate) |
 | Equipo · elegir (tutor, guardería, scripts) | `equipo_elegir` | Nueva (ui_scr_choose.c) |
-| Combate (HUD: individual, entrenador, doble, Safari; FIGHT, objetivo, SÍ/NO, subida de nivel, juez de la Arena) | `combate` | Diseño propio adaptado al kit |
+| Combate (HUD: individual, entrenador, doble, Safari; FIGHT, objetivo, SÍ/NO, subida de nivel, juez de la Arena; temas con `?theme=`) | `combate` | Diseño propio adaptado al kit |
+| PC: cajas (modos MOVE / WITHDRAW / DEPOSIT / MOVE ITEMS con `?mode=`) | `pc_cajas` | Nueva (2026-11-13) |
+| Teclado de nombre (`?for=mon`, `player`, `box`) | `teclado_nombre` | Nueva (2026-11-13) |
+| Correo / Easy Chat (`?type=mail`, `profile`, `battle`, `interview`, `trendy`) | `correo` | Nueva (2026-11-13) |
+| Mochila de la Pirámide (`?loc=field`, `battle`, `toss`, `party`) | `mochila_piramide` | Nueva (2026-11-13) |
+| Equipo en combate múltiple (`?forced=1`: cambio obligado) | `equipo_multi` | Nueva (2026-11-13): `equipo_combate` en modo múltiple |
+| Concurso: elección de la actuación | `concurso` | Nueva (2026-11-13) |
+| Batidora de bayas: elección de baya y resultados | `batidora` | Nueva (2026-11-13) |
 
 ## Tacto
 
@@ -86,6 +93,9 @@ El runtime implementa la misma tabla.
   se tocan. Una pestaña abre otra pantalla o cambia el contenido de la misma.
 - **B / ○**: cierra primero el popup abierto; si no hay ninguno, vuelve un nivel
   (detalle → lista → menú START). Con un popup abierto, L/R no cambian de pestaña.
+- Secciones con `back: 'screen'` (PC, nombre, correo, Pirámide, concurso, batidora): ○ es una tecla
+  de la pantalla (borrar letra, preguntar antes de salir, no se puede cancelar) y nunca sale sola.
+  Con `lr: 'screen'` (PC) los gatillos son de la pantalla (cambiar de caja) y el carril no muestra L / R.
 
 | Sección | Pestañas (orden de Stitch) | Pantallas |
 |---|---|---|

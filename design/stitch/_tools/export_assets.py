@@ -77,7 +77,8 @@ ITEMS = ["POTION", "SUPER_POTION", "HYPER_POTION", "ANTIDOTE", "PARALYZE_HEAL", 
          "NUGGET", "ORAN_BERRY", "PECHA_BERRY", "RARE_CANDY", "MACH_BIKE", "POKEBLOCK_CASE",
          "TM01", "TM28", "TM39", "HM01", "OLD_ROD", "SOOTHE_BELL", "TIMER_BALL", "REPEAT_BALL",
          "NEST_BALL", "LUXURY_BALL", "PREMIER_BALL", "MASTER_BALL", "AWAKENING", "BURN_HEAL",
-         "ICE_HEAL", "FULL_HEAL", "ETHER", "X_SPEED", "LETTER", "CARD_KEY"]
+         "ICE_HEAL", "FULL_HEAL", "ETHER", "X_SPEED", "LETTER", "CARD_KEY",
+         "CHERI_BERRY", "RAWST_BERRY", "ASPEAR_BERRY", "LEPPA_BERRY", "PERSIM_BERRY", "WEPEAR_BERRY", "ORANGE_MAIL"]
 PARTY = ["mudkip", "torchic", "ralts", "taillow", "zigzagoon", "wurmple", "treecko", "grovyle",
          "sceptile", "combusken", "marshtomp", "poochyena", "seedot", "lotad", "wingull",
          "blaziken", "swampert", "mightyena", "linoone", "silcoon", "beautifly", "cascoon",
@@ -244,10 +245,44 @@ def export_battle_and_extras():
         save(im, f"ui_gba/{names[n]}.png")
 
 
+# PC box wallpapers in WALLPAPER_* order (src/data/wallpapers.h); FRIENDS is drawn from Walda's
+# colours at run time and is left out
+WALLPAPERS = ["forest", "city", "desert", "savanna", "crag", "volcano", "snow", "cave", "beach",
+              "seafloor", "river", "sky", "polkadot", "pokecenter", "machine", "plain"]
+
+
+def export_wallpapers():
+    """Composes each wallpaper as the PC draws it (DrawWallpaper): 20 x 18 tiles of tilemap.bin over
+    tiles.4bpp (frame tiles, then bg tiles); palette 1 = frame.gbapal, 2 = bg.gbapal, colour 0 and
+    tile 0 transparent. 160 x 144 px, the top rows are the box name plate."""
+    import struct
+    for name in WALLPAPERS:
+        d = os.path.join(G, "pokemon_storage", "wallpapers", name)
+        tiles = open(os.path.join(d, "tiles.4bpp"), "rb").read()
+        tmap = struct.unpack("<360H", open(os.path.join(d, "tilemap.bin"), "rb").read()[:720])
+        pals = {1: read_gbapal(os.path.join(d, "frame.gbapal")), 2: read_gbapal(os.path.join(d, "bg.gbapal"))}
+        im = Image.new("RGBA", (160, 144), (0, 0, 0, 0))
+        px = im.load()
+        for i, e in enumerate(tmap):
+            t, hf, vf, p = e & 0x3FF, (e >> 10) & 1, (e >> 11) & 1, e >> 12
+            if e == 0 or p not in pals:
+                continue
+            base = t * 32
+            for y in range(8):
+                for x in range(8):
+                    sx, sy = (7 - x if hf else x), (7 - y if vf else y)
+                    b = tiles[base + sy * 4 + sx // 2] if base + sy * 4 + sx // 2 < len(tiles) else 0
+                    v = (b >> 4) if sx & 1 else (b & 15)
+                    if v:
+                        px[(i % 20) * 8 + x, (i // 20) * 8 + y] = pals[p][v] + (255,)
+        save(im, f"wallpapers/{name}.png")
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     export_sprites()
     export_region_map()
     export_battle_and_extras()
+    export_wallpapers()
     print("done ->", OUT)
     sys.exit(0)

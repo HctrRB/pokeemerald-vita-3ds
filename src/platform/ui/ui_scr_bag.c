@@ -209,9 +209,11 @@ static bool Update(const UiInput *in)
         sGiveTo = -1;
         return false;
     }
-    int32_t tab = UiKit_TabHit(in, sTabX, sTabW, POCKETS_COUNT);
-    if (in->pressed & VITA_BTN_L) tab = (sPocket + POCKETS_COUNT - 1) % POCKETS_COUNT;
-    if (in->pressed & VITA_BTN_R) tab = (sPocket + 1) % POCKETS_COUNT;
+    // Battle Pyramid: one list (ITEMS), no pockets and no sorting, as its GBA bag
+    const bool pyr = UiGame_InPyramid();
+    int32_t tab = pyr ? -1 : UiKit_TabHit(in, sTabX, sTabW, POCKETS_COUNT);
+    if (!pyr && (in->pressed & VITA_BTN_L)) tab = (sPocket + POCKETS_COUNT - 1) % POCKETS_COUNT;
+    if (!pyr && (in->pressed & VITA_BTN_R)) tab = (sPocket + 1) % POCKETS_COUNT;
     if (tab >= 0 && tab != sPocket)
     {
         sPocket = tab;
@@ -219,7 +221,7 @@ static bool Update(const UiInput *in)
         Refresh();
         return true;
     }
-    if (in->pressed & VITA_BTN_SELECT)
+    if ((in->pressed & VITA_BTN_SELECT) && !pyr)
     {
         sSort = (sSort + 1) % UI_SORT_COUNT;
         UiGame_SortPocket(sPocket, sSort);
@@ -253,7 +255,11 @@ static bool Update(const UiInput *in)
 
 static void Build(void)
 {
-    UiKit_Header("BAG", sPocketTabs, POCKETS_COUNT, sPocket, sTabX, sTabW, 8);
+    const bool pyr = UiGame_InPyramid();
+    if (pyr)
+        UiKit_Header("BATTLE BAG", sPocketTabs, 1, 0, sTabX, sTabW, 8);
+    else
+        UiKit_Header("BAG", sPocketTabs, POCKETS_COUNT, sPocket, sTabX, sTabW, 8);
     UiKit_HeaderMoney();
     if (sGiveTo >= 0)
     {
@@ -268,12 +274,24 @@ static void Build(void)
 
     // Bag art and pocket
     UiW_PanelDark(16, 60, 304, 136);
-    const uint16_t bagBase = UiGame_PlayerIsMale() ? UI_SPR_BAG_MALE_FIRST : UI_SPR_BAG_FEMALE_FIRST;
-    UiDraw_Sprite((uint16_t)(bagBase + sPocket), 22, 64, 2);
-    UiText_Draw(UI_FACE_PS2P, 16, 160, 100, sPocketTabs[sPocket], UI_RGBA(153, 246, 228, 255));
     char buf[96];
-    snprintf(buf, sizeof(buf), "%d kinds", (int)sCount);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 160, 122, buf, UI_COL_ON_SOFT);
+    if (pyr)
+    {
+        // PYRAMID BAG: kinds used of the 10 slots
+        UiText_Draw(UI_FACE_PS2P, 16, 32, 76, "PYRAMID BAG", UI_COL_TITLE);
+        snprintf(buf, sizeof(buf), "%d / %d kinds", (int)sCount, PYRAMID_BAG_ITEMS_COUNT);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 32, 100, buf, UI_COL_ON_SOFT);
+        for (int32_t i = 0; i < PYRAMID_BAG_ITEMS_COUNT; i++)
+            UiW_Bar(32 + i * 27, 156, 23, 16, i < sCount ? 100 : 0, gUiTheme->tabTop, gUiTheme->tabBot);
+    }
+    else
+    {
+        const uint16_t bagBase = UiGame_PlayerIsMale() ? UI_SPR_BAG_MALE_FIRST : UI_SPR_BAG_FEMALE_FIRST;
+        UiDraw_Sprite((uint16_t)(bagBase + sPocket), 22, 64, 2);
+        UiText_Draw(UI_FACE_PS2P, 16, 160, 100, sPocketTabs[sPocket], UI_COL_TITLE);
+        snprintf(buf, sizeof(buf), "%d kinds", (int)sCount);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 160, 122, buf, UI_COL_ON_SOFT);
+    }
 
     // Item card
     UiW_Panel(16, 208, 304, 284);

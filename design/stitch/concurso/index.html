@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contest · appeal</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* POKéMON CONTEST appeal turn (contest.c): the stage stays visible (the frame is lighter), the
+     four entrants with their appeal hearts and turn order on the right, the move list at the
+     bottom with the category icon, appeal (red) and jam (black) hearts and the effect text.
+     As in the game: the APPLAUSE meter (5) over the entrants; each entrant's state (NERVOUS,
+     no more appeals, combo ready ★, startled ✕); a move used last turn is marked REPEAT (it
+     loses hearts). ✕ only: an appeal cannot be cancelled and ○ does nothing (the contest cannot
+     be left). The results and the judge's comments use the dialogue box. */
+  .applause { display: flex; align-items: center; gap: 10px; padding: 4px 8px 6px; }
+  .applause .cells { display: flex; gap: 4px; }
+  .applause .cells i { width: 22px; height: 14px; border-radius: 3px; background: var(--paper-2); border: 2px solid var(--paper-shade); }
+  .applause .cells i.f { background: linear-gradient(#F5D162, #E07A1F); border-color: #B45309; }
+  .ent .st { width: 34px; text-align: center; font-size: 20px; color: var(--ink-soft); }
+  .mv .rep { font-family: 'Press Start 2P'; font-size: 10px; color: #B5352B; }
+  .stage .frame { background: rgba(4, 20, 16, 0.35); }
+  .body { flex-direction: column; }
+  .top { flex: 1; display: flex; justify-content: flex-end; min-height: 0; }
+  .entrants { width: 420px; display: flex; flex-direction: column; gap: 4px; padding: 8px; }
+  .ent { height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 8px; border-radius: 4px; background: var(--paper-1); border: 2px solid var(--row-line); }
+  .ent.me { background: linear-gradient(var(--sel-top), var(--sel-bot)); border-color: var(--sel-edge); color: var(--sel-ink); }
+  .ent .ord { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--paper-edge); color: #fff; font-family: 'Press Start 2P'; font-size: 12px; }
+  .ent .name { flex: 1; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; }
+  .hearts i { width: 12px; height: 12px; }
+  .low { height: 212px; flex: none; display: flex; gap: 12px; }
+  .moves { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; gap: 8px; padding: 10px; }
+  .mv { display: flex; align-items: center; gap: 10px; padding: 0 12px; border-radius: 4px; cursor: pointer; background: var(--paper-1); border: 2px solid var(--row-line); }
+  .mv.on { background: linear-gradient(var(--sel-top), var(--sel-bot)); border-color: var(--sel-edge); color: var(--sel-ink); }
+  .mv img { zoom: 2; }
+  .mv .name { flex: 1; }
+  .info { width: 360px; flex: none; display: flex; flex-direction: column; gap: 8px; }
+  .info .h2 { display: flex; gap: 18px; align-items: center; }
+</style>
+</head>
+<body data-screen="concurso">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="contest:appeal"><span class="spacer"></span><span class="capsule">COOL · NORMAL RANK · TURN 2 / 5</span></div>
+    <div class="body">
+      <div class="top">
+        <div class="panel entrants">
+          <div class="applause"><span class="ps" style="font-size:12px">APPLAUSE</span><span class="cells"><i class="f"></i><i class="f"></i><i></i><i></i><i></i></span></div>
+          <div class="ent"><span class="ord">1</span><div class="mon" style="background-image:url(../_assets/pokemon/zigzagoon_icon.png)"></div><span class="name">ZIGZAGOON</span><span class="st" title="startled">✕</span><span class="hearts"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i></span></div>
+          <div class="ent me"><span class="ord">2</span><div class="mon" style="background-image:url(../_assets/pokemon/combusken_icon.png)"></div><span class="name">COMBUSKEN</span><span class="st"></span><span class="hearts"><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></span></div>
+          <div class="ent"><span class="ord">3</span><div class="mon" style="background-image:url(../_assets/pokemon/linoone_icon.png)"></div><span class="name">LINOONE</span><span class="st" title="nervous">NRV</span><span class="hearts"><i class="f"></i><i></i><i></i><i></i><i></i><i></i></span></div>
+          <div class="ent"><span class="ord">4</span><div class="mon" style="background-image:url(../_assets/pokemon/shiftry_icon.png)"></div><span class="name">SHIFTRY</span><span class="st" title="combo ready">★</span><span class="hearts"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></span></div>
+        </div>
+      </div>
+      <div class="low">
+        <div class="panel moves">
+          <div class="mv on"><img src="../_assets/types/contest_cool.png" alt=""><span class="name">EMBER</span><span class="hearts"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></span></div>
+          <div class="mv"><img src="../_assets/types/contest_cool.png" alt=""><span class="name">DOUBLE KICK <span class="rep">REPEAT</span></span><span class="hearts"><i class="f"></i><i class="f"></i></span></div>
+          <div class="mv"><img src="../_assets/types/contest_beauty.png" alt=""><span class="name">SAND-ATTACK</span><span class="hearts"><i class="f"></i><i class="f"></i><i class="f"></i></span></div>
+          <div class="mv"><img src="../_assets/types/contest_tough.png" alt=""><span class="name">PECK</span><span class="hearts"><i class="f"></i><i class="f"></i><i class="f"></i></span></div>
+        </div>
+        <div class="panel info">
+          <div class="h2"><span class="ps">APPEAL</span><span class="hearts"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></span><span class="ps">JAM</span><span class="hearts jam"><i></i><i></i></span></div>
+          <div class="inset" style="flex:1">A basic appeal. Earns more if it matches the contest type: COOL.</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Appeal</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+<script>
+document.addEventListener('ui-back', () => window.UI && UI.toast('An appeal cannot be cancelled.'));
+document.querySelectorAll('.mv').forEach(m => m.addEventListener('click', () => m.classList.contains('on') && window.UI && UI.toast(m.querySelector('.name').firstChild.textContent.trim() + '! The appeal goes on in the dialogue box.')));
+</script>
+</body>
+</html>

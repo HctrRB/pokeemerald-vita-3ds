@@ -33,6 +33,7 @@ void UiDraw_Begin(void)
 {
     UiDrawList *list = &sLists[sBack];
     list->vcount = 0;
+    UiTheme_Refresh();
     sClipDepth = 0;
     sClip[0] = (UiClip){ 0, 0, UI_SCREEN_W, UI_SCREEN_H };
     uint16_t wx = 0, wy = 0, tw = 1, th = 1;

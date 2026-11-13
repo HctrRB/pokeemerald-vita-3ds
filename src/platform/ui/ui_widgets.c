@@ -6,122 +6,174 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "ui_internal.h"
 
 #define HEADER_H 48
 #define FOOTER_H 40
 
-// Finish colours (ui.css)
-#define C_FRAME_TOP   UI_RGBA(14, 43, 37, 255)
-#define C_FRAME_BOT   UI_RGBA(6, 26, 22, 255)
-#define C_EDGE_DARK   UI_RGBA(4, 18, 16, 255)
-#define C_HI_DARK     UI_RGBA(27, 84, 75, 255)
-#define C_SHADE_DARK  UI_RGBA(5, 22, 20, 255)
-#define C_CAP_TOP     UI_RGBA(18, 58, 49, 255)
-#define C_CAP_BOT     UI_RGBA(10, 36, 30, 255)
-#define C_CAP_HI      UI_RGBA(46, 107, 91, 255)
-#define C_MINT        UI_RGBA(153, 246, 228, 255)
-#define C_MINT2       UI_RGBA(110, 231, 183, 255)
-#define C_PAPER_EDGE  UI_RGBA(26, 48, 36, 255)
-#define C_PAPER_SHADE UI_RGBA(209, 200, 175, 255)
-#define C_PAPER_STRIP UI_RGBA(231, 223, 198, 255)
-#define C_ROW_A       UI_RGBA(235, 228, 207, 255)
-#define C_ROW_B       UI_RGBA(241, 235, 216, 255)
-#define C_ROW_LINE    UI_RGBA(216, 207, 183, 255)
-#define C_SEL_TOP     UI_RGBA(255, 247, 214, 255)
-#define C_SEL_BOT     UI_RGBA(253, 230, 138, 255)
-#define C_SEL_EDGE    UI_RGBA(217, 119, 6, 255)
-#define C_TAB_TOP     UI_RGBA(252, 237, 166, 255)
-#define C_TAB_BOT     UI_RGBA(226, 171, 36, 255)
-#define C_TAB_EDGE    UI_RGBA(140, 96, 6, 255)
-#define C_TAB_HI      UI_RGBA(255, 251, 224, 255)
-#define C_RAIL        UI_RGBA(4, 22, 18, 255)
-#define C_RAIL_EDGE   UI_RGBA(28, 85, 71, 255)
-#define C_KEY_TOP     UI_RGBA(27, 58, 50, 255)
-#define C_KEY_BOT     UI_RGBA(12, 32, 26, 255)
-#define C_KEY_LIGHT   UI_RGBA(54, 109, 95, 255)
-#define C_KEY_DARK    UI_RGBA(6, 21, 17, 255)
+#define T gUiTheme
 #define C_SHADOW      UI_RGBA(0, 0, 0, 102)
 #define C_WHITE       UI_RGBA(255, 255, 255, 255)
-#define C_GOLD        UI_RGBA(252, 211, 77, 255)
+#define C_GLOSS       UI_RGBA(255, 255, 255, 46)
 
-// ---------- Bevel primitives ----------
+// ---------- Shape primitives (rounded or chamfered corners, from the theme) ----------
 
-// Box with a cut-corner edge of thickness t, a vertical gradient fill, an inner highlight and an
-// inner shade of thickness b, and an optional hard shadow of `shadow` px below.
-static void BevelBox(int32_t x, int32_t y, int32_t w, int32_t h, int32_t t, uint32_t edge, uint32_t top, uint32_t bottom,
-                     int32_t b, uint32_t hi, uint32_t shade, int32_t shadow)
+// Edge inset of row k of a corner of size r
+static int32_t CornerInset(int32_t r, int32_t k, bool chamfer)
 {
-    // Rounded corners: radius 6 (smaller on short boxes), drawn as stepped rows
-    static const int8_t kInset[6] = { 4, 2, 1, 1, 0, 0 };   // edge inset of the first rows of a radius-6 corner
-    int32_t r = h >= 24 ? 6 : h >= 12 ? 3 : 0;
-    if (w < 2 * r) r = 0;
-    if (shadow > 0)
-        UiDraw_Rect(x + r, y + h, w - 2 * r, shadow, C_SHADOW);
-    // Edge shape
+    if (chamfer)
+        return r - k;
+    const float d = (float)r - (float)k - 0.5f;
+    const float in = (float)r - sqrtf((float)(r * r) - d * d);
+    return (int32_t)(in + 0.5f);
+}
+
+static void ShapeFill(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r, bool chamfer, uint32_t top, uint32_t bottom)
+{
+    if (w <= 0 || h <= 0)
+        return;
     for (int32_t k = 0; k < r; k++)
     {
-        const int32_t in = r == 6 ? kInset[k] : (k == 0 ? 2 : k == 1 ? 1 : 0);
-        UiDraw_Rect(x + in, y + k, w - 2 * in, 1, edge);
-        UiDraw_Rect(x + in, y + h - 1 - k, w - 2 * in, 1, edge);
+        const int32_t in = CornerInset(r, k, chamfer);
+        UiDraw_Rect(x + in, y + k, w - 2 * in, 1, top);
+        UiDraw_Rect(x + in, y + h - 1 - k, w - 2 * in, 1, bottom);
     }
-    UiDraw_Rect(x, y + r, w, h - 2 * r, edge);
-    // Fill (gradient), inset by the edge thickness, with the same rounding
+    if (top == bottom)
+        UiDraw_Rect(x, y + r, w, h - 2 * r, top);
+    else
+        UiDraw_RectV(x, y + r, w, h - 2 * r, top, bottom);
+}
+
+// Box of corner size r: hard shadow (sx, sy), edge of thickness t, vertical gradient fill, inner
+// highlight / shade of thickness b and an optional glass highlight on the upper half
+static void BevelBoxR(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r, bool chamfer, int32_t t, uint32_t edge,
+                      uint32_t top, uint32_t bottom, int32_t b, uint32_t hi, uint32_t shade, int32_t sx, int32_t sy,
+                      uint32_t shadowCol, bool gloss)
+{
+    if (r > h / 2) r = h / 2;
+    if (r > w / 2) r = w / 2;
+    if (sx > 0 || sy > 0)
+        ShapeFill(x + sx, y + sy, w, h, r, chamfer, shadowCol, shadowCol);
+    if (t > 0)
+        ShapeFill(x, y, w, h, r, chamfer, edge, edge);
     const int32_t fx = x + t, fy = y + t, fw = w - 2 * t, fh = h - 2 * t;
     const int32_t fr = r > t ? r - t : 0;
-    for (int32_t k = 0; k < fr; k++)
-    {
-        const int32_t in = fr - k > 2 ? (fr - k - 1) : (fr - k == 2 ? 1 : 0);
-        UiDraw_Rect(fx + in, fy + k, fw - 2 * in, 1, top);
-        UiDraw_Rect(fx + in, fy + fh - 1 - k, fw - 2 * in, 1, bottom);
-    }
-    UiDraw_RectV(fx, fy + fr, fw, fh - 2 * fr, top, bottom);
+    ShapeFill(fx, fy, fw, fh, fr, chamfer, top, bottom);
     if (b > 0)
     {
-        // Inner highlight (top, left) and shade (bottom, right): the bevel
         UiDraw_Rect(fx + fr, fy, fw - 2 * fr, b, hi);
         UiDraw_Rect(fx, fy + fr, b, fh - 2 * fr, hi);
         UiDraw_Rect(fx + fr, fy + fh - b, fw - 2 * fr, b, shade);
         UiDraw_Rect(fx + fw - b, fy + fr, b, fh - 2 * fr, shade);
     }
+    if (gloss && fh > 6)
+        UiDraw_Rect(fx + fr, fy + 1, fw - 2 * fr, fh / 2 - 1, C_GLOSS);
 }
 
-// Public bevelled box (battle HUD plates, command buttons)
+// Box in the shape of the current theme. shadow: the depth of the default design (4 px panels,
+// 6 px windows, 2 px capsules), scaled to the theme's shadow.
+static void BevelBox(int32_t x, int32_t y, int32_t w, int32_t h, int32_t t, uint32_t edge, uint32_t top, uint32_t bottom,
+                     int32_t b, uint32_t hi, uint32_t shade, int32_t shadow)
+{
+    int32_t r = T->radius;
+    if (h < 12) r = 0;
+    else if (h < 24 && r > 3) r = T->chamfer ? 4 : 3;
+    const int32_t sy = shadow > 0 ? (shadow * T->shadow + 3) / 4 : 0;
+    const int32_t sx = shadow > 0 ? (shadow * T->shadowR + 3) / 4 : 0;
+    BevelBoxR(x, y, w, h, r, T->chamfer, t, edge, top, bottom, T->bevel ? b : 0, hi, shade, sx, sy, T->shadowCol, false);
+}
+
+// Glass highlight of the theme (CRYSTAL) on a box already drawn
+static void Gloss(int32_t x, int32_t y, int32_t w, int32_t h, int32_t t)
+{
+    if (!T->gloss || h <= 2 * t + 6)
+        return;
+    const int32_t r = T->radius > t ? T->radius - t : 0;
+    const int32_t rr = r > (h - 2 * t) / 2 ? (h - 2 * t) / 2 : r;
+    UiDraw_Rect(x + t + rr, y + t + 1, w - 2 * t - 2 * rr, (h - 2 * t) / 2 - 1, C_GLOSS);
+}
+
+// ---------- Bevel primitives ----------
+
+// Public bevelled box (battle HUD plates, command buttons): always the original rounded shape,
+// the battle HUD keeps its own colours whatever the menu theme
 void UiW_Bevel(int32_t x, int32_t y, int32_t w, int32_t h, int32_t t, uint32_t edge, uint32_t top, uint32_t bottom,
                int32_t b, uint32_t hi, uint32_t shade, int32_t shadow)
 {
-    BevelBox(x, y, w, h, t, edge, top, bottom, b, hi, shade, shadow);
+    const int32_t r = h >= 24 ? 6 : h >= 12 ? 3 : 0;
+    BevelBoxR(x, y, w, h, r, false, t, edge, top, bottom, b, hi, shade, 0, shadow, C_SHADOW, false);
+}
+
+void UiW_ThemeBox(int32_t x, int32_t y, int32_t w, int32_t h, int32_t t, uint32_t edge, uint32_t top, uint32_t bottom,
+                  uint32_t hi, uint32_t shade, int32_t shadow, bool pill, uint32_t ring)
+{
+    int32_t r = T->radius;
+    if (pill) r = h / 2;
+    else if (h < 12) r = 0;
+    else if (h < 24 && r > 3) r = T->chamfer ? 4 : 3;
+    const bool chamfer = T->chamfer && !pill;
+    const int32_t sy = shadow > 0 ? (shadow * T->shadow + 3) / 4 : 0;
+    const int32_t sx = shadow > 0 ? (shadow * T->shadowR + 3) / 4 : 0;
+    if (ring)
+        BevelBoxR(x - 3, y - 3, w + 6, h + 6, r + 3, chamfer, 0, 0, ring, ring, 0, 0, 0, sx, sy, T->shadowCol, false);
+    BevelBoxR(x, y, w, h, r, chamfer, t, edge, top, bottom, T->bevel ? 2 : 0, hi, shade, ring ? 0 : sx, ring ? 0 : sy,
+              T->shadowCol, false);
+    if (T->gloss && h > 2 * t + 6)
+    {
+        const int32_t fr = r > t ? r - t : 0, rr = fr > (h - 2 * t) / 2 ? (h - 2 * t) / 2 : fr;
+        UiDraw_Rect(x + t + rr, y + t + 1, w - 2 * t - 2 * rr, (h - 2 * t) / 2 - 1, C_GLOSS);
+    }
 }
 
 // Dialogue / choice box (design/stitch .dialog): cream gradient, white highlight, warm shade,
 // dark rounded edge and a soft drop shadow
 void UiW_DialogBox(int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    BevelBox(x, y, w, h, 3, UI_RGBA(38, 39, 45, 255), UI_RGBA(251, 250, 242, 255), UI_RGBA(235, 231, 211, 255),
-             2, C_WHITE, UI_RGBA(158, 151, 132, 255), 6);
+    BevelBox(x, y, w, h, T->edge > 3 ? T->edge : 3, T->dlgEdge, T->dlgTop, T->dlgBot, 2, C_WHITE, T->dlgShade, 6);
+    if (T->accent)
+        UiDraw_Rect(x, y + (T->chamfer ? T->radius : 0), 8, h - (T->chamfer ? 2 * T->radius : 0), T->accent);
 }
 
 // Sunken info box inside a panel (labels and values of the summaries)
 void UiW_Inset(int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    BevelBox(x, y, w, h, 2, UI_RGBA(209, 200, 175, 255), UI_COL_PAPER1, UI_RGBA(229, 221, 197, 255),
-             2, UI_RGBA(205, 196, 170, 255), C_WHITE, 0);
+    BevelBox(x, y, w, h, 2, T->paperShade, T->paper1, T->paper1, 2, T->paperShade, C_WHITE, 0);
+}
+
+// Key cap: bevelled (light top-left, dark bottom-right) or, in flat themes, a shaped box
+static void KeyCap(int32_t x, int32_t y, int32_t w, int32_t h)
+{
+    if (T->bevel || T->gloss)
+    {
+        const int32_t r = T->radius >= 10 ? (h >= 40 ? 10 : 6) : 0;
+        if (r > 0)
+        {
+            BevelBoxR(x, y, w, h, r, T->chamfer, 2, T->keyLight, T->keyTop, T->keyBot, 0, 0, 0, 0, 2, C_SHADOW, T->gloss);
+            return;
+        }
+        UiDraw_Rect(x + 1, y + h, w - 2, 2, C_SHADOW);
+        UiDraw_RectV(x, y, w, h, T->keyTop, T->keyBot);
+        UiDraw_Rect(x, y, w, 2, T->keyLight);
+        UiDraw_Rect(x, y, 2, h, T->keyLight);
+        UiDraw_Rect(x, y + h - 2, w, 2, T->keyDark);
+        UiDraw_Rect(x + w - 2, y, 2, h, T->keyDark);
+        return;
+    }
+    const int32_t r = T->chamfer ? 4 : (T->radius >= 10 ? h / 2 : 3);
+    const int32_t t = T->edge >= 4 ? 3 : 0;
+    BevelBoxR(x, y, w, h, r, T->chamfer, t, T->keyDark, T->keyTop, T->keyBot, 0, 0, 0, 0, t ? 2 : 0, T->keyDark, false);
 }
 
 // Bevelled key; the footer one uses the footer type (Press Start 2P 16)
 static int32_t KeyEx(int32_t x, int32_t y, const char *label, bool small)
 {
     const int32_t w = (small ? UiText_Width(UI_FACE_PS2P, UI_FOOT_PX, label) + 12 : UiText_Width(UI_FACE_VT323, UI_BODY_PX, label) + 14);
-    UiDraw_Rect(x + 1, y + 24, w - 2, 2, C_SHADOW);
-    UiDraw_RectV(x, y, w, 24, C_KEY_TOP, C_KEY_BOT);
-    UiDraw_Rect(x, y, w, 2, C_KEY_LIGHT);
-    UiDraw_Rect(x, y, 2, 24, C_KEY_LIGHT);
-    UiDraw_Rect(x, y + 22, w, 2, C_KEY_DARK);
-    UiDraw_Rect(x + w - 2, y, 2, 24, C_KEY_DARK);
+    KeyCap(x, y, w, 24);
     if (small)
-        UiText_Draw(UI_FACE_PS2P, UI_FOOT_PX, x + 6, y + 5, label, C_MINT2);
+        UiText_Draw(UI_FACE_PS2P, UI_FOOT_PX, x + 6, y + 5, label, T->keyInk);
     else
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 7, y - 4, label, C_MINT2);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 7, y - 4, label, T->keyInk);
     return w;
 }
 
@@ -197,24 +249,40 @@ void UiW_FullFrame(void)
 {
     // Translucent frame over the 3D world (decision D3), then the bars with their shadows
     UiDraw_Rect(0, HEADER_H, UI_SCREEN_W, UI_SCREEN_H - HEADER_H - FOOTER_H, UI_COL_FRAME0_A);
-    UiDraw_RectV(0, 0, UI_SCREEN_W, HEADER_H - 2, C_FRAME_TOP, C_FRAME_BOT);
+    if (T->stripes)
+    {
+        // Diagonal stripes: 14 px bands every 28 px, clipped to the body
+        const float top = HEADER_H, bot = UI_SCREEN_H - FOOTER_H, hgt = bot - top;
+        UiDraw_PushClip(0, HEADER_H, UI_SCREEN_W, UI_SCREEN_H - HEADER_H - FOOTER_H);
+        for (int32_t sx = -(int32_t)hgt; sx < UI_SCREEN_W; sx += 28)
+        {
+            const float xs[4] = { (float)sx + hgt, (float)sx + hgt + 14, (float)sx + 14, (float)sx };
+            const float ys[4] = { top, top, bot, bot };
+            UiDraw_Poly4(xs, ys, UI_RGBA(255, 255, 255, 10));
+        }
+        UiDraw_PopClip();
+    }
+    UiDraw_RectV(0, 0, UI_SCREEN_W, HEADER_H - 2, T->barTop, T->barBot);
+    if (T->gloss)
+        UiDraw_Rect(0, 1, UI_SCREEN_W, HEADER_H / 2 - 2, C_GLOSS);
     UiDraw_Rect(0, HEADER_H - 2, UI_SCREEN_W, 2, UI_COL_LINE_DARK);
     UiDraw_Rect(0, HEADER_H, UI_SCREEN_W, 2, C_SHADOW);
     UiDraw_Rect(0, UI_SCREEN_H - FOOTER_H - 2, UI_SCREEN_W, 2, C_SHADOW);
     UiDraw_Rect(0, UI_SCREEN_H - FOOTER_H, UI_SCREEN_W, 2, UI_COL_LINE_DARK);
-    UiDraw_RectV(0, UI_SCREEN_H - FOOTER_H + 2, UI_SCREEN_W, FOOTER_H - 2, C_FRAME_BOT, C_FRAME_TOP);
+    UiDraw_RectV(0, UI_SCREEN_H - FOOTER_H + 2, UI_SCREEN_W, FOOTER_H - 2, T->barBot, T->barTop);
 }
 
 void UiW_FooterBar(void)
 {
     UiDraw_Rect(0, UI_SCREEN_H - FOOTER_H - 2, UI_SCREEN_W, 2, C_SHADOW);
     UiDraw_Rect(0, UI_SCREEN_H - FOOTER_H, UI_SCREEN_W, 2, UI_COL_LINE_DARK);
-    UiDraw_RectV(0, UI_SCREEN_H - FOOTER_H + 2, UI_SCREEN_W, FOOTER_H - 2, C_FRAME_BOT, C_FRAME_TOP);
+    UiDraw_RectV(0, UI_SCREEN_H - FOOTER_H + 2, UI_SCREEN_W, FOOTER_H - 2, T->barBot, T->barTop);
 }
 
 int32_t UiW_Capsule(int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    BevelBox(x, y, w, h, 2, C_EDGE_DARK, C_CAP_TOP, C_CAP_BOT, 1, C_CAP_HI, C_SHADE_DARK, 2);
+    BevelBox(x, y, w, h, 2, T->capEdge, T->capTop, T->capBot, 1, T->capHi, T->capBot, 2);
+    Gloss(x, y, w, h, 2);
     return w;
 }
 
@@ -223,7 +291,7 @@ void UiW_HeaderTitle(const char *title)
     const int32_t w = UiText_Width(UI_FACE_PS2P, 16, title) + 48;
     UiW_Capsule(16, 8, w, 32);
     UiDraw_Sprite(UI_SPR_BALL, 24, 16, 1);
-    UiText_Draw(UI_FACE_PS2P, 16, 48, 16, title, C_MINT);
+    UiText_Draw(UI_FACE_PS2P, 16, 48, 16, title, T->title);
 }
 
 void UiW_HeaderValue(const char *text, uint32_t colour)
@@ -241,10 +309,12 @@ int32_t UiW_TabsPad(int32_t x, const char *const *labels, int32_t count, int32_t
         total += UiText_Width(UI_FACE_VT323, UI_BODY_PX, labels[i]) + 2 * pad + 2;
     total += UiText_Width(UI_FACE_VT323, UI_BODY_PX, "R") + 14 + 4;
     // Sunken rail
-    UiDraw_Rect(x + 1, 6, total - 2, 36, C_RAIL_EDGE);
-    UiDraw_Rect(x, 7, total, 34, C_RAIL_EDGE);
-    UiDraw_Rect(x + 2, 8, total - 4, 32, C_RAIL);
-    UiDraw_Rect(x + 2, 8, total - 4, 2, C_SHADOW);
+    {
+        const int32_t r = T->chamfer ? 6 : T->radius >= 10 ? 12 : 1;
+        BevelBoxR(x, 6, total, 36, r, T->chamfer, 2, T->railEdge, T->rail, T->rail, 0, 0, 0, 0, 0, 0, false);
+        if (T->bevel)
+            UiDraw_Rect(x + 2 + r, 8, total - 4 - 2 * r, 2, C_SHADOW);
+    }
     int32_t cx = x + 4;
     cx += Key(cx, 12, "L") + 4;
     for (int32_t i = 0; i < count; i++)
@@ -252,8 +322,9 @@ int32_t UiW_TabsPad(int32_t x, const char *const *labels, int32_t count, int32_t
         const int32_t w = UiText_Width(UI_FACE_VT323, UI_BODY_PX, labels[i]) + 2 * pad;
         if (i == current)
         {
-            BevelBox(cx, 10, w, 28, 2, C_TAB_EDGE, C_TAB_TOP, C_TAB_BOT, 1, C_TAB_HI, C_TAB_BOT, 0);
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx + pad, 8, labels[i], UI_COL_INK);
+            const int32_t r = T->chamfer ? 5 : T->radius >= 10 ? 10 : 3;
+            BevelBoxR(cx, 10, w, 28, r, T->chamfer, 2, T->tabEdge, T->tabTop, T->tabBot, T->bevel ? 1 : 0, T->tabHi, T->tabBot, 0, 0, 0, T->gloss);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx + pad, 8, labels[i], T->tabInk);
         }
         else
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx + pad, 8, labels[i], UI_COL_ON_SOFT);
@@ -335,34 +406,60 @@ void UiW_FooterKey(int32_t *x, const char *key, const char *label)
 
 // ---------- Boxes ----------
 
+// Left accent bar of the theme (RED), between the cut corners
+static void AccentBar(int32_t x, int32_t y, int32_t h)
+{
+    if (!T->accent)
+        return;
+    const int32_t r = T->chamfer && h >= 24 ? T->radius : 0;
+    UiDraw_Rect(x, y + r, 6, h - 2 * r, T->accent);
+}
+
 void UiW_Panel(int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    BevelBox(x, y, w, h, 3, C_PAPER_EDGE, UI_COL_PAPER0, UI_COL_PAPER0, 2, C_WHITE, C_PAPER_SHADE, 4);
+    BevelBox(x, y, w, h, T->edge, T->paperEdge, T->paper0, T->paper0, 2, C_WHITE, T->paperShade, 4);
+    AccentBar(x, y, h);
 }
 
 void UiW_PanelDark(int32_t x, int32_t y, int32_t w, int32_t h)
 {
-    BevelBox(x, y, w, h, 3, C_EDGE_DARK, UI_RGBA(12, 47, 39, 255), UI_RGBA(7, 29, 24, 255), 1, C_HI_DARK, C_SHADE_DARK, 4);
+    BevelBox(x, y, w, h, T->edge > 3 ? T->edge : 3, T->darkEdge, T->darkTop, T->darkBot, 1, T->darkHi, T->darkBot, 4);
+    Gloss(x, y, w, h, 3);
+    AccentBar(x, y, h);
 }
 
 // Head strip inside a paper panel ("LEDGER: 05 / 12 ITEMS")
 void UiW_PanelHead(int32_t x, int32_t y, int32_t w, const char *label, const char *right)
 {
-    UiDraw_Rect(x + 3, y + 3, w - 6, 36, C_PAPER_STRIP);
-    UiDraw_Rect(x + 3, y + 3, w - 6, 2, C_WHITE);
-    UiDraw_Rect(x + 3, y + 39, w - 6, 2, C_PAPER_SHADE);
-    UiText_Draw(UI_FACE_PS2P, 16, x + 16, y + 14, label, UI_COL_INK);
+    // Square strip under the panel edge, kept clear of the rounded / cut top corners
+    const int32_t e = T->edge, r = T->radius > e ? T->radius - e : 0;
+    ShapeFill(x + e, y + e, w - 2 * e, 2 * r + 2, r, T->chamfer, T->paperStrip, T->paperStrip);
+    UiDraw_Rect(x + e, y + e + r, w - 2 * e, 39 - e - r, T->paperStrip);
+    if (T->bevel)
+        UiDraw_Rect(x + e + r, y + e, w - 2 * e - 2 * r, 2, C_WHITE);
+    UiDraw_Rect(x + e, y + 39, w - 2 * e, 2, T->edge >= 4 ? T->paperEdge : T->paperShade);
+    AccentBar(x, y, 41);
+    UiText_Draw(UI_FACE_PS2P, 16, x + 16, y + 14, label, T->stripInk);
     if (right)
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 16 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, right), y + 5, right, UI_COL_INK_SOFT);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 16 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, right), y + 5, right, T->stripSoft);
 }
 
 void UiW_Window(int32_t x, int32_t y, int32_t w, int32_t h, const char *title)
 {
-    BevelBox(x, y, w, h, 3, C_PAPER_EDGE, UI_COL_PAPER0, UI_COL_PAPER0, 2, C_WHITE, C_PAPER_SHADE, 6);
-    UiDraw_RectV(x + 3, y + 3, w - 6, 38, UI_RGBA(28, 56, 47, 255), UI_RGBA(11, 35, 29, 255));
-    UiDraw_Rect(x + 3, y + 3, w - 6, 1, C_CAP_HI);
-    UiDraw_Rect(x + 3, y + 41, w - 6, 2, C_EDGE_DARK);
-    UiText_Draw(UI_FACE_PS2P, 16, x + 16, y + 15, title, C_MINT);
+    const int32_t e = T->edge;
+    BevelBox(x, y, w, h, e, T->paperEdge, T->paper0, T->paper0, 2, C_WHITE, T->paperShade, 6);
+    // Title bar: same corner shape as the window on top, square below
+    const int32_t r = T->radius > e ? T->radius - e : 0;
+    ShapeFill(x + e, y + e, w - 2 * e, 2 * r + 2, r, T->chamfer, T->winTop, T->winTop);
+    UiDraw_RectV(x + e, y + e + r, w - 2 * e, 41 - e - r, T->winTop, T->winBot);
+    if (T->bevel)
+        UiDraw_Rect(x + e + r, y + e, w - 2 * e - 2 * r, 1, T->capHi);
+    if (T->gloss)
+        UiDraw_Rect(x + e + r, y + e + 1, w - 2 * e - 2 * r, 18, C_GLOSS);
+    UiDraw_Rect(x + e, y + 41, w - 2 * e, 2, T->edge >= 4 ? T->paperEdge : T->darkEdge);
+    if (T->accent)
+        UiDraw_Rect(x + e, y + 41, w - 2 * e, 3, T->accent);
+    UiText_Draw(UI_FACE_PS2P, 16, x + 16, y + 15, title, T->winInk);
 }
 
 // ---------- Rows, chips, bars, buttons ----------
@@ -382,26 +479,49 @@ void UiW_Row(int32_t x, int32_t y, int32_t w, int32_t h, bool selected, int32_t 
 {
     if (selected)
     {
-        UiDraw_RectV(x, y, w, h - 2, C_SEL_TOP, C_SEL_BOT);
-        UiDraw_Rect(x, y, w, 1, C_WHITE);
-        UiDraw_Rect(x, y + h - 2, w, 2, C_SEL_EDGE);
-        UiW_Arrow(x + 8, y + (h - 12) / 2, C_SEL_EDGE);
+        if (T->selRadius > 0)
+        {
+            // Pill (CRYSTAL, TROPICAL): outlined and rounded, over the row background
+            UiDraw_Rect(x, y, w, h - 2, (index & 1) ? T->rowB : T->rowA);
+            const int32_t r = T->selRadius < (h - 2) / 2 ? T->selRadius : (h - 2) / 2;
+            BevelBoxR(x, y, w, h - 2, r, false, T->edge >= 4 ? 3 : 2, T->selEdge, T->selTop, T->selBot, 0, 0, 0, 0, 0, 0, T->gloss);
+            UiW_Arrow(x + 10, y + (h - 14) / 2, T->selArrow);
+        }
+        else if (T->chamfer)
+        {
+            // Block with a cut right end (RED, ROYAL)
+            const int32_t c = h - 2 < 20 ? 6 : 12;
+            UiDraw_RectV(x, y, w - c, h - 2, T->selTop, T->selBot);
+            const float xs[4] = { (float)(x + w - c), (float)(x + w), (float)(x + w - c), (float)(x + w - c) };
+            const float ys[4] = { (float)y, (float)y, (float)(y + h - 2), (float)(y + h - 2) };
+            UiDraw_Poly4(xs, ys, T->selBot);
+            UiDraw_Rect(x, y + h - 2, w - c, 2, T->selEdge);
+            UiW_Arrow(x + 8, y + (h - 12) / 2, T->selArrow);
+        }
+        else
+        {
+            UiDraw_RectV(x, y, w, h - 2, T->selTop, T->selBot);
+            UiDraw_Rect(x, y, w, 1, C_WHITE);
+            UiDraw_Rect(x, y + h - 2, w, 2, T->selEdge);
+            UiW_Arrow(x + 8, y + (h - 12) / 2, T->selArrow);
+        }
     }
     else
     {
-        UiDraw_Rect(x, y, w, h - 2, (index & 1) ? C_ROW_B : C_ROW_A);
-        UiDraw_Rect(x, y + h - 2, w, 2, C_ROW_LINE);
+        UiDraw_Rect(x, y, w, h - 2, (index & 1) ? T->rowB : T->rowA);
+        UiDraw_Rect(x, y + h - 2, w, 2, T->rowLine);
     }
 }
 
 int32_t UiW_Chip(int32_t x, int32_t y, const char *label, bool amber)
 {
     const int32_t w = UiText_Width(UI_FACE_VT323, UI_BODY_PX, label) + 16;
+    const int32_t r = T->chamfer ? 4 : T->radius >= 10 ? 12 : 3;
     if (amber)
-        BevelBox(x, y, w, 26, 2, C_TAB_EDGE, C_TAB_TOP, C_TAB_BOT, 1, C_TAB_HI, C_TAB_BOT, 0);
+        BevelBoxR(x, y, w, 26, r, T->chamfer, 2, T->tabEdge, T->tabTop, T->tabBot, T->bevel ? 1 : 0, T->tabHi, T->tabBot, 0, 0, 0, false);
     else
-        BevelBox(x, y, w, 26, 2, UI_RGBA(11, 46, 38, 255), UI_RGBA(36, 82, 68, 255), UI_RGBA(22, 58, 48, 255), 1, UI_RGBA(60, 122, 104, 255), UI_RGBA(22, 58, 48, 255), 0);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 8, y - 4, label, amber ? UI_COL_INK : UI_RGBA(209, 250, 229, 255));
+        BevelBoxR(x, y, w, 26, r, T->chamfer, 2, T->chipEdge, T->chipTop, T->chipBot, T->bevel ? 1 : 0, T->capHi, T->chipBot, 0, 0, 0, false);
+    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 8, y - 4, label, amber ? T->tabInk : T->chipInk);
     return w;
 }
 
@@ -418,24 +538,25 @@ void UiW_Bar(int32_t x, int32_t y, int32_t w, int32_t h, int32_t percent, uint32
 
 void UiW_Button(int32_t x, int32_t y, int32_t w, const char *label, uint8_t colour, bool pressed)
 {
-    static const uint32_t tops[3] = { UI_RGBA(47, 122, 92, 255), UI_RGBA(224, 138, 42, 255), UI_RGBA(168, 58, 58, 255) };
-    static const uint32_t bots[3] = { UI_RGBA(29, 90, 67, 255), UI_RGBA(184, 102, 26, 255), UI_RGBA(122, 38, 38, 255) };
     const int32_t dy = pressed ? 2 : 0;
-    BevelBox(x, y + dy, w, 40, 2, UI_RGBA(23, 42, 34, 255), tops[colour % 3], bots[colour % 3], 1,
-             UI_RGBA(255, 255, 255, 102), UI_RGBA(0, 0, 0, 102), pressed ? 0 : 2);
-    UiText_Draw(UI_FACE_PS2P, 16, x + (w - UiText_Width(UI_FACE_PS2P, 16, label)) / 2, y + 12 + dy, label, C_WHITE);
+    const int32_t r = T->chamfer ? 8 : T->radius >= 10 ? 20 : 6;
+    const int32_t sh = pressed ? 0 : (T->shadowR ? 4 : 2);
+    BevelBoxR(x, y + dy, w, 40, r, T->chamfer, T->edge >= 4 ? 3 : 2, T->btnEdge, T->btnTop[colour % 3], T->btnBot[colour % 3],
+              T->bevel ? 1 : 0, UI_RGBA(255, 255, 255, 102), UI_RGBA(0, 0, 0, 102), T->shadowR ? sh : 0, sh,
+              T->shadowR ? T->shadowCol : C_SHADOW, T->gloss);
+    UiText_Draw(UI_FACE_PS2P, 16, x + (w - UiText_Width(UI_FACE_PS2P, 16, label)) / 2, y + 12 + dy, label, T->btnInk);
 }
 
 void UiW_Strip3(int32_t x, int32_t y, int32_t w, const char *const labels[3], const char *const values[3])
 {
-    UiDraw_Rect(x, y, w, 64, C_ROW_LINE);
-    UiDraw_Rect(x + 2, y + 2, w - 4, 60, C_ROW_A);
+    UiDraw_Rect(x, y, w, 64, T->rowLine);
+    UiDraw_Rect(x + 2, y + 2, w - 4, 60, T->paper1);
     const int32_t cw = (w - 4) / 3;
     for (int32_t i = 0; i < 3; i++)
     {
         const int32_t cx = x + 2 + i * cw;
         if (i > 0)
-            UiDraw_Rect(cx - 1, y + 2, 2, 60, C_ROW_LINE);
+            UiDraw_Rect(cx - 1, y + 2, 2, 60, T->rowLine);
         UiText_Draw(UI_FACE_PS2P, 16, cx + (cw - UiText_Width(UI_FACE_PS2P, 16, labels[i])) / 2, y + 8, labels[i], UI_COL_INK_SOFT);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx + (cw - UiText_Width(UI_FACE_VT323, UI_BODY_PX, values[i])) / 2, y + 26, values[i], UI_COL_INK);
     }
@@ -448,16 +569,11 @@ void UiW_Stepper(int32_t x, int32_t y, int32_t value, int32_t *minusX, int32_t *
     for (int32_t k = 0; k < 2; k++)
     {
         const int32_t kx = x + k * 136;
-        UiDraw_Rect(kx + 2, y + 40, 36, 2, C_SHADOW);
-        UiDraw_RectV(kx, y, 40, 40, C_KEY_TOP, C_KEY_BOT);
-        UiDraw_Rect(kx, y, 40, 2, C_KEY_LIGHT);
-        UiDraw_Rect(kx, y, 2, 40, C_KEY_LIGHT);
-        UiDraw_Rect(kx, y + 38, 40, 2, C_KEY_DARK);
-        UiDraw_Rect(kx + 38, y, 2, 40, C_KEY_DARK);
-        UiText_Draw(UI_FACE_VT323, 32, kx + 13, y + 4, k ? "+" : "-", C_MINT2);
+        KeyCap(kx, y, 40, 40);
+        UiText_Draw(UI_FACE_VT323, 32, kx + 13, y + 4, k ? "+" : "-", T->keyInk);
     }
-    UiDraw_Rect(x + 48, y, 80, 40, C_PAPER_SHADE);
-    UiDraw_Rect(x + 50, y + 2, 76, 36, C_ROW_A);
+    UiDraw_Rect(x + 48, y, 80, 40, T->paperShade);
+    UiDraw_Rect(x + 50, y + 2, 76, 36, T->paper1);
     UiDraw_Rect(x + 50, y + 2, 76, 2, UI_RGBA(0, 0, 0, 31));
     UiText_Draw(UI_FACE_VT323, 32, x + 48 + (80 - UiText_Width(UI_FACE_VT323, 32, buf)) / 2, y + 4, buf, UI_COL_INK);
     if (minusX) *minusX = x;

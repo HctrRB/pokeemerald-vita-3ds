@@ -19,6 +19,9 @@
 #include "constants/party_menu.h"
 #include "battle_anim.h"
 #include "item_menu.h"
+#include "main.h"
+#include "strings.h"
+#include "string_util.h"
 
 static bool sBattleMenu;
 
@@ -34,9 +37,8 @@ void UiGame_BattleMenuEnd(void)
 
 static bool CanOpenInBattle(void)
 {
-    // The PYRAMID bag and multi battles (partner's POKÃ©MON) keep the old screens
-    return Ui_IsEnabled() && !Ui_IsOpen() && CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE
-        && !(gBattleTypeFlags & BATTLE_TYPE_MULTI);
+    // The PYRAMID bag keeps the old screen; multi battles use the party in multi mode (2026-11-13)
+    return Ui_IsEnabled() && !Ui_IsOpen() && CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE;
 }
 
 bool Ui_OpenBattleBag(void)
@@ -73,9 +75,24 @@ bool UiGame_MonIsInBattle(int32_t slot)
     return false;
 }
 
+// Multi battle: party slots 3-5 hold the partner's POKÃ©MON (shown greyed, never chosen)
+bool UiGame_IsMultiPartner(int32_t slot)
+{
+    return gMain.inBattle && IsMultiBattle() && slot >= MULTI_PARTY_SIZE;
+}
+
 // NULL when the POKÃ©MON is sent out (the UI then closes), otherwise why not
 const char *UiGame_BattleSwitch(int32_t slot)
 {
+    static char sWhy[96];
+    if (UiGame_IsMultiPartner(slot))
+    {
+        // TrySwitchInPokemon: "You can't switch {partner}'s POKéMON with one of yours!"
+        StringCopy(gStringVar1, GetTrainerPartnerName());
+        StringExpandPlaceholders(gStringVar4, gText_CantSwitchWithAlly);
+        UiGame_Text(gStringVar4, sWhy, sizeof(sWhy));
+        return sWhy;
+    }
     struct Pokemon *mon = &gPlayerParty[slot];
     if (GetMonData(mon, MON_DATA_IS_EGG)) return "An EGG can't battle!";
     if (GetMonData(mon, MON_DATA_HP) == 0) return "It has no energy left to battle!";

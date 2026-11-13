@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Battle Pyramid bag</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* BATTLE PYRAMID bag (battle_pyramid_bag.c): one list, no pockets, at most 10 kinds and 99 of
+     each, emptied when the challenge ends. Same layout as the BAG; the left panel shows the floor
+     and the free slots. Four places it opens from, as in the game (review: ?loc=):
+       field   ✕: USE / GIVE / TOSS / CANCEL; ○ back to the START menu
+       battle  ✕: USE / CANCEL (CANCEL only for items with no battle use); ○ back to the battle
+       toss    the bag was full when picking an item up: TOSS / CANCEL; ○ = keep the bag, the new
+               item stays on the floor
+       party   giving from the POKéMON menu: ✕ GIVE; ○ back to the party
+     SELECT moves an item (reorder), not in the party / toss cases. */
+  .side { width: 304px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+  .floor { height: 136px; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+  .floor .row1 { display: flex; align-items: baseline; gap: 12px; }
+  .slots { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+  .slots i { height: 16px; border-radius: 2px; background: #0A241E; border: 2px solid #2B5849; }
+  .slots i.f { background: linear-gradient(#FCEDA6, #E2AB24); border-color: #8C6006; }
+  .detail { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .detail .acts { display: flex; gap: 6px; margin-top: auto; }
+  .detail .acts .act { flex: 1; padding: 0 6px; }
+  .detail .acts > span { display: flex; gap: 6px; flex: 1; }
+  .detail .top { display: flex; align-items: center; gap: 12px; }
+  .iconbox { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .desc { line-height: 30px; flex: 1; min-height: 0; overflow: hidden; }
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .item-ico { width: 24px; height: 24px; flex: none; }
+  .count { color: var(--ink-soft); }
+  .row.on .count { color: var(--select-ink); }
+</style>
+</head>
+<body data-screen="mochila_piramide">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="bag_pyramid:items"><span class="spacer"></span><span class="capsule">FLOOR 3 · ROUND 12</span></div>
+    <div class="body">
+      <div class="side">
+        <div class="panel-dark floor">
+          <div class="row1"><span class="ps">PYRAMID BAG</span></div>
+          <div class="vt-sm" style="color:var(--on-frame-soft)">6 / 10 kinds</div>
+          <div class="slots"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="panel detail">
+          <div class="top">
+            <div class="iconbox"><img class="x2" src="../_assets/items/hyper_potion.png" alt=""></div>
+            <div><div class="ps">HYPER POTION</div><div style="margin-top:6px">In bag: <b>x3</b></div></div>
+          </div>
+          <div class="sep"></div>
+          <div class="desc">Restores the HP of one POKéMON by 200 points.</div>
+          <div class="acts"><span id="acts"></span></div>
+        </div>
+      </div>
+      <div class="panel main">
+        <div class="panel-head"><span class="ps" id="listhead" style="white-space:nowrap">ITEMS</span></div>
+        <div class="list">
+          <div class="row on" data-open="acciones"><img class="item-ico" src="../_assets/items/hyper_potion.png" alt=""><span class="grow">HYPER POTION</span><span class="count">x3</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/super_potion.png" alt=""><span class="grow">SUPER POTION</span><span class="count">x5</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/full_heal.png" alt=""><span class="grow">FULL HEAL</span><span class="count">x2</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/revive.png" alt=""><span class="grow">REVIVE</span><span class="count">x1</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/ether.png" alt=""><span class="grow">ETHER</span><span class="count">x2</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/x_speed.png" alt=""><span class="grow">X SPEED</span><span class="count">x1</span></div>
+          <div class="row" style="border-bottom:0"><span class="item-ico"></span><span class="grow soft">CLOSE BAG</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Options</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span><span id="fback">Back</span></span>
+      <span class="btn" data-btn="select" id="fsel"><span class="key">SELECT</span>Move item</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+<div class="modal" id="acciones"><div class="win at" style="left:648px; top:120px; width:232px">
+  <div class="win-head"><span class="ps">HYPER POTION</span></div>
+  <div class="list" style="padding:6px" id="actlist"></div></div></div>
+<div class="modal" id="tirar"><div class="win" style="width:440px">
+  <div class="win-head"><span class="ps">TOSS</span><span class="spacer"></span><span class="vt-sm">In bag x3</span></div>
+  <div class="win-body" style="display:flex; align-items:center; justify-content:center; gap:16px; height:96px">
+    <img class="x2" src="../_assets/items/hyper_potion.png" alt=""><div class="stepper" data-min="1" data-max="3" data-value="1" data-unit="0"><span class="step" data-step="-1">−</span><span class="n"></span><span class="step" data-step="1">+</span></div></div>
+  <div class="win-body" style="padding-top:0"><div class="choice-row"><div class="row on" data-close data-toast="Threw away the HYPER POTION.">TOSS</div><div class="row" data-close>CANCEL</div></div></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+<script>
+(() => {
+  const LOC = {
+    field: { acts: ['USE', 'GIVE', 'TOSS', 'CANCEL'], back: 'Back', sel: true, out: 'Back to the START menu.' },
+    battle: { acts: ['USE', 'CANCEL'], back: 'Back', sel: true, out: 'Back to the battle.' },
+    toss: { acts: ['TOSS', 'CANCEL'], back: 'Keep the bag', sel: false, out: 'The bag stays as it is; the new item is left on the floor.', head: 'TOSS WHICH ITEM?' },
+    party: { acts: ['GIVE', 'CANCEL'], back: 'Back', sel: false, out: 'Back to the party.', head: 'GIVE WHICH ITEM?' },
+  };
+  const l = LOC[new URLSearchParams(location.search).get('loc')] || LOC.field;
+  const toast = t => window.UI && UI.toast(t);
+  document.getElementById('actlist').innerHTML = l.acts.map((a, i) => `<div class="row${i ? '' : ' on'}" data-act="${a}"${i === l.acts.length - 1 ? ' style="border-bottom:0"' : ''}>${a}</div>`).join('');
+  document.getElementById('acts').innerHTML = l.acts.filter(a => a !== 'CANCEL').map((a, i) => `<span class="act ${['green', 'amber', 'red'][a === 'TOSS' ? 2 : i]}" data-act="${a}">${a}</span>`).join('');
+  document.getElementById('fback').textContent = l.back;
+  if (!l.sel) document.getElementById('fsel').remove();
+  if (l.head) document.getElementById('listhead').textContent = l.head;
+  const run = a => {
+    if (a === 'CANCEL') return;
+    if (a === 'TOSS') return UI_MODALS.open('tirar');
+    toast({ USE: 'Opens the party to use it.', GIVE: 'Opens the party to give it.' }[a] || a);
+  };
+  document.getElementById('actlist').addEventListener('click', e => { const r = e.target.closest('[data-act]'); if (!r || !r.classList.contains('on')) return; UI_MODALS.closeTop(); run(r.dataset.act); });
+  document.getElementById('acts').addEventListener('click', e => { const r = e.target.closest('[data-act]'); if (r) run(r.dataset.act); });
+  document.addEventListener('ui-back', () => toast(l.out));
+  document.querySelectorAll('[data-toast]').forEach(r => r.addEventListener('click', () => r.classList.contains('on') && toast(r.dataset.toast)));
+})();
+</script>
+</body>
+</html>

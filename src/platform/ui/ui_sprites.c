@@ -27,12 +27,56 @@
 #endif
 
 extern const u8 *const gMonFootprintTable[];
+extern void PokeStorage_WallpaperForUi(u8 wallpaperId, const u32 **tiles, const u32 **tilemap, u16 *pal32);
+static inline uint16_t To5551(uint16_t bgr);
+
+// PC box wallpaper (160 x 144), composed once as DrawWallpaper puts it on BG2 and cut into 3 x 3
+// cells. Tilemap entries use palette 1 (frame) and 2 (background); colour 0 is transparent.
+#define WALL_W 160
+#define WALL_H 144
+static uint16_t sWall[WALL_W * WALL_H];
+static int32_t sWallId = -1;
+
+static void ComposeWallpaper(int32_t id)
+{
+    static uint8_t tiles[256 * 32];
+    static uint16_t tmap[32 * 32];
+    static uint16_t pal32[32];
+    const u32 *tilesLz, *mapLz;
+    PokeStorage_WallpaperForUi((u8)id, &tilesLz, &mapLz, pal32);
+    LZ77UnCompWram(tilesLz, tiles);
+    LZ77UnCompWram(mapLz, tmap);
+    uint16_t pal[2][16];
+    for (int32_t p = 0; p < 2; p++)
+        for (int32_t i = 0; i < 16; i++)
+            pal[p][i] = i ? To5551(pal32[p * 16 + i]) : 0;
+    memset(sWall, 0, sizeof(sWall));
+    for (int32_t t = 0; t < 20 * 18; t++)
+    {
+        const uint16_t e = tmap[t];
+        const int32_t p = (e >> 12) - 1;
+        if (e == 0 || p < 0 || p > 1)
+            continue;
+        const uint8_t *tile = &tiles[(e & 0x3FF) * 32];
+        const bool hf = (e >> 10) & 1, vf = (e >> 11) & 1;
+        for (int32_t y = 0; y < 8; y++)
+            for (int32_t x = 0; x < 8; x++)
+            {
+                const int32_t sx = hf ? 7 - x : x, sy = vf ? 7 - y : y;
+                const uint8_t b = tile[sy * 4 + sx / 2];
+                const uint8_t v = (sx & 1) ? (b >> 4) : (b & 15);
+                if (v)
+                    sWall[((t / 20) * 8 + y) * WALL_W + (t % 20) * 8 + x] = pal[p][v];
+            }
+    }
+    sWallId = id;
+}
 
 #define UI_SPR_RING 16             // staging slots (64x64 RGBA5551 = 8 KB each)
 #define UI_SPR_DECODES_PER_TICK 4  // bounds the Core 1 cost of opening a full screen
 #define UI_SPR_IDLE_TICKS 16       // a cell is reusable after this many ticks without being drawn
 
-enum { KIND_MON_ICON = 1, KIND_MON_FRONT, KIND_MON_FRONT_SHINY, KIND_ITEM, KIND_FOOTPRINT, KIND_TRAINER };
+enum { KIND_MON_ICON = 1, KIND_MON_FRONT, KIND_MON_FRONT_SHINY, KIND_ITEM, KIND_FOOTPRINT, KIND_TRAINER, KIND_WALLPAPER };
 #define KEY(kind, id) (((uint32_t)(kind) << 16) | (uint32_t)(id))
 
 // ---------- Core 1: cache ----------
@@ -146,6 +190,18 @@ static bool Decode(uint32_t key, uint16_t *dst)
                         dst[((t / 2) * 8 + py) * UI_CELL + (t % 2) * 8 + px] = 0xFFFF;
         return true;
     }
+    case KIND_WALLPAPER:
+    {
+        // id = wallpaper * 16 + part (3 x 3 parts of 64 x 64)
+        const int32_t wid = id >> 4, part = id & 15;
+        if (wid != sWallId)
+            ComposeWallpaper(wid);
+        const int32_t x0 = (part % 3) * UI_CELL, y0 = (part / 3) * UI_CELL;
+        for (int32_t y = 0; y < UI_CELL && y0 + y < WALL_H; y++)
+            for (int32_t x = 0; x < UI_CELL && x0 + x < WALL_W; x++)
+                dst[y * UI_CELL + x] = sWall[(y0 + y) * WALL_W + x0 + x];
+        return true;
+    }
     default:
         return false;
     }
@@ -255,6 +311,19 @@ bool UiSpr_TrainerSized(uint16_t pic, int32_t x, int32_t y, int32_t w, int32_t h
     const uint32_t u = (uint32_t)(c % UI_CELL_COLS) * UI_CELL, v = UI_DYN_Y + (uint32_t)(c / UI_CELL_COLS) * UI_CELL;
     UiDraw_Quad(x, y, w, h, u, v, u + 64, v + 64, 0xFFFFFFFFu);
     return true;
+}
+
+// PC box wallpaper at (x, y), 160 x 144 times scale; false while a part is still on its way
+bool UiSpr_Wallpaper(uint8_t wallpaperId, int32_t x, int32_t y, int32_t scale)
+{
+    bool all = true;
+    for (int32_t part = 0; part < 9; part++)
+    {
+        const int32_t px = (part % 3) * UI_CELL, py = (part / 3) * UI_CELL;
+        const int32_t w = WALL_W - px < UI_CELL ? WALL_W - px : UI_CELL, h = WALL_H - py < UI_CELL ? WALL_H - py : UI_CELL;
+        all &= DrawCell(KEY(KIND_WALLPAPER, ((uint32_t)wallpaperId << 4) | (uint32_t)part), 0, 0, w, h, x + px * scale, y + py * scale, scale, 0xFFFFFFFFu);
+    }
+    return all;
 }
 
 bool UiSpr_Footprint(uint16_t species, int32_t x, int32_t y, int32_t scale, uint32_t rgba)

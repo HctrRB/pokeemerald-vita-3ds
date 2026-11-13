@@ -45,6 +45,16 @@ enum { UI_CHOOSE_TUTOR, UI_CHOOSE_DAYCARE, UI_CHOOSE_ANY };
 bool Ui_OpenChooseMon(int kind);
 
 // Battle controller: the new BAG / POKEMON instead of the old Vita UI (false: not taken)
+// Naming screen (naming_screen.c DoNamingScreen): true when the new UI took it; it writes the name
+// to destBuffer as the GBA screen does and then sets returnCallback.
+bool Ui_OpenNaming(uint8_t templateNum, uint8_t *destBuffer, uint16_t species, uint16_t gender, uint32_t personality, void (*returnCallback)(void));
+// PC boxes (pokemon_storage_system.c, PC menu): option = OPTION_WITHDRAW / DEPOSIT / MOVE_MONS /
+// MOVE_ITEMS. True when the new UI took it; it returns to the PC menu when closed.
+bool Ui_OpenPc(uint8_t option);
+// Berry for the BERRY BLENDER / BERRY CRUSH (item_menu.c ChooseBerryForMachine)
+bool Ui_OpenBerryChoice(void (*exitCallback)(void));
+// Easy Chat (easy_chat.c DoEasyChatScreen): mail, profile, interviews, trendy saying...
+bool Ui_OpenEasyChat(uint8_t type, uint16_t *words, void (*exitCallback)(void), uint8_t personType);
 bool Ui_OpenBattleBag(void);
 bool Ui_OpenBattleParty(void);
 

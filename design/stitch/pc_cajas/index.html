@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PC · Boxes</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Someone's PC / LANETTE's PC (pokemon_storage_system.c). The mode is picked in the PC menu
+     before entering, as in the game (review: ?mode=move | withdraw | deposit | items):
+       MOVE POKéMON  box POKéMON: MOVE / SUMMARY / WITHDRAW / MARK / RELEASE
+       WITHDRAW      box POKéMON: WITHDRAW / SUMMARY / MARK / RELEASE (party full: refused)
+       DEPOSIT       party POKéMON: STORE (then the box list) / SUMMARY / MARK / RELEASE
+       MOVE ITEMS    held items: MOVE / GIVE / TAKE / BAG / INFO
+     ✕ on the box name (the wallpaper's plate): JUMP / WALLPAPER (a set, then one of its four GBA
+     wallpapers) / NAME. L / R change the box (as in the game).
+     SELECT: quick grab (the cursor picks a POKéMON up without the menu). ○ asks
+     "Continue BOX operations?"; while holding a POKéMON it is refused. Releasing or storing the
+     last POKéMON that can battle is refused. */
+  .party { width: 176px; flex: none; display: flex; flex-direction: column; gap: 4px; padding: 8px; }
+  .slot { height: 50px; display: flex; align-items: center; gap: 6px; padding: 0 8px; border-radius: 4px; background: var(--paper-1); border: 2px solid var(--row-line); cursor: pointer; }
+  .slot.empty { opacity: 0.45; }
+  .slot.on { background: linear-gradient(var(--sel-top), var(--sel-bot)); border-color: var(--sel-edge); }
+  /* The box is the GBA wallpaper itself (_assets/wallpapers, exported by export_assets.py), x2 with
+     no smoothing: 320 x 288. The name plate (rows 1-23) carries the box name; the 6 x 5 grid sits
+     on the body (rows 25-143) at the GBA's 24 px pitch, 48 px here. */
+  .box { width: 352px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 10px; }
+  .wall { position: relative; width: 320px; height: 288px; background: url(../_assets/wallpapers/forest.png) 0 0 / 320px 288px no-repeat; image-rendering: pixelated;
+    filter: drop-shadow(0 4px 0 rgba(0,0,0,0.45)); }
+  .wall .plate { position: absolute; left: 36px; top: 2px; width: 248px; height: 44px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    font-family: 'Press Start 2P', monospace; font-size: 16px; color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,0.65); }
+  .wall .lr { position: absolute; top: 12px; }
+  .wall .lr.l { left: 2px; } .wall .lr.r { right: 2px; }
+  .grid { position: absolute; left: 16px; top: 54px; display: grid; grid-template-columns: repeat(6, 48px); grid-template-rows: repeat(5, 46px); }
+  .cell { display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; border-radius: 6px; }
+  .cell.on { background: rgba(255, 247, 214, 0.55); box-shadow: inset 0 0 0 3px var(--sel-edge), 0 0 0 2px #fff; }
+  .cell.on::after { content: ''; position: absolute; top: -12px; left: 16px; border: 8px solid transparent; border-top-color: var(--sel-edge); }
+  body.quick .cell.on { box-shadow: inset 0 0 0 3px #2F7A5C, 0 0 0 2px #fff; } body.quick .cell.on::after { border-top-color: #2F7A5C; }
+  .boxinfo { display: flex; gap: 8px; }
+  #walls .opt.on { background: linear-gradient(var(--sel-top), var(--sel-bot)); box-shadow: inset 0 0 0 2px var(--sel-edge); }
+  .cell .held { position: absolute; right: 2px; bottom: 2px; width: 16px; height: 16px; }
+  body:not(.items) .cell .held { display: none; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; }
+  .cell .mon { zoom: 1.5; }
+  .detail { flex: 1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .detail .top { display: flex; gap: 12px; }
+  .detail .pic { width: 136px; height: 136px; flex: none; }
+  .detail .pic img { zoom: 2; }
+  .detail .kvs { flex: 1; }
+  .detail .kvs .v { white-space: nowrap; }
+  .detail > .kvs { flex: none; }
+  .marks { display: flex; gap: 6px; font-size: 22px; color: var(--ink-soft); }
+  .marks .m.on { color: var(--sel-edge); }
+  .hint { margin-top: auto; }
+  .boxes { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .boxes .row { padding-left: 28px; }
+</style>
+</head>
+<body data-screen="pc_cajas">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="pc:move"><span class="spacer"></span><span class="capsule" id="quick">CURSOR: MENU</span></div>
+    <div class="body">
+      <div class="panel party">
+        <div class="ps" style="padding:2px 4px 6px">PARTY <span class="soft">4/6</span></div>
+        <div class="slot"><div class="mon" style="background-image:url(../_assets/pokemon/marshtomp_icon.png)"></div><span>Lv17</span></div>
+        <div class="slot"><div class="mon" style="background-image:url(../_assets/pokemon/taillow_icon.png)"></div><span>Lv13</span></div>
+        <div class="slot"><div class="mon" style="background-image:url(../_assets/pokemon/ralts_icon.png)"></div><span>Lv11</span></div>
+        <div class="slot"><div class="mon" style="background-image:url(../_assets/pokemon/lotad_icon.png)"></div><span>Lv9</span></div>
+        <div class="slot empty"><span class="soft">-----</span></div>
+        <div class="slot empty"><span class="soft">-----</span></div>
+      </div>
+      <div class="box">
+        <div class="wall" id="wall">
+        <span class="key lr l" data-lr="-1">L</span><span class="plate" data-open="caja" id="boxname">BOX 1</span><span class="key lr r" data-lr="1">R</span>
+        <div class="grid">
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/zigzagoon_icon.png)"></div><img class="held" src="../_assets/items/nugget.png" alt=""></div>
+          <div class="cell on" data-open="acciones"><div class="mon" style="background-image:url(../_assets/pokemon/wingull_icon.png)"></div></div>
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/poochyena_icon.png)"></div></div>
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/wurmple_icon.png)"></div><img class="held" src="../_assets/items/oran_berry.png" alt=""></div>
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/seedot_icon.png)"></div></div>
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/marill_icon.png)"></div></div>
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/geodude_icon.png)"></div></div>
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/zubat_icon.png)"></div></div>
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/magikarp_icon.png)"></div></div>
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/whismur_icon.png)"></div></div>
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/surskit_icon.png)"></div></div>
+          <div class="cell"><div class="mon" style="background-image:url(../_assets/pokemon/egg_icon.png)"></div></div>
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+          <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+        </div>
+        </div>
+        <div class="boxinfo"><span class="capsule" id="boxcount">12/30</span><span class="capsule" id="wallname">FOREST</span></div>
+      </div>
+      <div class="panel detail">
+        <div class="top">
+          <div class="well pic"><img src="../_assets/pokemon/wingull_front.png" alt=""></div>
+          <div class="kvs">
+            <div><div class="k">WINGULL</div><div class="v">Lv11 <img class="gly" src="../_assets/ui_gba/gender_female.png" alt=""></div></div>
+            <div><div class="k">ITEM</div><div class="v soft">NONE</div></div>
+          </div>
+        </div>
+        <div class="kvs h"><div><div class="k">NATURE</div><div class="v">JOLLY</div></div><div><div class="k">MARKS</div><div class="v marks"><span class="m on">●</span><span class="m">▲</span><span class="m on">■</span><span class="m">♥</span></div></div></div>
+        <div class="kvs h"><div><div class="k">ABILITY</div><div class="v">KEEN EYE</div></div><div><div class="k">OT</div><div class="v">BRENDAN</div></div></div>
+        <div class="inset hint vt-sm">✕ on a POKéMON: options. ✕ on the box name: box menu.</div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Options</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Exit</span>
+      <span class="btn" data-btn="select"><span class="key">SELECT</span>Quick grab</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+  <!-- Popup: options of the POKéMON / item under the cursor (filled by the mode) -->
+  <div class="modal" id="acciones"><div class="win at" style="left:560px; top:110px; width:260px">
+    <div class="win-head"><span class="ps" id="acthead">WINGULL</span></div>
+    <div class="win-body list" style="padding:6px" id="actlist"></div></div></div>
+  <!-- Popup: box menu (✕ on the box name) -->
+  <div class="modal" id="caja"><div class="win at" style="left:236px; top:110px; width:260px">
+    <div class="win-head"><span class="ps">BOX 1</span></div>
+    <div class="win-body list" style="padding:6px">
+      <div class="row on" data-open="saltar">JUMP</div><div class="row" data-open="fondo">WALLPAPER</div>
+      <div class="row" onclick="this.classList.contains('on') && (location.href = '../teclado_nombre/index.html?for=box')">NAME</div><div class="row" data-close style="border-bottom:0">CANCEL</div>
+    </div></div></div>
+  <!-- Popup: box list (JUMP, and the target box of STORE in DEPOSIT mode) -->
+  <div class="modal" id="saltar"><div class="win" style="width:560px">
+    <div class="win-head"><span class="ps" id="savehead">JUMP TO WHICH BOX?</span></div>
+    <div class="win-body list boxes" style="padding:6px" id="boxlist"></div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Choose</span><span class="btn" data-btn="circle"><span class="glyph circle">○</span>Cancel</span></div></div></div>
+  <!-- Popup: wallpaper sets, then the four wallpapers of the set (as in the game) -->
+  <div class="modal" id="fondo"><div class="win" style="width:360px">
+    <div class="win-head"><span class="ps">WALLPAPER</span></div>
+    <div class="win-body list" style="padding:6px" id="sets"></div></div></div>
+  <div class="modal" id="fondo2"><div class="win" style="width:560px">
+    <div class="win-head"><span class="ps" id="sethead">SCENERY 1</span></div>
+    <div class="win-body" style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:12px" id="walls"></div>
+    <div class="win-foot"><span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Set</span><span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span></div></div></div>
+  <!-- Popup: release confirmation -->
+  <div class="modal" id="liberar"><div class="win" style="width:480px"><div class="win-head"><span class="ps">RELEASE</span></div>
+    <div class="win-body vt-lg">Release WINGULL?<div class="choice-row"><div class="row" data-close data-toast="WINGULL was released. Bye-bye, WINGULL!">YES</div><div class="row on" data-close>NO</div></div></div></div></div>
+  <!-- Popup: exit -->
+  <div class="modal" id="salir"><div class="win" style="width:480px"><div class="win-head"><span class="ps">PC</span></div>
+    <div class="win-body vt-lg">Continue BOX operations?<div class="choice-row"><div class="row on" data-close>YES</div><div class="row" data-close data-toast="Back to the PC menu.">NO</div></div></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+<script>
+(() => {
+  const MODES = {
+    move: { tab: 'MOVE POKéMON', acts: ['MOVE', 'SUMMARY', 'WITHDRAW', 'MARK', 'RELEASE', 'CANCEL'] },
+    withdraw: { tab: 'WITHDRAW', acts: ['WITHDRAW', 'SUMMARY', 'MARK', 'RELEASE', 'CANCEL'] },
+    deposit: { tab: 'DEPOSIT', acts: ['STORE', 'SUMMARY', 'MARK', 'RELEASE', 'CANCEL'] },
+    items: { tab: 'MOVE ITEMS', acts: ['MOVE', 'GIVE', 'TAKE', 'BAG', 'INFO', 'CANCEL'] },
+  };
+  const mode = new URLSearchParams(location.search).get('mode') || 'move';
+  const m = MODES[mode] || MODES.move;
+  const toast = t => window.UI && UI.toast(t);
+  let box = 0, held = false, quick = false;
+  document.body.classList.toggle('items', mode === 'items');
+  const tab = document.querySelector('.header .tab'); if (tab) tab.textContent = m.tab;
+  if (mode === 'deposit') {
+    document.querySelector('.cell.on').classList.remove('on');
+    document.querySelector('.slot').classList.add('on');
+    document.querySelector('.slot').dataset.open = 'acciones';
+    document.getElementById('acthead').textContent = 'MARSHTOMP';
+  }
+  if (mode === 'items') {
+    // MOVE ITEMS: the cursor starts on the first POKéMON holding something (ZIGZAGOON, NUGGET)
+    const on = document.querySelector('.cell.on'); on.classList.remove('on'); delete on.dataset.open;
+    const z = document.querySelector('.cell'); z.classList.add('on'); z.dataset.open = 'acciones';
+    document.getElementById('acthead').textContent = 'NUGGET';
+  }
+  const TOAST = {
+    WITHDRAW: 'WINGULL was taken out of the BOX.', MARK: 'Marks ● ▲ ■ ♥: toggled with ✕.', SUMMARY: 'Opens the POKéMON summary.',
+    TAKE: 'The NUGGET was put in the BAG.', BAG: 'The NUGGET was put in the BAG.', GIVE: 'Opens the BAG to choose an item.',
+    INFO: 'A nugget of pure gold.', MOVE: 'The cursor holds it: ✕ to place it, ○ is refused while holding.',
+  };
+  const list = document.getElementById('actlist');
+  list.innerHTML = m.acts.map((a, i) => `<div class="row${i ? '' : ' on'}" data-act="${a}"${i === m.acts.length - 1 ? ' style="border-bottom:0"' : ''}>${a}</div>`).join('');
+  list.addEventListener('click', e => {
+    const r = e.target.closest('[data-act]'); if (!r || !r.classList.contains('on')) return;
+    const a = r.dataset.act;
+    UI_MODALS.closeTop();
+    if (a === 'CANCEL') return;
+    if (a === 'RELEASE') return UI_MODALS.open('liberar');
+    if (a === 'STORE') { document.getElementById('savehead').textContent = 'DEPOSIT IN WHICH BOX?'; return UI_MODALS.open('saltar'); }
+    if (a === 'MOVE') held = true;
+    toast(TOAST[a]);
+  });
+  // Box list: 14 boxes with their counts; a full box cannot take a STORE
+  const counts = [12, 30, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const bl = document.getElementById('boxlist');
+  bl.innerHTML = counts.map((c, i) => `<div class="row${i ? '' : ' on'}" data-box="${i}"><span class="grow">BOX ${i + 1}</span><span class="soft">${c}/30</span></div>`).join('');
+  bl.addEventListener('click', e => {
+    const r = e.target.closest('[data-box]'); if (!r || !r.classList.contains('on')) return;
+    const i = +r.dataset.box;
+    const storing = document.getElementById('savehead').textContent.startsWith('DEPOSIT');
+    if (storing && counts[i] >= 30) return toast('That BOX is full.');
+    UI_MODALS.closeTop(); setBox(i);
+    if (storing) toast('MARSHTOMP was stored in BOX ' + (i + 1) + '.');
+    document.getElementById('savehead').textContent = 'JUMP TO WHICH BOX?';
+  });
+  // Wallpapers in WALLPAPER_* order; boxes start with FOREST, CITY, DESERT, SAVANNA in turn (game default)
+  const WALLS = ['forest', 'city', 'desert', 'savanna', 'crag', 'volcano', 'snow', 'cave', 'beach', 'seafloor', 'river', 'sky', 'polkadot', 'pokecenter', 'machine', 'plain'];
+  const SETS = [['SCENERY 1', 0], ['SCENERY 2', 4], ['SCENERY 3', 8], ['ETCETERA', 12]];
+  const boxWall = counts.map((c, i) => i % 4);
+  const label = w => w === 'pokecenter' ? 'POKéCENTER' : w.toUpperCase();
+  function paintWall() {
+    const w = WALLS[boxWall[box]];
+    document.getElementById('wall').style.backgroundImage = 'url(../_assets/wallpapers/' + w + '.png)';
+    document.getElementById('wallname').textContent = label(w);
+  }
+  function setBox(i) { box = (i + 14) % 14; document.getElementById('boxname').textContent = 'BOX ' + (box + 1); document.getElementById('boxcount').textContent = counts[box] + '/30'; paintWall(); }
+  const sets = document.getElementById('sets');
+  sets.innerHTML = SETS.map((st, i) => '<div class="row' + (i ? '' : ' on') + '" data-set="' + i + '">' + st[0] + '</div>').join('') + '<div class="row" data-close style="border-bottom:0">CANCEL</div>';
+  sets.addEventListener('click', e => {
+    const r = e.target.closest('[data-set]'); if (!r || !r.classList.contains('on')) return;
+    const st = SETS[+r.dataset.set];
+    document.getElementById('sethead').textContent = st[0];
+    document.getElementById('walls').innerHTML = WALLS.slice(st[1], st[1] + 4).map((w, k) =>
+      '<div class="opt' + (k ? '' : ' on') + '" data-wall="' + (st[1] + k) + '" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px;border-radius:4px;cursor:pointer">' +
+      '<img src="../_assets/wallpapers/' + w + '.png" alt="" style="width:112px;height:101px;image-rendering:pixelated"><span class="vt-sm">' + label(w) + '</span></div>').join('');
+    UI_MODALS.open('fondo2');
+  });
+  document.getElementById('walls').addEventListener('click', e => {
+    const o = e.target.closest('[data-wall]'); if (!o) return;
+    if (!o.classList.contains('on')) { document.querySelectorAll('#walls .opt').forEach(x => x.classList.remove('on')); o.classList.add('on'); return; }
+    boxWall[box] = +o.dataset.wall; paintWall();
+    while (UI_MODALS.stack.length) UI_MODALS.closeTop();
+  });
+  // Review: ?wall=n sets the wallpaper of BOX 1
+  const qw = +new URLSearchParams(location.search).get('wall'); if (qw >= 0 && qw < 16) boxWall[0] = qw;
+  document.addEventListener('ui-lr', e => setBox(box + e.detail));
+  paintWall();
+  document.querySelectorAll('[data-lr]').forEach(k => k.addEventListener('click', e => { e.stopPropagation(); setBox(box + +k.dataset.lr); }));
+  document.addEventListener('ui-back', () => held ? toast("You're holding a POKéMON!") : UI_MODALS.open('salir'));
+  document.addEventListener('keydown', e => {
+    if (e.key.toLowerCase() !== 'v' || UI_MODALS.stack.length) return;
+    quick = !quick; document.body.classList.toggle('quick', quick);
+    document.getElementById('quick').textContent = quick ? 'CURSOR: QUICK GRAB' : 'CURSOR: MENU';
+  });
+  document.querySelectorAll('[data-toast]').forEach(r => r.addEventListener('click', () => r.classList.contains('on') && toast(r.dataset.toast)));
+})();
+</script>
+</body>
+</html>

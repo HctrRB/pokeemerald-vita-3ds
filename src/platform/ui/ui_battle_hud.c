@@ -59,21 +59,10 @@ enum { ST_NONE, ST_ACTION, ST_MOVE, ST_TARGET, ST_REORDER, ST_SAFARI };
 #define CMP_W 270                      // doubles, player's side
 #define CMP_H 66
 
-// Colours
-#define C_PLATE_EDGE  UI_RGBA(12, 22, 38, 255)
-#define C_PLATE_TOP   UI_RGBA(251, 248, 238, 255)
-#define C_PLATE_BOT   UI_RGBA(239, 232, 213, 255)
-#define C_PLATE_SHADE UI_RGBA(197, 190, 170, 255)
-#define C_MINT        UI_RGBA(52, 211, 153, 255)
-#define C_GOLD        UI_RGBA(252, 211, 77, 255)
+// Colours: the menu theme's (gUiTheme, ui_theme.c); these few are the same in every theme
 #define C_WHITE       UI_RGBA(255, 255, 255, 255)
-#define C_AMBER       UI_RGBA(217, 119, 6, 255)
-#define C_LV          UI_RGBA(87, 69, 0, 255)
-#define C_DARK_TOP    UI_RGBA(14, 43, 37, 255)
-#define C_DARK_BOT    UI_RGBA(6, 26, 22, 255)
-#define C_DARK_EDGE   UI_RGBA(4, 18, 16, 255)
-#define C_DARK_HI     UI_RGBA(27, 84, 75, 255)
-#define C_SOFT        UI_RGBA(126, 166, 156, 255)
+#define TH            gUiTheme
+#define PILL          (TH->selRadius > 0)
 
 static bool sActive;
 static uint16_t sDispClear;            // Core 1 writes, Core 0 reads
@@ -181,37 +170,16 @@ static void Bar(int32_t x, int32_t y, int32_t w, int32_t h, int32_t pct, uint32_
 {
     if (pct < 0) pct = 0;
     if (pct > 100) pct = 100;
-    UiDraw_Rect(x, y, w, h, C_PLATE_EDGE);
+    UiDraw_Rect(x, y, w, h, TH->gauge);
     int32_t fill = (w - 4) * pct / 100;
     if (pct > 0 && fill < 1) fill = 1;
     UiDraw_RectV(x + 2, y + 2, fill, h - 4, top, bottom);
 }
 
-// Selection: a warm halo fading outwards plus a light sheen over the top half, pulsing gently
-static void Glow(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t rgb)
-{
-    const int32_t pulse = (int32_t)((sFrame / 2) % 40);
-    const int32_t k = pulse < 20 ? pulse : 40 - pulse;          // 0..20..0
-    static const uint8_t kAlpha[5] = { 120, 84, 56, 32, 14 };
-    for (int32_t r = 0; r < 5; r++)
-    {
-        const uint32_t a = (uint32_t)(kAlpha[r] * (80 + k) / 100);
-        UiDraw_Frame(x - 1 - r, y - 1 - r, w + 2 + 2 * r, h + 2 + 2 * r, 1, (rgb & 0x00FFFFFFu) | (a << 24));
-    }
-}
-
-static void Sheen(int32_t x, int32_t y, int32_t w, int32_t h)
-{
-    const int32_t pulse = (int32_t)((sFrame / 2) % 40);
-    const int32_t k = pulse < 20 ? pulse : 40 - pulse;
-    UiDraw_RectV(x + 4, y + 4, w - 8, h / 2 - 2, UI_RGBA(255, 255, 255, 70 + k * 2), UI_RGBA(255, 255, 255, 0));
-}
-
 static void PlateBox(int32_t x, int32_t y, int32_t w, int32_t h, bool lit)
 {
-    if (lit)
-        Glow(x, y, w, h, C_GOLD);
-    UiW_Bevel(x, y, w, h, 3, C_PLATE_EDGE, C_PLATE_TOP, C_PLATE_BOT, 2, C_WHITE, C_PLATE_SHADE, 4);
+    UiW_ThemeBox(x, y, w, h, 3, TH->plateEdge, TH->plateTop, TH->plateBot, C_WHITE, TH->plateShade, 4, false,
+                 lit ? TH->gold : TH->plateRing);
 }
 
 // mine: the player's side (HP numbers, EXP). compact: doubles, player's side.
@@ -221,11 +189,16 @@ static void Plate(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool turn
     const int32_t h = compact ? CMP_H : mine ? OWN_H : FOE_H;
     PlateBox(x, y, w, h, turn || target);
     if (turn)
-        UiW_Arrow(x - 22, y + 24, C_GOLD);
+        UiW_Arrow(x - 22, y + 24, TH->gold);
     char name[24], buf[24];
     UiGame_Text(gBattleMons[b].nickname, name, sizeof(name));
     const u16 species = gBattleMons[b].species;
-    int32_t cx = x + 12 + UiText_Draw(UI_FACE_PS2P, 16, x + 12, y + 10, name, UI_COL_INK);
+    // Name in the body face (as tall as the level) for legibility; the small title face only when a
+    // long nickname would run into the level
+    const int32_t nameRoom = w - 12 - 12 - 100;
+    int32_t cx = x + 12 + (UiText_Width(UI_FACE_VT323, UI_BODY_PX, name) <= nameRoom
+                           ? UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y + 1, name, UI_COL_INK)
+                           : UiText_Draw(UI_FACE_PS2P, 16, x + 12, y + 10, name, UI_COL_INK));
     const u8 gender = GetGenderFromSpeciesAndPersonality(species, gBattleMons[b].personality);
     // Gender at x1 (14 px), centred on the 16 px name
     if (gender == MON_MALE) { UiDraw_Sprite(UI_SPR_GENDER_MALE, cx + 6, y + 11, 1); cx += 22; }
@@ -237,7 +210,7 @@ static void Plate(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool turn
     snprintf(buf, sizeof(buf), "%u", (unsigned)gBattleMons[b].level);
     const int32_t lvW = UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 12 - lvW, y + 1, buf, UI_COL_INK);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 14 - lvW - UiText_Width(UI_FACE_VT323, UI_BODY_PX, "Lv"), y + 1, "Lv", C_LV);
+    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 14 - lvW - UiText_Width(UI_FACE_VT323, UI_BODY_PX, "Lv"), y + 1, "Lv", TH->lvInk);
 
     if (mine && (gBattleTypeFlags & BATTLE_TYPE_SAFARI))
     {
@@ -251,7 +224,7 @@ static void Plate(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool turn
     HpColours(pct, &top, &bottom);
     const int st = StatusIndex(gBattleMons[b].status1);
     const int32_t rowY = y + 34;
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, rowY - 8, "HP", C_AMBER);
+    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, rowY - 8, "HP", TH->hpInk);
     if (compact)
     {
         Bar(x + 46, rowY + 2, 120, 12, pct, top, bottom);
@@ -337,7 +310,7 @@ static void PartyBalls(int32_t xPlayer, int32_t yPlayer, int32_t xFoe, int32_t y
         const int32_t w = 6 * 22 + 16;
         const int32_t away = (int32_t)((1.0f - e) * (float)(w + 40));
         const int32_t x = side ? xFoe - away : xPlayer + away, y = side ? yFoe : yPlayer;
-        UiW_Bevel(x, y, w, 30, 2, UI_RGBA(43, 88, 73, 255), UI_RGBA(12, 22, 38, 235), UI_RGBA(12, 22, 38, 235), 0, 0, 0, 3);
+        UiW_ThemeBox(x, y, w, 30, 2, TH->darkEdge, TH->darkTop, TH->darkBot, TH->darkHi, TH->darkBot, 3, PILL, 0);
         for (int32_t i = 0; i < PARTY_SIZE; i++)
             UiDraw_Sprite((uint16_t)(UI_SPR_BATTLE_BALL_FIRST + sBallsState[side][i]), x + 10 + i * 22, y + 7, 2);
     }
@@ -345,17 +318,13 @@ static void PartyBalls(int32_t xPlayer, int32_t yPlayer, int32_t xFoe, int32_t y
 
 // ---------------------------------------------------------------- bottom box
 
-static void CommandButton(int32_t x, int32_t y, int32_t w, int32_t h, const char *label, uint32_t top, uint32_t bottom, bool on)
+static void CommandButton(int32_t x, int32_t y, int32_t w, int32_t h, const char *label, int32_t i, bool on)
 {
+    UiW_ThemeBox(x, y, w, h, 3, TH->cmdEdge, TH->cmdTop[i], TH->cmdBot[i], UI_RGBA(255, 255, 255, 102), UI_RGBA(0, 0, 0, 89),
+                 3, PILL, on ? TH->gold : 0);
     if (on)
-        Glow(x, y, w, h, UI_RGBA(255, 236, 170, 255));
-    UiW_Bevel(x, y, w, h, 3, C_PLATE_EDGE, top, bottom, 2, UI_RGBA(255, 255, 255, 102), UI_RGBA(0, 0, 0, 89), 3);
-    if (on)
-    {
-        Sheen(x, y, w, h);
-        UiW_Arrow(x + 10, y + h / 2 - 6, C_WHITE);
-    }
-    UiText_Draw(UI_FACE_PS2P, 16, x + 30, y + (h - 16) / 2, label, C_WHITE);
+        UiW_Arrow(x + (PILL ? 18 : 10), y + h / 2 - 6, TH->cmdInk == C_WHITE ? TH->gold : TH->cmdInk);
+    UiText_Draw(UI_FACE_PS2P, 16, x + (PILL ? 38 : 30), y + (h - 16) / 2, label, TH->cmdInk);
 }
 
 static bool Hit(int32_t tx, int32_t ty, int32_t x, int32_t y, int32_t w, int32_t h)
@@ -366,14 +335,12 @@ static bool Hit(int32_t tx, int32_t ty, int32_t x, int32_t y, int32_t w, int32_t
 static void Commands(u8 b, bool safari, bool tap, int32_t tx, int32_t ty)
 {
     static const char *const kLabels[2][4] = { { "FIGHT", "BAG", "POKéMON", "RUN" }, { "BALL", "POKéBLOCK", "GO NEAR", "RUN" } };
-    static const uint32_t kTop[4] = { UI_RGBA(240, 112, 112, 255), UI_RGBA(245, 158, 43, 255), UI_RGBA(45, 107, 87, 255), UI_RGBA(155, 107, 242, 255) };
-    static const uint32_t kBot[4] = { UI_RGBA(217, 68, 68, 255), UI_RGBA(217, 119, 6, 255), UI_RGBA(27, 77, 62, 255), UI_RGBA(124, 58, 237, 255) };
     const int32_t x0 = UI_SCREEN_W - 16 - 400, y0 = BOX_Y + 18, cw = 195, ch = 56;
     const u8 cursor = gActionSelectionCursor[b] & 3;
     for (int32_t i = 0; i < 4; i++)
     {
         const int32_t x = x0 + (i & 1) * (cw + 10), y = y0 + (i >> 1) * (ch + 10);
-        CommandButton(x, y, cw, ch, kLabels[safari ? 1 : 0][i], kTop[i], kBot[i], i == cursor);
+        CommandButton(x, y, cw, ch, kLabels[safari ? 1 : 0][i], i, i == cursor);
         if (tap && Hit(tx, ty, x, y, cw, ch))
         {
             if (i == cursor) UiMirror_Inject(A_BUTTON);
@@ -388,7 +355,7 @@ static void PromptText(u8 b, bool safari)
     if (safari) UiGame_PlayerName(name, sizeof(name));
     else UiGame_Text(gBattleMons[b].nickname, name, sizeof(name));
     UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 22, "What will", UI_COL_INK);
-    const int32_t w = UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 72, name, UI_COL_MONEY);
+    const int32_t w = UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 72, name, TH->em);
     UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28 + w, BOX_Y + 72, " do?", UI_COL_INK);
 }
 
@@ -403,22 +370,19 @@ static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)
     {
         const int32_t x = x0 + (i & 1) * (cw + 10), y = y0 + (i >> 1) * (ch + 10);
         const bool on = i == cursor && st != ST_TARGET ? true : i == cursor;
-        if (i == from)
-            Glow(x, y, cw, ch, C_MINT);
         if (on)
-            Glow(x, y, cw, ch, UI_RGBA(255, 200, 90, 255));
-        UiW_Bevel(x, y, cw, ch, 2, UI_RGBA(38, 39, 45, 255), on ? UI_RGBA(255, 247, 214, 255) : C_WHITE,
-                  on ? UI_RGBA(253, 230, 138, 255) : UI_RGBA(241, 236, 221, 255), 2, C_WHITE, C_PLATE_SHADE, 0);
+            UiW_ThemeBox(x, y, cw, ch, 2, TH->selEdge, TH->selTop, TH->selBot, UI_RGBA(255, 255, 255, 150), UI_RGBA(0, 0, 0, 40), 0,
+                         PILL, i == from ? TH->gold : 0);
+        else
+            UiW_ThemeBox(x, y, cw, ch, 2, TH->dlgEdge, TH->dlgTop, TH->dlgBot, C_WHITE, TH->dlgShade, 0, PILL,
+                         i == from ? TH->gold : 0);
         if (on)
-        {
-            Sheen(x, y, cw, ch);
-            UiW_Arrow(x + 10, y + ch / 2 - 6, UI_RGBA(217, 119, 6, 255));
-        }
+            UiW_Arrow(x + (PILL ? 16 : 10), y + ch / 2 - 6, TH->selInk);
         if (mi->moves[i] != MOVE_NONE)
             UiGame_MoveName(mi->moves[i], name, sizeof(name));
         else
             snprintf(name, sizeof(name), "-");
-        UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, x + 30, y + 6, name, UI_COL_INK);
+        UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, x + (PILL ? 36 : 30), y + 6, name, on ? TH->selInk : UI_COL_INK);
         if (tap && st == ST_MOVE && mi->moves[i] != MOVE_NONE && Hit(tx, ty, x, y, cw, ch))
         {
             if (i == cursor) UiMirror_Inject(A_BUTTON);
@@ -427,7 +391,7 @@ static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)
     }
     // PP and TYPE of the selected move (GBA B_WIN_PP / B_WIN_MOVE_TYPE); the target in doubles
     const int32_t px = UI_SCREEN_W - 16 - 312, py = BOX_Y + 18;
-    UiW_Bevel(px, py, 312, 131, 2, C_DARK_EDGE, C_DARK_TOP, C_DARK_BOT, 1, C_DARK_HI, C_DARK_EDGE, 0);
+    UiW_ThemeBox(px, py, 312, 131, 2, TH->darkEdge, TH->darkTop, TH->darkBot, TH->darkHi, TH->darkBot, 0, false, 0);
     const int sel = cursor & 3;
     const u16 move = mi->moves[sel];
     if (st == ST_TARGET)
@@ -437,8 +401,8 @@ static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)
         if (t < gBattlersCount)
         {
             UiGame_Text(gBattleMons[t].nickname, name, sizeof(name));
-            UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, px + 16, py + 40, name, C_GOLD);
-            UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 98, GetBattlerSide(t) == B_SIDE_PLAYER ? (t == b ? "SELF" : "ALLY") : "FOE", C_MINT);
+            UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, px + 16, py + 40, name, TH->gold);
+            UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 98, GetBattlerSide(t) == B_SIDE_PLAYER ? (t == b ? "SELF" : "ALLY") : "FOE", UI_COL_TITLE);
         }
         return;
     }
@@ -449,12 +413,12 @@ static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)
     snprintf(buf, sizeof(buf), "%u/%u", (unsigned)mi->currentPp[sel], (unsigned)mi->maxPp[sel]);
     const u8 pp = mi->currentPp[sel], maxPp = mi->maxPp[sel] ? mi->maxPp[sel] : 1;
     const uint32_t ppc = pp == 0 ? UI_RGBA(240, 122, 110, 255) : pp * 4 <= maxPp ? UI_RGBA(245, 158, 43, 255)
-                       : pp * 2 <= maxPp ? UI_RGBA(245, 209, 98, 255) : C_WHITE;
+                       : pp * 2 <= maxPp ? UI_RGBA(245, 209, 98, 255) : UI_COL_ON_FRAME;
     UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, px + 312 - 16 - UiText_Width(UI_FACE_VT323, UI_DIALOG_PX, buf), py + 4, buf, ppc);
     UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 66, "TYPE", UI_COL_ON_SOFT);
     UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + gBattleMoves[move].type), px + 312 - 16 - 64, py + 58, 2);
     if (st == ST_REORDER)
-        UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 100, "MOVE WHERE?", C_MINT);
+        UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 100, "MOVE WHERE?", UI_COL_TITLE);
 }
 
 static void Message(bool tap, int32_t ty)
@@ -472,7 +436,7 @@ static void Message(bool tap, int32_t ty)
     UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 72, lines[1], UI_COL_INK);
     const bool waiting = tp->active && tp->state == RENDER_STATE_WAIT;
     if (waiting && ((sFrame / 16) & 1))
-        UiDraw_Tri(UI_SCREEN_W - 44, UI_SCREEN_H - 34, UI_SCREEN_W - 28, UI_SCREEN_H - 34, UI_SCREEN_W - 36, UI_SCREEN_H - 24, UI_COL_MONEY);
+        UiDraw_Tri(UI_SCREEN_W - 44, UI_SCREEN_H - 34, UI_SCREEN_W - 28, UI_SCREEN_H - 34, UI_SCREEN_W - 36, UI_SCREEN_H - 24, TH->em);
     if (waiting && tap && ty >= BOX_Y)
         UiMirror_Inject(A_BUTTON);
 }
@@ -505,22 +469,21 @@ static void LevelUp(int32_t platesTop)
     GetMonLevelUpWindowStats(&gPlayerParty[gBattleStruct->expGetterMonId], curr);
     const u16 *before = gBattleResources->beforeLvlUp->stats;
     const int32_t w = 300, h = 140, x = UI_SCREEN_W - 16 - w, y = platesTop - 14 - h;
-    UiDraw_Frame(x - 2, y - 2, w + 4, h + 4, 1, C_MINT);
-    UiW_Bevel(x, y, w, h, 3, C_DARK_EDGE, C_DARK_TOP, C_DARK_BOT, 1, C_DARK_HI, C_DARK_EDGE, 4);
-    UiText_Draw(UI_FACE_PS2P, 16, x + 14, y + 12, gUiLevelUpPage == 2 ? "NEW STATS" : "LEVEL UP!", C_MINT);
+    UiW_ThemeBox(x, y, w, h, 3, TH->darkEdge, TH->darkTop, TH->darkBot, TH->darkHi, TH->darkBot, 4, false, TH->plateRing);
+    UiText_Draw(UI_FACE_PS2P, 16, x + 14, y + 12, gUiLevelUpPage == 2 ? "NEW STATS" : "LEVEL UP!", UI_COL_TITLE);
     char buf[12];
     for (int32_t k = 0; k < NUM_STATS; k++)
     {
         const u8 s = kOrder[k];
         const int32_t cx = x + 14 + (k & 1) * 142, cy = y + 36 + (k >> 1) * 32;
-        UiDraw_Rect(cx, cy + 31, 128, 1, C_DARK_HI);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx, cy, kNames[s], C_SOFT);
+        UiDraw_Rect(cx, cy + 31, 128, 1, TH->darkHi);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx, cy, kNames[s], UI_COL_ON_SOFT);
         if (gUiLevelUpPage == 2)
             snprintf(buf, sizeof(buf), "%u", (unsigned)curr[s]);
         else
             snprintf(buf, sizeof(buf), "+%d", (int)curr[s] - (int)before[s]);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx + 128 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), cy, buf,
-                    gUiLevelUpPage == 2 ? C_WHITE : UI_RGBA(110, 231, 183, 255));
+                    gUiLevelUpPage == 2 ? UI_COL_ON_FRAME : UI_RGBA(110, 231, 183, 255));
     }
 }
 
@@ -570,8 +533,10 @@ bool UiBattle_Draw(void)
     PartyBalls(UI_SCREEN_W - 16 - (6 * 22 + 16), ownTop - 44, 16, dbl ? 16 + 84 + FOE_H + 12 : 16 + FOE_H + 12);
 
     // Bottom box: full width, flush with the bottom and the sides (GBA y 112..160)
-    UiW_Bevel(-6, BOX_Y, UI_SCREEN_W + 12, UI_SCREEN_H - BOX_Y + 8, 3, UI_RGBA(38, 39, 45, 255), UI_RGBA(251, 250, 242, 255),
-              UI_RGBA(235, 231, 211, 255), 2, C_WHITE, UI_RGBA(158, 151, 132, 255), 0);
+    UiW_ThemeBox(-6, BOX_Y, UI_SCREEN_W + 12, UI_SCREEN_H - BOX_Y + 8, 3, TH->dlgEdge, TH->dlgTop, TH->dlgBot, C_WHITE,
+                 TH->dlgShade, 0, false, 0);
+    if (TH->accent)
+        UiDraw_Rect(0, BOX_Y + 3 + TH->radius, 6, UI_SCREEN_H - BOX_Y - 3 - TH->radius, TH->accent);
     if (st == ST_ACTION || st == ST_SAFARI)
     {
         PromptText(who, st == ST_SAFARI);

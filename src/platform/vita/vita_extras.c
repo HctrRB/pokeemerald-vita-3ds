@@ -88,6 +88,7 @@ static inline int32_t LookupFastId(const char *key)
         break;
     case 'u':
         if (strcmp(key, "ui_v2") == 0) return FAST_EXTRA_UI_V2;
+        if (strcmp(key, "ui_theme") == 0) return FAST_EXTRA_UI_THEME;
         break;
     case 'v':
         if (strcmp(key, "voxel_3d") == 0) return FAST_EXTRA_VOXEL_3D;
@@ -128,8 +129,9 @@ const char *const gVitaExtrasOffOn[2] = { "OFF", "ON" };
 static const char *const sSpeedValues[] = { "2X", "3X", "4X", "5X", NULL };
 static const char *const sFFButtonValues[] = { "HOLD", "TOGGLE", NULL };
 static const char *const sFilterValues[] = { "NEAREST", "BILINEAR", "SHARP", NULL };
-static const char *const sVoxelResValues[] = { "960x544", "720x408", NULL };
-static const char *const sVoxelFpsValues[] = { "30 FPS", "LIBRE 60", NULL };
+// Order = UI_THEME_* (src/platform/ui/ui_internal.h); RED is the default
+static const char *const sUiThemeValues[] = { "RED", "EMERALD", "CRYSTAL", "TROPICAL", "ROYAL", NULL };
+static const char *const sVoxelFpsValues[] = { "30", "60", NULL };
 static const char *const sSaveSlotValues[] = { "SLOT 1", "SLOT 2", "SLOT 3", NULL };
 static const char *const sDayNightValues[] = { "OFF", "AUTO", NULL };
 static const char *const sClockSpeedValues[] = { "1X", "6X", "12X", "24X", "60X", "120X", "1000X", NULL };
@@ -266,11 +268,11 @@ const VitaExtra gVitaExtras[] = {
     { VITA_TAB_GENERAL, "PACING",     "FAST FWD SPEED",    "speed",            4, 1, sSpeedValues,       NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "PACING",     "FF BUTTON MODE",    "ff_button",        2, 0, sFFButtonValues,    NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "DISPLAY",    "2D SCALER",         "filter",           3, 0, sFilterValues,      NULL, NULL, NULL },
+    { VITA_TAB_GENERAL, "DISPLAY",    "MENU COLOR",        "ui_theme",         5, 0, sUiThemeValues,     NULL, NULL, NULL },
 
     // ---- [WORLD] ----
     { VITA_TAB_WORLD,   "RENDERER",   "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "DIORAMA BLUR (DOF)","voxel_blur",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "RENDERER",   "VOXEL RESOLUTION",  "voxel_res",        2, 0, sVoxelResValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "TARGET FRAMERATE",  "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "DAY / NIGHT CYCLE", "day_night",        2, 1, sDayNightValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "TIMED ENCOUNTERS",  "timed_encounters", 2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
@@ -338,7 +340,6 @@ static void SyncPlatformSetting(const char *key, const int32_t value)
     else if (strcmp(key, "ivs_evs") == 0) Platform_SetSetting(PLATFORM_SETTING_STATS_INFO, (u8)value);
     else if (strcmp(key, "exp_share") == 0) Platform_SetSetting(PLATFORM_SETTING_EXP_SHARE, (u8)value);
     else if (strcmp(key, "voxel_3d") == 0) Platform_SetSetting(PLATFORM_SETTING_VOXEL_3D, (u8)value);
-    else if (strcmp(key, "voxel_res") == 0) Platform_SetSetting(PLATFORM_SETTING_VOXEL_RES, (u8)value);
     else if (strcmp(key, "voxel_fps") == 0) Platform_SetSetting(PLATFORM_SETTING_VOXEL_FPS, (u8)value);
     else if (strcmp(key, "filter") == 0)
     {

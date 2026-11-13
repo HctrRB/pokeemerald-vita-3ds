@@ -46,6 +46,12 @@ extern const u8 gText_ObtainedTheItem[], gText_PlayerFoundOneItem[], gText_Playe
 static uint16_t sShownItem;      // item of the "obtained / found" messages (design/stitch/objeto_obtenido)
 
 static bool sCovers;           // written by Core 1, read by Core 0
+// The last dialogue box drawn, held a few frames when the mirror would drop out for a moment: the
+// windows of a closing YES/NO, a finished call or the next message are torn down and created over
+// several frames, and in between the GBA box (or nothing) showed for a frame or two (flicker)
+#define HOLD_FRAMES 6
+static char sHeldLines[2][160];
+static int32_t sHold;
 static uint16_t sInjected;     // GBA keys asked by a tap (Core 1 only)
 static bool sTouchPrev;
 static int32_t sTouchX, sTouchY, sTouchDownX, sTouchDownY;
@@ -149,6 +155,24 @@ static bool OtherBg0Windows(u8 except, u8 except2)
     return false;
 }
 
+// The mirror has nothing to show this frame: the held box while the hold lasts, else nothing (the
+// GBA overlay shows its windows)
+static bool HeldBox(void)
+{
+    if (sHold <= 0)
+    {
+        __atomic_store_n(&sCovers, false, __ATOMIC_RELAXED);
+        return false;
+    }
+    sHold--;
+    const int32_t x = 48, y = UI_SCREEN_H - 24 - 124, w = UI_SCREEN_W - 96, h = 124;
+    UiW_DialogBox(x, y, w, h);
+    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, x + 28, y + 12, sHeldLines[0], UI_COL_INK);
+    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, x + 28, y + 58, sHeldLines[1], UI_COL_INK);
+    __atomic_store_n(&sCovers, true, __ATOMIC_RELAXED);
+    return true;
+}
+
 // Core 1, from Ui_Tick while no screen is open: draws into the list being built
 bool UiMirror_Draw(void)
 {
@@ -187,10 +211,7 @@ bool UiMirror_Draw(void)
     if (call)
     {
         if (OtherBg0Windows(callWin, 0))
-        {
-            __atomic_store_n(&sCovers, false, __ATOMIC_RELAXED);
-            return false;
-        }
+            return HeldBox();
         const struct TextPrinter *tp = GetTextPrinterForUi(callWin);
         const u8 *start = gUiPrinterStart[callWin];
         const u8 *end = tp->active ? tp->printerTemplate.currentChar : NULL;
@@ -207,6 +228,8 @@ bool UiMirror_Draw(void)
             UiDraw_Sprite(UI_SPR_START_POKENAV, x + 34, y - 78, 1);
         UiW_Capsule(x + 112, y - 52, 300, 34);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 124, y - 51, "POKéNAV · MATCH CALL", UI_COL_ON_FRAME);
+        memcpy(sHeldLines, lines, sizeof(sHeldLines));
+        sHold = HOLD_FRAMES;
         UiW_DialogBox(x, y, w, h);
         UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, x + 28, y + 12, lines[0], UI_COL_INK);
         UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, x + 28, y + 58, lines[1], UI_COL_INK);
@@ -219,8 +242,9 @@ bool UiMirror_Draw(void)
     }
     if ((!box && !yesNo && !choice) || (!sceneBox && OtherBg0Windows(menuWin, moneyWin == WINDOW_NONE ? 0 : moneyWin)))
     {
-        __atomic_store_n(&sCovers, false, __ATOMIC_RELAXED);
-        return false;
+        if (!field)
+            sHold = 0;                                     // a battle, a menu, a 2D map: no hold
+        return HeldBox();
     }
     if (box)
     {
@@ -239,6 +263,8 @@ bool UiMirror_Draw(void)
             UiDraw_Rect(0, UI_SCREEN_H - 172, UI_SCREEN_W, 172, UI_COL_FRAME1);
             UiDraw_Rect(0, UI_SCREEN_H - 172, UI_SCREEN_W, 3, UI_COL_LINE_DARK);
         }
+        memcpy(sHeldLines, lines, sizeof(sHeldLines));
+        sHold = sceneBox ? 0 : HOLD_FRAMES;
         UiW_DialogBox(x, y, w, h);
         UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, x + 28, y + 12, lines[0], UI_COL_INK);
         UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, x + 28, y + 58, lines[1], UI_COL_INK);

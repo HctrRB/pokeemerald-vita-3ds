@@ -38,6 +38,22 @@ static bool InPyramid(void)
     return CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE;
 }
 
+bool UiGame_InPyramid(void)
+{
+    return InPyramid();
+}
+
+// Inside the Battle Pyramid every item goes to and comes from its own bag (battle_pyramid_bag.c)
+static bool8 BagAdd(u16 item, u16 n)
+{
+    return InPyramid() ? AddPyramidBagItem(item, n) : AddBagItem(item, n);
+}
+
+static bool8 BagRemove(u16 item, u16 n)
+{
+    return InPyramid() ? RemovePyramidBagItem(item, n) : RemoveBagItem(item, n);
+}
+
 int32_t UiGame_PocketItems(int32_t pocket, UiBagRow *rows, int32_t max)
 {
     int32_t n = 0;
@@ -124,7 +140,7 @@ uint16_t UiGame_ItemMove(uint16_t itemId)
 
 bool UiGame_CanToss(uint16_t itemId)
 {
-    return GetItemImportance(itemId) == 0 && !InPyramid();
+    return GetItemImportance(itemId) == 0;
 }
 
 bool UiGame_CanRegister(uint16_t itemId)
@@ -135,12 +151,12 @@ bool UiGame_CanRegister(uint16_t itemId)
 
 bool UiGame_CanGive(uint16_t itemId)
 {
-    return GetItemImportance(itemId) == 0 && !InPyramid();
+    return GetItemImportance(itemId) == 0;
 }
 
 void UiGame_Toss(uint16_t itemId, uint16_t n)
 {
-    RemoveBagItem(itemId, n);
+    BagRemove(itemId, n);
 }
 
 void UiGame_Register(uint16_t itemId)
@@ -179,14 +195,14 @@ UiUseResult UiGame_UseFromBag(uint16_t itemId, char *msg, size_t cap, void (**af
         if (VarGet(VAR_REPEL_STEP_COUNT) > 0) { snprintf(msg, cap, "The REPEL is still in effect."); return UI_USE_FAIL; }
         VarSet(VAR_REPEL_STEP_COUNT, GetItemHoldEffectParam(itemId));
         VarSet(VAR_LAST_REPEL, itemId);
-        RemoveBagItem(itemId, 1);
+        BagRemove(itemId, 1);
         snprintf(msg, cap, "The REPEL was sprayed!");
         return UI_USE_DONE;
     }
     if (itemId == ITEM_ESCAPE_ROPE)
     {
         if (!CanUseDigOrEscapeRopeOnCurMap()) { snprintf(msg, cap, "It can't be used here."); return UI_USE_FAIL; }
-        RemoveBagItem(itemId, 1);
+        BagRemove(itemId, 1);
         *afterClose = AfterClose_EscapeRope;
         return UI_USE_CLOSE;
     }
@@ -212,7 +228,7 @@ UiUseResult UiGame_UseFromBag(uint16_t itemId, char *msg, size_t cap, void (**af
             }
         }
         if (!any) { snprintf(msg, cap, "It won't have any effect."); return UI_USE_FAIL; }
-        RemoveBagItem(itemId, 1);
+        BagRemove(itemId, 1);
         snprintf(msg, cap, "All fainted POKéMON were revived!");
         return UI_USE_DONE;
     }
@@ -243,7 +259,7 @@ static void Consume(uint16_t item)
     const uint16_t move = ItemIdToBattleMoveId(item);
     if (move != MOVE_NONE && (IsMoveHm(move) || VitaExtras_GetFast(FAST_EXTRA_INFINITE_TMS) != 0))
         return;                     // HMs, and TMs with the infinite TMs extra, are not used up
-    RemoveBagItem(item, 1);
+    BagRemove(item, 1);
 }
 
 static void Stats(struct Pokemon *mon, int16_t out[6], uint8_t *lv)
@@ -288,7 +304,7 @@ UiItemResult UiGame_ItemOnMon(int32_t slot, uint16_t item, UiStatDelta *delta, c
     {
         const uint16_t target = GetEvolutionTargetSpecies(mon, EVO_ITEM, item);
         if (target == SPECIES_NONE) { snprintf(msg, cap, "It won't have any effect."); return UI_ITEM_FAIL; }
-        RemoveBagItem(item, 1);
+        BagRemove(item, 1);
         sEvoSlot = (uint8_t)slot;
         sEvoSpecies = target;
         *afterClose = AfterClose_Evolve;
@@ -342,8 +358,8 @@ void UiGame_GiveItem(int32_t slot, uint16_t item, uint16_t *previous)
     struct Pokemon *mon = &gPlayerParty[slot];
     *previous = (uint16_t)GetMonData(mon, MON_DATA_HELD_ITEM);
     if (*previous != ITEM_NONE)
-        AddBagItem(*previous, 1);
-    RemoveBagItem(item, 1);
+        BagAdd(*previous, 1);
+    BagRemove(item, 1);
     SetMonData(mon, MON_DATA_HELD_ITEM, &item);
 }
 
@@ -351,7 +367,7 @@ bool UiGame_TakeItem(int32_t slot, uint16_t *taken)
 {
     struct Pokemon *mon = &gPlayerParty[slot];
     *taken = (uint16_t)GetMonData(mon, MON_DATA_HELD_ITEM);
-    if (*taken == ITEM_NONE || !AddBagItem(*taken, 1))
+    if (*taken == ITEM_NONE || !BagAdd(*taken, 1))
         return false;
     const uint16_t none = ITEM_NONE;
     SetMonData(mon, MON_DATA_HELD_ITEM, &none);

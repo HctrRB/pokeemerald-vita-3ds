@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mail · Easy Chat</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* Easy Chat (easy_chat.c), one screen for every type; review: ?type=mail (9 words), profile (4),
+     battle (6: battle start / won / lost), interview (2), trendy (2 words, both needed).
+     Two levels, as in the game: the MESSAGE (word slots + DEL ALL / CANCEL / OK) and the WORDS
+     (groups or A-Z on the left, words on the right). ✕ on a slot opens the words; ✕ on a word
+     puts it in the slot and goes back to the message. ○ in the words goes back to the message;
+     ○ in the message = CANCEL: "Quit editing?" (types that cannot be left say "You cannot quit
+     here."). OK with empty slots: mail and profile accept it; types that need every word refuse. */
+  .msg { padding: 12px 16px; display: flex; gap: 14px; }
+  .msg .slots { flex: 1; display: grid; gap: 8px; }
+  .w { height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer;
+    background: var(--paper-1); border: 2px dashed var(--paper-shade); color: var(--ink-soft); }
+  .w.set { border-style: solid; border-color: var(--row-line); color: var(--ink); background: #fff; }
+  .w.on { background: linear-gradient(var(--sel-top), var(--sel-bot)); border: 2px solid var(--sel-edge); color: var(--sel-ink); }
+  .msg .btns { width: 150px; flex: none; display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+  .msg .btns .act { width: 100%; cursor: pointer; }
+  .msg .btns .act.on { box-shadow: 0 0 0 3px var(--sel-bot); }
+  .low { flex: 1; display: flex; gap: 12px; min-height: 0; }
+  body.at-msg .low { opacity: 0.55; }
+  body:not(.at-msg) .msg { opacity: 0.75; }
+  .groups { width: 300px; flex: none; display: flex; flex-direction: column; }
+  .words { flex: 1; display: flex; flex-direction: column; }
+  .wgrid { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .wgrid .row { padding-left: 28px; }
+  .abc { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; padding: 6px; }
+  .abc .row { justify-content: center; padding: 0; border-radius: 4px; }
+</style>
+</head>
+<body data-screen="correo" class="at-msg">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="mail:groups"><span class="spacer"></span><span class="capsule" id="what"><img src="../_assets/items/orange_mail.png" alt="" style="width:24px;height:24px">ORANGE MAIL</span></div>
+    <div class="body" style="flex-direction:column">
+      <div class="panel msg">
+        <div class="slots" id="slots"></div>
+        <div class="btns">
+          <span class="act red" data-b="all">DEL ALL</span><span class="act amber" data-b="cancel">CANCEL</span><span class="act green" data-b="ok">OK</span>
+        </div>
+      </div>
+      <div class="low">
+        <div class="panel groups">
+          <div class="panel-head"><span class="ps" id="lefthead">GROUPS</span></div>
+          <div class="list" id="left"></div>
+        </div>
+        <div class="panel words">
+          <div class="panel-head"><span class="ps" id="righthead">FEELINGS</span><span class="spacer"></span><span class="vt-sm soft" id="wcount"></span></div>
+          <div class="list wgrid" id="words"></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Choose</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+      <span class="btn" data-btn="triangle"><span class="glyph triangle">△</span>Delete word</span>
+      <span class="btn" data-btn="start"><span class="key">START</span>OK</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+  <div class="modal" id="salir"><div class="win" style="width:520px"><div class="win-head"><span class="ps">EASY CHAT</span></div>
+    <div class="win-body vt-lg" id="salirq">Quit editing?<div class="choice-row"><div class="row" data-close data-toast="Editing stopped: nothing changed.">YES</div><div class="row on" data-close>NO</div></div></div></div></div>
+  <div class="modal" id="borrar"><div class="win" style="width:520px"><div class="win-head"><span class="ps">DEL ALL</span></div>
+    <div class="win-body vt-lg">All the text being edited will be deleted. Is that OK?<div class="choice-row"><div class="row" data-close id="borrarsi">YES</div><div class="row on" data-close>NO</div></div></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+<script>
+(() => {
+  const TYPES = {
+    mail: { title: 'ORANGE MAIL', cols: 3, n: 9, words: ['HELLO', 'MAY', ''], all: false, quit: true },
+    profile: { title: 'PROFILE', cols: 2, n: 4, words: ['I', 'LIKE', 'POKéMON', ''], all: false, quit: true },
+    battle: { title: 'BATTLE START', cols: 3, n: 6, words: ['LET\'S', 'BATTLE', ''], all: false, quit: true },
+    interview: { title: 'INTERVIEW', cols: 2, n: 2, words: ['', ''], all: false, quit: false },
+    trendy: { title: 'TRENDY SAYING', cols: 2, n: 2, words: ['', ''], all: true, quit: true },
+  };
+  const t = TYPES[new URLSearchParams(location.search).get('type')] || TYPES.mail;
+  const GROUPS = { 'POKéMON': ['TREECKO', 'TORCHIC', 'MUDKIP', 'RALTS', 'WINGULL', 'ZIGZAGOON'], 'TRAINER': ['I', 'YOU', 'MAY', 'BRENDAN', 'RIVAL', 'LEADER'],
+    'FEELINGS': ['MEET', 'FUN', 'COOL', 'HAPPY', 'GREAT', 'TOUGH', 'LUCKY', 'SORRY', 'BEST', 'SCARY', 'KIND', 'STRONG'],
+    'GREETINGS': ['HELLO', 'BYE', 'THANKS', 'SORRY', 'WELCOME'], 'BATTLE': ['BATTLE', 'WIN', 'LOSE', 'MATCH', 'LET\'S'], 'HOBBIES': ['POKéMON', 'LIKE', 'SONG', 'MUSIC'] };
+  const ALL = [...new Set(Object.values(GROUPS).flat())].sort();
+  let words = [...t.words, ...Array(t.n).fill('')].slice(0, t.n), slot = words.indexOf(''), atMsg = true, mode = 'groups', group = 'FEELINGS';
+  if (slot < 0) slot = 0;
+  const toast = x => window.UI && UI.toast(x);
+  document.getElementById('what').lastChild.textContent = t.title;
+  if (t.title !== 'ORANGE MAIL') document.querySelector('#what img').remove();
+  const slotsEl = document.getElementById('slots'); slotsEl.style.gridTemplateColumns = `repeat(${t.cols}, 1fr)`;
+  function paintSlots() {
+    slotsEl.innerHTML = words.map((w, i) => `<span class="w${w ? ' set' : ''}${i === slot ? ' on' : ''}" data-s="${i}">${w || '-----'}</span>`).join('');
+  }
+  function paintLeft() {
+    const l = document.getElementById('left');
+    document.getElementById('lefthead').textContent = mode === 'groups' ? 'GROUPS' : 'A-Z';
+    l.className = mode === 'groups' ? 'list' : 'list abc';
+    const items = mode === 'groups' ? Object.keys(GROUPS) : [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].filter(c => ALL.some(w => w[0] === c));
+    l.innerHTML = items.map(g => `<div class="row${g === group ? ' on' : ''}" data-g="${g}">${g}</div>`).join('');
+  }
+  function paintWords() {
+    const list = mode === 'groups' ? (GROUPS[group] || []) : ALL.filter(w => w[0] === group);
+    document.getElementById('righthead').textContent = group;
+    document.getElementById('wcount').textContent = list.length + ' words';
+    document.getElementById('words').innerHTML = list.map((w, i) => `<div class="row${i ? '' : ' on'}" data-w="${w}">${w}</div>`).join('');
+  }
+  function setAt(m) { atMsg = m; document.body.classList.toggle('at-msg', m); }
+  slotsEl.addEventListener('click', e => { const s = e.target.closest('[data-s]'); if (!s) return; if (+s.dataset.s === slot) setAt(false); slot = +s.dataset.s; paintSlots(); });
+  document.getElementById('left').addEventListener('click', e => { const g = e.target.closest('[data-g]'); if (!g) return; group = g.dataset.g; setAt(false); paintLeft(); paintWords(); });
+  document.getElementById('words').addEventListener('click', e => {
+    const w = e.target.closest('[data-w]'); if (!w || !w.classList.contains('on')) return;
+    words[slot] = w.dataset.w; const next = words.indexOf(''); if (next >= 0) slot = next; setAt(true); paintSlots();
+  });
+  function ok() {
+    if (t.all && words.includes('')) return toast('Every word is needed.');
+    toast((words.some(Boolean) ? words.filter(Boolean).join(' ') : '(empty)') + ' · saved. Back to where it was opened.');
+  }
+  function cancel() {
+    const q = document.getElementById('salirq');
+    if (!t.quit) return toast('You cannot quit here.');
+    UI_MODALS.open('salir');
+  }
+  document.querySelector('.btns').addEventListener('click', e => {
+    const b = e.target.closest('[data-b]'); if (!b) return;
+    if (b.dataset.b === 'ok') ok(); else if (b.dataset.b === 'cancel') cancel(); else UI_MODALS.open('borrar');
+  });
+  document.getElementById('borrarsi').addEventListener('click', e => { if (!e.currentTarget.classList.contains('on')) return; words = words.map(() => ''); slot = 0; paintSlots(); });
+  document.addEventListener('ui-tab', e => { mode = e.detail; group = mode === 'groups' ? 'FEELINGS' : 'B'; paintLeft(); paintWords(); });
+  document.addEventListener('ui-back', () => atMsg ? cancel() : setAt(true));
+  document.addEventListener('keydown', e => {
+    if (UI_MODALS.stack.length) return;
+    if (e.key.toLowerCase() === 't' && atMsg) { words[slot] = ''; paintSlots(); }
+    if (e.key === 'Enter') ok();
+  });
+  document.querySelectorAll('[data-toast]').forEach(r => r.addEventListener('click', () => r.classList.contains('on') && toast(r.dataset.toast)));
+  paintSlots(); paintLeft(); paintWords();
+})();
+</script>
+</body>
+</html>

@@ -58,16 +58,17 @@ bool UiSign_Draw(void)
                         : (sSec >= MAPSEC_ROUTE_101 && sSec <= MAPSEC_ROUTE_134) ? UI_RGBA(201, 165, 90, 255)
                                                                                 : UI_RGBA(88, 167, 201, 255);
     const int32_t x = 16, y = 16 - off, w = 400;
-    // Name strip
-    UiDraw_Rect(x + 3, y + 4, w, 48, UI_RGBA(0, 0, 0, 110));
-    UiDraw_Rect(x, y, w, 48, UI_RGBA(4, 18, 16, 255));
-    UiDraw_RectV(x + 2, y + 2, w - 4, 44, UI_RGBA(18, 58, 49, 255), UI_RGBA(10, 36, 30, 255));
-    UiDraw_Rect(x, y, 8, 48, tint);
-    UiText_Draw(UI_FACE_PS2P, 16, x + 24, y + 16, name, UI_COL_ON_FRAME);
+    // Name strip: the dark capsule of the menu theme (its shape, edge, shadow and gloss), with the
+    // tint of the kind of area as a bar inside its left end
+    const UiTheme *t = gUiTheme;
+    const int32_t r = t->radius > 3 ? t->radius - 3 : 0;
+    UiW_PanelDark(x, y, w, 48);
+    UiDraw_Rect(x + 3 + (r > 0 ? 2 : 0), y + 3 + r, 8, 42 - 2 * r, tint);
+    UiText_Draw(UI_FACE_PS2P, 16, x + 26, y + 16, name, UI_COL_ON_FRAME);
     if (motto)
     {
-        // The motto drops down under the name once it has slid in: half-transparent box,
-        // Press Start 2P 16 (one step smaller than the body text)
+        // The motto drops down under the name once it has slid in: half-transparent box in the
+        // theme's dark colour, title face at 16 (one step smaller than the body text)
         const int32_t lines = UiW_TextWrappedF(UI_FACE_PS2P, 16, 0, 0, w - 40, 24, motto, 0, 4);
         const int32_t full = 16 + lines * 24;
         int32_t drop = age <= SLIDE ? 0 : (age - SLIDE) * full / 10;
@@ -75,10 +76,13 @@ bool UiSign_Draw(void)
         if (sTicks < SLIDE) drop = full * sTicks / SLIDE;
         if (drop > 0)
         {
-            UiDraw_PushClip(x + 8, y + 48, w - 8, drop);
-            UiDraw_Rect(x + 8, y + 48, w - 8, full, UI_RGBA(9, 33, 29, 150));
-            UiDraw_Rect(x + 8, y + 48 + full - 2, w - 8, 2, UI_RGBA(43, 88, 73, 200));
-            UiW_TextWrappedF(UI_FACE_PS2P, 16, x + 24, y + 48 + 10, w - 40, 24, motto, UI_COL_ON_SOFT, 4);
+            const int32_t bx = x + 8 + r, bw = w - 16 - 2 * r;
+            UiDraw_PushClip(bx, y + 48, bw, drop);
+            UiDraw_Rect(bx, y + 48, bw, full, (t->darkBot & 0x00FFFFFFu) | (170u << 24));
+            UiDraw_Rect(bx, y + 48 + full - 2, bw, 2, (t->darkEdge & 0x00FFFFFFu) | (220u << 24));
+            if (t->accent)
+                UiDraw_Rect(bx, y + 48, 4, full - 2, t->accent);
+            UiW_TextWrappedF(UI_FACE_PS2P, 16, bx + 16, y + 48 + 10, w - 40, 24, motto, UI_COL_ON_SOFT, 4);
             UiDraw_PopClip();
         }
     }

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Party · multi battle</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* equipo_combate in multi battle mode (STEVEN at the Space Center, Battle Tower / Frontier
+     partner multis, link multis): same section and keys as the single battle party. Your three
+     POKéMON on the left, the partner's three on the right, greyed: they cannot be chosen ("You
+     can't switch with a partner's POKéMON!"). ✕: SHIFT / SUMMARY / CANCEL. SHIFT is refused for
+     the one IN BATTLE and for a fainted one ("has no energy left"). Review ?forced=1: a POKéMON
+     fainted, a replacement is required, ○ does nothing and CANCEL is gone. Using an item from
+     the BAG in a multi battle opens this same screen. */
+  .team { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+  .team .owner { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+  .team .owner img { width: 48px; height: 48px; object-fit: cover; object-position: top; image-rendering: pixelated; }
+  .card { height: 92px; display: flex; align-items: center; gap: 12px; padding: 0 14px 0 10px; border-radius: 4px; cursor: pointer;
+    background: #FDFAF2; border: 2px solid #364253; box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #D6CCB6, 0 2px 0 rgba(0,0,0,0.35); }
+  .card.on { background: linear-gradient(#FFFBEB, #FDE68A); border-color: #A85800; color: var(--sel-ink);
+    box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px -1px 0 #D49B20, 0 0 0 2px rgba(245, 158, 11, 0.55), 0 2px 0 rgba(0,0,0,0.35); }
+  .card.ally { background: #E9E4D6; border-color: #7F8790; color: var(--ink-soft); cursor: default; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; zoom: 1.5; }
+  .card .info { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .card .l1 { display: flex; align-items: center; gap: 8px; }
+  .card .l1 .name { flex: 1; }
+  .card .l2 { display: flex; align-items: center; gap: 10px; }
+  .card .l2 .bar { flex: 1; }
+  .card .hp { width: 76px; text-align: right; }
+  .vs { width: 4px; flex: none; background: repeating-linear-gradient(var(--line-dark) 0 10px, transparent 10px 18px); }
+</style>
+</head>
+<body data-screen="equipo_multi">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="party_battle:status"><span class="spacer"></span><span class="capsule">MULTI BATTLE</span></div>
+    <div class="body">
+      <div class="team">
+        <div class="panel-dark owner"><img src="../_assets/trainers/brendan.png" alt=""><span class="ps">BRENDAN</span></div>
+        <div class="card on" data-open="acciones" data-name="MARSHTOMP" data-state="active"><div class="mon" style="background-image:url(../_assets/pokemon/marshtomp_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">MARSHTOMP</span><span class="chip lead">IN BATTLE</span></div>
+          <div class="l2"><span class="soft">Lv32</span><div class="bar"><i style="width:72%"></i></div><span class="hp">68/94</span></div></div></div>
+        <div class="card" data-open="acciones" data-name="TAILLOW"><div class="mon" style="background-image:url(../_assets/pokemon/taillow_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">TAILLOW</span></div>
+          <div class="l2"><span class="soft">Lv30</span><div class="bar"><i style="width:100%"></i></div><span class="hp">78/78</span></div></div></div>
+        <div class="card" data-open="acciones" data-name="RALTS"><div class="mon" style="background-image:url(../_assets/pokemon/ralts_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">RALTS</span></div>
+          <div class="l2"><span class="soft">Lv29</span><div class="bar low"><i style="width:18%"></i></div><span class="hp">11/60</span></div></div></div>
+      </div>
+      <div class="vs"></div>
+      <div class="team">
+        <div class="panel-dark owner"><img src="../_assets/trainers/may.png" alt=""><span class="ps">MAY</span></div>
+        <div class="card ally"><div class="mon" style="background-image:url(../_assets/pokemon/geodude_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">GEODUDE</span><span class="chip">IN BATTLE</span></div>
+          <div class="l2"><span>Lv33</span><div class="bar"><i style="width:90%"></i></div><span class="hp">80/88</span></div></div></div>
+        <div class="card ally"><div class="mon" style="background-image:url(../_assets/pokemon/nosepass_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">NOSEPASS</span></div>
+          <div class="l2"><span>Lv33</span><div class="bar"><i style="width:100%"></i></div><span class="hp">71/71</span></div></div></div>
+        <div class="card ally"><div class="mon" style="background-image:url(../_assets/pokemon/mightyena_icon.png)"></div>
+          <div class="info"><div class="l1"><span class="name">MIGHTYENA</span></div>
+          <div class="l2"><span>Lv32</span><div class="bar mid"><i style="width:44%"></i></div><span class="hp">40/91</span></div></div></div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Shift / use item</span>
+      <span class="btn" data-btn="circle" id="fback"><span class="glyph circle">○</span>Back to the battle</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+  <div class="modal" id="acciones"><div class="win at" style="left:424px; top:110px; width:256px">
+    <div class="win-head"><span class="ps" id="acthead">MARSHTOMP</span></div>
+    <div class="list" style="padding:6px" id="actlist">
+      <div class="row on" data-act="SHIFT">SHIFT</div><div class="row" data-act="SUMMARY">SUMMARY</div><div class="row" data-act="CANCEL" style="border-bottom:0">CANCEL</div>
+    </div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+<script>
+(() => {
+  const forced = new URLSearchParams(location.search).get('forced') === '1';
+  const toast = t => window.UI && UI.toast(t);
+  let cur = document.querySelector('.card.on');
+  if (forced) { document.getElementById('fback').remove(); document.querySelector('[data-act="CANCEL"]').remove(); document.querySelector('[data-act="SUMMARY"]').style.borderBottom = '0'; }
+  document.querySelectorAll('.card[data-name]').forEach(c => c.addEventListener('click', () => { cur = c; document.getElementById('acthead').textContent = c.dataset.name; }));
+  document.querySelectorAll('.card.ally').forEach(c => c.addEventListener('click', () => toast("You can't switch with a partner's POKéMON!")));
+  document.getElementById('actlist').addEventListener('click', e => {
+    const r = e.target.closest('[data-act]'); if (!r || !r.classList.contains('on')) return;
+    UI_MODALS.closeTop();
+    const a = r.dataset.act, n = cur.dataset.name;
+    if (a === 'SHIFT') toast(cur.dataset.state === 'active' ? n + ' is already in battle!' : 'Go! ' + n + '!');
+    if (a === 'SUMMARY') toast('Opens the summary of ' + n + '.');
+  });
+  // forced: ○ does nothing; otherwise nav.js shows "Back to the battle"
+  if (forced) document.addEventListener('keydown', e => { if (e.key === 'Escape' || e.key.toLowerCase() === 'b') { e.stopImmediatePropagation(); toast('Choose a POKéMON to send out.'); } }, true);
+})();
+</script>
+</body>
+</html>

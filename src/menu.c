@@ -1607,9 +1607,26 @@ u8 InitMenuInUpperLeftCornerNormal(u8 windowId, u8 itemCount, u8 initialCursorPo
     return InitMenuInUpperLeftCorner(windowId, itemCount, initialCursorPos, FALSE);
 }
 
+extern u8 gUiChoiceWindow;
+extern u8 gUiChoiceCount;
+extern const u8 *gUiChoiceTexts[8];
+
+// New UI mirror: the options of the menu last printed in a window (script_menu.c globals), so the
+// mirror's choice list shows this menu's words and not those of the menu that had the window before
+static void SetUiChoiceTexts(u8 windowId, u8 itemCount, const struct MenuAction *menuActions, const u8 *actionIds)
+{
+    u32 i;
+    gUiChoiceWindow = windowId;
+    gUiChoiceCount = itemCount > 8 ? 8 : itemCount;
+    for (i = 0; i < gUiChoiceCount; i++)
+        gUiChoiceTexts[i] = menuActions[actionIds != NULL ? actionIds[i] : i].text;
+}
+
 void PrintMenuTable(u8 windowId, u8 itemCount, const struct MenuAction *menuActions)
 {
     u32 i;
+
+    SetUiChoiceTexts(windowId, itemCount, menuActions, NULL);
 
     for (i = 0; i < itemCount; i++)
         AddTextPrinterParameterized(windowId, 1, menuActions[i].text, 8, (i * 16) + 1, TEXT_SKIP_DRAW, NULL);
@@ -1621,6 +1638,8 @@ void PrintMenuActionTextsInUpperLeftCorner(u8 windowId, u8 itemCount, const stru
 {
     u8 i;
     struct TextPrinterTemplate printer;
+
+    SetUiChoiceTexts(windowId, itemCount, menuActions, actionIds);
 
     printer.windowId = windowId;
     printer.fontId = FONT_NORMAL;

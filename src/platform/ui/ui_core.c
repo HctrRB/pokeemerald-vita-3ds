@@ -23,6 +23,8 @@
 #include "event_object_lock.h"
 #include "event_object_movement.h"
 #include "field_player_avatar.h"
+#include "sprite.h"
+#include "task.h"
 #include "constants/songs.h"
 
 #define REPEAT_DELAY 18
@@ -44,6 +46,7 @@ static bool sIgnoreTouch;
 static uint32_t sCircleTicks;
 static int32_t sLastTy;
 static float sAvgTickMs;
+static bool sHosted;                  // the UI owns the game loop (naming screen...): see UiCore_OpenHosted
 static uint32_t sRenderMsBits;        // float bits, written by Core 0
 
 void Ui_Init(void)
@@ -227,6 +230,34 @@ void UiCore_OpenFromScript(const UiScreen *screen, void (*afterClose)(void))
     sAfterClose = afterClose;
 }
 
+// Hosted screens replace a whole GBA scene (naming screen, ...) outside the field and the battle
+// menus: the game loop runs this callback (tasks, sprites, fades) while the UI is open; the screen
+// ends with UiNav_Close(after), where `after` puts the game's return callback back. The GBA picture
+// left behind is whatever the caller faded to (black in every caller).
+static void CB2_UiHost(void)
+{
+    RunTasks();
+    AnimateSprites();
+    BuildOamBuffer();
+    UpdatePaletteFade();
+}
+
+bool UiCore_IsHostCallback(void)
+{
+    return gMain.callback2 == CB2_UiHost;
+}
+
+void UiCore_OpenHosted(const UiScreen *screen, void (*afterClose)(void))
+{
+    if (Ui_IsOpen())
+        return;
+    SetMainCallback2(CB2_UiHost);
+    sHosted = true;
+    sFromScript = true;
+    Open(screen);
+    sAfterClose = afterClose;
+}
+
 void UiCore_OpenScreen(const UiScreen *screen)
 {
     if (!Ui_IsOpen())
@@ -244,6 +275,7 @@ static void Close(void)
         UnlockPlayerFieldControls();
     }
     sFromScript = false;
+    sHosted = false;
     UiGame_BattleMenuEnd();
     UiStall_Closed();
     UiDraw_Begin();
@@ -261,7 +293,11 @@ void Ui_Tick(void)
         static bool sOverlayShown;
         UiDraw_Begin();
         bool any = UiSign_Draw();
-        any |= UiBattle_Active() ? UiBattle_Draw() : UiMirror_Draw();
+        // Contest appeal choice first: it owns this tick's tap (ui_contest.c)
+        const bool contest = UiContest_Draw();
+        any |= contest;
+        if (!contest)
+            any |= UiBattle_Active() ? UiBattle_Draw() : UiMirror_Draw();
         if (any || sOverlayShown)
             UiDraw_Publish(0.0f);
         sOverlayShown = any;
@@ -276,7 +312,7 @@ void Ui_Tick(void)
 
     const double t0 = VitaPerf_NowMs();
     ReadInput();
-    if (gMain.callback2 != CB2_Overworld && !(gMain.inBattle && UiGame_InBattleMenu()))
+    if (gMain.callback2 != CB2_Overworld && !(gMain.inBattle && UiGame_InBattleMenu()) && !(sHosted && gMain.callback2 == CB2_UiHost))
     {
         Close();
         return;

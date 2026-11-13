@@ -1618,6 +1618,53 @@ static void Task_HandleMoveSelectInput(u8 taskId)
     }
 }
 
+#ifdef PLATFORM_VITA
+// ---------- New UI (design/stitch/concurso): the move choice drawn by ui_contest.c ----------
+bool8 Contest_UiChoosingMove(void)
+{
+    return gMain.callback2 == CB2_ContestMain && gTasks[eContest.mainTaskId].func == Task_HandleMoveSelectInput;
+}
+
+u8 Contest_UiChoice(void)
+{
+    return eContest.playerMoveChoice;
+}
+
+// A tap on another move: the same as the d-pad (arrow and description of the GBA screen too)
+void Contest_UiSetChoice(u8 i)
+{
+    if (i >= MAX_MON_MOVES || gContestMons[gContestPlayerMonIndex].moves[i] == MOVE_NONE || i == eContest.playerMoveChoice)
+        return;
+    EraseMoveSelectArrow(eContest.playerMoveChoice);
+    eContest.playerMoveChoice = i;
+    DrawMoveSelectArrow(i);
+    PrintContestMoveDescription(gContestMons[gContestPlayerMonIndex].moves[i]);
+}
+
+u16 Contest_UiMove(u8 i)
+{
+    return gContestMons[gContestPlayerMonIndex].moves[i];
+}
+
+// 1: combo with the previous move (highlighted in the game), 2: repeated (greyed), 0: plain
+u8 Contest_UiMoveTag(u8 i)
+{
+    const u16 move = gContestMons[gContestPlayerMonIndex].moves[i];
+    const u16 prev = eContestantStatus[gContestPlayerMonIndex].prevMove;
+    if (prev != MOVE_NONE && IsContestantAllowedToCombo(gContestPlayerMonIndex) && AreMovesContestCombo(prev, move)
+        && eContestantStatus[gContestPlayerMonIndex].hasJudgesAttention)
+        return 1;
+    if (move != MOVE_NONE && prev == move && gContestMoves[move].effect != CONTEST_EFFECT_REPETITION_NOT_BORING)
+        return 2;
+    return 0;
+}
+
+u8 Contest_UiAppealNumber(void)
+{
+    return eContest.appealNumber;
+}
+#endif
+
 static void DrawMoveSelectArrow(s8 moveIndex)
 {
     ContestBG_FillBoxWithIncrementingTile(2, 55, 0, 31 + moveIndex * 2, 2, 2, 17, 1);

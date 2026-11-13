@@ -179,7 +179,7 @@ static void Build(void)
             const char *val = (ex->values && v >= 0 && v < ex->count) ? ex->values[v] : "?";
             const int32_t vw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, val);
             UiW_Capsule(LIST_X + LIST_W - 60 - vw, y + 4, vw + 24, 32);
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + LIST_W - 48 - vw, y + 4, val, UI_RGBA(153, 246, 228, 255));
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + LIST_W - 48 - vw, y + 4, val, UI_COL_TITLE);
         }
         else
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, y + 4, sResetArmed ? "RESET TRACKER? (X)" : "RESET TRACKER", on ? ink : UI_COL_HP_LOW);

@@ -1,4 +1,7 @@
 #include "global.h"
+#ifdef PLATFORM_VITA
+#include "platform/ui.h"
+#endif
 #include "item_menu.h"
 #include "battle.h"
 #include "battle_controllers.h"
@@ -580,6 +583,10 @@ void CB2_ChooseBerry(void)
 // Choosing berry for Berry Blender or Berry Crush
 void ChooseBerryForMachine(void (*exitCallback)(void))
 {
+#ifdef PLATFORM_VITA
+    if (Ui_OpenBerryChoice(exitCallback))         // new UI (design/stitch/batidora)
+        return;
+#endif
     GoToBagMenu(ITEMMENULOCATION_BERRY_BLENDER_CRUSH, BERRIES_POCKET, exitCallback);
 }
 

@@ -471,7 +471,10 @@ static void PartyBuild(void)
     {
         const bool on = i == sParty.sel;
         const bool inBattle = UiGame_InBattleMenu() && UiGame_MonIsInBattle(i);
-        DrawCard(i, CARD_Y + i * CARD_H, on && sMode != MODE_MOVES, inBattle ? "IN BATTLE" : NULL, true);
+        const bool partner = UiGame_InBattleMenu() && UiGame_IsMultiPartner(i);
+        DrawCard(i, CARD_Y + i * CARD_H, on && sMode != MODE_MOVES, inBattle ? "IN BATTLE" : partner ? "PARTNER" : NULL, !partner);
+        if (partner)
+            UiDraw_Rect(CARD_X, CARD_Y + i * CARD_H, CARD_W, CARD_H - 2, UI_RGBA(0, 0, 0, 70));   // the partner's: greyed
         if ((sMode == MODE_SWITCH || sMode == MODE_SHARE) && i == sFrom)
             UiDraw_Frame(CARD_X, CARD_Y + i * CARD_H, CARD_W, CARD_H - 2, 3, UI_COL_SELECT);
     }

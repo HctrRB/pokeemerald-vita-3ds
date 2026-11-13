@@ -35,11 +35,14 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 SRC_PNG = os.path.join(HERE, "fonts", "ui_fonts.png")
 SRC_JSON = os.path.join(HERE, "fonts", "ui_fonts.json")
+# Fonts of the menu themes (faces 2-9), baked by bake_theme_fonts.py; every role is kept
+THEME_PNG = os.path.join(HERE, "fonts", "theme_fonts.png")
+THEME_JSON = os.path.join(HERE, "fonts", "theme_fonts.json")
 OUT = os.path.join(ROOT, "assets", "ui2", "ui_atlas.bin")
 OUT_H = os.path.join(ROOT, "src", "platform", "ui", "ui_sprite_ids.h")
 KEEP = {(0, 16), (0, 24), (1, 32), (1, 40)}                   # (face, px): D2
 TEX_W = 1024
-MAX_FIXED_H = 384                                    # = UI_DYN_Y in ui_internal.h                                    # the dynamic cells start below (ui_sprites.c)
+MAX_FIXED_H = 1024                                   # = UI_DYN_Y in ui_internal.h                                    # the dynamic cells start below (ui_sprites.c)
 ASSETS = os.path.join(ROOT, "design", "stitch", "_assets")   # GBA art exported by export_assets.py
 GFX = os.path.join(ROOT, "graphics")
 
@@ -185,7 +188,7 @@ def rgba5551(r, g, b, a):
 def main():
     meta = json.load(open(SRC_JSON, encoding="utf-8"))
     src = Image.open(SRC_PNG).convert("RGBA")
-    atlas = Image.new("RGBA", (TEX_W, 1024), (0, 0, 0, 0))
+    atlas = Image.new("RGBA", (TEX_W, 2048), (0, 0, 0, 0))
     for y in range(4):                                # white block for solid fills
         for x in range(4):
             atlas.putpixel((x, y), (255, 255, 255, 255))
@@ -201,9 +204,11 @@ def main():
         return x, y
 
     fonts, glyphs = [], []
-    for f in meta["fonts"]:
-        if (f["face"], f["px"]) not in KEEP:
-            continue
+    sources = [(f, src) for f in meta["fonts"] if (f["face"], f["px"]) in KEEP]
+    if os.path.exists(THEME_JSON):
+        theme_src = Image.open(THEME_PNG).convert("RGBA")
+        sources += [(f, theme_src) for f in json.load(open(THEME_JSON, encoding="utf-8"))["fonts"]]
+    for f, src in sources:
         first = len(glyphs)
         for cp, gx, gy, w, h, xoff, yoff, adv in f["glyphs"]:
             x, y = place(w, h)

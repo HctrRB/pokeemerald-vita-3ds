@@ -1,4 +1,7 @@
 #include "global.h"
+#ifdef PLATFORM_VITA
+#include "platform/ui.h"
+#endif
 #include "malloc.h"
 #include "bg.h"
 #include "data.h"
@@ -1596,6 +1599,17 @@ static void Task_PCMainMenu(u8 taskId)
                 AddTextPrinterParameterized2(0, FONT_NORMAL, gText_JustOnePkmn, 0, NULL, TEXT_COLOR_DARK_GRAY, TEXT_COLOR_WHITE, TEXT_COLOR_LIGHT_GRAY);
                 task->tState = STATE_ERROR_MSG;
             }
+#ifdef PLATFORM_VITA
+            // New UI (design/stitch/pc_cajas): the boxes over the world, back to this menu after
+            else if (Ui_OpenPc(task->tInput))
+            {
+                sPreviousBoxOption = task->tInput;
+                ClearStdWindowAndFrame(task->tWindowId, TRUE);
+                ClearDialogWindowAndFrame(0, TRUE);
+                RemoveWindow(task->tWindowId);
+                DestroyTask(taskId);
+            }
+#endif
             else
             {
                 // Enter PC
@@ -1654,6 +1668,37 @@ void ShowPokemonStorageSystemPC(void)
     gTasks[taskId].tSelectedOption = 0;
     LockPlayerFieldControls();
 }
+
+#ifdef PLATFORM_VITA
+// New UI: back to the PC menu (the box option is kept), no fade (the world never left)
+void PokeStorage_ReturnToPcMenuForUi(void)
+{
+    u8 taskId = CreateTask(Task_PCMainMenu, 80);
+    gTasks[taskId].tState = 0;
+    gTasks[taskId].tSelectedOption = sPreviousBoxOption;
+}
+
+// After naming a box from the new UI: back on the field, the boxes open again as soon as the 3D
+// world is drawn (up to a second); otherwise the PC menu comes back
+static void Task_ReopenBoxesForUi(u8 taskId)
+{
+    if (gPaletteFade.active)
+        return;
+    if (Ui_OpenPc(sPreviousBoxOption) || ++gTasks[taskId].data[0] > 60)
+    {
+        if (!Ui_IsOpen())
+            PokeStorage_ReturnToPcMenuForUi();
+        DestroyTask(taskId);
+    }
+}
+
+void PokeStorage_FieldReturnAfterNamingForUi(void)
+{
+    LockPlayerFieldControls();
+    FadeInFromBlack();
+    CreateTask(Task_ReopenBoxesForUi, 80);
+}
+#endif
 
 static void FieldTask_ReturnToPcMenu(void)
 {
@@ -9544,6 +9589,40 @@ u8 *GetBoxNamePtr(u8 boxId)
     else
         return NULL;
 }
+
+#ifdef PLATFORM_VITA
+// New UI: a box wallpaper's LZ77 tiles and tilemap (20 x 18) and its two palettes (frame, bg),
+// as LoadWallpaperGfx loads them; the FRIENDS one takes Walda's pattern and colours
+void PokeStorage_WallpaperForUi(u8 wallpaperId, const u32 **tiles, const u32 **tilemap, u16 *pal32)
+{
+    const struct Wallpaper *w;
+    if (wallpaperId != WALLPAPER_FRIENDS)
+    {
+        w = &sWallpapers[wallpaperId < WALLPAPER_FRIENDS ? wallpaperId : 0];
+        CpuCopy16(w->palettes, pal32, 0x40);
+    }
+    else
+    {
+        w = &sWaldaWallpapers[GetWaldaWallpaperPatternId()];
+        CpuCopy16(w->palettes, pal32, 0x40);
+        CpuCopy16(GetWaldaWallpaperColorsPtr(), &pal32[1], 4);
+        CpuCopy16(GetWaldaWallpaperColorsPtr(), &pal32[17], 4);
+    }
+    *tiles = w->tiles;
+    *tilemap = w->tilemap;
+}
+
+u8 PokeStorage_GetBoxWallpaperForUi(u8 boxId)
+{
+    return boxId < TOTAL_BOXES_COUNT ? gPokemonStoragePtr->boxWallpapers[boxId] : 0;
+}
+
+void PokeStorage_SetBoxWallpaperForUi(u8 boxId, u8 wallpaperId)
+{
+    if (boxId < TOTAL_BOXES_COUNT && wallpaperId < WALLPAPER_COUNT)
+        gPokemonStoragePtr->boxWallpapers[boxId] = wallpaperId;
+}
+#endif
 
 static u8 GetBoxWallpaper(u8 boxId)
 {

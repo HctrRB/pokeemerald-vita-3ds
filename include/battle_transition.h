@@ -2,6 +2,7 @@
 #define GUARD_BATTLE_TRANSITION_H
 
 void BattleTransition_StartOnField(u8 transitionId);
+void BattleTransition_StartSmoothOnField(void);
 void BattleTransition_Start(u8 transitionId);
 bool8 IsBattleTransitionDone(void);
 bool8 FldEff_PokeballTrail(void);

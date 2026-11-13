@@ -1,4 +1,7 @@
 #include "global.h"
+#ifdef PLATFORM_VITA
+#include "platform/ui.h"
+#endif
 #include "malloc.h"
 #include "bard_music.h"
 #include "bg.h"
@@ -1296,6 +1299,11 @@ void DoEasyChatScreen(u8 type, u16 *words, MainCallback exitCallback, u8 display
     u8 taskId;
 
     ResetTasks();
+#ifdef PLATFORM_VITA
+    // New UI (design/stitch/correo): every type but the BARD's song and the quiz screens
+    if (Ui_OpenEasyChat(type, words, exitCallback, displayedPersonType))
+        return;
+#endif
     taskId = CreateTask(Task_InitEasyChatScreen, 0);
     gTasks[taskId].tType = type;
     gTasks[taskId].tPersonType = displayedPersonType;
@@ -5876,3 +5884,84 @@ bool32 IsEasyChatAnswerUnlocked(int easyChatWord)
     else
         return IsEasyChatIndexAndGroupUnlocked(index, groupId & mask);
 }
+
+#ifdef PLATFORM_VITA
+// ---------- New UI bridge (src/platform/ui/ui_scr_easychat.c) ----------
+// The new screen only edits the words; the game's own checks and effects run here, on the same
+// sEasyChatScreen / sWordData the GBA screen uses (TryConfirmWords, StartConfirmExitPrompt,
+// SetSpecialEasyChatResult, SaveCurrentPhrase).
+bool8 EasyChat_UiSupported(u8 type)
+{
+    return type != EASY_CHAT_TYPE_BARD_SONG && type != EASY_CHAT_TYPE_QUIZ_ANSWER && type != EASY_CHAT_TYPE_QUIZ_QUESTION
+        && type != EASY_CHAT_TYPE_QUIZ_SET_QUESTION && type != EASY_CHAT_TYPE_QUIZ_SET_ANSWER;
+}
+
+bool8 EasyChat_UiBegin(u8 type, u16 *words, u8 displayedPersonType)
+{
+    if (!InitEasyChatScreenStruct(type, words, displayedPersonType))
+        return FALSE;
+    if (!InitEasyChatScreenWordData())
+    {
+        FreeEasyChatScreenStruct();
+        return FALSE;
+    }
+    return TRUE;
+}
+
+u8 EasyChat_UiColumns(void) { return sEasyChatScreen->numColumns; }
+u8 EasyChat_UiMaxWords(void) { return sEasyChatScreen->maxWords; }
+u8 EasyChat_UiType(void) { return sEasyChatScreen->type; }
+u16 *EasyChat_UiPhrase(void) { return sEasyChatScreen->currentPhrase; }
+const u8 *EasyChat_UiTitle(void) { return sEasyChatScreen->titleText; }
+void EasyChat_UiInstructions(const u8 **a, const u8 **b) { GetEasyChatInstructionsText(a, b); }
+void EasyChat_UiDeleteAllText(const u8 **a, const u8 **b) { GetEasyChatConfirmDeletionText(a, b); }
+u8 EasyChat_UiGroupCount(void) { return GetNumUnlockedEasyChatGroups(); }
+u8 EasyChat_UiGroupId(u8 index) { return GetUnlockedEasyChatGroupId(index); }
+const u8 *EasyChat_UiGroupName(u8 groupId) { return GetEasyChatWordGroupName(groupId); }
+u16 EasyChat_UiSelectGroup(bool8 alphabet, u16 group) { SetSelectedWordGroup(alphabet, group); return GetNumWordsInSelectedGroup(); }
+u16 EasyChat_UiWordAt(u16 index) { return GetWordFromSelectedGroup(index); }
+u16 EasyChat_UiAlphabetCount(u8 letter) { return sWordData->numUnlockedAlphabetWords[letter]; }
+
+// OK: 0 = ask to confirm, 1 = ask to quit (empty / unfinished), 2 = a message only
+u8 EasyChat_UiTryConfirm(const u8 **t1, const u8 **t2)
+{
+    *t1 = *t2 = NULL;
+    switch (TryConfirmWords())
+    {
+    case ECFUNC_PROMPT_CONFIRM: GetEasyChatConfirmText(t1, t2); return 0;
+    case ECFUNC_PROMPT_EXIT: GetEasyChatConfirmExitText(t1, t2); return 1;
+    case ECFUNC_MSG_COMBINE_TWO_WORDS: *t1 = gText_CombineTwoWordsOrPhrases3; return 2;
+    case ECFUNC_MSG_CANT_EXIT: *t1 = gText_YouCannotQuitHere; *t2 = gText_SectionMustBeCompleted; return 2;
+    default: return 2;
+    }
+}
+
+// CANCEL / B: 1 = ask to quit, 2 = "You cannot quit here."
+u8 EasyChat_UiTryQuit(const u8 **t1, const u8 **t2)
+{
+    *t1 = *t2 = NULL;
+    if (StartConfirmExitPrompt() == ECFUNC_MSG_CANT_EXIT)
+    {
+        *t1 = gText_YouCannotQuitHere;
+        *t2 = gText_SectionMustBeCompleted;
+        return 2;
+    }
+    GetEasyChatConfirmExitText(t1, t2);
+    return 1;
+}
+
+// YES to the confirmation (TRUE) or to quitting (FALSE); frees the data
+void EasyChat_UiFinish(bool8 confirmed)
+{
+    if (confirmed)
+    {
+        SetSpecialEasyChatResult();
+        gSpecialVar_Result = GetEasyChatCompleted();
+        SaveCurrentPhrase();
+    }
+    else
+        gSpecialVar_Result = 0;
+    FreeEasyChatScreenWordData();
+    FreeEasyChatScreenStruct();
+}
+#endif

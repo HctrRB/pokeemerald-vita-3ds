@@ -80,7 +80,7 @@ static uint16_t MapSec(void) { return UiGame_MapSecAt(sCurX, sCurY); }
 
 static void MapDraw(bool fly, uint32_t frame)
 {
-    UiDraw_Rect(MAP_X - 3, MAP_Y - 3, MAP_W + 6, MAP_H + 6, UI_RGBA(43, 88, 73, 255));
+    UiDraw_Rect(MAP_X - 3, MAP_Y - 3, MAP_W + 6, MAP_H + 6, UI_COL_LINE_DARK);
     int32_t ox, oy;
     MapOrigin(&ox, &oy);
     const int32_t c = CellPx();
@@ -182,13 +182,13 @@ static void SubTabs(int32_t row, int32_t x, int32_t y, const char *const *labels
         sSubW[row][i] = w;
         if (i == cur)
         {
-            UiDraw_Rect(x, y, w, 30, UI_RGBA(4, 18, 16, 255));
-            UiDraw_RectV(x + 2, y + 2, w - 4, 26, UI_RGBA(28, 56, 47, 255), UI_RGBA(11, 35, 29, 255));
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y - 1, labels[i], UI_RGBA(153, 246, 228, 255));
+            UiDraw_Rect(x, y, w, 30, gUiTheme->chipEdge);
+            UiDraw_RectV(x + 2, y + 2, w - 4, 26, gUiTheme->chipTop, gUiTheme->chipBot);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y - 1, labels[i], gUiTheme->chipInk);
         }
         else
         {
-            UiDraw_Rect(x, y, w, 30, UI_RGBA(209, 200, 175, 255));
+            UiDraw_Rect(x, y, w, 30, gUiTheme->paperShade);
             UiDraw_Rect(x + 2, y + 2, w - 4, 26, UI_COL_PAPER1);
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y - 1, labels[i], UI_COL_INK_SOFT);
         }
@@ -252,8 +252,8 @@ static void DrawEncPopup(void)
     UiW_ScrollBar(POP_X + POP_W - 25, POP_Y + 134, POP_ROWS * 44, sEncList.first, POP_ROWS, sWildN);
     // Footer strip with the button guides
     const int32_t fy = POP_Y + POP_H - 46;
-    UiDraw_Rect(POP_X + 3, fy, POP_W - 6, 2, UI_RGBA(209, 200, 175, 255));
-    UiDraw_Rect(POP_X + 3, fy + 2, POP_W - 6, 41, UI_RGBA(231, 223, 198, 255));
+    UiDraw_Rect(POP_X + 3, fy, POP_W - 6, 2, gUiTheme->paperShade);
+    UiDraw_Rect(POP_X + 3, fy + 2, POP_W - 6, 41, gUiTheme->paper1);
     int32_t fx = POP_X + 20;
     UiW_Glyph(fx, fy + 10, UI_GLYPH_TRIANGLE);
     fx += 30 + UiText_Draw(UI_FACE_PS2P, 16, fx + 30, fy + 15, "Method", UI_COL_INK) + 24;
@@ -673,7 +673,7 @@ const UiScreen gUiFlyScreen = { FlyEnter, FlyUpdate, FlyBuild, NULL };
 // Pokédex AREA: the Hoenn map with the areas where the species lives
 void UiMap_DrawArea(const uint8_t *areas, uint32_t frame)
 {
-    UiDraw_Rect(MAP_X - 3, MAP_Y - 3, MAP_W + 6, MAP_H + 6, UI_RGBA(43, 88, 73, 255));
+    UiDraw_Rect(MAP_X - 3, MAP_Y - 3, MAP_W + 6, MAP_H + 6, UI_COL_LINE_DARK);
     UiDraw_PushClip(MAP_X, MAP_Y, MAP_W, MAP_H);
     UiDraw_Sprite(UI_SPR_HOENN_MAP, MAP_X, MAP_Y, 3);
     const uint32_t a = (frame / 20) & 1 ? 150 : 110;   // gentle blink

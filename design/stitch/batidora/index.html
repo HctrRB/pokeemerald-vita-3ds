@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Berry Blender</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* BERRY BLENDER (berry_blender.c), berry choice before blending: the BERRIES pocket on the
+     left, the blender with the players' seats on the right (the chosen berry goes into your
+     seat). The blending itself keeps the game's animation; only the timing result (PERFECT /
+     GOOD / MISS) and the speed gauge get the new frame.
+     Flow, as in the game: ✕ on a berry puts it in (no confirmation) → the blending → RESULTS
+     (ranking, max speed, the POKéBLOCK made) → "Blend again?" (YES: back to this choice; NO:
+     field). ○ here leaves without blending (confirmation). Checked before opening: no berries
+     ("You have no BERRIES") and a full POKéBLOCK CASE ("Your CASE is full") stop it in the
+     dialogue box, so this screen never opens empty. */
+
+  .berries { width: 380px; flex: none; display: flex; flex-direction: column; }
+  .item-ico { width: 24px; height: 24px; flex: none; }
+  .count { color: var(--ink-soft); }
+  .right { flex: 1; display: flex; flex-direction: column; gap: 12px; }
+  .blender { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
+  .disc { width: 236px; height: 236px; border-radius: 50%; position: relative;
+    background: conic-gradient(#E8C35A 0 25%, #F2D98A 0 50%, #E8C35A 0 75%, #F2D98A 0); border: 6px solid var(--paper-edge);
+    box-shadow: inset 0 0 0 10px #FFF7DC, inset 0 0 0 14px var(--paper-shade), 0 6px 0 rgba(0,0,0,0.4); }
+  .disc::after { content: ''; position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; transform: translate(-50%, -50%); border-radius: 50%;
+    background: radial-gradient(#fff, #D7D0BC); border: 4px solid var(--paper-edge); }
+  .seat { position: absolute; display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 4px; background: var(--paper-1); border: 2px solid var(--row-line); white-space: nowrap; }
+  .seat.me { background: linear-gradient(var(--sel-top), var(--sel-bot)); border-color: var(--sel-edge); }
+  .seat img { width: 24px; height: 24px; }
+  .gauge { display: flex; align-items: center; gap: 12px; }
+  .gauge .bar { flex: 1; height: 16px; }
+</style>
+</head>
+<body data-screen="batidora">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="blender:berry"><span class="spacer"></span><span class="capsule">4 PLAYERS</span></div>
+    <div class="body">
+      <div class="panel berries">
+        <div class="panel-head"><span class="ps">BERRIES</span><span class="spacer"></span><span class="vt-sm soft">8 kinds</span></div>
+        <div class="list">
+          <div class="row on" data-pick="ORAN BERRY"><img class="item-ico" src="../_assets/items/oran_berry.png" alt=""><span class="grow">ORAN BERRY</span><span class="count">x12</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/pecha_berry.png" alt=""><span class="grow">PECHA BERRY</span><span class="count">x5</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/cheri_berry.png" alt=""><span class="grow">CHERI BERRY</span><span class="count">x3</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/rawst_berry.png" alt=""><span class="grow">RAWST BERRY</span><span class="count">x2</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/aspear_berry.png" alt=""><span class="grow">ASPEAR BERRY</span><span class="count">x4</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/leppa_berry.png" alt=""><span class="grow">LEPPA BERRY</span><span class="count">x1</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/items/persim_berry.png" alt=""><span class="grow">PERSIM BERRY</span><span class="count">x2</span></div>
+          <div class="row" style="border-bottom:0"><img class="item-ico" src="../_assets/items/wepear_berry.png" alt=""><span class="grow">WEPEAR BERRY</span><span class="count">x6</span></div>
+        </div>
+      </div>
+      <div class="right">
+        <div class="panel blender">
+          <div class="disc"></div>
+          <div class="seat me" style="left:16px; top:16px"><img src="../_assets/items/oran_berry.png" alt="">BRENDAN</div>
+          <div class="seat" style="right:16px; top:16px">MAY <span class="soft">?</span></div>
+          <div class="seat" style="left:16px; bottom:16px">WALLY <span class="soft">?</span></div>
+          <div class="seat" style="right:16px; bottom:16px">BLEND MASTER <span class="soft">?</span></div>
+        </div>
+        <div class="panel-dark gauge"><span class="ps">SPEED</span><div class="bar exp"><i style="width:0%"></i></div><span>0.00 RPM</span></div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Put in</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Leave</span>
+            <span class="spacer"></span>
+    </div>
+  </div>
+  <div class="modal" id="resultado"><div class="win" style="width:600px">
+    <div class="win-head"><span class="ps">RESULTS</span><span class="spacer"></span><span class="vt-sm">MAX SPEED 132.4 RPM</span></div>
+    <div class="win-body">
+      <div class="list"><div class="row"><span style="width:36px">1</span><span class="grow">MAY</span><span class="vt-sm">PERFECT 14 · MISS 1</span></div><div class="row on"><span style="width:36px">2</span><span class="grow">BRENDAN</span><span class="vt-sm">PERFECT 11 · MISS 2</span></div><div class="row"><span style="width:36px">3</span><span class="grow">WALLY</span><span class="vt-sm">PERFECT 9 · MISS 4</span></div><div class="row" style="border-bottom:0"><span style="width:36px">4</span><span class="grow">BLEND MASTER</span><span class="vt-sm">PERFECT 6 · MISS 3</span></div></div>
+      <div class="sep"></div>
+      <div style="display:flex; align-items:center; gap:12px"><div class="iconbox" style="width:56px;height:56px;display:flex;align-items:center;justify-content:center"><img src="../_assets/ui_gba/pokeblock.png" alt="" style="zoom:2"></div>
+        <div><b>PINK POKéBLOCK</b><div class="vt-sm soft">LEVEL 6 · FEEL 21 · added to the CASE</div></div></div>
+      <div class="choice-row"><div class="row on" data-open="otra">NEXT</div></div>
+    </div></div></div>
+  <div class="modal" id="otra"><div class="win" style="width:440px"><div class="win-head"><span class="ps">BERRY BLENDER</span></div>
+    <div class="win-body vt-lg">Blend again?<div class="choice-row"><div class="row on" data-reset>YES</div><div class="row" data-close data-toast="Back to the field.">NO</div></div></div></div></div>
+  <div class="modal" id="salir"><div class="win" style="width:440px"><div class="win-head"><span class="ps">BERRY BLENDER</span></div>
+    <div class="win-body vt-lg">Leave without blending?<div class="choice-row"><div class="row" data-close data-toast="Back to the field.">YES</div><div class="row on" data-close>NO</div></div></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+<script>
+(() => {
+  const toast = t => window.UI && UI.toast(t);
+  document.querySelector('.berries .list').addEventListener('click', e => {
+    const r = e.target.closest('.row'); if (!r || !r.classList.contains('on')) return;
+    const name = r.querySelector('.grow').textContent;
+    document.querySelector('.seat.me img').src = r.querySelector('img').src;
+    toast(name + ' goes in. Blending… (game animation)');
+    setTimeout(() => UI_MODALS.open('resultado'), 900);
+  });
+  document.querySelector('[data-reset]').addEventListener('click', e => { if (!e.currentTarget.classList.contains('on')) return; while (UI_MODALS.stack.length) UI_MODALS.closeTop(); });
+  document.addEventListener('ui-back', () => UI_MODALS.open('salir'));
+  document.querySelectorAll('[data-toast]').forEach(r => r.addEventListener('click', () => r.classList.contains('on') && toast(r.dataset.toast)));
+})();
+</script>
+</body>
+</html>

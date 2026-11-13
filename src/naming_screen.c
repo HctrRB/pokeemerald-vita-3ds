@@ -1,4 +1,7 @@
 #include "global.h"
+#ifdef PLATFORM_VITA
+#include "platform/ui.h"
+#endif
 #include "naming_screen.h"
 #include "malloc.h"
 #include "palette.h"
@@ -394,6 +397,15 @@ static bool8 IsWideLetter(u8);
 
 void DoNamingScreen(u8 templateNum, u8 *destBuffer, u16 monSpecies, u16 monGender, u32 monPersonality, MainCallback returnCallback)
 {
+#ifdef PLATFORM_VITA
+    // New UI (design/stitch/teclado_nombre): same result in destBuffer, same return callback
+    if (Ui_OpenNaming(templateNum, destBuffer, monSpecies, monGender, monPersonality, returnCallback))
+    {
+        if (templateNum == NAMING_SCREEN_PLAYER)
+            StartTimer1();
+        return;
+    }
+#endif
     sNamingScreen = Alloc(sizeof(struct NamingScreenData));
     if (!sNamingScreen)
     {
@@ -713,6 +725,28 @@ static bool8 MainState_Exit(void)
     }
     return FALSE;
 }
+
+#ifdef PLATFORM_VITA
+// New UI: the "was transferred to the PC" text of DisplaySentToPCMessage, for a caught POKéMON
+// named while the party is full. Returns NULL when no message applies.
+const u8 *NamingScreen_SentToPCTextForUi(const u8 *name)
+{
+    u8 stringToDisplay = 0;
+    if (CalculatePlayerPartyCount() < PARTY_SIZE)
+        return NULL;
+    StringCopy(gStringVar1, GetBoxNamePtr(VarGet(VAR_PC_BOX_TO_SEND_MON)));
+    StringCopy(gStringVar2, name);
+    if (IsDestinationBoxFull())
+    {
+        StringCopy(gStringVar3, GetBoxNamePtr(GetPCBoxToSendMon()));
+        stringToDisplay = 2;
+    }
+    if (FlagGet(FLAG_SYS_PC_LANETTE))
+        stringToDisplay++;
+    StringExpandPlaceholders(gStringVar4, sTransferredToPCMessages[stringToDisplay]);
+    return gStringVar4;
+}
+#endif
 
 static void DisplaySentToPCMessage(void)
 {

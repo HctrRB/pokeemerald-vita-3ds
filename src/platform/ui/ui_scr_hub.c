@@ -241,7 +241,7 @@ static void BuildStatus(void)
     char buf[48], zone[32];
     UiGame_ZoneName(zone, sizeof(zone));
     UiW_PanelDark(16, 16, 360, 52);
-    UiText_Draw(UI_FACE_PS2P, 16, 34, 34, zone, UI_RGBA(153, 246, 228, 255));
+    UiText_Draw(UI_FACE_PS2P, 16, 34, 34, zone, UI_COL_TITLE);
 
     // Row 1: clock and money
     char clock[8];
@@ -254,7 +254,7 @@ static void BuildStatus(void)
     int32_t x = 16;
     x += StatusCapsule(x, 76, buf, UI_COL_ON_FRAME) + 8;
     snprintf(buf, sizeof(buf), "$%u", (unsigned)UiGame_Money());
-    StatusCapsule(x, 76, buf, UI_RGBA(245, 209, 98, 255));
+    StatusCapsule(x, 76, buf, UI_COL_GOLD);
 
     // Row 2: registered item, repel or Safari counter
     x = 16;

@@ -1042,6 +1042,17 @@ void BattleTransition_StartOnField(u8 transitionId)
     LaunchBattleTransitionTask(transitionId);
 }
 
+// Vita, wild encounters in the 3D world (battle_setup.c): no GBA transition, only palette fades;
+// the field is stopped and the text box closed as BattleTransition_StartOnField does
+void BattleTransition_StartSmoothOnField(void)
+{
+    if (Ui_IsEnabled() && gWindows[0].tileData != NULL)
+        ClearDialogWindowAndFrame(0, TRUE);
+    gMain.callback2 = CB2_OverworldBasic;
+    SetWeatherScreenFadeOut();
+    CpuCopy32(gPlttBufferFaded, gPlttBufferUnfaded, PLTT_SIZE);
+}
+
 void BattleTransition_Start(u8 transitionId)
 {
     LaunchBattleTransitionTask(transitionId);
