@@ -94,4 +94,5 @@ __pycache__/
 /assets/ui/intro_margins.bin
 /.assets_src/
 /.assets_ok
+/.assets_manifest
 /vita/sce_sys_custom/

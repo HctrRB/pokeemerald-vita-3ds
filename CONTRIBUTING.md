@@ -48,14 +48,14 @@ columns). Format only the lines you change; don't mix formatting with logic in o
    `docs`, `build`, `chore`), with a body explaining why.
 5. Update the documentation in `docs/` that your change makes wrong, in the same branch.
 
-## Smoke test (hardware or Vita3K)
+## Smoke test (on hardware: Vita3K shows a black screen)
 
 1. Intro (all scenes) → title → main menu → load a save.
 2. Walk, run and cycle Route 101 → Oldale: no flicker or camera jumps at the border.
 3. Mauville and Route 111 in a sandstorm: steady frame rate.
 4. Talk to an NPC (GBA text over 3D).
 5. Wild battle in 3D: FIGHT, BAG, POKÉMON, RUN.
-6. START: every dock screen; save from the dock.
+6. START: every screen of the menu hub; save from the hub.
 7. Buy and sell in a shop.
 8. A field move (Cut or Surf) and Fly.
 9. Quit to LiveArea.

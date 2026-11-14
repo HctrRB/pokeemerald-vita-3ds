@@ -29,10 +29,17 @@ EMERALD_US_SHA1="f3ae088181bf583e55daf962a92bb46f4f1d07b7"
 die() { echo "ERROR: $*" >&2; exit 1; }
 
 ROM="${1:-}"
-[ -n "$ROM" ] || die "usage: ./fetch_assets.sh <path to your Pokémon Emerald .gba dump>"
-[ -f "$ROM" ] || die "'$ROM' does not exist"
+[ -n "$ROM" ] || die "usage: ./fetch_assets.sh <path to your Pokémon Emerald .gba dump>
+       (or ./fetch_assets.sh --update, after a first run, to get the files a new version needs)"
 
 # ---------------------------------------------------------------- 1. the ROM
+if [ "$ROM" = "--update" ]; then
+    # The dump was checked by an earlier run; .assets_ok holds its game code
+    [ -s .assets_ok ] || die "--update needs a first run with your Pokémon Emerald dump"
+    code=$(cat .assets_ok)
+    echo "=== Updating the game files (dump checked before: $code) ==="
+else
+[ -f "$ROM" ] || die "'$ROM' does not exist"
 echo "=== Checking the ROM ==="
 size=$(wc -c < "$ROM" | tr -d ' ')
 [ "$size" -eq 16777216 ] || die "not a Pokémon Emerald dump (size $size bytes, expected 16 MB)"
@@ -50,6 +57,7 @@ if [ "$sha" = "$EMERALD_US_SHA1" ]; then
     echo "Pokémon Emerald ($code), USA/Europe 1.0: verified"
 else
     echo "Pokémon Emerald ($code): header verified"
+fi
 fi
 
 # ---------------------------------------------------------------- 2. the decompilation's files
@@ -86,4 +94,6 @@ done
 "$PY" tools/ui2/build_atlas.py
 
 echo "$code" > .assets_ok
+# Which manifest these files match: build_all.sh fetches again (--update) when it changes
+(sha1sum "$MANIFEST" 2>/dev/null || shasum "$MANIFEST") | cut -d' ' -f1 > .assets_manifest
 echo "=== Done: you can build now (build_vita.ps1 or build_vita.sh) ==="

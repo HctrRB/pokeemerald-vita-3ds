@@ -37,33 +37,39 @@ or, without Git, use **Code > Download ZIP** on GitHub and extract it.
 
 Put it in a folder whose path has **no spaces or accents**, for example
 `C:\Emerald\pokeemerald-vita-3ds`. The build tools cannot handle them (the script checks and
-stops), so `C:\Users\Your Name\Downloads\...` will not work.
+stops), so `C:\Users\Your Name\Downloads\...` will not work. Avoid folders that OneDrive
+syncs (often *Documents* and *Desktop*): the build writes thousands of files and the sync can
+lock them.
 
 ## 2. Build
 
-Open PowerShell in the repository folder (in Explorer, right-click inside the folder >
-*Open in Terminal*; on Windows 10, *File > Open Windows PowerShell*) and run:
+Double-click **`build_all.bat`** in the repository folder. A window asks for your `.gba`, and
+the console window stays open at the end with the result. (If Windows warns that the file comes
+from the internet, choose *More info > Run anyway*.)
+
+Or, from PowerShell in the repository folder:
 
 ```powershell
-powershell.exe -ExecutionPolicy Bypass -File .\build_all.ps1
+powershell.exe -ExecutionPolicy Bypass -File .\build_all.ps1 -Rom "C:\path\to\emerald.gba"
 ```
 
-A window asks for your `.gba`. You can also give it on the command line:
-`.\build_all.ps1 -Rom "C:\path\to\emerald.gba"` (any path, spaces included).
+Any ROM path works, spaces included; without `-Rom` the window asks for it.
 
 The script:
 
 1. installs MSYS2 in `C:\msys64` if it is missing, and the packages the build needs;
-2. installs VitaSDK with SDL2 in MSYS2 (`/usr/local/vitasdk`) if it is missing;
+2. installs VitaSDK in MSYS2 (`/usr/local/vitasdk`) and the libraries the game uses (vitaGL,
+   SDL2) if they are missing;
 3. checks your dump and downloads the game files (about 9,000 files);
-4. builds the tools, converts the game files and builds the VPK.
+4. builds the interface atlas and the tools, converts the game files and builds the VPK.
 
 The first run downloads 1–2 GB and can take 20–40 minutes; later runs take a few minutes. The
 result is **`EmeraldVita.vpk`** in the repository folder. Every step that is already done is
 skipped, so you can run the script again after a failure.
 
-**Updating:** `git pull` (or download the ZIP again into the same folder) and run
-`.\build_all.ps1` again. The ROM is only asked for the first time.
+**Updating:** `git pull` (or download the ZIP again over the same folder) and run
+`build_all.bat` again. The ROM is only asked for the first time: when a new version needs other
+game files, the script downloads them by itself.
 
 ## 3. Install
 
@@ -80,9 +86,11 @@ Your own LiveArea art can go in `vita/sce_sys_custom/` with the same file names 
 | Message | Fix |
 |---|---|
 | `This folder's path has spaces or special characters` | Move the repository folder to a simple path such as `C:\Emerald\pokeemerald-vita-3ds`. |
+| `Permission denied` / `Device or resource busy` while building | Often OneDrive or an antivirus locking files: move the folder out of OneDrive, or run the script again. |
 | `Could not download MSYS2` / `MSYS2 did not install` | Install MSYS2 by hand from [msys2.org](https://www.msys2.org) in `C:\msys64`, then run the script again. |
 | `not a Pokémon Emerald dump` | The file is not a Pokémon Emerald ROM, or it is damaged. It must be 16 MB. |
-| `VitaSDK did not install` | Usually a download that failed: run the script again. Otherwise see [BUILD.md](BUILD.md#requirements-windows). |
+| `VitaSDK did not install` / `... is still missing after vdpm install` | Usually a download that failed: run the script again. Otherwise see [BUILD.md](BUILD.md#requirements-windows). |
+| `vitaGL.h: No such file or directory` | Your copy of the script is older than the fix that installs vitaGL: update the repository (`git pull` or a new ZIP) and run `build_all.ps1` again. |
 | `running scripts is disabled on this system` | Start it exactly as shown above (`powershell.exe -ExecutionPolicy Bypass -File ...`). |
 
 ## Building by hand

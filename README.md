@@ -128,7 +128,7 @@ Stability:
 ## Repository layout
 
 ```
-build_all.ps1/.sh                    one step from your dump to EmeraldVita.vpk
+build_all.bat/.ps1/.sh               one step from your dump to EmeraldVita.vpk
 CMakeLists.txt, build_vita.ps1/.sh   Vita build (preprocess → compile → link → SELF → VPK)
 make_tools.mk, *_rules.mk, vita/     host tools, asset rules, link wrapper, LiveArea art
 src/, include/, asm/, data/,         the pokeemerald decompilation (game code and text data;
@@ -154,22 +154,20 @@ You need a Windows 10/11 PC, your Pokémon Emerald dump (`.gba`, any language, 1
 PS Vita with HENkaku or Ensō. Nothing else has to be installed by hand:
 
 1. **Get the repository** (`git clone`, or *Code > Download ZIP*) into a folder with no spaces
-   or accents in its path, e.g. `C:\Emerald\pokeemerald-vita-3ds`.
-2. **Run the script** in PowerShell from that folder, and choose your `.gba` in the window it
-   opens:
-   ```powershell
-   powershell.exe -ExecutionPolicy Bypass -File .\build_all.ps1
-   ```
+   or accents in its path and not synced by OneDrive, e.g. `C:\Emerald\pokeemerald-vita-3ds`.
+2. **Double-click `build_all.bat`** in that folder and choose your `.gba` in the window it
+   opens (or run `powershell.exe -ExecutionPolicy Bypass -File .\build_all.ps1 -Rom <file>`).
    It installs what is missing ([MSYS2](https://www.msys2.org) in `C:\msys64`, its packages,
-   [VitaSDK](https://vitasdk.org)), checks your dump, downloads the game files and checks each
-   one against [tools/assets/manifest.txt](tools/assets/manifest.txt) (nothing is copied from
+   [VitaSDK](https://vitasdk.org) with vitaGL and SDL2), checks your dump, downloads the game
+   files and checks each one against [tools/assets/manifest.txt](tools/assets/manifest.txt) (nothing is copied from
    the ROM), and builds everything. The first run takes 20–40 minutes.
 3. **Install `EmeraldVita.vpk`** with VitaShell (*Enable unsafe homebrew* on in HENkaku
    settings). The game appears as **Emerald Vita** (title ID `PKEM00001`); saves and settings
    live in `ux0:data/POKEVITA/`.
 
-To update: `git pull` and run `.\build_all.ps1` again (the ROM is only asked for the first
-time). The manual steps are in the guide and in [docs/BUILD.md](docs/BUILD.md).
+To update: `git pull` and run `build_all.bat` again (the ROM is only asked for the first time;
+game files a new version needs are downloaded by themselves). The manual steps are in the guide
+and in [docs/BUILD.md](docs/BUILD.md).
 
 Do not share the VPK or the downloaded files: they contain Nintendo's game data.
 

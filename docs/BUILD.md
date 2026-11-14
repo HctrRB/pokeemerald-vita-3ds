@@ -24,14 +24,19 @@ handle them (`build_all.ps1` refuses such a folder).
    export TAR_OPTIONS=--force-local
    mkdir -p /c/vdpm-tmp && export TMPDIR=$(cygpath -m /c/vdpm-tmp)
    git clone --depth 1 https://github.com/vitasdk/vdpm /tmp/vdpm && (cd /tmp/vdpm && ./bootstrap-vitasdk.sh)
-   VDPM_NONINTERACTIVE=1 vdpm install sdl2 sdl2_image
+   VDPM_NONINTERACTIVE=1 vdpm install vitaGL sdl2 sdl2_image
    ```
-   vitaGL comes with VitaSDK. Check with `arm-vita-eabi-gcc --version`.
+   The base VitaSDK has none of the libraries the game links: `vitaGL` brings vitaShaRK,
+   libmathneon, SceShaccCgExt and taihen with it, `sdl2_image` brings libpng, libjpeg-turbo,
+   libwebp and zlib. Without them the build stops at `vitaGL.h: No such file or directory`.
+   Check with `arm-vita-eabi-gcc --version` and `vdpm list`.
 
 MSYS2 pitfalls: the Windows-form `TMPDIR` avoids `vdpm-channel: cannot open file`;
 `TAR_OPTIONS=--force-local` stops tar reading `C:/…` as a host; without Developer Mode pacman
-cannot create symlinks (copy the target instead, e.g. `cp lib/libpng16.a lib/libpng.a` in
-`$VITASDK/arm-vita-eabi`).
+cannot create symlinks, so libpng's unversioned names are missing after `vdpm install`
+(`Can't create ... libpng.a`): copy the targets in `$VITASDK/arm-vita-eabi` (`lib/libpng16.a` →
+`lib/libpng.a`, `lib/pkgconfig/libpng16.pc` → `libpng.pc`, `bin/libpng16-config` →
+`libpng-config`). `build_all.sh` does this itself.
 
 ## Steps
 

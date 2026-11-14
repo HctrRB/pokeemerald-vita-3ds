@@ -15,6 +15,9 @@ function Fail([string]$msg) {
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location -LiteralPath $scriptDir
 
+# MSYS2 prints UTF-8 ("Pokémon"); without this the console shows it garbled
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+
 # make cannot build in a folder whose path has spaces or other special characters
 if ($scriptDir -notmatch '^[A-Za-z]:\\[A-Za-z0-9_.\-\\]*$') {
     Fail ("This folder's path has spaces or special characters, which the build tools cannot handle:`n" +
@@ -22,10 +25,21 @@ if ($scriptDir -notmatch '^[A-Za-z]:\\[A-Za-z0-9_.\-\\]*$') {
           "Move the whole folder to a simple path, for example C:\Emerald\pokeemerald-vita-3ds, and run this again.")
 }
 
+# A folder that OneDrive syncs gets thousands of files uploaded during the build, and the sync
+# can lock them while the tools write them
+foreach ($od in @($env:OneDrive, $env:OneDriveConsumer, $env:OneDriveCommercial)) {
+    if ($od -and $scriptDir.StartsWith($od, [StringComparison]::OrdinalIgnoreCase)) {
+        Write-Host ("Warning: this folder is synced by OneDrive ($od). The build writes thousands of files;`n" +
+                    "if it fails with 'Permission denied' or 'Device or resource busy', move the folder`n" +
+                    "out of OneDrive, for example to C:\Emerald\pokeemerald-vita-3ds.") -ForegroundColor Yellow
+        break
+    }
+}
+
 # ---------------------------------------------------------------- the ROM (only the first time)
+# Once the game files are there (.assets_ok), later runs never need the ROM again
 $assetsReady = (Test-Path -LiteralPath (Join-Path $scriptDir ".assets_ok")) -and
-               (Test-Path -LiteralPath (Join-Path $scriptDir "graphics\pokemon\bulbasaur\front.png")) -and
-               (Test-Path -LiteralPath (Join-Path $scriptDir "assets\ui2\ui_atlas.bin"))
+               (Test-Path -LiteralPath (Join-Path $scriptDir "graphics\pokemon\bulbasaur\front.png"))
 if ($Rom -eq "" -and -not $assetsReady) {
     Add-Type -AssemblyName System.Windows.Forms
     $dialog = New-Object System.Windows.Forms.OpenFileDialog
@@ -77,11 +91,21 @@ if (-not (Test-Path -LiteralPath $bashExe)) {
     $null = Invoke-Msys "pacman -Syu --noconfirm"
 }
 
+$env:BUILD_ALL_DIR = $scriptDir
+$env:BUILD_ALL_ROM = $Rom
+
+# An MSYS2 installed earlier may be missing packages and be out of date. Installing them needs
+# a full update first, and when that updates MSYS2 itself it closes every MSYS2 program, the
+# build included; so the update runs here on its own (twice, for that case) before the build.
+if ((Invoke-Msys 'cd $(cygpath -u $BUILD_ALL_DIR) && ./build_all.sh --missing-packages') -ne 0) {
+    Write-Host "=== Updating MSYS2 before installing the packages the build needs ===" -ForegroundColor Cyan
+    $null = Invoke-Msys "pacman -Syu --noconfirm"
+    $null = Invoke-Msys "pacman -Syu --noconfirm"
+}
+
 # ---------------------------------------------------------------- the build
 # The ROM goes through an environment variable (build_all.sh reads BUILD_ALL_ROM), so that any
 # character in its path is safe. The folder's path was checked above: no spaces.
-$env:BUILD_ALL_DIR = $scriptDir
-$env:BUILD_ALL_ROM = $Rom
 # MINGW64 environment: the host tools use its gcc, the generators its Python with Pillow
 $code = Invoke-Msys 'cd $(cygpath -u $BUILD_ALL_DIR) && ./build_all.sh' "MINGW64"
 if ($code -eq 0) {

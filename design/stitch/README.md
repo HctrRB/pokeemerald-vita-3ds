@@ -179,28 +179,29 @@ cerrar el menú, volver al campo).
 
 ## Cobertura de la UI actual (paridad funcional)
 
-Cada función que ya existe en la UI del juego (`vita_ui*.c`, `vita_extras.c`) tiene su sitio en
-las maquetas. La UI de combate queda fuera (se mantiene la actual).
+Cada función que tenía la antigua UI de estilo 3DS (`vita_ui*.c`, eliminada el 13-11-2026) tiene
+su sitio en las maquetas y en la UI nueva (`src/platform/ui/`). El HUD de combate tiene sus propias
+maquetas (`combate`).
 
-| UI actual | Función | Pantalla nueva |
+| Función | Qué incluye | Maqueta (código) |
 |---|---|---|
-| Menú START (`vita_ui.c`) | Entradas según progreso, NUZLOCKE con el extra activo, RETIRE en la Zona Safari | `hub` (menú) |
+| Menú START | Entradas según progreso, NUZLOCKE con el extra activo, RETIRE en la Zona Safari | `hub` (menú) (`ui_scr_hub.c`) |
 | Barra de estado | Reloj día/noche y velocidad, dinero, objeto registrado (SELECT), pasos de Repelente / balls Safari, correr (Deportivas) | `hub` (cápsulas) |
 | Guardar | Ranura, resumen, aviso de sobrescribir otra partida, resultado | `hub` → popup Guardar |
 | MO de campo | Solo con la medalla que la habilita | `hub` → equipo, popup |
-| Equipo (`vita_ui_party.c`) | Resumen INFO / SKILLS / MOVES / CONTEST, IV/EV solo con su opción, huevo, variocolor ★ | `equipo`, `equipo_movimientos` |
+| Equipo | Resumen INFO / SKILLS / MOVES / CONTEST, IV/EV solo con su opción, huevo, variocolor ★ | `equipo`, `equipo_movimientos` (`ui_scr_party.c`) |
 | Popup de equipo | SUMMARY / SWITCH / ITEM / MO; huevo; SHARE HP (Amortiguador, Batido); SHIFT en combate | `equipo_popup`, `equipo` |
 | Usar objeto en el equipo | Regla del huevo, Éter → elegir movimiento, Caramelo raro → tarjeta de subida de nivel | `equipo_objetivo` (popups `#pp`, `#delta`) |
 | MT / MO | Compatibilidad, olvidar movimiento | `equipo_mt` |
-| Mochila (`vita_ui_bag.c`) | Bolsillos, ordenar (DEFAULT, A–Z, MÁS, MENOS), bolsillo vacío, cantidad con − / +, registrar | `mochila`, `mochila_combate` |
-| Pokédex (`vita_ui_pokedex.c`) | Lista, búsqueda con filtros y RESET, huella, área por método, grito con onda, tamaño | `pokedex`, `pokedex_detalle` |
-| PokéNav (`vita_ui_pokenav.c`) | Mapa, Match Call, Condición (araña del Pokémon elegido), Cintas | `pokenav*` |
-| Mapa (`vita_ui_map.c`) | MAPSEC 28×15, zoom ×2, encuentros por método, hora del día y caña | `pokenav_mapa`, `vuelo` |
-| Ficha | Anverso, reverso con récords y símbolos del Frente Batalla | `ficha` |
-| Opciones (`vita_ui_options.c`) | Pestañas GENERAL / WORLD / BATTLE / MODES / CHEATS, grupos, acciones EXECUTE, reasignar botones con RESET | `opciones` |
-| Nuzlocke (`vita_extras.c`) | Zonas AVAILABLE / CAUGHT / MISSED / BLOCKED, equipo vivo/caído, tope de nivel del próximo líder, contadores | `nuzlocke` (AREAS / SQUAD / RULES) |
-| Tienda | Comprar y vender con cantidad | `tienda_comprar`, `tienda_vender` |
-| Campo | Diálogo, sí/no, multielección, objeto obtenido, llamada, cartel de zona | pantallas de campo |
+| Mochila | Bolsillos, ordenar (DEFAULT, A–Z, MÁS, MENOS), bolsillo vacío, cantidad con − / +, registrar | `mochila`, `mochila_combate` (`ui_scr_bag.c`) |
+| Pokédex | Lista, búsqueda con filtros y RESET, huella, área por método, grito con onda, tamaño | `pokedex`, `pokedex_detalle` (`ui_scr_dex.c`) |
+| PokéNav | Mapa, Match Call, Condición (araña del Pokémon elegido), Cintas | `pokenav*` (`ui_scr_nav.c`) |
+| Mapa | MAPSEC 28×15, zoom ×2, encuentros por método, hora del día y caña | `pokenav_mapa`, `vuelo` (`ui_scr_nav.c`) |
+| Ficha | Anverso, reverso con récords y símbolos del Frente Batalla | `ficha` (`ui_scr_card.c`) |
+| Opciones | Pestañas GENERAL / WORLD / BATTLE / MODES / CHEATS, grupos, acciones EXECUTE, reasignar botones con RESET | `opciones` (`ui_scr_options.c`) |
+| Nuzlocke | Zonas AVAILABLE / CAUGHT / MISSED / BLOCKED, equipo vivo/caído, tope de nivel del próximo líder, contadores | `nuzlocke` (AREAS / SQUAD / RULES) (`ui_scr_nuz.c`, reglas en `vita_nuzlocke.c`) |
+| Tienda | Comprar y vender con cantidad | `tienda_comprar`, `tienda_vender` (`ui_scr_mart.c`) |
+| Campo | Diálogo, sí/no, multielección, objeto obtenido, llamada, cartel de zona | pantallas de campo (`ui_mirror.c`, `ui_sign.c`) |
 
 ## Reglas del sistema (resumen de `_shared/ui.css`)
 

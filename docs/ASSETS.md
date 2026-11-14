@@ -39,7 +39,7 @@ by hand-editing `relief.bin`.
 
 | File | Content | Generator |
 |---|---|---|
-| `src/platform/vita/3ds_bottom_art.h` | Dock and UI sprites (4bpp tiles + palettes) | Emerald 3DS `scripts/gen_bottom_art.py` (not in this repository) |
+| `src/platform/vita/3ds_bottom_art.h` | Sprites of the removed 3DS-style dock (4bpp tiles + palettes). Still included by `vita_stage.c`, but nothing uses its arrays any more | Emerald 3DS `scripts/gen_bottom_art.py` (not in this repository) |
 
 ## Regenerating the UI art
 
@@ -49,5 +49,7 @@ python tools/ui_gen/gen_intro_margins.py --output assets/ui/intro_margins.bin
 ```
 
 `build_atlas.py` reads the fonts baked by `design/stitch/_tools/font_bake.html`
-(`tools/ui2/fonts/`). `gen_intro_margins.py` reads `graphics/intro/scene_1`; run the asset step
-first.
+(`tools/ui2/fonts/`) and the images `design/stitch/_tools/export_assets.py` exports to
+`design/stitch/_assets/`. `build_all` runs both on every build, because `ui_sprite_ids.h` is
+committed and the atlas must always match it. `gen_intro_margins.py` reads
+`graphics/intro/scene_1`; run the asset step first.

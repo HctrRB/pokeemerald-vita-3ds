@@ -52,18 +52,19 @@ hardware did (VBlank, DMA, timers, sound mixing, flash saves, the real-time cloc
 Core 1 (AgbMain)                      Core 0 (MainThread)                 Core 2
 ────────────────                      ───────────────────                 ──────
 game logic for one GBA frame
+Ui_Tick(): new UI draw list
 VBlankIntrWait():
   VBlank handler, m4a mixer → audio
   publish entity snapshot
   post sFrameReadySem  ──────────────► wait for it (one post at 60 FPS,
   pace to 60.00 Hz on the                two at 30 FPS in 3D)
-  audio buffer                         read input, update the native UI
+  audio buffer                         read input
                                        choose a path:
-                                        · native UI → ShowNativeUi()
                                         · 3D field / battle →
                                           VoxelRenderer_RenderFrame()   ◄─ chunk computed since
                                         · else → VDraw() +                 the last swap
                                           RenderGameTexture()              (VoxelChunkWorker)
+                                       Ui_Render(): the new UI on top
                                        vglSwapBuffers(), then hand the  ─► next chunk
                                        next chunk to the worker            DrawWorker1/2: GBA
                                                                            scanlines (2D and

@@ -8,7 +8,7 @@ touching anything that crosses threads.
 
 | Thread | Core | Created in | Work |
 |---|---|---|---|
-| `MainThread` | 0 | `sdl2.c` (`main`) | Input, native UI, presentation (vitaGL, voxel renderer, 2D overlay), `vglSwapBuffers`. The GXM display-queue driver thread also stays on Core 0: moving it caused a GPU crash |
+| `MainThread` | 0 | `sdl2.c` (`main`) | Input, presentation (vitaGL, voxel renderer, 2D overlay, the new UI's draw list), `vglSwapBuffers`. The GXM display-queue driver thread also stays on Core 0: moving it caused a GPU crash |
 | `AgbMain` | 1 | `sdl2.c` (`main` → `DoMain`) | The original game loop, the m4a/CGB sound mixer, VBlank work, 60 Hz pacing |
 | `DrawWorker1`, `DrawWorker2` | 2 | `gba_fast_draw.c` (`StartWorkers`) | Draw even/odd scanlines of a GBA frame and convert them to RGB565 with NEON |
 | `VoxelIoWorker` | 2 | `voxel_renderer.c` (`VoxelRenderer_Init`) | Reads building texture pages from the VPK with its own buffered file handle |
@@ -31,7 +31,7 @@ touching anything that crosses threads.
 
 | Data | Writer | Reader | Protection |
 |---|---|---|---|
-| Game state: `gMain`, tasks, `gObjectEvents`, `gSprites`, save blocks | Core 1 | Core 0 (renderer, UI) | Renderer reads entities only through the snapshot below. The native UI reads game state while the game is paused (menu open) |
+| Game state: `gMain`, tasks, `gObjectEvents`, `gSprites`, save blocks | Core 1 | Core 0 (renderer) | Renderer reads entities only through the snapshot below. The new UI reads game state on Core 1 (`Ui_Tick`) and hands Core 0 only a draw list |
 | Entity snapshot `VoxelEntitySnapshot sSnapshots[2]` (`voxel_entities.c`, `include/platform/voxel_snapshot.h`) | Core 1, `VoxelEntities_PublishSnapshot()` in VBlank | Core 0, `VoxelEntities_GetVisibleSnapshot()` | Double buffer; index swap between release fences, acquire fence on read |
 | Map layout during a map change | Core 1 (`CB2_LoadMap`, `DoMapLoadLoop`, connection transitions) | Core 0 (`voxel_world.c`) | `volatile uint32_t sMapMutationLock` (`overworld.c:102`): set by the loader, cleared when the next snapshot is published. Core 0 keeps drawing the previous instances meanwhile |
 | Emulated VRAM, OAM, palettes, registers | Core 1 | Draw workers (2D), Core 0 (overlay pass) | 2D: Core 1 is blocked while the frame is captured line by line. Overlay pass: read only; layers it hides are masked in each line's captured copy (`gFastDrawDispcntClear`, `gFastDrawBldcntClear`), never in the live registers |

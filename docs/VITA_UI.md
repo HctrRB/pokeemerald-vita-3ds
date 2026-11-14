@@ -26,7 +26,8 @@ at run time). See [THREADS.md](THREADS.md) and [RENDERING.md](RENDERING.md).
 |---|---|
 | `ui_core.c`, `ui_draw.c`, `ui_render.c`, `ui_assets.c`, `ui_sprites.c` | Screen stack, input, draw list, texture, atlas, sprite cache |
 | `ui_widgets.c`, `ui_kit.c` | Boxes, rows, buttons, lists, popups, toasts |
-| `ui_scr_*.c` | Screens: START hub, Pokédex, party, bag, PokéNav, trainer card, options, Nuzlocke, mart, choose a Pokémon |
+| `ui_scr_*.c` | Screens: START hub, Pokédex, party, bag, PokéNav, trainer card, options, Nuzlocke, mart, PC boxes, player's PC (items, mailbox, decorations), naming keyboard, Easy Chat, berry choice, forget a move, choose a Pokémon |
+| `ui_contest.c` | Contest appeal choice |
 | `ui_mirror.c`, `ui_sign.c` | Dialogue, YES/NO, multichoice and money boxes, and zone signs, drawn from the game's own windows |
 | `ui_battle_hud.c`, `ui_game_battle.c` | Battle HUD (plates, party balls, messages, commands, moves, targets, level up) and the battle bag / party |
 | `ui_game*.c` | Game data and actions used by the screens |

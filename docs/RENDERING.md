@@ -1,14 +1,14 @@
 # Rendering
 
 Everything on screen goes through vitaGL (OpenGL ES 1.x style fixed pipeline over SceGxm) at
-960×544. There are three presentation paths, chosen every frame in `sdl2.c` (see
-[ARCHITECTURE.md](ARCHITECTURE.md)).
+960×544. There are two presentation paths, chosen every frame in `sdl2.c` (see
+[ARCHITECTURE.md](ARCHITECTURE.md)); on both, the new UI is drawn last, on top.
 
 | Path | When | Entry point |
 |---|---|---|
-| Native UI | The dock / a native screen is open | `ShowNativeUi()` (`sdl2.c`) |
 | 3D | Field callbacks, shop buy menu, 3D battle | `VoxelRenderer_RenderFrame()` (`voxel/voxel_renderer.c`) |
 | 2D | Every other GBA screen | `VDraw()` + `RenderGameTexture()` (`sdl2.c`) |
+| New UI (over either) | Its draw list is not empty | `Ui_Render()` (`ui/ui_render.c`), called at the end of both paths |
 
 ## 2D path: the software GBA PPU
 
