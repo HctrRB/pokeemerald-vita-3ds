@@ -16,7 +16,8 @@
 #include "window.h"
 #include "gba/m4a_internal.h"
 #include "constants/rgb.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
+#include "platform/ui.h"
 #include "main_menu.h"
 
 #define tMenuSelection data[0]
@@ -176,25 +177,28 @@ static void VBlankCB(void)
     TransferPlttBuffer();
 }
 
-void CB2_VitaStandaloneOptions(void)
+#ifdef PLATFORM_VITA
+// OPTION on the title menu: the new UI's options screen, hosted, then back to the main menu
+static void ReturnFromUiOptions(void)
 {
-    RunTasks();
-    AnimateSprites();
-    BuildOamBuffer();
-    UpdatePaletteFade();
-    if (!VitaUI_IsOpen())
-    {
-        SetMainCallback2(gMain.savedCallback != NULL ? gMain.savedCallback : CB2_InitMainMenu);
-    }
+    SetMainCallback2(gMain.savedCallback != NULL ? gMain.savedCallback : CB2_InitMainMenu);
 }
+#endif
 
 void CB2_InitOptionMenu(void)
 {
 #ifdef PLATFORM_VITA
-    SetVBlankCallback(VBlankCB);
-    VitaUI_OpenStandaloneOptions();
-    SetMainCallback2(CB2_VitaStandaloneOptions);
-    return;
+    if (gMain.state == 0 && Ui_OpenOptionsHosted(ReturnFromUiOptions))
+    {
+        // The GBA screen's resets (states 0 and 2): the caller's scene stops running
+        SetHBlankCallback(NULL);
+        ResetPaletteFade();
+        ScanlineEffect_Stop();
+        ResetTasks();
+        ResetSpriteData();
+        SetVBlankCallback(VBlankCB);
+        return;
+    }
 #endif
     switch (gMain.state)
     {

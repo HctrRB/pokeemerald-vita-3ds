@@ -265,6 +265,9 @@ bool VoxelWorld_IsMapAvailable(void)
         return false;
     extern bool8 Shop_IsBuyMenuActive(void);
     extern bool8 Overworld_IsReturningToField(void);
+    extern bool8 Decoration_IsFieldModeActive(void);
+    if (Decoration_IsFieldModeActive())
+        return false;   // placing decorations: flat 2D field (decoration.c)
     return gMain.callback2 == CB2_Overworld
         || gMain.callback2 == CB2_OverworldBasic
         || Shop_IsBuyMenuActive()

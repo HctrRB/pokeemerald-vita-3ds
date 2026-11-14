@@ -279,3 +279,11 @@ document.addEventListener('keydown', e => {
   header.prepend(title, tabs);
   paint();
 })();
+
+// Menu themes on the mocks (?theme=red|crystal|tropical|royal): _shared/theme.js
+(() => {
+  if (!new URLSearchParams(location.search).get('theme')) return;
+  const s = document.createElement('script');
+  s.src = '../_shared/theme.js';
+  document.head.appendChild(s);
+})();

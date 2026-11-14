@@ -401,6 +401,12 @@ void DoNamingScreen(u8 templateNum, u8 *destBuffer, u16 monSpecies, u16 monGende
     // New UI (design/stitch/teclado_nombre): same result in destBuffer, same return callback
     if (Ui_OpenNaming(templateNum, destBuffer, monSpecies, monGender, monPersonality, returnCallback))
     {
+        // CB2_LoadNamingScreen's resets: the caller's scene (field, battle, PC) stops running
+        ResetVHBlank();
+        ResetPaletteFade();
+        ResetSpriteData();
+        FreeAllSpritePalettes();
+        ResetTasks();
         if (templateNum == NAMING_SCREEN_PLAYER)
             StartTimer1();
         return;

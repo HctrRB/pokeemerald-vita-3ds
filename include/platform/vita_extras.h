@@ -68,7 +68,6 @@ typedef enum
     FAST_EXTRA_VOXEL_RES,
     FAST_EXTRA_VOXEL_FPS,
     FAST_EXTRA_VOXEL_BLUR,
-    FAST_EXTRA_UI_V2,          // new UI (phase B test screen on START)
     FAST_EXTRA_UI_THEME,       // colour theme of the new UI menus (UI_THEME_*)
     FAST_EXTRA_COUNT
 } FastExtraId;

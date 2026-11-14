@@ -24,7 +24,7 @@
 #include "item.h"
 #ifdef PLATFORM_VITA
 #include "platform.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 #endif
 #include "constants/abilities.h"
 #include "constants/event_objects.h"
@@ -657,7 +657,7 @@ static void PlayerNotOnBikeMoving(u8 direction, u16 heldKeys)
     }
 
 #ifdef PLATFORM_VITA
-    if (Platform_GetSetting(PLATFORM_SETTING_AUTO_RUN) || VitaUI_IsRunAlwaysActive())
+    if (Platform_GetSetting(PLATFORM_SETTING_AUTO_RUN) || VitaControls_IsRunAlwaysActive())
     {
         // Auto-run: run unless B is held, indoors too; tiles that forbid running still do.
         if (!(gPlayerAvatar.flags & PLAYER_AVATAR_FLAG_UNDERWATER) && !(heldKeys & B_BUTTON) && FlagGet(FLAG_SYS_B_DASH)

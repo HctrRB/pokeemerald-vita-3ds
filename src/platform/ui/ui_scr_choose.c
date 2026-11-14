@@ -44,7 +44,7 @@ static void Resume(void)
 
 bool Ui_OpenChooseMon(int kind)
 {
-    if (!Ui_IsEnabled() || !__atomic_load_n(&gUiVoxelFrame, __ATOMIC_RELAXED))
+    if (!Ui_IsEnabled() || Ui_IsOpen() || !__atomic_load_n(&gUiVoxelFrame, __ATOMIC_RELAXED))
         return false;
     sKind = kind;
     // Defaults if the screen is left with circle
@@ -64,7 +64,9 @@ static const char *Tag(int32_t slot, bool *ok)
 {
     UiMon m;
     UiGame_Mon(slot, &m);
-    *ok = !m.egg;
+    // ChoosePartyMon (PARTY_ACTION_CHOOSE_AND_CLOSE) takes an EGG too: the scripts (Name Rater,
+    // Move Deleter, trades) answer it themselves. The tutor and the day care refuse it.
+    *ok = sKind == UI_CHOOSE_ANY || !m.egg;
     if (sKind == UI_CHOOSE_TUTOR)
     {
         const u8 st = PartyMenu_TutorStatusForUi((u8)slot, (u8)gSpecialVar_0x8005);

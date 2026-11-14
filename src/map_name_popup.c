@@ -432,3 +432,27 @@ static void LoadMapNamePopUpWindowBg(void)
         LoadPalette(sMapPopUp_PaletteTable[popUpThemeId], BG_PLTT_ID(14), sizeof(sMapPopUp_PaletteTable[0]));
     BlitBitmapToWindow(popupWindowId, sMapPopUp_Table[popUpThemeId], 0, 0, 80, 24);
 }
+
+// New UI zone sign (ui_sign.c): the popup frame of a map section, drawn there from the same
+// graphics. The theme (wood, marble...) and whether the underwater palette applies.
+u8 MapNamePopUp_ThemeForUi(u16 mapSec, bool8 *underwater)
+{
+    if (mapSec >= KANTO_MAPSEC_START)
+    {
+        if (mapSec > KANTO_MAPSEC_END)
+            mapSec -= KANTO_MAPSEC_COUNT;
+        else
+            mapSec = 0;
+    }
+    *underwater = gMapHeader.weather == WEATHER_UNDERWATER_BUBBLES;
+    return mapSec < ARRAY_COUNT(sMapSectionToThemeId) ? sMapSectionToThemeId[mapSec] : MAPPOPUP_THEME_WOOD;
+}
+
+void MapNamePopUp_GfxForUi(u8 theme, bool8 underwater, const u8 **inner, const u8 **outline, const u16 **palette)
+{
+    if (theme >= ARRAY_COUNT(sMapPopUp_Table))
+        theme = MAPPOPUP_THEME_WOOD;
+    *inner = sMapPopUp_Table[theme];
+    *outline = sMapPopUp_OutlineTable[theme];
+    *palette = underwater ? sMapPopUp_Palette_Underwater : sMapPopUp_PaletteTable[theme];
+}

@@ -11,7 +11,7 @@
 #include <setjmp.h>
 #include "vita/vita_perf.h"
 #include "vita/vita_platform.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 #include "platform/ui.h"
 #include "constants/moves.h"
 #include "vita/vita_reset.h"
@@ -212,103 +212,6 @@ void VitaPlatform_RequestQuit(void)
     isRunning = false;
 }
 
-static GLuint sNativeUiTexture = 0;
-static bool sNativeUiTextureAllocated = false;
-static int32_t sCachedUiFilter = -1;
-
-static void ShowNativeUi(void)
-{
-    const uint16_t *canvas = NULL;
-    int32_t dirtyY0 = 0;
-    int32_t dirtyY1 = 0;
-    const bool hasDirtyRows = VitaUI_RenderDirty(&canvas, &dirtyY0, &dirtyY1);
-    const int32_t filter = sPlatformSettings[PLATFORM_SETTING_FILTER];
-    const bool isFullscreen = (filter != 0 || sPlatformSettings[PLATFORM_SETTING_UI_SCALE] != 0);
-    const GLenum minMagFilter = (filter == 0 && sPlatformSettings[PLATFORM_SETTING_UI_SCALE] == 0) ? GL_NEAREST : GL_LINEAR;
-
-    if (sNativeUiTexture == 0)
-    {
-        glGenTextures(1, &sNativeUiTexture);
-        glBindTexture(GL_TEXTURE_2D, sNativeUiTexture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minMagFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, minMagFilter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, VITA_UI_WIDTH, VITA_UI_HEIGHT, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, canvas);
-        sNativeUiTextureAllocated = true;
-        sCachedUiFilter = filter;
-    }
-    else
-    {
-        glBindTexture(GL_TEXTURE_2D, sNativeUiTexture);
-        if (filter != sCachedUiFilter)
-        {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minMagFilter);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, minMagFilter);
-            sCachedUiFilter = filter;
-        }
-
-        if (!sNativeUiTextureAllocated)
-        {
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, VITA_UI_WIDTH, VITA_UI_HEIGHT, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, canvas);
-            sNativeUiTextureAllocated = true;
-        }
-        else if (hasDirtyRows && canvas != NULL && dirtyY1 > dirtyY0)
-        {
-            glTexSubImage2D(
-                GL_TEXTURE_2D, 0,
-                0, dirtyY0,
-                VITA_UI_WIDTH, dirtyY1 - dirtyY0,
-                GL_RGB, GL_UNSIGNED_SHORT_5_6_5,
-                &canvas[(size_t)dirtyY0 * VITA_UI_WIDTH]);
-        }
-    }
-
-    glViewport(0, 0, sRenderWidth, sRenderHeight);
-    glClearColor(0.04f, 0.12f, 0.09f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
-    glDisable(GL_BLEND);
-    glDisable(GL_ALPHA_TEST);
-    glEnable(GL_TEXTURE_2D);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0.0, 960.0, 544.0, 0.0, -1.0, 1.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    // Dynamic quad: Fullscreen (725.33x544 with Sharp Bilinear) or Pixel Perfect (640x480)
-    const float uiVerts[8] = {
-        isFullscreen ? 117.3333f : 160.0f, isFullscreen ? 0.0f : 32.0f,
-        isFullscreen ? 842.6667f : 800.0f, isFullscreen ? 0.0f : 32.0f,
-        isFullscreen ? 842.6667f : 800.0f, isFullscreen ? 544.0f : 512.0f,
-        isFullscreen ? 117.3333f : 160.0f, isFullscreen ? 544.0f : 512.0f
-    };
-    static const float uiUvs[8] = {
-        0.0f, 0.0f,
-        1.0f, 0.0f,
-        1.0f, 1.0f,
-        0.0f, 1.0f
-    };
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 0, uiVerts);
-    glTexCoordPointer(2, GL_FLOAT, 0, uiUvs);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDepthMask(GL_FALSE);
-
-#ifdef PLATFORM_VITA
-    eglSwapInterval(NULL, 1);
-    vglSwapBuffers(GL_FALSE);
-#endif
-}
 
 // Draws the game texture in native widescreen (16:9 at 960x544) or centered fit-height into the back buffer.
 #ifdef WIDESCREEN_SUPPORTED
@@ -534,26 +437,6 @@ static void RenderGameTexture(void)
     glDepthMask(GL_FALSE);
 }
 
-// Keep audio engine and VBlank interrupts ticking at 60 Hz during menus without Core 0 spin-waiting
-static inline void TickMenuAudioAndVBlank(uint64_t menuIterationStart)
-{
-    if (!SDL_AtomicGet(&isFrameAvailable) && sFrameReadySem != NULL)
-    {
-        SDL_SemWaitTimeout(sFrameReadySem, 16);
-    }
-    while (sFrameReadySem != NULL && SDL_SemTryWait(sFrameReadySem) == 0)
-    {
-    }
-    SDL_AtomicSet(&isFrameAvailable, 0);
-
-    const uint64_t freq = SDL_GetPerformanceFrequency();
-    const uint64_t elapsedTicks = SDL_GetPerformanceCounter() - menuIterationStart;
-    const double elapsedUs = ((double)elapsedTicks * 1000000.0) / (double)freq;
-    if (elapsedUs < 16500.0)
-    {
-        VitaPlatform_DelayMicroseconds((uint32_t)(16666.0 - elapsedUs));
-    }
-}
 
 
 int main(int argc, char **argv)
@@ -576,7 +459,7 @@ int main(int argc, char **argv)
     // The config says which save file (1-3) to open.
     VitaPlatform_BuildPath(sConfigPath, sizeof(sConfigPath), "pokeemerald.cfg");
     ReadConfigFile();
-    VitaUI_GetSavePath(sSavePath, sizeof(sSavePath));
+    VitaControls_GetSavePath(sSavePath, sizeof(sSavePath));
     ReadSaveFile(sSavePath);
 
     // Initialize hardware accelerated OpenGL via vitaGL
@@ -588,13 +471,20 @@ int main(int argc, char **argv)
     vglUseVramForUSSE(GL_TRUE);
     vglUseCachedMem(GL_TRUE);
     vglUseTripleBuffering(GL_TRUE);
-    if (!vglInitWithCustomSizes(8 * 1024 * 1024, 960, 544, 16 * 1024 * 1024, 48 * 1024 * 1024, 8 * 1024 * 1024, 0, SCE_GXM_MULTISAMPLE_NONE))
+    // Pool sizes. vitaGL's circular vertex pool (32 MB, one third per display buffer) is
+    // placed RAM first: with a 16 MB RAM pool two thirds spilled into CDRAM (~21 MB), and
+    // CDRAM was left with 2-3 MB free in play. Every chunk build reallocates its VBO there, so
+    // over a long session it fragmented; when nothing fits, vitaGL waits on the GPU and sleeps
+    // 1 s per retry (gpu_utils.c, gpu_alloc_mapped_aligned_unsafe_for_gpu). 40 MB of RAM hold
+    // the whole circular pool plus vitaGL's ~2.5 MB of other buffers; 88 MB of CDRAM of the
+    // 112 MB the console gives the app (user measurement 2026-11-14: 64/112 in use before).
+    if (!vglInitWithCustomSizes(8 * 1024 * 1024, 960, 544, 40 * 1024 * 1024, 88 * 1024 * 1024, 8 * 1024 * 1024, 0, SCE_GXM_MULTISAMPLE_NONE))
     {
         VITA_LOG("vglInitWithCustomSizes failed!\n");
     }
     else
     {
-        VITA_LOG("vglInitWithCustomSizes succeeded (8MB pool, 16MB RAM, 48MB CDRAM, 8MB PHYCONT)\n");
+        VITA_LOG("vglInitWithCustomSizes succeeded (8MB pool, 40MB RAM, 88MB CDRAM, 8MB PHYCONT)\n");
     }
     VitaPerf_LogMemory("after vglInit");
 #endif
@@ -616,7 +506,6 @@ int main(int argc, char **argv)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, FRAME_LINE_WIDTH, DISPLAY_HEIGHT, 0, GL_RGB, GL_UNSIGNED_SHORT_5_6_5, NULL);
     }
 
-    VitaUI_Prewarm();
     // New UI atlas, before the game thread starts (its tables are read from Core 1)
     Ui_Init();
 
@@ -665,61 +554,9 @@ int main(int argc, char **argv)
         ProcessEvents();
 
         {
-            static uint32_t sPrevButtons;
+            // The new UI takes START and the options button itself (Ui_Tick, Core 1)
             const uint32_t buttons = VitaPlatform_ReadButtons();
-            const uint32_t menuButton = VitaUI_ActionButton(VITA_ACTION_MENU);
-            const uint32_t startButton = VITA_BTN_START;
-
-            extern void CB2_Overworld(void);
-            const bool isStandaloneOpts = (gMain.callback2 == CB2_VitaStandaloneOptions);
-            const bool inBattleMenu = gMain.inBattle && (VitaUI_GetSection() == VITA_UI_SEC_BAG || VitaUI_GetSection() == VITA_UI_SEC_POKEMON);
-            const bool isShopSell = VitaUI_IsShopSellActive();
-            const bool canOpenMenu = (gMain.callback2 == CB2_Overworld) || isStandaloneOpts || inBattleMenu || isShopSell;
-
-            if (VitaUI_IsOpen() && !canOpenMenu)
-            {
-                VitaUI_Close();
-            }
-
-            // With the new UI on, START in the field belongs to it (handled on Core 1 in Ui_Tick);
-            // the options button still opens the old options, so the extra can be switched off.
-            const bool newUiStart = Ui_IsEnabled() && !VitaUI_IsOpen() && !isStandaloneOpts && !inBattleMenu && !isShopSell;
-            if (Ui_IsOpen())
-            {
-                // nothing: the new UI has the buttons
-            }
-            else if ((buttons & startButton) && !(sPrevButtons & startButton) && !newUiStart)
-            {
-                if (VitaUI_IsOpen())
-                {
-                    if (!gMain.inBattle)
-                        VitaUI_Close();
-                }
-                else if (gMain.callback2 == CB2_Overworld)
-                    VitaUI_Open(VITA_UI_SEC_MAP);
-            }
-            else if ((buttons & menuButton) && !(sPrevButtons & menuButton) && !Ui_IsEnabled())
-            {
-                if (VitaUI_IsOpen())
-                    VitaUI_Close();
-                else if (gMain.callback2 == CB2_Overworld)
-                    VitaUI_Open(VITA_UI_SEC_OPTIONS);
-            }
-
-            sPrevButtons = buttons;
-            if (VitaUI_IsOpen())
-            {
-                const uint64_t iterStart = SDL_GetPerformanceCounter();
-                VitaUI_Update(buttons);
-                if (VitaUI_IsOpen())
-                    ShowNativeUi();
-
-                TickMenuAudioAndVBlank(iterStart);
-                accumulator = 0.0;
-                lastGameTime = SDL_GetPerformanceCounter();
-                continue;
-            }
-            sFastForward = VitaUI_FastForwardActive(buttons);
+            sFastForward = VitaControls_FastForwardActive(buttons);
             timeScale = sFastForward ? Platform_GetSetting(PLATFORM_SETTING_FAST_FORWARD_SPEED) : 1.0;
         }
 
@@ -1256,14 +1093,15 @@ void ProcessEvents(void)
 
 u16 Platform_GetKeyInput(void)
 {
-    // When native Emerald 3DS UI is open, do not deliver keys to in-game movement/events
-    if (VitaUI_IsOpen() || Ui_ConsumesInput())
+    // While a screen of the new UI is open the game gets no keys
+    if (Ui_ConsumesInput())
         return 0;
 
-    // Read straight from sceCtrl on the game thread; mask out START in overworld where VitaUI handles it
-    uint16_t keys = VitaUI_MapButtons(VitaPlatform_ReadButtons()) | Ui_TakeInjectedKeys();
+    // Read straight from sceCtrl on the game thread. START in the field opens the new UI's menu
+    // (Ui_Tick); the game's own START menu is used where its entries are special (Ui_OwnsFieldStart).
+    uint16_t keys = VitaControls_MapButtons(VitaPlatform_ReadButtons()) | Ui_TakeInjectedKeys();
     extern void CB2_Overworld(void);
-    if (gMain.callback2 == CB2_Overworld)
+    if (gMain.callback2 == CB2_Overworld && Ui_OwnsFieldStart())
         keys &= ~START_BUTTON;
     return keys;
 }
@@ -1563,7 +1401,7 @@ void SoftReset(u32 resetFlags)
     if (sGameResetJumpValid && VitaReset_RestoreBootSnapshot())
     {
         CloseSaveFile();
-        VitaUI_GetSavePath(sSavePath, sizeof(sSavePath));
+        VitaControls_GetSavePath(sSavePath, sizeof(sSavePath));
         ReadSaveFile(sSavePath);
         SDL_ClearQueuedAudio(sdlAudioDevice);
         longjmp(sGameResetJump, 1);

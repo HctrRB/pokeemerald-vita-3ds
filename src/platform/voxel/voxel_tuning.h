@@ -86,9 +86,13 @@
 
 /* ---- Depth of field: blurred bands at 544 rows ---------------------------------------- */
 
-#define VOXEL_DOF_TOP_ROWS 226.0f     /* rows of the top band */
-#define VOXEL_DOF_BOTTOM_ROWS 127.0f  /* rows of the bottom band */
-#define VOXEL_DOF_TOP_ALPHA 0.82f     /* blur strength at the screen edge */
-#define VOXEL_DOF_BOTTOM_ALPHA 0.68f
+#define VOXEL_DOF_TOP_ROWS 150.0f     /* rows of the top band (a diorama: only the edges) */
+#define VOXEL_DOF_BOTTOM_ROWS 84.0f   /* rows of the bottom band */
+#define VOXEL_DOF_TOP_ALPHA 0.60f     /* blur strength at the screen edge */
+#define VOXEL_DOF_BOTTOM_ALPHA 0.50f
+
+/* ---- Sun rays ------------------------------------------------------------------------- */
+
+#define VOXEL_RAYS_OPACITY 0.75f      /* on the shafts' alpha (25 % more transparent) */
 
 #endif /* VOXEL_TUNING_H */

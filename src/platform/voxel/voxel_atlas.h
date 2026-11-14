@@ -158,6 +158,12 @@ uint32_t VoxelAtlas_RefreshAnimatedPage(const VoxelMapInstance *inst, const Voxe
 uint32_t VoxelAtlas_RefreshAnimatedPageRows(const VoxelMapInstance *inst, const VoxelAtlasMap *map,
                                             uint32_t page, uint16_t *dest, const uint8_t *liveTiles,
                                             const uint8_t dirtyTiles[128], uint32_t *rows);
+/* The same for a neighbouring map's slot that shares the current map's primary tileset: only
+ * its metatiles made wholly of primary tiles (the live secondary tiles are not its own). */
+uint32_t VoxelAtlas_RefreshAnimatedPrimaryRows(const void *primaryTileset, const void *secondaryTileset,
+                                               const VoxelAtlasMap *map, uint32_t page, uint16_t *dest,
+                                               const uint8_t *liveTiles, const uint8_t dirtyTiles[128],
+                                               uint32_t *rows);
 
 /* Does this metatile of the instance's tileset pair draw nothing but black -
  * an interior's outside? Known once the pair's atlas has been built. */

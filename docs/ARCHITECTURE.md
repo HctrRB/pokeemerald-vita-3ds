@@ -18,12 +18,12 @@ How the port is put together and what happens in one frame. Thread rules are in
 │   widescreen.c    288-px lines: what fills the margins in each scene       │
 │   bios.c dma.c cgb_audio.c                                                 │
 ├─────────────────────────────────────┬──────────────────────────────────────┤
-│ Voxel 3D world   src/platform/voxel │ Native UI and features               │
-│   world, chunks, meshes, atlas,     │   src/platform/vita                  │
-│   buildings, trees, relief, signs,  │   dock and screens (vita_ui*.c),     │
-│   lighting, weather, entities,      │   battle HUD and action deck,        │
-│   3D battle, depth of field         │   shop, intro stage, day/night,      │
-│                                     │   extras, Nuzlocke, telemetry        │
+│ Voxel 3D world   src/platform/voxel │ Vita features      src/platform/vita │
+│   world, chunks, meshes, atlas,     │   controls, intro stage, day/night,  │
+│   buildings, trees, relief, signs,  │   extras, Nuzlocke, telemetry;       │
+│   lighting, weather, entities,      │   the UI itself: src/platform/ui     │
+│   3D battle, depth of field         │                                      │
+│                                     │                                      │
 ├─────────────────────────────────────┴──────────────────────────────────────┤
 │ VitaSDK 2026.08 · vitaGL · SDL2 (audio device, threads, timers)            │
 └────────────────────────────────────────────────────────────────────────────┘
@@ -39,10 +39,10 @@ hardware did (VBlank, DMA, timers, sound mixing, flash saves, the real-time cloc
 
 1. Pins itself to Core 0 (`VitaPlatform_PinCurrentThread`), creates `ux0:data/POKEVITA/`, sets
    the clocks (`vita_platform.c`: CPU 444, bus 222, GPU 222, GPU crossbar 166 MHz).
-2. Initialises vitaGL with `vglInitWithCustomSizes` (8 MB GXM pool, 16 MB RAM, 48 MB CDRAM,
+2. Initialises vitaGL with `vglInitWithCustomSizes` (8 MB GXM pool, 40 MB RAM, 88 MB CDRAM,
    8 MB physically contiguous) at 960×544.
 3. Reads `pokeemerald.cfg` and `settings.txt`, opens the save, starts audio (48 kHz stereo).
-4. `VoxelRenderer_Init()` and `VitaUI_Prewarm()` decode the heavy assets once.
+4. `VoxelRenderer_Init()` and `Ui_Init()` decode the heavy assets once.
 5. Starts the `AgbMain` thread (4 MB stack, Core 1), which runs the original game loop.
 6. Enters the presentation loop.
 
@@ -83,7 +83,7 @@ is decided in `sdl2.c` from `VoxelWorld_IsMapAvailable()` (field callbacks, shop
 | vitaGL passes, DoF, 2D overlay | `voxel/voxel_renderer.c` | [RENDERING.md](RENDERING.md) |
 | 16:9 handling of GBA screens | `widescreen.c`, `vita/vita_stage.c` | [SCENES_16_9.md](SCENES_16_9.md) |
 | Voxel world | `src/platform/voxel/` | [VOXEL_ENGINE.md](VOXEL_ENGINE.md) |
-| Native UI | `src/platform/vita/vita_ui*.c` | [VITA_UI.md](VITA_UI.md) |
+| User interface | `src/platform/ui/` | [VITA_UI.md](VITA_UI.md) |
 | Build and packaging | `CMakeLists.txt`, `build_vita.*`, `vita/` | [BUILD.md](BUILD.md) |
 | Data files | `assets/`, `tools/ui_gen/` | [ASSETS.md](ASSETS.md) |
 | Logs, telemetry, crash dumps | `vita/vita_perf.c`, `vita/vita_platform.c` | [DEBUGGING.md](DEBUGGING.md) |

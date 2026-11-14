@@ -1,13 +1,22 @@
 # Building
 
+`build_all.ps1` (Windows) or `./build_all.sh` (in MSYS2) installs everything below and runs every
+step; users should follow [BUILD_YOUR_OWN.md](BUILD_YOUR_OWN.md). This page is the detail behind
+it, for development.
+
+The repository's path must not contain spaces or accents: `make` and the decomp's rules cannot
+handle them (`build_all.ps1` refuses such a folder).
+
 ## Requirements (Windows)
 
 1. [MSYS2](https://www.msys2.org) in `C:\msys64`. In the **MSYS** shell:
    ```sh
    pacman -Syu
    pacman -S --needed make git cmake tar bzip2 xz wget curl python patch pkgconf diffutils \
-       mingw-w64-x86_64-gcc mingw-w64-x86_64-libpng mingw-w64-x86_64-pkgconf
+       mingw-w64-x86_64-gcc mingw-w64-x86_64-libpng mingw-w64-x86_64-pkgconf \
+       mingw-w64-x86_64-python mingw-w64-x86_64-python-pillow
    ```
+   The generators run with MINGW64's Python and Pillow; no Windows Python is needed.
 2. VitaSDK 2026.08 with the SDL2 packages (MSYS shell; keep the two `export` lines in
    `~/.bash_profile`):
    ```sh
@@ -29,9 +38,10 @@ cannot create symlinks (copy the target instead, e.g. `cp lib/libpng16.a lib/lib
 From the repository root:
 
 0. **Game files** (once): this repository does not carry the game's graphics, sounds or binary
-   data. `fetch_assets.ps1 -Rom <your Emerald dump>` (or `./fetch_assets.sh <dump>`) checks the
-   dump, downloads them and generates the files made from them; see
-   [BUILD_YOUR_OWN.md](BUILD_YOUR_OWN.md).
+   data. `./fetch_assets.sh <your Emerald dump>` in the MINGW64 shell (or
+   `fetch_assets.ps1 -Rom <dump>` from PowerShell) checks the dump, downloads them and
+   generates the files made from them. Generators run there must read only downloaded sources
+   (PNG, `.bin`, `.pal`): the conversion in step 2 has not run yet on a new copy.
 1. **Host tools** (once), MINGW64 shell:
    ```sh
    make -f make_tools.mk -j8 CC="gcc -static" CXX="g++ -static"
@@ -83,9 +93,9 @@ full-colour art (needs `mingw-w64-x86_64-imagemagick`).
 
 - **PS Vita**: install the VPK with VitaShell (HENkaku/Ensō, *Enable Unsafe Homebrew*).
   Disable overclock plugins for this title; the game sets its own clocks.
-- **Vita3K**: good for boot, visuals, input and crashes; not for performance (it runs the ARM
-  code much faster than the console). Measure on hardware with the telemetry
-  ([DEBUGGING.md](DEBUGGING.md)).
+- **Vita3K**: the current build shows a black screen there, so test on hardware. Even when it
+  runs, it is no guide to performance (it runs the ARM code much faster than the console):
+  measure on hardware with the telemetry ([DEBUGGING.md](DEBUGGING.md)).
 
 ## Warnings
 

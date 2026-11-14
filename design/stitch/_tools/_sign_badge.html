@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign plates</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Saira+Condensed:wght@500;700&family=M+PLUS+Rounded+1c:wght@500;700&family=Fredoka:wght@500;600&family=Exo+2:wght@500;700&display=block" rel="stylesheet">
+<style>
+  body { margin: 0; background: #000; }
+  .stage { position: relative; width: 960px; height: 1110px; overflow: hidden; background: #000; }
+  .cell { position: absolute; left: 0; width: 960px; height: 220px; overflow: hidden; background: url(../_assets/fondo_mundo.png) -40px -60px / 960px 544px; }
+  /* The GBA zone popup (graphics/map_popup, 96x40) at x2 as a 9-slice: 8 px edges, the middle
+     repeated to the plate's width */
+  .plate { position: absolute; height: 80px; box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+           border: 16px solid transparent; border-image: var(--img) 8 fill / 16px / 0 round; image-rendering: pixelated; color: #2b2b33; }
+  .motto { position: absolute; box-sizing: border-box; padding: 10px 16px 12px; border-bottom: 2px solid rgba(0,0,0,.4); color: #fff; }
+  .tag { position: absolute; right: 8px; bottom: 8px; font: 14px monospace; color: #fff; background: rgba(0,0,0,.75); padding: 4px 8px; }
+</style>
+</head>
+<body>
+<div class="stage" id="s"></div>
+<script>
+// Theme: the name in the theme's title face (one size up, medium weight), dark as on the GBA
+// popup; the motto box as approved (text face, regular, white, box at 67 %).
+const T = {
+  RED:      { box: '36,36,44',  title: "700 26px 'Saira Condensed'", body: "500 27px 'Saira Condensed'", r: 10 },
+  EMERALD:  { box: '7,29,24',   title: "16px 'Press Start 2P'",       body: '32px VT323', r: 6 },
+  CRYSTAL:  { box: '7,42,68',   title: "700 24px 'M PLUS Rounded 1c'", body: "500 23px 'M PLUS Rounded 1c'", r: 12 },
+  TROPICAL: { box: '42,30,59',  title: "600 26px Fredoka",            body: "500 25px Fredoka", r: 14 },
+  ROYAL:    { box: '6,40,31',   title: "700 25px 'Exo 2'",            body: "500 24px 'Exo 2'", r: 10 },
+};
+const img = n => `url(../_assets/popup/${n}.png)`;
+const plate = (t, n, name, x, y, w) => `<div class="plate" style="--img:${img(n)};left:${x}px;top:${y}px;width:${w}px;font:${t.title}">${name}</div>`;
+let h = '', row = 0;
+for (const [id, t] of Object.entries(T)) {
+  const y = row * 222;
+  h += `<div class="cell" style="top:${y}px">
+    ${plate(t, 'wood', 'LAVARIDGE TOWN', 16, 12, 400)}
+    <div class="motto" style="left:28px;top:90px;width:376px;background:rgba(${t.box},.67);font:${t.body};line-height:30px">"POKéMON CENTER HOT SPRINGS An excellent place for relaxing!"</div>
+    ${plate(t, 'marble', 'SLATEPORT CITY', 460, 12, 240)}
+    ${plate(t, 'stone', 'GRANITE CAVE', 708, 12, 240)}
+    ${plate(t, 'underwater', 'ROUTE 105', 460, 100, 240)}
+    ${plate(t, 'brick', 'PETALBURG', 708, 100, 240)}
+    <span class="tag">${id}</span></div>`;
+  row++;
+}
+document.getElementById('s').innerHTML = h;
+// 1-bit glyphs, as the console draws them
+document.fonts.ready.then(() => document.querySelectorAll('.motto, .plate').forEach(box => {
+  const cs = getComputedStyle(box), plate = box.classList.contains('plate');
+  const lh = plate ? 48 : parseFloat(cs.lineHeight), w = box.clientWidth - (plate ? 0 : 32);
+  const c = document.createElement('canvas'), g = c.getContext('2d');
+  g.font = cs.font;
+  const lines = []; let cur = '';
+  for (const wd of box.textContent.split(' ')) { const t = cur ? cur + ' ' + wd : wd; if (!plate && g.measureText(t).width > w && cur) { lines.push(cur); cur = wd; } else cur = t; }
+  lines.push(cur);
+  c.width = plate ? Math.ceil(g.measureText(cur).width) + 4 : w + 4; c.height = lines.length * lh + 2;
+  g.font = cs.font; g.textBaseline = 'middle'; g.fillStyle = '#fff';
+  lines.forEach((l, i) => g.fillText(l, 0, i * lh + lh / 2));
+  const d = g.getImageData(0, 0, c.width, c.height), m = cs.color.match(/\d+/g).map(Number);
+  for (let i = 0; i < d.data.length; i += 4) { const on = d.data[i + 3] >= 128; d.data[i] = m[0]; d.data[i + 1] = m[1]; d.data[i + 2] = m[2]; d.data[i + 3] = on ? 255 : 0; }
+  g.putImageData(d, 0, 0);
+  box.textContent = ''; box.appendChild(c);
+}));
+</script>
+</body>
+</html>

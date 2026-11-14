@@ -8,7 +8,7 @@
 #include "platform/vita_daynight.h"
 #include "platform/vita_encounters.h"
 #include "platform/vita_extras.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 
 #include "global.h"
 #include "battle_setup.h"

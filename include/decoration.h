@@ -65,4 +65,18 @@ void CopyDecorationCategoryName(u8 *dest, u8 category);
 bool8 IsSelectedDecorInThePC(void);
 u8 AddDecorationIconObject(u8 decor, s16 x, s16 y, u8 priority, u16 tilesTag, u16 paletteTag);
 
+// New UI: the PC's DECORATION tab (ui_scr_playerpc.c), with the game's rules and lines
+void Decoration_InitForUi(bool8 isPlayerRoom);
+bool8 Decoration_IsFieldModeActive(void);   // placing / putting away: the field is drawn 2D
+bool8 Decoration_InUseForUi(u8 category, u8 index);
+bool8 Decoration_HasAnyForUi(void);
+bool8 Decoration_CategoryPlaceableForUi(u8 category);
+bool8 Decoration_CanPlaceForUi(u8 category, u8 index);
+bool8 Decoration_CanTossForUi(u8 category, u8 index);
+void Decoration_TossForUi(u8 category, u8 index);
+bool8 Decoration_CanPutAwayForUi(void);
+void Decoration_StartPlaceFromUi(u8 taskId, u8 category, u8 index);
+void Decoration_StartPutAwayFromUi(u8 taskId);
+void Decoration_EndUiSession(u8 taskId);
+
 #endif //GUARD_DECORATION_H

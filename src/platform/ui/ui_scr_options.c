@@ -5,10 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "ui_internal.h"
+#include "platform/ui.h"
 #include "ui_game.h"
 #include "platform/vita_extras.h"
 #include "platform/vita_nuzlocke.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 #include "../vita/vita_platform.h"
 
 #include "global.h"
@@ -77,7 +78,6 @@ static const struct { const char *key, *help; } sExtraHelp[] = {
     { "nuzlocke", "One catch per area; fainted POKEMON are lost." },
     { "level_cap", "Limit levels to the next GYM LEADER's ace." },
     { "save_slot", "Which save file is used." },
-    { "ui_v2", "Use the new interface instead of the GBA menus." },
     { "infinite_tms", "TMs are not used up." },
     { "trade_evo", "Trade evolutions happen at level 40." },
     { "fast_eggs", "EGGS hatch much sooner." },
@@ -345,3 +345,11 @@ static void Build(void)
 }
 
 const UiScreen gUiOptionsScreen = { Enter, Update, Build, NULL };
+
+bool Ui_OpenOptionsHosted(void (*after)(void))
+{
+    if (!Ui_IsEnabled() || Ui_IsOpen())
+        return false;
+    UiCore_OpenHosted(&gUiOptionsScreen, after);
+    return true;
+}

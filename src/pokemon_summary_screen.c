@@ -1,4 +1,5 @@
 #include "global.h"
+#include "platform/ui.h"
 #include "platform/vita_extras.h"
 #include "main.h"
 #include "battle.h"
@@ -1170,8 +1171,17 @@ void ShowPokemonSummaryScreen(u8 mode, void *mons, u8 monIndex, u8 maxMonIndex, 
     SetMainCallback2(CB2_InitSummaryScreen);
 }
 
+// New UI (ui_scr_forget.c): the choice it leaves, where the callers read it, as Task_HandleReplaceMoveInput
+void SummaryScreen_SetMoveSlotForUi(u8 slot)
+{
+    sMoveSlotToReplace = slot;
+    gSpecialVar_0x8005 = slot;
+}
+
 void ShowSelectMovePokemonSummaryScreen(struct Pokemon *mons, u8 monIndex, u8 maxMonIndex, void (*callback)(void), u16 newMove)
 {
+    if (Ui_OpenForgetMove(mons, monIndex, newMove, callback))
+        return;
     ShowPokemonSummaryScreen(SUMMARY_MODE_SELECT_MOVE, mons, monIndex, maxMonIndex, callback);
     sMonSummaryScreen->newMove = newMove;
 }

@@ -1,7 +1,7 @@
 #include "global.h"
 #include "platform/ui.h"
 #include "platform.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 #include "bg.h"
 #include "data.h"
 #include "decompress.h"
@@ -418,11 +418,13 @@ static void Task_ShopMenu(u8 taskId)
 
 static void Task_ShopWaitingForSell(u8 taskId);
 
-// New UI (NEW UI (TEST) option): BUY and SELL of a normal mart are one screen of the new UI; the
-// shop task waits and Shop_ReturnFrom3DsSell brings back "Anything else?" when it closes.
+// New UI: BUY and SELL of a normal mart, and the decoration shops' BUY, are one screen of the new UI; the
+// shop task waits and Shop_ReturnFromNewUiMart brings back "Anything else?" when it closes.
 static bool8 TryOpenNewUiMart(u8 taskId, bool8 sell)
 {
-    if (sMartInfo.martType != MART_TYPE_NORMAL || !Ui_OpenMart(taskId, sell, sMartInfo.itemList, sMartInfo.itemCount))
+    // Decoration shops have no SELL (BUY / QUIT only)
+    if ((sell && sMartInfo.martType != MART_TYPE_NORMAL)
+     || !Ui_OpenMart(taskId, sell, sMartInfo.martType, sMartInfo.itemList, sMartInfo.itemCount))
         return FALSE;
     ClearStdWindowAndFrameToTransparent(sMartInfo.windowId, 2);
     RemoveWindow(sMartInfo.windowId);
@@ -468,20 +470,22 @@ static void Task_HandleShopMenuBuy(u8 taskId)
 
 static void Task_ShopWaitingForSell(u8 taskId)
 {
-    // Idle while 3DS bag is open
+    // Idle while the new UI's mart is open
 }
 
 static void Task_HandleShopMenuSell(u8 taskId)
 {
     if (TryOpenNewUiMart(taskId, TRUE))
         return;
-    ClearStdWindowAndFrameToTransparent(sMartInfo.windowId, 2);
-    RemoveWindow(sMartInfo.windowId);
-    gTasks[taskId].func = Task_ShopWaitingForSell;
-    VitaUI_OpenShopSell(taskId);
+    // The game's sell screen (the bag) where the new UI's mart cannot open
+    s16 *data = gTasks[taskId].data;
+    tCallbackHi = (u32)CB2_GoToSellMenu >> 16;
+    tCallbackLo = (u32)CB2_GoToSellMenu;
+    gTasks[taskId].func = Task_GoToBuyOrSellMenu;
+    FadeScreen(FADE_TO_BLACK, 0);
 }
 
-void Shop_ReturnFrom3DsSell(u8 taskId)
+void Shop_ReturnFromNewUiMart(u8 taskId)
 {
     if (sMartInfo.martType == MART_TYPE_DECOR2)
         DisplayItemMessageOnField(taskId, gText_CanIHelpWithAnythingElse, ShowShopMenuAfterExitingBuyOrSellMenu);

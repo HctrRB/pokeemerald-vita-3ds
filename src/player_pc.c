@@ -1,4 +1,5 @@
 #include "global.h"
+#include "platform/ui.h"
 #include "constants/songs.h"
 #include "bg.h"
 #include "decoration.h"
@@ -448,8 +449,31 @@ void ReshowPlayerPC(u8 var)
     DisplayItemMessageOnField(var, gText_WhatWouldYouLike, InitPlayerPCMenu);
 }
 
+// New UI (ui_scr_playerpc.c): the PC task waits while its screen is open, then the PC's list
+// comes back as after the game's own item storage and mailbox
+static void PlayerPC_WaitForUi(u8 taskId)
+{
+}
+
+void PlayerPC_ReturnFromUi(u8 taskId)
+{
+    ReshowPlayerPC(taskId);
+}
+
+// The bedroom PC has DECORATION (the new UI shows it as a third tab)
+static u8 PlayerPC_UiKind(void)
+{
+    return sTopMenuNumOptions == NUM_BEDROOM_PC_OPTIONS ? UI_PC_BEDROOM : UI_PC_CENTER;
+}
+
 static void PlayerPC_ItemStorage(u8 taskId)
 {
+    if (Ui_OpenPlayerPc(taskId, UI_PC_TAB_ITEMS, PlayerPC_UiKind()))
+    {
+        ClearDialogWindowAndFrame(0, FALSE);
+        gTasks[taskId].func = PlayerPC_WaitForUi;
+        return;
+    }
     InitItemStorageMenu(taskId, MENU_WITHDRAW);
     gTasks[taskId].func = ItemStorageMenuProcessInput;
 }
@@ -469,6 +493,12 @@ static void PlayerPC_Mailbox(u8 taskId)
         gPlayerPCItemPageInfo.itemsAbove = 0;
         gPlayerPCItemPageInfo.scrollIndicatorTaskId = TASK_NONE;
         Mailbox_CompactMailList();
+        if (Ui_OpenPlayerPc(taskId, UI_PC_TAB_MAIL, PlayerPC_UiKind()))
+        {
+            ClearDialogWindowAndFrame(0, FALSE);
+            gTasks[taskId].func = PlayerPC_WaitForUi;
+            return;
+        }
         SetPlayerPCListCount(taskId);
         if (MailboxMenu_Alloc(gPlayerPCItemPageInfo.count) == TRUE)
         {
@@ -486,6 +516,12 @@ static void PlayerPC_Mailbox(u8 taskId)
 
 static void PlayerPC_Decoration(u8 taskId)
 {
+    if (Ui_OpenPlayerPc(taskId, UI_PC_TAB_DECORATION, UI_PC_BEDROOM))
+    {
+        ClearDialogWindowAndFrame(0, FALSE);
+        gTasks[taskId].func = PlayerPC_WaitForUi;
+        return;
+    }
     DoPlayerRoomDecorationMenu(taskId);
 }
 

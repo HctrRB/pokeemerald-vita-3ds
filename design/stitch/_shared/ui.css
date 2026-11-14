@@ -183,7 +183,7 @@ img { image-rendering: pixelated; display: block; }
 .panel-head { display: flex; align-items: center; gap: var(--s2); margin: calc(-1 * var(--s3)) calc(-1 * var(--s3)) var(--s2); padding: 8px 12px;
   background: var(--paper-strip); border-bottom: 2px solid var(--paper-shade); border-radius: 2px 2px 0 0; }
 .panel-head .spacer { flex: 1; }
-.panel-head .ps { color: var(--ink); }
+.panel-head .ps { color: var(--strip-ink, var(--ink)); }
 .sep { height: 2px; background: var(--paper-shade); box-shadow: 0 1px 0 #FFFFFF; margin: var(--s2) 0; }
 
 /* ---------- List rows ---------- */

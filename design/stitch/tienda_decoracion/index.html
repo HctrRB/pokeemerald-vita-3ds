@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tienda · Comprar</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  .side { width: 320px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+  .detail .top { display: flex; align-items: center; gap: 12px; }
+  .iconbox { width: 56px; height: 56px; background: var(--paper-1); display: flex; align-items: center; justify-content: center; flex: none; }
+  .desc { font-size: var(--t-body-sm); line-height: 30px; }
+  .qty { display: flex; align-items: center; justify-content: space-between; }
+  .qty .stepper { display: flex; align-items: center; gap: 8px; }
+  .qty .n { width: 56px; height: 32px; background: var(--paper-1); display: flex; align-items: center; justify-content: center; }
+  .total { display: flex; justify-content: space-between; font-size: var(--t-body-lg); }
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .item-ico { width: 24px; height: 24px; flex: none; }
+  .price { width: 96px; text-align: right; }
+  .owned { width: 72px; text-align: right; color: var(--ink-soft); font-size: var(--t-body-sm); }
+  .row.on .owned { color: var(--select-ink); }
+</style>
+</head>
+<body data-screen="tienda_decoracion">
+<!-- Decoration shops (pokemartdecoration / 2: Slateport stalls, Fortree, Lilycove 5F and rooftop,
+     Pretty Petal): the same mart screen, BUY only, one at a time; it goes to the PC at home. -->
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="mart:buy" data-money>
+      <span class="spacer"></span>
+      <span class="capsule">SLATEPORT CITY</span>
+    </div>
+    <div class="body">
+      <div class="side">
+        <div class="panel detail">
+          <div class="top"><div class="iconbox"><img class="x2" src="../_assets/decor/azurill_doll.png" alt="" style="width:32px;height:32px"></div>
+            <div><div class="ps">AZURILL DOLL</div><div style="margin-top:6px">In PC: <b>-</b></div></div></div>
+          <div class="sep"></div>
+          <div class="desc">An AZURILL DOLL. Place it on a mat or a desk.</div>
+        </div>
+        <div class="panel">
+          <div class="total"><span>Price</span><span class="money">₽ 3,000</span></div>
+          <div class="sep"></div>
+          <div class="vt-sm soft" style="margin-top:6px">One at a time. It is sent to the PC at home.</div>
+        </div>
+      </div>
+      <div class="panel main">
+        <div class="panel-head"><span class="ps">FOR SALE</span><span class="spacer"></span><span class="vt-sm soft">In PC</span></div>
+        <div class="list">
+          <div class="row on" data-open="compra"><img class="item-ico" src="../_assets/decor/azurill_doll.png" alt="" style="width:32px;height:32px"><span class="grow">AZURILL DOLL</span><span class="owned">-</span><span class="price">₽ 3,000</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/decor/marill_doll.png" alt="" style="width:32px;height:32px"><span class="grow">MARILL DOLL</span><span class="owned">x1</span><span class="price">₽ 3,000</span></div>
+          <div class="row"><img class="item-ico" src="../_assets/decor/skitty_doll.png" alt="" style="width:32px;height:32px"><span class="grow">SKITTY DOLL</span><span class="owned">-</span><span class="price">₽ 3,000</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn" data-btn="cross" data-open="compra"><span class="glyph cross">✕</span>Buy</span>
+      <span class="btn" data-btn="circle"><span class="glyph circle">○</span>Back</span>
+            <span class="spacer"></span>
+    </div>
+  </div>
+  <!-- Popup: purchase confirmation, then receipt -->
+  <div class="modal" id="compra"><div class="win" style="width:560px">
+    <div class="win-head"><span class="ps">DECORATION</span><span class="spacer"></span><span class="money">-₽ 3,000</span></div>
+    <div class="win-body" style="display:flex; gap:16px; align-items:center">
+      <img class="x3" src="../_assets/decor/azurill_doll.png" alt="" style="width:32px;height:32px">
+      <div class="vt-lg" style="line-height:34px">You wanted an AZURILL DOLL?<br>That will be ₽3,000.</div>
+    </div>
+    <div class="win-body" style="padding-top:0"><div class="choice-row"><div class="row on" data-open="recibo">YES</div><div class="row" data-close>NO</div></div></div>
+    <div class="win-foot"><span class="btn" data-btn="cross" data-open="recibo"><span class="glyph cross">✕</span>YES</span><span class="btn" data-btn="circle" data-close><span class="glyph circle">○</span>NO</span></div></div></div>
+  <div class="modal" id="recibo"><div class="win" style="width:560px">
+    <div class="win-head"><span class="ps">THANK YOU!</span></div>
+    <div class="win-body vt-lg" style="line-height:34px">Thanks! I'll send it to your PC at home.<br><span class="vt-sm soft">In PC: AZURILL DOLL x1 · Money ₽7,000</span><div class="choice-row"><div class="row on" data-close>OK</div></div></div>
+    <div class="win-foot"><span class="btn" data-btn="cross" data-close><span class="glyph cross">✕</span>OK</span></div></div></div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+</body>
+</html>

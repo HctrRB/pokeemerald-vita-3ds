@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Theme font bake</title>
-<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@700;800&family=M+PLUS+Rounded+1c:wght@500;800&family=Fredoka:wght@500;600&family=Exo+2:ital,wght@0,700;1,800&display=block" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=M+PLUS+Rounded+1c:wght@500;800&family=Fredoka:wght@500;600&family=Exo+2:ital,wght@0,500;0,700;1,800&display=block" rel="stylesheet">
 </head>
 <body>
 <!-- Rasterises the fonts of the menu themes (src/platform/ui/ui_theme.c) into 1-bit glyph bitmaps
@@ -13,7 +13,8 @@
      output element. -->
 <pre id="out">baking</pre>
 <script>
-// face ids: 2 / 3 RED, 4 / 5 CRYSTAL, 6 / 7 TROPICAL, 8 / 9 ROYAL (title face, text face)
+// face ids: 2 / 3 RED, 4 / 5 CRYSTAL, 6 / 7 TROPICAL, 8 / 9 ROYAL (title face, text face); 10-13 the
+// zone sign face of RED, CRYSTAL, TROPICAL, ROYAL
 const FACES = [
   { id: 2, css: '800 SIZEpx "Saira Condensed"',       roles: { 16: 20, 24: 29 } },
   { id: 3, css: '700 SIZEpx "Saira Condensed"',       roles: { 32: 26, 40: 32 } },
@@ -24,6 +25,12 @@ const FACES = [
   { id: 7, css: '500 SIZEpx "Fredoka"',               roles: { 32: 24, 40: 29 } },
   { id: 8, css: 'italic 800 SIZEpx "Exo 2"',          roles: { 16: 20, 24: 30 } },
   { id: 9, css: '700 SIZEpx "Exo 2"',                 roles: { 32: 22, 40: 26 } },
+  // Zone sign mottos and names (ui_sign.c): the text face at regular weight, a size up. Bold
+  // glyphs clog up as 1-bit text on the console. EMERALD uses VT323 (face 1) as it is.
+  { id: 10, css: '500 SIZEpx "Saira Condensed"',      roles: { 32: 27 } },
+  { id: 11, css: '500 SIZEpx "M PLUS Rounded 1c"',    roles: { 32: 23 } },
+  { id: 12, css: '500 SIZEpx "Fredoka"',              roles: { 32: 25 } },
+  { id: 13, css: '500 SIZEpx "Exo 2"',                roles: { 32: 24 } },
 ];
 const CHARS = (() => { let s = ''; for (let c = 32; c < 127; c++) s += String.fromCharCode(c); return s + 'éÉ·×'; })();
 

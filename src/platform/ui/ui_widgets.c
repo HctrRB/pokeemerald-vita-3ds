@@ -171,9 +171,9 @@ static int32_t KeyEx(int32_t x, int32_t y, const char *label, bool small)
     const int32_t w = (small ? UiText_Width(UI_FACE_PS2P, UI_FOOT_PX, label) + 12 : UiText_Width(UI_FACE_VT323, UI_BODY_PX, label) + 14);
     KeyCap(x, y, w, 24);
     if (small)
-        UiText_Draw(UI_FACE_PS2P, UI_FOOT_PX, x + 6, y + 5, label, T->keyInk);
+        UiText_DrawMid(UI_FACE_PS2P, UI_FOOT_PX, x + 6, y, 24, label, T->keyInk);
     else
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 7, y - 4, label, T->keyInk);
+        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, x + 7, y, 24, label, T->keyInk);
     return w;
 }
 
@@ -291,14 +291,14 @@ void UiW_HeaderTitle(const char *title)
     const int32_t w = UiText_Width(UI_FACE_PS2P, 16, title) + 48;
     UiW_Capsule(16, 8, w, 32);
     UiDraw_Sprite(UI_SPR_BALL, 24, 16, 1);
-    UiText_Draw(UI_FACE_PS2P, 16, 48, 16, title, T->title);
+    UiText_DrawMid(UI_FACE_PS2P, 16, 48, 8, 32, title, T->title);
 }
 
 void UiW_HeaderValue(const char *text, uint32_t colour)
 {
     const int32_t w = UiText_Width(UI_FACE_VT323, UI_BODY_PX, text) + 24;
     UiW_Capsule(UI_SCREEN_W - 16 - w, 8, w, 32);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, UI_SCREEN_W - 16 - w + 12, 8, text, colour);
+    UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, UI_SCREEN_W - 16 - w + 12, 8, 32, text, colour);
 }
 
 int32_t UiW_TabsPad(int32_t x, const char *const *labels, int32_t count, int32_t current, int32_t *tabX, int32_t *tabW, int32_t pad)
@@ -324,10 +324,10 @@ int32_t UiW_TabsPad(int32_t x, const char *const *labels, int32_t count, int32_t
         {
             const int32_t r = T->chamfer ? 5 : T->radius >= 10 ? 10 : 3;
             BevelBoxR(cx, 10, w, 28, r, T->chamfer, 2, T->tabEdge, T->tabTop, T->tabBot, T->bevel ? 1 : 0, T->tabHi, T->tabBot, 0, 0, 0, T->gloss);
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx + pad, 8, labels[i], T->tabInk);
+            UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, cx + pad, 10, 28, labels[i], T->tabInk);
         }
         else
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx + pad, 8, labels[i], UI_COL_ON_SOFT);
+            UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, cx + pad, 10, 28, labels[i], UI_COL_ON_SOFT);
         if (tabX) tabX[i] = cx;
         if (tabW) tabW[i] = w;
         cx += w + 2;
@@ -385,23 +385,23 @@ void UiW_FooterGlyph(int32_t *x, uint8_t glyph, const char *label)
     const int32_t y = UI_SCREEN_H - FOOTER_H + 8;
     UiW_Glyph(*x, y, glyph);
     *x += 30;
-    *x += UiText_Draw(UI_FACE_PS2P, UI_FOOT_PX, *x, y + 5, label, UI_COL_ON_FRAME) + 18;
+    *x += UiText_DrawMid(UI_FACE_PS2P, UI_FOOT_PX, *x, y, 24, label, UI_COL_ON_FRAME) + 18;
 }
 
 void UiW_FooterClock(const char *clock)
 {
     const int32_t y = UI_SCREEN_H - FOOTER_H + 5;
-    const int32_t w = UiText_Width(UI_FACE_PS2P, UI_FOOT_PX, clock) + 24;
+    const int32_t w = UiText_InkWidth(UI_FACE_PS2P, UI_FOOT_PX, clock) + 26;
     const int32_t x = UI_SCREEN_W - 8 - w;
     UiW_Capsule(x, y, w, 30);
-    UiText_Draw(UI_FACE_PS2P, UI_FOOT_PX, x + 12, y + 8, clock, UI_COL_ON_FRAME);
+    UiText_DrawCentred(UI_FACE_PS2P, UI_FOOT_PX, x, y, w, 30, clock, UI_COL_ON_FRAME);
 }
 
 void UiW_FooterKey(int32_t *x, const char *key, const char *label)
 {
     const int32_t y = UI_SCREEN_H - FOOTER_H + 8;
     *x += KeyEx(*x, y, key, true) + 6;
-    *x += UiText_Draw(UI_FACE_PS2P, UI_FOOT_PX, *x, y + 5, label, UI_COL_ON_FRAME) + 18;
+    *x += UiText_DrawMid(UI_FACE_PS2P, UI_FOOT_PX, *x, y, 24, label, UI_COL_ON_FRAME) + 18;
 }
 
 // ---------- Boxes ----------
@@ -439,9 +439,9 @@ void UiW_PanelHead(int32_t x, int32_t y, int32_t w, const char *label, const cha
         UiDraw_Rect(x + e + r, y + e, w - 2 * e - 2 * r, 2, C_WHITE);
     UiDraw_Rect(x + e, y + 39, w - 2 * e, 2, T->edge >= 4 ? T->paperEdge : T->paperShade);
     AccentBar(x, y, 41);
-    UiText_Draw(UI_FACE_PS2P, 16, x + 16, y + 14, label, T->stripInk);
+    UiText_DrawMid(UI_FACE_PS2P, 16, x + 16, y + T->edge, 39 - T->edge, label, T->stripInk);
     if (right)
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 16 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, right), y + 5, right, T->stripSoft);
+        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, x + w - 16 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, right), y + T->edge, 39 - T->edge, right, T->stripSoft);
 }
 
 void UiW_Window(int32_t x, int32_t y, int32_t w, int32_t h, const char *title)
@@ -459,7 +459,7 @@ void UiW_Window(int32_t x, int32_t y, int32_t w, int32_t h, const char *title)
     UiDraw_Rect(x + e, y + 41, w - 2 * e, 2, T->edge >= 4 ? T->paperEdge : T->darkEdge);
     if (T->accent)
         UiDraw_Rect(x + e, y + 41, w - 2 * e, 3, T->accent);
-    UiText_Draw(UI_FACE_PS2P, 16, x + 16, y + 15, title, T->winInk);
+    UiText_DrawMid(UI_FACE_PS2P, 16, x + 16, y + T->edge, 41 - T->edge, title, T->winInk);
 }
 
 // ---------- Rows, chips, bars, buttons ----------
@@ -521,7 +521,7 @@ int32_t UiW_Chip(int32_t x, int32_t y, const char *label, bool amber)
         BevelBoxR(x, y, w, 26, r, T->chamfer, 2, T->tabEdge, T->tabTop, T->tabBot, T->bevel ? 1 : 0, T->tabHi, T->tabBot, 0, 0, 0, false);
     else
         BevelBoxR(x, y, w, 26, r, T->chamfer, 2, T->chipEdge, T->chipTop, T->chipBot, T->bevel ? 1 : 0, T->capHi, T->chipBot, 0, 0, 0, false);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 8, y - 4, label, amber ? T->tabInk : T->chipInk);
+    UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, x + 8, y, 26, label, amber ? T->tabInk : T->chipInk);
     return w;
 }
 
@@ -544,7 +544,7 @@ void UiW_Button(int32_t x, int32_t y, int32_t w, const char *label, uint8_t colo
     BevelBoxR(x, y + dy, w, 40, r, T->chamfer, T->edge >= 4 ? 3 : 2, T->btnEdge, T->btnTop[colour % 3], T->btnBot[colour % 3],
               T->bevel ? 1 : 0, UI_RGBA(255, 255, 255, 102), UI_RGBA(0, 0, 0, 102), T->shadowR ? sh : 0, sh,
               T->shadowR ? T->shadowCol : C_SHADOW, T->gloss);
-    UiText_Draw(UI_FACE_PS2P, 16, x + (w - UiText_Width(UI_FACE_PS2P, 16, label)) / 2, y + 12 + dy, label, T->btnInk);
+    UiText_DrawMid(UI_FACE_PS2P, 16, x + (w - UiText_Width(UI_FACE_PS2P, 16, label)) / 2, y + dy, 40, label, T->btnInk);
 }
 
 void UiW_Strip3(int32_t x, int32_t y, int32_t w, const char *const labels[3], const char *const values[3])
@@ -570,12 +570,12 @@ void UiW_Stepper(int32_t x, int32_t y, int32_t value, int32_t *minusX, int32_t *
     {
         const int32_t kx = x + k * 136;
         KeyCap(kx, y, 40, 40);
-        UiText_Draw(UI_FACE_VT323, 32, kx + 13, y + 4, k ? "+" : "-", T->keyInk);
+        UiText_DrawMid(UI_FACE_VT323, 32, kx + (40 - UiText_Width(UI_FACE_VT323, 32, k ? "+" : "-")) / 2, y, 40, k ? "+" : "-", T->keyInk);
     }
     UiDraw_Rect(x + 48, y, 80, 40, T->paperShade);
     UiDraw_Rect(x + 50, y + 2, 76, 36, T->paper1);
     UiDraw_Rect(x + 50, y + 2, 76, 2, UI_RGBA(0, 0, 0, 31));
-    UiText_Draw(UI_FACE_VT323, 32, x + 48 + (80 - UiText_Width(UI_FACE_VT323, 32, buf)) / 2, y + 4, buf, UI_COL_INK);
+    UiText_DrawMid(UI_FACE_VT323, 32, x + 48 + (80 - UiText_Width(UI_FACE_VT323, 32, buf)) / 2, y, 40, buf, UI_COL_INK);
     if (minusX) *minusX = x;
     if (plusX) *plusX = x + 136;
 }
@@ -596,5 +596,5 @@ void UiW_Toast(const char *text)
     const int32_t w = UiText_Width(UI_FACE_VT323, UI_BODY_PX, text) + 28;
     const int32_t x = (UI_SCREEN_W - w) / 2, y = 446;
     UiW_PanelDark(x, y, w, 42);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 14, y + 3, text, UI_COL_ON_FRAME);
+    UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, x + 14, y, 42, text, UI_COL_ON_FRAME);
 }

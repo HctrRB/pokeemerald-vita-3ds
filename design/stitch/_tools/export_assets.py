@@ -251,28 +251,75 @@ WALLPAPERS = ["forest", "city", "desert", "savanna", "crag", "volcano", "snow", 
               "seafloor", "river", "sky", "polkadot", "pokecenter", "machine", "plain"]
 
 
+_NUM_TILES = None
+
+
+def num_tiles_limit(png_path):
+    """The -num_tiles that graphics_file_rules.mk gives gbagfx for this PNG's .4bpp, or None."""
+    global _NUM_TILES
+    if _NUM_TILES is None:
+        import re
+        _NUM_TILES = {}
+        mk = os.path.join(ROOT, "graphics_file_rules.mk")
+        dirs, target = {}, None
+        for line in open(mk, encoding="utf-8", errors="replace"):
+            m = re.match(r"(\w+GFXDIR)\s*:=\s*(\S+)", line)
+            if m:
+                dirs[m.group(1)] = m.group(2)
+                continue
+            m = re.match(r"\$\((\w+)\)/(\S+?\.4bpp):\s*%\.4bpp:\s*%\.png", line)
+            if m:
+                target = dirs.get(m.group(1), "") + "/" + m.group(2)
+                continue
+            m = re.search(r"-num_tiles\s+(\d+)", line)
+            if target and m:
+                _NUM_TILES[target] = int(m.group(1))
+            target = None
+    rel = os.path.relpath(png_path, ROOT).replace(os.sep, "/")
+    return _NUM_TILES.get(rel[:-4] + ".4bpp")
+
+
+def read_png_tiles(path):
+    """Tiles and palette of an indexed PNG as gbagfx converts them (8x8 tiles, row-major, cut to
+    the rule's -num_tiles; colours cut to 5 bits like a .gbapal). Reads the source PNG so this
+    runs before the game files are converted (fetch_assets.sh calls it first)."""
+    im = Image.open(path)
+    w, h = im.size
+    data = im.tobytes()
+    tiles = []
+    for ty in range(0, h, 8):
+        for tx in range(0, w, 8):
+            tiles.append([data[(ty + y) * w + tx + x] & 15 for y in range(8) for x in range(8)])
+    limit = num_tiles_limit(path)
+    if limit is not None:
+        tiles = tiles[:limit]
+    raw = im.getpalette()[:48]
+    pal = [tuple((raw[i + k] >> 3) * 255 // 31 for k in range(3)) for i in range(0, len(raw), 3)]
+    return tiles, pal
+
+
 def export_wallpapers():
     """Composes each wallpaper as the PC draws it (DrawWallpaper): 20 x 18 tiles of tilemap.bin over
-    tiles.4bpp (frame tiles, then bg tiles); palette 1 = frame.gbapal, 2 = bg.gbapal, colour 0 and
-    tile 0 transparent. 160 x 144 px, the top rows are the box name plate."""
+    the frame tiles followed by the bg tiles; palette 1 = frame, 2 = bg, colour 0 and tile 0
+    transparent. 160 x 144 px, the top rows are the box name plate."""
     import struct
     for name in WALLPAPERS:
         d = os.path.join(G, "pokemon_storage", "wallpapers", name)
-        tiles = open(os.path.join(d, "tiles.4bpp"), "rb").read()
+        frame_tiles, frame_pal = read_png_tiles(os.path.join(d, "frame.png"))
+        bg_tiles, bg_pal = read_png_tiles(os.path.join(d, "bg.png"))
+        tiles = frame_tiles + bg_tiles
         tmap = struct.unpack("<360H", open(os.path.join(d, "tilemap.bin"), "rb").read()[:720])
-        pals = {1: read_gbapal(os.path.join(d, "frame.gbapal")), 2: read_gbapal(os.path.join(d, "bg.gbapal"))}
+        pals = {1: frame_pal, 2: bg_pal}
         im = Image.new("RGBA", (160, 144), (0, 0, 0, 0))
         px = im.load()
         for i, e in enumerate(tmap):
             t, hf, vf, p = e & 0x3FF, (e >> 10) & 1, (e >> 11) & 1, e >> 12
-            if e == 0 or p not in pals:
+            if e == 0 or p not in pals or t >= len(tiles):
                 continue
-            base = t * 32
             for y in range(8):
                 for x in range(8):
                     sx, sy = (7 - x if hf else x), (7 - y if vf else y)
-                    b = tiles[base + sy * 4 + sx // 2] if base + sy * 4 + sx // 2 < len(tiles) else 0
-                    v = (b >> 4) if sx & 1 else (b & 15)
+                    v = tiles[t][sy * 8 + sx]
                     if v:
                         px[(i % 20) * 8 + x, (i // 20) * 8 + y] = pals[p][v] + (255,)
         save(im, f"wallpapers/{name}.png")

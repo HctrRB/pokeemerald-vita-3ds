@@ -1,26 +1,26 @@
-# Build script for pokeemerald-vita on Windows PowerShell
+# Builds build-vita/pokeemerald.vpk from PowerShell by running build_vita.sh in MSYS2.
+# Needs the game files and the converted assets (build_all.ps1 does everything in one step).
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-Set-Location $scriptDir
+Set-Location -LiteralPath $scriptDir
 
 $bashExe = "C:\msys64\usr\bin\bash.exe"
-if (-not (Test-Path $bashExe)) {
-    Write-Error "MSYS2 bash.exe no encontrado en C:\msys64\usr\bin\bash.exe"
+if (-not (Test-Path -LiteralPath $bashExe)) {
+    Write-Host "MSYS2 not found in C:\msys64. Run build_all.ps1, which installs it, or see docs/BUILD.md." -ForegroundColor Red
     exit 1
 }
 
-# Convert Windows path (e.g. A:\foo\bar) to MSYS2 posix path (/a/foo/bar)
-$drive = (Get-Item $scriptDir).PSDrive.Name.ToLower()
-$restPath = $scriptDir.Substring(3).Replace('\', '/')
-$unixDir = "/$drive/$restPath"
+Write-Host "=== Building pokeemerald-vita in $scriptDir ===" -ForegroundColor Cyan
 
-Write-Host "=== Iniciando compilacion de pokeemerald-vita ===" -ForegroundColor Cyan
-Write-Host "Directorio: $unixDir" -ForegroundColor Gray
-
-& $bashExe -lc "cd '$unixDir' && ./build_vita.sh"
+# The path goes through an environment variable (no double quotes in the command: Windows
+# PowerShell 5.1 does not pass them on to programs)
+$env:BUILD_VITA_DIR = $scriptDir
+$env:CHERE_INVOKING = "1"
+& $bashExe -lc 'set -f; IFS=; cd $(cygpath -u $BUILD_VITA_DIR) && ./build_vita.sh'
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "=== Compilacion exitosa: build-vita/pokeemerald.vpk generado ===" -ForegroundColor Green
+    Write-Host "=== Done: build-vita\pokeemerald.vpk ===" -ForegroundColor Green
 } else {
-    Write-Error "Fallo en la compilacion (codigo de salida $LASTEXITCODE)"
+    Write-Host "The build failed (exit code $LASTEXITCODE)." -ForegroundColor Red
 }
+exit $LASTEXITCODE

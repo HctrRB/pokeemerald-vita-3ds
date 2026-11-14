@@ -28,6 +28,9 @@
 
 extern const u8 *const gMonFootprintTable[];
 extern void PokeStorage_WallpaperForUi(u8 wallpaperId, const u32 **tiles, const u32 **tilemap, u16 *pal32);
+extern void Mail_StationeryForUi(u8 mailType, const u32 **tiles, const u32 **tilemap, u16 *palette);
+extern bool8 Decoration_PictureForUi(u8 decor, u8 *tiles, u16 *palette, u8 *w, u8 *h);
+extern void MapNamePopUp_GfxForUi(u8 theme, bool8 underwater, const u8 **inner, const u8 **outline, const u16 **palette);
 static inline uint16_t To5551(uint16_t bgr);
 
 // PC box wallpaper (160 x 144), composed once as DrawWallpaper puts it on BG2 and cut into 3 x 3
@@ -72,11 +75,114 @@ static void ComposeWallpaper(int32_t id)
     sWallId = id;
 }
 
+// Mail stationery (240 x 160), composed as ReadMail draws it: BG2 is tile 1 everywhere, BG1 the
+// mail's tilemap over it (32 entries a row), palette 0 with the player's colours (Mail_StationeryForUi)
+#define MAIL_W 240
+#define MAIL_H 160
+static uint16_t sMail[MAIL_W * MAIL_H];
+static int32_t sMailKey = -1;
+
+static void PutMailTile(const uint8_t *tiles, uint16_t tileCount, uint16_t entry, int32_t tx, int32_t ty, const uint16_t *pal)
+{
+    const uint16_t t = entry & 0x3FF;
+    if (t >= tileCount)
+        return;
+    const bool hf = (entry >> 10) & 1, vf = (entry >> 11) & 1;
+    const uint8_t *tile = &tiles[t * 32];
+    for (int32_t y = 0; y < 8; y++)
+        for (int32_t x = 0; x < 8; x++)
+        {
+            const int32_t sx = hf ? 7 - x : x, sy = vf ? 7 - y : y;
+            const uint8_t b = tile[sy * 4 + sx / 2], v = (sx & 1) ? (b >> 4) : (b & 15);
+            if (v)
+                sMail[(ty * 8 + y) * MAIL_W + tx * 8 + x] = pal[v];
+        }
+}
+
+static void ComposeMail(int32_t mailType)
+{
+    static uint8_t tiles[0x2000];
+    static uint16_t tmap[32 * 32];
+    const u32 *tilesLz, *mapLz;
+    uint16_t bgr[16], pal[16];
+    Mail_StationeryForUi((u8)mailType, &tilesLz, &mapLz, bgr);
+    // the decompressed size is in the LZ77 header (bytes 1-3)
+    const uint32_t tilesSize = ((const uint32_t *)tilesLz)[0] >> 8;
+    if (tilesSize > sizeof(tiles))
+        return;
+    LZ77UnCompWram(tilesLz, tiles);
+    LZ77UnCompWram(mapLz, tmap);
+    for (int32_t i = 0; i < 16; i++)
+        pal[i] = To5551(bgr[i]);
+    const uint16_t backdrop = pal[0];
+    for (int32_t i = 0; i < MAIL_W * MAIL_H; i++)
+        sMail[i] = backdrop;
+    const uint16_t count = (uint16_t)(tilesSize / 32);
+    for (int32_t ty = 0; ty < MAIL_H / 8; ty++)
+        for (int32_t tx = 0; tx < MAIL_W / 8; tx++)
+            PutMailTile(tiles, count, 1, tx, ty, pal);                 // BG2
+    for (int32_t ty = 0; ty < MAIL_H / 8; ty++)
+        for (int32_t tx = 0; tx < MAIL_W / 8; tx++)
+            PutMailTile(tiles, count, tmap[ty * 32 + tx], tx, ty, pal);   // BG1
+    sMailKey = mailType;
+}
+
+// Decoration pictures: their size, known once decoded (Core 1)
+static uint8_t sDecorW[256], sDecorH[256];
+
+// Zone sign plate: the GBA map name popup (96 x 40), composed as DrawMapNamePopUpFrame lays it
+// out: the outline's 30 tiles round the 10 x 3 tile inner picture, colour 0 transparent.
+#define POPUP_W 96
+#define POPUP_H 40
+static uint16_t sPopup[POPUP_W * POPUP_H];
+static int32_t sPopupKey = -1;
+
+static void ComposePopup(int32_t key)
+{
+    const u8 *inner, *outline;
+    const u16 *bgr;
+    MapNamePopUp_GfxForUi((u8)(key >> 1), (bool8)(key & 1), &inner, &outline, &bgr);
+    uint16_t pal[16];
+    pal[0] = 0;
+    for (int32_t i = 1; i < 16; i++)
+        pal[i] = To5551(bgr[i]);
+    memset(sPopup, 0, sizeof(sPopup));
+    // Where each outline tile goes (tile units): 12 along the top, the sides, 12 along the bottom
+    for (int32_t n = 0; n < 30; n++)
+    {
+        int32_t tx, ty;
+        if (n < 12) { tx = n; ty = 0; }
+        else if (n < 18) { tx = (n & 1) ? 11 : 0; ty = 1 + (n - 12) / 2; }
+        else { tx = n - 18; ty = 4; }
+        const uint8_t *tile = &outline[n * 32];
+        for (int32_t y = 0; y < 8; y++)
+            for (int32_t x = 0; x < 8; x++)
+            {
+                const uint8_t b = tile[y * 4 + x / 2], v = (x & 1) ? (b >> 4) : (b & 15);
+                if (v)
+                    sPopup[(ty * 8 + y) * POPUP_W + tx * 8 + x] = pal[v];
+            }
+    }
+    for (int32_t n = 0; n < 30; n++)
+    {
+        const uint8_t *tile = &inner[n * 32];
+        const int32_t tx = 1 + n % 10, ty = 1 + n / 10;
+        for (int32_t y = 0; y < 8; y++)
+            for (int32_t x = 0; x < 8; x++)
+            {
+                const uint8_t b = tile[y * 4 + x / 2], v = (x & 1) ? (b >> 4) : (b & 15);
+                if (v)
+                    sPopup[(ty * 8 + y) * POPUP_W + tx * 8 + x] = pal[v];
+            }
+    }
+    sPopupKey = key;
+}
+
 #define UI_SPR_RING 16             // staging slots (64x64 RGBA5551 = 8 KB each)
 #define UI_SPR_DECODES_PER_TICK 4  // bounds the Core 1 cost of opening a full screen
 #define UI_SPR_IDLE_TICKS 16       // a cell is reusable after this many ticks without being drawn
 
-enum { KIND_MON_ICON = 1, KIND_MON_FRONT, KIND_MON_FRONT_SHINY, KIND_ITEM, KIND_FOOTPRINT, KIND_TRAINER, KIND_WALLPAPER };
+enum { KIND_MON_ICON = 1, KIND_MON_FRONT, KIND_MON_FRONT_SHINY, KIND_ITEM, KIND_FOOTPRINT, KIND_TRAINER, KIND_WALLPAPER, KIND_POPUP, KIND_DECOR, KIND_MAIL };
 #define KEY(kind, id) (((uint32_t)(kind) << 16) | (uint32_t)(id))
 
 // ---------- Core 1: cache ----------
@@ -202,6 +308,45 @@ static bool Decode(uint32_t key, uint16_t *dst)
                 dst[y * UI_CELL + x] = sWall[(y0 + y) * WALL_W + x0 + x];
         return true;
     }
+    case KIND_DECOR:
+    {
+        // A decoration's list picture (Decoration_PictureForUi), up to 64 x 64, in 1D tile order
+        static uint8_t tiles[0x800];
+        static uint16_t pal[16];
+        uint8_t w = 0, h = 0;
+        if (!Decoration_PictureForUi((u8)id, tiles, pal, &w, &h) || w == 0 || h == 0 || w > UI_CELL || h > UI_CELL)
+            return false;
+        Tiles4bpp(dst, 0, 0, tiles, w / 8, h / 8, pal);
+        sDecorW[(uint8_t)id] = w;
+        sDecorH[(uint8_t)id] = h;
+        return true;
+    }
+    case KIND_MAIL:
+    {
+        // id = mail type * 16 + part (4 x 3 parts of 64 x 64)
+        const int32_t mt = id >> 4, part = id & 15;
+        if (mt != sMailKey)
+            ComposeMail(mt);
+        if (mt != sMailKey)
+            return false;
+        const int32_t x0 = (part % 4) * UI_CELL, y0 = (part / 4) * UI_CELL;
+        for (int32_t y = 0; y < UI_CELL && y0 + y < MAIL_H; y++)
+            for (int32_t x = 0; x < UI_CELL && x0 + x < MAIL_W; x++)
+                dst[y * UI_CELL + x] = sMail[(y0 + y) * MAIL_W + x0 + x];
+        return true;
+    }
+    case KIND_POPUP:
+    {
+        // id = popup key (theme * 2 + underwater palette) * 2 + part (x 0-63, x 64-95)
+        const int32_t pk = id >> 1, part = id & 1;
+        if (pk != sPopupKey)
+            ComposePopup(pk);
+        const int32_t x0 = part * UI_CELL;
+        for (int32_t y = 0; y < POPUP_H; y++)
+            for (int32_t x = 0; x < UI_CELL && x0 + x < POPUP_W; x++)
+                dst[y * UI_CELL + x] = sPopup[y * POPUP_W + x0 + x];
+        return true;
+    }
     default:
         return false;
     }
@@ -322,6 +467,61 @@ bool UiSpr_Wallpaper(uint8_t wallpaperId, int32_t x, int32_t y, int32_t scale)
         const int32_t px = (part % 3) * UI_CELL, py = (part / 3) * UI_CELL;
         const int32_t w = WALL_W - px < UI_CELL ? WALL_W - px : UI_CELL, h = WALL_H - py < UI_CELL ? WALL_H - py : UI_CELL;
         all &= DrawCell(KEY(KIND_WALLPAPER, ((uint32_t)wallpaperId << 4) | (uint32_t)part), 0, 0, w, h, x + px * scale, y + py * scale, scale, 0xFFFFFFFFu);
+    }
+    return all;
+}
+
+// Columns sx .. sx + sw of the popup picture (never across x = 64) at x2, full height
+static bool PopupColumns(uint32_t pk, int32_t sx, int32_t sw, int32_t x, int32_t y)
+{
+    const int32_t part = sx >= UI_CELL ? 1 : 0;
+    return DrawCell(KEY(KIND_POPUP, (pk << 1) | (uint32_t)part), sx - part * UI_CELL, 0, sw, POPUP_H, x, y, 2, 0xFFFFFFFFu);
+}
+
+// Zone sign plate: the GBA map name popup of `theme` at x2, w wide (>= 64) and 80 tall. Its
+// 8 px ends as they are, its middle (80 px) repeated to fill, the last copy cut.
+bool UiSpr_ZonePlate(uint8_t theme, bool underwater, int32_t x, int32_t y, int32_t w)
+{
+    const uint32_t pk = (uint32_t)theme * 2u + (underwater ? 1u : 0u);
+    bool all = PopupColumns(pk, 0, 8, x, y);
+    all &= PopupColumns(pk, POPUP_W - 8, 8, x + w - 16, y);
+    UiDraw_PushClip(x + 16, y, w - 32, POPUP_H * 2);
+    for (int32_t mx = x + 16; mx < x + w - 16; mx += 160)
+    {
+        all &= PopupColumns(pk, 8, UI_CELL - 8, mx, y);
+        all &= PopupColumns(pk, UI_CELL, POPUP_W - 8 - UI_CELL, mx + (UI_CELL - 8) * 2, y);
+    }
+    UiDraw_PopClip();
+    return all;
+}
+
+// A decoration's picture centred in the box (bx, by, box x box): at 2x if it fits, else 1x, else
+// half size (the 64 px ones in a small box); false while it is on its way
+bool UiSpr_Decoration(uint16_t decor, int32_t bx, int32_t by, int32_t box)
+{
+    const uint32_t key = KEY(KIND_DECOR, decor);
+    const int32_t c = Lookup(key);
+    if (c < 0 || decor > 255 || sDecorW[decor] == 0)
+        return false;
+    const int32_t w = sDecorW[decor], h = sDecorH[decor];
+    const int32_t big = w > h ? w : h;
+    int32_t dw = w, dh = h;
+    if (big * 2 <= box) { dw = w * 2; dh = h * 2; }
+    else if (big > box) { dw = w / 2; dh = h / 2; }
+    const uint32_t u = (uint32_t)(c % UI_CELL_COLS) * UI_CELL, v = UI_DYN_Y + (uint32_t)(c / UI_CELL_COLS) * UI_CELL;
+    UiDraw_Quad(bx + (box - dw) / 2, by + (box - dh) / 2, dw, dh, u, v, u + w, v + h, 0xFFFFFFFFu);
+    return true;
+}
+
+// A mail's stationery at (x, y), 240 x 160 times scale; false while a part is on its way
+bool UiSpr_MailStationery(uint8_t mailType, int32_t x, int32_t y, int32_t scale)
+{
+    bool all = true;
+    for (int32_t part = 0; part < 12; part++)
+    {
+        const int32_t px = (part % 4) * UI_CELL, py = (part / 4) * UI_CELL;
+        const int32_t w = MAIL_W - px < UI_CELL ? MAIL_W - px : UI_CELL, h = MAIL_H - py < UI_CELL ? MAIL_H - py : UI_CELL;
+        all &= DrawCell(KEY(KIND_MAIL, ((uint32_t)mailType << 4) | (uint32_t)part), 0, 0, w, h, x + px * scale, y + py * scale, scale, 0xFFFFFFFFu);
     }
     return all;
 }

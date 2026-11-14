@@ -115,14 +115,17 @@ static GLuint sFogTex = 0;
 // ---- Downscaled Scratch Diorama Blur (DoF) FBOs ----
 #define VOXEL_DIORAMA_FBO_W 960
 #define VOXEL_DIORAMA_FBO_H 544
-#define VOXEL_SCRATCH_FBO_W 240
-#define VOXEL_SCRATCH_FBO_H 136
+#define VOXEL_SCRATCH_FBO_W 480
+#define VOXEL_SCRATCH_FBO_H 272
 
 static GLuint sDioramaFbo = 0;
 static GLuint sDioramaColorTex = 0;
 static GLuint sDioramaDepthRb = 0;
 static GLuint sScratchFbo = 0;
 static GLuint sScratchColorTex = 0;
+// The wider blur level of the depth of field (Pass_DepthOfField), half resolution like the scratch
+static GLuint sBlurFbo = 0;
+static GLuint sBlurTex = 0;
 static bool sDioramaFboReady = false;
 
 // Animated tiles tracking (water waves, flowers, waterfalls)
@@ -1657,6 +1660,32 @@ static uint32_t AtlasSpares_Present(int32_t slotIdx, uint32_t page)
     if (slotIdx == sActiveAtlasSlot)
         sAtlasTex[page] = slot->tex[page];
     return rowsWritten;
+}
+
+// Writes `rows` of a page straight into its drawn texture's memory, as the sprite atlas does:
+// for the slots of neighbouring maps, which have no spare. The GPU may still be reading it for
+// the previous frame: at worst a wave shows its next frame one frame early.
+static void WriteAtlasRowsDirect(GLuint tex, const uint16_t *linear, uint32_t rows)
+{
+    if (rows == 0 || !tex)
+        return;
+#ifdef PLATFORM_VITA
+    glBindTexture(GL_TEXTURE_2D, tex);
+    uint16_t *const texels = (uint16_t *)vglGetTexDataPointer(GL_TEXTURE_2D);
+    if (texels != NULL)
+    {
+        const uint32_t minRow = (uint32_t)__builtin_ctz(rows);
+        const uint32_t maxRow = 31u - (uint32_t)__builtin_clz(rows);
+        const uint32_t startY = minRow * VOXEL_ATLAS_SLOT;
+        const uint32_t numY = (maxRow - minRow + 1u) * VOXEL_ATLAS_SLOT;
+        const uint32_t glYOffset = VOXEL_ATLAS_H - (startY + numY);   // bottom-up, as the copy
+        memcpy(&texels[glYOffset * VOXEL_ATLAS_W], &linear[glYOffset * VOXEL_ATLAS_W],
+               (size_t)numY * VOXEL_ATLAS_W * sizeof(uint16_t));
+        VitaPerf_AddCount(VITA_PERF_C_ATLAS_UPLOADS, 1);
+        return;
+    }
+#endif
+    UploadAtlasRows(tex, linear, rows);
 }
 
 // Sprite atlas: VoxelEntities_Emit gives the billboards the texture coordinates of the frames
@@ -3332,6 +3361,7 @@ static void DrawRays(float strength, float seconds)
         const float xb = xc + yBot * skew;
         float aTop = strength * shafts[i].weight * 0.65f;
         if (aTop > 0.22f) aTop = 0.22f;
+        aTop *= VOXEL_RAYS_OPACITY;
         const uint8_t alphaTop = (uint8_t)(aTop * 255.0f + 0.5f);
 
         // Left feather -> center
@@ -3636,22 +3666,28 @@ bool VoxelRenderer_Init(void)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sDioramaColorTex, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, sDioramaDepthRb);
 
-    // Pre-allocate Downscaled Scratch FBO (240x136 RGBA5551, 1/4 resolution, zero depth needed)
-    glGenTextures(1, &sScratchColorTex);
-    glBindTexture(GL_TEXTURE_2D, sScratchColorTex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_SCRATCH_FBO_W, VOXEL_SCRATCH_FBO_H, 0,
-                 GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, NULL);
-
-    glGenFramebuffers(1, &sScratchFbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, sScratchFbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sScratchColorTex, 0);
+    // Downscaled targets of the depth of field (480x272, half resolution, no depth): the scene
+    // downsample (the light blur) and the wider blur. RGBA8: the blur averages taps by
+    // blending, and 5-bit channels would band and darken (512 KB each).
+    GLuint *const blurTex[2] = { &sScratchColorTex, &sBlurTex };
+    GLuint *const blurFbo[2] = { &sScratchFbo, &sBlurFbo };
+    for (int32_t i = 0; i < 2; ++i)
+    {
+        glGenTextures(1, blurTex[i]);
+        glBindTexture(GL_TEXTURE_2D, *blurTex[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_SCRATCH_FBO_W, VOXEL_SCRATCH_FBO_H, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glGenFramebuffers(1, blurFbo[i]);
+        glBindFramebuffer(GL_FRAMEBUFFER, *blurFbo[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *blurTex[i], 0);
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    sDioramaFboReady = (sDioramaFbo != 0 && sScratchFbo != 0);
+    sDioramaFboReady = (sDioramaFbo != 0 && sScratchFbo != 0 && sBlurFbo != 0);
 
     MakeFog();
     MakeWeather();
@@ -3719,6 +3755,8 @@ void VoxelRenderer_Shutdown(void)
     if (sDioramaDepthRb) { glDeleteRenderbuffers(1, &sDioramaDepthRb); sDioramaDepthRb = 0; }
     if (sScratchFbo) { glDeleteFramebuffers(1, &sScratchFbo); sScratchFbo = 0; }
     if (sScratchColorTex) { glDeleteTextures(1, &sScratchColorTex); sScratchColorTex = 0; }
+    if (sBlurFbo) { glDeleteFramebuffers(1, &sBlurFbo); sBlurFbo = 0; }
+    if (sBlurTex) { glDeleteTextures(1, &sBlurTex); sBlurTex = 0; }
     sDioramaFboReady = false;
 
     if (sChunkStaging)
@@ -4179,6 +4217,51 @@ static void Frame_AnimateTiles(const VoxelFrame *const f)
                     VoxelAtlasPageSpare *const spare = AtlasSpares_Claim(sActiveAtlasSlot, page);
                     spare->drawnStale |= changedRows;
                     spare->spareStale |= changedRows;
+                }
+            }
+        }
+        // Neighbouring maps drawn from other slots (another secondary tileset, the same primary):
+        // their sea and flowers move with the current map's
+        if (primaryDirty)
+        {
+            uint8_t primaryMask[128];
+            memcpy(primaryMask, sVoxelTilesetAnimDirty, 64);
+            memset(primaryMask + 64, 0, 64);
+            const void *const primary = sAtlasSlots[sActiveAtlasSlot].primaryTileset;
+            for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
+            {
+                VoxelAtlasSlot *const other = &sAtlasSlots[s];
+                // (on screen last frame: Frame_SelectChunks stamps the slots it draws)
+                if (s == sActiveAtlasSlot || !other->valid || other->primaryTileset != primary
+                    || (uint32_t)(sFrameCounter - other->stamp) > 2u || AtlasExtend_Busy(s))
+                    continue;
+                const uint32_t pages = other->pageCount < VOXEL_ANIM_PAGES ? other->pageCount : VOXEL_ANIM_PAGES;
+                for (uint32_t page = 0; page < pages; page++)
+                {
+                    const uint32_t *const pageWords = (const uint32_t *)other->map.tileMask[page];
+                    bool pageHasDirty = false;
+                    for (uint32_t w = 0; w < 16; w++)
+                    {
+                        if ((dirtyWords[w] & pageWords[w]) != 0)
+                        {
+                            pageHasDirty = true;
+                            break;
+                        }
+                    }
+                    if (!pageHasDirty || !other->tex[page])
+                        continue;
+                    uint32_t changedRows = 0;
+                    VitaPerf_SubBegin(VITA_PERF_T_ATLAS_COMPOSE);
+                    VoxelAtlas_RefreshAnimatedPrimaryRows(other->primaryTileset, other->secondaryTileset, &other->map,
+                                                          page, other->linear[page], (const uint8_t *)BG_VRAM,
+                                                          primaryMask, &changedRows);
+                    VitaPerf_SubEnd(VITA_PERF_T_ATLAS_COMPOSE);
+                    if (changedRows == 0)
+                        continue;
+                    WriteAtlasRowsDirect(other->tex[page], other->linear[page], changedRows);
+                    // A spare left from when this slot was active lacks these rows now
+                    if (sAtlasSpares[page].ownerSlot == s)
+                        sAtlasSpares[page].spareStale |= changedRows;
                 }
             }
         }
@@ -5318,59 +5401,130 @@ static void Pass_Atmosphere2D(const VoxelFrame *const f)
 
 // Depth of field: the FBO scene downscaled to the scratch buffer, then presented with the
 // blurred top and bottom bands.
+// Draws `tex` over the bound target as four bilinear taps offset diagonally by (dx, dy) texels
+// of `tex`, averaged by blending (alpha 1, 1/2, 1/3, 1/4: the running mean). Unit quad, ortho
+// (0..1, 0..1); uv spans (0, 0)-(uMax, vMax).
+static void BlurTaps(GLuint tex, float uMax, float vMax, float texW, float texH, float dx, float dy)
+{
+    static const float verts[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+    static const float sign[4][2] = { { -1.0f, -1.0f }, { 1.0f, 1.0f }, { 1.0f, -1.0f }, { -1.0f, 1.0f } };
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glVertexPointer(2, GL_FLOAT, 0, verts);
+    glDisable(GL_BLEND);
+    for (int32_t i = 0; i < 4; ++i)
+    {
+        const float ox = sign[i][0] * dx / texW, oy = sign[i][1] * dy / texH;
+        const float uvs[8] = { ox, oy, uMax + ox, oy, uMax + ox, vMax + oy, ox, vMax + oy };
+        if (i == 1)
+        {
+            // Blended taps leave the alpha of the first one (1): blending it would lower it and
+            // weaken the next passes, which blend by source alpha
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f / (float)(i + 1));
+        glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    }
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDisable(GL_BLEND);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+static float DofSmooth(float e0, float e1, float x)
+{
+    float t = (x - e0) / (e1 - e0);
+    t = t < 0.0f ? 0.0f : t > 1.0f ? 1.0f : t;
+    return t * t * (3.0f - 2.0f * t);
+}
+
+// One blurred band over the screen (ortho 0..1, y down) as a strip of DOF_STEPS rows, from y0
+// (focus side) to y1 (screen edge). The alpha of each row is peak * smoothstep(e0, e1, d), d = 0
+// at the focus edge and 1 at the screen edge. The blur texture is read at the same place (its v
+// is flipped: the FBO origin is at the bottom).
+#define DOF_STEPS 12
+static void DofBand(float y0, float y1, float uMax, float vMax, float peak, float e0, float e1)
+{
+    float verts[(DOF_STEPS + 1) * 4], uvs[(DOF_STEPS + 1) * 4];
+    uint8_t colors[(DOF_STEPS + 1) * 8];
+    for (int32_t k = 0; k <= DOF_STEPS; ++k)
+    {
+        const float d = (float)k / (float)DOF_STEPS;
+        const float y = y0 + (y1 - y0) * d, v = vMax * (1.0f - y);
+        const uint8_t a = (uint8_t)(peak * DofSmooth(e0, e1, d) * 255.0f + 0.5f);
+        verts[k * 4 + 0] = 0.0f; verts[k * 4 + 1] = y; verts[k * 4 + 2] = 1.0f; verts[k * 4 + 3] = y;
+        uvs[k * 4 + 0] = 0.0f; uvs[k * 4 + 1] = v; uvs[k * 4 + 2] = uMax; uvs[k * 4 + 3] = v;
+        for (int32_t c = 0; c < 2; ++c)
+        {
+            colors[k * 8 + c * 4 + 0] = 255;
+            colors[k * 8 + c * 4 + 1] = 255;
+            colors[k * 8 + c * 4 + 2] = 255;
+            colors[k * 8 + c * 4 + 3] = a;
+        }
+    }
+    glVertexPointer(2, GL_FLOAT, 0, verts);
+    glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, colors);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, (DOF_STEPS + 1) * 2);
+}
+
+// Depth of field of the diorama (tilt-shift): only the top of the screen (the distance) and the
+// bottom (the nearest ground) soften, progressively; sharp around the player. A light blur:
+//   1. The scene is reduced to half size with one bilinear tap per texel (exactly a 2x2 box).
+//      Stretched back with bilinear filtering, that is the light blur.
+//   2. A wider level from it: four diagonal taps one texel out (Kawase style).
+//   3. Over the sharp scene, each band gets the light blur fading in from the focus edge and the
+//      wider one fading in near the screen edge (smoothstep ramps, 12 rows per band).
+// Fixed function only: 5 draws of 480x272 pixels, then the two bands twice.
 static void Pass_DepthOfField(const VoxelFrame *const f)
 {
     const int32_t renderW = f->renderW;
     const int32_t renderH = f->renderH;
     const float uMax = (float)renderW / (float)VOXEL_DIORAMA_FBO_W;
     const float vMax = (float)renderH / (float)VOXEL_DIORAMA_FBO_H;
-    const int32_t scratchW = renderW / 4;
-    const int32_t scratchH = renderH / 4;
-    const float uScratchMax = (float)scratchW / (float)VOXEL_SCRATCH_FBO_W;
-    const float vScratchMax = (float)scratchH / (float)VOXEL_SCRATCH_FBO_H;
+    const int32_t scratchW = renderW / 2;
+    const int32_t scratchH = renderH / 2;
+    const float uS = (float)scratchW / (float)VOXEL_SCRATCH_FBO_W;
+    const float vS = (float)scratchH / (float)VOXEL_SCRATCH_FBO_H;
+    static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 
-    // Step 1: Downscale 3D scene to 1/4 scratch buffer with bilinear filtering
-    glBindFramebuffer(GL_FRAMEBUFFER, sScratchFbo);
-    glViewport(0, 0, scratchW, scratchH);
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    glDisable(GL_DEPTH_TEST);
-    glDepthMask(GL_FALSE);
-    glDisable(GL_BLEND);
-    glDisable(GL_ALPHA_TEST);
-    glEnable(GL_TEXTURE_2D);
-
+    // 1. Downsample: one bilinear tap per half-size texel
+    glBindFramebuffer(GL_FRAMEBUFFER, sScratchFbo);
+    glViewport(0, 0, scratchW, scratchH);
     glBindTexture(GL_TEXTURE_2D, sDioramaColorTex);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    const float downVerts[8] = {
-        0.0f, 0.0f,
-        1.0f, 0.0f,
-        1.0f, 1.0f,
-        0.0f, 1.0f
-    };
-    const float downUvs[8] = {
-        0.0f, 0.0f,
-        uMax, 0.0f,
-        uMax, vMax,
-        0.0f, vMax
-    };
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 0, downVerts);
-    glTexCoordPointer(2, GL_FLOAT, 0, downUvs);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
+    {
+        const float uvs[8] = { 0.0f, 0.0f, uMax, 0.0f, uMax, vMax, 0.0f, vMax };
+        glVertexPointer(2, GL_FLOAT, 0, quad);
+        glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    }
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-    // Step 2: Present to screen (Framebuffer 0)
+    // 2. Wider blur -> sBlurTex
+    glBindFramebuffer(GL_FRAMEBUFFER, sBlurFbo);
+    glViewport(0, 0, scratchW, scratchH);
+    BlurTaps(sScratchColorTex, uS, vS, (float)VOXEL_SCRATCH_FBO_W, (float)VOXEL_SCRATCH_FBO_H, 1.0f, 1.0f);
+
+    // 3. The sharp scene to the screen, then the bands
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, renderW, renderH);
     glMatrixMode(GL_PROJECTION);
@@ -5379,91 +5533,27 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // 2A: Fullscreen base quad (1:1 sharp image)
     glBindTexture(GL_TEXTURE_2D, sDioramaColorTex);
-    const float baseVerts[8] = {
-        0.0f, 0.0f,
-        1.0f, 0.0f,
-        1.0f, 1.0f,
-        0.0f, 1.0f
-    };
-    const float baseUvs[8] = {
-        0.0f, vMax,
-        uMax, vMax,
-        uMax, 0.0f,
-        0.0f, 0.0f
-    };
-    glVertexPointer(2, GL_FLOAT, 0, baseVerts);
-    glTexCoordPointer(2, GL_FLOAT, 0, baseUvs);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    {
+        const float baseUvs[8] = { 0.0f, vMax, uMax, vMax, uMax, 0.0f, 0.0f, 0.0f };
+        glVertexPointer(2, GL_FLOAT, 0, quad);
+        glTexCoordPointer(2, GL_FLOAT, 0, baseUvs);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    }
 
-    // 2B: Draw Top and Bottom blur bands with GL_LINEAR and alpha gradient from sScratchColorTex
-    glBindTexture(GL_TEXTURE_2D, sScratchColorTex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    const float yTop = VOXEL_DOF_TOP_ROWS / 544.0f;
+    const float yBot = 1.0f - VOXEL_DOF_BOTTOM_ROWS / 544.0f;
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    const float topRows = VOXEL_DOF_TOP_ROWS * ((float)renderH / 544.0f);
-    const float botRows = VOXEL_DOF_BOTTOM_ROWS * ((float)renderH / 544.0f);
-    const float yTopNorm = topRows / (float)renderH;
-    const float yBotNorm = ((float)renderH - botRows) / (float)renderH;
-    const float vTopScratch = vScratchMax * (1.0f - yTopNorm);
-    const float vBotScratch = vScratchMax * (1.0f - yBotNorm);
-
-    const uint8_t alphaTop = (uint8_t)(VOXEL_DOF_TOP_ALPHA * 255.0f);
-    const uint8_t alphaBot = (uint8_t)(VOXEL_DOF_BOTTOM_ALPHA * 255.0f);
-
-    // Top band quad: Y in [0.0, yTopNorm], V in [vScratchMax, vTopScratch]
-    const float topBandVerts[8] = {
-        0.0f, 0.0f,
-        1.0f, 0.0f,
-        1.0f, yTopNorm,
-        0.0f, yTopNorm
-    };
-    const float topBandUvs[8] = {
-        0.0f, vScratchMax,
-        uScratchMax, vScratchMax,
-        uScratchMax, vTopScratch,
-        0.0f, vTopScratch
-    };
-    const uint8_t topBandColors[16] = {
-        255, 255, 255, alphaTop,
-        255, 255, 255, alphaTop,
-        255, 255, 255, 0,
-        255, 255, 255, 0
-    };
-
     glEnableClientState(GL_COLOR_ARRAY);
-    glVertexPointer(2, GL_FLOAT, 0, topBandVerts);
-    glTexCoordPointer(2, GL_FLOAT, 0, topBandUvs);
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, topBandColors);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-    // Bottom band quad: Y in [yBotNorm, 1.0], V in [vBotScratch, 0.0]
-    const float botBandVerts[8] = {
-        0.0f, yBotNorm,
-        1.0f, yBotNorm,
-        1.0f, 1.0f,
-        0.0f, 1.0f
-    };
-    const float botBandUvs[8] = {
-        0.0f, vBotScratch,
-        uScratchMax, vBotScratch,
-        uScratchMax, 0.0f,
-        0.0f, 0.0f
-    };
-    const uint8_t botBandColors[16] = {
-        255, 255, 255, 0,
-        255, 255, 255, 0,
-        255, 255, 255, alphaBot,
-        255, 255, 255, alphaBot
-    };
-
-    glVertexPointer(2, GL_FLOAT, 0, botBandVerts);
-    glTexCoordPointer(2, GL_FLOAT, 0, botBandUvs);
-    glColorPointer(4, GL_UNSIGNED_BYTE, 0, botBandColors);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    // Light blur: fades in over the first 60 % of each band
+    glBindTexture(GL_TEXTURE_2D, sScratchColorTex);
+    DofBand(yTop, 0.0f, uS, vS, VOXEL_DOF_TOP_ALPHA, 0.0f, 0.6f);
+    DofBand(yBot, 1.0f, uS, vS, VOXEL_DOF_BOTTOM_ALPHA, 0.0f, 0.6f);
+    // Wider blur: only the outer 40 % of each band, strongest at the screen edge
+    glBindTexture(GL_TEXTURE_2D, sBlurTex);
+    DofBand(yTop, 0.0f, uS, vS, VOXEL_DOF_TOP_ALPHA, 0.6f, 1.0f);
+    DofBand(yBot, 1.0f, uS, vS, VOXEL_DOF_BOTTOM_ALPHA, 0.6f, 1.0f);
 
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);

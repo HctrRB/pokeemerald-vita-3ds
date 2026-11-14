@@ -68,6 +68,19 @@ static EWRAM_DATA u8 sPaletteNum = 0;
 static EWRAM_DATA u8 sYesNoWindowId = 0;
 bool8 gUiDialogFrameShown;   // the message window (window 0) has its frame drawn
 
+extern u8 gUiChoiceWindow;
+
+// New UI mirrors: a window closed is no longer the YES / NO box or a recorded choice list. Its id
+// is handed to the next window opened, often another menu (the PC's), which was taken for a
+// YES / NO box and drawn as one.
+void Menu_WindowRemovedForUi(u8 windowId)
+{
+    if (windowId == sYesNoWindowId)
+        sYesNoWindowId = 0;
+    if (windowId == gUiChoiceWindow)
+        gUiChoiceWindow = 0xFF;
+}
+
 // New UI mirror of the YES / NO box: TRUE while it is open, with the cursor (0 YES, 1 NO)
 bool8 Menu_GetYesNoForUi(s8 *cursor, u8 *windowId)
 {

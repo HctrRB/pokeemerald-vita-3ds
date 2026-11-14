@@ -38,6 +38,7 @@
 #include "constants/songs.h"
 #include "constants/region_map_sections.h"
 #include "constants/metatile_labels.h"
+#include "platform/ui.h"
 
 #define PLACE_DECORATION_SELECTOR_TAG 0xbe5
 #define PLACE_DECORATION_PLAYER_TAG   0x008
@@ -133,6 +134,18 @@ static void DecorationMenuAction_Decorate(u8 taskId);
 static void DecorationMenuAction_PutAway(u8 taskId);
 static void DecorationMenuAction_Toss(u8 taskId);
 static void DecorationMenuAction_Cancel(u8 taskId);
+
+// Vita, 3D world: placing and putting away decorations move the GBA camera under screen sprites
+// (the cursor, the decorating player) while the player object stays put, which the voxel view can't
+// show; the field is drawn flat (2D) from the fade to black until the game returns to its menu.
+static bool8 sDecorationFieldMode;
+
+bool8 Decoration_IsFieldModeActive(void)
+{
+    return sDecorationFieldMode;
+}
+static bool8 TryReturnToDecorationUi(void);
+static bool8 TryOpenSecretBaseUi(u8 taskId);
 static void ReturnToDecorationActionsAfterInvalidSelection(u8 taskId);
 static void SecretBasePC_PrepMenuForSelectingStoredDecors(u8 taskId);
 static void InitDecorationCategoriesWindow(u8 taskId);
@@ -580,6 +593,9 @@ static void InitDecorationActionsWindow(void)
 
 void DoSecretBaseDecorationMenu(u8 taskId)
 {
+    Decoration_InitForUi(FALSE);
+    if (TryOpenSecretBaseUi(taskId))
+        return;
     InitDecorationActionsWindow();
     sDecorationContext.items = gSaveBlock1Ptr->secretBases[0].decorations;
     sDecorationContext.pos = gSaveBlock1Ptr->secretBases[0].decorationPositions;
@@ -1365,6 +1381,7 @@ static void Task_PlaceDecoration(u8 taskId)
         case 0:
             if (!gPaletteFade.active)
             {
+                sDecorationFieldMode = TRUE;
                 SetInitialPositions(taskId);
                 gTasks[taskId].tState = 1;
             }
@@ -1789,6 +1806,9 @@ static void FieldCB_InitDecorationItemsWindow(void)
 {
     u8 taskId;
 
+    sDecorationFieldMode = FALSE;
+    if (TryReturnToDecorationUi())
+        return;
     LockPlayerFieldControls();
     FadeInFromBlack();
     taskId = CreateTask(Task_InitDecorationItemsWindow, 8);
@@ -2331,6 +2351,7 @@ static void Task_ContinuePuttingAwayDecorations(u8 taskId)
     case 0:
         if (!gPaletteFade.active)
         {
+            sDecorationFieldMode = TRUE;
             SetInitialPositions(taskId);
             tState = 1;
             tDecorHeight = 1;
@@ -2686,6 +2707,9 @@ static void FieldCB_StopPuttingAwayDecorations(void)
 {
     u8 taskId;
 
+    sDecorationFieldMode = FALSE;
+    if (TryReturnToDecorationUi())
+        return;
     FadeInFromBlack();
     DrawDialogueFrame(0, TRUE);
     InitDecorationActionsWindow();
@@ -2745,4 +2769,278 @@ static void TossDecoration(u8 taskId)
     IdentifyOwnedDecorationsCurrentlyInUseInternal(taskId);
     StringExpandPlaceholders(gStringVar4, gText_DecorationThrownAway);
     DisplayItemMessageOnField(taskId, gStringVar4, ReturnToDecorationItemsAfterInvalidSelection);
+}
+
+// New UI (shop, PC decoration screen): a decoration's picture as the game shows it in its lists
+// (AddDecorationIconObject): the icon table's 24 x 24 icon, else the selection box the game builds
+// from the secret base tileset, else (dolls, cushions) the object's own frame. Writes 4bpp tiles in
+// 1D sprite order (w / 8 per row) and 16 colours (BGR555); returns FALSE if it has none.
+bool8 Decoration_PictureForUi(u8 decor, u8 *tiles, u16 *palette, u8 *w, u8 *h)
+{
+    static const u8 sShapeW[] = { [DECORSHAPE_1x1] = 16, [DECORSHAPE_2x1] = 32, [DECORSHAPE_3x1] = 64, [DECORSHAPE_4x2] = 64,
+                                  [DECORSHAPE_2x2] = 32, [DECORSHAPE_1x2] = 16, [DECORSHAPE_1x3] = 32, [DECORSHAPE_2x4] = 32,
+                                  [DECORSHAPE_3x3] = 64, [DECORSHAPE_3x2] = 64 };
+    static const u8 sShapeH[] = { [DECORSHAPE_1x1] = 16, [DECORSHAPE_2x1] = 16, [DECORSHAPE_3x1] = 32, [DECORSHAPE_4x2] = 32,
+                                  [DECORSHAPE_2x2] = 32, [DECORSHAPE_1x2] = 32, [DECORSHAPE_1x3] = 64, [DECORSHAPE_2x4] = 64,
+                                  [DECORSHAPE_3x3] = 64, [DECORSHAPE_3x2] = 32 };
+    static struct PlaceDecorationGraphicsDataBuffer sBuffer;
+
+    if (decor == DECOR_NONE || decor > NUM_DECORATIONS)
+        return FALSE;
+    if (gDecorIconTable[decor][0] != NULL)
+    {
+        LZ77UnCompWram(gDecorIconTable[decor][0], tiles);
+        LZ77UnCompWram(gDecorIconTable[decor][1], palette);
+        *w = 24;
+        *h = 24;
+        return TRUE;
+    }
+    if (gDecorations[decor].permission != DECORPERM_SPRITE)
+    {
+        u8 shape = gDecorations[decor].shape;
+        if (shape >= ARRAY_COUNT(sShapeW))
+            return FALSE;
+        ClearPlaceDecorationGraphicsDataBuffer(&sBuffer);
+        sBuffer.decoration = &gDecorations[decor];
+        SetDecorSelectionMetatiles(&sBuffer);
+        SetDecorSelectionBoxTiles(&sBuffer);
+        CopyPalette(sBuffer.palette, gTilesetPointer_SecretBaseRedCave->metatiles[(sBuffer.decoration->tiles[0] * NUM_TILES_PER_METATILE) + 7] >> 12);
+        memcpy(tiles, sBuffer.image, sDecorShapeSizes[shape] * TILE_SIZE_4BPP);
+        memcpy(palette, sBuffer.palette, sizeof(sBuffer.palette));
+        *w = sShapeW[shape];
+        *h = sShapeH[shape];
+        return TRUE;
+    }
+    {
+        extern const u16 *ObjectEvent_PaletteDataForUi(u16 tag);
+        const struct ObjectEventGraphicsInfo *info = GetObjectEventGraphicsInfo(gDecorations[decor].tiles[0]);
+        const u16 *pal;
+        if (info == NULL || info->images == NULL || info->width > 64 || info->height > 64)
+            return FALSE;
+        pal = ObjectEvent_PaletteDataForUi(info->paletteTag);
+        if (pal == NULL)
+            return FALSE;
+        memcpy(tiles, info->images[0].data, info->images[0].size);
+        memcpy(palette, pal, 16 * sizeof(u16));
+        *w = info->width;
+        *h = info->height;
+        return TRUE;
+    }
+}
+
+// ---------------------------------------------------------------------------------------------
+// New UI: the PC's DECORATION tab (ui_scr_playerpc.c). It shows the categories and the stored
+// decorations; these keep the game's own rules and lines (DecorationMenuAction_*,
+// DecorationItemsMenuAction_*), and DECORATE / PUT AWAY start the game's own field tasks on the
+// PC's task. When those end, the game would rebuild its GBA windows (FieldCB_InitDecorationItemsWindow,
+// FieldCB_StopPuttingAwayDecorations); while the new UI drives the session it reopens instead.
+
+static bool8 sDecorUiSession;
+
+// As DoPlayerRoomDecorationMenu / DoSecretBaseDecorationMenu, without the GBA window
+void Decoration_InitForUi(bool8 isPlayerRoom)
+{
+    LockPlayerFieldControls();
+    if (isPlayerRoom)
+    {
+        sDecorationContext.items = gSaveBlock1Ptr->playerRoomDecorations;
+        sDecorationContext.pos = gSaveBlock1Ptr->playerRoomDecorationPositions;
+        sDecorationContext.size = DECOR_MAX_PLAYERS_HOUSE;
+        sDecorationContext.isPlayerRoom = TRUE;
+    }
+    else
+    {
+        sDecorationContext.items = gSaveBlock1Ptr->secretBases[0].decorations;
+        sDecorationContext.pos = gSaveBlock1Ptr->secretBases[0].decorationPositions;
+        sDecorationContext.size = DECOR_MAX_SECRET_BASE;
+        sDecorationContext.isPlayerRoom = FALSE;
+    }
+}
+
+// The category's list as the game builds it when it is opened (InitDecorationContextItems,
+// IdentifyOwnedDecorationsCurrentlyInUse), with the cursor on index
+static void SelectForUi(u8 category, u8 index)
+{
+    sCurDecorationCategory = category;
+    InitDecorationContextItems();
+    sNumOwnedDecorationsInCurCategory = GetNumOwnedDecorationsInCategory(category);
+    IdentifyOwnedDecorationsCurrentlyInUseInternal(0);
+    sDecorationsScrollOffset = 0;
+    sDecorationsCursorPos = index;
+    gCurDecorationIndex = index;
+}
+
+// In use (placed in the room or the secret base): the list's mark (DecorationItemsMenu_PrintDecorationInUse)
+bool8 Decoration_InUseForUi(u8 category, u8 index)
+{
+    if (category >= DECORCAT_COUNT || index >= gDecorationInventories[category].size)
+        return FALSE;
+    SelectForUi(category, index);
+    return !IsSelectedDecorInThePC();
+}
+
+// DECORATE / TOSS with none at all, as DecorationMenuAction_Decorate and _Toss
+bool8 Decoration_HasAnyForUi(void)
+{
+    if (GetNumOwnedDecorations() != 0)
+        return TRUE;
+    StringExpandPlaceholders(gStringVar4, gText_NoDecorations);
+    return FALSE;
+}
+
+// DECORATE in the player's room: only DOLL and CUSHION (PrintDecorationCategoryMenuItems)
+bool8 Decoration_CategoryPlaceableForUi(u8 category)
+{
+    return !(sDecorationContext.isPlayerRoom == TRUE && category != DECORCAT_DOLL && category != DECORCAT_CUSHION);
+}
+
+// As DecorationItemsMenuAction_AttemptPlace: TRUE if it can be placed, else gStringVar4 holds the game's line
+bool8 Decoration_CanPlaceForUi(u8 category, u8 index)
+{
+    SelectForUi(category, index);
+    if (!Decoration_CategoryPlaceableForUi(category))
+    {
+        StringExpandPlaceholders(gStringVar4, gText_CantPlaceInRoom);
+        return FALSE;
+    }
+    if (IsSelectedDecorInThePC() != TRUE)
+    {
+        StringExpandPlaceholders(gStringVar4, gText_InUseAlready);
+        return FALSE;
+    }
+    if (HasDecorationSpace() != TRUE)
+    {
+        ConvertIntToDecimalStringN(gStringVar1, sDecorationContext.size, STR_CONV_MODE_RIGHT_ALIGN, 2);
+        StringExpandPlaceholders(gStringVar4, sDecorationContext.isPlayerRoom ? gText_NoMoreDecorations2 : gText_NoMoreDecorations);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+// As DecorationItemsMenuAction_AttemptToss: TRUE and the question in gStringVar4, else the refusal
+bool8 Decoration_CanTossForUi(u8 category, u8 index)
+{
+    SelectForUi(category, index);
+    if (IsSelectedDecorInThePC() != TRUE)
+    {
+        StringExpandPlaceholders(gStringVar4, gText_CantThrowAwayInUse);
+        return FALSE;
+    }
+    StringCopy(gStringVar1, gDecorations[gCurDecorationItems[gCurDecorationIndex]].name);
+    StringExpandPlaceholders(gStringVar4, gText_DecorationWillBeDiscarded);
+    return TRUE;
+}
+
+// As TossDecoration (after YES); gStringVar4 holds the game's "thrown away" line
+void Decoration_TossForUi(u8 category, u8 index)
+{
+    SelectForUi(category, index);
+    gCurDecorationItems[gCurDecorationIndex] = DECOR_NONE;
+    sNumOwnedDecorationsInCurCategory = GetNumOwnedDecorationsInCategory(sCurDecorationCategory);
+    CondenseDecorationsInCategory(sCurDecorationCategory);
+    IdentifyOwnedDecorationsCurrentlyInUseInternal(0);
+    StringExpandPlaceholders(gStringVar4, gText_DecorationThrownAway);
+}
+
+// As DecorationMenuAction_PutAway: TRUE if something is in use, else the game's line
+bool8 Decoration_CanPutAwayForUi(void)
+{
+    if (HasDecorationsInUse(0))
+        return TRUE;
+    StringExpandPlaceholders(gStringVar4, gText_NoDecorationsInUse);
+    return FALSE;
+}
+
+// After the UI closed (DECORATE chosen): the game's placement on the PC's task
+void Decoration_StartPlaceFromUi(u8 taskId, u8 category, u8 index)
+{
+    SelectForUi(category, index);
+    sDecorUiSession = TRUE;
+    gTasks[taskId].tDecorationMenuCommand = DECOR_MENU_PLACE;
+    FadeScreen(FADE_TO_BLACK, 0);
+    gTasks[taskId].tState = 0;
+    gTasks[taskId].func = Task_PlaceDecoration;
+}
+
+// After the UI closed (PUT AWAY chosen): the game's putting away on the PC's task
+void Decoration_StartPutAwayFromUi(u8 taskId)
+{
+    sDecorUiSession = TRUE;
+    FadeScreen(FADE_TO_BLACK, 0);
+    gTasks[taskId].tState = 0;
+    gTasks[taskId].func = Task_ContinuePuttingAwayDecorations;
+}
+
+// The session is over (the PC was left with Back): the secret base PC ends as
+// DecorationMenuAction_Cancel does; the bedroom PC's caller reshows its list
+void Decoration_EndUiSession(u8 taskId)
+{
+    sDecorUiSession = FALSE;
+    if (!sDecorationContext.isPlayerRoom)
+    {
+        ScriptContext_SetupScript(SecretBase_EventScript_PCCancel);
+        DestroyTask(taskId);
+    }
+}
+
+static void Task_WaitForDecorationUi(u8 taskId)
+{
+}
+
+// Back on the field after placing or putting away: the game's re-init steps
+// (Task_InitDecorationItemsWindow), then the UI's DECORATION tab again
+static void Task_ReopenDecorationUi(u8 taskId)
+{
+    s16 *data = gTasks[taskId].data;
+    switch (tState)
+    {
+    case 0:
+        HideSecretBaseDecorationSprites();
+        tState++;
+        break;
+    case 1:
+        ScriptContext_SetupScript(SecretBase_EventScript_InitDecorations);
+        tState++;
+        break;
+    case 2:
+        LockPlayerFieldControls();
+        tState++;
+        break;
+    case 3:
+        if (IsWeatherNotFadingIn() == TRUE)
+        {
+            if (Ui_OpenPlayerPc(taskId, UI_PC_TAB_DECORATION, sDecorationContext.isPlayerRoom ? UI_PC_BEDROOM : UI_PC_SECRET_BASE))
+            {
+                gTasks[taskId].func = Task_WaitForDecorationUi;
+            }
+            else
+            {
+                // The UI can't open: the game's own menu
+                sDecorUiSession = FALSE;
+                DrawDialogueFrame(0, TRUE);
+                InitDecorationActionsWindow();
+                gTasks[taskId].func = HandleDecorationActionsMenuInput;
+            }
+        }
+        break;
+    }
+}
+
+static bool8 TryReturnToDecorationUi(void)
+{
+    if (!sDecorUiSession)
+        return FALSE;
+    LockPlayerFieldControls();
+    FadeInFromBlack();
+    gTasks[CreateTask(Task_ReopenDecorationUi, 8)].tState = 0;
+    return TRUE;
+}
+
+// Secret base PC: DECORATION opens the UI's tab instead of the GBA menu
+static bool8 TryOpenSecretBaseUi(u8 taskId)
+{
+    if (!Ui_OpenPlayerPc(taskId, UI_PC_TAB_DECORATION, UI_PC_SECRET_BASE))
+        return FALSE;
+    gTasks[taskId].func = Task_WaitForDecorationUi;
+    return TRUE;
 }

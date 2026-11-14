@@ -43,6 +43,7 @@ typedef struct
     bool stripes;        // diagonal stripes on the full-screen frame
     uint8_t faceTitle;   // font face of the Press Start 2P role (titles, labels, footer)
     uint8_t faceBody;    // font face of the VT323 role (text, dialogue)
+    uint8_t faceSign;    // regular-weight text face of the zone signs (role 32)
 } UiTheme;
 
 enum { UI_THEME_RED, UI_THEME_EMERALD, UI_THEME_CRYSTAL, UI_THEME_TROPICAL, UI_THEME_ROYAL, UI_THEME_COUNT };
@@ -147,6 +148,10 @@ bool UiAssets_Sprite(uint16_t id, uint16_t *x, uint16_t *y, uint16_t *w, uint16_
 int32_t UiText_Width(uint8_t face, uint8_t px, const char *s);
 int32_t UiText_Draw(uint8_t face, uint8_t px, int32_t x, int32_t y, const char *s, uint32_t rgba);   // y = top of the line
 int32_t UiText_LineHeight(uint8_t face, uint8_t px);
+int32_t UiText_CapMid(uint8_t face, uint8_t px);
+int32_t UiText_InkWidth(uint8_t face, uint8_t px, const char *s);                                // width of the glyphs' ink
+int32_t UiText_DrawCentred(uint8_t face, uint8_t px, int32_t boxX, int32_t boxY, int32_t boxW, int32_t boxH, const char *s, uint32_t rgba);                                                  // top of line -> middle of the capitals
+int32_t UiText_DrawMid(uint8_t face, uint8_t px, int32_t x, int32_t boxY, int32_t boxH, const char *s, uint32_t rgba);   // centred in the box
 
 // ---------- Run-time sprites (ui_sprites.c) ----------
 // Core 1: draws a sprite decoded from the game's tables and cached in the texture's cells. The
@@ -158,6 +163,9 @@ bool UiSpr_MonFront(uint16_t species, bool shiny, int32_t x, int32_t y, int32_t 
 bool UiSpr_ItemIcon(uint16_t itemId, int32_t x, int32_t y, int32_t scale);                   // 24x24
 bool UiSpr_Footprint(uint16_t species, int32_t x, int32_t y, int32_t scale, uint32_t rgba);  // 16x16, tinted
 bool UiSpr_Wallpaper(uint8_t wallpaperId, int32_t x, int32_t y, int32_t scale);              // PC box wallpaper, 160x144
+bool UiSpr_ZonePlate(uint8_t theme, bool underwater, int32_t x, int32_t y, int32_t w);   // zone sign plate, 80 tall
+bool UiSpr_Decoration(uint16_t decor, int32_t bx, int32_t by, int32_t box);               // decoration picture, centred in a box
+bool UiSpr_MailStationery(uint8_t mailType, int32_t x, int32_t y, int32_t scale);   // 240x160 mail paper
 bool UiSpr_Trainer(uint16_t trainerPic, int32_t x, int32_t y, int32_t scale);                // 64x64
 bool UiSpr_MonFrontTint(uint16_t species, int32_t x, int32_t y, int32_t scale, uint32_t rgba);
 bool UiSpr_MonFrontSized(uint16_t species, int32_t x, int32_t y, int32_t w, int32_t h);
@@ -296,6 +304,12 @@ extern const UiScreen gUiPartyScreen;
 extern const UiScreen gUiTargetScreen;
 extern const UiScreen gUiCardScreen;
 extern const UiScreen gUiOptionsScreen;
+extern const UiScreen gUiForgetMoveScreen;
+extern const UiScreen gUiPlayerPcScreen;
+extern const UiScreen gUiMailReadScreen;
+struct Mail;
+void UiMailRead_Set(const struct Mail *mail);                                             // ui_scr_playerpc.c
+void UiMail_Draw(const struct Mail *mail, int32_t x, int32_t y, int32_t scale);
 extern const UiScreen gUiDexScreen;
 extern const UiScreen gUiDexDetailScreen;
 extern const UiScreen gUiNuzlockeScreen;

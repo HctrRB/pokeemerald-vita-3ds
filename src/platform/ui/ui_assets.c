@@ -7,7 +7,7 @@
 #include "ui_internal.h"
 #include "../vita/vita_platform.h"
 
-#define UI_MAX_FONTS 24
+#define UI_MAX_FONTS 32
 #define UI_MAX_SPRITES 256   // must cover UI_SPR_COUNT (ui_sprite_ids.h); a bigger atlas is rejected and the new UI turns off
 
 typedef struct
@@ -191,6 +191,71 @@ int32_t UiText_LineHeight(uint8_t face, uint8_t px)
 {
     const UiFont *font = FindFont(face, px);
     return font ? font->lineH : px;
+}
+
+// Offset from the top of the line (UiText_Draw's y) to the middle of the capitals: what is
+// centred in a box, since each theme font has its own ascent and cap height
+int32_t UiText_CapMid(uint8_t face, uint8_t px)
+{
+    const UiFont *font = FindFont(face, px);
+    if (font == NULL)
+        return px / 2;
+    const int16_t gi = font->map['H'];
+    if (gi < 0)
+        return font->ascent - px / 3;
+    const UiGlyph *g = &sGlyphs[gi];
+    return font->ascent + g->yoff + g->h / 2;
+}
+
+// Left and right ends of the ink of `s` drawn at x = 0 (the advance widths leave a side bearing)
+static void InkSpan(const UiFont *font, const char *s, int32_t *left, int32_t *right)
+{
+    int32_t x = 0, lo = 0, hi = 0;
+    bool any = false;
+    while (*s)
+    {
+        const uint32_t c = NextCodepoint(&s);
+        const int16_t gi = c < 256 ? font->map[c] : -1;
+        if (gi < 0) { x += font->px / 2; continue; }
+        const UiGlyph *g = &sGlyphs[gi];
+        if (g->w)
+        {
+            if (!any || x + g->xoff < lo) lo = x + g->xoff;
+            if (!any || x + g->xoff + g->w > hi) hi = x + g->xoff + g->w;
+            any = true;
+        }
+        x += g->adv;
+    }
+    *left = lo;
+    *right = any ? hi : x;
+}
+
+// Text centred on both axes in the box: its ink across, its capitals down
+int32_t UiText_DrawCentred(uint8_t face, uint8_t px, int32_t boxX, int32_t boxY, int32_t boxW, int32_t boxH, const char *s, uint32_t rgba)
+{
+    const UiFont *font = FindFont(face, px);
+    if (font == NULL || s == NULL)
+        return 0;
+    int32_t lo, hi;
+    InkSpan(font, s, &lo, &hi);
+    return UiText_DrawMid(face, px, boxX + (boxW - (hi - lo)) / 2 - lo, boxY, boxH, s, rgba);
+}
+
+// Width of the ink of `s` (no side bearings)
+int32_t UiText_InkWidth(uint8_t face, uint8_t px, const char *s)
+{
+    const UiFont *font = FindFont(face, px);
+    if (font == NULL || s == NULL)
+        return 0;
+    int32_t lo, hi;
+    InkSpan(font, s, &lo, &hi);
+    return hi - lo;
+}
+
+// Text whose capitals are centred vertically in the box (boxY, boxH)
+int32_t UiText_DrawMid(uint8_t face, uint8_t px, int32_t x, int32_t boxY, int32_t boxH, const char *s, uint32_t rgba)
+{
+    return UiText_Draw(face, px, x, boxY + boxH / 2 - UiText_CapMid(face, px), s, rgba);
 }
 
 int32_t UiText_Width(uint8_t face, uint8_t px, const char *s)

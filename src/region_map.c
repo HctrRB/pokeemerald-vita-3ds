@@ -27,7 +27,7 @@
 #include "constants/map_types.h"
 #include "constants/rgb.h"
 #include "constants/weather.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 
 /*
  *  This file handles region maps generally, and the map used when selecting a fly destination.

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sign legibility</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Saira+Condensed:wght@500;800&family=M+PLUS+Rounded+1c:wght@500;800&family=Fredoka:wght@500;600&family=Exo+2:ital,wght@0,500;1,800&display=block" rel="stylesheet">
+<style>
+  body { margin: 0; background: #000; }
+  .stage { position: relative; width: 960px; height: 1110px; overflow: hidden; background: #000; }
+  .cell { position: absolute; width: 478px; height: 220px; overflow: hidden; background: url(../_assets/fondo_mundo.png) -40px -60px / 960px 544px; }
+  .cap { position: absolute; left: 16px; top: 16px; height: 48px; display: flex; align-items: center; color: #fff; box-sizing: border-box; }
+  .box { position: absolute; left: 24px; top: 64px; box-sizing: border-box; }
+  .tag { position: absolute; right: 8px; bottom: 8px; font: 14px monospace; color: #fff; background: rgba(0,0,0,.75); padding: 4px 8px; }
+  .bar { position: absolute; left: 0; top: 0; bottom: 0; width: 8px; }
+</style>
+</head>
+<body>
+<div class="stage" id="s"></div>
+<script>
+// Runtime look (ui_sign.c): the theme's dark capsule with the zone tint, then the motto box at
+// 67 %. now: the motto as it is (title face, soft colour); neu: the proposal (text face, regular
+// weight, white, no shadow). Glyphs drawn 1-bit as on the console.
+const T = {
+  RED:      { cap: ['#32323c', '#24242c', '#14141a'], box: '36,36,44', soft: '#b7b7c2', r: 10, ch: true,
+              title: "800 20px 'Saira Condensed'", now: ["800 20px 'Saira Condensed'", 24], neu: ["500 27px 'Saira Condensed'", 30] },
+  EMERALD:  { cap: ['#0c2f27', '#071d18', '#041210'], box: '7,29,24', soft: '#7ea69c', r: 6, ch: false,
+              title: "16px 'Press Start 2P'", now: ["16px 'Press Start 2P'", 24], neu: ['32px VT323', 30] },
+  CRYSTAL:  { cap: ['#11507c', '#072a44', '#4fb3d6'], box: '7,42,68', soft: '#9cc7db', r: 12, ch: false,
+              title: "800 20px 'M PLUS Rounded 1c'", now: ["800 20px 'M PLUS Rounded 1c'", 24], neu: ["500 23px 'M PLUS Rounded 1c'", 30] },
+  TROPICAL: { cap: ['#2a1e3b', '#2a1e3b', '#2a1e3b'], box: '42,30,59', soft: '#ffe9cf', r: 14, ch: false,
+              title: "600 20px Fredoka", now: ["600 20px Fredoka", 24], neu: ["500 25px Fredoka", 30] },
+  ROYAL:    { cap: ['#0f4a37', '#06281f', '#c9a646'], box: '6,40,31', soft: '#93b8a6', r: 10, ch: true,
+              title: "italic 800 20px 'Exo 2'", now: ["italic 800 20px 'Exo 2'", 24], neu: ["500 24px 'Exo 2'", 30] },
+};
+const motto = '"POKéMON CENTER HOT SPRINGS An excellent place for relaxing!"';
+let h = '', row = 0;
+for (const [id, t] of Object.entries(T)) {
+  for (const neu of [false, true]) {
+    const clip = t.ch ? `clip-path:polygon(${t.r}px 0,calc(100% - ${t.r}px) 0,100% ${t.r}px,100% calc(100% - ${t.r}px),calc(100% - ${t.r}px) 100%,${t.r}px 100%,0 calc(100% - ${t.r}px),0 ${t.r}px);` : `border-radius:${t.r}px;`;
+    const w = 400;
+    h += `<div class="cell" style="left:${neu ? 482 : 0}px;top:${row * 222}px">
+      <div class="cap" style="width:${w}px;background:linear-gradient(${t.cap[0]},${t.cap[1]});border:3px solid ${t.cap[2]};${clip}">
+        <span class="bar" style="background:#4fb27a"></span>
+        <span style="font:${t.title};margin-left:22px">LAVARIDGE TOWN</span></div>
+      <div class="box" style="width:${w - 16}px;padding:10px 16px ${neu ? 12 : 8}px;background:rgba(${t.box},.67);
+        border-bottom:2px solid rgba(0,0,0,.4);font:${neu ? t.neu[0] : t.now[0]};line-height:${neu ? t.neu[1] : t.now[1]}px;
+        color:${neu ? '#ffffff' : t.soft}">${motto}</div>
+      <span class="tag">${id} · ${neu ? 'PROPUESTA' : 'ACTUAL'}</span>
+    </div>`;
+  }
+  row++;
+}
+document.getElementById('s').innerHTML = h;
+// 1-bit glyphs (alpha >= 128), as the console draws them
+document.fonts.ready.then(() => document.querySelectorAll('.box').forEach(box => {
+  const cs = getComputedStyle(box), lh = parseFloat(cs.lineHeight), w = box.clientWidth - 32;
+  const c = document.createElement('canvas'), g = c.getContext('2d');
+  g.font = cs.font;
+  const lines = []; let cur = '';
+  for (const wd of box.textContent.split(' ')) { const t = cur ? cur + ' ' + wd : wd; if (g.measureText(t).width > w && cur) { lines.push(cur); cur = wd; } else cur = t; }
+  lines.push(cur);
+  c.width = w + 4; c.height = lines.length * lh + 2;
+  g.font = cs.font; g.textBaseline = 'middle'; g.fillStyle = '#fff';
+  lines.forEach((l, i) => g.fillText(l, 0, i * lh + lh / 2));
+  const d = g.getImageData(0, 0, c.width, c.height), m = cs.color.match(/\d+/g).map(Number);
+  for (let i = 0; i < d.data.length; i += 4) { const on = d.data[i + 3] >= 128; d.data[i] = m[0]; d.data[i + 1] = m[1]; d.data[i + 2] = m[2]; d.data[i + 3] = on ? 255 : 0; }
+  g.putImageData(d, 0, 0);
+  box.textContent = ''; box.appendChild(c);
+}));
+</script>
+</body>
+</html>

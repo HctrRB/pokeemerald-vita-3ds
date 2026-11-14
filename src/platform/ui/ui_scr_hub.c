@@ -9,7 +9,7 @@
 #include "ui_game.h"
 #include "platform/ui.h"
 #include "platform/vita_extras.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 #include "../vita/vita_platform.h"
 
 #include "global.h"

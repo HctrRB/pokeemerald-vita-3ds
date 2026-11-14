@@ -99,14 +99,8 @@ to ~13 + 5 ms on large screens (logs/sesion 27); it is most of the slow frames l
 scanlines are drawn by `DrawWorker1/2` on Core 2, which they now share with the chunk worker.
 When no window is open the pass is skipped entirely. With the new UI's battle HUD, BG0 (and BG1
 while the level-up box shows) and the healthbox sprites are left out: the HUD is drawn by the new
-UI (`Ui_BattleDispcntClear`, `gUiHideBattleHudSprites`). The GBA menus are to be replaced by a new
-menu system, so this pass is not being optimised.
-
-## Native UI path
-
-`VitaUI` screens draw into a 320×240 RGB565 buffer on the CPU; only dirty rows are uploaded
-(`VitaUI_RenderDirty`) and the GPU scales it to 640×480 ("pixel perfect") or 725×544
-("fullscreen") with nearest filtering. See [VITA_UI.md](VITA_UI.md).
+UI (`Ui_BattleDispcntClear`, `gUiHideBattleHudSprites`). The new UI replaces the GBA menus, so
+this pass is not being optimised.
 
 ## GPU rules learned on hardware
 

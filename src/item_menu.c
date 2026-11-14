@@ -585,7 +585,18 @@ void ChooseBerryForMachine(void (*exitCallback)(void))
 {
 #ifdef PLATFORM_VITA
     if (Ui_OpenBerryChoice(exitCallback))         // new UI (design/stitch/batidora)
+    {
+        // SetupBagMenu's resets (the link's tasks keep running, as there)
+        SetVBlankHBlankCallbacksToNull();
+        ClearScheduledBgCopiesToVram();
+        ScanlineEffect_Stop();
+        FreeAllSpritePalettes();
+        ResetPaletteFade();
+        ResetSpriteData();
+        if (!MenuHelpers_IsLinkActive())
+            ResetTasks();
         return;
+    }
 #endif
     GoToBagMenu(ITEMMENULOCATION_BERRY_BLENDER_CRUSH, BERRIES_POCKET, exitCallback);
 }

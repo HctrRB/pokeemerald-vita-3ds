@@ -5896,15 +5896,22 @@ bool8 EasyChat_UiSupported(u8 type)
         && type != EASY_CHAT_TYPE_QUIZ_SET_QUESTION && type != EASY_CHAT_TYPE_QUIZ_SET_ANSWER;
 }
 
+// As InitEasyChatScreen: the word data first (InitEasyChatScreenStruct reads it through
+// GetNumUnlockedEasyChatGroups), then the screen struct
 bool8 EasyChat_UiBegin(u8 type, u16 *words, u8 displayedPersonType)
 {
-    if (!InitEasyChatScreenStruct(type, words, displayedPersonType))
-        return FALSE;
     if (!InitEasyChatScreenWordData())
+        return FALSE;
+    if (!InitEasyChatScreenStruct(type, words, displayedPersonType))
     {
-        FreeEasyChatScreenStruct();
+        FreeEasyChatScreenWordData();
         return FALSE;
     }
+    // InitEasyChatScreen's first step: the caller's picture (already faded to black) is let go
+    SetVBlankCallback(NULL);
+    ResetSpriteData();
+    FreeAllSpritePalettes();
+    ResetPaletteFade();
     return TRUE;
 }
 

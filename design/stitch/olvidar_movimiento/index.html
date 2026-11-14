@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Olvidar movimiento</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* "Which move should be forgotten?" (ShowSelectMovePokemonSummaryScreen): after a level up in
+     battle or outside it, an evolution, the Move Relearner. The four moves and the new one; the
+     chosen one is compared with the new one. Choosing the new one = stop learning it. */
+  .left { width: 300px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+  .well { height: 176px; }
+  .well img { width: 128px; height: 128px; image-rendering: pixelated; object-fit: cover; object-position: top; }
+  .types { display: flex; gap: 8px; margin-top: 8px; }
+  .types img { width: 64px; height: 28px; image-rendering: pixelated; }
+  .right { flex: 1; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .mvs .row { height: 40px; gap: 12px; }
+  .mvs .row img { width: 64px; height: 28px; image-rendering: pixelated; }
+  .mvs .row .pp { width: 96px; text-align: right; }
+  .mvs .sepnew { height: 26px; display: flex; align-items: flex-end; padding: 0 12px 4px; color: var(--accent); font-family: 'Press Start 2P'; font-size: 16px; }
+  .mvs .row.new { background: #E9F6EC; }
+  .mvs .row.on.new { background: linear-gradient(var(--sel-top), var(--sel-bot)); }
+  .cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: none; }
+  .cmp .inset { line-height: 28px; padding: 6px 12px; }
+  .cmp .l1 { display: flex; justify-content: space-between; white-space: nowrap; }
+  .cmp .kvs .v { justify-content: space-between; }
+  .tag { font-family: 'Press Start 2P'; font-size: 16px; }
+  .tag.out { color: #B5352B; } .tag.in { color: #2F9E58; }
+</style>
+</head>
+<body data-screen="olvidar_movimiento">
+<div class="stage">
+  <div class="frame">
+    <div class="header">
+      <span class="nav-title">LEARN A MOVE</span>
+      <span class="spacer"></span>
+      <span class="capsule">MARSHTOMP wants to learn WATER PULSE</span>
+    </div>
+    <div class="body">
+      <div class="left">
+        <div class="panel">
+          <div class="well"><img src="../_assets/pokemon/marshtomp_front.png" alt=""></div>
+          <div class="ps" style="margin-top:10px">MARSHTOMP <span class="soft">Lv20</span></div>
+          <div class="types"><img src="../_assets/types/water.png" alt=""><img src="../_assets/types/ground.png" alt=""></div>
+        </div>
+        <div class="inset" style="flex:1">Choose a move to forget, or the new one to stop learning it.</div>
+      </div>
+      <div class="right">
+        <div class="panel" style="padding-bottom:6px; flex:none">
+          <div class="panel-head"><span class="ps">MOVES</span><span class="spacer"></span><span class="vt-sm soft">PP</span></div>
+          <div class="list mvs">
+            <div class="row"><img src="../_assets/types/normal.png" alt=""><span class="grow">TACKLE</span><span class="pp">31/35</span></div>
+            <div class="row on"><img src="../_assets/types/ground.png" alt=""><span class="grow">MUD-SLAP</span><span class="pp">10/10</span></div>
+            <div class="row"><img src="../_assets/types/water.png" alt=""><span class="grow">WATER GUN</span><span class="pp">25/25</span></div>
+            <div class="row"><img src="../_assets/types/water.png" alt=""><span class="grow">SURF</span><span class="chip">HM</span><span class="pp">15/15</span></div>
+            <div class="sepnew">NEW MOVE</div>
+            <div class="row new"><img src="../_assets/types/water.png" alt=""><span class="grow">WATER PULSE</span><span class="pp">20/20</span></div>
+          </div>
+        </div>
+        <div class="cmp">
+          <div class="inset"><div class="l1"><span class="tag out">FORGET</span><span>20 · 100%</span></div><div class="vt-sm">Lowers the foe's accuracy.</div></div>
+          <div class="inset"><div class="l1"><span class="tag in">LEARN</span><span>60 · 100%</span></div><div class="vt-sm">May confuse the foe.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span class="btn"><span class="glyph cross">✕</span>Forget</span>
+      <span class="btn"><span class="glyph circle">○</span>Don't learn</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+</div>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+</body>
+</html>

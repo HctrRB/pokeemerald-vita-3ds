@@ -748,9 +748,15 @@ bool VoxelAtlas_JobNextPage(VoxelAtlasJob *job)
     return true;
 }
 
-uint32_t VoxelAtlas_RefreshAnimatedPageRows(const VoxelMapInstance *inst, const VoxelAtlasMap *map,
-                                        uint32_t page, uint16_t *dest, const uint8_t *liveTiles,
-                                        const uint8_t dirtyTiles[128], uint32_t *rows)
+/*
+ * The animated metatiles of one page, recomposed from the live GBA tiles. primaryOnly: the
+ * slot belongs to a neighbouring map that shares the current map's primary tileset (every
+ * outdoor map: the sea, the flowers). Only its metatiles drawn wholly from primary tiles are
+ * recomposed: the live secondary tiles are the current map's, not its own.
+ */
+static uint32_t RefreshAnimated(const void *primaryTileset, const void *secondaryTileset, bool primaryOnly,
+                                const VoxelAtlasMap *map, uint32_t page, uint16_t *dest,
+                                const uint8_t *liveTiles, const uint8_t dirtyTiles[128], uint32_t *rows)
 {
     struct AtlasSource src;
     uint8_t *voidBits;
@@ -758,19 +764,19 @@ uint32_t VoxelAtlas_RefreshAnimatedPageRows(const VoxelMapInstance *inst, const 
 
     if (rows != NULL)
         *rows = 0;
-    if (inst == NULL || map == NULL || dest == NULL || liveTiles == NULL || dirtyTiles == NULL)
+    if (primaryTileset == NULL || map == NULL || dest == NULL || liveTiles == NULL || dirtyTiles == NULL)
         return 0;
     memset(&src, 0, sizeof(src));
     /* The game has already applied TransferTilesetAnimsBuffer to logical GBA
      * VRAM. Both tilesets occupy the first 0x8000 bytes in 4bpp order. */
     src.primaryTiles = liveTiles;
     src.secondaryTiles = liveTiles + TILES_PER_TILESET * 32;
-    src.primaryMetatiles = Voxel_ResolveMetatiles(inst->primaryTileset);
-    src.secondaryMetatiles = Voxel_ResolveMetatiles(inst->secondaryTileset);
-    src.primaryPalettes = Voxel_ResolvePalettes(inst->primaryTileset);
-    src.secondaryPalettes = Voxel_ResolvePalettes(inst->secondaryTileset);
-    src.primaryCount = Voxel_MetatileCount(inst->primaryTileset, NUM_METATILES_IN_PRIMARY);
-    src.secondaryCount = Voxel_MetatileCount(inst->secondaryTileset,
+    src.primaryMetatiles = Voxel_ResolveMetatiles(primaryTileset);
+    src.secondaryMetatiles = Voxel_ResolveMetatiles(secondaryTileset);
+    src.primaryPalettes = Voxel_ResolvePalettes(primaryTileset);
+    src.secondaryPalettes = Voxel_ResolvePalettes(secondaryTileset);
+    src.primaryCount = Voxel_MetatileCount(primaryTileset, NUM_METATILES_IN_PRIMARY);
+    src.secondaryCount = Voxel_MetatileCount(secondaryTileset,
                                              NUM_METATILES_TOTAL - NUM_METATILES_IN_PRIMARY);
 
     /* Pages >= 2 belong to adjacent maps; inst0 has no metatiles on them. */
@@ -782,7 +788,7 @@ uint32_t VoxelAtlas_RefreshAnimatedPageRows(const VoxelMapInstance *inst, const 
         return 0;
 
     BuildColorTable(&src);
-    voidBits = VoidBits(inst->primaryTileset, inst->secondaryTileset, true);
+    voidBits = VoidBits(primaryTileset, secondaryTileset, true);
 
     for (uint8_t i = 0; i < animCount; ++i)
     {
@@ -793,21 +799,22 @@ uint32_t VoxelAtlas_RefreshAnimatedPageRows(const VoxelMapInstance *inst, const 
         if (slot == 0 || slot == VOXEL_SLOT_ABSENT || slot == VOXEL_SLOT_PENDING
          || (slot - 1u) / VOXEL_ATLAS_MAX_SLOTS != page)
             continue;
-        if (!AtlasSourceOf(inst->primaryTileset, inst->secondaryTileset, m, &base, &hidden, &cut))
+        if (!AtlasSourceOf(primaryTileset, secondaryTileset, m, &base, &hidden, &cut))
             continue;
         const uint16_t *entries = MetatileEntries(&src, base);
         if (entries == NULL)
             continue;
-        bool affected = false;
+        bool affected = false, secondary = false;
         for (uint32_t t = 0; t < NUM_TILES_PER_METATILE; ++t)
         {
             uint32_t tile = entries[t] & 0x3FF;
+            if (tile >= TILES_PER_TILESET)
+                secondary = true;
             if (dirtyTiles[tile >> 3] & (1u << (tile & 7)))
-            {
                 affected = true;
-                break;
-            }
         }
+        if (primaryOnly && secondary)
+            continue;
         if (!affected)
             continue;
         if (voidBits != NULL)
@@ -819,6 +826,26 @@ uint32_t VoxelAtlas_RefreshAnimatedPageRows(const VoxelMapInstance *inst, const 
         ++changed;
     }
     return changed;
+}
+
+uint32_t VoxelAtlas_RefreshAnimatedPageRows(const VoxelMapInstance *inst, const VoxelAtlasMap *map,
+                                        uint32_t page, uint16_t *dest, const uint8_t *liveTiles,
+                                        const uint8_t dirtyTiles[128], uint32_t *rows)
+{
+    if (rows != NULL)
+        *rows = 0;
+    if (inst == NULL)
+        return 0;
+    return RefreshAnimated(inst->primaryTileset, inst->secondaryTileset, false, map, page, dest, liveTiles,
+                           dirtyTiles, rows);
+}
+
+uint32_t VoxelAtlas_RefreshAnimatedPrimaryRows(const void *primaryTileset, const void *secondaryTileset,
+                                               const VoxelAtlasMap *map, uint32_t page, uint16_t *dest,
+                                               const uint8_t *liveTiles, const uint8_t dirtyTiles[128],
+                                               uint32_t *rows)
+{
+    return RefreshAnimated(primaryTileset, secondaryTileset, true, map, page, dest, liveTiles, dirtyTiles, rows);
 }
 
 uint32_t VoxelAtlas_RefreshAnimatedPage(const VoxelMapInstance *inst, const VoxelAtlasMap *map,

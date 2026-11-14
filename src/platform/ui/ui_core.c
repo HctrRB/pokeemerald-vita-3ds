@@ -2,7 +2,7 @@
 // VBlankIntrWait, between two game frames, so it can read and change game state directly:
 // no locks, no snapshots (docs/THREADS.md).
 //
-// Phase B: START opens the test screen when the "ui_v2" extra is on. The world keeps running
+// START in the field opens the hub (the options button, OPTIONS). The world keeps running
 // and rendering behind it; the player and the NPCs are frozen while it is open (decision D4).
 
 #include <string.h>
@@ -10,13 +10,17 @@
 #include "ui_game.h"
 #include "platform/ui.h"
 #include "platform/vita_extras.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 #include "../vita/vita_platform.h"
 #include "../vita/vita_perf.h"
 
 #include "global.h"
 #include "main.h"
 #include "overworld.h"
+#include "battle_pike.h"
+#include "battle_pyramid.h"
+#include "field_specials.h"
+#include "link.h"
 #include "palette.h"
 #include "script.h"
 #include "sound.h"
@@ -59,7 +63,7 @@ void Ui_Init(void)
 
 bool Ui_IsEnabled(void)
 {
-    return UiAssets_Ready() && VitaExtras_GetFast(FAST_EXTRA_UI_V2) != 0;
+    return UiAssets_Ready();
 }
 
 bool Ui_IsOpen(void)
@@ -149,9 +153,17 @@ static void ReadInput(void)
     sPrevTouch = touch;
 }
 
+// Places whose START menu is the game's own (link and Union rooms, the Battle Pike and Pyramid):
+// their entries (REST, RETIRE, link cards...) and rules are not the hub's
+bool Ui_OwnsFieldStart(void)
+{
+    return Ui_IsEnabled() && !IsOverworldLinkActive() && !InUnionRoom() && !InMultiPartnerRoom() && !InBattlePike()
+        && CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE;
+}
+
 static bool CanOpenFromField(void)
 {
-    return gMain.callback2 == CB2_Overworld && !VitaUI_IsOpen() && !ArePlayerFieldControlsLocked() && !gPaletteFade.active;
+    return gMain.callback2 == CB2_Overworld && !ArePlayerFieldControlsLocked() && !gPaletteFade.active;
 }
 
 static void EnterTop(void)
@@ -303,9 +315,14 @@ void Ui_Tick(void)
         sOverlayShown = any;
         const uint32_t held = VitaPlatform_ReadButtons();
         const bool startNew = (held & VITA_BTN_START) && !(sPrevHeld & VITA_BTN_START) && sPrevHeld != ~0u;
+        // The options button (OPTIONS > remap, square by default) goes straight to OPTIONS
+        const uint32_t menuButton = VitaControls_ActionButton(VITA_ACTION_MENU);
+        const bool menuNew = menuButton && (held & menuButton) && !(sPrevHeld & menuButton) && sPrevHeld != ~0u;
         sPrevHeld = held;
-        if (startNew && CanOpenFromField())
+        if (startNew && CanOpenFromField() && Ui_OwnsFieldStart())
             Open(&gUiHubScreen);
+        else if (menuNew && CanOpenFromField())
+            Open(&gUiOptionsScreen);
         if (!Ui_IsOpen())
             return;
     }

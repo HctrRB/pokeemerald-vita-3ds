@@ -37,7 +37,7 @@ The full list is under [Features](#features).
 - Wild encounters in the 3D world fade smoothly into the battle.
 - HGSS follower Pokémon, an accelerated clock and time-based encounters.
 
-### New interface (OPTIONS > MODES > NEW UI (TEST), off by default)
+### New interface
 
 Drawn natively at 960×544 over the 3D world. Every screen works with the buttons and with touch
 (first tap selects, a second tap on the selection confirms).
@@ -110,6 +110,7 @@ These parts build and run in the design mocks, but have not been checked on the 
 ## Repository layout
 
 ```
+build_all.ps1/.sh                    one step from your dump to EmeraldVita.vpk
 CMakeLists.txt, build_vita.ps1/.sh   Vita build (preprocess → compile → link → SELF → VPK)
 make_tools.mk, *_rules.mk, vita/     host tools, asset rules, link wrapper, LiveArea art
 src/, include/, asm/, data/,         the pokeemerald decompilation (game code and text data;
@@ -117,9 +118,11 @@ constants/                           graphics/, sound/ and data binaries come fr
 fetch_assets.sh/.ps1, tools/assets/  game files download (checks your ROM, then the manifest)
 src/platform/                        GBA hardware emulation and main loop
 src/platform/voxel/                  3D voxel world
-src/platform/vita/                   native UI and Vita-specific features
-assets/                              port data packed into the VPK (voxel, UI art, followers)
-tools/                               pret host tools and the UI art generators (tools/ui_gen)
+src/platform/ui/                     the new interface (screens, widgets, themes)
+src/platform/vita/                   Vita-specific features (clock, encounters, extras, stage)
+assets/                              port data packed into the VPK (voxel, UI atlas, followers)
+tools/                               pret host tools, UI atlas builder (tools/ui2), generators
+design/stitch/                       HTML mocks of the new interface
 docs/                                technical documentation
 ```
 
@@ -129,50 +132,28 @@ No builds are distributed: you make your own from your Pokémon Emerald cartridg
 with every command and the common errors: [docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md)
 (en español: [docs/COMPILA_TU_VPK.md](docs/COMPILA_TU_VPK.md)).
 
-**One step (Windows).** With [MSYS2](https://www.msys2.org) installed in `C:\msys64` and the
-repository cloned, one script installs what is missing (MSYS2 packages, VitaSDK, Python with
-Pillow), checks your dump, gets the game files, builds everything and leaves `EmeraldVita.vpk`
-in the repository folder:
+You need a Windows 10/11 PC, your Pokémon Emerald dump (`.gba`, any language, 16 MB) and a
+PS Vita with HENkaku or Ensō. Nothing else has to be installed by hand:
 
-```powershell
-powershell.exe -ExecutionPolicy Bypass -File .\build_all.ps1 -Rom "C:\path\to\emerald.gba"
-```
-
-The ROM is only needed the first time; after `git pull`, run `.\build_all.ps1` again to rebuild.
-The steps it runs, one by one:
-
-1. **Dump your cartridge** to a `.gba` file (any language of Pokémon Emerald, 16 MB).
-2. **Install the tools** (Windows, once): [MSYS2](https://www.msys2.org) in `C:\msys64`,
-   [VitaSDK](https://vitasdk.org) with SDL2, [Git](https://git-scm.com) and
-   [Python 3](https://www.python.org) with Pillow (`pip install pillow`). Exact commands:
-   [docs/BUILD.md](docs/BUILD.md#requirements-windows).
-3. **Get the repository**:
+1. **Get the repository** (`git clone`, or *Code > Download ZIP*) into a folder with no spaces
+   or accents in its path, e.g. `C:\Emerald\pokeemerald-vita-3ds`.
+2. **Run the script** in PowerShell from that folder, and choose your `.gba` in the window it
+   opens:
    ```powershell
-   git clone https://github.com/HctrRB/pokeemerald-vita-3ds.git
-   cd pokeemerald-vita-3ds
+   powershell.exe -ExecutionPolicy Bypass -File .\build_all.ps1
    ```
-4. **Get the game files** (once). The script checks that your dump is Pokémon Emerald, then
-   downloads the decompilation's graphics, sounds and data and checks each file
-   ([tools/assets/manifest.txt](tools/assets/manifest.txt)). Nothing is copied from the ROM.
-   ```powershell
-   powershell.exe -ExecutionPolicy Bypass -File .\fetch_assets.ps1 -Rom "C:\path\to\emerald.gba"
-   ```
-5. **Build the host tools and convert the game files** (once), in the *MSYS2 MINGW64* shell:
-   ```sh
-   make -f make_tools.mk -j8 CC="gcc -static" CXX="g++ -static"
-   make -f vita/assets.mk -j8
-   ```
-6. **Build the VPK**, in PowerShell:
-   ```powershell
-   powershell.exe -ExecutionPolicy Bypass -File .\build_vita.ps1
-   ```
-   The result is `build-vita\pokeemerald.vpk`.
-7. **Install it** with VitaShell (*Enable unsafe homebrew* on in HENkaku settings). The game
-   appears as **Emerald Vita** (title ID `PKEM00001`); saves and settings live in
-   `ux0:data/POKEVITA/`.
+   It installs what is missing ([MSYS2](https://www.msys2.org) in `C:\msys64`, its packages,
+   [VitaSDK](https://vitasdk.org)), checks your dump, downloads the game files and checks each
+   one against [tools/assets/manifest.txt](tools/assets/manifest.txt) (nothing is copied from
+   the ROM), and builds everything. The first run takes 20–40 minutes.
+3. **Install `EmeraldVita.vpk`** with VitaShell (*Enable unsafe homebrew* on in HENkaku
+   settings). The game appears as **Emerald Vita** (title ID `PKEM00001`); saves and settings
+   live in `ux0:data/POKEVITA/`.
 
-Do not share the VPK or the downloaded files: they contain Nintendo's game data. Vita3K runs the
-VPK for functional testing; measure performance on hardware.
+To update: `git pull` and run `.\build_all.ps1` again (the ROM is only asked for the first
+time). The manual steps are in the guide and in [docs/BUILD.md](docs/BUILD.md).
+
+Do not share the VPK or the downloaded files: they contain Nintendo's game data.
 
 ## Controls
 
@@ -200,7 +181,7 @@ Buttons can be remapped in Options. Settings and saves live in `ux0:data/POKEVIT
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, boot, one frame, where things are, runtime files |
 | [docs/THREADS.md](docs/THREADS.md) | Cores, pacing, who owns which data |
 | [docs/RENDERING.md](docs/RENDERING.md) | Presentation paths, voxel passes, GBA overlay, GPU rules |
-| [docs/VITA_UI.md](docs/VITA_UI.md) | The new UI and the original Vita UI |
+| [docs/VITA_UI.md](docs/VITA_UI.md) | The user interface |
 | [docs/VOXEL_ENGINE.md](docs/VOXEL_ENGINE.md) | The 3D overworld |
 | [docs/SCENES_16_9.md](docs/SCENES_16_9.md) | How GBA screens fill 16:9 |
 | [docs/ASSETS.md](docs/ASSETS.md) | Where every data file comes from |

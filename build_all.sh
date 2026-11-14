@@ -15,6 +15,10 @@ set -eo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 ROM="${1:-}"
+# build_all.ps1 passes the ROM's Windows path in BUILD_ALL_ROM
+if [ -z "$ROM" ] && [ -n "${BUILD_ALL_ROM:-}" ]; then
+    ROM="$(cygpath -u "$BUILD_ALL_ROM" 2>/dev/null || echo "$BUILD_ALL_ROM")"
+fi
 JOBS=$(nproc 2>/dev/null || echo 4)
 
 step() { echo; echo "=== $* ==="; }
@@ -34,6 +38,9 @@ missing=""
 for p in $PKGS; do pacman -Q "$p" >/dev/null 2>&1 || missing="$missing $p"; done
 if [ -n "$missing" ]; then
     step "Installing MSYS2 packages:$missing"
+    # Refresh the package lists first: on a new or old MSYS2 they are out of date and the
+    # downloads fail (404). -Syu also brings the installed packages up to the new lists.
+    pacman -Syu --noconfirm || pacman -Syu --noconfirm
     pacman -S --needed --noconfirm $missing
 fi
 

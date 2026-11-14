@@ -87,7 +87,6 @@ static inline int32_t LookupFastId(const char *key)
         if (strcmp(key, "trade_evo") == 0) return FAST_EXTRA_TRADE_EVO;
         break;
     case 'u':
-        if (strcmp(key, "ui_v2") == 0) return FAST_EXTRA_UI_V2;
         if (strcmp(key, "ui_theme") == 0) return FAST_EXTRA_UI_THEME;
         break;
     case 'v':
@@ -295,7 +294,6 @@ const VitaExtra gVitaExtras[] = {
     { VITA_TAB_MODES,   "CHALLENGE",  "NUZLOCKE MODE",     "nuzlocke",         2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_MODES,   "CHALLENGE",  "LEVEL CAP",         "level_cap",        3, 0, sLevelCapValues,    NULL, NULL, NULL },
     { VITA_TAB_MODES,   "PROFILES",   "ACTIVE SAVE SLOT",  "save_slot",        3, 0, sSaveSlotValues,    NULL, NULL, NULL },
-    { VITA_TAB_MODES,   "PREVIEW",    "NEW UI (TEST)",     "ui_v2",            2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
 
     // ---- [CHEATS] ----
     { VITA_TAB_CHEATS,  "CONVENIENCE","INFINITE TMS",      "infinite_tms",     2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },

@@ -9196,3 +9196,10 @@ u8 MovementAction_Fly_Finish(struct ObjectEvent *objectEvent, struct Sprite *spr
 {
     return TRUE;
 }
+
+// New UI (decoration pictures, ui_sprites.c): the colours of an object event palette tag
+const u16 *ObjectEvent_PaletteDataForUi(u16 tag)
+{
+    u8 i = FindObjectEventPaletteIndexByTag(tag);
+    return i == 0xFF ? NULL : sObjectEventSpritePalettes[i].data;
+}

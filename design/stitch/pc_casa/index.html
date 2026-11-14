@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PC de casa</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* The player's PC (bedroom and POKéMON CENTER: player_pc.c): ITEM STORAGE, MAILBOX and, in the
+     bedroom, DECORATION. The PC's own choice list stays the mirrored one; each entry opens its tab.
+     ?view=items | deposit | mail | read | decor */
+  .side { width: 312px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .ico { width: 24px; height: 24px; image-rendering: pixelated; flex: none; }
+  .ico32 { width: 32px; height: 32px; image-rendering: pixelated; flex: none; object-fit: contain; }
+  .qty { width: 64px; text-align: right; }
+  .row .chip { margin-left: 8px; }
+  .chips { display: flex; gap: 8px; margin-bottom: 8px; }
+  .chips .chip { cursor: pointer; }
+  .mailcard { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .paper { width: 480px; height: 320px; image-rendering: pixelated; background-size: 480px 320px; position: relative; }
+  .paper .txt { position: absolute; left: 56px; top: 64px; right: 56px; font-size: 32px; line-height: 40px; color: #3A2A1A; }
+  .paper .from { position: absolute; right: 56px; bottom: 44px; font-size: 32px; color: #3A2A1A; }
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; padding: 4px; }
+  .cell { height: 72px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 2px solid var(--row-line); background: var(--paper-1); border-radius: var(--r); position: relative; }
+  .cell img { width: 48px; height: 48px; image-rendering: pixelated; object-fit: contain; }
+  .cell.on { background: linear-gradient(var(--sel-top), var(--sel-bot)); border-color: var(--sel-edge); }
+  .cell .in { position: absolute; right: 4px; top: 2px; font-size: 22px; color: var(--accent); }
+  .cats .row { height: 36px; }
+</style>
+</head>
+<body data-screen="pc_casa">
+<div class="stage">
+  <div class="frame">
+    <div class="header">
+      <span class="nav-title">BRENDAN's PC</span>
+      <span class="tabs" id="tabs"></span>
+      <span class="spacer"></span>
+      <span class="capsule" id="cap">-</span>
+    </div>
+    <div class="body" id="body"></div>
+    <div class="footer" id="foot"></div>
+  </div>
+</div>
+<script>
+const V = new URLSearchParams(location.search).get('view') || 'items';
+const I = n => `../_assets/items/${n}.png`, D = n => `../_assets/decor/${n}.png`;
+const tabs = [['ITEMS', ['items', 'deposit']], ['MAILBOX', ['mail', 'read']], ['DECORATION', ['decor']]];
+document.getElementById('tabs').innerHTML = '<span class="key">L</span>' + tabs.map(([t, v]) => `<span class="tab${v.includes(V) ? ' on' : ''}">${t}</span>`).join('') + '<span class="key">R</span>';
+const foot = (...b) => document.getElementById('foot').innerHTML = b.map(([g, t]) => `<span class="btn"><span class="glyph ${g}">${{ cross: '✕', circle: '○', triangle: '△', square: '□' }[g]}</span>${t}</span>`).join('') + '<span class="spacer"></span>';
+const body = document.getElementById('body'), cap = document.getElementById('cap');
+if (V === 'items' || V === 'deposit') {
+  const dep = V === 'deposit';
+  cap.textContent = dep ? 'BAG → PC' : 'STORED 12 / 50';
+  const rows = dep ? [['potion', 'POTION', 'x3'], ['antidote', 'ANTIDOTE', 'x1'], ['repel', 'REPEL', 'x2'], ['escape_rope', 'ESCAPE ROPE', 'x1'], ['awakening', 'AWAKENING', 'x4']]
+                   : [['potion', 'POTION', 'x1'], ['super_potion', 'SUPER POTION', 'x6'], ['revive', 'REVIVE', 'x2'], ['ether', 'ETHER', 'x3'], ['rare_candy', 'RARE CANDY', 'x1'], ['nugget', 'NUGGET', 'x2'], ['great_ball', 'GREAT BALL', 'x10'], ['orange_mail', 'ORANGE MAIL', 'x1']];
+  body.innerHTML = `<div class="side">
+      <div class="panel"><div style="display:flex;gap:12px;align-items:center"><div class="iconbox" style="width:56px;height:56px;display:flex;align-items:center;justify-content:center"><img class="x2" src="${I(dep ? 'potion' : 'super_potion')}"></div>
+        <div><div class="ps">${dep ? 'POTION' : 'SUPER POTION'}</div><div>In PC: <b>${dep ? 'x1' : 'x6'}</b> · Bag: <b>${dep ? 'x3' : 'x0'}</b></div></div></div>
+        <div class="sep"></div><div>Restores the HP of one POKéMON by ${dep ? '20' : '50'} points.</div></div>
+      <div class="panel inset">${dep ? 'Choose an item from the BAG to store in the PC.' : 'Items in the PC stay here until you take them. Up to 50 kinds.'}</div></div>
+    <div class="panel main">
+      <div class="chips"><span class="chip${dep ? '' : ' lead'}">WITHDRAW</span><span class="chip${dep ? ' lead' : ''}">DEPOSIT</span>${dep ? '<span class="spacer"></span><span class="chip">ITEMS</span><span class="chip">BALLS</span><span class="chip">BERRIES</span>' : ''}</div>
+      <div class="list">${rows.map((r, i) => `<div class="row${i === (dep ? 0 : 1) ? ' on' : ''}"><img class="ico" src="${I(r[0])}"><span class="grow">${r[1]}</span><span class="qty">${r[2]}</span></div>`).join('')}</div></div>`;
+  dep ? foot(['cross', 'Deposit'], ['circle', 'Back'], ['triangle', 'Pocket']) : foot(['cross', 'Withdraw'], ['triangle', 'Toss'], ['circle', 'Back']);
+} else if (V === 'mail') {
+  cap.textContent = 'MAIL 3 / 16';
+  const mails = [['orange', 'ORANGE MAIL', 'From MAY'], ['harbor', 'HARBOR MAIL', 'From WALLY'], ['glitter', 'GLITTER MAIL', 'From STEVEN']];
+  body.innerHTML = `<div class="panel main" style="flex:none;width:420px">
+      <div class="panel-head"><span class="ps">STORED MAIL</span></div>
+      <div class="list">${mails.map((m, i) => `<div class="row${i === 0 ? ' on' : ''}"><img class="ico" src="${I(m[0] + '_mail')}" onerror="this.style.visibility='hidden'"><span class="grow">${m[1]}</span><span class="soft">${m[2]}</span></div>`).join('')}</div></div>
+    <div class="panel" style="flex:1;display:flex;align-items:center;justify-content:center"><div class="paper" style="background-image:url(${D('mail_orange')});width:400px;height:267px;background-size:400px 267px"><div class="txt" style="font-size:28px;line-height:34px;left:44px;top:50px">HELLO! I'm GOING to the CONTEST.</div><div class="from" style="font-size:28px;right:44px;bottom:34px">MAY</div></div></div>`;
+  foot(['cross', 'Read'], ['square', 'To the BAG'], ['triangle', 'Give'], ['circle', 'Back']);
+} else if (V === 'read') {
+  cap.textContent = 'ORANGE MAIL';
+  body.innerHTML = `<div class="panel" style="flex:1;display:flex;align-items:center;justify-content:center"><div class="paper" style="background-image:url(${D('mail_orange')})"><div class="txt">HELLO! I'm GOING to the CONTEST.<br>COME and SEE my POKéMON!</div><div class="from">From MAY</div></div></div>`;
+  foot(['cross', 'Close'], ['circle', 'Close']);
+} else {
+  cap.textContent = 'DOLLS · 3';
+  const cats = ['DESK', 'CHAIR', 'PLANT', 'ORNAMENT', 'MAT', 'POSTER', 'DOLL', 'CUSHION'];
+  const items = [['pikachu_doll', 'PIKACHU DOLL', true], ['red_brick', 'RED BRICK', false], ['pretty_desk', 'PRETTY DESK', false], ['big_plant', 'BIG PLANT', true], ['surf_mat', 'SURF MAT', false]];
+  body.innerHTML = `<div class="side" style="width:260px"><div class="panel cats" style="flex:1"><div class="panel-head"><span class="ps">CATEGORY</span></div>
+      <div class="list">${cats.map((c, i) => `<div class="row${i === 6 ? ' on' : ''}"><span class="grow">${c}</span><span class="soft">${[1, 0, 2, 1, 1, 0, 3, 0][i]}</span></div>`).join('')}</div></div></div>
+    <div class="main" style="gap:12px">
+      <div class="panel" style="flex:1"><div class="chips"><span class="chip lead">DECORATE</span><span class="chip">PUT AWAY</span><span class="chip">TOSS</span></div>
+        <div class="grid">${items.map((it, i) => `<div class="cell${i === 0 ? ' on' : ''}"><img src="${D(it[0])}">${it[2] ? '<span class="in">●</span>' : ''}</div>`).join('')}</div></div>
+      <div class="panel inset" style="flex:none"><b>PIKACHU DOLL</b> · In your room (●). A doll. Place it on a mat or a desk.</div></div>`;
+  foot(['cross', 'Decorate'], ['triangle', 'Toss'], ['circle', 'Back']);
+}
+</script>
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+</body>
+</html>

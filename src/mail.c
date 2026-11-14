@@ -752,3 +752,80 @@ static void CB2_ExitMailReadFreeVars(void)
         FREE_AND_SET_NULL(sMailRead);
     }
 }
+
+// New UI (the player's PC, ui_scr_playerpc.c): a mail as ReadMail shows it. The stationery
+// (tiles and tilemap, LZ77, and its palette with the player's two colours), the text colour,
+// every line of words where PrintMailText puts it in window 0 (GBA pixels from its top left,
+// which is at 16, 24 on the screen), the "From" signature and, for BEAD and DREAM MAIL, the
+// POKéMON icon (centre, screen pixels). Lines that print nothing have no text.
+#include "platform/mail_ui.h"
+
+void Mail_LayoutForUi(const struct Mail *mail, struct MailUiLayout *out)
+{
+    u16 buffer[2];
+    u16 species;
+    u8 mailType = IS_ITEM_MAIL(mail->itemId) ? ITEM_TO_MAIL(mail->itemId) : ITEM_TO_MAIL(FIRST_MAIL_INDEX);
+    bool8 hasText = IS_ITEM_MAIL(mail->itemId);
+    const struct MailLayout *layout = &sMailLayouts_Tall[mailType];
+    u16 i, numWords = 0;
+    u8 y = 0;
+    u8 *ptr;
+
+    memset(out, 0, sizeof(*out));
+    out->mailType = mailType;
+    out->tiles = sMailGraphics[mailType].tiles;
+    out->tilemap = sMailGraphics[mailType].tileMap;
+    memcpy(out->palette, sMailGraphics[mailType].palette, sizeof(out->palette));
+    out->palette[10] = sBgColors[gSaveBlock2Ptr->playerGender][0];
+    out->palette[11] = sBgColors[gSaveBlock2Ptr->playerGender][1];
+    out->textColor = sMailGraphics[mailType].textColor;
+    out->numLines = 0;
+    for (i = 0; hasText && i < layout->numLines && i < ARRAY_COUNT(out->lines); i++)
+    {
+        u8 line[64];
+        ConvertEasyChatWordsToString(line, &mail->words[numWords], layout->lines[i].numEasyChatWords, 1);
+        numWords += layout->lines[i].numEasyChatWords;
+        if (line[0] == EOS || line[0] == CHAR_SPACE)
+            continue;
+        StringCopy(out->lines[out->numLines].text, line);
+        out->lines[out->numLines].x = layout->lines[i].xOffset + layout->wordsXPos;
+        out->lines[out->numLines].y = y + layout->wordsYPos;
+        out->numLines++;
+        y += layout->lines[i].height;
+    }
+    ptr = StringCopy(out->signature, gText_FromSpace);
+    StringCopy(ptr, mail->playerName);
+    ConvertInternationalPlayerName(ptr);
+    out->signatureWidth = layout->signatureWidth;
+    out->signatureY = layout->signatureYPos + 88;
+
+    out->iconSpecies = SPECIES_NONE;
+    species = MailSpeciesToSpecies(mail->species, buffer);
+    if (species > SPECIES_NONE && species < NUM_SPECIES)
+    {
+        if (mailType == ITEM_TO_MAIL(ITEM_BEAD_MAIL))
+        {
+            out->iconSpecies = GetIconSpeciesNoPersonality(mail->species);
+            out->iconX = 96;
+            out->iconY = 128;
+        }
+        else if (mailType == ITEM_TO_MAIL(ITEM_DREAM_MAIL))
+        {
+            out->iconSpecies = GetIconSpeciesNoPersonality(mail->species);
+            out->iconX = 40;
+            out->iconY = 128;
+        }
+    }
+}
+
+// New UI: the stationery of a mail type alone (tiles, tilemap, palette with the player's colours)
+void Mail_StationeryForUi(u8 mailType, const u32 **tiles, const u32 **tilemap, u16 *palette)
+{
+    if (mailType >= ARRAY_COUNT(sMailGraphics))
+        mailType = 0;
+    *tiles = sMailGraphics[mailType].tiles;
+    *tilemap = sMailGraphics[mailType].tileMap;
+    memcpy(palette, sMailGraphics[mailType].palette, 16 * sizeof(u16));
+    palette[10] = sBgColors[gSaveBlock2Ptr->playerGender][0];
+    palette[11] = sBgColors[gSaveBlock2Ptr->playerGender][1];
+}

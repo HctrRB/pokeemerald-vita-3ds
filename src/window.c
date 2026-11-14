@@ -215,9 +215,13 @@ int AddWindowWithoutTileMap(const struct WindowTemplate *template)
     return win;
 }
 
+extern void Menu_WindowRemovedForUi(u8 windowId);   // menu.c: the new UI's menu mirrors
+
 void RemoveWindow(u8 windowId)
 {
     u8 bgLayer = gWindows[windowId].window.bg;
+
+    Menu_WindowRemovedForUi(windowId);
 
     if (gWindowTileAutoAllocEnabled == TRUE)
         BgTileAllocOp(bgLayer, gWindows[windowId].window.baseBlock, gWindows[windowId].window.width * gWindows[windowId].window.height, 2);

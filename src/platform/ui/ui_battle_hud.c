@@ -10,7 +10,7 @@
 #include "ui_internal.h"
 #include "ui_game.h"
 #include "platform/ui.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 #include "../vita/vita_platform.h"
 
 #include "global.h"
@@ -104,7 +104,7 @@ void UiBattle_Tick(void)
     // controller moves the GBA cursor) and the Battle Arena judgment window keep the GBA HUD
     sActive = Ui_IsEnabled() && inBattle
            && !(gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED | BATTLE_TYPE_WALLY_TUTORIAL))
-           && !gUiArenaJudging && !VitaUI_IsOpen();
+           && !gUiArenaJudging;
     gUiHideBattleHudSprites = sActive;
     const uint16_t clear = sActive ? (uint16_t)(DISPCNT_BG0_ON | (gUiLevelUpPage ? DISPCNT_BG1_ON : 0)) : 0;
     __atomic_store_n(&sDispClear, clear, __ATOMIC_RELAXED);
@@ -324,7 +324,7 @@ static void CommandButton(int32_t x, int32_t y, int32_t w, int32_t h, const char
                  3, PILL, on ? TH->gold : 0);
     if (on)
         UiW_Arrow(x + (PILL ? 18 : 10), y + h / 2 - 6, TH->cmdInk == C_WHITE ? TH->gold : TH->cmdInk);
-    UiText_Draw(UI_FACE_PS2P, 16, x + (PILL ? 38 : 30), y + (h - 16) / 2, label, TH->cmdInk);
+    UiText_DrawMid(UI_FACE_PS2P, 16, x + (PILL ? 38 : 30), y, h, label, TH->cmdInk);
 }
 
 static bool Hit(int32_t tx, int32_t ty, int32_t x, int32_t y, int32_t w, int32_t h)

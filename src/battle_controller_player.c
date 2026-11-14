@@ -35,7 +35,7 @@
 #include "constants/songs.h"
 #include "constants/trainers.h"
 #include "constants/rgb.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 #include "platform/ui.h"
 
 static void PlayerHandleGetMonData(void);
@@ -1373,7 +1373,8 @@ static void OpenPartyMenuToChooseMon(void)
 
 static void WaitForMonSelection(void)
 {
-    if (!VitaUI_IsOpen() && !Ui_IsOpen())
+    // The new UI's party (Ui_OpenBattleParty) or, where it cannot open, the GBA one
+    if (!Ui_IsOpen() && gMain.callback2 == BattleMainCB2 && !gPaletteFade.active)
     {
         if (gPartyMenuUseExitCallback == TRUE)
             BtlController_EmitChosenMonReturnValue(B_COMM_TO_ENGINE, gSelectedMonPartyId, gBattlePartyCurrentOrder);
@@ -1400,7 +1401,8 @@ static void OpenBagAndChooseItem(void)
 
 static void CompleteWhenChoseItem(void)
 {
-    if (!VitaUI_IsOpen() && !Ui_IsOpen())
+    // The new UI's bag (Ui_OpenBattleBag) or, where it cannot open, the GBA one
+    if (!Ui_IsOpen() && gMain.callback2 == BattleMainCB2 && !gPaletteFade.active)
     {
         BtlController_EmitOneReturnValue(B_COMM_TO_ENGINE, gSpecialVar_ItemId);
         PlayerBufferExecCompleted();
@@ -2677,7 +2679,11 @@ static void PlayerHandleChooseItem(void)
         gBattlePartyCurrentOrder[i] = gBattleBufferA[gActiveBattler][1 + i];
 
     if (!Ui_OpenBattleBag())
-        VitaUI_Open(VITA_UI_SEC_BAG);
+    {
+        // The game's bag (the Battle Pyramid's): fade out, then OpenBagAndChooseItem
+        BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
+        gBattlerControllerFuncs[gActiveBattler] = OpenBagAndChooseItem;
+    }
 }
 
 static void PlayerHandleChoosePokemon(void)
@@ -2699,7 +2705,17 @@ static void PlayerHandleChoosePokemon(void)
         gSelectedMonPartyId = PARTY_SIZE;
         gPartyMenuUseExitCallback = FALSE;
         if (!Ui_OpenBattleParty())
-            VitaUI_Open(VITA_UI_SEC_POKEMON);
+        {
+            // The game's party screen: the data its battle mode reads, then fade out and
+            // OpenPartyMenuToChooseMon
+            gBattleControllerData[gActiveBattler] = CreateTask(TaskDummy, 0xFF);
+            gTasks[gBattleControllerData[gActiveBattler]].data[0] = gBattleBufferA[gActiveBattler][1] & 0xF;
+            *(&gBattleStruct->battlerPreventingSwitchout) = gBattleBufferA[gActiveBattler][1] >> 4;
+            *(&gBattleStruct->prevSelectedPartySlot) = gBattleBufferA[gActiveBattler][2];
+            *(&gBattleStruct->abilityPreventingSwitchout) = (gBattleBufferA[gActiveBattler][3] & 0xFF) | (gBattleBufferA[gActiveBattler][7] << 8);
+            BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
+            gBattlerControllerFuncs[gActiveBattler] = OpenPartyMenuToChooseMon;
+        }
     }
 }
 

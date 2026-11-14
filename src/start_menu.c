@@ -33,7 +33,7 @@
 #include "save.h"
 #include "scanline_effect.h"
 #include "script.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 #include "sound.h"
 #include "start_menu.h"
 #include "strings.h"
@@ -554,13 +554,6 @@ static bool8 FieldCB_ReturnToFieldStartMenu(void)
 
 void ShowReturnToFieldStartMenu(void)
 {
-#ifdef PLATFORM_VITA
-    if (!IsOverworldLinkActive() && !InUnionRoom() && !InMultiPartnerRoom())
-    {
-        VitaUI_Open(VITA_UI_SEC_MAP);
-        return;
-    }
-#endif
     sInitStartMenuData[0] = 0;
     sInitStartMenuData[1] = 0;
     gFieldCallback2 = FieldCB_ReturnToFieldStartMenu;
@@ -588,13 +581,6 @@ void Task_ShowStartMenu(u8 taskId)
 
 void ShowStartMenu(void)
 {
-#ifdef PLATFORM_VITA
-    if (!IsOverworldLinkActive() && !InUnionRoom() && !InMultiPartnerRoom())
-    {
-        VitaUI_Open(VITA_UI_SEC_MAP);
-        return;
-    }
-#endif
     if (!IsOverworldLinkActive())
     {
         FreezeObjectEvents();

@@ -10,7 +10,7 @@
 static const UiTheme sThemes[UI_THEME_COUNT] = {
     [UI_THEME_RED] = {
         .name = "RED",
-        .faceTitle = 2, .faceBody = 3,   // Saira Condensed
+        .faceTitle = 2, .faceBody = 3, .faceSign = 10,   // Saira Condensed
         .frameA = UI_RGBA(30, 30, 38, 214), .barTop = RGB(46, 46, 56), .barBot = RGB(30, 30, 38), .barLine = RGB(224, 48, 58),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(183, 183, 194), .title = RGB(255, 255, 255),
         .paper0 = RGB(250, 250, 250), .paper1 = RGB(240, 240, 242), .paper2 = RGB(226, 226, 230), .paperEdge = RGB(43, 43, 51),
@@ -37,7 +37,7 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
     },
     [UI_THEME_EMERALD] = {
         .name = "EMERALD",
-        .faceTitle = 0, .faceBody = 1,   // Press Start 2P / VT323
+        .faceTitle = 0, .faceBody = 1, .faceSign = 1,   // Press Start 2P / VT323
         .frameA = UI_RGBA(4, 20, 16, 209), .barTop = RGB(14, 43, 37), .barBot = RGB(6, 26, 22), .barLine = RGB(43, 88, 73),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(126, 166, 156), .title = RGB(153, 246, 228),
         .paper0 = RGB(247, 244, 233), .paper1 = RGB(235, 228, 207), .paper2 = RGB(223, 215, 191), .paperEdge = RGB(26, 48, 36),
@@ -64,7 +64,7 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
     },
     [UI_THEME_CRYSTAL] = {
         .name = "CRYSTAL",
-        .faceTitle = 4, .faceBody = 5,   // M PLUS Rounded 1c
+        .faceTitle = 4, .faceBody = 5, .faceSign = 11,   // M PLUS Rounded 1c
         .frameA = UI_RGBA(8, 36, 62, 214), .barTop = RGB(47, 143, 192), .barBot = RGB(11, 62, 99), .barLine = RGB(79, 179, 214),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(156, 199, 219), .title = RGB(159, 234, 255),
         .paper0 = RGB(255, 255, 255), .paper1 = RGB(238, 246, 250), .paper2 = RGB(220, 235, 242), .paperEdge = RGB(27, 79, 114),
@@ -91,7 +91,7 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
     },
     [UI_THEME_TROPICAL] = {
         .name = "TROPICAL",
-        .faceTitle = 6, .faceBody = 7,   // Fredoka
+        .faceTitle = 6, .faceBody = 7, .faceSign = 12,   // Fredoka
         .frameA = UI_RGBA(12, 104, 112, 214), .barTop = RGB(255, 154, 42), .barBot = RGB(240, 122, 20), .barLine = RGB(42, 30, 59),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(255, 233, 207), .title = RGB(255, 210, 63),
         .paper0 = RGB(255, 248, 236), .paper1 = RGB(255, 241, 216), .paper2 = RGB(255, 227, 181), .paperEdge = RGB(42, 30, 59),
@@ -118,7 +118,7 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
     },
     [UI_THEME_ROYAL] = {
         .name = "ROYAL",
-        .faceTitle = 8, .faceBody = 9,   // Exo 2
+        .faceTitle = 8, .faceBody = 9, .faceSign = 13,   // Exo 2
         .frameA = UI_RGBA(4, 34, 26, 214), .barTop = RGB(17, 85, 63), .barBot = RGB(7, 51, 38), .barLine = RGB(201, 166, 70),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(147, 184, 166), .title = RGB(246, 231, 168),
         .paper0 = RGB(244, 248, 242), .paper1 = RGB(231, 240, 228), .paper2 = RGB(214, 229, 209), .paperEdge = RGB(11, 58, 44),

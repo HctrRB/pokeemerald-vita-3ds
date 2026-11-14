@@ -1,7 +1,8 @@
-// Zone sign of the new UI (design/stitch/cartel_zona): replaces the GBA map name popup
+// Zone sign of the new UI (design/stitch/_tools/_sign_badge.html): replaces the GBA map name popup
 // (map_name_popup.c) when the new UI is on. It is an overlay, not a screen: the game keeps its
-// input. Name strip tinted by the kind of area; towns and cities add their sign's motto (the game's
-// own text, ui_town_signs.h) in a box below. Slides in, stays, slides out.
+// input. The name sits on the GBA popup's own plate of that zone (wood, marble, stone, brick, sea),
+// at x2; towns and cities add their sign's motto (the game's own text, ui_town_signs.h) in a box
+// below, in the theme's regular-weight text face. Slides in, stays, slides out.
 
 #include <stdio.h>
 #include <string.h>
@@ -12,6 +13,8 @@
 
 #include "global.h"
 #include "constants/region_map_sections.h"
+
+extern u8 MapNamePopUp_ThemeForUi(u16 mapSec, bool8 *underwater);
 
 #define SLIDE 12
 #define HOLD 150
@@ -54,35 +57,37 @@ bool UiSign_Draw(void)
     char name[32];
     UiGame_MapSecName(sSec, name, sizeof(name));
     const char *motto = Motto(sSec);
-    const uint32_t tint = sSec <= MAPSEC_EVER_GRANDE_CITY ? UI_RGBA(79, 178, 122, 255)
-                        : (sSec >= MAPSEC_ROUTE_101 && sSec <= MAPSEC_ROUTE_134) ? UI_RGBA(201, 165, 90, 255)
-                                                                                : UI_RGBA(88, 167, 201, 255);
-    const int32_t x = 16, y = 16 - off, w = 400;
-    // Name strip: the dark capsule of the menu theme (its shape, edge, shadow and gloss), with the
-    // tint of the kind of area as a bar inside its left end
     const UiTheme *t = gUiTheme;
-    const int32_t r = t->radius > 3 ? t->radius - 3 : 0;
-    UiW_PanelDark(x, y, w, 48);
-    UiDraw_Rect(x + 3 + (r > 0 ? 2 : 0), y + 3 + r, 8, 42 - 2 * r, tint);
-    UiText_Draw(UI_FACE_PS2P, 16, x + 26, y + 16, name, UI_COL_ON_FRAME);
+    bool8 underwater = FALSE;
+    const uint8_t plateTheme = MapNamePopUp_ThemeForUi(sSec, &underwater);
+
+    // The name: EMERALD keeps its title face (Press Start 2P 16), the others the sign face
+    const bool pixel = t->faceSign == UI_FACE_VT323;
+    const uint8_t nameFace = pixel ? UI_FACE_PS2P : t->faceSign, namePx = pixel ? 16 : UI_BODY_PX;
+    const int32_t nameW = UiText_Width(nameFace, namePx, name);
+    int32_t w = nameW + 96;
+    if (w < 240) w = 240;
+    if (w > 440) w = 440;
+    const int32_t x = 16, y = 12 - off, plateH = 80;
+    UiSpr_ZonePlate(plateTheme, underwater, x, y, w);
+    UiText_DrawMid(nameFace, namePx, x + (w - nameW) / 2, y + 16, plateH - 32, name, UI_RGBA(43, 43, 51, 255));
+
     if (motto)
     {
-        // The motto drops down under the name once it has slid in: half-transparent box in the
-        // theme's dark colour, title face at 16 (one step smaller than the body text)
-        const int32_t lines = UiW_TextWrappedF(UI_FACE_PS2P, 16, 0, 0, w - 40, 24, motto, 0, 4);
-        const int32_t full = 16 + lines * 24;
+        // The motto drops down under the plate once it has slid in: the theme's dark colour at
+        // 67 %, the text face at regular weight, white
+        const int32_t bw = w - 24 < 376 ? 376 : w - 24, bx = x + 12, by = y + plateH - 2, lineH = 30;
+        const int32_t lines = UiW_TextWrappedF(t->faceSign, UI_BODY_PX, 0, 0, bw - 32, lineH, motto, 0, 4);
+        const int32_t full = 22 + lines * lineH;
         int32_t drop = age <= SLIDE ? 0 : (age - SLIDE) * full / 10;
         if (drop > full) drop = full;
         if (sTicks < SLIDE) drop = full * sTicks / SLIDE;
         if (drop > 0)
         {
-            const int32_t bx = x + 8 + r, bw = w - 16 - 2 * r;
-            UiDraw_PushClip(bx, y + 48, bw, drop);
-            UiDraw_Rect(bx, y + 48, bw, full, (t->darkBot & 0x00FFFFFFu) | (170u << 24));
-            UiDraw_Rect(bx, y + 48 + full - 2, bw, 2, (t->darkEdge & 0x00FFFFFFu) | (220u << 24));
-            if (t->accent)
-                UiDraw_Rect(bx, y + 48, 4, full - 2, t->accent);
-            UiW_TextWrappedF(UI_FACE_PS2P, 16, bx + 16, y + 48 + 10, w - 40, 24, motto, UI_COL_ON_SOFT, 4);
+            UiDraw_PushClip(bx, by, bw, drop);
+            UiDraw_Rect(bx, by, bw, full, (t->darkBot & 0x00FFFFFFu) | (171u << 24));
+            UiDraw_Rect(bx, by + full - 2, bw, 2, UI_RGBA(0, 0, 0, 102));
+            UiW_TextWrappedF(t->faceSign, UI_BODY_PX, bx + 16, by + 10, bw - 32, lineH, motto, UI_RGBA(255, 255, 255, 255), 4);
             UiDraw_PopClip();
         }
     }

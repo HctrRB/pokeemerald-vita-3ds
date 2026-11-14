@@ -8,7 +8,7 @@
 #include "ui_internal.h"
 #include "ui_game.h"
 #include "platform/ui.h"
-#include "platform/vita_ui.h"
+#include "platform/vita_controls.h"
 #include "../vita/vita_platform.h"
 
 #include "global.h"
