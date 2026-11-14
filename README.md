@@ -92,24 +92,37 @@ These parts build and run in the design mocks, but have not been checked on the 
 
 ### Known issues and gaps
 
-- Still on the GBA interface: the summary of a boxed POKéMON in the PC, the Battle Pyramid bag
-  inside battles and its "bag full: choose what to drop" step, and Easy Chat's Bard song and
-  quiz screens.
-- Some UI screens are still missing: give feedback on the ones you find.
-- The menu can freeze sometimes. Debug logs written to the memory card while a menu is open are
-  a suspected cause.
+Screens still on the GBA interface:
+
+- The Pokédex entry shown after a catch (description and stats): the GBA text is drawn with no
+  background over the 3D battle.
+- The summary of a boxed POKéMON in the PC.
+- The Battle Pyramid bag inside battles and its "bag full: choose what to drop" step.
+- Easy Chat's Bard song and quiz screens.
+- Link and recorded battles, Wally's catching tutorial and the Battle Arena judgment keep the
+  GBA battle HUD.
+- Other screens may be missing too: give feedback on the ones you find.
+
+Visual glitches:
+
+- Trainer and legendary battle transitions are the GBA ones and only partly show over the 3D
+  world.
+- Intro and title screen margins at 16:9 are broken (sprites cut at the GBA edge, streaks
+  beside Rayquaza); a replacement is designed in [docs/SCENES_16_9.md](docs/SCENES_16_9.md).
+- The shop buy / sell flow over the 3D world with the new UI off still has visual glitches.
+- Walda's FRIENDS wallpaper may draw without its frame.
+
+3D world:
+
 - Terrain generation bugs in some maps (they come from Emerald 3DS). Fixed so far: Route 119
   (its long bridge), Lilycove City and Mirage Island; the rest are being fixed map by map.
 - Black spots on the terrain in some places: holes in the relief mesh that show the background.
-- The shop buy / sell flow over the 3D world with the new UI off still has visual glitches.
-- Walda's FRIENDS wallpaper may draw without its frame.
-- Trainer and legendary battle transitions are the GBA ones and only partly show over the 3D
-  world.
-- Link and recorded battles, Wally's catching tutorial and the Battle Arena judgment keep the
-  GBA battle HUD.
-- Intro and title screen margins at 16:9 are broken (sprites cut at the GBA edge, streaks
-  beside Rayquaza); a replacement is designed in [docs/SCENES_16_9.md](docs/SCENES_16_9.md).
 - Occasional frame drops in dense areas of the 3D overworld.
+
+Stability:
+
+- The menu can freeze sometimes. Debug logs written to the memory card while a menu is open are
+  a suspected cause.
 - Vita3K shows a black screen; test on hardware.
 
 ## Repository layout
