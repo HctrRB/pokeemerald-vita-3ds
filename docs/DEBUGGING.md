@@ -8,6 +8,17 @@
 - Do not log every frame: writes to the memory card can stall for hundreds of milliseconds.
 - `printf` is not used in production code.
 
+## UI stall log (`ui_stall.c`)
+
+With a screen of the new UI open, `ux0:data/POKEVITA/ui_stall.log` gets a line (200 at most per
+session) whenever Core 1 did not tick the UI for more than 100 ms, Core 0 did not render for more
+than 100 ms, or Core 0 kept drawing the same list while Core 1 was publishing new ones. Each line
+gives the screen and the ages of the other core, so it says which core held the frame.
+
+It opens, writes and closes the file on the spot, from Core 0 when the render side logs: on a
+slow card that write can itself last hundreds of milliseconds and chain further stall lines.
+Read a run of consecutive Core 0 gaps with that in mind.
+
 ## Per-frame telemetry (`vita_perf.c/h`)
 
 Always compiled in. Timestamps cost ~40 ns (`sceKernelGetProcessTimeWide`); results are buffered

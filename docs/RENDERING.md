@@ -38,7 +38,15 @@ Per frame (`VoxelRenderer_RenderFrame`):
    uploaded through a spare texture per page (see "Textures rewritten at run time" below).
 3. **Lighting**: sun position from the clock (`voxel_lighting.c`); chunks whose lighting hash
    changed are rebuilt progressively.
-4. **Culling**: trapezoidal frustum test per chunk (`Frustum_ChunkInView`), `zFar = 62`.
+4. **Culling** (`Frame_SelectChunks`): a chunk is a candidate when it overlaps the tile window
+   around the camera target (36 tiles north, 12 south, 12–18 to the sides), then must pass the
+   frustum test (`Frustum_ChunkInView`, `zFar = 62`). A building is emitted only by the chunk
+   holding its north-west cell, so each chunk records how far its building models reach past its
+   own cells and how tall they are (`bldWest/East/North/South/Top`, measured from the vertices
+   on the worker); both tests use that extent, and chunks up to 3 west and 4 north of the window
+   are kept for their models. Those extra chunks are drawn only when already built: they are
+   never built or pre-warmed from there. Without this, wide buildings (Rustboro's Devon Corp.)
+   vanished at the screen's west edge while still in view.
 5. **Chunk builds**: in three phases (`PrepareChunkJob`, `ComputeChunkJob`, `CommitChunkJob`).
    Visible holes, and chunks drawn with an outdated atlas, are built on Core 0 in the frame:
    up to two whatever the budget, more if they fit it (`ChunkBuildFits`: the estimated build

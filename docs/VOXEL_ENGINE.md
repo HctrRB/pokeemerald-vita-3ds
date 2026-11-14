@@ -37,7 +37,8 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 - A build has three phases: `PrepareChunkJob` (Core 0: the chunk's window and the atlas slot of
   every map it touches), `ComputeChunkJob` (geometry and lighting into `sChunkStaging`, no GL)
   and `CommitChunkJob` (Core 0: building pages, slot, VBO upload).
-- Per frame: frustum-cull candidate chunks and draw the built ones. Visible holes are built on
+- Per frame: frustum-cull candidate chunks (widened by how far each chunk's buildings reach)
+  and draw the built ones. Visible holes are built on
   Core 0; every other build (chunks about to enter the view, dated chunks, pre-warming ahead of
   the movement) goes to `VoxelChunkWorker` on Core 2, one per frame. See
   [RENDERING.md](RENDERING.md) for the policy and [THREADS.md](THREADS.md) for the worker.

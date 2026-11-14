@@ -351,6 +351,13 @@ typedef struct
     // (ShiftChunkCoordinates), applied as a translation (ChunkOffsets_Apply).
     float drawOffsetX, drawOffsetZ;
 
+    // How far its building models reach past its own cells, in tiles (0: not past them), and
+    // the top of the highest. A model is emitted only by the chunk holding its north-west
+    // cell but stretches up to a dozen cells east and south of it (Rustboro's Devon Corp:
+    // 10x9); the culling tests the chunk with these, or the whole model vanished as soon as
+    // that one corner left the view. Relative to the chunk, so a map crossing keeps them.
+    float bldWest, bldEast, bldNorth, bldSouth, bldTop;
+
     // While the chunk is being built: its parts in sChunkStaging. NULL otherwise; once uploaded
     // the geometry only lives in the VBO.
     VoxelGlVertex *groundVerts;
@@ -614,7 +621,6 @@ static inline int32_t FloorDivChunk(int32_t a)
 
 static bool Frustum_ChunkInView(int32_t cx, int32_t cy, const VoxelChunkSlot *slot)
 {
-    (void)slot;
     const VoxelMapInstance *inst = VoxelWorld_Instance(0);
     // Indoors (gyms, houses, Pokemon Centers, Marts) and caves:
     // Render all chunks in the layout so tall structures (11-tile gym walls, pillars, rock ceilings)
@@ -635,8 +641,40 @@ static bool Frustum_ChunkInView(int32_t cx, int32_t cy, const VoxelChunkSlot *sl
     float maxX = (float)(sChunkOriginX + (cx + 1) * CHUNK_SIZE) + 2.0f;
     float minZ = (float)(sChunkOriginY + cy * CHUNK_SIZE) - 2.0f;
     float maxZ = (float)(sChunkOriginY + (cy + 1) * CHUNK_SIZE) + 3.0f;
+    float maxY = 14.0f;
 
-    return Frustum_IntersectsAABB(minX, -4.0f, minZ, maxX, 14.0f, maxZ);
+    // and as far as its building models reach (a model stands in the chunk of its
+    // north-west cell, the rest of it east and south of there)
+    if (slot != NULL && slot->valid)
+    {
+        minX = fminf(minX, (float)(sChunkOriginX + cx * CHUNK_SIZE) - slot->bldWest);
+        maxX = fmaxf(maxX, (float)(sChunkOriginX + (cx + 1) * CHUNK_SIZE) + slot->bldEast);
+        minZ = fminf(minZ, (float)(sChunkOriginY + cy * CHUNK_SIZE) - slot->bldNorth);
+        maxZ = fmaxf(maxZ, (float)(sChunkOriginY + (cy + 1) * CHUNK_SIZE) + slot->bldSouth);
+        maxY = fmaxf(maxY, slot->bldTop);
+    }
+
+    return Frustum_IntersectsAABB(minX, -4.0f, minZ, maxX, maxY, maxZ);
+}
+
+// How many chunks west and north of the candidate area a chunk may stand and still have a
+// building model reaching into it: models are at most 17 cells wide (the Battle Frontier's)
+// and stand south of their cell by the terrain's lift as well.
+#define VOXEL_BUILDING_REACH_CHUNKS_X 3
+#define VOXEL_BUILDING_REACH_CHUNKS_Y 4
+
+// Whether a built chunk's building models reach into the tile window [wx0, wx1] x [wz0, wz1]
+// (Frame_SelectChunks' candidate rectangle for its row).
+static bool ChunkModelsReachWindow(const VoxelChunkSlot *slot, int32_t cx, int32_t cy,
+                                   float wx0, float wx1, float wz0, float wz1)
+{
+    if (slot == NULL || !slot->valid || slot->buildingCount == 0)
+        return false;
+    const float x0 = (float)(sChunkOriginX + cx * CHUNK_SIZE) - slot->bldWest;
+    const float x1 = (float)(sChunkOriginX + (cx + 1) * CHUNK_SIZE) + slot->bldEast;
+    const float z0 = (float)(sChunkOriginY + cy * CHUNK_SIZE) - slot->bldNorth;
+    const float z1 = (float)(sChunkOriginY + (cy + 1) * CHUNK_SIZE) + slot->bldSouth;
+    return x1 >= wx0 && x0 <= wx1 && z1 >= wz0 && z0 <= wz1;
 }
 
 // Whether the chunk would be in view once the camera has moved by (aheadX, aheadZ) tiles:
@@ -2089,6 +2127,8 @@ typedef struct
     // Building pages its models are drawn from, to load before they show.
     uint32_t pageCount;
     int16_t pages[CHUNK_JOB_MAX_PAGES];
+    // How far its building models reach past its cells (VoxelChunkSlot::bldWest...).
+    float bldWest, bldEast, bldNorth, bldSouth, bldTop;
 } VoxelChunkJobOutput;
 
 static void PrepareChunkJob(VoxelChunkJobInput *in, int32_t chunkX, int32_t chunkY)
@@ -2228,6 +2268,8 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     out->usedAtlasMask = 0;
     out->uncoveredAtlasMask = 0;
     out->pageCount = 0;
+    out->bldWest = out->bldEast = out->bldNorth = out->bldSouth = 0.0f;
+    out->bldTop = 0.0f;
 
     VoxelMesh_BeginWindow(x0 - 1, y0 - VOXEL_CHUNK_MARGIN_NORTH, x1 + 1, y1 + 1);
 
@@ -2350,6 +2392,24 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     if (builder.count > 0)
     {
         uint32_t count = builder.count > CHUNK_BUILDING_CAP ? CHUNK_BUILDING_CAP : builder.count;
+        // How far the models reach past the chunk's cells (built with origin 0, so in the
+        // same coordinates as x0..y1): read off their vertices, a pass over at most
+        // CHUNK_BUILDING_CAP of them, on the worker as the rest of the build.
+        float minX = (float)x0, maxX = (float)x1, minZ = (float)y0, maxZ = (float)y1, maxY = 0.0f;
+        for (uint32_t k = 0; k < count; k++)
+        {
+            const VoxelVertex *v = &sScratch[k];
+            if (v->x < minX) minX = v->x;
+            if (v->x > maxX) maxX = v->x;
+            if (v->z < minZ) minZ = v->z;
+            if (v->z > maxZ) maxZ = v->z;
+            if (v->y > maxY) maxY = v->y;
+        }
+        out->bldWest = (float)x0 - minX;
+        out->bldEast = maxX - (float)x1;
+        out->bldNorth = (float)y0 - minZ;
+        out->bldSouth = maxZ - (float)y1;
+        out->bldTop = maxY;
         PackVoxelVertices(sScratch, out->buildingVerts, count, !in->indoor);
         out->buildingCount = count;
     }
@@ -2388,6 +2448,11 @@ static void CommitChunkJob(VoxelChunkSlot *slot, int32_t chunkX, int32_t chunkY,
     memcpy(slot->groundSpans, out->groundSpans, sizeof(out->groundSpans[0]) * out->groundSpanCount);
     slot->buildingSpanCount = out->buildingSpanCount;
     memcpy(slot->buildingSpans, out->buildingSpans, sizeof(out->buildingSpans[0]) * out->buildingSpanCount);
+    slot->bldWest = out->bldWest;
+    slot->bldEast = out->bldEast;
+    slot->bldNorth = out->bldNorth;
+    slot->bldSouth = out->bldSouth;
+    slot->bldTop = out->bldTop;
     slot->buildingPage = out->buildingPage;
     slot->groundTotalCount = out->groundTotalCount;
     slot->treeCount = out->treeCount;
@@ -4599,6 +4664,8 @@ static void Frame_SelectChunks(VoxelFrame *const f)
     // one long frame, showing the background).
     const int32_t baseMinChunkY = minChunkY;
     const int32_t baseMaxChunkY = maxChunkY;
+    const int32_t baseMinTileY = minTileY;
+    const int32_t baseMaxTileY = maxTileY;
     if (sMoveVelZ < -VOXEL_MOVE_THRESHOLD) minTileY -= CHUNK_SIZE;
     if (sMoveVelZ > VOXEL_MOVE_THRESHOLD) maxTileY += CHUNK_SIZE;
     minChunkY = FloorDivChunk(minTileY - sChunkOriginY);
@@ -4615,7 +4682,12 @@ static void Frame_SelectChunks(VoxelFrame *const f)
     // Visible frustum chunks: drawn, and built now when they are holes
     VitaPerf_MarkCullStart();
     int32_t candidateChunks = 0;
-    for (int32_t cy = maxChunkY; cy >= minChunkY; cy--)
+    // Outdoors the scan also reaches a few chunks west and north of the candidate area: a
+    // building model stands in the chunk of its north-west cell and may reach into the view
+    // from there. Those chunks are only drawn (never built or pre-warmed from here).
+    const int32_t reachY = indoor ? 0 : VOXEL_BUILDING_REACH_CHUNKS_Y;
+    const int32_t reachX = indoor ? 0 : VOXEL_BUILDING_REACH_CHUNKS_X;
+    for (int32_t cy = maxChunkY; cy >= minChunkY - reachY; cy--)
     {
         float chunkZ = (float)(sChunkOriginY + cy * CHUNK_SIZE);
         // Frustum width expands with distance north of camera:
@@ -4630,11 +4702,23 @@ static void Frame_SelectChunks(VoxelFrame *const f)
         int32_t maxChunkX = FloorDivChunk(rowMaxTileX + extraRight - sChunkOriginX);
         const bool rowInBase = (cy >= baseMinChunkY && cy <= baseMaxChunkY);
 
-        for (int32_t cx = minChunkX; cx <= maxChunkX; cx++)
+        for (int32_t cx = minChunkX - reachX; cx <= maxChunkX; cx++)
         {
-            candidateChunks++;
             VoxelChunkSlot *slot = FindChunkSlot(cx, cy);
-            const bool inBase = rowInBase && cx >= baseMinChunkX && cx <= baseMaxChunkX;
+            // whether its building models reach into this row's window (the base area, not
+            // the movement's extra band, so the drawn set stays independent of the speed)
+            const bool modelsReach = !indoor
+                && ChunkModelsReachWindow(slot, cx, cy, (float)rowMinTileX, (float)rowMaxTileX,
+                                          (float)baseMinTileY, (float)baseMaxTileY);
+            if (cy < minChunkY || cx < minChunkX)
+            {
+                // outside the candidate area: drawn only for its models
+                if (!modelsReach || !Frustum_ChunkInView(cx, cy, slot))
+                    continue;
+            }
+            else
+                candidateChunks++;
+            const bool inBase = (rowInBase && cx >= baseMinChunkX && cx <= baseMaxChunkX) || modelsReach;
             const bool inFrustum = inBase && Frustum_ChunkInView(cx, cy, slot);
 
             if (!inFrustum)

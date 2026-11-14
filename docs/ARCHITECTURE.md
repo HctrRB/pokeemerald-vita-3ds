@@ -81,12 +81,12 @@ is decided in `sdl2.c` from `VoxelWorld_IsMapAvailable()` (field callbacks, shop
 |---|---|---|
 | Thread ownership, snapshot, map lock | `voxel_entities.c`, `overworld.c`, `sdl2.c` | [THREADS.md](THREADS.md) |
 | vitaGL passes, DoF, 2D overlay | `voxel/voxel_renderer.c` | [RENDERING.md](RENDERING.md) |
-| 16:9 handling of GBA screens | `widescreen.c`, `vita/vita_stage.c` | [SCENES_16_9.md](SCENES_16_9.md) |
+| 16:9 handling of GBA screens | `widescreen.c`, `src/platform/vita/vita_stage.c` | [SCENES_16_9.md](SCENES_16_9.md) |
 | Voxel world | `src/platform/voxel/` | [VOXEL_ENGINE.md](VOXEL_ENGINE.md) |
 | User interface | `src/platform/ui/` | [VITA_UI.md](VITA_UI.md) |
 | Build and packaging | `CMakeLists.txt`, `build_vita.*`, `vita/` | [BUILD.md](BUILD.md) |
-| Data files | `assets/`, `tools/ui_gen/` | [ASSETS.md](ASSETS.md) |
-| Logs, telemetry, crash dumps | `vita/vita_perf.c`, `vita/vita_platform.c` | [DEBUGGING.md](DEBUGGING.md) |
+| Data files | `assets/`, `tools/ui2/`, `tools/ui_gen/` | [ASSETS.md](ASSETS.md) |
+| Logs, telemetry, crash dumps | `src/platform/vita/vita_perf.c`, `src/platform/vita/vita_platform.c` | [DEBUGGING.md](DEBUGGING.md) |
 
 ## Runtime files (`ux0:data/POKEVITA/`)
 
@@ -94,6 +94,7 @@ is decided in `sdl2.c` from `VoxelWorld_IsMapAvailable()` (field callbacks, shop
 |---|---|---|
 | `saves/pokeemerald*.sav` | `sdl2.c` | Saves, 128 KB GBA flash layout; slot 1–3 |
 | `pokeemerald.cfg` | `sdl2.c` `StoreConfigFile` | Platform settings (filter, widescreen, buttons, 3D on/off, resolution, FPS cap…) |
-| `settings.txt` | `vita/vita_extras.c` | QoL extras and voxel options (`VitaExtras_GetFast`) |
+| `settings.txt` | `src/platform/vita/vita_extras.c` | QoL extras and voxel options (`VitaExtras_GetFast`) |
 | `debug.log` | `VITA_LOG` | Boot and error log |
-| `perf_summary.txt`, `perf_frames.csv` | `vita/vita_perf.c` | Per-frame telemetry |
+| `perf_summary.txt`, `perf_frames.csv` | `src/platform/vita/vita_perf.c` | Per-frame telemetry |
+| `ui_stall.log` | `src/platform/ui/ui_stall.c` | New UI stalls over 100 ms, and which core held the frame |

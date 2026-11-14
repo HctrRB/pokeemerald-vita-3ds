@@ -86,6 +86,8 @@ These parts build and run in the design mocks, but have not been checked on the 
 - The dialogue box after PokéNav calls and YES / NO answers (it used to flicker).
 - The words of the PC choice menus, larger POKéMON names in battle.
 - The fade into wild battles in the 3D world.
+- Wide buildings no longer vanishing and popping back at the screen's west edge when you walk
+  away from them (Rustboro City).
 - Evolutions and some other scenes.
 
 ### Known issues and gaps
@@ -94,8 +96,11 @@ These parts build and run in the design mocks, but have not been checked on the 
   inside battles and its "bag full: choose what to drop" step, and Easy Chat's Bard song and
   quiz screens.
 - Some UI screens are still missing: give feedback on the ones you find.
-- The menu can freeze sometimes.
-- Terrain generation bugs in some maps (they come from Emerald 3DS).
+- The menu can freeze sometimes. Debug logs written to the memory card while a menu is open are
+  a suspected cause.
+- Terrain generation bugs in some maps (they come from Emerald 3DS). Fixed so far: Route 119
+  (its long bridge), Lilycove City and Mirage Island; the rest are being fixed map by map.
+- Black spots on the terrain in some places: holes in the relief mesh that show the background.
 - The shop buy / sell flow over the 3D world with the new UI off still has visual glitches.
 - Walda's FRIENDS wallpaper may draw without its frame.
 - Trainer and legendary battle transitions are the GBA ones and only partly show over the 3D
