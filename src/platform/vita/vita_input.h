@@ -23,8 +23,6 @@ typedef struct {
     bool     touchActive;
     int32_t  touchScreenX; // 0..959
     int32_t  touchScreenY; // 0..543
-    int32_t  touchGbaX;    // 0..239
-    int32_t  touchGbaY;    // 0..159
 } VitaInputState;
 
 /**
@@ -53,13 +51,5 @@ uint32_t VitaInput_GetButtonsHeld(void);
  * @return True if a touch report is active, false otherwise.
  */
 bool VitaInput_ReadTouchScreen(int32_t *const outX, int32_t *const outY);
-
-/**
- * @brief Checks if front touch is active within the GBA viewport and maps to 240x160.
- * @param outGbaX Destination pointer for GBA X coordinate (0..239).
- * @param outGbaY Destination pointer for GBA Y coordinate (0..159).
- * @return True if touch is within the active GBA screen, false otherwise.
- */
-bool VitaInput_ReadTouchGBA(int32_t *const outGbaX, int32_t *const outGbaY);
 
 #endif // GUARD_VITA_INPUT_H

@@ -962,7 +962,6 @@ u8 GetSpecialBattleTransition(s32 id)
 
 void ChooseStarter(void)
 {
-    printf("[StarterChoose] ChooseStarter called\n"); fflush(stdout);
     SetMainCallback2(CB2_ChooseStarter);
     gMain.savedCallback = CB2_GiveStarter;
 }

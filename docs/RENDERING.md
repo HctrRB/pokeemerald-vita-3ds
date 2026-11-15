@@ -86,8 +86,12 @@ in order. The builds left after the visibility loop go through a `VoxelBuildQueu
 
 ## Pass 6: the GBA overlay over 3D
 
-Text boxes, menus, the battle interface and field-move banners are still drawn by the game
-through the GBA PPU. When `VoxelRenderer_HasActiveUi()` sees one:
+Field dialogues, YES/NO, multichoice, the money box, zone signs, the menus and the battle HUD
+are drawn by the new UI (`src/platform/ui/`). Pass 6 is skipped on the field whenever
+`Ui_MirrorCovers()` is true, and runs only for unmirrored GBA windows, field-move / HM banners,
+and 3D battles (where it draws the Pokémon and trainer sprites, move animations and weather while
+`Ui_BattleDispcntClear()` and `gUiHideBattleHudSprites` hide the GBA HUD). When
+`VoxelRenderer_HasActiveUi()` sees an active GBA layer:
 
 1. The map layers are hidden through `gFastDrawDispcntClear` (field: BG1-3; shop: BG2-3; battle:
    BG3), applied to each line's captured registers; the live registers are never written.
@@ -141,8 +145,10 @@ frames, which vitaGL fills directly:
   (`WriteSpriteAtlasSlots`, `vglGetTexDataPointer`), as vitaGL's own direct path does; the GPU
   may still read it for the previous frame, so a billboard can show its new frame one frame early.
 - GBA overlay (pass 6): not converted nor uploaded when its image hash is unchanged.
-- New UI texture (`src/platform/ui/`, 1024x1024 RGBA5551): the fixed atlas on top (fonts, GBA
-  sprites of `tools/ui2/build_atlas.py`) is uploaded once; the 64x64 cells below receive sprites
-  decoded at run time (Pokémon icons and front sprites, item icons, footprints). Each new cell is
-  written in place (`vglGetTexDataPointer`) before the draw, and only cells no list drew in the
-  last 16 ticks are reused, so the GPU never reads a cell being written.
+- New UI texture (`src/platform/ui/`, 1024×2048 RGBA5551): the fixed atlas on top (rows 0–1023,
+  `assets/ui2/ui_atlas.bin` v3 built by `tools/ui2/build_atlas.py`, holding the five themes'
+  baked fonts and fixed GBA sprites) is uploaded once; the 256 64×64 cells below (rows 1024–2047)
+  receive sprites decoded at run time (Pokémon icons and front sprites, trainers, item icons,
+  footprints, decorations, PC box wallpapers, mail stationery and zone sign plates). Each new
+  cell is written in place (`vglGetTexDataPointer`) before the draw, and only cells no list drew
+  in the last 16 ticks are reused, so the GPU never reads a cell being written.

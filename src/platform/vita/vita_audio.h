@@ -25,13 +25,4 @@ void VitaAudio_Terminate(void);
  */
 void VitaAudio_SetVolume(uint32_t volume);
 
-/**
- * @brief Feeds floating-point audio samples into the Vita audio pipeline.
- * Converts to signed 16-bit PCM, applies a DC-blocking filter, and outputs via SceAudioOut.
- * 
- * @param audioBuffer Interleaved stereo float samples [-1.0f, 1.0f].
- * @param byteCount Size of the incoming buffer in bytes.
- */
-void VitaAudio_QueueAudio(const float *const audioBuffer, uint32_t byteCount);
-
 #endif // GUARD_VITA_AUDIO_H

@@ -34,6 +34,5 @@ const struct WildPokemonInfo *VitaEncounters_Land(const struct WildPokemonInfo *
 
 const struct WildPokemonInfo *VitaEncounters_LandPhase(const struct WildPokemonInfo *original,
                                                        const unsigned mapGroup, const unsigned mapNum, const unsigned phase);
-bool VitaEncounters_PlayerInWater(const bool surfing, const bool underwater);
 
 #endif // GUARD_VITA_ENCOUNTERS_H

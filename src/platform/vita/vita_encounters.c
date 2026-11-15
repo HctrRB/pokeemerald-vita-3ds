@@ -166,8 +166,3 @@ const struct WildPokemonInfo *VitaEncounters_Land(const struct WildPokemonInfo *
     timed.wildPokemon = slots;
     return &timed;
 }
-
-bool VitaEncounters_PlayerInWater(const bool surfing, const bool underwater)
-{
-    return surfing || underwater;
-}

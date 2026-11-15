@@ -16,7 +16,7 @@ How the port is put together and what happens in one frame. Thread rules are in
 │   sdl2.c          main(), threads, 60 Hz clock, saves, config, RTC         │
 │   gba_fast_draw*.c software GBA PPU (scanline renderer, 3 cores, NEON)     │
 │   widescreen.c    288-px lines: what fills the margins in each scene       │
-│   bios.c dma.c cgb_audio.c                                                 │
+│   bios.c dma.c cgb_audio.c mods/mod_manager.c                              │
 ├─────────────────────────────────────┬──────────────────────────────────────┤
 │ Voxel 3D world   src/platform/voxel │ Vita features      src/platform/vita │
 │   world, chunks, meshes, atlas,     │   controls, intro stage, day/night,  │
@@ -86,7 +86,7 @@ is decided in `sdl2.c` from `VoxelWorld_IsMapAvailable()` (field callbacks, shop
 | Voxel world | `src/platform/voxel/` | [VOXEL_ENGINE.md](VOXEL_ENGINE.md) |
 | User interface | `src/platform/ui/` | [VITA_UI.md](VITA_UI.md) |
 | Build and packaging | `CMakeLists.txt`, `build_vita.*`, `vita/` | [BUILD.md](BUILD.md) |
-| Data files | `assets/`, `tools/ui2/`, `tools/ui_gen/` | [ASSETS.md](ASSETS.md) |
+| Data files | `assets/`, `tools/ui2/`, `tools/ui_gen/gen_intro_margins.py` | [ASSETS.md](ASSETS.md) |
 | Logs, telemetry, crash dumps | `src/platform/vita/vita_perf.c`, `src/platform/vita/vita_platform.c` | [DEBUGGING.md](DEBUGGING.md) |
 
 ## Runtime files (`ux0:data/POKEVITA/`)
@@ -94,7 +94,7 @@ is decided in `sdl2.c` from `VoxelWorld_IsMapAvailable()` (field callbacks, shop
 | File | Written by | Content |
 |---|---|---|
 | `saves/pokeemerald*.sav` | `sdl2.c` | Saves, 128 KB GBA flash layout; slot 1–3 |
-| `pokeemerald.cfg` | `sdl2.c` `StoreConfigFile` | Platform settings (filter, widescreen, buttons, 3D on/off, resolution, FPS cap…) |
+| `pokeemerald.cfg` | `sdl2.c` `StoreConfigFile` | Platform settings (filter, widescreen, buttons, 3D on/off, FPS cap…) |
 | `settings.txt` | `src/platform/vita/vita_extras.c` | QoL extras and voxel options (`VitaExtras_GetFast`) |
 | `debug.log` | `VITA_LOG` | Boot and error log |
 | `perf_summary.txt`, `perf_frames.csv` | `src/platform/vita/vita_perf.c` | Per-frame telemetry |

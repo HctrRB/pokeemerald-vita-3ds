@@ -3395,17 +3395,6 @@ static void DrawFrameSelfCheck(uint16_t *pixels)
 #endif // VITA_DRAW_SELFCHECK
 #endif // FAST_DRAW_PARALLEL
 
-void RunFrameLineEvents(void)
-{
-    int32_t i;
-
-    for (i = 0; i < DISPLAY_HEIGHT; i++)
-    {
-        StartLine(i);
-        EndLine();
-    }
-}
-
 // Direct event dispatch: triggers audio mixing (VCount match) and VBlank prep in < 0.001 ms without a 160-line loop
 void GbaEngine_StepDirectHardwareEvents(void)
 {

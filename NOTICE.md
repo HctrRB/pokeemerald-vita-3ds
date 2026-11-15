@@ -21,7 +21,7 @@ by this project. A built VPK contains it: do not distribute builds.
 | Component | Source | Licence | Used in |
 |---|---|---|---|
 | **pokeemerald-multiplatform** | <https://github.com/gradenGnostic/pokeemerald-multiplatform> | MIT ([LICENSE](LICENSE)) | The SDL2 platform layer this port starts from (`src/platform/sdl2.c`, `gba_fast_draw*.c`, `widescreen.c`, `bios.c`, `dma.c`, `cgb_audio.c`, `mods/`) and the original voxel renderer logic (map instances, metatile classification, atlas composition, follow camera) |
-| **Emerald 3DS** | <https://github.com/ZallaxDev/emerald-3ds>, v0.5.0, commit `bcae4b7` | **CC BY-NC-SA 4.0** (<https://creativecommons.org/licenses/by-nc-sa/4.0/>) | Logic and data ported to vitaGL and the Vita: the voxel overworld (`src/platform/voxel/`: buildings, relief, trees, signposts, lighting and shadows, weather, entities, 3D battle), the Emerald 3DS features (`src/platform/vita/`: `vita_stage.c`, `vita_daynight.c`, `vita_encounters.c`, `vita_extras.c`, `vita_nuzlocke.c`, `3ds_bottom_art.h`), the follower Pokémon (`src/follower_mon.c`), the scene classification headers (`src/platform/vita/compat/`) and the voxel data in `assets/voxel/`, made with its generators and hand-made inputs (`3ds_port/scripts`, `3ds_port/assets/voxel`; the copy used to build them is kept outside this repository). The first, 3DS-style Vita interface (`vita_ui*.c` and related files) was also ported from it and was removed on 2026-11-13 |
+| **Emerald 3DS** | <https://github.com/ZallaxDev/emerald-3ds>, v0.5.0, commit `bcae4b7` | **CC BY-NC-SA 4.0** (<https://creativecommons.org/licenses/by-nc-sa/4.0/>) | Logic and data ported to vitaGL and the Vita: the voxel overworld (`src/platform/voxel/`: buildings, relief, trees, signposts, lighting and shadows, weather, entities, 3D battle), the Emerald 3DS features (`src/platform/vita/`: `vita_stage.c`, `vita_daynight.c`, `vita_encounters.c`, `vita_extras.c`, `vita_nuzlocke.c`), the follower Pokémon (`src/follower_mon.c`), the scene classification headers (`src/platform/vita/compat/`) and the voxel data in `assets/voxel/`, made with its generators and hand-made inputs (`3ds_port/scripts`, `3ds_port/assets/voxel`; the copy used to build them is kept outside this repository). The first, 3DS-style Vita interface (`vita_ui*.c`, `3ds_bottom_art.h` and related files) was also ported from it and was removed on 2026-11-13 |
 | **pokeemerald-rogue-vita** (reference) | <https://github.com/MinZe25/pokeemerald-rogue-vita> | — | Consulted as a reference for a few low-level techniques: resetting the game from a boot copy of its data, the link padding value, the DC-blocking audio filter and two renderer optimisations |
 
 Emerald 3DS states (`LICENSE-PORT.md`, `NOTICE.md` of that repository) that its own port code is
@@ -47,8 +47,7 @@ build scripts, telemetry, the multicore pipeline) is offered under the MIT licen
 |---|---|---|
 | VitaSDK toolchain, newlib, libraries | various open source | Build and runtime |
 | vitaGL (Rinnegatamante) | LGPL-2.1 | OpenGL on SceGxm (linked) |
-| SDL2, SDL2_image (+ libpng, libjpeg, libwebp, zlib) | zlib and others | Audio device, timing, threads |
-| cJSON (Dave Gamble), in `src/platform/mods/` | MIT | JSON parsing |
+| SDL2 | zlib | Audio device, timing, threads |
 | nlohmann/json (Niels Lohmann), in `tools/jsonproc/` | MIT | Host tool |
 | pret host tools (`tools/preproc`, `gbagfx`, `aif2pcm`, `mid2agb`, `mapjson`, `jsonproc`, `scaninc`) | from pret | Asset conversion at build time |
 

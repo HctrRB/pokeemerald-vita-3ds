@@ -22,13 +22,9 @@ struct FastDrawWide gFastDrawWide;
 // gMain, tilemaps and VRAM don't change during the draw.
 static MainCallback sFieldCallback;
 static MainCallback sBattleCallback;
-static MainCallback sSceneCallback;
-static u8 sSceneSpans[4];
-static bool8 sSceneSprites;
 static u16 sFillMaps[4][32 * 32];
 static bool8 sFieldFrame;
 static bool8 sBattleFrame;
-static bool8 sBattleIntroSlide;
 static u16 *sFieldMaps[4];
 static u8 sFieldMapBase[4];
 
@@ -38,9 +34,7 @@ static u16 sTextboxBase[32 * 64];
 static bool8 sTextboxBaseLoaded;
 static u16 sTextboxWide[64 * 64];
 
-// Always on: every GBA screen is presented at 16:9 (docs/SCENES_16_9.md). The old WIDESCREEN
-// option in the GBA options screen and its pokeemerald.cfg key no longer have any effect; the
-// menu row is removed in a later cleanup.
+// Always on: every GBA screen is presented at 16:9 (docs/SCENES_16_9.md).
 bool8 Widescreen_IsOn(void)
 {
     return TRUE;
@@ -62,19 +56,9 @@ void Widescreen_SetFieldFrame(void)
 
 void Widescreen_SetBattleFrame(bool8 introSlide)
 {
+    (void)introSlide;
     sBattleCallback = gMain.callback2;
     sFieldCallback = NULL;
-    sBattleIntroSlide = introSlide;
-}
-
-void Widescreen_SetSceneFrame(u8 bg0, u8 bg1, u8 bg2, u8 bg3, bool8 sprites)
-{
-    sSceneCallback = gMain.callback2;
-    sSceneSpans[0] = bg0;
-    sSceneSpans[1] = bg1;
-    sSceneSpans[2] = bg2;
-    sSceneSpans[3] = bg3;
-    sSceneSprites = sprites;
 }
 
 // The most common entry of a BG's visible 30x20 tiles (in its first 32x32 block): the tile of
@@ -435,16 +419,6 @@ void Widescreen_PrepareDraw(void)
             gFastDrawWide.bgMapSize[0] = 3; // 64x64
             gFastDrawWide.bgSpan[0] = WIDE_BG_WIDE;
         }
-    }
-    else if (gFastDrawWide.output && sSceneCallback != NULL && gMain.callback2 == sSceneCallback)
-    {
-        for (bg = 0; bg < 4; bg++)
-        {
-            gFastDrawWide.bgSpan[bg] = sSceneSpans[bg];
-            if (sSceneSpans[bg] == WIDE_BG_FILL)
-                gFastDrawWide.bgFillMaps[bg] = BuildFillMap(bg);
-        }
-        gFastDrawWide.extendObj = sSceneSprites;
     }
     else if (gFastDrawWide.output && VitaStage_IsStageActive())
     {

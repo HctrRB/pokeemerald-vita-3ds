@@ -44,21 +44,21 @@ typedef struct
     uint32_t key;
 } VitaDayNightSun;
 
-unsigned VitaDayNight_Speed(int index);
-void VitaDayNight_Advance(VitaDayNightClock *clock, uint64_t nowMs, unsigned localSeconds, int speed);
-void VitaDayNight_Sync(VitaDayNightClock *clock, uint64_t nowMs, unsigned localSeconds, int speed);
-VitaDayNightLight VitaDayNight_At(unsigned timeMs);
+uint32_t VitaDayNight_Speed(int32_t index);
+void VitaDayNight_Advance(VitaDayNightClock *clock, uint64_t nowMs, uint32_t localSeconds, int32_t speed);
+void VitaDayNight_Sync(VitaDayNightClock *clock, uint64_t nowMs, uint32_t localSeconds, int32_t speed);
+VitaDayNightLight VitaDayNight_At(uint32_t timeMs);
 VitaDayNightBlend VitaDayNight_Moonlight(const VitaDayNightLight *light, float fade, const float fadeRgb[3]);
-VitaDayNightSun VitaDayNight_SunAt(unsigned timeMs);
+VitaDayNightSun VitaDayNight_SunAt(uint32_t timeMs);
 void VitaDayNight_Update(void);
 void VitaDayNight_Resume(void);
 const VitaDayNightLight *VitaDayNight_Get(void);
 const VitaDayNightSun *VitaDayNight_GetSun(void);
-bool VitaDayNight_Time(unsigned *seconds, unsigned *rate);
+bool VitaDayNight_Time(uint32_t *seconds, uint32_t *rate);
 bool VitaDayNight_IsShifted(void);
 bool VitaDayNight_Active(void);
 bool VitaDayNight_BerryDue(void);
-unsigned VitaDayNight_TakeBerryMinutes(void);
+uint32_t VitaDayNight_TakeBerryMinutes(void);
 void VitaDayNight_Reset(void);
 bool VitaDayNight_SyncToConsole(void);
 bool VitaDayNight_Snapshot(VitaDayNightSnapshot *snapshot);
@@ -67,6 +67,6 @@ bool VitaDayNight_Restore(const VitaDayNightSnapshot *snapshot);
 // Game environment queries
 bool VitaGame_IsOutdoor(void);
 bool VitaGame_IsOverworld(void);
-bool VitaGame_LocalTimeSeconds(unsigned *seconds);
+bool VitaGame_LocalTimeSeconds(uint32_t *seconds);
 
 #endif // GUARD_VITA_DAYNIGHT_H

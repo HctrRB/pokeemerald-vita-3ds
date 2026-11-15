@@ -10,7 +10,6 @@
 #include "main.h"
 #include "gpu_regs.h"
 #include "palette.h"
-#include "3ds_bottom_art.h"
 
 #define LEAVES_LEFT 56
 #define LEAVES_RIGHT 56
@@ -20,8 +19,6 @@
 #define LEAVES_BYTES (8 + 4 * LEAVES_LAYER)
 
 static void (*sStageCallback)(void) = NULL;
-static void (*sCentredCallback)(void) = NULL;
-static uint32_t sCentredScreen = 0;
 
 static uint8_t *sLeavesData = NULL;
 static bool sLeavesTried = false;
@@ -29,56 +26,15 @@ static GLuint sLeavesTex[4] = {0, 0, 0, 0};
 static uint32_t sLeavesPalHash[4] = {0, 0, 0, 0};
 static uint16_t sLeavesPixels[128 * LEAVES_ROWS];
 
-void VitaStage_Init(void)
-{
-    sStageCallback = NULL;
-    sCentredCallback = NULL;
-    sCentredScreen = 0;
-}
-
 void VitaStage_SetVBlankCallback(void (*callback)(void))
 {
     sStageCallback = callback;
     SetVBlankCallback(callback);
 }
 
-void VitaCentred_SetVBlankCallback(void (*callback)(void), uint32_t screen)
-{
-    sCentredCallback = callback;
-    sCentredScreen = screen;
-    SetVBlankCallback(callback);
-}
-
-void CtrCentredMainMenu_SetVBlankCallback(void (*callback)(void))
-{
-    VitaCentred_SetVBlankCallback(callback, 1);
-}
-
-void CtrCentredNaming_SetVBlankCallback(void (*callback)(void))
-{
-    VitaCentred_SetVBlankCallback(callback, 2);
-}
-
-void CtrCentredClock_SetVBlankCallback(void (*callback)(void))
-{
-    VitaCentred_SetVBlankCallback(callback, 3);
-}
-
-void CtrCentred_SetVBlankCallback(void (*callback)(void))
-{
-    VitaCentred_SetVBlankCallback(callback, 0);
-}
-
 bool VitaStage_IsStageActive(void)
 {
     return (sStageCallback != NULL && gMain.vblankCallback == sStageCallback);
-}
-
-uint32_t VitaStage_GetCentredScreen(void)
-{
-    if (sCentredCallback != NULL && gMain.vblankCallback == sCentredCallback)
-        return sCentredScreen;
-    return 0;
 }
 
 static bool IsLeavesScene(void)
@@ -114,11 +70,6 @@ void VitaStage_UpdateSceneState(void)
     // Check if stage callback was cleared
     if (gMain.vblankCallback != sStageCallback)
         sStageCallback = NULL;
-    if (gMain.vblankCallback != sCentredCallback)
-    {
-        sCentredCallback = NULL;
-        sCentredScreen = 0;
-    }
 }
 
 bool VitaStage_LeavesLoad(void)
@@ -139,25 +90,6 @@ bool VitaStage_LeavesLoad(void)
         return false;
     }
     return true;
-}
-
-void VitaStage_LeavesFree(void)
-{
-    for (int32_t bg = 0; bg < 4; ++bg)
-    {
-        if (sLeavesTex[bg] != 0)
-        {
-            glDeleteTextures(1, &sLeavesTex[bg]);
-            sLeavesTex[bg] = 0;
-        }
-        sLeavesPalHash[bg] = 0;
-    }
-    if (sLeavesData)
-    {
-        free(sLeavesData);
-        sLeavesData = NULL;
-    }
-    sLeavesTried = false;
 }
 
 static uint32_t HashPalette(void)

@@ -43,12 +43,13 @@ CSV columns:
 | Pacing | `logic_ticks`: game frames since the previous Core 0 frame (1 per 3D frame at 60 FPS, 2 at 30; the summary's `PACING` line counts the others); `world_ms`: `VoxelWorld_BuildInstances`; `atlas_slots_ms`: the current map's atlas slot (compose, extend, activate) on map or tileset changes |
 | Chunk worker | `worker_built`, `worker_dropped` (results dropped because the world changed), `worker_compute_ms` (the worker's time for the chunk committed this frame), `worker_wait_ms` (Core 0 blocked waiting for it, at the frame start or in mid-frame). `build_ms` and `chunks_built` count only the builds on Core 0 |
 | `events` | Letters: `M` new map (chunk cache reset), `X` map crossing (chunks shifted), `L` live tile changed, `S` sun moved (visible chunks rebuild), `W` warm-up, `F` faded (synchronous builds), `A` atlas extended in a build, `C` an atlas slot recomposed for another tileset |
+| New UI | `ui2_render_ms` (Core 0 Pass 7 draw and cell uploads), `ui2_tick_ms` (Core 1 `Ui_Tick` draw-list build), `ui2_quads` (quads in the list) |
 
 | Marker | Where |
 |---|---|
 | `VitaPerf_BeginFrame` / `EndFrame` | `sdl2.c` presentation loop (`EndFrame` gets the target FPS) |
 | `VitaPerf_MarkAtlasAnim*`, `MarkCull*`, `MarkBuild*`, `MarkDraw3D*` | `VoxelRenderer_RenderFrame` |
-| `VitaPerf_SubBegin/SubEnd`, `AddCount`, `MarkEvent` | `BuildChunk` phases, atlas animation, map shift, entities, live digest |
+| `VitaPerf_SubBegin/SubEnd`, `AddCount`, `MarkEvent` | `BuildChunk` phases, atlas animation, map shift, entities, live digest, and New UI render/tick (`VITA_PERF_T_UI2_RENDER`, `VITA_PERF_T_UI2_TICK`) |
 | `VitaPerf_MarkUiScanlines*`, `MarkUiUpload*` | Pass 6 (GBA overlay) |
 | `VitaPerf_MarkSwap*` | around `vglSwapBuffers` |
 | `VitaPerf_Core1*` | `VBlankIntrWait` (logic, VBlank and audio, pacing) |

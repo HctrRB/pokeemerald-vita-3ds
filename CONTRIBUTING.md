@@ -9,7 +9,8 @@ Every change is tested on a real PS Vita before it is considered done.
 |---|---|
 | Vita backend, GBA hardware emulation, main loop | `src/platform/` |
 | 3D world | `src/platform/voxel/` |
-| Native UI and Vita features | `src/platform/vita/` |
+| Native touch UI (screens, widgets, themes, battle HUD, mirrors) | `src/platform/ui/` |
+| Vita features (controls, stage, clock, encounters, extras, Nuzlocke, telemetry) | `src/platform/vita/` |
 | Public platform headers used by game code | `include/platform/` |
 | Game behaviour | The decompilation (`src/*.c`), only as small hooks under `#ifdef PLATFORM_VITA` (or `VOXEL_SUPPORTED`). Keep the original code path intact in the `#else` branch |
 

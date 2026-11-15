@@ -16,7 +16,6 @@
 #include "window.h"
 #include "gba/m4a_internal.h"
 #include "constants/rgb.h"
-#include "platform/vita_controls.h"
 #include "platform/ui.h"
 #include "main_menu.h"
 
@@ -28,9 +27,6 @@
 #define tButtonMode data[5]
 #define tWindowFrameType data[6]
 #define tPlatformPage data[8]
-#define tFullscreen data[9]
-#define tWindowScale data[10]
-#define tVSync data[12]
 #define tVolume data[14]
 
 #define OPTION_ROW_HEIGHT 14
@@ -283,9 +279,6 @@ void CB2_InitOptionMenu(void)
         gTasks[taskId].tSound = gSaveBlock2Ptr->optionsSound;
         gTasks[taskId].tButtonMode = gSaveBlock2Ptr->optionsButtonMode;
         gTasks[taskId].tWindowFrameType = gSaveBlock2Ptr->optionsWindowFrameType;
-        gTasks[taskId].tFullscreen = Platform_GetSetting(PLATFORM_SETTING_FULLSCREEN);
-        gTasks[taskId].tWindowScale = Platform_GetSetting(PLATFORM_SETTING_WINDOW_SCALE);
-        gTasks[taskId].tVSync = Platform_GetSetting(PLATFORM_SETTING_VSYNC);
         gTasks[taskId].tVolume = Platform_GetSetting(PLATFORM_SETTING_VOLUME);
 
         TextSpeed_DrawChoices(gTasks[taskId].tTextSpeed);

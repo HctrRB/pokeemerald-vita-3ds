@@ -11,8 +11,7 @@ Necesitan un servidor (las rutas son relativas y el mapa carga un JSON):
 python -m http.server 8765 --bind 127.0.0.1 --directory design/stitch
 ```
 
-Abrir `http://localhost:8765/<pantalla>/index.html` con la ventana a 960×544. En Claude Code la
-configuración `design-stitch` de `.claude/launch.json` hace lo mismo.
+Abrir `http://localhost:8765/<pantalla>/index.html` con la ventana a 960×544.
 
 ## Estructura
 
@@ -66,6 +65,9 @@ configuración `design-stitch` de `.claude/launch.json` hace lo mismo.
 | Equipo en combate múltiple (`?forced=1`: cambio obligado) | `equipo_multi` | Nueva (2026-11-13): `equipo_combate` en modo múltiple |
 | Concurso: elección de la actuación | `concurso` | Nueva (2026-11-13) |
 | Batidora de bayas: elección de baya y resultados | `batidora` | Nueva (2026-11-13) |
+| PC de casa (objetos, buzón, carta, decoración) | `pc_casa` | Nueva (2026-11-14, `ui_scr_playerpc.c`) |
+| Olvidar movimiento | `olvidar_movimiento` | Nueva (2026-11-14, `ui_scr_forget.c`) |
+| Tienda de decoración | `tienda_decoracion` | Nueva (2026-11-14, `ui_scr_mart.c`) |
 
 ## Tacto
 
@@ -206,8 +208,12 @@ maquetas (`combate`).
 ## Reglas del sistema (resumen de `_shared/ui.css`)
 
 - **Lienzo**: 960×544, píxeles enteros, márgenes de 16 px, ritmo de 8 px, filas táctiles ≥ 40 px.
-- **Tipografía** (D2, decidida en la consola): Press Start 2P a 16 px (títulos, etiquetas, botones)
-  y 24 px; VT323 a 32 px para todo el texto (28 se descartó: poco legible en la consola). Nada más.
+- **Tipografía y temas** (D2, decidida en la consola): El tema `EMERALD` usa Press Start 2P a 16 px
+  (títulos, etiquetas, botones) y 24 px, y VT323 a 32 px para todo el texto (28 se descartó: poco
+  legible en la consola) y 40 px para diálogo. Además, los mocks aceptan `?theme=red|emerald|crystal|tropical|royal`
+  (`_shared/theme.js`) y `tools/ui2/bake_theme_fonts.py` hornea las fuentes del resto de temas
+  (`Saira Condensed` en `RED`, `M PLUS Rounded 1c` en `CRYSTAL`, `Fredoka` en `TROPICAL` y
+  `Exo 2` en `ROYAL`).
 - **Color**: tokens `--frame-*`, `--paper-*`, `--ink*`, `--select`, `--accent-money`, `--hp-*`.
   Nada de colores sueltos fuera de los tokens, salvo los de los sprites del GBA.
 - **Pantallas completas** (D3): marco translúcido sobre el mundo; los paneles son opacos.

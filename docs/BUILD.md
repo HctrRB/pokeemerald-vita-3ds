@@ -17,26 +17,22 @@ handle them (`build_all.ps1` refuses such a folder).
        mingw-w64-x86_64-python mingw-w64-x86_64-python-pillow
    ```
    The generators run with MINGW64's Python and Pillow; no Windows Python is needed.
-2. VitaSDK 2026.08 with the SDL2 packages (MSYS shell; keep the two `export` lines in
+2. VitaSDK 2026.08 with the vitaGL and SDL2 packages (MSYS shell; keep the two `export` lines in
    `~/.bash_profile`):
    ```sh
    export VITASDK=/usr/local/vitasdk PATH=/usr/local/vitasdk/bin:$PATH VITASDK_CHANNEL=2026.08
    export TAR_OPTIONS=--force-local
    mkdir -p /c/vdpm-tmp && export TMPDIR=$(cygpath -m /c/vdpm-tmp)
    git clone --depth 1 https://github.com/vitasdk/vdpm /tmp/vdpm && (cd /tmp/vdpm && ./bootstrap-vitasdk.sh)
-   VDPM_NONINTERACTIVE=1 vdpm install vitaGL sdl2 sdl2_image
+   VDPM_NONINTERACTIVE=1 vdpm install vitaGL sdl2
    ```
    The base VitaSDK has none of the libraries the game links: `vitaGL` brings vitaShaRK,
-   libmathneon, SceShaccCgExt and taihen with it, `sdl2_image` brings libpng, libjpeg-turbo,
-   libwebp and zlib. Without them the build stops at `vitaGL.h: No such file or directory`.
+   libmathneon, SceShaccCgExt and taihen with it. Without them the build stops at
+   `vitaGL.h: No such file or directory`.
    Check with `arm-vita-eabi-gcc --version` and `vdpm list`.
 
-MSYS2 pitfalls: the Windows-form `TMPDIR` avoids `vdpm-channel: cannot open file`;
-`TAR_OPTIONS=--force-local` stops tar reading `C:/…` as a host; without Developer Mode pacman
-cannot create symlinks, so libpng's unversioned names are missing after `vdpm install`
-(`Can't create ... libpng.a`): copy the targets in `$VITASDK/arm-vita-eabi` (`lib/libpng16.a` →
-`lib/libpng.a`, `lib/pkgconfig/libpng16.pc` → `libpng.pc`, `bin/libpng16-config` →
-`libpng-config`). `build_all.sh` does this itself.
+MSYS2 pitfalls: the Windows-form `TMPDIR` avoids `vdpm-channel: cannot open file`, and
+`TAR_OPTIONS=--force-local` stops tar reading `C:/…` as a host.
 
 ## Steps
 
@@ -89,7 +85,7 @@ another checkout path; for a clean rebuild delete `build-vita/`.
 7. `vita_create_self(... UNSAFE)` (the app writes `ux0:data/`), then `vita-mksfoex` and
    `vita-pack-vpk` called directly (`vita_create_vpk` breaks on paths with spaces).
 8. Packs `vita/sce_sys/` (LiveArea), `assets/voxel/` → `voxel/`, `assets/ui/` → `ui/`,
-   `assets/followers/` → `followers/`.
+   `assets/ui2/` → `ui2/`, `assets/followers/` → `followers/`.
 
 Title ID `PKEM00001`. LiveArea PNGs must be 8-bit indexed; `vita/make_livearea.sh` converts
 full-colour art (needs `mingw-w64-x86_64-imagemagick`).

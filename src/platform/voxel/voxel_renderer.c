@@ -79,8 +79,6 @@ static inline void VoxelGl_DrawArrays(GLenum mode, GLint first, GLsizei count)
 #include "voxel_tuning.h"
 
 // External state
-bool gVoxelModeEnabled = true;
-bool gVoxelFirstPersonMode = false;
 extern SDL_Window *sdlWindow;
 
 // ---- Hardware Vertex Format for vitaGL ----
@@ -2674,21 +2672,6 @@ static void EnsureWorkerIdle(void)
     sWorkerBusyThisFrame = false;
 }
 
-static void ChunkWorker_Stop(void)
-{
-    ChunkWorker_Join();
-    if (sChunkWorkerThread != NULL)
-    {
-        SDL_AtomicSet(&sChunkWorkerStop, 1);
-        SDL_SemPost(sChunkJobSem);
-        SDL_WaitThread(sChunkWorkerThread, NULL);
-        sChunkWorkerThread = NULL;
-    }
-    if (sChunkJobSem) { SDL_DestroySemaphore(sChunkJobSem); sChunkJobSem = NULL; }
-    if (sChunkDoneSem) { SDL_DestroySemaphore(sChunkDoneSem); sChunkDoneSem = NULL; }
-    sChunkJobState = CHUNK_JOB_NONE;
-}
-
 // Chooses the chunk the worker computes after this frame (Core 0, during the chunk pass).
 static void ChunkWorker_Choose(int32_t cx, int32_t cy, uint32_t hash)
 {
@@ -3765,83 +3748,6 @@ bool VoxelRenderer_Init(void)
 
     VITA_LOG("[VOXEL] Voxel renderer initialized.\n");
     return true;
-}
-
-// Shutdown and release resources
-void VoxelRenderer_Shutdown(void)
-{
-    ChunkWorker_Stop();
-    if (sBuildingIoThread != NULL)
-    {
-        SDL_AtomicSet(&sBuildingIoStop, 1);
-        if (sBuildingReqSem)
-            SDL_SemPost(sBuildingReqSem);
-        if (sBuildingConsumedSem)
-            SDL_SemPost(sBuildingConsumedSem);
-        SDL_WaitThread(sBuildingIoThread, NULL);
-        sBuildingIoThread = NULL;
-    }
-    if (sBuildingReqSem) { SDL_DestroySemaphore(sBuildingReqSem); sBuildingReqSem = NULL; }
-    if (sBuildingConsumedSem) { SDL_DestroySemaphore(sBuildingConsumedSem); sBuildingConsumedSem = NULL; }
-    if (sBuildingIoMutex) { SDL_DestroyMutex(sBuildingIoMutex); sBuildingIoMutex = NULL; }
-
-    VoxelBuildings_Shutdown();
-    VoxelRegions_Shutdown();
-    VoxelRelief_Shutdown();
-    VoxelSign_Shutdown();
-
-    for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
-    {
-        for (int32_t p = 0; p < VOXEL_MAX_ATLAS_PAGES; p++)
-        {
-            if (sAtlasSlots[s].tex[p]) { glDeleteTextures(1, &sAtlasSlots[s].tex[p]); sAtlasSlots[s].tex[p] = 0; }
-        }
-        sAtlasSlots[s].valid = false;
-    }
-    sActiveAtlasSlot = -1;
-    sAtlasPageCount = 0;
-    AtlasExtend_Cancel();
-    AtlasSpares_Reset(true);
-    if (sTreeTex) { glDeleteTextures(1, &sTreeTex); sTreeTex = 0; }
-    for (int32_t i = 0; i < VOXEL_BUILDING_CACHE_SLOTS; i++)
-    {
-        if (sBuildingCache[i].tex) { glDeleteTextures(1, &sBuildingCache[i].tex); sBuildingCache[i].tex = 0; }
-        sBuildingCache[i].page = -1;
-    }
-    memset(sBuildingPageToSlot, -1, sizeof(sBuildingPageToSlot));
-    if (sSpriteTex) { glDeleteTextures(1, &sSpriteTex); sSpriteTex = 0; }
-    if (sUiTexRing[0]) { glDeleteTextures(2, sUiTexRing); sUiTexRing[0] = sUiTexRing[1] = 0; }
-    sUiTex = 0;
-    sUiImageValid = false;
-    if (sLampPoolTex) { glDeleteTextures(1, &sLampPoolTex); sLampPoolTex = 0; }
-    if (sFogTex) { glDeleteTextures(1, &sFogTex); sFogTex = 0; }
-    if (sDioramaFbo) { glDeleteFramebuffers(1, &sDioramaFbo); sDioramaFbo = 0; }
-    if (sDioramaColorTex) { glDeleteTextures(1, &sDioramaColorTex); sDioramaColorTex = 0; }
-    if (sDioramaDepthRb) { glDeleteRenderbuffers(1, &sDioramaDepthRb); sDioramaDepthRb = 0; }
-    if (sScratchFbo) { glDeleteFramebuffers(1, &sScratchFbo); sScratchFbo = 0; }
-    if (sScratchColorTex) { glDeleteTextures(1, &sScratchColorTex); sScratchColorTex = 0; }
-    if (sBlurFbo) { glDeleteFramebuffers(1, &sBlurFbo); sBlurFbo = 0; }
-    if (sBlurTex) { glDeleteTextures(1, &sBlurTex); sBlurTex = 0; }
-    sDioramaFboReady = false;
-
-    if (sChunkStaging)
-    {
-        free(sChunkStaging);
-        sChunkStaging = NULL;
-    }
-    for (int32_t i = 0; i < MAX_CHUNKS; i++)
-    {
-        if (sChunks[i].vbo)
-        {
-            glDeleteBuffers(1, &sChunks[i].vbo);
-            sChunks[i].vbo = 0;
-        }
-        sChunks[i].valid = false;
-        sChunks[i].groundVerts = NULL;
-        sChunks[i].treeVerts = NULL;
-        sChunks[i].buildingVerts = NULL;
-    }
-    sChunksAllocated = false;
 }
 
 // Visible tile rows and columns of BG0 (the GBA screen in 8-px tiles) and its map row width.

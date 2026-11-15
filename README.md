@@ -47,15 +47,19 @@ Drawn natively at 960×544 over the 3D world. Every screen works with the button
   (map, Match Call, condition, ribbons), Fly map, trainer card, Nuzlocke tracker, options, save.
 - **PC boxes**: withdraw, deposit, move POKéMON and items, release, marks, jump to a box,
   wallpapers (the game's own, Walda's included) and box names.
-- **Scenes the scripts open**: Poké Mart buy / sell, naming keyboard (player, rival, POKéMON,
-  boxes), Easy Chat (mail, profile, battle messages, interviews, trendy saying, survey…), berry
-  choice for the Berry Blender and Berry Crush, contest appeal choice, "choose a POKéMON" for
-  the move tutor, the Day Care and other scripts.
+- **Player's PC**: item storage (withdraw, deposit, toss), mailbox and mail reading on the game's
+  stationery, and room / Secret Base decoration.
+- **Scenes the scripts open**: Poké Mart buy / sell and decoration shops, naming keyboard (player,
+  rival, POKéMON, boxes), Easy Chat (mail, profile, battle messages, interviews, trendy saying,
+  survey…), berry choice for the Berry Blender and Berry Crush, contest appeal choice, "choose a
+  POKéMON" for the move tutor, the Day Care and other scripts, and the forget-move screen
+  (level-up, HM/TM, Move Tutor).
 - **Battle**: HUD with health plates, party balls, commands, moves with PP and type, targets in
   double battles, YES / NO, level-up stats and the Safari Zone; bag and party in battle (multi
   battles included); the Battle Pyramid bag.
 - **Field**: dialogue box, YES / NO, choice lists (PC menus, NPC questions), money box, item
-  obtained, PokéNav calls and zone signs with each town's motto.
+  obtained, PokéNav calls and zone signs with each town's motto, plus dialogue mirrors in 2D
+  evolution, egg-hatch and trade scenes.
 - **Menu themes** (OPTIONS > GENERAL > MENU COLOR): RED (default), EMERALD, CRYSTAL, TROPICAL
   and ROYAL. Each has its own colours, box shapes, bevels and font, and applies to every screen,
   the battle HUD and the zone signs.
@@ -79,7 +83,8 @@ Performance: 60 FPS with drops to 55 at 333 / 166 MHz.
 These parts build and run in the design mocks, but have not been checked on the console yet:
 
 - The menu themes on every screen, the battle HUD in each theme, and the lighter TROPICAL font.
-- PC boxes: moving, withdrawing, depositing, releasing, marks, wallpapers and box names.
+- PC boxes and the player's PC (item storage, mailbox / mail reading, room and Secret Base
+  decoration), decoration shops, and the forget-move screen.
 - Naming keyboard: new game, box names, nicknames, a POKéMON caught with a full party.
 - Easy Chat in each of its uses, the berry choice and the contest appeal choice.
 - Day Care and move tutor choice (the right POKéMON is taken, the screen fades back in).
@@ -88,7 +93,7 @@ These parts build and run in the design mocks, but have not been checked on the 
 - The fade into wild battles in the 3D world.
 - Wide buildings no longer vanishing and popping back at the screen's west edge when you walk
   away from them (Rustboro City).
-- Evolutions and some other scenes.
+- Mirrored dialogue boxes in 2D evolution, egg-hatch and trade scenes.
 
 ### Known issues and gaps
 
@@ -97,6 +102,7 @@ Screens still on the GBA interface:
 - The Pokédex entry shown after a catch (description and stats): the GBA text is drawn with no
   background over the 3D battle.
 - The summary of a boxed POKéMON in the PC.
+- Move Relearner / Move Deleter, and Contest / Battle Frontier party choice.
 - The Battle Pyramid bag inside battles and its "bag full: choose what to drop" step.
 - Easy Chat's Bard song and quiz screens.
 - Link and recorded battles, Wally's catching tutorial and the Battle Arena judgment keep the
@@ -109,7 +115,6 @@ Visual glitches:
   world.
 - Intro and title screen margins at 16:9 are broken (sprites cut at the GBA edge, streaks
   beside Rayquaza); a replacement is designed in [docs/SCENES_16_9.md](docs/SCENES_16_9.md).
-- The shop buy / sell flow over the 3D world with the new UI off still has visual glitches.
 - Walda's FRIENDS wallpaper may draw without its frame.
 
 3D world:
@@ -215,8 +220,8 @@ Buttons can be remapped in Options. Settings and saves live in `ux0:data/POKEVIT
 - **gradenGnostic** and contributors:
   [pokeemerald-multiplatform](https://github.com/gradenGnostic/pokeemerald-multiplatform), the SDL2
   platform layer and voxel renderer this port starts from.
-- **Rinnegatamante** (vitaGL), the **VitaSDK**, **SDL** and **Vita3K** teams, **Dave Gamble**
-  (cJSON) and **Niels Lohmann** (nlohmann/json).
+- **Rinnegatamante** (vitaGL), the **VitaSDK**, **SDL** and **Vita3K** teams, and **Niels Lohmann**
+  (nlohmann/json).
 - **HctrRB**: project lead, supervision and hardware testing.
 
 ## Legal

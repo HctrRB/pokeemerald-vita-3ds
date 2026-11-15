@@ -35,21 +35,26 @@ kept outside this repository (several GB); the files in `assets/voxel/` are comm
 Terrain faults are corrected as data (`relief_fixes.json`, read by `gen_voxel_relief.py`), never
 by hand-editing `relief.bin`.
 
-## 3. Generated C tables
+## 3. Generated C headers
 
 | File | Content | Generator |
 |---|---|---|
-| `src/platform/vita/3ds_bottom_art.h` | Sprites of the removed 3DS-style dock (4bpp tiles + palettes). Still included by `vita_stage.c`, but nothing uses its arrays any more | Emerald 3DS `scripts/gen_bottom_art.py` (not in this repository) |
+| `src/platform/ui/ui_sprite_ids.h` | Fixed UI atlas sprite enum matching `assets/ui2/ui_atlas.bin` | `tools/ui2/build_atlas.py` |
+| `src/platform/ui/ui_town_signs.h` | Town and city sign mottos extracted from `data/maps/*/scripts.inc` | `tools/ui2/gen_town_signs.py` |
 
 ## Regenerating the UI art
 
 ```sh
-python tools/ui2/build_atlas.py                                    # assets/ui2/ui_atlas.bin
+python tools/ui2/bake_theme_fonts.py                               # theme_fonts.png + .json (needs local server)
+python tools/ui2/build_atlas.py                                    # assets/ui2/ui_atlas.bin + ui_sprite_ids.h
+python tools/ui2/gen_town_signs.py                                 # src/platform/ui/ui_town_signs.h
 python tools/ui_gen/gen_intro_margins.py --output assets/ui/intro_margins.bin
 ```
 
-`build_atlas.py` reads the fonts baked by `design/stitch/_tools/font_bake.html`
-(`tools/ui2/fonts/`) and the images `design/stitch/_tools/export_assets.py` exports to
-`design/stitch/_assets/`. `build_all` runs both on every build, because `ui_sprite_ids.h` is
+`build_atlas.py` reads the base pixel fonts baked by `design/stitch/_tools/font_bake.html`
+(`tools/ui2/fonts/ui_fonts.*`), the theme fonts baked by `tools/ui2/bake_theme_fonts.py`
+(`tools/ui2/fonts/theme_fonts.*` for `RED`, `CRYSTAL`, `TROPICAL` and `ROYAL`), and the images
+`design/stitch/_tools/export_assets.py` exports to `design/stitch/_assets/`. `build_all` runs
+both `export_assets.py` and `build_atlas.py` on every build, because `ui_sprite_ids.h` is
 committed and the atlas must always match it. `gen_intro_margins.py` reads
 `graphics/intro/scene_1`; run the asset step first.

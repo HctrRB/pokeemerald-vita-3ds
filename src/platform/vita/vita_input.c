@@ -16,13 +16,6 @@ static const float TOUCH_PANEL_MAX_Y = 1088.0f;
 static const float SCREEN_WIDTH_F    = 960.0f;
 static const float SCREEN_HEIGHT_F   = 544.0f;
 
-// GBA centered viewport on Vita display (816x544, offset 72px)
-static const int32_t GBA_VIEWPORT_OFFSET_X = 72;
-static const int32_t GBA_VIEWPORT_WIDTH    = 816;
-static const int32_t GBA_VIEWPORT_HEIGHT   = 544;
-static const int32_t GBA_NATIVE_WIDTH      = 240;
-static const int32_t GBA_NATIVE_HEIGHT     = 160;
-
 // Internal persistent state
 static VitaInputState sCurrentState;
 static uint32_t sPreviousButtons = 0U;
@@ -118,22 +111,6 @@ void VitaInput_Poll(VitaInputState *const outState)
         sCurrentState.touchActive = true;
         sCurrentState.touchScreenX = (int32_t)((float)touch.report[0].x * (SCREEN_WIDTH_F / TOUCH_PANEL_MAX_X));
         sCurrentState.touchScreenY = (int32_t)((float)touch.report[0].y * (SCREEN_HEIGHT_F / TOUCH_PANEL_MAX_Y));
-
-        // Map to GBA coords if inside the active viewport
-        const int32_t sx = sCurrentState.touchScreenX;
-        const int32_t sy = sCurrentState.touchScreenY;
-
-        if (sx >= GBA_VIEWPORT_OFFSET_X && sx < (GBA_VIEWPORT_OFFSET_X + GBA_VIEWPORT_WIDTH) &&
-            sy >= 0 && sy < GBA_VIEWPORT_HEIGHT)
-        {
-            sCurrentState.touchGbaX = (sx - GBA_VIEWPORT_OFFSET_X) * GBA_NATIVE_WIDTH / GBA_VIEWPORT_WIDTH;
-            sCurrentState.touchGbaY = sy * GBA_NATIVE_HEIGHT / GBA_VIEWPORT_HEIGHT;
-        }
-        else
-        {
-            sCurrentState.touchGbaX = -1;
-            sCurrentState.touchGbaY = -1;
-        }
     }
 
     if (outState != NULL)
@@ -156,17 +133,5 @@ bool VitaInput_ReadTouchScreen(int32_t *const outX, int32_t *const outY)
 
     if (outX != NULL) *outX = sCurrentState.touchScreenX;
     if (outY != NULL) *outY = sCurrentState.touchScreenY;
-    return true;
-}
-
-bool VitaInput_ReadTouchGBA(int32_t *const outGbaX, int32_t *const outGbaY)
-{
-    if (!sCurrentState.touchActive || sCurrentState.touchGbaX < 0 || sCurrentState.touchGbaY < 0)
-    {
-        return false;
-    }
-
-    if (outGbaX != NULL) *outGbaX = sCurrentState.touchGbaX;
-    if (outGbaY != NULL) *outGbaY = sCurrentState.touchGbaY;
     return true;
 }

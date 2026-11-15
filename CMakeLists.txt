@@ -225,11 +225,9 @@ target_include_directories(pokeemerald PRIVATE "${ROOT}" "${ROOT}/sound")
 target_compile_options(pokeemerald PRIVATE ${PLATFORM_COMPILE_OPTIONS})
 # SDL2's own config carries its stub libraries, which differ between VitaSDK builds
 # (e.g. SDL2 built with the vitaGL backend also needs vitaGL and its dependencies).
-# SDL2 renders through GXM directly (VitaSDK 2026.08); no vitaGL. SDL2_image loads the border art.
+# vitaGL renders the 3D world, GBA stage and native UI; SDL2 is kept for audio, timers, semaphores and threads.
 find_package(SDL2 REQUIRED CONFIG)
-find_package(SDL2_image REQUIRED CONFIG)
 target_link_libraries(pokeemerald PRIVATE
-    SDL2_image::SDL2_image-static
     SDL2::SDL2-static
     vitaGL
     vitashark
@@ -248,9 +246,6 @@ target_link_libraries(pokeemerald PRIVATE
     stdc++
     m)
 target_link_options(pokeemerald PRIVATE -Wl,-z,max-page-size=0x10000 -Wl,-z,common-page-size=0x10000)
-# libwebp (pulled in by SDL2_image) needs pthread. CMake appends transitive dependencies after
-# the target's own libraries, so it has to go at the very end of the link line.
-set(CMAKE_C_STANDARD_LIBRARIES "-lpthread -lm")
 
 # Leaves room after the code segment for the module info vita-elf-create appends.
 set_property(TARGET pokeemerald PROPERTY RULE_LAUNCH_LINK "bash '${ROOT}/vita/vita_link.sh'")
@@ -293,7 +288,7 @@ if(EXISTS "${ROOT}/assets/followers")
     list(APPEND VPK_FILE_DEPS "${ROOT}/assets/followers/sources.txt")
 endif()
 
-# Procedural Emerald 3DS UI & HUD binary assets read from app0:ui/
+# Intro/title margin tiles read from app0:ui/intro_margins.bin
 file(GLOB UI_ASSETS CONFIGURE_DEPENDS "${ROOT}/assets/ui/*.bin")
 foreach(UA IN LISTS UI_ASSETS)
     get_filename_component(UA_NAME "${UA}" NAME)

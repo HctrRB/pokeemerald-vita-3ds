@@ -10,7 +10,7 @@ labels: bug
 **What should have happened**
 
 **Where**
-<!-- Map / town, screen or battle, and whether the NEW UI option was on. -->
+<!-- Map / town, screen or battle, 3D or 2D mode, and active MENU COLOR theme. -->
 
 **Can you repeat it?**
 <!-- Always / sometimes / once. Steps if you know them. -->

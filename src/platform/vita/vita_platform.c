@@ -257,11 +257,6 @@ bool VitaPlatform_ReadTouch(int32_t *const outX, int32_t *const outY)
     return VitaInput_ReadTouchScreen(outX, outY);
 }
 
-bool VitaPlatform_ReadTouchGBA(int32_t *const outGbaX, int32_t *const outGbaY)
-{
-    return VitaInput_ReadTouchGBA(outGbaX, outGbaY);
-}
-
 uint64_t VitaPlatform_GetMilliseconds(void)
 {
     return (uint64_t)sceKernelGetProcessTimeWide() / 1000ULL;

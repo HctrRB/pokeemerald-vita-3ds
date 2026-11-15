@@ -42,17 +42,13 @@ enum
 };
 #define VITA_BTN_UNBOUND 0xFF   // remap setting of an action with no button
 
-// VITA_BTN_* bits for the buttons held right now; the left stick counts as the d-pad. The port
-// menu maps them to GBA keys (VitaMenu_MapButtons).
+// VITA_BTN_* bits for the buttons held right now; the left stick counts as the d-pad.
+// VitaControls_MapButtons maps them to GBA keys.
 uint32_t VitaPlatform_ReadButtons(void);
 
 // Reads front touch panel position in screen coordinates (960x544).
 // Returns true if touched, false otherwise.
 bool VitaPlatform_ReadTouch(int32_t *outX, int32_t *outY);
-
-// Reads front touch panel mapped to GBA coordinates (240x160).
-// Returns true if touched within GBA screen area, false otherwise.
-bool VitaPlatform_ReadTouchGBA(int32_t *outGbaX, int32_t *outGbaY);
 
 // Local time as configured on the console. Returns 0 on success.
 int32_t VitaPlatform_GetLocalTime(struct VitaLocalTime *out);

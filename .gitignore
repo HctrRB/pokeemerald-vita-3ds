@@ -58,7 +58,8 @@ param.sfo
 *.sav
 
 
-# graft's local graph cache — regenerable, not committed (run `graft build`).
+# Local context graph caches — regenerable, not committed (run `trail build`).
+.trail/
 /graft/
 
 # Telemetry logs and coredumps

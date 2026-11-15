@@ -11,23 +11,13 @@ extern "C" {
 enum VitaStageKind
 {
     VITA_STAGE_NONE = 0,
-    VITA_STAGE_GENERIC,
     VITA_STAGE_INTRO_LEAVES,
-    VITA_STAGE_INTRO_BIKE,
-    VITA_STAGE_TITLE_SCREEN,
-    VITA_STAGE_MAIN_MENU
+    VITA_STAGE_INTRO_BIKE
 };
 
-void VitaStage_Init(void);
 void VitaStage_SetVBlankCallback(void (*callback)(void));
-void VitaCentred_SetVBlankCallback(void (*callback)(void), uint32_t screen);
-void CtrCentredMainMenu_SetVBlankCallback(void (*callback)(void));
-void CtrCentredNaming_SetVBlankCallback(void (*callback)(void));
-void CtrCentredClock_SetVBlankCallback(void (*callback)(void));
-void CtrCentred_SetVBlankCallback(void (*callback)(void));
 
 bool VitaStage_IsStageActive(void);
-uint32_t VitaStage_GetCentredScreen(void);
 int32_t VitaStage_GetActiveKind(void);
 
 // Evaluates the current scene to determine which stage mode applies

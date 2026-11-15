@@ -42,9 +42,6 @@ extern u16 gFastDrawBldcntClear;
 // When TRUE, the next DrawFrame draws only the GBA's 240 px (nothing in the widescreen margins):
 // an overlay shown centred does not pay for margins nobody sees.
 extern bool8 gFastDrawCentredOnly;
-// Runs a frame's per-scanline hardware events (VCount/HBlank interrupts and HBlank DMAs) in
-// order, exactly as DrawFrame does, without drawing anything.
-void RunFrameLineEvents(void);
 // Direct event dispatch: triggers audio mixing (VCount match) and VBlank prep in < 0.001 ms without a 160-line loop
 void GbaEngine_StepDirectHardwareEvents(void);
 #if defined(VITA_PARALLEL_DRAW)

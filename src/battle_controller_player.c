@@ -35,7 +35,6 @@
 #include "constants/songs.h"
 #include "constants/trainers.h"
 #include "constants/rgb.h"
-#include "platform/vita_controls.h"
 #include "platform/ui.h"
 
 static void PlayerHandleGetMonData(void);

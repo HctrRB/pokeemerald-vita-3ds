@@ -6,7 +6,6 @@
 
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
 #include "mods/mod_manager.h"
 #include <setjmp.h>
 #include "vita/vita_perf.h"
@@ -15,17 +14,6 @@
 #include "platform/ui.h"
 #include "constants/moves.h"
 #include "vita/vita_reset.h"
-// Catch-up game frames run their scanline events without being drawn (see the main loop).
-#define VITA_SKIP_CATCHUP_DRAW
-#if defined(VITA_PARALLEL_DRAW)
-// The draw workers write each frame straight into a texture in GPU memory, while the GPU may
-// still be drawing the previous frame from its texture. Writing into that same texture mixed
-// lines of two frames (visible shaking when the screen scrolls), so frames rotate through
-// several textures and a texture is only rewritten once the GPU is done with it.
-#define VITA_TEXTURE_RING 3
-static SDL_Texture *sFrameTextures[VITA_TEXTURE_RING];
-static int32_t sFrameTextureIndex;
-#endif
 
 #include "global.h"
 #include "main.h"
@@ -65,13 +53,10 @@ static int32_t sFrameTextureIndex;
 
 SDL_Thread *mainLoopThread;
 SDL_Window *sdlWindow;
-SDL_Renderer *sdlRenderer;
-SDL_Texture *sdlTexture;
 #define VITA_GAME_TEXTURE_RING 2
 static GLuint sGameTextureRing[VITA_GAME_TEXTURE_RING] = {0, 0};
 static uint8_t sGameTextureUploadIdx = 0;
 #define VITA_AUDIO_RATE 48000
-static SDL_AudioStream *sAudioStream;
 
 // Per-frame timing for hardware profiling.
 // Main thread: draw = DrawFrame + texture upload, render = SDL copies, vblank = DMAs and the
@@ -83,7 +68,6 @@ static SDL_AudioStream *sAudioStream;
 enum { PERF_DRAW, PERF_DRAWFRAME, PERF_UPLOAD, PERF_RENDER, PERF_VBLANK, PERF_PRESENT, PERF_LOGIC, PERF_COUNT };
 static double sPerfTotal[PERF_COUNT], sPerfWorstMain, sPerfFrameStart;
 static int32_t sPerfFrames, sPerfPresents, sPerfSkipped;
-static u8 sPlatformSettings[PLATFORM_SETTING_COUNT]; // defined (with defaults) further down
 static Uint64 sPerfFpsStart;
 
 static double PerfNowMs(void)
@@ -113,7 +97,6 @@ SDL_sem *vBlankSemaphore;
 static SDL_sem *sFrameReadySem;
 SDL_atomic_t isFrameAvailable;
 bool speedUp = false;
-uint32_t videoScale = 1;
 bool isRunning = true;
 bool paused = false;
 double simTime = 0;
@@ -182,7 +165,7 @@ extern void DoSoftReset(void);
 
 int32_t DoMain(void *param);
 void ProcessEvents(void);
-void VDraw(SDL_Texture *texture);
+void VDraw(void);
 
 static void ReadSaveFile(const char *path);
 static void ReadConfigFile(void);
@@ -524,7 +507,6 @@ int main(int argc, char **argv)
     want.channels = 2;
     want.samples = 512;
     cgb_audio_init(want.freq);
-    sAudioStream = NULL;
 
     sdlAudioDevice = SDL_OpenAudioDevice(NULL, 0, &want, NULL, 0);
     if (sdlAudioDevice == 0)
@@ -536,8 +518,6 @@ int main(int argc, char **argv)
         SDL_PauseAudioDevice(sdlAudioDevice, 0);
     }
     VITA_LOG("audio: device %s at %d Hz\n", sdlAudioDevice ? "open" : "FAILED", want.freq);
-    if (sdlTexture != NULL)
-        VDraw(sdlTexture);
     // The game's memory at power on, for resets and switching save files.
     VitaReset_TakeBootSnapshot();
     // SDL's default Vita thread stack is small; the game logic runs on this thread.
@@ -644,10 +624,6 @@ int main(int argc, char **argv)
                 bool didPresent2D = false;
                 sPerfFrameStart = PerfNowMs();
 
-#ifdef VITA_TEXTURE_RING
-                sFrameTextureIndex = (sFrameTextureIndex + 1) % VITA_TEXTURE_RING;
-                sdlTexture = sFrameTextures[sFrameTextureIndex];
-#endif
                 if (voxelActive)
                 {
                     if (VoxelRenderer_RenderFrame())
@@ -655,7 +631,7 @@ int main(int argc, char **argv)
                 }
                 else
                 {
-                    VDraw(NULL);
+                    VDraw();
                     const double perfT1 = PerfNowMs();
                     sPerfTotal[PERF_DRAW] += perfT1 - sPerfFrameStart;
                     RenderGameTexture();
@@ -685,8 +661,6 @@ int main(int argc, char **argv)
                     eglSwapInterval(NULL, 1);
                     vglSwapBuffers(GL_FALSE);
 #endif
-                    if (sdlRenderer)
-                        SDL_RenderPresent(sdlRenderer);
                     sPerfTotal[PERF_PRESENT] += PerfNowMs() - perfPresentStart;
                     sPerfPresents++;
                 }
@@ -706,11 +680,6 @@ int main(int argc, char **argv)
     // Quit from the port menu. The game thread is blocked mid-frame, so end the process here
     // rather than tear SDL down under it.
     VitaPlatform_Exit();
-
-    SDL_DestroyWindow(sdlWindow);
-    ModManager_Shutdown();
-    SDL_Quit();
-    return 0;
 }
 
 static void ReadSaveFile(const char *path)
@@ -848,9 +817,6 @@ static void ApplyPlatformSettings(void)
 #endif
     VitaPlatform_ApplyRenderResolution();
     VitaPlatform_ApplyTargetFramerate();
-    if (sdlRenderer == NULL)
-        return;
-    SDL_RenderSetVSync(sdlRenderer, sPlatformSettings[PLATFORM_SETTING_VSYNC]);
 }
 
 static void StoreSaveFile()
@@ -936,17 +902,6 @@ void Platform_QueueAudio(float *audioBuffer, u32 bufferSizeBytes)
             sAdjustedAudio[i] = out;
         }
 
-        if (sAudioStream != NULL)
-        {
-            static float sResampled[8192];
-            int32_t got;
-
-            SDL_AudioStreamPut(sAudioStream, sAdjustedAudio, floatCount * sizeof(float));
-            while ((got = SDL_AudioStreamGet(sAudioStream, sResampled, sizeof(sResampled))) > 0)
-                SDL_QueueAudio(sdlAudioDevice, sResampled, got);
-            return;
-        }
-
         if (SDL_QueueAudio(sdlAudioDevice, sAdjustedAudio, floatCount * sizeof(float)) < 0)
             SDL_Log("Failed to queue audio: %s", SDL_GetError());
     }
@@ -968,8 +923,6 @@ void Platform_SetSetting(enum PlatformSetting setting, u8 value)
         VitaPlatform_ApplyRenderResolution();
     else if (setting == PLATFORM_SETTING_VOXEL_FPS)
         VitaPlatform_ApplyTargetFramerate();
-    if (setting == PLATFORM_SETTING_VSYNC && sdlRenderer != NULL)
-        SDL_RenderSetVSync(sdlRenderer, value);
     StoreConfigFile();
 }
 
@@ -1109,9 +1062,8 @@ u16 Platform_GetKeyInput(void)
 
 // Draws the next frame; sFrameImage keeps it in the GBA's BGR555 (the port menu shows it
 // dimmed behind itself).
-void VDraw(SDL_Texture *texture)
+void VDraw(void)
 {
-    (void)texture;
     uint16_t *gbaImage = sFrameImage;
     // New UI battle HUD: the GBA text box and menus (BG0, BG1 while the level-up box shows) are its
     gFastDrawDispcntClear = Ui_BattleDispcntClear();

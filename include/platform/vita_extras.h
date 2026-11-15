@@ -9,13 +9,9 @@ enum
     VITA_TAB_GENERAL = 0,   // Text, Sound, Volume, Fast-Forward, Button Remap
     VITA_TAB_WORLD,         // 3D Voxel, Day/Night, Clock Speed, HGSS Follower, Field QoL
     VITA_TAB_BATTLE,        // 3D Battles, Native HD HUD, Battle Speed, Move Split, Exp Share
-    VITA_TAB_MODES,         // Nuzlocke, Level Cap, Save Slots, Scaler, Quit
+    VITA_TAB_MODES,         // Nuzlocke, Level Caps
     VITA_TAB_CHEATS,        // Shiny Odds, Always Catch, Infinite TMs, Money, Dex, Give Items
-    VITA_TAB_COUNT,
-
-    // Legacy aliases preserved for compatibility
-    VITA_TAB_SYSTEM       = VITA_TAB_GENERAL,
-    VITA_TAB_ENHANCEMENTS = VITA_TAB_WORLD
+    VITA_TAB_COUNT
 };
 
 typedef struct

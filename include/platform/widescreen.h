@@ -59,11 +59,6 @@ enum
 // margins to black so the repeated edges read as the picture's frame, not as content.
 bool8 Widescreen_StageFadesMargins(void);
 
-// Called by any other scene on every frame it runs, to choose how its BGs and sprites fill the
-// margins. Scenes that don't call it (menus) fill the margins with their back BG's pattern
-// (WIDE_BG_FILL) and keep the other BGs and the sprites centred.
-void Widescreen_SetSceneFrame(u8 bg0, u8 bg1, u8 bg2, u8 bg3, bool8 sprites);
-
 // Main thread, at the start of each drawn frame: fills gFastDrawWide (platform/framedraw.h).
 void Widescreen_PrepareDraw(void);
 #endif

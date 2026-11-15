@@ -62,9 +62,8 @@ if [ ! -x "$VITASDK/bin/arm-vita-eabi-gcc" ]; then
 fi
 [ -x "$VITASDK/bin/arm-vita-eabi-gcc" ] || die "VitaSDK did not install; see docs/BUILD.md"
 # The base VitaSDK has none of these. vdpm installs their dependencies too (vitaGL brings
-# vitaShaRK, libmathneon, SceShaccCgExt and taihen; sdl2_image brings libpng, libjpeg-turbo,
-# libwebp and zlib). Every file CMakeLists.txt links is checked, so a VitaSDK installed
-# earlier without one of them gets it here.
+# vitaShaRK, libmathneon, SceShaccCgExt and taihen). Every file CMakeLists.txt links is checked,
+# so a VitaSDK installed earlier without one of them gets it here.
 VITA_LIB="$VITASDK/arm-vita-eabi/lib"
 VITA_INC="$VITASDK/arm-vita-eabi/include"
 need_gl=""; need_sdl=""
@@ -72,8 +71,8 @@ for f in "$VITA_INC/vitaGL.h" "$VITA_LIB/libvitaGL.a" "$VITA_LIB/libvitashark.a"
          "$VITA_LIB/libmathneon.a" "$VITA_LIB/libSceShaccCgExt.a" "$VITA_LIB/libtaihen_stub.a"; do
     [ -f "$f" ] || need_gl=" vitaGL"
 done
-for f in "$VITA_LIB/libSDL2.a" "$VITA_LIB/libSDL2_image.a"; do
-    [ -f "$f" ] || need_sdl=" sdl2 sdl2_image"
+for f in "$VITA_LIB/libSDL2.a"; do
+    [ -f "$f" ] || need_sdl=" sdl2"
 done
 need_pkgs="$need_gl$need_sdl"
 if [ -n "$need_pkgs" ]; then
@@ -81,18 +80,10 @@ if [ -n "$need_pkgs" ]; then
     mkdir -p /c/vdpm-tmp
     export TMPDIR="$(cygpath -m /c/vdpm-tmp)"
     VDPM_NONINTERACTIVE=1 vdpm install $need_pkgs
-    for f in "$VITA_INC/vitaGL.h" "$VITA_LIB/libvitaGL.a" "$VITA_LIB/libSDL2.a" "$VITA_LIB/libSDL2_image.a"; do
+    for f in "$VITA_INC/vitaGL.h" "$VITA_LIB/libvitaGL.a" "$VITA_LIB/libSDL2.a"; do
         [ -f "$f" ] || die "$(basename "$f") is still missing after vdpm install $need_pkgs; see docs/BUILD.md"
     done
 fi
-# libpng's unversioned names are symbolic links in the package, and Windows without Developer
-# Mode cannot create them ("Can't create ... libpng.a" while installing): copy the targets.
-for pair in "lib/libpng16.a lib/libpng.a" "lib/pkgconfig/libpng16.pc lib/pkgconfig/libpng.pc" \
-            "bin/libpng16-config bin/libpng-config"; do
-    set -- $pair
-    src="$VITASDK/arm-vita-eabi/$1"; dst="$VITASDK/arm-vita-eabi/$2"
-    if [ -f "$src" ] && [ ! -e "$dst" ]; then cp "$src" "$dst"; fi
-done
 
 # ---------------------------------------------------------------- 3. the game files
 manifest_sha=$(sha1sum tools/assets/manifest.txt | cut -d' ' -f1)

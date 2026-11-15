@@ -44,7 +44,7 @@ the intro's leaves scene.
   art and can still be improved. Bike, legendary cutscenes and credits not yet checked.
 - On the title screen the Rayquaza layer keeps its own `EDGES` policy; check it on hardware.
 - Field-move banners are still stretched from 240 to 960 px (18 % distortion).
-- Centred menus still use the per-frame most-common-tile `FILL`.
+- The few remaining GBA menus not yet replaced by `src/platform/ui/` still use the per-frame most-common-tile `FILL`.
 
 ## Planned replacement: Wide Scene
 

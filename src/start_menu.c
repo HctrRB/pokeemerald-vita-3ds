@@ -33,7 +33,6 @@
 #include "save.h"
 #include "scanline_effect.h"
 #include "script.h"
-#include "platform/vita_controls.h"
 #include "sound.h"
 #include "start_menu.h"
 #include "strings.h"

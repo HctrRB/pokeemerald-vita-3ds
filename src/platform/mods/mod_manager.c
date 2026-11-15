@@ -44,20 +44,13 @@ static void InitRAMShadows(void) {
     memcpy(gItems, gItems_ROM, sizeof(gItems));
 }
 
-bool8 gModsEnabled = FALSE;
-char *gActiveModSelector = NULL;
-
-// The RAM copies of the ROM tables (wild encounters, species, moves, items) are needed
-// with or without mod support; leaving them unfilled crashes on the first map load.
+// Initializes mutable RAM shadow copies of the ROM lookup tables (wild encounter headers,
+// species info, names, moves, and items) at boot for runtime features such as time-of-day
+// encounters. Pass-through hooks preserve vanilla lookups without dynamic JSON loading.
 void ModManager_Init(void) { InitRAMShadows(); }
-void ModManager_Shutdown(void) {}
-bool8 ModManager_IsEnabled(void) { return FALSE; }
-char *ModManager_ReadFileToString(const char *path) { (void)path; return NULL; }
 const struct Trainer *ModManager_GetTrainer(u16 trainerId) { return &gTrainers[trainerId]; }
 bool8 ModManager_GetTrainerFrontPicOverride(u16 trainerPicId, void *destBuffer) { (void)trainerPicId; (void)destBuffer; return FALSE; }
 u16 ModManager_GetStarterSpecies(u8 slot, u16 vanillaSpecies) { (void)slot; return vanillaSpecies; }
 u8 ModManager_GetStarterLevel(u8 slot, u8 vanillaLevel) { (void)slot; return vanillaLevel; }
-const struct WildPokemonHeader *ModManager_GetWildMonHeader(u16 headerId, const struct WildPokemonHeader *vanilla) { (void)headerId; return vanilla; }
-const struct WildPokemonHeader *ModManager_GetWildMonHeaderByMap(u8 mapGroup, u8 mapNum, const struct WildPokemonHeader *vanilla) { (void)mapGroup; (void)mapNum; return vanilla; }
 const struct MapHeader *ModManager_GetMapHeaderByMap(u16 mapGroup, u16 mapNum, const struct MapHeader *vanilla) { (void)mapGroup; (void)mapNum; return vanilla; }
 

@@ -1,7 +1,6 @@
 #include "global.h"
 #include "platform/ui.h"
 #include "platform.h"
-#include "platform/vita_controls.h"
 #include "bg.h"
 #include "data.h"
 #include "decompress.h"
