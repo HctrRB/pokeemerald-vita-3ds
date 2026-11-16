@@ -585,7 +585,7 @@ static bool8 AreLegendariesInSootopolisPreventingEncounters(void)
 #include "constants/pokemon_icon.h"
 #include "constants/songs.h"
 
-static const u8 sVisibleMost[] = {0, 2, 4, 6};
+static const u8 sVisibleMost[] = {0, 4, 8, 12};
 
 static u32 VisibleSetting(void)
 {
@@ -597,7 +597,7 @@ static u32 VisibleSetting(void)
 #define VISIBLE_MOST() sVisibleMost[VisibleSetting()]
 #define VISIBLE_REPLACES_RANDOM() (VisibleSetting() == ARRAY_COUNT(sVisibleMost) - 1)
 
-#define VW_MAX       6
+#define VW_MAX       12
 #define VW_MAGIC     0x5657
 #define VW_RANGE_X   11
 #define VW_RANGE_Y   6
@@ -1236,7 +1236,7 @@ void VisibleWild_Update(void)
     if (VisibleCount() < most)
     {
         if (VisibleTrySpawn(headerId))
-            sVisibleSpawnTimer = 120 * 100 / percent;
+            sVisibleSpawnTimer = 60 * 100 / percent;
         else
             sVisibleSpawnTimer = 15;
     }

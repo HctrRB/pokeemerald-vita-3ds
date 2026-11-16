@@ -577,8 +577,8 @@ static void RemoveFollower(void)
  * A file let go is freed one creation later, as the follower's: a frame copy
  * from it may still be queued for VBlank.
  */
-#define WILD_SLOTS       6
-#define WILD_PAL_TAG     0x7F01   /* + slot */
+#define WILD_SLOTS       12
+#define WILD_PAL_TAG     0x7F01   /* + slot (0x7F01..0x7F0C) */
 
 static struct
 {
@@ -687,7 +687,7 @@ void FollowerMon_WildFree(u32 slot, struct Sprite *sprite)
  * Its Poke Ball, a moment where it goes in or comes out: Emerald's own ball
  * picture (the battle's) on an ext palette, opening or closing on the tile.
  */
-#define BALL_PAL_TAG 0x7F07
+#define BALL_PAL_TAG 0x7F20
 #define BALL_FRAMES  24           /* going in: the ball closes and stays a moment */
 #define POP_FRAMES   10           /* coming out: the follower shows, the ball goes, once it is open */
 
