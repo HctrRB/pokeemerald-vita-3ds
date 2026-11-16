@@ -505,27 +505,60 @@ const struct ObjectEventGraphicsInfo *FollowerMon_GraphicsInfo(void)
     return &sGraphicsInfo;
 }
 
+static u8 LoadExtOrFallbackPalette(u16 tag, const u16 *colors, bool8 *isExt)
+{
+    struct SpritePalette pal = {colors, tag};
+    u8 slot = LoadSpritePaletteExt(&pal);
+
+    if (slot != 0xFF)
+    {
+        *isExt = TRUE;
+        if (gMain.callback2 == CB2_Overworld)
+            UpdateSpritePaletteExtWithWeather(slot);
+        return slot;
+    }
+
+    *isExt = FALSE;
+    slot = LoadSpritePalette(&pal);
+    if (slot != 0xFF && gMain.callback2 == CB2_Overworld)
+        UpdateSpritePaletteWithWeather(slot);
+    return slot;
+}
+
 /* Each time the follower's sprite is made (event_object_movement.c): its ext
  * palette, loaded again if the field freed it (a battle, a menu). */
 void FollowerMon_BindSprite(struct Sprite *sprite)
 {
-    u8 slot = IndexOfSpritePaletteTag(FOLLOWER_PAL_TAG);
+    u8 slot;
+    bool8 isExt;
 
     if (sFollower.file == NULL)
         return;
-    if (slot == 0xFF)
+
+    slot = IndexOfSpritePaletteExtTag(FOLLOWER_PAL_TAG);
+    if (slot != 0xFF)
+    {
+        SetSpriteExtPalette(sprite, slot);
+        return;
+    }
+
+    slot = IndexOfSpritePaletteTag(FOLLOWER_PAL_TAG);
+    if (slot != 0xFF)
+    {
+        sprite->oam.paletteNum = slot;
+        return;
+    }
+
     {
         const u16 *colors = (const u16 *)(sFollower.file + FMN_HEADER) + (sFollower.shiny ? 16 : 0);
-        struct SpritePalette pal = {colors, FOLLOWER_PAL_TAG};
-
-        slot = LoadSpritePalette(&pal);
-        if (slot == 0xFF)
-            return;
-
-        if (gMain.callback2 == CB2_Overworld)
-            UpdateSpritePaletteWithWeather(slot);
+        slot = LoadExtOrFallbackPalette(FOLLOWER_PAL_TAG, colors, &isExt);
     }
-    sprite->oam.paletteNum = slot;
+    if (slot == 0xFF)
+        return;
+    if (isExt)
+        SetSpriteExtPalette(sprite, slot);
+    else
+        sprite->oam.paletteNum = slot;
 }
 
 static void RemoveFollower(void)
@@ -612,6 +645,7 @@ static void ShowBall(struct ObjectEvent *follower, bool8 opening)
     const struct CompressedSpritePalette *palette = &gBallSpritePalettes[BALL_POKE];
     u16 colors[16];
     u8 pal;
+    bool8 isExt;
 
     if (sBall < MAX_SPRITES && gSprites[sBall].inUse && gSprites[sBall].callback == SpriteCB_FollowerBall)
         DestroySprite(&gSprites[sBall]);
@@ -620,13 +654,9 @@ static void ShowBall(struct ObjectEvent *follower, bool8 opening)
         return;
     LZ77UnCompWram(palette->data, colors);
     FreeSpritePaletteByTag(BALL_PAL_TAG);
-    {
-        struct SpritePalette sp = {colors, BALL_PAL_TAG};
-        pal = LoadSpritePalette(&sp);
-    }
+    pal = LoadExtOrFallbackPalette(BALL_PAL_TAG, colors, &isExt);
     if (pal == 0xFF)
         return;
-    UpdateSpritePaletteWithWeather(pal);
     if (GetSpriteTileStartByTag(gBallSpriteSheets[BALL_POKE].tag) == 0xFFFF)
         LoadCompressedSpriteSheetUsingHeap(&gBallSpriteSheets[BALL_POKE]);
     template.tileTag = gBallSpriteSheets[BALL_POKE].tag;
@@ -646,7 +676,10 @@ static void ShowBall(struct ObjectEvent *follower, bool8 opening)
             return;
         }
         gSprites[sBall].oam.priority = player->oam.priority;
-        gSprites[sBall].oam.paletteNum = pal;
+        if (isExt)
+            SetSpriteExtPalette(&gSprites[sBall], pal);
+        else
+            gSprites[sBall].oam.paletteNum = pal;
     }
     gSprites[sBall].coordOffsetEnabled = TRUE;
     gSprites[sBall].data[1] = follower->currentCoords.x;

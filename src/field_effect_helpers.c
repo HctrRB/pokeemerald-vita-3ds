@@ -63,9 +63,15 @@ void SetUpReflection(struct ObjectEvent *objectEvent, struct Sprite *sprite, boo
     reflectionSprite->sReflectionObjEventId = sprite->data[0];
     reflectionSprite->sReflectionObjEventLocalId = objectEvent->localId;
     reflectionSprite->sIsStillReflection = stillReflection;
-    LoadObjectReflectionPalette(objectEvent, reflectionSprite);
     if (FollowerMon_IsFollower(objectEvent))
+    {
         reflectionSprite->oam.paletteNum = sprite->oam.paletteNum;
+        SetSpriteExtPalette(reflectionSprite, GetSpriteExtPalette(sprite));
+    }
+    else
+    {
+        LoadObjectReflectionPalette(objectEvent, reflectionSprite);
+    }
 
     if (!stillReflection)
         reflectionSprite->oam.affineMode = ST_OAM_AFFINE_NORMAL;
