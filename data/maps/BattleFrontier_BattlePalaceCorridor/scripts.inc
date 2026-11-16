@@ -120,31 +120,30 @@ BattleFrontier_BattlePalaceCorridor_Movement_AttendantEnterBattleRoom:
 	step_end
 
 BattleFrontier_BattlePalaceCorridor_Text_PeopleAndMonAreSame:
-	.string "Pessoas e POKéMON, no fundo,\n"
-	.string "são iguais…\p"
-	.string "A natureza de cada um faz com que\n"
-	.string "seja bom em umas coisas e não\l"
-	.string "em outras.$"
+	.string "People and POKéMON, they are but\n"
+	.string "the same…\p"
+	.string "Their individual nature makes them\n"
+	.string "good at certain things, and not good\l"
+	.string "at others.$"
 
 BattleFrontier_BattlePalaceCorridor_Text_LetMonDoWhatItLikes:
-	.string "Em vez de forçar um POKéMON a fazer\n"
-	.string "o que não gosta, deixe-o fazer o\l"
-	.string "que gosta e sabe fazer bem.\p"
-	.string "Se coloque no lugar do POKéMON e\n"
-	.string "pense em que golpes ele gostaria.$"
+	.string "Rather than trying to make a POKéMON\n"
+	.string "do what it dislikes, try to let it do\l"
+	.string "what it likes and is good at doing.\p"
+	.string "Put yourself in the POKéMON's position\n"
+	.string "and consider what moves it would like.$"
 
 BattleFrontier_BattlePalaceCorridor_Text_MonDifferentWhenCornered:
-	.string "A natureza de um POKéMON é uma\n"
-	.string "coisa notável…\p"
-	.string "Alguns POKéMON agem de um jeito\n"
-	.string "totalmente diferente quando\l"
-	.string "encurralados.$"
+	.string "A POKéMON's nature is a remarkable\n"
+	.string "thing…\p"
+	.string "Some POKéMON behave in a completely\n"
+	.string "different way when they are cornered.$"
 
 BattleFrontier_BattlePalaceCorridor_Text_BeginningToUnderstandNature:
-	.string "Está começando a entender como a\n"
-	.string "natureza faz um POKéMON agir?$"
+	.string "Are you beginning to understand how\n"
+	.string "a POKéMON's nature makes it behave?$"
 
 BattleFrontier_BattlePalaceCorridor_Text_HeartfeltBondBetweenYouAndMons:
-	.string "Ah… Vejo um laço forte e sincero\n"
-	.string "entre você e os seus POKéMON…$"
+	.string "Ah… I see a strong, heartfelt bond\n"
+	.string "between you and your POKéMON…$"
 

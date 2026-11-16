@@ -63,41 +63,41 @@ VerdanturfTown_FriendshipRatersHouse_EventScript_Pikachu::
 	end
 
 VerdanturfTown_FriendshipRatersHouse_Text_SeeHowMuchPokemonLikesYou:
-	.string "Deixa eu ver o seu POKéMON.\n"
-	.string "Vou ver o quanto ele gosta de você.\p"
-	.string "Ah.\n"
-	.string "O seu POKéMON…$"
+	.string "Let me see your POKéMON.\n"
+	.string "I'll check to see how much it likes you.\p"
+	.string "Oh.\n"
+	.string "Your POKéMON…$"
 
 VerdanturfTown_FriendshipRatersHouse_Text_AdoresYou:
-	.string "Ele te adora.\n"
-	.string "Não tem como te amar mais.\l"
-	.string "Até eu fico feliz de ver.$"
+	.string "It adores you.\n"
+	.string "It can't possibly love you any more.\l"
+	.string "I even feel happy seeing it.$"
 
 VerdanturfTown_FriendshipRatersHouse_Text_VeryHappy:
-	.string "Ele parece muito feliz.\n"
-	.string "Dá pra ver que gosta muito de você.$"
+	.string "It seems to be very happy.\n"
+	.string "It obviously likes you a whole lot.$"
 
 VerdanturfTown_FriendshipRatersHouse_Text_LikesYouQuiteALot:
-	.string "Ele gosta bastante de você.\n"
-	.string "Parece querer um pouco de dengo.$"
+	.string "It likes you quite a lot.\n"
+	.string "It seems to want to be babied a little.$"
 
 VerdanturfTown_FriendshipRatersHouse_Text_GettingUsedToYou:
-	.string "Ele está se acostumando com você.\n"
-	.string "Parece confiar em você.$"
+	.string "It's getting used to you.\n"
+	.string "It seems to believe in you.$"
 
 VerdanturfTown_FriendshipRatersHouse_Text_NotUsedToYou:
-	.string "Ele ainda não se acostumou com você.\n"
-	.string "Nem te ama, nem te odeia.$"
+	.string "It's not very used to you yet.\n"
+	.string "It neither loves nor hates you.$"
 
 VerdanturfTown_FriendshipRatersHouse_Text_VeryWary:
-	.string "Ele está muito desconfiado.\n"
-	.string "Tem uma maldade assustadora no olhar.\l"
-	.string "Não gosta nada de você.$"
+	.string "It's very wary.\n"
+	.string "It has scary viciousness in its eyes.\l"
+	.string "It doesn't like you much at all.$"
 
 VerdanturfTown_FriendshipRatersHouse_Text_DetestsYou:
-	.string "É meio difícil pra mim dizer isto…\p"
-	.string "O seu POKéMON simplesmente te detesta.\n"
-	.string "Isso não te incomoda?$"
+	.string "This is a little hard for me to say…\p"
+	.string "Your POKéMON simply detests you.\n"
+	.string "Doesn't that make you uncomfortable?$"
 
 VerdanturfTown_FriendshipRatersHouse_Text_Pikachu:
 	.string "PIKACHU: Pika pika!$"

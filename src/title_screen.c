@@ -312,6 +312,7 @@ static const struct SpriteTemplate sStartCopyrightBannerSpriteTemplate =
     .callback = SpriteCB_PressStartCopyrightBanner,
 };
 
+#ifndef PLATFORM_VITA
 static const struct CompressedSpriteSheet sSpriteSheet_PressStart[] =
 {
     {
@@ -321,6 +322,7 @@ static const struct CompressedSpriteSheet sSpriteSheet_PressStart[] =
     },
     {},
 };
+#endif
 
 #ifdef PLATFORM_VITA
 static const struct CompressedSpriteSheet sSpriteSheet_PressStartPt[] =

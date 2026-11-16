@@ -160,9 +160,9 @@ static void NavEnter(void)
 
 static void Filter(char *buf, size_t cap)
 {
-    if (sMethod == UI_WILD_GRASS && UiGame_TimedEncounters()) snprintf(buf, cap, UiLocale_Translate("GRASS · %s"), sTimes[sPhase]);
-    else if (sMethod == UI_WILD_FISH) snprintf(buf, cap, UiLocale_Translate("FISH · %s"), sRod ? sRods[sRod] : "ALL RODS");
-    else snprintf(buf, cap, "%s", sMethods[sMethod]);
+    if (sMethod == UI_WILD_GRASS && UiGame_TimedEncounters()) snprintf(buf, cap, UiLocale_Translate("GRASS · %s"), UiLocale_Translate(sTimes[sPhase]));
+    else if (sMethod == UI_WILD_FISH) snprintf(buf, cap, UiLocale_Translate("FISH · %s"), UiLocale_Translate(sRod ? sRods[sRod] : "ALL RODS"));
+    else snprintf(buf, cap, "%s", UiLocale_Translate(sMethods[sMethod]));
 }
 
 // ENCOUNTERS popup (design/stitch/pokenav_mapa #encuentros): method sub-tabs, time of day (grass)
@@ -231,9 +231,13 @@ static void DrawEncPopup(void)
     UiW_Window(POP_X, POP_Y, POP_W, POP_H, name);
     snprintf(buf, sizeof(buf), "%d POKéMON", (int)sWildN);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + POP_W - 20 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), POP_Y + 4, buf, UI_COL_ON_FRAME);
-    SubTabs(0, POP_X + 16, POP_Y + 54, sMethods, UI_WILD_COUNT, sMethod);
-    if (sMethod == UI_WILD_GRASS && UiGame_TimedEncounters()) SubTabs(1, POP_X + 16, POP_Y + 92, sTimes, 3, sPhase);
-    if (sMethod == UI_WILD_FISH) SubTabs(1, POP_X + 16, POP_Y + 92, sRods, 4, sRod);
+    const char *translatedTimes[3], *translatedRods[4], *translatedMethods[UI_WILD_COUNT];
+    for (int i = 0; i < 3; ++i) translatedTimes[i] = UiLocale_Translate(sTimes[i]);
+    for (int i = 0; i < 4; ++i) translatedRods[i] = UiLocale_Translate(sRods[i]);
+    for (int i = 0; i < UI_WILD_COUNT; ++i) translatedMethods[i] = UiLocale_Translate(sMethods[i]);
+    SubTabs(0, POP_X + 16, POP_Y + 54, translatedMethods, UI_WILD_COUNT, sMethod);
+    if (sMethod == UI_WILD_GRASS && UiGame_TimedEncounters()) SubTabs(1, POP_X + 16, POP_Y + 92, translatedTimes, 3, sPhase);
+    if (sMethod == UI_WILD_FISH) SubTabs(1, POP_X + 16, POP_Y + 92, translatedRods, 4, sRod);
     for (int32_t r = 0; r < POP_ROWS && sEncList.first + r < sWildN; r++)
     {
         const int32_t i = sEncList.first + r, y = POP_Y + 134 + r * 44;
@@ -243,7 +247,7 @@ static void DrawEncPopup(void)
         UiSpr_MonIcon(sWild[i].species, 0, POP_X + 44, y + 4, 1);
         UiGame_SpeciesName(sWild[i].species, name, sizeof(name));
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 84, y + 6, name, ink);
-        if (sWild[i].rod) UiW_Chip(POP_X + 420, y + 10, sRods[sWild[i].rod], false);
+        if (sWild[i].rod) UiW_Chip(POP_X + 420, y + 10, UiLocale_Translate(sRods[sWild[i].rod]), false);
         snprintf(buf, sizeof(buf), "Lv%u-%u", (unsigned)sWild[i].minLv, (unsigned)sWild[i].maxLv);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + POP_W - 36 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), y + 6, buf, ink);
     }

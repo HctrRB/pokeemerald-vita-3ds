@@ -422,7 +422,7 @@ void VitaPerf_LogMemory(const char *stage)
             (uint32_t)((size_t)_newlib_heap_size_user / 1024u),
             (uint32_t)(vglMemFree(VGL_MEM_VRAM) / 1024u), (uint32_t)(vglMemTotal(VGL_MEM_VRAM) / 1024u),
             (uint32_t)(vglMemFree(VGL_MEM_RAM) / 1024u), (uint32_t)(vglMemTotal(VGL_MEM_RAM) / 1024u),
-            (uint32_t)(vglMemFree(VGL_MEM_SLOW) / 1024u), (uint32_t)(vglMemTotal(VGL_MEM_SLOW) / 1024u));
+            (uint32_t)(vglMemFree(VGL_MEM_PHYCONT) / 1024u), (uint32_t)(vglMemTotal(VGL_MEM_PHYCONT) / 1024u));
 #else
     fprintf(sSummaryFile, "[MEMORY %s] not measured on this platform\n", stage);
 #endif
@@ -546,7 +546,7 @@ static void WriteSummaryBlock(void)
                 (uint32_t)(heapFree / 1024u), (uint32_t)(sSessionMinHeapFree / 1024u),
                 (uint32_t)(vglMemFree(VGL_MEM_VRAM) / 1024u),
                 (uint32_t)(vglMemFree(VGL_MEM_RAM) / 1024u),
-                (uint32_t)(vglMemFree(VGL_MEM_SLOW) / 1024u));
+                (uint32_t)(vglMemFree(VGL_MEM_PHYCONT) / 1024u));
     }
 #endif
     fprintf(sSummaryFile, "  SESSION (3D): %u frames | over %.1f ms: %u (%.2f%%) | over %.1f ms: %u (%.2f%%) | max %.2f ms\n",

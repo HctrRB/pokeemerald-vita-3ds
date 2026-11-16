@@ -153,7 +153,7 @@ static void DoAction(int32_t act)
     case ACT_TOSS:
     {
         char title[24];
-        snprintf(title, sizeof(title), UiLocale_Translate("TOSS"));
+        snprintf(title, sizeof(title), "%s", UiLocale_Translate("TOSS"));
         UiQty_Open(&sQty, title, sRows[sList[sPocket].sel].qty);
         break;
     }
@@ -226,7 +226,7 @@ static bool Update(const UiInput *in)
         sSort = (sSort + 1) % UI_SORT_COUNT;
         UiGame_SortPocket(sPocket, sSort);
         PlaySE(SE_SELECT);
-        UiKit_Toast("POCKET SORTED: %s", sSortNames[sSort]);
+        UiKit_Toast("POCKET SORTED: %s", UiLocale_Translate(sSortNames[sSort]));
         Refresh();
         return true;
     }
@@ -256,10 +256,13 @@ static bool Update(const UiInput *in)
 static void Build(void)
 {
     const bool pyr = UiGame_InPyramid();
+    const char *pocketTabs[POCKETS_COUNT];
+    for (int32_t i = 0; i < POCKETS_COUNT; ++i)
+        pocketTabs[i] = UiLocale_Translate(sPocketTabs[i]);
     if (pyr)
-        UiKit_Header("BATTLE BAG", sPocketTabs, 1, 0, sTabX, sTabW, 8);
+        UiKit_Header("BATTLE BAG", pocketTabs, 1, 0, sTabX, sTabW, 8);
     else
-        UiKit_Header("BAG", sPocketTabs, POCKETS_COUNT, sPocket, sTabX, sTabW, 8);
+        UiKit_Header("BAG", pocketTabs, POCKETS_COUNT, sPocket, sTabX, sTabW, 8);
     UiKit_HeaderMoney();
     if (sGiveTo >= 0)
     {
@@ -288,7 +291,7 @@ static void Build(void)
     {
         const uint16_t bagBase = UiGame_PlayerIsMale() ? UI_SPR_BAG_MALE_FIRST : UI_SPR_BAG_FEMALE_FIRST;
         UiDraw_Sprite((uint16_t)(bagBase + sPocket), 22, 64, 2);
-        UiText_Draw(UI_FACE_PS2P, 16, 160, 100, sPocketTabs[sPocket], UI_COL_TITLE);
+        UiText_Draw(UI_FACE_PS2P, 16, 160, 100, UiLocale_Translate(sPocketTabs[sPocket]), UI_COL_TITLE);
         snprintf(buf, sizeof(buf), UiLocale_Translate("%d kinds"), (int)sCount);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 160, 122, buf, UI_COL_ON_SOFT);
     }
@@ -305,7 +308,7 @@ static void Build(void)
         char name[24];
         UiGame_ItemName(item, name, sizeof(name));
         UiText_Draw(UI_FACE_PS2P, 16, 100, 228, name, UI_COL_INK);
-        const int32_t cw = UiW_Chip(100, 252, sPocketCat[sPocket], false);
+        const int32_t cw = UiW_Chip(100, 252, UiLocale_Translate(sPocketCat[sPocket]), false);
         if (sPocket != KEYITEMS_POCKET)
         {
             snprintf(buf, sizeof(buf), "x%u", (unsigned)sRows[sList[sPocket].sel].qty);
@@ -329,9 +332,9 @@ static void Build(void)
 
     // List
     UiW_Panel(332, 60, 612, 432);
-    snprintf(buf, sizeof(buf), "%s POCKET", sPocketTabs[sPocket]);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("%s POCKET"), UiLocale_Translate(sPocketTabs[sPocket]));
     char sortBuf[24];
-    snprintf(sortBuf, sizeof(sortBuf), UiLocale_Translate("Sort: %s"), sSortNames[sSort]);
+    snprintf(sortBuf, sizeof(sortBuf), UiLocale_Translate("Sort: %s"), UiLocale_Translate(sSortNames[sSort]));
     UiW_PanelHead(332, 60, 612, buf, sortBuf);
     const UiList *l = &sList[sPocket];
     UiDraw_PushClip(LIST_X, LIST_Y, LIST_W, ROWS * ROW_H);

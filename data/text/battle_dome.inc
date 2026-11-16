@@ -1,341 +1,341 @@
 BattleDome_Text_Potential1::
-	.string "O melhor candidato ao título!$"
+	.string "The best candidate to be a champ!$"
 
 BattleDome_Text_Potential2::
-	.string "Equipe finalista na certa.$"
+	.string "A sure-finalist team.$"
 
 BattleDome_Text_Potential3::
-	.string "Deve ficar entre os três.$"
+	.string "A likely top-three finisher.$"
 
 BattleDome_Text_Potential4::
-	.string "Candidata ao primeiro lugar.$"
+	.string "A candidate to finish first.$"
 
 BattleDome_Text_Potential5::
-	.string "Equipe com potencial de elite.$"
+	.string "A team with top-class potential.$"
 
 BattleDome_Text_Potential6::
-	.string "A zebra deste torneio.$"
+	.string "The dark horse team this tournament.$"
 
 BattleDome_Text_Potential7::
-	.string "Equipe acima da média.$"
+	.string "A better-than-average team.$"
 
 BattleDome_Text_Potential8::
-	.string "A equipe média do torneio.$"
+	.string "This tournament's average team.$"
 
 BattleDome_Text_Potential9::
-	.string "Equipe de potencial médio.$"
+	.string "A team with average potential.$"
 
 BattleDome_Text_Potential10::
-	.string "Equipe abaixo da média.$"
+	.string "A weaker-than-average team.$"
 
 BattleDome_Text_Potential11::
-	.string "Equipe atrás da 1ª vitória.$"
+	.string "A team looking for its first win.$"
 
 BattleDome_Text_Potential12::
-	.string "Uma vitória já seria um orgulho.$"
+	.string "One win will make this team proud.$"
 
 BattleDome_Text_Potential13::
-	.string "No geral, uma equipe fraca.$"
+	.string "Overall, a weak team.$"
 
 BattleDome_Text_Potential14::
-	.string "Equipe de potencial bem baixo.$"
+	.string "A team with very low potential.$"
 
 BattleDome_Text_Potential15::
-	.string "Dificilmente vence o torneio.$"
+	.string "A team unlikely to win the tournament.$"
 
 BattleDome_Text_Potential16::
-	.string "A que menos chance tem de vencer.$"
+	.string "The team most unlikely to win.$"
 
 BattleDome_Text_PotentialDomeAceTucker::
-	.string "O astro perfeito e invencível!$"
+	.string "The perfect, invincible superstar!$"
 
 BattleDome_Text_StyleRiskDisaster::
-	.string "Às vezes arrisca um desastre total.$"
+	.string "Willing to risk total disaster at times.$"
 
 BattleDome_Text_StyleEndureLongBattles::
-	.string "Aguenta bem batalhas longas.$"
+	.string "Skilled at enduring long battles.$"
 
 BattleDome_Text_StyleVariesTactics::
-	.string "Muda a tática conforme o rival.$"
+	.string "Varies tactics to suit the opponent.$"
 
 BattleDome_Text_StyleToughWinningPattern::
-	.string "Tem um padrão de vitória sólido.$"
+	.string "Has a tough winning pattern.$"
 
 BattleDome_Text_StyleUsesVeryRareMove::
-	.string "Às vezes usa um golpe raríssimo.$"
+	.string "Occasionally uses a very rare move.$"
 
 BattleDome_Text_StyleUsesStartlingMoves::
-	.string "Usa golpes surpreendentes.$"
+	.string "Uses startling and disruptive moves.$"
 
 BattleDome_Text_StyleConstantlyWatchesHP::
-	.string "Vigia os PS o tempo todo.$"
+	.string "Constantly watches HP in battle.$"
 
 BattleDome_Text_StyleStoresAndLoosesPower::
-	.string "Acumula poder e depois solta.$"
+	.string "Good at storing then loosing power.$"
 
 BattleDome_Text_StyleEnfeeblesFoes::
-	.string "Sabe enfraquecer o adversário.$"
+	.string "Skilled at enfeebling foes.$"
 
 BattleDome_Text_StylePrefersLuckTactics::
-	.string "Prefere táticas de sorte.$"
+	.string "Prefers tactics that rely on luck.$"
 
 BattleDome_Text_StyleRegalAtmosphere::
-	.string "Ataca com ar majestoso.$"
+	.string "Attacks with a regal atmosphere.$"
 
 BattleDome_Text_StylePowerfulLowPPMoves::
-	.string "Usa golpes fortes de pouco PP.$"
+	.string "Attacks with powerful, low-PP moves.$"
 
 BattleDome_Text_StyleEnfeebleThenAttack::
-	.string "Enfraquece e depois ataca.$"
+	.string "Skilled at enfeebling, then attacking.$"
 
 BattleDome_Text_StyleBattlesWhileEnduring::
-	.string "Luta aguentando todo ataque.$"
+	.string "Battles while enduring all attacks.$"
 
 BattleDome_Text_StyleUpsetsFoesEmotionally::
-	.string "Sabe abalar o adversário.$"
+	.string "Skilled at upsetting foes emotionally.$"
 
 BattleDome_Text_StyleStrongAndStraightforward::
-	.string "Usa golpes fortes e diretos.$"
+	.string "Uses strong and straightforward moves.$"
 
 BattleDome_Text_StyleAggressivelyStrongMoves::
-	.string "Usa golpes fortes com garra.$"
+	.string "Aggressively uses strong moves.$"
 
 BattleDome_Text_StyleCleverlyDodgesAttacks::
-	.string "Luta desviando com esperteza.$"
+	.string "Battles while cleverly dodging attacks.$"
 
 BattleDome_Text_StyleUsesUpsettingMoves::
-	.string "Sabe usar golpes irritantes.$"
+	.string "Skilled at using upsetting attacks.$"
 
 BattleDome_Text_StyleUsesPopularMoves::
-	.string "Usa muitos golpes populares.$"
+	.string "Uses many popular moves.$"
 
 BattleDome_Text_StyleHasPowerfulComboMoves::
-	.string "Tem golpes pra combos fortes.$"
+	.string "Has moves for powerful combinations.$"
 
 BattleDome_Text_StyleUsesHighProbabilityMoves::
-	.string "Usa golpes de alta precisão.$"
+	.string "Uses high-probability attacks.$"
 
 BattleDome_Text_StyleAggressivelySpectacularMoves::
-	.string "Usa golpes vistosos com garra.$"
+	.string "Aggressively uses spectacular moves.$"
 
 BattleDome_Text_StyleEmphasizesOffenseOverDefense::
-	.string "Prioriza o ataque à defesa.$"
+	.string "Emphasizes offense over defense.$"
 
 BattleDome_Text_StyleEmphasizesDefenseOverOffense::
-	.string "Prioriza a defesa ao ataque.$"
+	.string "Emphasizes defense over offense.$"
 
 BattleDome_Text_StyleAttacksQuicklyStrongMoves::
-	.string "Ataca rápido com golpes fortes.$"
+	.string "Attacks quickly with strong moves.$"
 
 BattleDome_Text_StyleUsesAddedEffectMoves::
-	.string "Usa golpes com efeito extra.$"
+	.string "Often uses moves with added effects.$"
 
 BattleDome_Text_StyleUsesBalancedMixOfMoves::
-	.string "Usa golpes bem variados.$"
+	.string "Uses a well-balanced mix of moves.$"
 
 BattleDome_Text_StyleSampleMessage1::
-	.string "Mensagem de exemplo 1.$"
+	.string "This is sample message 1.$"
 
 BattleDome_Text_StyleSampleMessage2::
-	.string "Mensagem de exemplo 2.$"
+	.string "This is sample message 2.$"
 
 BattleDome_Text_StyleSampleMessage3::
-	.string "Mensagem de exemplo 3.$"
+	.string "This is sample message 3.$"
 
 BattleDome_Text_StyleSampleMessage4::
-	.string "Mensagem de exemplo 4.$"
+	.string "This is sample message 4.$"
 
 BattleDome_Text_EmphasizesHPAndAtk::
-	.string "Prioriza PS e ATAQUE.$"
+	.string "Emphasizes HP and ATTACK.$"
 
 BattleDome_Text_EmphasizesHPAndDef::
-	.string "Prioriza PS e DEFESA.$"
+	.string "Emphasizes HP and DEFENSE.$"
 
 BattleDome_Text_EmphasizesHPAndSpeed::
-	.string "Prioriza PS e VELOC..$"
+	.string "Emphasizes HP and SPEED.$"
 
 BattleDome_Text_EmphasizesHPAndSpAtk::
-	.string "Prioriza PS e AT. ESP..$"
+	.string "Emphasizes HP and SP. ATTACK.$"
 
 BattleDome_Text_EmphasizesHPAndSpDef::
-	.string "Prioriza PS e DEF. ESP..$"
+	.string "Emphasizes HP and SP. DEFENSE.$"
 
 BattleDome_Text_EmphasizesAtkAndDef::
-	.string "Prioriza ATAQUE e DEFESA.$"
+	.string "Emphasizes ATTACK and DEFENSE.$"
 
 BattleDome_Text_EmphasizesAtkAndSpeed::
-	.string "Prioriza ATAQUE e VELOC..$"
+	.string "Emphasizes ATTACK and SPEED.$"
 
 BattleDome_Text_EmphasizesAtkAndSpAtk::
-	.string "Prioriza ATAQUE e AT. ESP..$"
+	.string "Emphasizes ATTACK and SP. ATTACK.$"
 
 BattleDome_Text_EmphasizesAtkAndSpDef::
-	.string "Prioriza ATAQUE e DEF. ESP..$"
+	.string "Emphasizes ATTACK and SP. DEFENSE.$"
 
 BattleDome_Text_EmphasizesDefAndSpeed::
-	.string "Prioriza DEFESA e VELOC..$"
+	.string "Emphasizes DEFENSE and SPEED.$"
 
 BattleDome_Text_EmphasizesDefAndSpAtk::
-	.string "Prioriza DEFESA e AT. ESP..$"
+	.string "Emphasizes DEFENSE and SP. ATTACK.$"
 
 BattleDome_Text_EmphasizesDefAndSpDef::
-	.string "Prioriza DEFESA e DEF. ESP..$"
+	.string "Emphasizes DEFENSE and SP. DEFENSE.$"
 
 BattleDome_Text_EmphasizesSpeedAndSpAtk::
-	.string "Prioriza VELOC. e AT. ESP..$"
+	.string "Emphasizes SPEED and SP. ATTACK.$"
 
 BattleDome_Text_EmphasizesSpeedAndSpDef::
-	.string "Prioriza VELOC. e DEF. ESP..$"
+	.string "Emphasizes SPEED and SP. DEFENSE.$"
 
 BattleDome_Text_EmphasizesSpAtkAndSpDef::
-	.string "Prioriza AT. ESP. e DEF. ESP..$"
+	.string "Emphasizes SP. ATTACK and SP. DEFENSE.$"
 
 BattleDome_Text_EmphasizesHP::
-	.string "Prioriza PS.$"
+	.string "Emphasizes HP.$"
 
 BattleDome_Text_EmphasizesAtk::
-	.string "Prioriza ATAQUE.$"
+	.string "Emphasizes ATTACK.$"
 
 BattleDome_Text_EmphasizesDef::
-	.string "Prioriza DEFESA.$"
+	.string "Emphasizes DEFENSE.$"
 
 BattleDome_Text_EmphasizesSpeed::
-	.string "Prioriza VELOC..$"
+	.string "Emphasizes SPEED.$"
 
 BattleDome_Text_EmphasizesSpAtk::
-	.string "Prioriza AT. ESP..$"
+	.string "Emphasizes SP. ATTACK.$"
 
 BattleDome_Text_EmphasizesSpDef::
-	.string "Prioriza DEF. ESP..$"
+	.string "Emphasizes SP. DEFENSE.$"
 
 BattleDome_Text_NeglectsHPAndAtk::
-	.string "Descuida de PS e ATAQUE.$"
+	.string "Neglects HP and ATTACK.$"
 
 BattleDome_Text_NeglectsHPAndDef::
-	.string "Descuida de PS e DEFESA.$"
+	.string "Neglects HP and DEFENSE.$"
 
 BattleDome_Text_NeglectsHPAndSpeed::
-	.string "Descuida de PS e VELOC..$"
+	.string "Neglects HP and SPEED.$"
 
 BattleDome_Text_NeglectsHPAndSpAtk::
-	.string "Descuida de PS e AT. ESP..$"
+	.string "Neglects HP and SP. ATTACK.$"
 
 BattleDome_Text_NeglectsHPAndSpDef::
-	.string "Descuida de PS e DEF. ESP..$"
+	.string "Neglects HP and SP. DEFENSE.$"
 
 BattleDome_Text_NeglectsAtkAndDef::
-	.string "Descuida de ATAQUE e DEFESA.$"
+	.string "Neglects ATTACK and DEFENSE.$"
 
 BattleDome_Text_NeglectsAtkAndSpeed::
-	.string "Descuida de ATAQUE e VELOC..$"
+	.string "Neglects ATTACK and SPEED.$"
 
 BattleDome_Text_NeglectsAtkAndSpAtk::
-	.string "Descuida de ATAQUE e AT. ESP..$"
+	.string "Neglects ATTACK and SP. ATTACK.$"
 
 BattleDome_Text_NeglectsAtkAndSpDef::
-	.string "Descuida de ATAQUE e DEF. ESP..$"
+	.string "Neglects ATTACK and SP. DEFENSE.$"
 
 BattleDome_Text_NeglectsDefAndSpeed::
-	.string "Descuida de DEFESA e VELOC..$"
+	.string "Neglects DEFENSE and SPEED.$"
 
 BattleDome_Text_NeglectsDefAndSpAtk::
-	.string "Descuida de DEFESA e AT. ESP..$"
+	.string "Neglects DEFENSE and SP. ATTACK.$"
 
 BattleDome_Text_NeglectsDefAndSpDef::
-	.string "Descuida de DEFESA e DEF. ESP..$"
+	.string "Neglects DEFENSE and SP. DEFENSE.$"
 
 BattleDome_Text_NeglectsSpeedAndSpAtk::
-	.string "Descuida de VELOC. e AT. ESP..$"
+	.string "Neglects SPEED and SP. ATTACK.$"
 
 BattleDome_Text_NeglectsSpeedAndSpDef::
-	.string "Descuida de VELOC. e DEF. ESP..$"
+	.string "Neglects SPEED and SP. DEFENSE.$"
 
 BattleDome_Text_NeglectsSpAtkAndSpDef::
-	.string "Descuida de AT. ESP. e DEF. ESP..$"
+	.string "Neglects SP. ATTACK and SP. DEFENSE.$"
 
 BattleDome_Text_NeglectsHP::
-	.string "Descuida de PS.$"
+	.string "Neglects HP.$"
 
 BattleDome_Text_NeglectsAtk::
-	.string "Descuida de ATAQUE.$"
+	.string "Neglects ATTACK.$"
 
 BattleDome_Text_NeglectsDef::
-	.string "Descuida de DEFESA.$"
+	.string "Neglects DEFENSE.$"
 
 BattleDome_Text_NeglectsSpeed::
-	.string "Descuida de VELOC..$"
+	.string "Neglects SPEED.$"
 
 BattleDome_Text_NeglectsSpAtk::
-	.string "Descuida de AT. ESP..$"
+	.string "Neglects SP. ATTACK.$"
 
 BattleDome_Text_NeglectsSpDef::
-	.string "Descuida de DEF. ESP..$"
+	.string "Neglects SP. DEFENSE.$"
 
 BattleDome_Text_RaisesMonsWellBalanced::
-	.string "Cria POKéMON de forma equilibrada.$"
+	.string "Raises POKéMON in a well-balanced way.$"
 
 BattleDome_Text_LetTheBattleBegin::
-	.string "Que comece a batalha!$"
+	.string "Let the battle begin!$"
 
 BattleDome_Text_TrainerWonUsingMove::
-	.string "{STR_VAR_1} vence com {STR_VAR_2}!$"
+	.string "{STR_VAR_1} won using {STR_VAR_2}!$"
 
 BattleDome_Text_TrainerBecameChamp::
-	.string "{STR_VAR_1} ganhou o título!$"
+	.string "{STR_VAR_1} became the champ!$"
 
 BattleDome_Text_TrainerWonByDefault::
-	.string "{STR_VAR_1} venceu por W.O.!$"
+	.string "{STR_VAR_1} won by default!$"
 
 BattleDome_Text_TrainerWonOutrightByDefault::
-	.string "{STR_VAR_1} levou o título por W.O.!$"
+	.string "{STR_VAR_1} won outright by default!$"
 
 BattleDome_Text_TrainerWonNoMoves::
-	.string "{STR_VAR_1} venceu sem usar golpes!$"
+	.string "{STR_VAR_1} won without using a move!$"
 
 BattleDome_Text_TrainerWonOutrightNoMoves::
-	.string "{STR_VAR_1} levou o título sem golpes!$"
+	.string "{STR_VAR_1} won outright with no moves!$"
 
 BattleDome_Text_Round1Match1::
-	.string "1ª rodada, luta 1$"
+	.string "Round 1, Match 1$"
 
 BattleDome_Text_Round1Match2::
-	.string "1ª rodada, luta 2$"
+	.string "Round 1, Match 2$"
 
 BattleDome_Text_Round1Match3::
-	.string "1ª rodada, luta 3$"
+	.string "Round 1, Match 3$"
 
 BattleDome_Text_Round1Match4::
-	.string "1ª rodada, luta 4$"
+	.string "Round 1, Match 4$"
 
 BattleDome_Text_Round1Match5::
-	.string "1ª rodada, luta 5$"
+	.string "Round 1, Match 5$"
 
 BattleDome_Text_Round1Match6::
-	.string "1ª rodada, luta 6$"
+	.string "Round 1, Match 6$"
 
 BattleDome_Text_Round1Match7::
-	.string "1ª rodada, luta 7$"
+	.string "Round 1, Match 7$"
 
 BattleDome_Text_Round1Match8::
-	.string "1ª rodada, luta 8$"
+	.string "Round 1, Match 8$"
 
 BattleDome_Text_Round2Match1::
-	.string "2ª rodada, luta 1$"
+	.string "Round 2, Match 1$"
 
 BattleDome_Text_Round2Match2::
-	.string "2ª rodada, luta 2$"
+	.string "Round 2, Match 2$"
 
 BattleDome_Text_Round2Match3::
-	.string "2ª rodada, luta 3$"
+	.string "Round 2, Match 3$"
 
 BattleDome_Text_Round2Match4::
-	.string "2ª rodada, luta 4$"
+	.string "Round 2, Match 4$"
 
 BattleDome_Text_SemifinalMatch1::
-	.string "Semifinal, luta 1$"
+	.string "Semifinal Match 1$"
 
 BattleDome_Text_SemifinalMatch2::
-	.string "Semifinal, luta 2$"
+	.string "Semifinal Match 2$"
 
 BattleDome_Text_FinalMatch::
-	.string "Final$"
+	.string "Final Match$"

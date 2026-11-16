@@ -1,38 +1,38 @@
 /* With the exception of Link standby, none of the below texts are used*/
 
 gTest_MissedTurn::
-	.string "Perdeu a vez$"
+	.string "Missed turn$"
 
 gText_LinkStandby4::
-	.string "Aguardando conexão!$"
+	.string "Link standby!$"
 
 gText_WinnerIsPlayersMonCongrats::
-	.string "Venceu: {STR_VAR_2} de {STR_VAR_1}!\n"
-	.string "Parabéns!$"
+	.string "The winner is {STR_VAR_1}'s {STR_VAR_2}!\n"
+	.string "Congratulations!$"
 
 gText_WinnerIsPlayersMon::
-	.string "Venceu: {STR_VAR_2} de {STR_VAR_1}!{PAUSE_UNTIL_PRESS}$"
+	.string "The winner is {STR_VAR_1}'s {STR_VAR_2}!{PAUSE_UNTIL_PRESS}$"
 
 gText_PrimaryJudgingNumX::
-	.string "1ª fase: Nº {STR_VAR_1}{PAUSE_UNTIL_PRESS}$"
+	.string "Primary judging: No. {STR_VAR_1}{PAUSE_UNTIL_PRESS}$"
 
 gText_SecondaryJudgingNumX::
-	.string "2ª fase: Nº {STR_VAR_1}{PAUSE_UNTIL_PRESS}$"
+	.string "Secondary judging: No. {STR_VAR_1}{PAUSE_UNTIL_PRESS}$"
 
 gText_SetEventNumX::
-	.string "Evento: Nº {STR_VAR_1}{PAUSE_UNTIL_PRESS}$"
+	.string "Set event: No. {STR_VAR_1}{PAUSE_UNTIL_PRESS}$"
 
 gText_MoveUsedMostOften::
-	.string "O golpe mais usado:\n"
+	.string "The move used most often:\n"
 	.string "{STR_VAR_1}{PAUSE_UNTIL_PRESS}$"
 
 gText_MostImpressiveMon::
-	.string "O POKéMON mais marcante:\n"
-	.string "{STR_VAR_2} de {STR_VAR_1}{PAUSE_UNTIL_PRESS}$"
+	.string "The most impressive POKéMON:\n"
+	.string "{STR_VAR_1}'s {STR_VAR_2}{PAUSE_UNTIL_PRESS}$"
 
 gText_SetEventNumX2::
-	.string "Evento: Nº {STR_VAR_1}{PAUSE_UNTIL_PRESS}$"
+	.string "Set event: No. {STR_VAR_1}{PAUSE_UNTIL_PRESS}$"
 
 gText_LinkTVProgramWillNotBeMadeTrainerLost::
-	.string "Não vai ter programa de TV da conexão,\n"
-	.string "porque o TREINADOR perdeu.{PAUSE_UNTIL_PRESS}$"
+	.string "A link TV program will not be made\n"
+	.string "because the TRAINER lost.{PAUSE_UNTIL_PRESS}$"

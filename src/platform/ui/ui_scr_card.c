@@ -83,12 +83,12 @@ static void Build(void)
                 UiDraw_Frame(x, y, 104, 86, 3, UI_COL_SELECT);
             // Unearned badges: a faded silhouette
             UiDraw_SpriteTint((uint16_t)(UI_SPR_BADGE_FIRST + i), x + 36, y + 8, 2, got ? 0xFFFFFFFFu : UI_RGBA(200, 192, 170, 120));
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 52 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, got ? sBadgeNames[i] : "-") / 2, y + 46, got ? sBadgeNames[i] : "-", UI_COL_INK);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 52 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, got ? UiLocale_Translate(sBadgeNames[i]) : "-") / 2, y + 46, got ? UiLocale_Translate(sBadgeNames[i]) : "-", UI_COL_INK);
         }
         if (FlagGet(FLAG_BADGE01_GET + sBadge))
-            snprintf(buf, sizeof(buf), "%s BADGE", sBadgeNames[sBadge]);
+            snprintf(buf, sizeof(buf), UiLocale_Translate("%s BADGE"), UiLocale_Translate(sBadgeNames[sBadge]));
         else
-            snprintf(buf, sizeof(buf), UiLocale_Translate("Not obtained yet."));
+            snprintf(buf, sizeof(buf), "%s", UiLocale_Translate("Not obtained yet."));
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 492, 316, buf, UI_COL_INK);
     }
     else

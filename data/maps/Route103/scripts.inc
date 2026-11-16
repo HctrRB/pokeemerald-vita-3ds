@@ -287,67 +287,67 @@ Route103_EventScript_Isabelle::
 	end
 
 Route103_Text_MayRoute103Pokemon:
-	.string "MAY: Vamos ver… Os POKéMON que\n"
-	.string "aparecem na ROTA 103 são…$"
+	.string "MAY: Let's see… The POKéMON found\n"
+	.string "on ROUTE 103 include…$"
 
 Route103_Text_MayLetsBattle:
-	.string "Ah, oi, {PLAYER}{KUN}!\p"
-	.string "…Ah, entendi, meu pai te deu\n"
-	.string "um POKéMON de presente.\p"
-	.string "Já que estamos aqui, que tal uma\n"
-	.string "batalha rapidinha?\p"
-	.string "Vou te mostrar como é treinar\n"
-	.string "POKéMON!$"
+	.string "Oh, hi, {PLAYER}{KUN}!\p"
+	.string "…Oh, I see, my dad gave you\n"
+	.string "a POKéMON as a gift.\p"
+	.string "Since we're here, let's have a quick\n"
+	.string "battle!\p"
+	.string "I'll give you a taste of what being\n"
+	.string "a TRAINER is like.$"
 
 Route103_Text_MayDefeated:
-	.string "Uau! Que demais!\n"
-	.string "{PLAYER}{KUN}, você é bom mesmo!$"
+	.string "Wow! That's great!\n"
+	.string "{PLAYER}{KUN}, you're pretty good!$"
 
 Route103_Text_MayTimeToHeadBack:
-	.string "MAY: Acho que entendi por que meu pai\n"
-	.string "está de olho em você.\p"
-	.string "Você acabou de ganhar esse POKéMON,\n"
-	.string "e ele já gosta de você.\p"
-	.string "Acho que você faz amizade fácil com\n"
-	.string "qualquer tipo de POKéMON.\p"
-	.string "Bom, hora de voltar pro\n"
-	.string "LABORATÓRIO.$"
+	.string "MAY: I think I know why my dad has\n"
+	.string "an eye out for you now.\p"
+	.string "I mean, you just got that POKéMON,\n"
+	.string "but it already likes you.\p"
+	.string "You might be able to befriend any\n"
+	.string "kind of POKéMON easily.\p"
+	.string "Well, it's time to head back to\n"
+	.string "the LAB.$"
 
 Route103_Text_BrendanRoute103Pokemon:
-	.string "BRENDAN: Certo, então este e aquele\n"
-	.string "vivem na ROTA 103…$"
+	.string "BRENDAN: Okay, so it's this one and\n"
+	.string "that one that live on ROUTE 103…$"
 
 Route103_Text_BrendanLetsBattle:
-	.string "Opa, é a {PLAYER}!\p"
-	.string "…Ah, é, meu pai te deu um POKéMON.\p"
-	.string "Já que estamos aqui, que tal uma\n"
-	.string "batalhinha?\p"
-	.string "Vou te ensinar como é treinar\n"
-	.string "POKéMON!$"
+	.string "Hey, it's {PLAYER}!\p"
+	.string "…Oh, yeah, Dad gave you a POKéMON.\p"
+	.string "Since we're here, how about a little\n"
+	.string "battle?\p"
+	.string "I'll teach you what being a TRAINER's\n"
+	.string "about!$"
 
 Route103_Text_BrendanDefeated:
-	.string "Hm, {PLAYER}, você não é nada mal.$"
+	.string "Huh, {PLAYER}, you're not too shabby.$"
 
 Route103_Text_BrendanTimeToHeadBack:
-	.string "BRENDAN: Saquei.\n"
-	.string "Acho que sei por que meu pai está\l"
-	.string "de olho em você.\p"
-	.string "Olha, seu POKéMON já gosta de você,\n"
-	.string "mesmo você tendo acabado de pegar.\p"
-	.string "{PLAYER}, acho que você faz amizade\n"
-	.string "fácil com qualquer POKéMON.\p"
-	.string "Melhor a gente voltar pro LABORATÓRIO.$"
+	.string "BRENDAN: I think I get it.\n"
+	.string "I think I know why my dad has his eye\l"
+	.string "out for you now.\p"
+	.string "Look, your POKéMON already likes you,\n"
+	.string "even though you just got it.\p"
+	.string "{PLAYER}, I get the feeling that you\n"
+	.string "could befriend any POKéMON with ease.\p"
+	.string "We should head back to the LAB.$"
 
 Route103_Text_ShouldHaveBroughtPotion:
-	.string "Meu POKéMON está morto de cansaço…\n"
-	.string "Devia ter trazido uma POÇÃO…$"
+	.string "My POKéMON is staggeringly tired…\n"
+	.string "I should have brought a POTION…$"
 
 Route103_Text_ShortcutToOldale:
-	.string "Se você atravessar o mar daqui,\n"
-	.string "é um atalho pra CIDADE DE OLDALE.\p"
-	.string "Hehehe, útil, né?$"
+	.string "If you cross the sea from here,\n"
+	.string "it'll be a shortcut to OLDALE TOWN.\p"
+	.string "Fufufu, that's useful, isn't it?$"
 
 Route103_Text_RouteSign:
-	.string "ROTA 103\n"
-	.string "{DOWN_ARROW} CIDADE DE OLDALE$"
+	.string "ROUTE 103\n"
+	.string "{DOWN_ARROW} OLDALE TOWN$"
 

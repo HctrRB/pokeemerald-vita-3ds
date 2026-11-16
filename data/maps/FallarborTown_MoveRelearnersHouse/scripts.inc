@@ -57,41 +57,41 @@ FallarborTown_MoveRelearnersHouse_EventScript_ComeBackWithHeartScale::
 	end
 
 FallarborTown_MoveRelearnersHouse_Text_ImTheMoveTutor:
-	.string "Eu sou o TUTOR DE GOLPES.\p"
-	.string "Conheço todos os golpes que os\n"
-	.string "POKéMON aprendem, todinhos, e\l"
-	.string "posso ensinar esses golpes.\p"
-	.string "Posso ensinar um golpe a um\n"
-	.string "POKéMON seu, se quiser.\p"
-	.string "Em troca de uma ESCAMA CORAÇÃO.\n"
-	.string "Estou colecionando.$"
+	.string "I'm the MOVE TUTOR.\p"
+	.string "I know all the moves that POKéMON\n"
+	.string "learn--every one of them--and I can\l"
+	.string "teach POKéMON those moves.\p"
+	.string "I can teach a move to a POKéMON\n"
+	.string "of yours if you'd like.\p"
+	.string "I'll do it for a HEART SCALE.\n"
+	.string "I'm collecting those now.$"
 
 FallarborTown_MoveRelearnersHouse_Text_ThatsAHeartScaleWantMeToTeachMove:
-	.string "Oh! É isso! Uma ESCAMA CORAÇÃO\n"
-	.string "de verdade!\p"
-	.string "Deixa eu adivinhar: quer que eu\n"
-	.string "ensine um golpe?$"
+	.string "Oh! That's it! That's an honest to\n"
+	.string "goodness HEART SCALE!\p"
+	.string "Let me guess, you want me to teach\n"
+	.string "a move?$"
 
 FallarborTown_MoveRelearnersHouse_Text_TutorWhichMon:
-	.string "Qual POKéMON vai ter aula?$"
+	.string "Which POKéMON needs tutoring?$"
 
 FallarborTown_MoveRelearnersHouse_Text_TeachWhichMove:
-	.string "Que golpe eu devo ensinar?$"
+	.string "Which move should I teach?$"
 
 FallarborTown_MoveRelearnersHouse_Text_DontHaveMoveToTeachPokemon:
-	.string "Desculpa…\p"
-	.string "Parece que não tenho nenhum golpe\n"
-	.string "pra ensinar a esse POKéMON.$"
+	.string "Sorry…\p"
+	.string "It doesn't appear as if I have any move\n"
+	.string "I can teach that POKéMON.$"
 
 FallarborTown_MoveRelearnersHouse_Text_HandedOverHeartScale:
-	.string "{PLAYER} entregou uma ESCAMA CORAÇÃO\n"
-	.string "em troca.$"
+	.string "{PLAYER} handed over one HEART SCALE\n"
+	.string "in exchange.$"
 
 FallarborTown_MoveRelearnersHouse_Text_ComeBackWithHeartScale:
-	.string "Se os seus POKéMON precisarem aprender\n"
-	.string "um golpe, volte com uma ESCAMA CORAÇÃO.$"
+	.string "If your POKéMON need to learn a move,\n"
+	.string "come back with a HEART SCALE.$"
 
 FallarborTown_MoveRelearnersHouse_Text_CantTeachEgg:
-	.string "Hã? Não tem nenhum golpe que eu\n"
-	.string "consiga ensinar a um OVO.$"
+	.string "Hunh? There isn't a single move that\n"
+	.string "I can teach an EGG.$"
 

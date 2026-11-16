@@ -37,42 +37,41 @@ Route110_TrickHousePuzzle1_EventScript_Robin::
 	end
 
 Route110_TrickHousePuzzle1_Text_WroteSecretCodeLockOpened::
-	.string "{PLAYER} escreveu a senha secreta\n"
-	.string "na porta.\p"
-	.string "“O MESTRE DOS TRUQUES é fabuloso.”\n"
+	.string "{PLAYER} wrote down the secret code\n"
+	.string "on the door.\p"
+	.string "“TRICK MASTER is fabulous.”\n"
 	.string "… … … … … … … …\p"
-	.string "A fechadura abriu com um clique!$"
+	.string "The lock clicked open!$"
 
 Route110_TrickHousePuzzle1_Text_SallyIntro:
-	.string "Vou cortar e picar até a vitória\n"
-	.string "com o CORTAR que acabamos de aprender!$"
+	.string "I'll hack and slash my way to victory\n"
+	.string "with the CUT we just learned!$"
 
 Route110_TrickHousePuzzle1_Text_SallyDefeat:
-	.string "Por que tanta seriedade?$"
+	.string "Why are you so serious?$"
 
 Route110_TrickHousePuzzle1_Text_SallyPostBattle:
-	.string "Nunca me canso de cortar\n"
-	.string "e picar!$"
+	.string "I never get tired of hacking\n"
+	.string "and slashing!$"
 
 Route110_TrickHousePuzzle1_Text_EddieIntro:
-	.string "Entrei nesta casa esquisita\n"
-	.string "sem querer…$"
+	.string "I wandered into this weird house\n"
+	.string "by accident…$"
 
 Route110_TrickHousePuzzle1_Text_EddieDefeat:
-	.string "E agora perdi…$"
+	.string "And now I've lost…$"
 
 Route110_TrickHousePuzzle1_Text_EddiePostBattle:
-	.string "Me perdi, perdi a batalha e agora estou\n"
-	.string "mais perdido ainda… Não consigo sair…$"
+	.string "I lost my way, I lost a battle, and I'm\n"
+	.string "now even more lost… I can't get out…$"
 
 Route110_TrickHousePuzzle1_Text_RobinIntro:
-	.string "Quem é, afinal, o MESTRE DOS TRUQUES?$"
+	.string "Just who is the TRICK MASTER?$"
 
 Route110_TrickHousePuzzle1_Text_RobinDefeat:
-	.string "Perdi enquanto estava perdida\n"
-	.string "nos pensamentos!$"
+	.string "I lost while I was lost in thought!$"
 
 Route110_TrickHousePuzzle1_Text_RobinPostBattle:
-	.string "Que força!\n"
-	.string "Quem é você, afinal?$"
+	.string "You're strong!\n"
+	.string "Just who are you?$"
 

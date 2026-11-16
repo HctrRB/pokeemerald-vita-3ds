@@ -43,154 +43,161 @@ BattleFrontier_Lounge5_EventScript_LittleBoy::
 
 BattleFrontier_Lounge5_Text_NatureGirlGreeting::
 	.string "Ehehe!\n"
-	.string "Eu sei o que os POKéMON pensam!\p"
-	.string "Por favor!\n"
-	.string "Posso ver os seus POKéMON?$"
+	.string "I can tell what POKéMON are thinking!\p"
+	.string "Please!\n"
+	.string "Can I see your POKéMON?$"
 
 BattleFrontier_Lounge5_Text_NatureGirlNoneShown::
-	.string "Buu!\n"
-	.string "Mão de vaca!$"
+	.string "Boo!\n"
+	.string "Cheapie!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlHardy::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de batalhar!\n"
-	.string "Batalha mesmo com muito dodói!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to battle!\n"
+	.string "It will battle even if it has a lot\l"
+	.string "of ouchies!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlLonely::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de ser sapeca!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele revida!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to be sneaky!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will hit back!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlBrave::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de batalhar!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele se preocupa consigo!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to battle!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will worry about itself!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlAdamant::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de batalhar!\n"
-	.string "Batalha mesmo com muito dodói!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to battle!\n"
+	.string "It will battle even if it has a lot\l"
+	.string "of ouchies!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlNaughty::
-	.string "Humhum…\p"
-	.string "Este diz que se cuida!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele revida!$"
+	.string "Hmhm…\p"
+	.string "This one says it looks after itself!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will hit back!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlBold::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de ser sapeca!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele se preocupa consigo!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to be sneaky!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will worry about itself!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlDocileNaiveQuietQuirky::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de batalhar!\n"
-	.string "Batalha mesmo com muito dodói!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to battle!\n"
+	.string "It will battle even if it has a lot\l"
+	.string "of ouchies!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlRelaxed::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de ser sapeca!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele revida!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to be sneaky!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will hit back!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlImpish::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de batalhar!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele se preocupa consigo!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to battle!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will worry about itself!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlLax::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de ser sapeca!\n"
-	.string "É sapeca mesmo com muito dodói!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to be sneaky!\n"
+	.string "It says it likes to be sneaky even\l"
+	.string "if it has a lot of ouchies!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlTimid::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de batalhar!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele fica sapeca!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to battle!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will turn sneaky!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlHasty::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de batalhar!\n"
-	.string "Batalha mesmo com muito dodói!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to battle!\n"
+	.string "It will battle even if it has a lot\l"
+	.string "of ouchies!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlSerious::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de ser sapeca!\n"
-	.string "É sapeca mesmo com muito dodói!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to be sneaky!\n"
+	.string "It says it likes to be sneaky even\l"
+	.string "if it has a lot of ouchies!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlJolly::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de ser sapeca!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele se preocupa consigo!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to be sneaky!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will worry about itself!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlModest::
-	.string "Humhum…\p"
-	.string "Este diz que se cuida!\n"
-	.string "Se preocupa consigo, tendo muito\l"
-	.string "ou pouco dodói!$"
+	.string "Hmhm…\p"
+	.string "This one says it looks after itself!\n"
+	.string "It says it worries about itself whether\l"
+	.string "or not it has a lot of ouchies!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlMild::
-	.string "Humhum…\p"
-	.string "Este diz que se cuida!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele fica sapeca!$"
+	.string "Hmhm…\p"
+	.string "This one says it looks after itself!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will turn sneaky!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlBashful::
-	.string "Humhum…\p"
-	.string "Este diz que se cuida!\n"
-	.string "Se preocupa consigo mesmo com\l"
-	.string "muito dodói!$"
+	.string "Hmhm…\p"
+	.string "This one says it looks after itself!\n"
+	.string "It says it worries about itself even\l"
+	.string "if it has a lot of ouchies!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlRash::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de ser sapeca!\n"
-	.string "É sapeca mesmo com muito dodói!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to be sneaky!\n"
+	.string "It says it likes to be sneaky even\l"
+	.string "if it has a lot of ouchies!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlCalm::
-	.string "Humhum…\p"
-	.string "Este diz que se cuida!\n"
-	.string "Se preocupa consigo mesmo com\l"
-	.string "muito dodói!$"
+	.string "Hmhm…\p"
+	.string "This one says it looks after itself!\n"
+	.string "It says it worries about itself even\l"
+	.string "if it has a lot of ouchies!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlGentle::
-	.string "Humhum…\p"
-	.string "Este diz que se cuida!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele revida!$"
+	.string "Hmhm…\p"
+	.string "This one says it looks after itself!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will hit back!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlSassy::
-	.string "Humhum…\p"
-	.string "Este diz que gosta de batalhar!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele fica sapeca!$"
+	.string "Hmhm…\p"
+	.string "This one says it likes to battle!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will turn sneaky!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlCareful::
-	.string "Humhum…\p"
-	.string "Este diz que se cuida!\n"
-	.string "Mas, se tiver dodói demais,\l"
-	.string "ele fica sapeca!$"
+	.string "Hmhm…\p"
+	.string "This one says it looks after itself!\n"
+	.string "But if it gets enough ouchies,\l"
+	.string "it will turn sneaky!$"
 
 BattleFrontier_Lounge5_Text_NatureGirlEgg::
-	.string "Que bobagem! O OVO está dormindo!\n"
-	.string "Não dá pra falar com ele!$"
+	.string "That's silly! An EGG is asleep!\n"
+	.string "I can't talk to it!$"
 
 BattleFrontier_Lounge5_Text_LadyClaimsSheUnderstandsPokemon::
-	.string "Que graça!\n"
-	.string "Aquela mocinha diz que entende\l"
-	.string "os POKéMON!$"
+	.string "How charming!\n"
+	.string "That little lady claims she can\l"
+	.string "understand POKéMON!$"
 
 BattleFrontier_Lounge5_Text_GirlSayingSomethingProfound::
-	.string "Tenho a impressão de que a menininha\n"
-	.string "está dizendo algo profundo.$"
+	.string "I have this feeling that the little girl\n"
+	.string "is saying something profound.$"
 
 BattleFrontier_Lounge5_Text_GirlPlaysAtRedHouseALot::
-	.string "Eu sei uma coisa!\p"
-	.string "Aquela menininha brinca muito na\n"
-	.string "casa vermelha!$"
+	.string "I know something!\p"
+	.string "That little girl plays at the red house\n"
+	.string "a lot!$"
 

@@ -440,63 +440,63 @@ BattleFrontier_BattleTowerMultiBattleRoom_Movement_WalkInPlaceLeft:
 	step_end
 
 BattleFrontier_BattleTowerMultiBattleRoom_Text_ReadyFor2ndOpponentSet:
-	.string "A 2ª dupla de oponentes é a próxima.\n"
-	.string "Está tudo pronto?$"
+	.string "The 2nd set of opponents is next.\n"
+	.string "Are you ready?$"
 
 BattleFrontier_BattleTowerMultiBattleRoom_Text_ReadyFor3rdOpponentSet:
-	.string "A 3ª dupla de oponentes é a próxima.\n"
-	.string "Está tudo pronto?$"
+	.string "The 3rd set of opponents is next.\n"
+	.string "Are you ready?$"
 
 BattleFrontier_BattleTowerMultiBattleRoom_Text_ReadyFor4thOpponentSet:
-	.string "A 4ª dupla de oponentes é a próxima.\n"
-	.string "Está tudo pronto?$"
+	.string "The 4th set of opponents is next.\n"
+	.string "Are you ready?$"
 
 BattleFrontier_BattleTowerMultiBattleRoom_Text_ReadyFor5thOpponentSet:
-	.string "A 5ª dupla de oponentes é a próxima.\n"
-	.string "Está tudo pronto?$"
+	.string "The 5th set of opponents is next.\n"
+	.string "Are you ready?$"
 
 BattleFrontier_BattleTowerMultiBattleRoom_Text_ReadyFor6thOpponentSet:
-	.string "A 6ª dupla de oponentes é a próxima.\n"
-	.string "Está tudo pronto?$"
+	.string "The 6th set of opponents is next.\n"
+	.string "Are you ready?$"
 
 BattleFrontier_BattleTowerMultiBattleRoom_Text_ReadyFor7thOpponentSet:
-	.string "A 7ª dupla de oponentes é a próxima.\n"
-	.string "Está tudo pronto?$"
+	.string "The 7th set of opponents is next.\n"
+	.string "Are you ready?$"
 
 /* Unused*/
 BattleFrontier_BattleTowerMultiBattleRoom_Text_2ndOpponentSetNext:
-	.string "A 2ª dupla de oponentes é a próxima.\n"
-	.string "Dê o seu melhor!$"
+	.string "The 2nd set of opponents is next.\n"
+	.string "Do your best!$"
 
 /* Unused*/
 BattleFrontier_BattleTowerMultiBattleRoom_Text_3rdOpponentSetNext:
-	.string "A 3ª dupla de oponentes é a próxima.\n"
-	.string "Dê o seu melhor!$"
+	.string "The 3rd set of opponents is next.\n"
+	.string "Do your best!$"
 
 /* Unused*/
 BattleFrontier_BattleTowerMultiBattleRoom_Text_4thOpponentSetNext:
-	.string "A 4ª dupla de oponentes é a próxima.\n"
-	.string "Dê o seu melhor!$"
+	.string "The 4th set of opponents is next.\n"
+	.string "Do your best!$"
 
 /* Unused*/
 BattleFrontier_BattleTowerMultiBattleRoom_Text_5thOpponentSetNext:
-	.string "A 5ª dupla de oponentes é a próxima.\n"
-	.string "Dê o seu melhor!$"
+	.string "The 5th set of opponents is next.\n"
+	.string "Do your best!$"
 
 /* Unused*/
 BattleFrontier_BattleTowerMultiBattleRoom_Text_6thOpponentSetNext:
-	.string "A 6ª dupla de oponentes é a próxima.\n"
-	.string "Dê o seu melhor!$"
+	.string "The 6th set of opponents is next.\n"
+	.string "Do your best!$"
 
 /* Unused*/
 BattleFrontier_BattleTowerMultiBattleRoom_Text_7thOpponentSetNext:
-	.string "A 7ª dupla de oponentes é a próxima.\n"
-	.string "Dê o seu melhor!$"
+	.string "The 7th set of opponents is next.\n"
+	.string "Do your best!$"
 
 gText_LinkStandby3::
-	.string "Aguardando o link…$"
+	.string "Link standby…$"
 
 gText_YourPartnerHasRetired::
-	.string "O seu parceiro desistiu.\p"
-	.string "O desafio da SALA DE BATALHA\n"
-	.string "será cancelado.$"
+	.string "Your partner has retired.\p"
+	.string "Your BATTLE ROOM challenge\n"
+	.string "will be canceled.$"

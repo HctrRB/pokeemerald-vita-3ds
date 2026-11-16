@@ -151,108 +151,108 @@ BattleFrontier_Lounge1_EventScript_Boy2::
 	end
 
 BattleFrontier_Lounge1_Text_PokemonBreederIntro:
-	.string "Crio POKéMON há 70 anos!\n"
-	.string "Sou o homem que veneram como o\l"
-	.string "lendário maior CRIADOR POKéMON!\p"
-	.string "Quando tiver a minha experiência,\n"
-	.string "vai ver as qualidades dos POKéMON\l"
-	.string "num piscar de olhos.\p"
-	.string "Você é TREINADOR. Não quer saber\n"
-	.string "das qualidades dos seus POKéMON?\p"
-	.string "Aqui!\n"
-	.string "Vamos ver os seus POKéMON!$"
+	.string "For 70 years I have raised POKéMON!\n"
+	.string "I am the man they revere as\l"
+	.string "the legendary top POKéMON BREEDER!\p"
+	.string "If you ever become as seasoned as me,\n"
+	.string "you'll see the abilities of POKéMON\l"
+	.string "at a glance.\p"
+	.string "You're a TRAINER. Doesn't it interest\n"
+	.string "you to know your own POKéMON's\l"
+	.string "abilities?\p"
+	.string "Here!\n"
+	.string "Let's have a look at your POKéMON!$"
 
 BattleFrontier_Lounge1_Text_AverageAbility:
-	.string "…Hum…\p"
-	.string "Este, no geral, eu diria que tem\n"
-	.string "qualidades medianas.$"
+	.string "…Hmm…\p"
+	.string "This one, overall, I would describe\n"
+	.string "as being of average ability.$"
 
 BattleFrontier_Lounge1_Text_BetterThanAverageAbility:
-	.string "…Hum…\p"
-	.string "Este, no geral, eu diria que tem\n"
-	.string "qualidades acima da média.$"
+	.string "…Hmm…\p"
+	.string "This one, overall, I would describe as\n"
+	.string "having better-than-average ability.$"
 
 BattleFrontier_Lounge1_Text_ImpressiveAbility:
-	.string "…Hum…\p"
-	.string "Este, no geral, eu diria que tem\n"
-	.string "qualidades impressionantes!$"
+	.string "…Hmm…\p"
+	.string "This one, overall, I would say is\n"
+	.string "quite impressive in ability!$"
 
 BattleFrontier_Lounge1_Text_OutstandingAbility:
-	.string "…Hum…\p"
-	.string "Este, no geral, eu diria que tem\n"
-	.string "qualidades excepcionais!$"
+	.string "…Hmm…\p"
+	.string "This one, overall, I would say is\n"
+	.string "wonderfully outstanding in ability!$"
 
 BattleFrontier_Lounge1_Text_BestAspectHP:
-	.string "Aliás, o melhor dele, eu diria,\n"
-	.string "são os PS…$"
+	.string "Incidentally, the best aspect of it,\n"
+	.string "I would say, is its HP…$"
 
 BattleFrontier_Lounge1_Text_BestAspectAtk:
-	.string "Aliás, o melhor dele, eu diria,\n"
-	.string "é o ATAQUE…$"
+	.string "Incidentally, the best aspect of it,\n"
+	.string "I would say, is its ATTACK…$"
 
 BattleFrontier_Lounge1_Text_BestAspectDef:
-	.string "Aliás, o melhor dele, eu diria,\n"
-	.string "é a DEFESA…$"
+	.string "Incidentally, the best aspect of it,\n"
+	.string "I would say, is its DEFENSE…$"
 
 BattleFrontier_Lounge1_Text_BestAspectSpAtk:
-	.string "Aliás, o melhor dele, eu diria,\n"
-	.string "é o ATAQUE ESPECIAL…$"
+	.string "Incidentally, the best aspect of it,\n"
+	.string "I would say, is its SPECIAL ATTACK…$"
 
 BattleFrontier_Lounge1_Text_BestAspectSpDef:
-	.string "Aliás, o melhor dele, eu diria,\n"
-	.string "é a DEFESA ESPECIAL…$"
+	.string "Incidentally, the best aspect of it,\n"
+	.string "I would say, is its SPECIAL DEFENSE…$"
 
 BattleFrontier_Lounge1_Text_BestAspectSpeed:
-	.string "Aliás, o melhor dele, eu diria,\n"
-	.string "é a VELOCIDADE…$"
+	.string "Incidentally, the best aspect of it,\n"
+	.string "I would say, is its SPEED…$"
 
 BattleFrontier_Lounge1_Text_StatRelativelyGood:
-	.string "Esse atributo é relativamente bom.\n"
-	.string "…Hum… É o que eu acho.$"
+	.string "That stat is relatively good.\n"
+	.string "…Hm… That's how I call it.$"
 
 BattleFrontier_Lounge1_Text_StatImpressive:
-	.string "Esse atributo é impressionante.\n"
-	.string "…Hum… É o que eu acho.$"
+	.string "That stat is quite impressive.\n"
+	.string "…Hm… That's how I call it.$"
 
 BattleFrontier_Lounge1_Text_StatOutstanding:
-	.string "Esse atributo é excepcional!\n"
-	.string "…Hum… É o que eu acho.$"
+	.string "That stat is outstanding!\n"
+	.string "…Hm… That's how I call it.$"
 
 BattleFrontier_Lounge1_Text_StatFlawless:
-	.string "Impecável! Uma perfeição!\n"
-	.string "…Hum… É o que eu acho.$"
+	.string "It's flawless! A thing of perfection!\n"
+	.string "…Hm… That's how I call it.$"
 
 BattleFrontier_Lounge1_Text_NoTimeForMyAdvice:
-	.string "Quê?\n"
-	.string "Não tem tempo pros meus conselhos?\p"
-	.string "Devia ter vontade de aprender com\n"
-	.string "a experiência dos mais velhos!$"
+	.string "What?\n"
+	.string "You have no time for my advice?\p"
+	.string "You should always be eager to learn\n"
+	.string "from the experiences of your elders!$"
 
 /* Unused*/
 BattleFrontier_Lounge1_Text_HaveBusinessNeedsTending:
-	.string "Sim, o que foi agora?\p"
-	.string "Tenho assuntos pra resolver!\n"
-	.string "Deixe pra próxima!$"
+	.string "Yes, what is it now?\p"
+	.string "I have business that needs tending!\n"
+	.string "Save it for next time!$"
 
 BattleFrontier_Lounge1_Text_LetsLookAtYourPokemon:
-	.string "Ah, jovem! Tem curiosidade sobre as\n"
-	.string "qualidades dos seus POKéMON?\p"
-	.string "Aqui, aqui!\n"
-	.string "Vamos ver os seus POKéMON!$"
+	.string "Ah, youngster! Do your POKéMON's\n"
+	.string "abilities intrigue you?\p"
+	.string "Here, here!\n"
+	.string "Let's have a look at your POKéMON!$"
 
 BattleFrontier_Lounge1_Text_EvenICantTell:
-	.string "Sou especialista, mas nem eu sei\n"
-	.string "dizer nada de um POKéMON no OVO!\p"
-	.string "Mostre um POKéMON!\n"
-	.string "É um POKéMON que eu preciso ver!$"
+	.string "An expert I am, but even I can't tell\n"
+	.string "anything about an unhatched POKéMON!\p"
+	.string "Show me a POKéMON!\n"
+	.string "A POKéMON is what I need to see!$"
 
 BattleFrontier_Lounge1_Text_SaidMyMonIsOutstanding:
-	.string "Ele disse que o meu POKéMON é\n"
-	.string "excepcional! Que bom que criei ele\l"
-	.string "com cuidado!$"
+	.string "He said my POKéMON is outstanding!\n"
+	.string "I'm glad I raised it carefully!$"
 
 BattleFrontier_Lounge1_Text_DidntDoAnythingSpecialRaisingIt:
-	.string "Ele disse que o meu POKéMON é\n"
-	.string "excepcional! Mas eu não fiz nada\l"
-	.string "de especial pra criar ele…$"
+	.string "He said my POKéMON is outstanding!\n"
+	.string "But I didn't do anything special\l"
+	.string "raising it…$"
 

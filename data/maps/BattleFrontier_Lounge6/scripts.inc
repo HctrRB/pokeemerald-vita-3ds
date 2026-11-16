@@ -46,31 +46,32 @@ BattleFrontier_Lounge6_EventScript_TradeCompleted::
 	end
 
 BattleFrontier_Lounge6_Text_WouldYouLikeToTrade:
-	.string "O meu POKéMON é um {STR_VAR_2}.\n"
-	.string "Conhece?\l"
-	.string "É fofo e bem bonzinho.\p"
-	.string "Este pequeno eu trocaria com\n"
-	.string "orgulho!\p"
-	.string "Quer me dar um {STR_VAR_1}\n"
-	.string "pelo meu {STR_VAR_2}?$"
+	.string "My POKéMON is a {STR_VAR_2}.\n"
+	.string "Do you know it?\l"
+	.string "It's quite cute and rather nice.\p"
+	.string "This little one, I could trade with\n"
+	.string "pride!\p"
+	.string "Would you like to trade me a {STR_VAR_1}\n"
+	.string "for my {STR_VAR_2}?$"
 
 BattleFrontier_Lounge6_Text_PromiseIllBeGoodToIt:
-	.string "Ah, que fofo!\n"
-	.string "Obrigada!\l"
-	.string "Prometo cuidar bem dele!\p"
-	.string "Ah! Espero que cuide bem do meu\n"
-	.string "{STR_VAR_2} também!$"
+	.string "Oh, it's adorable!\n"
+	.string "Thank you!\l"
+	.string "I promise I'll be good to it!\p"
+	.string "Oh! I hope you'll be good to\n"
+	.string "my {STR_VAR_2}, too!$"
 
 BattleFrontier_Lounge6_Text_DontTradeForAnythingButMon:
-	.string "Ah, desculpe!\n"
-	.string "Só troco por um {STR_VAR_1}.$"
+	.string "Oh, I'm sorry!\n"
+	.string "I don't intend to trade for anything\l"
+	.string "but a {STR_VAR_1}.$"
 
 BattleFrontier_Lounge6_Text_WellThatsFineToo:
-	.string "Ah, não quer?\n"
-	.string "Bom, tudo bem também.\l"
-	.string "Venha nos visitar de novo.$"
+	.string "Oh, you won't?\n"
+	.string "Well, that's fine, too.\l"
+	.string "Please come visit us again.$"
 
 BattleFrontier_Lounge6_Text_SkittySoMuchCuterThanImagined:
-	.string "Hihi!\n"
-	.string "O SKITTY é muito mais fofo do que\l"
-	.string "eu imaginava. Que alegria!$"
+	.string "Giggle!\n"
+	.string "A SKITTY is so much cuter than I had\l"
+	.string "imagined. I'm delighted!$"

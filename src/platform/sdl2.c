@@ -34,7 +34,6 @@
 #include <vitaGL.h>
 #include <psp2/power.h>
 #include <psp2/kernel/threadmgr.h>
-#include "vita/vita_boot_splash.h"
 #include "vita/vita_audio.h"
 #include "vita/vita_stage.h"
 #else
@@ -469,7 +468,6 @@ int main(int argc, char **argv)
     else
     {
         VITA_LOG("vglInitWithCustomSizes succeeded (8MB pool, 40MB RAM, 88MB CDRAM, 8MB PHYCONT)\n");
-        VitaBootSplash_Show();
     }
     VitaPerf_LogMemory("after vglInit");
 #endif

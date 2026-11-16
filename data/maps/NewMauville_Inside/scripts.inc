@@ -246,17 +246,18 @@ NewMauville_Inside_EventScript_DefeatedVoltorb3::
 	end
 
 NewMauville_Inside_Text_GeneratorRadiatingHeat:
-	.string "O gerador solta um calor que dá pra\n"
-	.string "sentir mesmo de longe.\p"
-	.string "Parece que precisa ser desligado\n"
-	.string "o quanto antes.$"
+	.string "The generator is radiating heat that\n"
+	.string "can be felt even at a distance.\p"
+	.string "It looks like it should be turned off\n"
+	.string "as soon as possible.$"
 
 NewMauville_Inside_Text_GeneratorQuietedDown:
-	.string "O gerador se acalmou.$"
+	.string "The generator quieted down.$"
 
 NewMauville_Inside_Text_SteppedOnSwitchGeneratorStopped:
-	.string "{PLAYER} pisou no interruptor.\p"
-	.string "Clique…\p"
+	.string "{PLAYER} stepped on the switch.\p"
+	.string "Click…\p"
 	.string "… … … … … … … …\n"
 	.string "… … … … … … … …\p"
-	.string "Parece que o gerador parou…$"
+	.string "The generator appears to have\n"
+	.string "stopped…$"

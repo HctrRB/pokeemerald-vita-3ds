@@ -387,7 +387,7 @@ static void MailGiveAsk(void)
         ToastText(gText_NoPokemon);
         return;
     }
-    snprintf(sQuestion, sizeof(sQuestion), UiLocale_Translate("Give the MAIL to which POKéMON?"));
+    snprintf(sQuestion, sizeof(sQuestion), "%s", UiLocale_Translate("Give the MAIL to which POKéMON?"));
     UiMenu_Open(&sMenu, "GIVE TO", 560, 100, 300);
     for (int32_t i = 0; i < CalculatePlayerPartyCount(); i++)
     {

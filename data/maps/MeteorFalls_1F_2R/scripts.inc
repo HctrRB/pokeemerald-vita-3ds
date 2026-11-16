@@ -61,119 +61,123 @@ MeteorFalls_1F_2R_EventScript_RematchJay::
 	end
 
 MeteorFalls_1F_2R_Text_NicolasIntro:
-	.string "É aqui que nós, usuários de DRAGÃO,\n"
-	.string "treinamos.\p"
-	.string "Até o CAMPEÃO vem aqui.\n"
-	.string "Viu como este lugar é especial?$"
+	.string "This is where we DRAGON users do our\n"
+	.string "training.\p"
+	.string "The CHAMPION even visits.\n"
+	.string "Now do you see how special it is here?$"
 
 MeteorFalls_1F_2R_Text_NicolasDefeat:
-	.string "Argh!\n"
-	.string "Não esperava tanta força!$"
+	.string "Urgh!\n"
+	.string "I didn't expect you to be so strong!$"
 
 MeteorFalls_1F_2R_Text_NicolasPostBattle:
-	.string "O caminho ainda é longo e duro.\p"
-	.string "Quando é que eu e os meus POKéMON\n"
-	.string "vamos ser os melhores?$"
+	.string "The road ahead remains long and harsh.\p"
+	.string "When will my POKéMON and I become\n"
+	.string "the best?$"
 
 MeteorFalls_1F_2R_Text_NicolasRegister:
-	.string "Quero conhecer melhor a sua força.\n"
-	.string "Vou te registrar no meu POKéNAV.$"
+	.string "I want to know more about your power.\n"
+	.string "Let me register you in my POKéNAV.$"
 
 MeteorFalls_1F_2R_Text_NicolasRematchIntro:
-	.string "Desde que nos vimos, treinamos\n"
-	.string "duro de olho no primeiro lugar.\p"
-	.string "Ajude a gente a ver o quanto\n"
-	.string "ficamos mais fortes!$"
+	.string "Since we met, we have trained hard\n"
+	.string "with our sights on number one.\p"
+	.string "Help us see how much stronger we've\n"
+	.string "become!$"
 
 MeteorFalls_1F_2R_Text_NicolasRematchDefeat:
-	.string "Argh!\n"
-	.string "Não esperava tanta força!$"
+	.string "Urgh!\n"
+	.string "I didn't expect you to be so strong!$"
 
 MeteorFalls_1F_2R_Text_NicolasPostRematch:
-	.string "Dá pra ver que você continua\n"
-	.string "treinando os seus POKéMON.\p"
-	.string "Enquanto você for forte, eu também\n"
-	.string "posso ficar mais forte!$"
+	.string "You've obviously kept up your\n"
+	.string "POKéMON training.\p"
+	.string "So long as you remain strong, I, too,\n"
+	.string "can become stronger!$"
 
 MeteorFalls_1F_2R_Text_JohnIntro:
-	.string "JOHN: Sempre batalhamos em dupla.\n"
-	.string "Confiamos em nós mesmos.$"
+	.string "JOHN: We've always battled POKéMON\n"
+	.string "together as a twosome.\l"
+	.string "We've confidence in ourselves.$"
 
 MeteorFalls_1F_2R_Text_JohnDefeat:
-	.string "JOHN: Puxa vida.\n"
-	.string "Perdemos, querida.$"
+	.string "JOHN: Oh, my.\n"
+	.string "We've lost, dear wife.$"
 
 MeteorFalls_1F_2R_Text_JohnPostBattle:
-	.string "JOHN: Estamos casados há cinquenta\n"
-	.string "anos.\p"
-	.string "Pensando bem, eu ainda não venci\n"
-	.string "a minha querida numa batalha.$"
+	.string "JOHN: We've been married for\n"
+	.string "fifty years.\p"
+	.string "Come to think of it, I've yet to beat\n"
+	.string "my dear wife in a battle.$"
 
 MeteorFalls_1F_2R_Text_JohnNotEnoughMons:
-	.string "JOHN: Ora, ora, que TREINADOR jovem!\p"
-	.string "Quer batalhar com a gente? Então\n"
-	.string "volte com mais POKéMON.$"
+	.string "JOHN: Well, well, what a young TRAINER!\p"
+	.string "Will you battle with us? If so, you'll\n"
+	.string "have to return with more POKéMON.$"
 
 MeteorFalls_1F_2R_Text_JohnRegister:
-	.string "JOHN: Jovem TREINADOR, se tiver a\n"
-	.string "chance, batalha com a gente de novo?$"
+	.string "JOHN: Young TRAINER, if the chance\n"
+	.string "arises, will you battle with us again?$"
 
 MeteorFalls_1F_2R_Text_JayIntro:
-	.string "JAY: Estamos casados há cinquenta\n"
-	.string "anos.\p"
-	.string "O laço que temos como casal\n"
-	.string "nunca vai se romper.$"
+	.string "JAY: We've been married for\n"
+	.string "fifty years.\p"
+	.string "The bond we share as a couple could\n"
+	.string "never be broken.$"
 
 MeteorFalls_1F_2R_Text_JayDefeat:
-	.string "JAY: Ai, ai.\n"
-	.string "Perdemos, meu querido.$"
+	.string "JAY: Oh, dear.\n"
+	.string "We've lost, my dear husband.$"
 
 MeteorFalls_1F_2R_Text_JayPostBattle:
-	.string "JAY: Cinquenta anos de casamento…\p"
-	.string "Se a gente brigava, sempre resolvia\n"
-	.string "com uma batalha POKéMON…$"
+	.string "JAY: Fifty years of marriage…\p"
+	.string "If we ever argued, we always settled\n"
+	.string "it with a POKéMON battle…$"
 
 MeteorFalls_1F_2R_Text_JayNotEnoughMons:
-	.string "JAY: Ora, ora, que TREINADOR jovem!\p"
-	.string "Se quiser batalhar com a gente,\n"
-	.string "volte com mais POKéMON.$"
+	.string "JAY: Well, well, aren't you a young\n"
+	.string "TRAINER?\p"
+	.string "If you'd care to battle with us, you'll\n"
+	.string "have to come back with more POKéMON.$"
 
 MeteorFalls_1F_2R_Text_JohnRematchIntro:
-	.string "JOHN: Sempre batalhamos em dupla.\n"
-	.string "Confiamos em nós mesmos.$"
+	.string "JOHN: We've always battled POKéMON\n"
+	.string "together as a twosome.\l"
+	.string "We've confidence in ourselves.$"
 
 MeteorFalls_1F_2R_Text_JohnRematchDefeat:
-	.string "JOHN: Puxa vida.\n"
-	.string "Perdemos, querida.$"
+	.string "JOHN: Oh, my.\n"
+	.string "We've lost, dear wife.$"
 
 MeteorFalls_1F_2R_Text_JohnPostRematch:
-	.string "JOHN: Casados há cinquenta anos…\p"
-	.string "Pensando bem, eu e a minha querida\n"
-	.string "batalhamos todo santo dia…$"
+	.string "JOHN: Married for fifty years…\p"
+	.string "On reflection, the dear wife and I,\n"
+	.string "we battled day in and day out…$"
 
 MeteorFalls_1F_2R_Text_JohnRematchNotEnoughMons:
-	.string "JOHN: Ora, ora, que TREINADOR jovem!\p"
-	.string "Quer batalhar com a gente? Então\n"
-	.string "volte com mais POKéMON.$"
+	.string "JOHN: Well, well, what a young TRAINER!\p"
+	.string "Will you battle with us? If so, you'll\n"
+	.string "have to return with more POKéMON.$"
 
 MeteorFalls_1F_2R_Text_JayRematchIntro:
-	.string "JAY: Estamos casados há cinquenta\n"
-	.string "anos.\p"
-	.string "Sempre apoiamos um ao outro.\n"
-	.string "Foi assim que ficamos fortes.$"
+	.string "JAY: We've been married for\n"
+	.string "fifty years.\p"
+	.string "We've supported each other all that\n"
+	.string "time. We've made ourselves strong.$"
 
 MeteorFalls_1F_2R_Text_JayRematchDefeat:
-	.string "JAY: Ai, ai.\n"
-	.string "Perdemos, meu querido.$"
+	.string "JAY: Oh, dear.\n"
+	.string "We've lost, my dear husband.$"
 
 MeteorFalls_1F_2R_Text_JayPostRematch:
-	.string "JAY: Cinquenta anos de casamento…\n"
-	.string "Muita coisa aconteceu.\p"
-	.string "Espero que a gente continue criando\n"
-	.string "lembranças felizes juntos.$"
+	.string "JAY: Fifty years of marriage…\n"
+	.string "Many things have happened.\p"
+	.string "I hope that we will continue to make\n"
+	.string "happy memories together.$"
 
 MeteorFalls_1F_2R_Text_JayRematchNotEnoughMons:
-	.string "JAY: Ora, ora, que TREINADOR jovem!\p"
-	.string "Se quiser batalhar com a gente,\n"
-	.string "volte com mais POKéMON.$"
+	.string "JAY: Well, well, aren't you a young\n"
+	.string "TRAINER?\p"
+	.string "If you'd care to battle with us, you'll\n"
+	.string "have to come back with more POKéMON.$"
 

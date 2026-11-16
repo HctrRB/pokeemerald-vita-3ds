@@ -355,7 +355,7 @@ static void BuildInfo(int32_t slot)
         if (r == 1) snprintf(buf, sizeof(buf), "%s", s.nature);
         if (r == 2) snprintf(buf, sizeof(buf), "%s", s.ability);
         if (r == 4) snprintf(buf, sizeof(buf), "%s Lv%u", s.metAt, (unsigned)s.metLevel);
-        if (r == 5) { if (s.item) UiGame_ItemName(s.item, buf, sizeof(buf)); else snprintf(buf, sizeof(buf), UiLocale_Translate("NONE")); }
+        if (r == 5) { if (s.item) UiGame_ItemName(s.item, buf, sizeof(buf)); else snprintf(buf, sizeof(buf), "%s", UiLocale_Translate("NONE")); }
         if (r == 3)
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 520, y - 4, s.abilityDesc, UI_COL_INK_SOFT);
         else
@@ -622,7 +622,7 @@ static bool TargetUpdate(const UiInput *in)
         if (m.item != ITEM_NONE)
         {
             // Already holding one: confirm the swap, as the game does
-            char old[24], title[40];
+            char old[40], title[96];
             UiGame_ItemName(m.item, old, sizeof(old));
             snprintf(title, sizeof(title), UiLocale_Translate("SWAP %s?"), old);
             UiMenu_Open(&sMoveMenu, title, 348, 200, 420);

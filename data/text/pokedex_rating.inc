@@ -1,115 +1,115 @@
 gBirchDexRatingText_AreYouCurious::
 	.string "PROF. BIRCH: Ah, {PLAYER}{KUN}!\p"
-	.string "Quer saber como anda a\n"
-	.string "sua POKéDEX?$"
+	.string "Are you curious about how your\n"
+	.string "POKéDEX is coming along?$"
 
 gBirchDexRatingText_Cancel::
-	.string "Hm? Ah, você ainda não capturou\n"
-	.string "POKéMON suficientes pra valer a pena.$"
+	.string "Hm? Oh, you haven't caught enough\n"
+	.string "POKéMON to make it worthwhile.$"
 
 gBirchDexRatingText_SoYouveSeenAndCaught::
 	.string "Hmhm…\p"
-	.string "Então você viu {STR_VAR_1} POKéMON\n"
-	.string "e capturou {STR_VAR_2} POKéMON…$"
+	.string "So, you've seen {STR_VAR_1} POKéMON,\n"
+	.string "and you've caught {STR_VAR_2} POKéMON…$"
 
 gBirchDexRatingText_LessThan10::
-	.string "Ande mais pelo mato e procure\n"
-	.string "POKéMON com mais atenção.$"
+	.string "Go into grassy areas more and look\n"
+	.string "for POKéMON more carefully.$"
 
 gBirchDexRatingText_LessThan20::
-	.string "Parece que você tá pegando o jeito.\n"
-	.string "Mas daqui pra frente fica mais difícil.$"
+	.string "I guess you're getting the hang\n"
+	.string "of it. But, it gets harder from here.$"
 
 gBirchDexRatingText_LessThan30::
-	.string "Alguns POKéMON só aparecem em\n"
-	.string "certos lugares.\l"
-	.string "É preciso persistência.$"
+	.string "Some POKéMON only appear in\n"
+	.string "certain areas.\l"
+	.string "You must be persistent.$"
 
 gBirchDexRatingText_LessThan40::
-	.string "Bom, ainda falta quantidade,\n"
-	.string "mas já tá parecendo mais\l"
-	.string "uma POKéDEX.$"
+	.string "Well, it could use more quantity,\n"
+	.string "but this is looking more like\l"
+	.string "a POKéDEX now.$"
 
 gBirchDexRatingText_LessThan50::
-	.string "Tá ficando bem bom.\n"
-	.string "Continue se esforçando.$"
+	.string "This is coming along pretty good.\n"
+	.string "Keep up the effort.$"
 
 gBirchDexRatingText_LessThan60::
-	.string "Tá usando alguma VARA?\n"
-	.string "Tem muitos POKéMON no mar.$"
+	.string "Are you using any RODS?\n"
+	.string "There are many POKéMON in the sea.$"
 
 gBirchDexRatingText_LessThan70::
-	.string "Em vez de só capturar POKéMON,\n"
-	.string "que tal fazer eles evoluírem também?$"
+	.string "Instead of just catching POKéMON,\n"
+	.string "how about making them evolve, too?$"
 
 gBirchDexRatingText_LessThan80::
-	.string "Essa vai ser uma POKéDEX\n"
-	.string "fantástica.\l"
-	.string "É o que eu sinto.$"
+	.string "This is going to be a fantastic\n"
+	.string "POKéDEX.\l"
+	.string "That's the feeling I'm getting.$"
 
 gBirchDexRatingText_LessThan90::
-	.string "Você já juntou tudo isso…\n"
-	.string "Seu talento é notável!$"
+	.string "You've collected this many…\n"
+	.string "Your talent is remarkable!$"
 
 gBirchDexRatingText_LessThan100::
-	.string "Já foi à ZONA DE SAFÁRI?\p"
-	.string "Dizem que tem POKéMON que só\n"
-	.string "dá pra capturar lá.$"
+	.string "Have you visited the SAFARI ZONE?\p"
+	.string "I hear there are some POKéMON that\n"
+	.string "can only be caught there.$"
 
 gBirchDexRatingText_LessThan110::
-	.string "Você finalmente chegou à marca\n"
-	.string "de 100 espécies.\p"
-	.string "É uma POKéDEX impressionante!$"
+	.string "You've finally reached\n"
+	.string "the 100-kind mark.\p"
+	.string "This is an impressive POKéDEX!$"
 
 gBirchDexRatingText_LessThan120::
-	.string "Talvez tenha POKéMON que dá pra\n"
-	.string "achar usando ESMAGA PEDRA.$"
+	.string "There might be POKéMON that can be\n"
+	.string "found using ROCK SMASH.$"
 
 gBirchDexRatingText_LessThan130::
-	.string "Você devia conseguir mais POKéMON\n"
-	.string "trocando com outras pessoas.$"
+	.string "You should get some more POKéMON\n"
+	.string "by trading with others.$"
 
 gBirchDexRatingText_LessThan140::
-	.string "Ouvi falar de POKéMON que evoluem\n"
-	.string "quando passam a amar de verdade\l"
-	.string "quem os treina.$"
+	.string "I've heard of POKéMON that evolve\n"
+	.string "when they come to fully love their\l"
+	.string "TRAINERS.$"
 
 gBirchDexRatingText_LessThan150::
-	.string "Eu não fazia ideia de que havia tantas\n"
-	.string "espécies de POKéMON na região\l"
-	.string "de HOENN.$"
+	.string "I had no idea that there were so\n"
+	.string "many POKéMON species in the HOENN\l"
+	.string "region.$"
 
 gBirchDexRatingText_LessThan160::
-	.string "De vez em quando, alguns POKéMON\n"
-	.string "aparecem em massa.\p"
-	.string "Não perca chances\n"
-	.string "como essas.$"
+	.string "On occasion, some POKéMON appear\n"
+	.string "in large numbers like outbreaks.\p"
+	.string "Don't miss opportunities like\n"
+	.string "those.$"
 
 gBirchDexRatingText_LessThan170::
-	.string "Dá pra ter uma ótima ideia dos\n"
-	.string "POKéMON da região de HOENN\l"
-	.string "olhando a sua POKéDEX.$"
+	.string "One can get a very good idea about\n"
+	.string "the POKéMON of the HOENN region\l"
+	.string "by looking through your POKéDEX.$"
 
 gBirchDexRatingText_LessThan180::
-	.string "Eu diria que você já poderia dar\n"
-	.string "aula sobre POKéMON, e muito\l"
-	.string "bem, aliás!$"
+	.string "I would say you already qualify as\n"
+	.string "a POKéMON PROFESSOR, and a good\l"
+	.string "one, too!$"
 
 gBirchDexRatingText_LessThan190::
-	.string "Com uma POKéDEX tão completa,\n"
-	.string "você manda muito nisso!$"
+	.string "With a POKéDEX this complete,\n"
+	.string "you're a real professional at this!$"
 
 gBirchDexRatingText_LessThan200::
-	.string "Você tá bem perto de completar\n"
-	.string "esta POKéDEX.\l"
-	.string "Sinto isso nos ossos!$"
+	.string "You're very close to completing\n"
+	.string "this POKéDEX.\l"
+	.string "I can feel it in my bones!$"
 
 gBirchDexRatingText_DexCompleted::
-	.string "Parabéns!\n"
-	.string "Sua POKéDEX está completa!$"
+	.string "Congratulations!\n"
+	.string "Your POKéDEX is complete!$"
 
 gBirchDexRatingText_OnANationwideBasis::
 	.string "Hmhm…\n"
-	.string "No nível nacional…\p"
-	.string "Você viu {STR_VAR_1} POKéMON\n"
-	.string "e capturou {STR_VAR_2} POKéMON…$"
+	.string "On a nationwide basis…\p"
+	.string "You've seen {STR_VAR_1} POKéMON,\n"
+	.string "and you've caught {STR_VAR_2} POKéMON…$"

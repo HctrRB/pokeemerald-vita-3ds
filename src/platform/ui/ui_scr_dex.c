@@ -229,7 +229,7 @@ static bool Update(const UiInput *in)
 
 static void Build(void)
 {
-    char buf[32];
+    char buf[96];
     UiKit_Header("POKéDEX", sModeTabs, IsNationalPokedexEnabled() ? 2 : 1, sMode, sTabX, sTabW, 12);
     snprintf(buf, sizeof(buf), UiLocale_Translate("SEEN %u · OWN %u"), (unsigned)GetHoennPokedexCount(FLAG_GET_SEEN), (unsigned)GetHoennPokedexCount(FLAG_GET_CAUGHT));
     if (sMode == 1)

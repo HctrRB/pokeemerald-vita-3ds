@@ -198,7 +198,7 @@ int32_t UiGame_Callers(const UiCaller **out)
         c->trainerPic = rem < REMATCH_TABLE_ENTRIES ? gTrainers[GetTrainerIdxByRematchIdx(rem)].trainerPic : 0xFFFF;
         const u8 *desc = NULL, *name = NULL;
         MatchCall_GetNameAndDesc(i, &desc, &name);
-        if (name) UiGame_Text(name, c->name, sizeof(c->name)); else snprintf(c->name, sizeof(c->name), UiLocale_Translate("CONTACT"));
+        if (name) UiGame_Text(name, c->name, sizeof(c->name)); else snprintf(c->name, sizeof(c->name), "%s", UiLocale_Translate("CONTACT"));
         if (desc) UiGame_Text(desc, c->desc, sizeof(c->desc));
     }
     for (uint16_t r = 0; r < REMATCH_SPECIAL_TRAINER_START && sCallerCount < 96; r++)
@@ -214,7 +214,7 @@ int32_t UiGame_Callers(const UiCaller **out)
         const uint16_t tr = (uint16_t)GetTrainerIdxByRematchIdx(r);
         c->trainerPic = gTrainers[tr].trainerPic;
         UiGame_Text(gTrainers[tr].trainerName, c->name, sizeof(c->name));
-        snprintf(c->desc, sizeof(c->desc), UiLocale_Translate("TRAINER"));
+        snprintf(c->desc, sizeof(c->desc), "%s", UiLocale_Translate("TRAINER"));
     }
     *out = sCallers;
     return sCallerCount;

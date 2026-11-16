@@ -234,7 +234,7 @@ bool UiGame_Mon(int32_t slot, UiMon *out)
     GetMonData(mon, MON_DATA_NICKNAME, nick);
     nick[POKEMON_NAME_LENGTH] = EOS;
     if (out->egg)
-        snprintf(out->name, sizeof(out->name), UiLocale_Translate("EGG"));
+        snprintf(out->name, sizeof(out->name), "%s", UiLocale_Translate("EGG"));
     else
         UiGame_Text(nick, out->name, sizeof(out->name));
     return true;
@@ -429,10 +429,10 @@ bool UiGame_ShareHp(int32_t from, int32_t to, char *msg, size_t cap)
     const uint16_t maxB = (uint16_t)GetMonData(b, MON_DATA_MAX_HP);
     if (from == to || GetMonData(b, MON_DATA_IS_EGG) || hpB == 0 || hpB >= maxB)
     {
-        snprintf(msg, cap, UiLocale_Translate("It can't be used on that POKéMON."));
+        snprintf(msg, cap, "%s", UiLocale_Translate("It can't be used on that POKéMON."));
         return false;
     }
-    if (hpA <= cost) { snprintf(msg, cap, UiLocale_Translate("Not enough HP left.")); return false; }
+    if (hpA <= cost) { snprintf(msg, cap, "%s", UiLocale_Translate("Not enough HP left.")); return false; }
     const uint16_t give = (uint16_t)((maxB - hpB) < cost ? (maxB - hpB) : cost);
     const uint16_t na = (uint16_t)(hpA - cost), nb = (uint16_t)(hpB + give);
     SetMonData(a, MON_DATA_HP, &na);

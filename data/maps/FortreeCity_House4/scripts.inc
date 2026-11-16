@@ -63,32 +63,32 @@ FortreeCity_House4_EventScript_Wingull::
 	end
 
 FortreeCity_House4_Text_BringsWorldCloserTogether:
-	.string "Junto com os POKéMON, as pessoas\n"
-	.string "fazem cada vez mais amigos.\p"
-	.string "E isso aproxima o mundo.\n"
-	.string "Acho isso maravilhoso!$"
+	.string "By being together with POKéMON,\n"
+	.string "people make more and more friends.\p"
+	.string "And that brings the world closer\n"
+	.string "together. I think it's wonderful!$"
 
 FortreeCity_House4_Text_GoBirdPokemon:
-	.string "Vai!\n"
-	.string "Vai, POKéMON PÁSSARO!$"
+	.string "There!\n"
+	.string "Go, BIRD POKéMON!$"
 
 FortreeCity_House4_Text_AskedWingullToRunErrand:
-	.string "Hehe, pedi pro meu WINGULL fazer\n"
-	.string "um favor pra mim.$"
+	.string "Heheh, I asked my WINGULL to run\n"
+	.string "an errand for me.$"
 
 FortreeCity_House4_Text_WelcomeWingullTakeMentalHerb:
-	.string "Isso!\n"
-	.string "Bem-vindo de volta, WINGULL!\p"
-	.string "Hã? O que é isso?\n"
-	.string "O que ele está segurando?\p"
-	.string "Uma ERVA MENTAL?\n"
-	.string "Deve ter achado em algum lugar.\p"
-	.string "Mas eu não sou TREINADOR, então\n"
-	.string "pode ficar com ela.$"
+	.string "Good!\n"
+	.string "Welcome back, WINGULL!\p"
+	.string "Huh? What is this?\n"
+	.string "What is it holding?\p"
+	.string "A MENTAL HERB?\n"
+	.string "It must have picked it up somewhere.\p"
+	.string "But I'm not a TRAINER, so you can\n"
+	.string "have it.$"
 
 FortreeCity_House4_Text_FriendsFarAwayThanksToWingull:
-	.string "Graças ao meu WINGULL, tenho amigos\n"
-	.string "que moram longe.$"
+	.string "Thanks to my WINGULL, I have friends\n"
+	.string "who live far away.$"
 
 FortreeCity_House4_Text_Wingull:
 	.string "WINGULL: Pihyoh!$"

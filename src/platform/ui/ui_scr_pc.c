@@ -835,7 +835,7 @@ static void DrawDetail(void)
     const uint16_t it = HeldItemOf(bm);
     UiText_Draw(UI_FACE_PS2P, 16, 716, 156, "ITEM", UI_COL_INK_SOFT);
     if (it != ITEM_NONE) { UiSpr_ItemIcon(it, 716, 176, 1); UiGame_ItemName(it, buf, sizeof(buf)); }
-    else snprintf(buf, sizeof(buf), UiLocale_Translate("NONE"));
+    else snprintf(buf, sizeof(buf), "%s", UiLocale_Translate("NONE"));
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, it ? 746 : 716, 172, buf, it ? UI_COL_INK : UI_COL_INK_SOFT);
     if (egg)
         return;

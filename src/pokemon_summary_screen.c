@@ -1197,7 +1197,7 @@ void ShowPokemonSummaryScreenHandleDeoxys(u8 mode, struct BoxPokemon *mons, u8 m
 // (sShowCategory).
 #define TAG_CATEGORY_ICONS 30010
 
-static const u8 sText_Category[] = _("CATEG.");
+static const u8 sText_Category[] = _("CATEGORY");
 // The icon's left edge in the window, in the middle of the value column.
 #define CATEGORY_ICON_X 43
 

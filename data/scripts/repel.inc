@@ -26,4 +26,4 @@ EventScript_RepelWoreOffOnly:
 	end
 
 Text_RepelWoreOff:
-	.string "O efeito do REPELENTE acabou…$"
+	.string "REPEL's effect wore off…$"

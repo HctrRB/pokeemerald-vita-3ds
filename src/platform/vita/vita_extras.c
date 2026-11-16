@@ -270,7 +270,7 @@ const VitaExtra gVitaExtras[] = {
     { VITA_TAB_GENERAL, "PACING",     "FF BUTTON MODE",    "ff_button",        2, 0, sFFButtonValues,    NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "DISPLAY",    "2D SCALER",         "filter",           3, 0, sFilterValues,      NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "DISPLAY",    "MENU COLOR",        "ui_theme",         5, 0, sUiThemeValues,     NULL, NULL, NULL },
-    { VITA_TAB_GENERAL, "DISPLAY",    "UI LANGUAGE",      "ui_lang",          2, 1, sUiLanguageValues,  NULL, NULL, NULL },
+    { VITA_TAB_GENERAL, "DISPLAY",    "UI LANGUAGE",      "ui_lang",          2, 0, sUiLanguageValues,  NULL, NULL, NULL },
 
     // ---- [WORLD] ----
     { VITA_TAB_WORLD,   "RENDERER",   "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },

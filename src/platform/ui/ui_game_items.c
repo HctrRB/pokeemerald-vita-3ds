@@ -192,23 +192,23 @@ UiUseResult UiGame_UseFromBag(uint16_t itemId, char *msg, size_t cap, void (**af
     msg[0] = 0;
     if (itemId == ITEM_REPEL || itemId == ITEM_SUPER_REPEL || itemId == ITEM_MAX_REPEL)
     {
-        if (VarGet(VAR_REPEL_STEP_COUNT) > 0) { snprintf(msg, cap, UiLocale_Translate("The REPEL is still in effect.")); return UI_USE_FAIL; }
+        if (VarGet(VAR_REPEL_STEP_COUNT) > 0) { snprintf(msg, cap, "%s", UiLocale_Translate("The REPEL is still in effect.")); return UI_USE_FAIL; }
         VarSet(VAR_REPEL_STEP_COUNT, GetItemHoldEffectParam(itemId));
         VarSet(VAR_LAST_REPEL, itemId);
         BagRemove(itemId, 1);
-        snprintf(msg, cap, UiLocale_Translate("The REPEL was sprayed!"));
+        snprintf(msg, cap, "%s", UiLocale_Translate("The REPEL was sprayed!"));
         return UI_USE_DONE;
     }
     if (itemId == ITEM_ESCAPE_ROPE)
     {
-        if (!CanUseDigOrEscapeRopeOnCurMap()) { snprintf(msg, cap, UiLocale_Translate("It can't be used here.")); return UI_USE_FAIL; }
+        if (!CanUseDigOrEscapeRopeOnCurMap()) { snprintf(msg, cap, "%s", UiLocale_Translate("It can't be used here.")); return UI_USE_FAIL; }
         BagRemove(itemId, 1);
         *afterClose = AfterClose_EscapeRope;
         return UI_USE_CLOSE;
     }
     if (itemId == ITEM_MACH_BIKE || itemId == ITEM_ACRO_BIKE)
     {
-        if (!Overworld_IsBikingAllowed() || IsBikingDisallowedByPlayer()) { snprintf(msg, cap, UiLocale_Translate("You can't ride a BIKE here.")); return UI_USE_FAIL; }
+        if (!Overworld_IsBikingAllowed() || IsBikingDisallowedByPlayer()) { snprintf(msg, cap, "%s", UiLocale_Translate("You can't ride a BIKE here.")); return UI_USE_FAIL; }
         *afterClose = AfterClose_Bike;
         return UI_USE_CLOSE;
     }
@@ -227,9 +227,9 @@ UiUseResult UiGame_UseFromBag(uint16_t itemId, char *msg, size_t cap, void (**af
                 any = true;
             }
         }
-        if (!any) { snprintf(msg, cap, UiLocale_Translate("It won't have any effect.")); return UI_USE_FAIL; }
+        if (!any) { snprintf(msg, cap, "%s", UiLocale_Translate("It won't have any effect.")); return UI_USE_FAIL; }
         BagRemove(itemId, 1);
-        snprintf(msg, cap, UiLocale_Translate("All fainted POKéMON were revived!"));
+        snprintf(msg, cap, "%s", UiLocale_Translate("All fainted POKéMON were revived!"));
         return UI_USE_DONE;
     }
     const ItemUseFunc fn = GetItemFieldFunc(itemId);
@@ -248,7 +248,7 @@ UiUseResult UiGame_UseFromBag(uint16_t itemId, char *msg, size_t cap, void (**af
         *afterClose = AfterClose_FieldFunc;
         return UI_USE_CLOSE;
     }
-    snprintf(msg, cap, UiLocale_Translate("It can't be used right now."));
+    snprintf(msg, cap, "%s", UiLocale_Translate("It can't be used right now."));
     return UI_USE_FAIL;
 }
 
@@ -285,17 +285,17 @@ UiItemResult UiGame_ItemOnMon(int32_t slot, uint16_t item, UiStatDelta *delta, c
     struct Pokemon *mon = &gPlayerParty[slot];
     *afterClose = NULL;
     msg[0] = 0;
-    if (GetMonData(mon, MON_DATA_IS_EGG) != 0) { snprintf(msg, cap, UiLocale_Translate("It can't be used on an EGG.")); return UI_ITEM_FAIL; }
+    if (GetMonData(mon, MON_DATA_IS_EGG) != 0) { snprintf(msg, cap, "%s", UiLocale_Translate("It can't be used on an EGG.")); return UI_ITEM_FAIL; }
 
     const uint16_t move = ItemIdToBattleMoveId(item);
     if (GetPocketByItemId(item) == POCKET_TM_HM && move != MOVE_NONE)
     {
-        if (MonKnowsMove(mon, move)) { snprintf(msg, cap, UiLocale_Translate("It already knows that move.")); return UI_ITEM_FAIL; }
-        if (!CanMonLearnTMHM(mon, (u8)(item - ITEM_TM01))) { snprintf(msg, cap, UiLocale_Translate("It can't learn that move.")); return UI_ITEM_FAIL; }
+        if (MonKnowsMove(mon, move)) { snprintf(msg, cap, "%s", UiLocale_Translate("It already knows that move.")); return UI_ITEM_FAIL; }
+        if (!CanMonLearnTMHM(mon, (u8)(item - ITEM_TM01))) { snprintf(msg, cap, "%s", UiLocale_Translate("It can't learn that move.")); return UI_ITEM_FAIL; }
         if (GiveMoveToMon(mon, move) != MON_HAS_MAX_MOVES)
         {
             Consume(item);
-            snprintf(msg, cap, UiLocale_Translate("It learned the move!"));
+            snprintf(msg, cap, "%s", UiLocale_Translate("It learned the move!"));
             return UI_ITEM_DONE;
         }
         return UI_ITEM_FORGET_MOVE;    // the screen asks which move to forget (UiGame_ReplaceMove)
@@ -303,7 +303,7 @@ UiItemResult UiGame_ItemOnMon(int32_t slot, uint16_t item, UiStatDelta *delta, c
     if (GetItemEffectType(item) == ITEM_EFFECT_EVO_STONE)
     {
         const uint16_t target = GetEvolutionTargetSpecies(mon, EVO_ITEM, item);
-        if (target == SPECIES_NONE) { snprintf(msg, cap, UiLocale_Translate("It won't have any effect.")); return UI_ITEM_FAIL; }
+        if (target == SPECIES_NONE) { snprintf(msg, cap, "%s", UiLocale_Translate("It won't have any effect.")); return UI_ITEM_FAIL; }
         BagRemove(item, 1);
         sEvoSlot = (uint8_t)slot;
         sEvoSpecies = target;
@@ -314,14 +314,14 @@ UiItemResult UiGame_ItemOnMon(int32_t slot, uint16_t item, UiStatDelta *delta, c
         return UI_ITEM_CHOOSE_MOVE;     // the screen asks which move (UiGame_ItemOnMove)
 
     Stats(mon, delta->before, &delta->levelBefore);
-    if (PokemonUseItemEffects(mon, item, (u8)slot, 0, FALSE)) { snprintf(msg, cap, UiLocale_Translate("It won't have any effect.")); return UI_ITEM_FAIL; }
+    if (PokemonUseItemEffects(mon, item, (u8)slot, 0, FALSE)) { snprintf(msg, cap, "%s", UiLocale_Translate("It won't have any effect.")); return UI_ITEM_FAIL; }
     Consume(item);
     CalculateMonStats(mon);
     Stats(mon, delta->after, &delta->levelAfter);
     bool changed = delta->levelAfter != delta->levelBefore;
     for (int32_t i = 0; i < 6; i++)
         changed |= delta->after[i] != delta->before[i];
-    snprintf(msg, cap, UiLocale_Translate("It was used."));
+    snprintf(msg, cap, "%s", UiLocale_Translate("It was used."));
     return changed ? UI_ITEM_DELTA : UI_ITEM_DONE;
 }
 

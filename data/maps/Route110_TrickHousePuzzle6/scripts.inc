@@ -43,45 +43,45 @@ Route110_TrickHousePuzzle6_EventScript_Sebastian::
 	end
 
 Route110_TrickHousePuzzle6_Text_WroteSecretCodeLockOpened:
-	.string "{PLAYER} escreveu a senha secreta\n"
-	.string "na porta.\p"
-	.string "“O MESTRE DOS TRUQUES é a minha vida.”\n"
+	.string "{PLAYER} wrote down the secret code\n"
+	.string "on the door.\p"
+	.string "“TRICK MASTER is my life.”\n"
 	.string "… … … … … … … …\p"
-	.string "A fechadura abriu com um clique!$"
+	.string "The lock clicked open!$"
 
 Route110_TrickHousePuzzle6_Text_SophiaIntro:
-	.string "Quando soube que tinha uma casa\n"
-	.string "esquisita, tive que vir conferir.$"
+	.string "When I heard there was a strange\n"
+	.string "house, I had to check it out.$"
 
 Route110_TrickHousePuzzle6_Text_SophiaDefeat:
-	.string "Descobri alguém que treina muito bem!$"
+	.string "I've discovered a tough TRAINER!$"
 
 Route110_TrickHousePuzzle6_Text_SophiaPostBattle:
-	.string "Estou me divertindo muito explorando\n"
-	.string "este lugar.\p"
-	.string "É um desafio que vale a pena\n"
-	.string "repetir!$"
+	.string "I'm sure having a good time checking\n"
+	.string "this place out.\p"
+	.string "It's a challenge I've found worth\n"
+	.string "repeating!$"
 
 Route110_TrickHousePuzzle6_Text_BennyIntro:
-	.string "Talvez o meu POKéMON PÁSSARO\n"
-	.string "consiga voar por cima do muro…$"
+	.string "Maybe I could get my BIRD POKéMON\n"
+	.string "to fly over the wall…$"
 
 Route110_TrickHousePuzzle6_Text_BennyDefeat:
-	.string "Gwaaah! Estraguei tudo!$"
+	.string "Gwaaah! I blew it!$"
 
 Route110_TrickHousePuzzle6_Text_BennyPostBattle:
-	.string "Hehehe… Acho que perdi porque\n"
-	.string "estava tentando trapacear.$"
+	.string "Ehehehe… I guess I lost because\n"
+	.string "I was trying to cheat.$"
 
 Route110_TrickHousePuzzle6_Text_SebastianIntro:
-	.string "Estou ficando tonto com essas portas\n"
-	.string "giratórias…$"
+	.string "I'm getting dizzy from these rotating\n"
+	.string "doors…$"
 
 Route110_TrickHousePuzzle6_Text_SebastianDefeat:
-	.string "Está tudo girando e girando.\n"
-	.string "Não aguento mais…$"
+	.string "Everything's spinning around and\n"
+	.string "around. I can't take this anymore…$"
 
 Route110_TrickHousePuzzle6_Text_SebastianPostBattle:
-	.string "Você parece nem ligar.\n"
-	.string "Ou está fazendo cara de paisagem?$"
+	.string "You don't seem to be affected at all.\n"
+	.string "Or do you have your poker face on?$"
 

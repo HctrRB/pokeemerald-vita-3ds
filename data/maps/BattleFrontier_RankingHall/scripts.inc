@@ -101,34 +101,34 @@ BattleFrontier_RankingHall_EventScript_Boy::
 	end
 
 BattleFrontier_RankingHall_Text_ExplainRankingHall:
-	.string "Este é o SALÃO DO RANKING.\p"
-	.string "Aqui homenageamos os TREINADORES\n"
-	.string "imortais que deixaram grandes\l"
-	.string "recordes nos eventos da FRONTEIRA.$"
+	.string "This is the RANKING HALL.\p"
+	.string "This is where we recognize the immortal\n"
+	.string "TRAINERS who left great records in\l"
+	.string "BATTLE FRONTIER events.$"
 
 BattleFrontier_RankingHall_Text_DomePikeFactoryRecords:
-	.string "Recordes da CÚPULA, do PICO\n"
-	.string "e da FÁBRICA DE BATALHA$"
+	.string "BATTLE DOME, BATTLE PIKE,\n"
+	.string "and BATTLE FACTORY Records$"
 
 BattleFrontier_RankingHall_Text_PalaceArenaPyramidRecords:
-	.string "Recordes do PALÁCIO, da ARENA\n"
-	.string "e da PIRÂMIDE DE BATALHA$"
+	.string "BATTLE PALACE, BATTLE ARENA,\n"
+	.string "and BATTLE PYRAMID Records$"
 
 BattleFrontier_RankingHall_Text_IsYourNameOnThisList:
-	.string "Oi, o seu nome está nesta lista?$"
+	.string "Hi, is your name on this list?$"
 
 BattleFrontier_RankingHall_Text_WowThatsSuper:
-	.string "Uau, que demais!\n"
-	.string "Vou ter que me esforçar mais também!$"
+	.string "Wow, that's super!\n"
+	.string "I'll have to try harder, too!$"
 
 BattleFrontier_RankingHall_Text_WorkHarderIfYouSawFriendsName:
-	.string "Ah, é mesmo?\p"
-	.string "Se visse o nome de um amigo aqui,\n"
-	.string "aposto que ia se esforçar mais!$"
+	.string "Oh, is that right?\p"
+	.string "If you saw your friend's name up here,\n"
+	.string "I bet it would make you work harder!$"
 
 BattleFrontier_RankingHall_Text_MyNamesNotUpThere:
-	.string "Hum…\n"
-	.string "O meu nome não está aí…\p"
-	.string "Bom, é natural, já que ainda não\n"
-	.string "encarei nenhum desafio.$"
+	.string "Hmm…\n"
+	.string "My name's not up there…\p"
+	.string "Well, it's only natural since I haven't\n"
+	.string "taken any challenges yet.$"
 

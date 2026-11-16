@@ -163,7 +163,7 @@ static void ExtraValue(const VitaExtra *ex, char *out, size_t cap)
     if (ex->text != NULL)
         UiGame_Text(ex->text(), out, cap);
     else if (ex->count == 0)
-        snprintf(out, cap, UiLocale_Translate("EXECUTE"));
+        snprintf(out, cap, "%s", UiLocale_Translate("EXECUTE"));
     else
     {
         const int v = VitaExtras_Get(ex->key);

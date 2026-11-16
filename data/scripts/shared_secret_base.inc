@@ -202,14 +202,14 @@ SecretBase_EventScript_SkittyTV::
 	end
 
 SecretBase_Text_SmallIndentInWall::
-	.string "Tem uma pequena fenda na parede.$"
+	.string "There's a small indent in the wall.$"
 
 SecretBase_Text_IndentUseSecretPower::
-	.string "Tem uma pequena fenda na parede.\p"
-	.string "Usar PODER SECRETO?$"
+	.string "There's a small indent in the wall.\p"
+	.string "Use the SECRET POWER?$"
 
 SecretBase_Text_DiscoveredSmallCavern::
-	.string "Uma pequena caverna apareceu!$"
+	.string "Discovered a small cavern!$"
 
 SecretBase_Text_WantToMakeYourSecretBaseHere:
-	.string "Quer fazer sua BASE SECRETA aqui?$"
+	.string "Want to make your SECRET BASE here?$"
