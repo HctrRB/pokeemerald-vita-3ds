@@ -553,9 +553,9 @@ void UiSpr_FlushUploads(void)
     if (tail == head)
         return;
 #ifdef PLATFORM_VITA
-    uint16_t *const texels = (uint16_t *)vglGetTexDataPointer(GL_TEXTURE_2D);
+    uint32_t *const texels = (uint32_t *)vglGetTexDataPointer(GL_TEXTURE_2D);
 #else
-    uint16_t *const texels = NULL;
+    uint32_t *const texels = NULL;
 #endif
     for (; tail != head; tail++)
     {
@@ -565,11 +565,19 @@ void UiSpr_FlushUploads(void)
         if (texels != NULL)
         {
             for (uint32_t r = 0; r < UI_CELL; r++)
-                memcpy(&texels[(cy + r) * UI_TEX_W + cx], &up->pixels[r * UI_CELL], UI_CELL * sizeof(uint16_t));
+            {
+                uint32_t *dst = &texels[(cy + r) * UI_TEX_W + cx];
+                const uint16_t *src = &up->pixels[r * UI_CELL];
+                for (uint32_t c = 0; c < UI_CELL; c++)
+                    dst[c] = Ui_UnpackTexel(src[c]);
+            }
         }
         else
         {
-            glTexSubImage2D(GL_TEXTURE_2D, 0, (GLint)cx, (GLint)cy, UI_CELL, UI_CELL, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, up->pixels);
+            static uint32_t cellRgba[UI_CELL * UI_CELL];
+            for (uint32_t i = 0; i < UI_CELL * UI_CELL; i++)
+                cellRgba[i] = Ui_UnpackTexel(up->pixels[i]);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, (GLint)cx, (GLint)cy, UI_CELL, UI_CELL, GL_RGBA, GL_UNSIGNED_BYTE, cellRgba);
         }
     }
     __atomic_store_n(&sTail, head, __ATOMIC_RELEASE);
