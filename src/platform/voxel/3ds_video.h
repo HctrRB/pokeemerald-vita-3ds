@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "global.h"
+#include "palette.h"
 #include "voxel_unswizzle.h"
 #include "sprite.h"
 #include "field_weather.h"
@@ -14,8 +15,7 @@ extern "C" {
 
 static inline const uint16_t *CtrVideo_ExtPalette(uint32_t index)
 {
-    (void)index;
-    return NULL;
+    return (index < PLTT_EXT_COUNT) ? &gPlttBufferUnfaded[PLTT_EXT_ID(index)] : NULL;
 }
 
 static inline bool8 CtrSprite_IsVoxelWeather(const struct Sprite *sprite)
