@@ -1,5 +1,5 @@
 [LavaridgeTown_HerbShop_Text_WelcomeToHerbShop] 57c2b05dda
-Bem-vindo à LOJA DE ERVAS, remédios\neficazes e baratinhos!$
+Boas-vindas à LOJA DE ERVAS, remédios\neficazes e baratinhos!$
 
 [LavaridgeTown_HerbShop_Text_YouveComeToLookAtHerbalMedicine] 2f3e3a4469
 Veio ver os remédios de ervas de\nLAVARIDGE?\pIsso é muito louvável.\pGostei de você! Tome isto!$

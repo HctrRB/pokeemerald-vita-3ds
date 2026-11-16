@@ -8,7 +8,7 @@
 {STR_VAR_1} pode gostar do programa.\n… … … … … … … … … … … … … … … …\pMelhor ir andando!$
 
 [gText_WhichFloorWouldYouLike] 3521c6ed75
-Bem-vindo à LOJA DE DEPARTAMENTOS\nde LILYCOVE.\pPara qual andar você quer ir?$
+Boas-vindas à LOJA DE DEPARTAMENTOS\nde LILYCOVE.\pPara qual andar você quer ir?$
 
 [gText_SandstormIsVicious] 2457eab70f
 A tempestade de areia está forte.\nNão dá pra seguir em frente.$

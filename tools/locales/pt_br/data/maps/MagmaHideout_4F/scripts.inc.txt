@@ -41,7 +41,7 @@ MAXIE: GROUDON…\pNada conseguia te despertar do seu\nsono banhado em magma…\
 MAXIE: GROUDON!\nO que houve?\pO ORBE AZUL não era a chave?\pGROUDON!\nAonde você foi…$
 
 [MagmaHideout_4F_Text_MaxieOhItWasYou] 877b3d7b51
-MAXIE: Ah, então foi você?\pVi você bisbilhotando por aí sem\nser convidado…\pAgora entendi!\nVocê deve ter feito alguma trapaça!$
+MAXIE: Ah, então foi você?\pVi você bisbilhotando por aí sem\nter um convite…\pAgora entendi!\nVocê deve ter feito alguma trapaça!$
 
 [MagmaHideout_4F_Text_MaxieDefeat] 290d81e99f
 Como você lida tão bem com\nPOKéMON?$

@@ -62,7 +62,7 @@ STEVEN: EQUIPE MAGMA…\pPra que roubar combustível de\nfoguete?$
 MAXIE: Fufufu… Já que está tão\ncurioso, merece uma explicação.\pVamos despejar a carga toda no\nMONTE CHIMNEY!\pSem o GROUDON, não precisamos mais\ndaquele monte de escória!\pEntão vamos usar a força do\ncombustível pra fazer o vulcão\lentrar em erupção!\pVai ser selvagem!$
 
 [MossdeepCity_SpaceCenter_2F_Text_StevenAreYouReadyToBattle] e107803d25
-STEVEN: {PLAYER}{KUN}!\nVai me ajudar?\pVamos batalhar juntos!\nPronto pra isso?$
+STEVEN: {PLAYER}{KUN}!\nVai me ajudar?\pVamos batalhar juntos!\nTudo pronto pra isso?$
 
 [MossdeepCity_SpaceCenter_2F_Text_StevenHurryGetReadyQuickly] e95435a8d8
 STEVEN: Então, rápido!\nPrepare-se logo!$

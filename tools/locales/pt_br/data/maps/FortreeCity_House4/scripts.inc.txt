@@ -8,7 +8,7 @@ Vai!\nVai, POKéMON PÁSSARO!$
 Hehe, pedi pro meu WINGULL fazer\num favor pra mim.$
 
 [FortreeCity_House4_Text_WelcomeWingullTakeMentalHerb] 016cb1dd1a
-Isso!\nBem-vindo de volta, WINGULL!\pHã? O que é isso?\nO que ele está segurando?\pUma ERVA MENTAL?\nDeve ter achado em algum lugar.\pMas eu não sou TREINADOR, então\npode ficar com ela.$
+Isso!\nBoas-vindas de volta, WINGULL!\pHã? O que é isso?\nO que ele está segurando?\pUma ERVA MENTAL?\nDeve ter achado em algum lugar.\pMas eu não sou TREINADOR, então\npode ficar com ela.$
 
 [FortreeCity_House4_Text_FriendsFarAwayThanksToWingull] 56562e7dbe
 Graças ao meu WINGULL, tenho amigos\nque moram longe.$

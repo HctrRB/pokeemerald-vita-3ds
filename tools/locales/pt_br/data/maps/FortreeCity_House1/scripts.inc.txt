@@ -2,7 +2,7 @@
 Uooooaaar! Eu preciso!\nTenho que ter um {STR_VAR_1}!\lFaço qualquer coisa!\p…Hã… Você ouviu?\nO meu grito do fundo do coração?\pDepois disso, você vai trocar o seu\n{STR_VAR_1} pelo meu {STR_VAR_2},\lnão vai?$
 
 [FortreeCity_House1_Text_MonYouTakeCare] cac76a0c06
-Isso aí, beleza!\p{STR_VAR_1}, bem-vindo!\n{STR_VAR_2}, se cuida!$
+Isso aí, beleza!\pBoas-vindas, {STR_VAR_1}!\n{STR_VAR_2}, se cuida!$
 
 [FortreeCity_House1_Text_ThisIsntAMon] a96fe71159
 Hã, não, acho que não.\nIsso não é um {STR_VAR_1}.$

@@ -77,7 +77,7 @@ Bom, parece que perdi sem nunca\nter o controle.$
 Fico aqui porque virei fã do poder\nda FLANNERY.\pHehehehe.$
 
 [LavaridgeTown_Gym_1F_Text_FlanneryIntro] 2228129d3d
-Boas-vindas… Não, espera.\pTREINADOR insignificante, que bom\nque chegou até aqui!\pFui encarregada de… Não, espera.\pEu sou a FLANNERY, a LÍDER deste\nGINÁSIO!\pHã…\nNão me subestime, mesmo que eu\lseja LÍDER há pouco tempo!\pCom as técnicas herdadas do meu avô,\nvou, hã… mostrar os golpes quentes\lque aperfeiçoamos nesta terra!$
+Boas-vindas… Não, espera.\pQue desafio insignificante! Bom\nque chegou até aqui!\pFui encarregada de… Não, espera.\pEu sou a FLANNERY, a LÍDER deste\nGINÁSIO!\pHã…\nNão me subestime, mesmo que eu\lseja LÍDER há pouco tempo!\pCom as técnicas herdadas do meu avô,\nvou, hã… mostrar os golpes quentes\lque aperfeiçoamos nesta terra!$
 
 [LavaridgeTown_Gym_1F_Text_FlanneryDefeat] 4466f30db5
 Ah…\nAcho que me esforcei demais…\pEu… Virei LÍDER de GINÁSIO há\npouco tempo.\pTentei ser alguém que eu não sou.\pTenho que agir do meu jeito. Senão,\nos meus POKéMON ficam confusos.\pObrigada por me ensinar isso.\nPor isso, você merece isto.$

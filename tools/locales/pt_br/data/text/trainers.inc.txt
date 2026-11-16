@@ -1,5 +1,5 @@
 [Route102_Text_CalvinIntro] 0d4f9503aa
-Se você tem POKéMON, então é\nTREINADOR POKéMON oficial!\lNão pode recusar o meu desafio!$
+Se você tem POKéMON, então já\npode treinar POKéMON!\lNão pode recusar o meu desafio!$
 
 [Route102_Text_CalvinDefeated] 2eac79335c
 Argh, perdi…\nEu devia ter treinado mais os meus…$
@@ -1292,7 +1292,7 @@ Iodelei-iiuuu!$
 Quando eu era pequenininho, achava\nque alguém me imitava e gritava de\lvolta: “Iodelei-iiuuu.”$
 
 [Route114_Text_LucasIntro] 9c37ce7fe4
-Se não está preparado, não devia\nestar nas montanhas!$
+Sem preparo, não devia\nestar nas montanhas!$
 
 [Route114_Text_LucasDefeat] 3393a8fb43
 As montanhas não perdoam…$
@@ -2012,7 +2012,7 @@ Acredite nos seus POKéMON.\nAcredite em você.\pO caminho vai se revelar.$
 Hã? Olha só.\pPra quem está numa aventura, você\nviaja bem leve.$
 
 [Route119_Text_CatherineDefeat] 32f44b37aa
-Acidentes acontecem quando não se\nestá preparado!$
+Acidentes acontecem quando\nfalta preparo!$
 
 [Route119_Text_CatherinePostBattle] 71a51a0752
 Você viaja leve, mas tem tudo o que\nprecisa.\pE está em dia de corpo e mente\ntambém.$
@@ -3371,7 +3371,7 @@ Cansado de novo…$
 Os meus POKéMON PÁSSAROS cansam\nrápido depois de um voo longo…$
 
 [Route134_Text_HitoshiIntro] a8cd73f76b
-Você é TREINADOR POKéMON.\nSem palavras. Batalhemos agora.$
+Você treina POKéMON.\nSem palavras. Batalhemos agora.$
 
 [Route134_Text_HitoshiDefeat] e4bddd8be9
 … … … … … …\n… … … … … …$

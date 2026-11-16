@@ -1,8 +1,8 @@
 [EverGrandeCity_ChampionsRoom_Text_IntroSpeech] 4cf7976458
-WALLACE: Boas-vindas, {PLAYER}{KUN}.\pAquele incidente na CIDADE DE\nSOOTOPOLIS… Foi um trabalho\lsoberbo, acabar com a crise sozinho.\pOps!\pNão seria justo dizer que você\nacabou com a crise sozinho.\pVocê superou aquela situação difícil\nagindo em sintonia com os POKéMON.\pNós, TREINADORES, criamos POKéMON\ndando itens e ensinando novas\ltécnicas de batalha.\pMas nós também aprendemos muito\ncom os POKéMON.\pE é aqui que as suas conquistas são\npostas à prova contra as de outros\lcomo você.\pAgora!\pQuem dança com mais elegância com\nos seus POKéMON em HOENN?\pMostre aqui e agora!$
+WALLACE: Boas-vindas, {PLAYER}{KUN}.\pAquele incidente na CIDADE DE\nSOOTOPOLIS… Foi um trabalho\lsoberbo, resolver a crise sem ajuda.\pOps!\pNão seria justo dizer que você\nresolveu a crise sem ajuda.\pVocê superou aquela situação difícil\nagindo em sintonia com os POKéMON.\pNós, TREINADORES, criamos POKéMON\ndando itens e ensinando novas\ltécnicas de batalha.\pMas nós também aprendemos muito\ncom os POKéMON.\pE é aqui que as suas conquistas são\npostas à prova contra as de outros\lcomo você.\pAgora!\pQuem dança com mais elegância com\nos seus POKéMON em HOENN?\pMostre aqui e agora!$
 
 [EverGrandeCity_ChampionsRoom_Text_Defeat] ed45b100ec
-Eu, o CAMPEÃO, caio derrotado…\pFoi um trabalho maravilhoso.\nVocê teve uma elegância irritante.\lE, ainda assim, foi glorioso!\pParabéns, {PLAYER}{KUN}!\pVocê é um TREINADOR POKéMON\nde verdadeira nobreza!$
+Eu, o CAMPEÃO, caio derrotado…\pFoi um trabalho maravilhoso.\nVocê teve uma elegância irritante.\lE, ainda assim, foi glorioso!\pParabéns, {PLAYER}{KUN}!\pVocê treina POKéMON\ncom verdadeira nobreza!$
 
 [EverGrandeCity_ChampionsRoom_Text_PostBattleSpeech] 51e4732c15
 WALLACE: Os POKéMON que você mandou\npra batalha…\pÀs vezes dançavam como a brisa da\nprimavera, às vezes atacavam como\lum raio.\pVocê conduziu os seus POKéMON com\numa elegância leve, mas firme.\pAté eu fiquei deslumbrado com a sua\natuação de mestre!\pVocê agora está no topo glorioso\nda LIGA POKéMON.\pE agora proclamo, em toda a região\nde HOENN…$

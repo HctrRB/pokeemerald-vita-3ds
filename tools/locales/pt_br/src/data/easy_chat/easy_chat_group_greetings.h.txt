@@ -1,5 +1,5 @@
 [gEasyChatWord_Thanks] ffa4516bff width=72
-OBRIGADO
+VALEU
 
 [gEasyChatWord_Yes] 8fff039853 width=72
 SIM
@@ -17,7 +17,7 @@ AQUI ESTÁ
 É
 
 [gEasyChatWord_Welcome] 0139615b45 width=72
-BEM-VINDO
+BOAS-VINDAS
 
 [gEasyChatWord_Oi] 11d8efc984 width=72
 OI
