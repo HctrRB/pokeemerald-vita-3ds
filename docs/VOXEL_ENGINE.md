@@ -16,10 +16,12 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 | `voxel_relief.c/h` | Terrain relief read from `relief.bin`: cliffs, stairs, sea rocks |
 | `voxel_regions.c/h` | Precomputed role of each cell (4 bits per cell), from `regions.bin` |
 | `voxel_building.c/h` | Buildings modelled from their own drawing (`buildings.bin`), with a texture page LRU |
-| `voxel_tree.c/h` | General-tileset trees: trunk on the ground, cutout crown (`trees.rgba5551`) |
+| `voxel_tree.c/h` | General-tileset trees, tall grass, ash grass & flowers (`trees.rgba5551`) |
 | `voxel_sign.c/h` | Signposts and street lamps with pixel-masked geometry (`signposts.bin`) |
 | `voxel_lighting.c/h` | Sun from the in-game clock, baked into vertex colours; cast shadows; face shading |
-| `voxel_grade.c/h` | Colour grade (slightly more saturated GBA art) |
+| `voxel_grade.c/h` | Colour grade (GBA / HD-2D) and CPU-baked tile relief |
+| `voxel_hd2d_shader.c/h` | HD-2D 30 FPS post-processing shaders (box downsample, bright-pass, Kawase bloom, DoF composite) |
+| `voxel_pointlights.c/h` | Dynamic point lights for street lamps, cave lanterns & battle glow |
 | `voxel_entities.c/h` | Player, NPC and follower billboards from the entity snapshot; cast shadows |
 | `voxel_sprite_slots.c/h` | Slots of the sprite atlas used by the billboards |
 | `voxel_battle.c/h` | The 3D battle stage built from the map the battle started on |
@@ -32,7 +34,7 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 
 ## Chunks
 
-- The world is split into chunks of `CHUNK_SIZE` = 8×8 metatiles. Up to `MAX_CHUNKS` = 64
+- The world is split into chunks of `CHUNK_SIZE` = 8×8 metatiles. Up to `MAX_CHUNKS` = 104
   chunk slots are cached, each with its own GL vertex buffer; the geometry lives only there.
 - A build has three phases: `PrepareChunkJob` (Core 0: the chunk's window and the atlas slot of
   every map it touches), `ComputeChunkJob` (geometry and lighting into `sChunkStaging`, no GL)

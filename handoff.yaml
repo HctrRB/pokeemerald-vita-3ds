@@ -1,8 +1,8 @@
 # Current state and next steps. Earlier logs: docs/history/handoff_2026-11-05.yaml and the
 # performance study docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
-last_updated: "2026-11-15"
+last_updated: "2026-11-16"
 branch: main
-current_milestone: "Native UI completion, voxel terrain fixes & hardware verification"
+current_milestone: "HD-2D 30 FPS upgrade, native UI completion, voxel terrain fixes & hardware verification"
 
 phases:
   phase_0_safety_net: done
@@ -17,6 +17,7 @@ phases:
   native_ui_remaining_screens: pending    # batch 2 & 3 secondary GBA screens
   voxelgen_terrain_fixes: in_progress     # local untracked voxelgen/ quick relief + 3D viewer/editor, Route 119 bridge & Lilycove/Mirage Island fixes, wide building culling extent (83300a5)
   ext_palettes_and_visible_wilds: done    # F1-F7 implemented per docs/plan/PLAN_PALETAS_EXT.md
+  hd2d_30fps_upgrade: done                # 30 FPS HD-2D post-FX (Kawase bloom, DoF, split-tone, point lights, foliage sway/anim/ash-grass, surface FX); 60 (CLASSIC) untouched
 
 tags:
   stable: stable/2026-11-05               # last tested build before the docs cleanup
@@ -80,6 +81,7 @@ untested_on_hardware:
   - Wide building culling extent (bldWest/East/North/South/Top in 83300a5, e.g. Rustboro's Devon Corp.).
   - Long-session stability with 40 MB RAM / 88 MB CDRAM vitaGL pools (aecb746).
   - Extended sprite palettes (`gPlttExt`) for the follower, its Poké Ball and reflection, and visible wild Pokémon in the overworld (`visible_wild` [default FEW], `encounter_rate` [default NORMAL]).
+  - HD-2D 30 FPS final ash-grass polish (`19bb1ab`): `gTileset_Fallarbor` `MB_ASHGRASS` 3D sprite in Route 113 switching to green `MB_TALL_GRASS` on step (core HD-2D 30 FPS pass—DoF, 2-pass Kawase bloom, point lights, foliage wind-sway/player-bend shader, flower frame anim, grass step particles, softer fog—already verified at 30.1 FPS / 60.0 Hz / 0 holes in `logs/sesion 43/perf_summary.txt`).
 
 next_steps:
   - Test the current VPK (build_vita.ps1) on PS Vita against untested_on_hardware and inspect
