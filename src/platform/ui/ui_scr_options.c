@@ -16,6 +16,7 @@
 #include "m4a.h"
 #include "platform.h"
 #include "sound.h"
+#include "constants/items.h"
 #include "constants/songs.h"
 
 enum { ROW_CORE, ROW_EXTRA, ROW_REMAP, ROW_QUIT };
@@ -26,7 +27,17 @@ typedef struct { uint8_t kind; uint16_t sub; const char *group, *label; const Vi
 #define LIST_Y 72
 #define ROW_H 40
 #define ROWS 9
+#define GBA_LIST_X 26
+#define GBA_LIST_W 892
+#define GBA_LIST_Y 104
+#define GBA_ROW_H 41
+#define GBA_ROWS 8
 #define MAX_ROWS 40
+
+static int32_t OptVisRows(void)
+{
+    return gUiTheme->gbaFrame ? GBA_ROWS : ROWS;
+}
 
 static const char *const sTabs[VITA_TAB_COUNT] = { "GENERAL", "WORLD", "BATTLE", "MODES", "CHEATS" };
 static const char *const sCoreNames[6] = { "TEXT SPEED", "BATTLE SCENE", "BATTLE STYLE", "SOUND OUTPUT", "MASTER VOLUME", "BUTTON MODE" };
@@ -64,6 +75,7 @@ static const struct { const char *key, *help; } sExtraHelp[] = {
     { "day_night", "Light changes with the clock." },
     { "timed_encounters", "Some POKEMON appear only by day or by night." },
     { "clock_speed", "How fast the in-game clock runs." },
+    { "visible_wild", "Wild POKEMON roam the grass and water; touch one to battle." },
     { "follower", "The first POKEMON of the party walks behind you." },
     { "run_indoors", "Allow running inside buildings." },
     { "auto_run", "Run without holding B; hold B to walk." },
@@ -82,6 +94,7 @@ static const struct { const char *key, *help; } sExtraHelp[] = {
     { "trade_evo", "Trade evolutions happen at level 40." },
     { "fast_eggs", "EGGS hatch much sooner." },
     { "shiny_odds", "Chance that a wild POKEMON is shiny." },
+    { "encounter_rate", "How often wild POKEMON appear." },
     { "always_catch", "Every POKE BALL catches." },
     { "give_money", "Set your money to $999,999." },
     { "give_pocket", "Pocket of the item to give." },
@@ -122,7 +135,7 @@ static void BuildRows(void)
     }
     if (sTab == VITA_TAB_MODES)
         sRows[sCount++] = (OptRow){ ROW_QUIT, 0, "SYSTEM", "QUIT TO LIVEAREA", NULL };
-    UiList_Reset(&sList[sTab], sCount, ROWS);
+    UiList_Reset(&sList[sTab], sCount, OptVisRows());
 }
 
 static void CoreValue(uint16_t id, char *out, size_t cap)
@@ -203,8 +216,50 @@ static void Step(const OptRow *r, int32_t dir)
     }
 }
 
+static int32_t CoreChoices(uint16_t id, const char *const **out)
+{
+    static const char *const kSpd[3] = { "SLOW", "MID", "FAST" };
+    static const char *const kOnOff[2] = { "ON", "OFF" };
+    static const char *const kStyle[2] = { "SHIFT", "SET" };
+    static const char *const kSound[2] = { "MONO", "STEREO" };
+    static const char *const kMode[3] = { "NORMAL", "LR", "L=A" };
+    switch (id)
+    {
+    case 0: *out = kSpd;   return gSaveBlock2Ptr->optionsTextSpeed % 3;
+    case 1: *out = kOnOff; return gSaveBlock2Ptr->optionsBattleSceneOff ? 1 : 0;
+    case 2: *out = kStyle; return gSaveBlock2Ptr->optionsBattleStyle ? 1 : 0;
+    case 3: *out = kSound; return gSaveBlock2Ptr->optionsSound ? 1 : 0;
+    case 5: *out = kMode;  return gSaveBlock2Ptr->optionsButtonMode % 3;
+    default: *out = NULL;  return -1;
+    }
+}
+
+static int32_t CoreChoiceCount(uint16_t id)
+{
+    return (id == 0 || id == 5) ? 3 : (id == 4) ? 0 : 2;
+}
+
+static int32_t RowChoices(const OptRow *row, const char *const **vals, int32_t *curOut)
+{
+    if (row->kind == ROW_CORE && row->sub != 4)
+    {
+        *curOut = CoreChoices(row->sub, vals);
+        return CoreChoiceCount(row->sub);
+    }
+    if (row->kind == ROW_EXTRA && row->ex != NULL && row->ex->text == NULL && row->ex->count >= 2 && row->ex->count <= 4 && row->ex->values != NULL)
+    {
+        *vals = row->ex->values;
+        *curOut = VitaExtras_Get(row->ex->key);
+        return row->ex->count;
+    }
+    *vals = NULL;
+    *curOut = -1;
+    return 0;
+}
+
 static bool Update(const UiInput *in)
 {
+    const bool gba = gUiTheme->gbaFrame;
     if (sQuit)
     {
         if (in->pressed & VITA_BTN_CROSS) { VitaExtras_Save(); VitaPlatform_RequestQuit(); }
@@ -213,6 +268,7 @@ static bool Update(const UiInput *in)
     }
     if (sRemap == 2)
     {
+        if (in->tap) { PlaySE(SE_SELECT); sRemap = 1; return true; }
         // The next face / shoulder / START / SELECT button pressed becomes the action's button
         for (int32_t bit = 4; bit < 16; bit++)
             if (in->pressed & (1u << bit))
@@ -226,7 +282,7 @@ static bool Update(const UiInput *in)
     }
     if (sRemap == 1)
     {
-        if (in->pressed & VITA_BTN_CIRCLE) { PlaySE(SE_SELECT); sRemap = 0; return true; }
+        if ((in->pressed & VITA_BTN_CIRCLE) || (in->tap && !UiHit(in, 200, 90, 560, 360))) { PlaySE(SE_SELECT); sRemap = 0; return true; }
         // Triangle: the action keeps no button (unbind)
         if ((in->pressed & VITA_BTN_TRIANGLE) && sRemapList.sel < VITA_ACTION_COUNT)
         {
@@ -259,20 +315,158 @@ static bool Update(const UiInput *in)
     }
     if (in->pressed & VITA_BTN_START) { PlaySE(SE_SELECT); sQuit = true; return true; }
     if (in->pressed & VITA_BTN_SELECT) { PlaySE(SE_SELECT); sRemap = 1; UiList_Reset(&sRemapList, VITA_ACTION_COUNT + 1, VITA_ACTION_COUNT + 1); return true; }
-    int32_t t = UiKit_TabHit(in, sTabX, sTabW, VITA_TAB_COUNT);
+    int32_t t = -1;
+    if (gba)
+    {
+        const int32_t ph = UiW_GbaPagerHit(in, true, VITA_TAB_COUNT);
+        if (ph != 0)
+            t = (sTab + VITA_TAB_COUNT + ph) % VITA_TAB_COUNT;
+    }
+    else
+        t = UiKit_TabHit(in, sTabX, sTabW, VITA_TAB_COUNT);
     if (in->pressed & VITA_BTN_L) t = (sTab + VITA_TAB_COUNT - 1) % VITA_TAB_COUNT;
     if (in->pressed & VITA_BTN_R) t = (sTab + 1) % VITA_TAB_COUNT;
     if (t >= 0 && t != sTab) { sTab = t; PlaySE(SE_SELECT); BuildRows(); return true; }
     UiList *l = &sList[sTab];
-    const int32_t a = UiList_Update(l, in, LIST_X, LIST_Y, LIST_W, ROW_H, false);
+    l->rows = OptVisRows();
+    const int32_t lx = gba ? GBA_LIST_X : LIST_X;
+    const int32_t ly = gba ? GBA_LIST_Y : LIST_Y;
+    const int32_t lw = gba ? GBA_LIST_W : LIST_W;
+    const int32_t rh = gba ? GBA_ROW_H : ROW_H;
+    const int32_t a = UiList_Update(l, in, lx, ly, lw, rh, false);
     if (in->repeat & VITA_BTN_LEFT) Step(&sRows[l->sel], -1);
     else if (in->repeat & VITA_BTN_RIGHT) Step(&sRows[l->sel], 1);
     else if (a >= 0) Step(&sRows[a], 1);
     return true;
 }
 
+static void DrawModalsGba(void)
+{
+    if (sRemap)
+    {
+        UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
+        UiW_Window(200, 100, 560, 400, sRemap == 2 ? "PRESS A BUTTON" : "BUTTON REMAPPING");
+        UiText_Draw(UI_FACE_PS2P, 16, 220, 482, "X: change  TRIANGLE: no button", UI_COL_INK_SOFT);
+        for (int32_t i = 0; i <= VITA_ACTION_COUNT; i++)
+        {
+            const int32_t y = 150 + i * 36;
+            const bool on = i == sRemapList.sel;
+            UiW_Row(220, y, 520, 36, on, i);
+            const uint32_t ink = on ? UI_COL_SELECT_INK : UI_COL_INK;
+            if (i == VITA_ACTION_COUNT) { UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 248, y + 2, "RESET TO DEFAULTS", ink); continue; }
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 248, y + 2, sActions[i], ink);
+            const uint8_t bit = (uint8_t)Platform_GetSetting((enum PlatformSetting)(PLATFORM_SETTING_BUTTON_FIRST + i));
+            const char *b = (sRemap == 2 && i == sRemapWaitFor) ? "PRESS..." : bit < 16 ? sButtons[bit] : "NONE";
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 720 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, b), y + 2, b, ink);
+        }
+    }
+    if (sQuit)
+    {
+        UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
+        UiW_Window(280, 200, 400, 140, "QUIT");
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 300, 250, "Quit to the LiveArea?", UI_COL_INK);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 300, 286, "X: quit   O: cancel", UI_COL_INK_SOFT);
+    }
+}
+
+static void BuildGba(void)
+{
+    char buf[64];
+    UiW_GbaTopBar(UI_GBA_BG_OPTIONS, 0, "OPTIONS", VITA_TAB_COUNT, sTab, false, sTabs[sTab]);
+    UiSpr_ItemIcon(ITEM_CARD_KEY, 28, 13, 1);
+
+    int32_t rx = UI_SCREEN_W - 14;
+    UiW_GbaHelpBadge(&rx, "O", "BACK", true);
+    UiW_GbaHelpBadge(&rx, "SELECT", "REMAP", true);
+    UiW_GbaHelpBadge(&rx, "X", "CHANGE", false);
+
+    // Main options sheet (.gba-win.opt-sheet)
+    UiW_GbaWin(14, 60, 932, 384, UI_GBA_WIN_DEFAULT);
+    snprintf(buf, sizeof(buf), "TAB %d / %d · %s", (int)sTab + 1, VITA_TAB_COUNT, sTabs[sTab]);
+    UiW_GbaSectionStrip(26, 70, 908, 28, UI_GBA_TAG_SLATE, "SYSTEM & GAMEPLAY OPTIONS", buf);
+
+    UiW_GbaBox(GBA_LIST_X, GBA_LIST_Y, GBA_LIST_W, GBA_ROWS * GBA_ROW_H, 6, UI_RGBA(150, 172, 156, 255),
+               UI_RGBA(250, 248, 236, 255), UI_RGBA(244, 244, 230, 255), C_WHITE, 0);
+    UiList *const l = &sList[sTab];
+    l->rows = GBA_ROWS;
+    UiDraw_PushClip(GBA_LIST_X + 2, GBA_LIST_Y + 2, GBA_LIST_W - 4, GBA_ROWS * GBA_ROW_H - 4);
+    for (int32_t r = 0; r < GBA_ROWS && l->first + r < sCount; r++)
+    {
+        const int32_t i = l->first + r, y = GBA_LIST_Y + r * GBA_ROW_H;
+        const OptRow *row = &sRows[i];
+        const bool on = (i == l->sel);
+        if (on)
+        {
+            UiW_GbaBox(GBA_LIST_X + 4, y + 2, GBA_LIST_W - 8, GBA_ROW_H - 4, 4, UI_RGBA(230, 148, 65, 255),
+                       UI_RGBA(255, 249, 224, 255), UI_RGBA(255, 242, 186, 255), C_WHITE, 0);
+            UiW_Arrow(GBA_LIST_X + 12, y + 14, UI_RGBA(230, 8, 8, 255));
+        }
+        else
+        {
+            UiDraw_Rect(GBA_LIST_X + 2, y, GBA_LIST_W - 4, GBA_ROW_H, (i & 1) ? UI_RGBA(241, 242, 228, 255) : UI_RGBA(250, 248, 236, 255));
+            if (r < GBA_ROWS - 1)
+                UiDraw_Rect(GBA_LIST_X + 2, y + GBA_ROW_H - 2, GBA_LIST_W - 4, 2, UI_RGBA(228, 228, 212, 255));
+        }
+        UiW_GbaTextMid(UI_FACE_VT323, 28, GBA_LIST_X + 34, y, GBA_ROW_H, row->label, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+
+        const char *const *vals = NULL;
+        int32_t curVal = -1;
+        const int32_t vc = RowChoices(row, &vals, &curVal);
+        if (vc >= 2)
+        {
+            int32_t px = GBA_LIST_X + GBA_LIST_W - 14;
+            for (int32_t j = vc - 1; j >= 0; j--)
+            {
+                const int32_t pw = UiText_Width(UI_FACE_VT323, 28, vals[j]) + 22;
+                px -= pw;
+                if (j == curVal)
+                {
+                    UiW_GbaBox(px, y + 5, pw, 30, 4, UI_RGBA(216, 32, 24, 255),
+                               UI_RGBA(255, 240, 238, 255), UI_RGBA(252, 224, 220, 255), C_WHITE, 1);
+                    UiW_GbaTextCentred(UI_FACE_VT323, 28, px, y + 5, pw, 30, vals[j], UI_RGBA(216, 32, 24, 255), UI_RGBA(248, 200, 196, 255));
+                }
+                else
+                    UiW_GbaTextCentred(UI_FACE_VT323, 28, px, y + 5, pw, 30, vals[j], UI_RGBA(130, 138, 132, 255), UI_GBA_SHAD_LIGHT);
+                px -= 8;
+            }
+        }
+        else
+        {
+            if (row->kind == ROW_CORE) CoreValue(row->sub, buf, sizeof(buf));
+            else if (row->kind == ROW_EXTRA) ExtraValue(row->ex, buf, sizeof(buf));
+            else snprintf(buf, sizeof(buf), row->kind == ROW_REMAP ? "OPEN" : "EXECUTE");
+            const int32_t pw = UiText_Width(UI_FACE_VT323, 28, buf) + 28;
+            const int32_t px = GBA_LIST_X + GBA_LIST_W - 18 - pw;
+            UiW_GbaBox(px, y + 5, pw, 30, 4, UI_RGBA(216, 32, 24, 255),
+                       UI_RGBA(255, 240, 238, 255), UI_RGBA(252, 224, 220, 255), C_WHITE, 1);
+            UiW_GbaTextCentred(UI_FACE_VT323, 28, px, y + 5, pw, 30, buf, UI_RGBA(216, 32, 24, 255), UI_RGBA(248, 200, 196, 255));
+            if (on && (row->kind == ROW_CORE || (row->kind == ROW_EXTRA && row->ex != NULL && row->ex->count > 1)))
+            {
+                UiW_GbaArrowH(px - 18, y + 14, false, UI_RGBA(216, 32, 24, 255));
+                UiW_GbaArrowH(px + pw + 6, y + 14, true, UI_RGBA(216, 32, 24, 255));
+            }
+        }
+    }
+    UiDraw_PopClip();
+    UiW_ScrollBar(924, GBA_LIST_Y, GBA_ROWS * GBA_ROW_H, l->first, GBA_ROWS, sCount);
+
+    // Bottom GBA message help box (.gba-msg)
+    UiW_GbaMsg(14, 452, 932, 80, false, true);
+    if (sCount > 0)
+    {
+        const OptRow *sel = &sRows[l->sel];
+        UiW_GbaTextWrapped(UI_FACE_VT323, 28, 38, 464, 868, 28, RowHelp(sel), UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT, 2);
+    }
+    DrawModalsGba();
+}
+
 static void Build(void)
 {
+    if (gUiTheme->gbaFrame)
+    {
+        BuildGba();
+        return;
+    }
     char buf[48];
     UiKit_Header("OPTIONS", sTabs, VITA_TAB_COUNT, sTab, sTabX, sTabW, 12);
     UiW_Panel(16, 60, 928, 376);
@@ -316,32 +510,7 @@ static void Build(void)
     UiW_FooterKey(&fx, "SELECT", "Remap");
     UiW_FooterKey(&fx, "START", "Quit");
     UiKit_FooterClock();
-
-    if (sRemap)
-    {
-        UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
-        UiW_Window(200, 100, 560, 400, sRemap == 2 ? "PRESS A BUTTON" : "BUTTON REMAPPING");
-        UiText_Draw(UI_FACE_PS2P, 16, 220, 482, "X: change  TRIANGLE: no button", UI_COL_INK_SOFT);
-        for (int32_t i = 0; i <= VITA_ACTION_COUNT; i++)
-        {
-            const int32_t y = 150 + i * 36;
-            const bool on = i == sRemapList.sel;
-            UiW_Row(220, y, 520, 36, on, i);
-            const uint32_t ink = on ? UI_COL_SELECT_INK : UI_COL_INK;
-            if (i == VITA_ACTION_COUNT) { UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 248, y + 2, "RESET TO DEFAULTS", ink); continue; }
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 248, y + 2, sActions[i], ink);
-            const uint8_t bit = (uint8_t)Platform_GetSetting((enum PlatformSetting)(PLATFORM_SETTING_BUTTON_FIRST + i));
-            const char *b = (sRemap == 2 && i == sRemapWaitFor) ? "PRESS..." : bit < 16 ? sButtons[bit] : "NONE";
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 720 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, b), y + 2, b, ink);
-        }
-    }
-    if (sQuit)
-    {
-        UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
-        UiW_Window(280, 200, 400, 140, "QUIT");
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 300, 250, "Quit to the LiveArea?", UI_COL_INK);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 300, 286, "X: quit   O: cancel", UI_COL_INK_SOFT);
-    }
+    DrawModalsGba();
 }
 
 const UiScreen gUiOptionsScreen = { Enter, Update, Build, NULL };

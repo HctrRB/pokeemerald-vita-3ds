@@ -34,6 +34,12 @@ bool8 FollowerMon_DoorDone(void);
 /* Palette settling check: ensure fade/weather has completed */
 bool8 FollowerMon_PalettesSettled(void);
 
+/* Visible wild Pokemon HGSS overworld sprites */
+u8 FollowerMon_WildSprite(u32 slot, u16 species, u32 personality, bool8 shiny);
+void FollowerMon_WildPrefetch(u16 species);
+void FollowerMon_WildFace(struct Sprite *sprite, s8 dx, s8 dy, bool8 walking);
+void FollowerMon_WildFree(u32 slot, struct Sprite *sprite);
+
 /* Cleanly releases follower resources on reset/warp */
 void FollowerMon_ReleaseAll(void);
 

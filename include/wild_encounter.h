@@ -37,5 +37,9 @@ void FishingWildEncounter(u8 rod);
 u16 GetLocalWildMon(bool8 *isWaterMon);
 u16 GetLocalWaterMon(void);
 bool8 UpdateRepelCounter(void);
+void VisibleWild_Update(void);
+void VisibleWild_CameraShift(s16 dx, s16 dy);
+bool8 VisibleWild_StepOnto(void);
+bool8 VisibleWild_IsSprite(u8 spriteId);
 
 #endif // GUARD_WILD_ENCOUNTER_H
