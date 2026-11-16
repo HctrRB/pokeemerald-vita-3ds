@@ -12,12 +12,6 @@
 extern "C" {
 #endif
 
-static inline u8 GetSpriteExtPalette(const struct Sprite *sprite)
-{
-    (void)sprite;
-    return 0xFF;
-}
-
 static inline const uint16_t *CtrVideo_ExtPalette(uint32_t index)
 {
     (void)index;
