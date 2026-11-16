@@ -41,6 +41,8 @@ typedef struct
     /* How far the sprite cards have tilted back from upright to face the
      * swoop's end camera (VOXEL_SWOOP_PITCH), 0..1 with the swoop itself
      * (voxel_entities.c). */
+    float lookPitch;  /* player-controlled additional tilt */
+    int32_t firstPerson; /* 0 regular follow, 1 first-person voxel camera */
     float lay;
 } VoxelCamera;
 

@@ -71,6 +71,8 @@ static const struct { const char *key, *help; } sExtraHelp[] = {
     { "ui_theme", "Colour and style of the menus." },
     { "ui_lang", "Display language of Vita menus. Game text stays in PT-BR." },
     { "voxel_3d", "Draw the overworld as a 3D voxel diorama." },
+    { "camera_stick", "Hold L + left stick to rotate or tilt the 3D camera (D-pad still walks)." },
+    { "first_person", "Eye-level voxel view. Hold L + left stick to look around if enabled." },
     { "voxel_blur", "Blur the far background of the diorama." },
     { "voxel_fps", "Frame rate of the 3D world. 60 uses more battery." },
     { "day_night", "Light changes with the clock." },

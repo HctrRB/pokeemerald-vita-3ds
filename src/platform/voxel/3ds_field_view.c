@@ -144,8 +144,10 @@ const CtrFieldView *CtrFieldView_Current(void)
 {
     bool voxel = Platform_GetSetting(PLATFORM_SETTING_VOXEL_3D) != 0;
     int32_t pitch = VitaExtras_GetFast(FAST_EXTRA_VOXEL_FOV) ? 25 : 35;
+    const bool freeCamera = voxel && (VitaExtras_GetFast(FAST_EXTRA_CAMERA_STICK) ||
+                                      VitaExtras_GetFast(FAST_EXTRA_FIRST_PERSON));
     int32_t zoom = 100;
-    int32_t key = voxel ? 1 + ((pitch & 0xFF) << 1) + ((zoom & 0x3FF) << 9) : 0;
+    int32_t key = voxel ? 1 + ((pitch & 0xFF) << 1) + ((zoom & 0x3FF) << 9) + (freeCamera ? (1 << 22) : 0) : 0;
     int32_t shiftX = voxel ? sVoxelShiftX : sFlatShiftX;
     int32_t shiftY = voxel ? sVoxelShiftY : sFlatShiftY;
 
@@ -154,7 +156,16 @@ const CtrFieldView *CtrFieldView_Current(void)
         CtrFieldView view;
 
         if (voxel)
+        {
             CtrFieldView_Voxel(&view, (float)pitch, (float)zoom);
+            if (freeCamera)
+            {
+                // Free yaw/first-person can look behind or beyond the standard
+                // north-facing frustum: include nearby chunks in every direction.
+                view.north = view.south = 28.0f;
+                view.nearHalfWidth = view.farHalfWidth = 28.0f;
+            }
+        }
         else
             CtrFieldView_Flat(&view);
         view.shiftX = shiftX;

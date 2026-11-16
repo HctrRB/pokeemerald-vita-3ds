@@ -3516,6 +3516,10 @@ static inline void PushFlatVertex2D(uint32_t *const vOut, const float x, const f
 
 static void DrawRays(float strength, float seconds, bool isMoon, float rayDirX, Hd2dPreset hd2d)
 {
+    // In 60 FPS classic these screen-space shafts appear as stationary
+    // bright stripes. Only draw the cinematic overlay with HD-2D enabled.
+    if (hd2d == HD2D_PRESET_OFF)
+        return;
     if (strength <= 0.005f)
         return;
 
@@ -5635,9 +5639,20 @@ static void Frame_BeginPasses(VoxelFrame *const f)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    Voxel_gluLookAt(sCamera.x, sCamera.y, sCamera.z,
-                    sCamera.targetX, sCamera.targetY, sCamera.targetZ,
-                    0.0f, 1.0f, 0.0f);
+    if (sCamera.firstPerson && !f->inBattle3D)
+    {
+        const float rad = sCamera.yaw * (3.14159265f / 180.0f);
+        const float pitch = sCamera.pitch * (3.14159265f / 180.0f);
+        Voxel_gluLookAt(sCamera.x, sCamera.y, sCamera.z,
+                        sCamera.x - sinf(rad) * 5.0f,
+                        sCamera.y - tanf(pitch) * 5.0f,
+                        sCamera.z - cosf(rad) * 5.0f,
+                        0.0f, 1.0f, 0.0f);
+    }
+    else
+        Voxel_gluLookAt(sCamera.x, sCamera.y, sCamera.z,
+                        sCamera.targetX, sCamera.targetY, sCamera.targetZ,
+                        0.0f, 1.0f, 0.0f);
 
     glDepthMask(GL_TRUE);
     glClearColor(fadeAmount >= 0.99f ? fadeRgb[0] : 0.0f,

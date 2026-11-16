@@ -586,7 +586,7 @@ DYNAMO|DÍNAMO
 Destinations: %d|Destinos: %d
 ETCETERA|OUTROS
 Empty: no change.|Vazio: nenhuma alteração.
-Empty: the name stays as it was.|Vazio: o nome não será alterado.
+Empty: the name stays as it was.|Deixar vazio usará o padrão
 FEATHER|PENA
 FISH · %s|PESCA · %s
 Flip card|Virar cartão
@@ -761,3 +761,10 @@ Kinds|Tipos
 Your money and game data.|Seu dinheiro e os dados do jogo.
 Items you bought or found.|Itens que você comprou ou encontrou.
 Check and organize your party.|Confira e organize sua equipe.
+Type|Digitar
+Delete|Apagar
+Locked|Bloqueado
+L STICK CAMERA|CÂMERA NO ANALÓGICO
+FIRST PERSON|PRIMEIRA PESSOA
+Hold L + left stick to rotate or tilt the 3D camera (D-pad still walks).|Segure L e mova o analógico esquerdo para girar ou inclinar a câmera. O direcional continua movendo.
+Eye-level voxel view. Hold L + left stick to look around if enabled.|Visão em primeira pessoa. Se a câmera analógica estiver ativa, segure L e mova o analógico para olhar.

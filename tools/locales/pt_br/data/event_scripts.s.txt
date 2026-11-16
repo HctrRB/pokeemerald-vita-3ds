@@ -14,7 +14,7 @@ Boas-vindas à LOJA DE DEPARTAMENTOS\nde LILYCOVE.\pPara qual andar você quer i
 A tempestade de areia está forte.\nNão dá pra seguir em frente.$
 
 [gText_SelectWithoutRegisteredItem] 0d286bda8d
-Dá pra registrar um item da BOLSA\nno SELECT, para usar mais rápido.$
+Registre um item da BOLSA\npara usá-lo rapidamente.$
 
 [gText_PokemonTrainerSchoolEmail] e514ab540c
 Tem um e-mail da ESCOLA DE\nTREINADORES POKéMON.\p… … … … … …\pUm POKéMON pode aprender até\nquatro golpes.\pUm TREINADOR mostra o que sabe\nnos golpes que escolhe pros POKéMON.\p… … … … … …$

@@ -11,6 +11,9 @@
 #include "voxel_camera.h"
 #include "voxel_relief.h"
 #include "voxel_world.h"
+#ifdef PLATFORM_VITA
+#include <psp2/ctrl.h>
+#endif
 
 #define VOXEL_DEG_TO_RAD (3.14159265358979323846f / 180.0f)
 #define VOXEL_FOLLOW 0.15f
@@ -19,6 +22,30 @@
 #define VOXEL_CAMERA_PITCH_DEFAULT 35.0f
 #define VOXEL_CAMERA_PITCH_LOW 25.0f
 
+// L + left stick changes camera direction without moving the player.
+static void CameraStick(VoxelCamera *cam)
+{
+    if (!VitaExtras_GetFast(FAST_EXTRA_CAMERA_STICK))
+        return;
+#ifdef PLATFORM_VITA
+    SceCtrlData pad = {0};
+    if (sceCtrlPeekBufferPositive(0, &pad, 1) < 1 || !(pad.buttons & SCE_CTRL_LTRIGGER))
+        return;
+    float dx = ((float)pad.lx - 128.0f) / 127.0f;
+    float dy = ((float)pad.ly - 128.0f) / 127.0f;
+    if (fabsf(dx) < 0.16f) dx = 0.0f;
+    if (fabsf(dy) < 0.16f) dy = 0.0f;
+    cam->yaw += dx * 1.4f;
+    if (cam->yaw > 360.0f) cam->yaw -= 360.0f;
+    if (cam->yaw < -360.0f) cam->yaw += 360.0f;
+    cam->lookPitch += dy * 0.75f;
+    const float limit = cam->firstPerson ? 25.0f : 12.0f;
+    if (cam->lookPitch > limit) cam->lookPitch = limit;
+    if (cam->lookPitch < -limit) cam->lookPitch = -limit;
+#else
+    (void)cam;
+#endif
+}
 static float DesiredPitch(void)
 {
     return VitaExtras_GetFast(FAST_EXTRA_VOXEL_FOV) ? VOXEL_CAMERA_PITCH_LOW : VOXEL_CAMERA_PITCH_DEFAULT;
@@ -67,6 +94,8 @@ void VoxelCamera_Init(VoxelCamera *cam)
     cam->targetZ = 0.0f;
     cam->pitch = DesiredPitch();
     cam->yaw = 0.0f;
+    cam->lookPitch = 0.0f;
+    cam->firstPerson = 0;
     cam->distance = 9.0f;
     cam->fov = VOXEL_CAMERA_FOV;
     cam->ground = 0.0f;
@@ -85,6 +114,14 @@ static void Place(VoxelCamera *cam)
     float pitchRad = cam->pitch * VOXEL_DEG_TO_RAD;
     float yawRad = cam->yaw * VOXEL_DEG_TO_RAD;
 
+    if (cam->firstPerson)
+    {
+        cam->x = cam->targetX;
+        cam->z = cam->targetZ;
+        cam->y = cam->ground + 1.55f;
+        cam->targetY = cam->ground;
+        return;
+    }
     /* The eye sits south of the player (+Z) and above it, looking north. */
     cam->x = cam->targetX + sinf(yawRad) * cam->distance;
     cam->y = cam->ground + tanf(pitchRad) * cam->distance;
@@ -111,7 +148,8 @@ static void AdaptDistance(VoxelCamera *cam)
     }
     cam->fov = VOXEL_CAMERA_FOV;
     cam->distance = ((8.0f + scale) * 0.90f) * 100.0f / (float)CtrSettings_VoxelZoom();
-    cam->pitch = DesiredPitch();
+    cam->firstPerson = VitaExtras_GetFast(FAST_EXTRA_FIRST_PERSON) != 0;
+    cam->pitch = (cam->firstPerson ? 0.0f : DesiredPitch()) + cam->lookPitch;
 }
 
 static float Between(float value, float lo, float hi)
@@ -169,6 +207,7 @@ static void Aim(const VoxelCamera *cam, float playerWorldX, float playerWorldZ, 
 void VoxelCamera_Snap(VoxelCamera *cam, float playerWorldX, float playerWorldZ)
 {
     cam->swoopX = cam->swoopZ = 0.0f;
+    CameraStick(cam);
     AdaptDistance(cam);
     Aim(cam, playerWorldX, playerWorldZ, &cam->targetX, &cam->targetZ);
     Place(cam);
@@ -181,6 +220,7 @@ void VoxelCamera_Update(VoxelCamera *cam, float playerWorldX, float playerWorldZ
     cam->targetX -= cam->swoopX;
     cam->targetZ -= cam->swoopZ;
     cam->swoopX = cam->swoopZ = 0.0f;
+    CameraStick(cam);
     AdaptDistance(cam);
     Aim(cam, playerWorldX, playerWorldZ, &x, &z);
     cam->targetX += (x - cam->targetX) * VOXEL_FOLLOW;
@@ -216,6 +256,7 @@ void VoxelCamera_Swoop(VoxelCamera *cam, float t)
     }
     if (t > 1.0f) t = 1.0f;
     cam->lay = t;
+    cam->firstPerson = 0; // transition reuses original follow camera
     pitch = pitch0 + (VOXEL_SWOOP_PITCH - pitch0) * t;
     length = length0 + (length1 - length0) * t;
     cam->fov = fov0;
@@ -237,5 +278,6 @@ void VoxelCamera_Frame(VoxelCamera *cam, float targetX, float targetZ, float gro
     cam->pitch = pitch;
     cam->distance = distance;
     cam->lay = 0.0f;
+    cam->firstPerson = 0; // separate battle camera framing
     Place(cam);
 }

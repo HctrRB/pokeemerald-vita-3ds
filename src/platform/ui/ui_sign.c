@@ -7,6 +7,7 @@
 #include <string.h>
 #include "ui_internal.h"
 #include "ui_game.h"
+#include "ui_town_signs.h"
 #include "platform/ui.h"
 
 #include "global.h"
@@ -63,5 +64,26 @@ bool UiSign_Draw(void)
     UiDraw_PushClip(x + 12, y + 6, w - 24, 58);
     UiText_DrawCentred(nameFace, namePx, x + 12, y + 6, w - 24, 58, name, UI_RGBA(43, 43, 51, 255));
     UiDraw_PopClip();
+
+    // v0.5 only drew the name, hiding the original Hoenn city slogans.
+    // The same source strings have PT-BR equivalents in ui_locale.c.
+    const char *motto = NULL;
+    for (size_t i = 0; i < sizeof(sTownSigns) / sizeof(sTownSigns[0]); ++i)
+    {
+        if (sTownSigns[i].mapSec == sSec)
+        {
+            motto = sTownSigns[i].motto;
+            break;
+        }
+    }
+    if (motto != NULL)
+    {
+        const int32_t mw = 600, mx = x + 8, my = y + 80;
+        UiW_Capsule(mx, my, mw, 62);
+        UiDraw_PushClip(mx + 14, my + 4, mw - 28, 54);
+        UiW_TextWrappedF(UI_FACE_VT323, 24, mx + 14, my + 5, mw - 28, 26,
+                         motto, UI_COL_ON_FRAME, 2);
+        UiDraw_PopClip();
+    }
     return true;
 }

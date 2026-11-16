@@ -274,6 +274,21 @@ static void EntryLabel(uint8_t e, char *out, size_t cap)
         snprintf(out, cap, "%s", labels[e]);
 }
 
+// Keep translated labels within the 162px status capsules of every theme.
+static void DrawCapsuleLabel(int32_t x, int32_t y, int32_t w, const char *label, uint32_t ink)
+{
+    const char *text = UiLocale_Translate(label);
+    const uint8_t face = UI_FACE_VT323;
+    uint8_t px = 24;
+    if (UiText_Width(face, px, text) > w - 14)
+        px = 20;
+    if (UiText_Width(face, px, text) > w - 14)
+        px = 18;
+    UiDraw_PushClip(x + 6, y, w - 12, 34);
+    UiText_DrawMid(face, px, x + (w - UiText_Width(face, px, text)) / 2, y, 34, text, ink);
+    UiDraw_PopClip();
+}
+
 static void BuildStatus(void)
 {
     char buf[48], zone[32];
@@ -297,7 +312,7 @@ static void BuildStatus(void)
         UiDraw_PopClip();
     }
     else
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 70, 34, UiLocale_Translate("SEL: NONE"), UI_COL_ON_SOFT);
+        DrawCapsuleLabel(16, 70, 162, "SEL: NONE", UI_COL_ON_SOFT);
 
     // Top-right: auto-run toggle (touch when Running Shoes are unlocked)
     UiW_Capsule(186, 70, 162, 34);
@@ -309,13 +324,13 @@ static void BuildStatus(void)
         sRunY = 70;
         sRunW = 162;
         sRunH = 34;
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, on ? "RUN: AUTO" : "RUN: B BTN",
-                       on ? UI_RGBA(115, 205, 164, 255) : UI_COL_ON_SOFT);
+        DrawCapsuleLabel(186, 70, 162, on ? "RUN: AUTO" : "RUN: B BTN",
+                         on ? UI_RGBA(115, 205, 164, 255) : UI_COL_ON_SOFT);
     }
     else
     {
         sRunW = 0;
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, "RUN: WALK", UI_COL_ON_SOFT);
+        DrawCapsuleLabel(186, 70, 162, "RUN: WALK", UI_COL_ON_SOFT);
     }
 
     // Bottom-left: Safari balls or Repel steps
@@ -323,15 +338,15 @@ static void BuildStatus(void)
     if (UiGame_InSafari())
     {
         snprintf(buf, sizeof(buf), UiLocale_Translate("SAFARI: %u"), (unsigned)UiGame_SafariBalls());
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, buf, UI_COL_ON_FRAME);
+        DrawCapsuleLabel(16, 110, 162, buf, UI_COL_ON_FRAME);
     }
     else if (UiGame_RepelSteps() > 0)
     {
         snprintf(buf, sizeof(buf), UiLocale_Translate("REPEL: %u"), (unsigned)UiGame_RepelSteps());
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, buf, UI_COL_GOLD);
+        DrawCapsuleLabel(16, 110, 162, buf, UI_COL_GOLD);
     }
     else
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, "REPEL: OFF", UI_COL_ON_SOFT);
+        DrawCapsuleLabel(16, 110, 162, "REPEL: OFF", UI_COL_ON_SOFT);
 
     // Bottom-right: money and clock
     UiW_Capsule(186, 110, 162, 34);
