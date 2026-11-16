@@ -67,6 +67,9 @@ typedef enum
     FAST_EXTRA_UI_THEME,       // colour theme of the new UI menus (UI_THEME_*)
     FAST_EXTRA_VISIBLE_WILD,
     FAST_EXTRA_ENCOUNTER_RATE,
+    FAST_EXTRA_VOXEL_HD2D,     // 0=AUTO(30:HIGH/60:LOW), 1=OFF, 2=LOW, 3=HIGH
+    FAST_EXTRA_VOXEL_FOV,      // 0=35 deg, 1=30 deg (telephoto diorama)
+    FAST_EXTRA_VOXEL_GRADE,    // 0=GBA faithful, 1=HD-2D cinematic
     FAST_EXTRA_COUNT
 } FastExtraId;
 

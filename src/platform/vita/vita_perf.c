@@ -136,6 +136,9 @@ static const char *const sSubNames[VITA_PERF_T_COUNT] = {
     [VITA_PERF_T_LIGHT_API] = "Light: all entries",
     [VITA_PERF_T_UI2_RENDER] = "New UI: render (C0)",
     [VITA_PERF_T_UI2_TICK] = "New UI: tick (C1)",
+    [VITA_PERF_T_POST_DOF] = "Post: DoF blur",
+    [VITA_PERF_T_POST_BLOOM] = "Post: Bloom",
+    [VITA_PERF_T_POST_COMPOSITE] = "Post: Composite",
 };
 
 // Letters of the CSV "events" column, by bit

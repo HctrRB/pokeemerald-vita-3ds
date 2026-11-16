@@ -63,6 +63,9 @@ static inline int32_t LookupFastId(const char *key)
         if (strcmp(key, "field_hms") == 0) return FAST_EXTRA_FIELD_HMS;
         if (strcmp(key, "fast_eggs") == 0) return FAST_EXTRA_FAST_EGGS;
         break;
+    case 'h':
+        if (strcmp(key, "hd2d_mode") == 0) return FAST_EXTRA_VOXEL_HD2D;
+        break;
     case 'i':
         if (strcmp(key, "infinite_tms") == 0) return FAST_EXTRA_INFINITE_TMS;
         if (strcmp(key, "ivs_evs") == 0) return FAST_EXTRA_IVS_EVS;
@@ -96,6 +99,8 @@ static inline int32_t LookupFastId(const char *key)
         if (strcmp(key, "voxel_res") == 0) return FAST_EXTRA_VOXEL_RES;
         if (strcmp(key, "voxel_fps") == 0) return FAST_EXTRA_VOXEL_FPS;
         if (strcmp(key, "voxel_blur") == 0) return FAST_EXTRA_VOXEL_BLUR;
+        if (strcmp(key, "voxel_fov") == 0) return FAST_EXTRA_VOXEL_FOV;
+        if (strcmp(key, "voxel_grade") == 0) return FAST_EXTRA_VOXEL_GRADE;
         if (strcmp(key, "visible_wild") == 0) return FAST_EXTRA_VISIBLE_WILD;
         break;
     default:
@@ -132,7 +137,8 @@ static const char *const sFFButtonValues[] = { "HOLD", "TOGGLE", NULL };
 static const char *const sFilterValues[] = { "NEAREST", "BILINEAR", "SHARP", NULL };
 // Order = UI_THEME_* (src/platform/ui/ui_internal.h); GBA is the default
 static const char *const sUiThemeValues[] = { "GBA", "RED", "EMERALD", "CRYSTAL", "TROPICAL", "ROYAL", NULL };
-static const char *const sVoxelFpsValues[] = { "30", "60", NULL };
+static const char *const sVoxelFpsValues[] = { "30 (HD-2D)", "60 (CLASSIC)", NULL };
+static const char *const sVoxelFovValues[] = { "35 DEG", "25 DEG", NULL };
 static const char *const sSaveSlotValues[] = { "SLOT 1", "SLOT 2", "SLOT 3", NULL };
 static const char *const sDayNightValues[] = { "OFF", "AUTO", NULL };
 static const char *const sClockSpeedValues[] = { "1X", "6X", "12X", "24X", "60X", "120X", "1000X", NULL };
@@ -276,7 +282,8 @@ const VitaExtra gVitaExtras[] = {
     // ---- [WORLD] ----
     { VITA_TAB_WORLD,   "RENDERER",   "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "DIORAMA BLUR (DOF)","voxel_blur",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "RENDERER",   "TARGET FRAMERATE",  "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "MODE / FRAMERATE",  "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "CAMERA ANGLE",      "voxel_fov",        2, 0, sVoxelFovValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "DAY / NIGHT CYCLE", "day_night",        2, 1, sDayNightValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "TIMED ENCOUNTERS",  "timed_encounters", 2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "CLOCK SPEED",       "clock_speed",      7, 0, sClockSpeedValues,  NULL, NULL, NULL },

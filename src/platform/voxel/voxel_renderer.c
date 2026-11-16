@@ -26,6 +26,7 @@
 #endif
 
 #include "../vita/vita_perf.h"
+#include "../vita/vita_ambient_audio.h"
 
 static int32_t sFrameDrawCalls = 0;
 static uint32_t sFrameVertCount = 0;
@@ -42,12 +43,16 @@ static inline void VoxelGl_DrawArrays(GLenum mode, GLint first, GLsizei count)
 
 #include "global.h"
 #include "main.h"
+#include "battle.h"
 #include "window.h"
 #include "gba/io_reg.h"
 #include "sprite.h"
 #include "palette.h"
 #include "field_weather.h"
 #include "fieldmap.h"
+#include "metatile_behavior.h"
+#include "constants/metatile_behaviors.h"
+#include "decompress.h"
 #include "constants/map_types.h"
 #include "field_effect.h"
 #include "constants/field_effects.h"
@@ -72,6 +77,8 @@ static inline void VoxelGl_DrawArrays(GLenum mode, GLint first, GLsizei count)
 #include "voxel_battle.h"
 #include "voxel_entities.h"
 #include "voxel_lighting.h"
+#include "voxel_pointlights.h"
+#include "voxel_hd2d_shader.h"
 #include "voxel_grade.h"
 #include "voxel_file.h"
 #include "voxel_unswizzle.h"
@@ -94,6 +101,17 @@ typedef struct
 static GLuint sAtlasTex[VOXEL_MAX_ATLAS_PAGES] = {0};
 static uint32_t sAtlasPageCount = 0;
 static GLuint sTreeTex = 0;
+static uint16_t sFlowerFrames[3][16 * 16];
+static bool sFlowerFramesReady = false;
+static uint32_t sLastFlowerStep = 0xFFFFFFFFu;
+static GLuint sTreeShaderProg = 0;
+static GLint sTreeShaderUMvp = -1;
+static GLint sTreeShaderUChunkDelta = -1;
+static GLint sTreeShaderUTime = -1;
+static GLint sTreeShaderUWind = -1;
+static GLint sTreeShaderUPlayerXZ = -1;
+static GLint sTreeShaderUTex = -1;
+static bool sTreeShaderReady = false;
 #define VOXEL_MAX_BUILDING_PAGES 272
 #define VOXEL_BUILDING_CACHE_SLOTS 24
 #define VOXEL_BUILDING_REQ_CAP 32
@@ -108,23 +126,48 @@ static bool sUiImageValid = false;
 static bool sUiImageHasUi = false;
 static uint32_t sUiImageHash = 0;
 static GLuint sLampPoolTex = 0;
+static GLuint sRippleTex = 0;
+static GLuint sSoftMistTex = 0;
 static GLuint sFogTex = 0;
+static GLuint sVignetteTex = 0;
+static GLuint sWeatherAtlasTex = 0;
 
-// ---- Downscaled Scratch Diorama Blur (DoF) FBOs ----
+// ---- Downscaled Scratch Diorama Blur (DoF) & HD-2D Bloom FBOs ----
 #define VOXEL_DIORAMA_FBO_W 960
 #define VOXEL_DIORAMA_FBO_H 544
 #define VOXEL_SCRATCH_FBO_W 480
 #define VOXEL_SCRATCH_FBO_H 272
+#define VOXEL_BLOOM_FBO_W   240
+#define VOXEL_BLOOM_FBO_H   136
 
 static GLuint sDioramaFbo = 0;
 static GLuint sDioramaColorTex = 0;
+static GLuint sDioramaColorTexFast = 0;
+static GLuint sDioramaActiveTex = 0;
 static GLuint sDioramaDepthRb = 0;
 static GLuint sScratchFbo = 0;
 static GLuint sScratchColorTex = 0;
 // The wider blur level of the depth of field (Pass_DepthOfField), half resolution like the scratch
 static GLuint sBlurFbo = 0;
 static GLuint sBlurTex = 0;
+static GLuint sBloomFboA = 0;
+static GLuint sBloomTexA = 0;
+static GLuint sBloomFboB = 0;
+static GLuint sBloomTexB = 0;
 static bool sDioramaFboReady = false;
+
+typedef enum
+{
+    HD2D_PRESET_OFF = 0,
+    HD2D_PRESET_LOW = 1,
+    HD2D_PRESET_HIGH = 2,
+} Hd2dPreset;
+
+static inline Hd2dPreset GetHd2dPreset(void)
+{
+    // Unified mode: 30 FPS = full HD-2D quality, 60 FPS = classic fast renderer (all HD-2D effects OFF)
+    return (VitaExtras_GetFast(FAST_EXTRA_VOXEL_FPS) == 0) ? HD2D_PRESET_HIGH : HD2D_PRESET_OFF;
+}
 
 // Animated tiles tracking (water waves, flowers, waterfalls)
 static uint8_t sVoxelTilesetAnimDirty[128];
@@ -294,12 +337,12 @@ static void BattleCamera(void)
 #define CHUNK_SIZE 8
 #define CHUNK_GROUND_CAP 1536
 #define CHUNK_GROUND_TOTAL_CAP (VOXEL_MAX_ATLAS_PAGES * CHUNK_GROUND_CAP)
-#define CHUNK_TREE_CAP 768
+#define CHUNK_TREE_CAP 1280
 #define CHUNK_BUILDING_CAP 12288
 #define MAX_CHUNK_GROUND_SPANS 24
 #define MAX_CHUNK_BUILDING_SPANS 4
 
-#define MAX_CHUNKS 64
+#define MAX_CHUNKS 104
 #define CHUNK_VERTS_PER_SLOT (CHUNK_GROUND_TOTAL_CAP + CHUNK_TREE_CAP + CHUNK_BUILDING_CAP)
 
 typedef struct
@@ -432,8 +475,8 @@ typedef struct
 } FogBank;
 
 static const FogBank sFogBanks[2] = {
-    { 0.35f,  0.45f, 0.18f, 0.75f, 0.00f, 0.00f },
-    { 0.85f, -0.30f, 0.28f, 0.64f, 0.37f, 0.61f },
+    { 0.35f,  0.45f, 0.18f, 0.56f, 0.00f, 0.00f },
+    { 0.85f, -0.30f, 0.28f, 0.48f, 0.37f, 0.61f },
 };
 
 static const FogBank sSandBanks[2] = {
@@ -461,8 +504,8 @@ static const WeatherKind sRainKind = {
 };
 
 static const WeatherKind sSandKind = {
-    false, 96, 220,
-    -13.0f, -1.2f, 4.0f, 0.042f, 0.80f, 0xFF7EB8E6u, 0.79f, 2.0f, 2.5f,
+    false, 128, 340,
+    -14.0f, -1.3f, 4.0f, 0.062f, 0.95f, 0xFF5488B8u, 0.92f, 2.0f, 2.5f,
 };
 
 static const WeatherKind sAshKind = {
@@ -1760,7 +1803,8 @@ static void WriteSpriteAtlasSlots(const uint16_t *morton, uint16_t *linear, uint
                                           startY, VOXEL_SPRITE_SLOT_DIM);
         // The linear copy is bottom-up: atlas rows startY.. land on texture rows glY0..
         const uint32_t glY0 = VOXEL_SPRITE_ATLAS_H - (startY + VOXEL_SPRITE_SLOT_DIM);
-        const uint16_t *const src = &linear[glY0 * VOXEL_SPRITE_ATLAS_W];
+        uint16_t *const src = &linear[glY0 * VOXEL_SPRITE_ATLAS_W];
+        VoxelGrade_ApplyRectRelief(src, VOXEL_SPRITE_ATLAS_W, VOXEL_SPRITE_ATLAS_W, VOXEL_SPRITE_SLOT_DIM);
         if (texels != NULL)
             memcpy(&texels[glY0 * VOXEL_SPRITE_ATLAS_W], src,
                    (size_t)VOXEL_SPRITE_SLOT_DIM * VOXEL_SPRITE_ATLAS_W * sizeof(uint16_t));
@@ -2342,6 +2386,19 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     {
         uint32_t count = builder.count > CHUNK_TREE_CAP ? CHUNK_TREE_CAP : builder.count;
         PackVoxelVertices(sScratch, out->treeVerts, count, !in->indoor);
+        // Tag top vertices of tall grass (v = 1 - 32/128), flowers (0..16, 112), and ash grass (16..32, 112) with sway weight 1.0 (a = 65).
+        const float grassTopV = 1.0f - 32.0f / (float)VOXEL_TREE_TEXTURE_DIM;
+        const float grassMinU = 79.5f / (float)VOXEL_TREE_TEXTURE_DIM;
+        const float grassMaxU = 96.5f / (float)VOXEL_TREE_TEXTURE_DIM;
+        const float flowerTopV = 1.0f - 112.0f / (float)VOXEL_TREE_TEXTURE_DIM;
+        const float flowerMaxU = 32.5f / (float)VOXEL_TREE_TEXTURE_DIM;
+        for (uint32_t vi = 0; vi < count; ++vi)
+        {
+            VoxelGlVertex *const gv = &out->treeVerts[vi];
+            const bool isGrassTop = (fabsf(gv->v - grassTopV) < 0.002f && gv->u >= grassMinU && gv->u <= grassMaxU);
+            const bool isFlowerTop = (fabsf(gv->v - flowerTopV) < 0.002f && gv->u <= flowerMaxU);
+            gv->a = (isGrassTop || isFlowerTop) ? 65u : 255u;
+        }
         out->treeCount = count;
     }
     out->treesMs = VitaPerf_NowMs() - phaseStart;
@@ -3142,7 +3199,7 @@ static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_
         float tx = sCamera.targetX - uOff * VOXEL_FOG_PERIOD_X;
         float tz = sCamera.targetZ - vOff * VOXEL_FOG_PERIOD_Z;
         float ty = sCamera.ground;
-        float alphaScale = (banks == sSandBanks ? 0.61f : banks[bk].alpha) * amount;
+        float alphaScale = (banks == sSandBanks ? 0.24f : banks[bk].alpha) * amount;
 
         for (uint32_t i = 0; i < VOXEL_FOG_BANK_VERTICES; ++i)
         {
@@ -3167,15 +3224,19 @@ static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_
     glDisable(GL_BLEND);
 }
 
-static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float seconds)
+
+
+static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float seconds, Hd2dPreset hd2d)
 {
     if (!kind || amount <= 0.005f)
         return;
 
-    uint32_t count = (uint32_t)(amount * (float)kind->maxCount + 0.5f);
+    const bool useHd2dAtlas = (hd2d != HD2D_PRESET_OFF && sWeatherAtlasTex != 0);
+    const uint32_t maxDropCap = (useHd2dAtlas && kind == &sRainKind) ? 384u
+                              : (useHd2dAtlas && kind == &sSandKind) ? 340u : 128u;
+    uint32_t count = (uint32_t)(amount * (float)(useHd2dAtlas && (kind == &sRainKind || kind == &sSandKind) ? maxDropCap : kind->maxCount) + 0.5f);
     if (count < kind->minCount) count = kind->minCount;
-    if (count > kind->maxCount) count = kind->maxCount;
-    if (count > 128) count = 128;
+    if (count > maxDropCap) count = maxDropCap;
 
     float offX = fmodf((seconds * kind->vx - sCamera.targetX) / VOXEL_WEATHER_SPAN_X, 1.0f);
     float offY = fmodf((seconds * kind->vy - sCamera.ground) / VOXEL_WEATHER_SPAN_Y, 1.0f);
@@ -3204,7 +3265,7 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
         alongY = cosf(pitchRad) * kind->length;
         alongZ = sinf(pitchRad) * kind->length;
     }
-    float acrossX = kind->width;
+    float acrossX = kind->width * (useHd2dAtlas ? 1.85f : 1.0f);
 
     const VitaDayNightLight *cycle = VitaDayNight_Get();
     VitaDayNightBlend moon = VitaDayNight_Moonlight(cycle, 0.0f, cycle->rgb);
@@ -3218,15 +3279,21 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
     static const float rectCy[6]  = {-1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f};
     static const float flakeCx[6] = { 0.0f,  1.0f,  0.0f,  0.0f,  0.0f, -1.0f};
     static const float flakeCy[6] = {-1.0f,  0.0f,  1.0f, -1.0f,  1.0f,  0.0f};
-    const float *cxTab = kind->flake ? flakeCx : rectCx;
-    const float *cyTab = kind->flake ? flakeCy : rectCy;
+    const float *cxTab = (kind->flake && !useHd2dAtlas) ? flakeCx : rectCx;
+    const float *cyTab = (kind->flake && !useHd2dAtlas) ? flakeCy : rectCy;
+
+    const float u0 = 0.0f, u1 = 0.5f;
+    const float v0 = (kind == &sRainKind || kind == &sSandKind) ? 0.0f : 0.5f;
+    const float v1 = (kind == &sRainKind || kind == &sSandKind) ? 0.5f : 1.0f;
 
     uint32_t vOut = 0;
     for (uint32_t i = 0; i < count; ++i)
     {
-        float px = sWeatherSeeds[i][0] + offX; if (px >= 1.0f) px -= 1.0f;
-        float py = sWeatherSeeds[i][1] + offY; if (py >= 1.0f) py -= 1.0f;
-        float pz = sWeatherSeeds[i][2] + offZ; if (pz >= 1.0f) pz -= 1.0f;
+        const uint32_t si = i % VOXEL_WEATHER_COUNT;
+        const float jitter = (float)(i / VOXEL_WEATHER_COUNT) * 0.37f;
+        float px = sWeatherSeeds[si][0] + jitter + offX; px -= floorf(px);
+        float py = sWeatherSeeds[si][1] + jitter * 0.53f + offY; py -= floorf(py);
+        float pz = sWeatherSeeds[si][2] + jitter * 0.79f + offZ; pz -= floorf(pz);
 
         float dx = 0.5f - fabsf(px - 0.5f);
         float dy = 0.5f - fabsf(py - 0.5f);
@@ -3268,8 +3335,8 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
             v->x = wx + acrossX * cxTab[k] + alongX * cyTab[k];
             v->y = wy + alongY * cyTab[k];
             v->z = wz + alongZ * cyTab[k];
-            v->u = 0.0f;
-            v->v = 0.0f;
+            v->u = (cxTab[k] > 0.0f) ? u1 : u0;
+            v->v = (cyTab[k] > 0.0f) ? v1 : v0;
             v->r = baseR;
             v->g = baseG;
             v->b = baseB;
@@ -3279,7 +3346,16 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
 
     if (vOut > 0)
     {
-        glDisable(GL_TEXTURE_2D);
+        if (useHd2dAtlas)
+        {
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, sWeatherAtlasTex);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+        else
+        {
+            glDisable(GL_TEXTURE_2D);
+        }
         glDisable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -3288,9 +3364,13 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
+        if (useHd2dAtlas)
+            glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].u);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
         glDrawArrays(GL_TRIANGLES, 0, vOut);
         glDisableClientState(GL_COLOR_ARRAY);
+        if (useHd2dAtlas)
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
 
         glDepthMask(GL_TRUE);
@@ -3299,53 +3379,95 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
     }
 }
 
-static void DrawMotes(float strength, float seconds)
+
+
+static void DrawMotes(float strength, float seconds, bool fireflies, Hd2dPreset hd2d)
 {
     if (strength <= 0.005f)
         return;
 
+    const bool useHd2dAtlas = (hd2d != HD2D_PRESET_OFF && sWeatherAtlasTex != 0);
+    const float radius = useHd2dAtlas ? (VOXEL_MOTE_RADIUS * (fireflies ? 2.1f : 1.7f)) : VOXEL_MOTE_RADIUS;
     float pitchRad = sCamera.pitch * (3.14159265f / 180.0f);
-    float upY = cosf(pitchRad) * VOXEL_MOTE_RADIUS;
-    float upZ = sinf(pitchRad) * VOXEL_MOTE_RADIUS;
-    float rightX = VOXEL_MOTE_RADIUS;
+    float upY = cosf(pitchRad) * radius;
+    float upZ = sinf(pitchRad) * radius;
 
     static const float dCx[6] = { 0.0f,  1.0f, 0.0f,  0.0f, 0.0f, -1.0f};
     static const float dCy[6] = {-1.0f,  0.0f, 1.0f, -1.0f, 1.0f,  0.0f};
+    static const float qCx[6] = {-1.0f,  1.0f, 1.0f, -1.0f, 1.0f, -1.0f};
+    static const float qCy[6] = {-1.0f, -1.0f, 1.0f, -1.0f, 1.0f,  1.0f};
+    const float *cxTab = useHd2dAtlas ? qCx : dCx;
+    const float *cyTab = useHd2dAtlas ? qCy : dCy;
 
     float ox = sCamera.targetX - 0.5f * VOXEL_MOTE_SPAN_X;
     float oy = sCamera.ground;
     float oz = sCamera.targetZ - VOXEL_MOTE_SPAN_Z + 4.0f;
 
     uint32_t vOut = 0;
-    for (uint32_t i = 0; i < VOXEL_MOTE_COUNT; ++i)
+    const uint8_t cr = fireflies ? 210u : 255u;
+    const uint8_t cg = fireflies ? 255u : 238u;
+    const uint8_t cb = fireflies ? 130u : 185u;
+
+    const uint32_t moteTotal = (hd2d != HD2D_PRESET_OFF) ? (VOXEL_MOTE_COUNT * 2u) : VOXEL_MOTE_COUNT;
+    for (uint32_t i = 0; i < moteTotal; ++i)
     {
-        const MoteSpec *m = &sMoteSpecs[i];
-        float glint = 0.5f + 0.5f * sinf(seconds * m->glintSpeed + m->glintPhase);
+        const MoteSpec *m = &sMoteSpecs[i % VOXEL_MOTE_COUNT];
+        const float jx = (float)(i / VOXEL_MOTE_COUNT) * 7.3f;
+        const float jz = (float)(i / VOXEL_MOTE_COUNT) * 5.9f;
+        const bool isLeaf = (useHd2dAtlas && !fireflies && (i & 3u) == 3u);
+        float glint = 0.5f + 0.5f * sinf(seconds * m->glintSpeed + m->glintPhase + (float)i);
         glint *= glint;
-        float wx = ox + fmodf(m->x + seconds * m->driftX + VOXEL_MOTE_SPAN_X * 64.0f, VOXEL_MOTE_SPAN_X);
-        float wz = oz + fmodf(m->z + seconds * m->driftZ + VOXEL_MOTE_SPAN_Z * 64.0f, VOXEL_MOTE_SPAN_Z);
+        const float relX = m->x + jx + seconds * (isLeaf ? m->driftX * 2.2f : m->driftX) - sCamera.targetX;
+        const float relZ = m->z + jz + seconds * (isLeaf ? m->driftZ * 1.8f : m->driftZ) - sCamera.targetZ;
+        const float lx = relX - floorf(relX / VOXEL_MOTE_SPAN_X) * VOXEL_MOTE_SPAN_X;
+        const float lz = relZ - floorf(relZ / VOXEL_MOTE_SPAN_Z) * VOXEL_MOTE_SPAN_Z;
+        const float edgeX = fminf(lx, VOXEL_MOTE_SPAN_X - lx) * 0.4f;
+        const float edgeZ = fminf(lz, VOXEL_MOTE_SPAN_Z - lz) * 0.4f;
+        const float edgeFade = fminf(1.0f, fminf(edgeX, edgeZ));
+        if (edgeFade <= 0.02f) continue;
+        float wx = ox + lx;
+        float wz = oz + lz;
         float wy = oy + m->y + m->bobAmp * sinf(seconds * m->bobSpeed + m->bobPhase);
-        uint8_t a = (uint8_t)(VOXEL_MOTE_ALPHA * strength * (0.25f + 0.75f * glint) * 255.0f + 0.5f);
+        const float baseA = (fireflies ? 0.72f : (isLeaf ? 0.78f : VOXEL_MOTE_ALPHA)) * edgeFade;
+        uint8_t a = (uint8_t)(baseA * strength * (0.25f + 0.75f * glint) * 255.0f + 0.5f);
         if (a == 0) continue;
+
+        const float lr = isLeaf ? (radius * 1.45f) : radius;
+        const float lUpY = isLeaf ? cosf(pitchRad) * lr : upY;
+        const float lUpZ = isLeaf ? sinf(pitchRad) * lr : upZ;
+        const float u0 = isLeaf ? 0.5f : 0.0f;
+        const float u1 = isLeaf ? 1.0f : 0.5f;
+        const uint8_t pr = isLeaf ? 140u : cr;
+        const uint8_t pg = isLeaf ? 220u : cg;
+        const uint8_t pb = isLeaf ? 110u : cb;
 
         for (int32_t k = 0; k < 6; ++k)
         {
             VoxelGlVertex *v = &sBatchGlVerts[vOut++];
-            v->x = wx + rightX * dCx[k];
-            v->y = wy + upY * dCy[k];
-            v->z = wz + upZ * dCy[k];
-            v->u = 0.0f;
-            v->v = 0.0f;
-            v->r = 255;
-            v->g = 238;
-            v->b = 185;
+            v->x = wx + lr * cxTab[k];
+            v->y = wy + lUpY * cyTab[k];
+            v->z = wz + lUpZ * cyTab[k];
+            v->u = (cxTab[k] > 0.0f) ? u1 : u0;
+            v->v = (cyTab[k] > 0.0f) ? 1.0f : 0.5f;
+            v->r = pr;
+            v->g = pg;
+            v->b = pb;
             v->a = a;
         }
     }
 
     if (vOut > 0)
     {
-        glDisable(GL_TEXTURE_2D);
+        if (useHd2dAtlas)
+        {
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, sWeatherAtlasTex);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
+        else
+        {
+            glDisable(GL_TEXTURE_2D);
+        }
         glDisable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -3354,9 +3476,13 @@ static void DrawMotes(float strength, float seconds)
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
         glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
+        if (useHd2dAtlas)
+            glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].u);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
         glDrawArrays(GL_TRIANGLES, 0, vOut);
         glDisableClientState(GL_COLOR_ARRAY);
+        if (useHd2dAtlas)
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
 
         glDepthMask(GL_TRUE);
@@ -3364,6 +3490,8 @@ static void DrawMotes(float strength, float seconds)
         glEnable(GL_TEXTURE_2D);
     }
 }
+
+
 
 static inline void PushFlatVertex2D(uint32_t *const vOut, const float x, const float y,
                                     const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a)
@@ -3380,7 +3508,7 @@ static inline void PushFlatVertex2D(uint32_t *const vOut, const float x, const f
     v->a = a;
 }
 
-static void DrawRays(float strength, float seconds)
+static void DrawRays(float strength, float seconds, bool isMoon, float rayDirX, Hd2dPreset hd2d)
 {
     if (strength <= 0.005f)
         return;
@@ -3398,37 +3526,45 @@ static void DrawRays(float strength, float seconds)
     };
 
     const float drift = 0.03f * sinf(seconds * 0.45f);
-    const float skew = tanf(35.0f * (3.14159265f / 180.0f)) * (544.0f / 960.0f);
+    const float skew = (hd2d != HD2D_PRESET_OFF ? (-rayDirX * 0.55f) : tanf(35.0f * (3.14159265f / 180.0f)))
+                     * (544.0f / 960.0f);
+    const uint8_t r = isMoon ? 165u : 255u;
+    const uint8_t g = isMoon ? 195u : 235u;
+    const uint8_t b = isMoon ? 255u : 176u;
+    const int32_t layers = (hd2d == HD2D_PRESET_HIGH) ? 2 : 1;
     uint32_t vOut = 0;
 
-    for (int32_t i = 0; i < 4; ++i)
+    for (int32_t lay = 0; lay < layers; ++lay)
     {
-        const float xc = shafts[i].xCenter + drift;
-        const float hw = shafts[i].halfWidth;
-        const float yBot = shafts[i].reachY;
-        const float xb = xc + yBot * skew;
-        float aTop = strength * shafts[i].weight * 0.65f;
-        if (aTop > 0.22f) aTop = 0.22f;
-        aTop *= VOXEL_RAYS_OPACITY;
-        const uint8_t alphaTop = (uint8_t)(aTop * 255.0f + 0.5f);
+        const float layShift = (lay == 0) ? 0.0f : (0.09f - 0.04f * sinf(seconds * 0.31f));
+        const float layScale = (lay == 0) ? 1.0f : 0.55f;
+        for (int32_t i = 0; i < 4; ++i)
+        {
+            const float xc = shafts[i].xCenter + drift + layShift;
+            const float hw = shafts[i].halfWidth * (lay == 0 ? 1.0f : 1.35f);
+            const float yBot = shafts[i].reachY;
+            const float xb = xc + yBot * skew;
+            float aTop = strength * shafts[i].weight * 0.65f * layScale;
+            if (aTop > 0.22f) aTop = 0.22f;
+            aTop *= VOXEL_RAYS_OPACITY;
+            const uint8_t alphaTop = (uint8_t)(aTop * 255.0f + 0.5f);
 
-        // Left feather -> center
-        PushFlatVertex2D(&vOut, xc - hw, 0.0f, 255, 235, 176, 0);
-        PushFlatVertex2D(&vOut, xc,      0.0f, 255, 235, 176, alphaTop);
-        PushFlatVertex2D(&vOut, xb,      yBot, 255, 235, 176, 0);
+            PushFlatVertex2D(&vOut, xc - hw, 0.0f, r, g, b, 0);
+            PushFlatVertex2D(&vOut, xc,      0.0f, r, g, b, alphaTop);
+            PushFlatVertex2D(&vOut, xb,      yBot, r, g, b, 0);
 
-        PushFlatVertex2D(&vOut, xc - hw, 0.0f, 255, 235, 176, 0);
-        PushFlatVertex2D(&vOut, xb,      yBot, 255, 235, 176, 0);
-        PushFlatVertex2D(&vOut, xb - hw, yBot, 255, 235, 176, 0);
+            PushFlatVertex2D(&vOut, xc - hw, 0.0f, r, g, b, 0);
+            PushFlatVertex2D(&vOut, xb,      yBot, r, g, b, 0);
+            PushFlatVertex2D(&vOut, xb - hw, yBot, r, g, b, 0);
 
-        // Center -> right feather
-        PushFlatVertex2D(&vOut, xc,      0.0f, 255, 235, 176, alphaTop);
-        PushFlatVertex2D(&vOut, xc + hw, 0.0f, 255, 235, 176, 0);
-        PushFlatVertex2D(&vOut, xb + hw, yBot, 255, 235, 176, 0);
+            PushFlatVertex2D(&vOut, xc,      0.0f, r, g, b, alphaTop);
+            PushFlatVertex2D(&vOut, xc + hw, 0.0f, r, g, b, 0);
+            PushFlatVertex2D(&vOut, xb + hw, yBot, r, g, b, 0);
 
-        PushFlatVertex2D(&vOut, xc,      0.0f, 255, 235, 176, alphaTop);
-        PushFlatVertex2D(&vOut, xb + hw, yBot, 255, 235, 176, 0);
-        PushFlatVertex2D(&vOut, xb,      yBot, 255, 235, 176, 0);
+            PushFlatVertex2D(&vOut, xc,      0.0f, r, g, b, alphaTop);
+            PushFlatVertex2D(&vOut, xb + hw, yBot, r, g, b, 0);
+            PushFlatVertex2D(&vOut, xb,      yBot, r, g, b, 0);
+        }
     }
 
     glDisable(GL_DEPTH_TEST);
@@ -3528,8 +3664,8 @@ static void UpdateAndDrawNightLamps(float glow)
             sLampGlassVerts[i].u = 0.0f;
             sLampGlassVerts[i].v = 0.0f;
             sLampGlassVerts[i].r = 255;
-            sLampGlassVerts[i].g = 191;
-            sLampGlassVerts[i].b = 107;
+            sLampGlassVerts[i].g = 224;
+            sLampGlassVerts[i].b = 148;
             sLampGlassVerts[i].a = a;
         }
         glDisable(GL_TEXTURE_2D);
@@ -3547,6 +3683,8 @@ static void UpdateAndDrawNightLamps(float glow)
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
 }
+
+
 
 // Mouse look / orbit
 void VoxelRenderer_HandleMouseMotion(int32_t dx, int32_t dy)
@@ -3588,6 +3726,159 @@ bool VoxelRenderer_Init(void)
             BrightenCrowns(sTreeMorton);
             Voxel_UnswizzleMortonToLinear(sTreeMorton, sTreeLinear,
                                           VOXEL_TREE_TEXTURE_DIM, VOXEL_TREE_TEXTURE_DIM);
+            // Pre-decode all 3 original GBA flower frames (0, 1, 2) and pack Frame0 into free slot (0, 112) of sTreeTex
+            {
+                extern const u16 gTilesetAnims_General_Flower_Frame0[];
+                extern const u16 gTilesetAnims_General_Flower_Frame1[];
+                extern const u16 gTilesetAnims_General_Flower_Frame2[];
+                static const uint16_t kFlowerPal02[16] = {
+                    0x0000u,
+                    (22u << 0) | (31u << 5) | (16u << 10),
+                    (16u << 0) | (24u << 5) | (12u << 10),
+                    (7u  << 0) | (17u << 5) | (6u  << 10),
+                    (7u  << 0) | (10u << 5) | (0u  << 10),
+                    (27u << 0) | (18u << 5) | (14u << 10),
+                    (13u << 0) | (11u << 5) | (11u << 10),
+                    (20u << 0) | (12u << 5) | (11u << 10),
+                    (8u  << 0) | (7u  << 5) | (6u  << 10),
+                    (31u << 0) | (24u << 5) | (18u << 10),
+                    (27u << 0) | (13u << 5) | (12u << 10),
+                    (25u << 0) | (8u  << 5) | (10u << 10),
+                    (20u << 0) | (26u << 5) | (24u << 10),
+                    0x0000u, 0x0000u, 0x0000u
+                };
+                const u16 *const frames[3] = {
+                    gTilesetAnims_General_Flower_Frame0,
+                    gTilesetAnims_General_Flower_Frame1,
+                    gTilesetAnims_General_Flower_Frame2,
+                };
+                for (int32_t fi = 0; fi < 3; ++fi)
+                {
+                    const uint8_t *const tiles4bpp = (const uint8_t *)frames[fi];
+                    for (int32_t ty = 0; ty < 2; ++ty)
+                    {
+                        for (int32_t tx = 0; tx < 2; ++tx)
+                        {
+                            const uint8_t *const tile = tiles4bpp + (ty * 2 + tx) * 32;
+                            for (int32_t py = 0; py < 8; ++py)
+                            {
+                                const int32_t localGlY = 15 - (ty * 8 + py);
+                                for (int32_t px = 0; px < 8; ++px)
+                                {
+                                    const uint8_t byte = tile[py * 4 + (px >> 1)];
+                                    const uint8_t idx = (px & 1) ? (byte >> 4) : (byte & 0x0Fu);
+                                    uint16_t col = 0u;
+                                    if (idx > 0u && idx < 13u)
+                                        col = VoxelGrade_RGBA5551(kFlowerPal02[idx]);
+                                    sFlowerFrames[fi][localGlY * 16 + (tx * 8 + px)] = col;
+                                }
+                            }
+                        }
+                    }
+                }
+                sFlowerFramesReady = true;
+                sLastFlowerStep = 0u;
+                for (int32_t localGlY = 0; localGlY < 16; ++localGlY)
+                {
+                    const int32_t glY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (112 + (15 - localGlY));
+                    memcpy(&sTreeLinear[glY * VOXEL_TREE_TEXTURE_DIM], &sFlowerFrames[0][localGlY * 16], 16u * sizeof(uint16_t));
+                }
+            }
+            // Pack original GBA ash-covered tall grass sprite (gTileset_Fallarbor MB_ASHGRASS) into free slot (16, 112)
+            {
+                extern const struct Tileset gTileset_Fallarbor;
+                bool packedAsh = false;
+                if (gTileset_Fallarbor.tiles != NULL && gTileset_Fallarbor.metatiles != NULL
+                    && gTileset_Fallarbor.metatileAttributes != NULL && gTileset_Fallarbor.palettes != NULL)
+                {
+                    int32_t ashMt = -1;
+                    for (int32_t m = 0; m < (int32_t)(NUM_METATILES_TOTAL - NUM_METATILES_IN_PRIMARY); ++m)
+                    {
+                        if ((gTileset_Fallarbor.metatileAttributes[m] & METATILE_ATTR_BEHAVIOR_MASK) == MB_ASHGRASS)
+                        {
+                            ashMt = m;
+                            break;
+                        }
+                    }
+                    uint8_t *const secTiles = (ashMt >= 0) ? (uint8_t *)malloc(16384u) : NULL;
+                    if (secTiles != NULL)
+                    {
+                        if (gTileset_Fallarbor.isCompressed)
+                            LZDecompressWram(gTileset_Fallarbor.tiles, secTiles);
+                        else
+                            memcpy(secTiles, gTileset_Fallarbor.tiles, 16384u);
+
+                        const u16 *const mt = gTileset_Fallarbor.metatiles + (uint32_t)ashMt * 8u;
+                        const u16 *const pals = (const u16 *)gTileset_Fallarbor.palettes;
+                        for (int32_t ty = 0; ty < 2; ++ty)
+                        {
+                            for (int32_t tx = 0; tx < 2; ++tx)
+                            {
+                                const u16 entry = mt[4 + ty * 2 + tx];
+                                const uint32_t tileIdx = entry & 0x3FFu;
+                                const bool hFlip = ((entry >> 10) & 1u) != 0u;
+                                const bool vFlip = ((entry >> 11) & 1u) != 0u;
+                                const uint32_t palIdx = (entry >> 12) & 0x0Fu;
+                                const uint8_t *const tile = (tileIdx >= 512u) ? (secTiles + (tileIdx - 512u) * 32u) : NULL;
+                                const u16 *const pal = pals + palIdx * 16u;
+                                for (int32_t py = 0; py < 8; ++py)
+                                {
+                                    const int32_t sy = ty * 8 + py;
+                                    const int32_t dstGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (112 + sy);
+                                    const int32_t srcGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (32 + sy);
+                                    const int32_t fy = vFlip ? (7 - py) : py;
+                                    for (int32_t px = 0; px < 8; ++px)
+                                    {
+                                        const int32_t sx = tx * 8 + px;
+                                        const uint16_t maskTexel = sTreeLinear[srcGlY * VOXEL_TREE_TEXTURE_DIM + (80 + sx)];
+                                        uint16_t col = 0u;
+                                        if ((maskTexel & 1u) != 0u && tile != NULL)
+                                        {
+                                            const int32_t fx = hFlip ? (7 - px) : px;
+                                            const uint8_t byte = tile[fy * 4 + (fx >> 1)];
+                                            const uint8_t idx = (fx & 1) ? (byte >> 4) : (byte & 0x0Fu);
+                                            if (idx > 0u)
+                                            {
+                                                col = VoxelGrade_RGBA5551(pal[idx]);
+                                                packedAsh = true;
+                                            }
+                                        }
+                                        sTreeLinear[dstGlY * VOXEL_TREE_TEXTURE_DIM + (16 + sx)] = col;
+                                    }
+                                }
+                            }
+                        }
+                        free(secTiles);
+                    }
+                }
+                if (!packedAsh)
+                {
+                    for (int32_t sy = 0; sy < 16; ++sy)
+                    {
+                        const int32_t dstGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (112 + sy);
+                        const int32_t srcGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (32 + sy);
+                        for (int32_t sx = 0; sx < 16; ++sx)
+                        {
+                            const uint16_t t = sTreeLinear[srcGlY * VOXEL_TREE_TEXTURE_DIM + (80 + sx)];
+                            uint16_t outCol = 0u;
+                            if ((t & 1u) != 0u)
+                            {
+                                const uint32_t r = ((t >> 11) & 31u);
+                                const uint32_t g = ((t >> 6) & 31u);
+                                const uint32_t b = ((t >> 1) & 31u);
+                                const uint32_t lum = (r * 3u + g * 6u + b) / 10u;
+                                const uint32_t ar = (r + lum * 2u + 14u) / 3u;
+                                const uint32_t ag = (g + lum * 2u + 15u) / 3u;
+                                const uint32_t ab = (b + lum * 2u + 16u) / 3u;
+                                outCol = (uint16_t)(((ar > 31u ? 31u : ar) << 11)
+                                                  | ((ag > 31u ? 31u : ag) << 6)
+                                                  | ((ab > 31u ? 31u : ab) << 1) | 1u);
+                            }
+                            sTreeLinear[dstGlY * VOXEL_TREE_TEXTURE_DIM + (16 + sx)] = outCol;
+                        }
+                    }
+                }
+            }
             glGenTextures(1, &sTreeTex);
             glBindTexture(GL_TEXTURE_2D, sTreeTex);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -3597,6 +3888,106 @@ bool VoxelRenderer_Init(void)
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_TREE_TEXTURE_DIM, VOXEL_TREE_TEXTURE_DIM,
                          0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, sTreeLinear);
             VITA_LOG("[VOXEL] Loaded trees.rgba5551 successfully.\n");
+
+            // Compile foliage sway + player-bend shader for Pass_Trees (falls back to fixed-function if unavailable)
+            {
+                static const char *const kTreeSwayVs =
+                    "attribute vec3 aPos;\n"
+                    "attribute vec2 aUv;\n"
+                    "attribute vec4 aCol;\n"
+                    "uniform mat4 uMvp;\n"
+                    "uniform vec3 uChunkDelta;\n"
+                    "uniform float uTime;\n"
+                    "uniform vec2 uWind;\n"
+                    "uniform vec2 uPlayerXZ;\n"
+                    "varying vec2 vUv;\n"
+                    "varying vec3 vCol;\n"
+                    "void main() {\n"
+                    "    float w = clamp((255.0 - floor(aCol.a * 255.0 + 0.5)) / 190.0, 0.0, 1.0);\n"
+                    "    vec3 p = aPos + uChunkDelta;\n"
+                    "    if (w > 0.001) {\n"
+                    "        float ph = dot(p.xz, vec2(0.37, 0.61));\n"
+                    "        float s = (sin(uTime * 1.7 + ph) + 0.5 * sin(uTime * 0.9 + ph * 0.5 + 1.3)) / 1.5;\n"
+                    "        float gust = 0.7 + 0.3 * sin(uTime * 0.35 + dot(p.xz, vec2(0.08, 0.05)));\n"
+                    "        float d = w * 0.14 * gust * (0.35 + 0.65 * s);\n"
+                    "        p.x += uWind.x * d;\n"
+                    "        p.z += uWind.y * d;\n"
+                    "        float w2 = w * w;\n"
+                    "        float s2 = sin(uTime * 2.3 + ph * 1.9 + 0.7) * 0.6 + sin(uTime * 3.7 + ph * 0.8) * 0.4;\n"
+                    "        p.x += -uWind.y * (w2 * 0.06 * gust * s2);\n"
+                    "        p.z +=  uWind.x * (w2 * 0.06 * gust * s2);\n"
+                    "        p.y -= w2 * 0.02 * (0.5 + 0.5 * s);\n"
+                    "        vec2 dv = p.xz - uPlayerXZ;\n"
+                    "        float dist = length(dv);\n"
+                    "        float k = w * clamp(1.0 - dist / 1.20, 0.0, 1.0);\n"
+                    "        k *= k;\n"
+                    "        vec2 pushDir = (dist > 0.001) ? (dv / dist) : vec2(0.0, 1.0);\n"
+                    "        p.xz += pushDir * (0.72 * k);\n"
+                    "        p.y -= 0.28 * k;\n"
+                    "    }\n"
+                    "    gl_Position = uMvp * vec4(p, 1.0);\n"
+                    "    vUv = aUv;\n"
+                    "    vCol = aCol.rgb;\n"
+                    "}\n";
+                static const char *const kTreeSwayFs =
+                    "varying vec2 vUv;\n"
+                    "varying vec3 vCol;\n"
+                    "uniform sampler2D uTex;\n"
+                    "void main() {\n"
+                    "    vec4 t = texture2D(uTex, vUv);\n"
+                    "    if (t.a <= 0.05) discard;\n"
+                    "    gl_FragColor = vec4(t.rgb * vCol, t.a);\n"
+                    "}\n";
+
+                const GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+                const GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+                const char *vsSrc = kTreeSwayVs;
+                const char *fsSrc = kTreeSwayFs;
+                glShaderSource(vs, 1, &vsSrc, NULL);
+                glCompileShader(vs);
+                glShaderSource(fs, 1, &fsSrc, NULL);
+                glCompileShader(fs);
+
+                GLint vsOk = 0, fsOk = 0;
+                glGetShaderiv(vs, GL_COMPILE_STATUS, &vsOk);
+                glGetShaderiv(fs, GL_COMPILE_STATUS, &fsOk);
+                if (vsOk && fsOk)
+                {
+                    const GLuint prog = glCreateProgram();
+                    glAttachShader(prog, vs);
+                    glAttachShader(prog, fs);
+                    glBindAttribLocation(prog, 0, "aPos");
+                    glBindAttribLocation(prog, 1, "aUv");
+                    glBindAttribLocation(prog, 2, "aCol");
+                    glLinkProgram(prog);
+
+                    GLint linkOk = 0;
+                    glGetProgramiv(prog, GL_LINK_STATUS, &linkOk);
+                    if (linkOk)
+                    {
+                        sTreeShaderProg = prog;
+                        sTreeShaderUMvp = glGetUniformLocation(prog, "uMvp");
+                        sTreeShaderUChunkDelta = glGetUniformLocation(prog, "uChunkDelta");
+                        sTreeShaderUTime = glGetUniformLocation(prog, "uTime");
+                        sTreeShaderUWind = glGetUniformLocation(prog, "uWind");
+                        sTreeShaderUPlayerXZ = glGetUniformLocation(prog, "uPlayerXZ");
+                        sTreeShaderUTex = glGetUniformLocation(prog, "uTex");
+                        sTreeShaderReady = true;
+                        VITA_LOG("[VOXEL] Compiled foliage sway shader successfully.\n");
+                    }
+                    else
+                    {
+                        glDeleteProgram(prog);
+                        VITA_LOG("[VOXEL] Foliage sway shader link failed; using fixed-function.\n");
+                    }
+                }
+                else
+                {
+                    VITA_LOG("[VOXEL] Foliage sway shader compile failed (vs=%d fs=%d); using fixed-function.\n", vsOk, fsOk);
+                }
+                glDeleteShader(vs);
+                glDeleteShader(fs);
+            }
         }
     }
     else
@@ -3695,9 +4086,71 @@ bool VoxelRenderer_Init(void)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 16, 16, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, lampPoolPixels);
     }
 
-    // Pre-allocate Diorama offscreen FBO (960x544 RGBA5551 color + Depth16 renderbuffer)
+    // Generate 16x16 RGBA4444 concentric ring texture (512 B) for rain ripples on water/puddles
+    {
+        uint16_t ripplePixels[16 * 16];
+        for (int32_t y = 0; y < 16; y++)
+        {
+            const float dy = ((float)y + 0.5f - 8.0f) / 7.5f;
+            for (int32_t x = 0; x < 16; x++)
+            {
+                const float dx = ((float)x + 0.5f - 8.0f) / 7.5f;
+                const float d = sqrtf(dx * dx + dy * dy);
+                const float ring = expf(-((d - 0.68f) * (d - 0.68f)) / (2.0f * 0.13f * 0.13f));
+                const uint16_t a4 = (d < 1.0f) ? (uint16_t)(ring * 15.0f + 0.5f) : 0u;
+                ripplePixels[y * 16 + x] = (uint16_t)(0xFFF0u | a4);
+            }
+        }
+        glGenTextures(1, &sRippleTex);
+        glBindTexture(GL_TEXTURE_2D, sRippleTex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 16, 16, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, ripplePixels);
+    }
+
+    // Generate 16x16 RGBA4444 soft radial alpha texture (512 B) for water/ground mist (zero dark square edges)
+    {
+        uint16_t mistPixels[16 * 16];
+        for (int32_t y = 0; y < 16; y++)
+        {
+            const float dy = ((float)y + 0.5f - 8.0f) / 7.5f;
+            for (int32_t x = 0; x < 16; x++)
+            {
+                const float dx = ((float)x + 0.5f - 8.0f) / 7.5f;
+                const float d2 = dx * dx + dy * dy;
+                float falloff = 0.0f;
+                if (d2 < 1.0f)
+                {
+                    const float inv = 1.0f - d2;
+                    falloff = inv * inv;
+                }
+                const uint16_t a4 = (uint16_t)(falloff * 15.0f + 0.5f);
+                mistPixels[y * 16 + x] = (uint16_t)(0xFFF0u | a4);
+            }
+        }
+        glGenTextures(1, &sSoftMistTex);
+        glBindTexture(GL_TEXTURE_2D, sSoftMistTex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 16, 16, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, mistPixels);
+    }
+
+    // Pre-allocate Diorama offscreen FBO (960x544 RGBA8 for HIGH/30fps + RGBA5551 fast target for LOW/60fps)
     glGenTextures(1, &sDioramaColorTex);
     glBindTexture(GL_TEXTURE_2D, sDioramaColorTex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H, 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+
+    glGenTextures(1, &sDioramaColorTexFast);
+    glBindTexture(GL_TEXTURE_2D, sDioramaColorTexFast);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -3709,9 +4162,10 @@ bool VoxelRenderer_Init(void)
     glBindRenderbuffer(GL_RENDERBUFFER, sDioramaDepthRb);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H);
 
+    sDioramaActiveTex = sDioramaColorTex;
     glGenFramebuffers(1, &sDioramaFbo);
     glBindFramebuffer(GL_FRAMEBUFFER, sDioramaFbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sDioramaColorTex, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sDioramaActiveTex, 0);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, sDioramaDepthRb);
 
     // Downscaled targets of the depth of field (480x272, half resolution, no depth): the scene
@@ -3734,8 +4188,115 @@ bool VoxelRenderer_Init(void)
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *blurTex[i], 0);
     }
 
+    // Quarter-res HD-2D bloom targets (240x136 RGBA8 = 130 KB each)
+    GLuint *const bloomTex[2] = { &sBloomTexA, &sBloomTexB };
+    GLuint *const bloomFbo[2] = { &sBloomFboA, &sBloomFboB };
+    for (int32_t i = 0; i < 2; ++i)
+    {
+        glGenTextures(1, bloomTex[i]);
+        glBindTexture(GL_TEXTURE_2D, *bloomTex[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_BLOOM_FBO_W, VOXEL_BLOOM_FBO_H, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glGenFramebuffers(1, bloomFbo[i]);
+        glBindFramebuffer(GL_FRAMEBUFFER, *bloomFbo[i]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *bloomTex[i], 0);
+    }
+
+    // 64x64 RGBA8 radial vignette texture (16 KB)
+    {
+        uint32_t vigPixels[64 * 64];
+        for (int32_t y = 0; y < 64; ++y)
+        {
+            const float dy = ((float)y + 0.5f - 32.0f) / 32.0f;
+            for (int32_t x = 0; x < 64; ++x)
+            {
+                const float dx = ((float)x + 0.5f - 32.0f) / 32.0f;
+                const float r2 = dx * dx + dy * dy;
+                float t = (r2 - 0.35f) / 1.45f;
+                if (t < 0.0f) t = 0.0f;
+                if (t > 1.0f) t = 1.0f;
+                t = t * t * (3.0f - 2.0f * t);
+                const uint32_t v = (uint32_t)((1.0f - 0.42f * t) * 255.0f + 0.5f);
+                vigPixels[y * 64 + x] = 0xFF000000u | (v << 16) | (v << 8) | v;
+            }
+        }
+        glGenTextures(1, &sVignetteTex);
+        glBindTexture(GL_TEXTURE_2D, sVignetteTex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, vigPixels);
+    }
+
+    // 64x64 RGBA8 2x2 weather/particle atlas (16 KB):
+    // [0,0]=rain streak, [1,0]=splash ring, [0,1]=soft glow dot, [1,1]=leaf
+    {
+        uint32_t waPixels[64 * 64];
+        for (int32_t y = 0; y < 64; ++y)
+        {
+            for (int32_t x = 0; x < 64; ++x)
+            {
+                const int32_t qx = x >> 5;
+                const int32_t qy = y >> 5;
+                const float lx = ((float)(x & 31) + 0.5f - 16.0f) / 15.0f;
+                const float ly = ((float)(y & 31) + 0.5f - 16.0f) / 15.0f;
+                float a = 0.0f;
+                if (qx == 0 && qy == 0)
+                {
+                    // Soft rain streak capsule
+                    const float ax = fabsf(lx) * 3.8f;
+                    const float ay = fabsf(ly);
+                    if (ax < 1.0f && ay < 1.0f)
+                        a = (1.0f - ax * ax) * (1.0f - ay * ay);
+                }
+                else if (qx == 1 && qy == 0)
+                {
+                    // Splash ring
+                    const float r = sqrtf(lx * lx + ly * ly);
+                    const float d = fabsf(r - 0.68f) / 0.24f;
+                    if (d < 1.0f)
+                        a = (1.0f - d * d);
+                }
+                else if (qx == 0 && qy == 1)
+                {
+                    // Gaussian glow dot (motes, fireflies, water glints, bloom emitters)
+                    const float r2 = lx * lx + ly * ly;
+                    if (r2 < 1.0f)
+                    {
+                        const float inv = 1.0f - r2;
+                        a = inv * inv;
+                    }
+                }
+                else
+                {
+                    // Leaf silhouette
+                    const float u = lx * 0.85f + ly * 0.52f;
+                    const float v = -lx * 0.52f + ly * 0.85f;
+                    const float r2 = (u * u) / 0.65f + (v * v) / 0.18f;
+                    if (r2 < 1.0f)
+                        a = 1.0f - r2 * r2;
+                }
+                const uint32_t alpha = (uint32_t)(a * 255.0f + 0.5f);
+                waPixels[y * 64 + x] = (alpha << 24) | 0x00FFFFFFu;
+            }
+        }
+        glGenTextures(1, &sWeatherAtlasTex);
+        glBindTexture(GL_TEXTURE_2D, sWeatherAtlasTex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 64, 64, 0, GL_RGBA, GL_UNSIGNED_BYTE, waPixels);
+    }
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     sDioramaFboReady = (sDioramaFbo != 0 && sScratchFbo != 0 && sBlurFbo != 0);
+    VoxelHd2dShader_Init();
 
     MakeFog();
     MakeWeather();
@@ -3858,6 +4419,9 @@ typedef struct
     VoxelFrameGrade grade;
     int32_t renderW, renderH;
     bool dioramaActive;                 // the 3D scene goes to the FBO for the depth of field
+    Hd2dPreset hd2dPreset;              // 0=OFF, 1=LOW (60 FPS), 2=HIGH (30 FPS)
+    bool hd2dMarkedGrade;               // true=HD-2D cinematic grading, false=GBA faithful
+    float playerScreenY;                // 0..1 screen Y of the player (focal plane center)
 } VoxelFrame;
 
 // Chunk builds left after the visibility loop: unbuilt chunks outside the view (pre-warm) and
@@ -3949,6 +4513,46 @@ static bool Frame_Begin(VoxelFrame *const f)
 }
 
 // Stage 1: follow camera (field or 3D battle), map changes and crossings.
+typedef struct
+{
+    bool     active;
+    uint16_t prevHp[MAX_BATTLERS_COUNT];
+    double   prevMs;
+    float    flashTimer;
+    float    flashDur;
+    float    flashAlpha;
+    float    flashRgb[3];
+    float    shakeTimer;
+    float    shakeDur;
+    float    shakeAmp;
+} VoxelBattleFxState;
+
+static VoxelBattleFxState sBattleFx = {0};
+
+static void BattleTypeToFlashRgb(const uint8_t moveType, float outRgb[3])
+{
+    switch (moveType)
+    {
+        case TYPE_FIRE:     outRgb[0] = 1.00f; outRgb[1] = 0.42f; outRgb[2] = 0.14f; break;
+        case TYPE_WATER:    outRgb[0] = 0.25f; outRgb[1] = 0.72f; outRgb[2] = 1.00f; break;
+        case TYPE_GRASS:    outRgb[0] = 0.28f; outRgb[1] = 0.92f; outRgb[2] = 0.42f; break;
+        case TYPE_ELECTRIC: outRgb[0] = 1.00f; outRgb[1] = 0.92f; outRgb[2] = 0.24f; break;
+        case TYPE_ICE:      outRgb[0] = 0.62f; outRgb[1] = 0.96f; outRgb[2] = 1.00f; break;
+        case TYPE_FIGHTING: outRgb[0] = 0.95f; outRgb[1] = 0.35f; outRgb[2] = 0.22f; break;
+        case TYPE_POISON:   outRgb[0] = 0.78f; outRgb[1] = 0.28f; outRgb[2] = 0.90f; break;
+        case TYPE_GROUND:   outRgb[0] = 0.90f; outRgb[1] = 0.68f; outRgb[2] = 0.32f; break;
+        case TYPE_FLYING:   outRgb[0] = 0.68f; outRgb[1] = 0.82f; outRgb[2] = 1.00f; break;
+        case TYPE_PSYCHIC:  outRgb[0] = 1.00f; outRgb[1] = 0.34f; outRgb[2] = 0.68f; break;
+        case TYPE_BUG:      outRgb[0] = 0.68f; outRgb[1] = 0.88f; outRgb[2] = 0.24f; break;
+        case TYPE_ROCK:     outRgb[0] = 0.82f; outRgb[1] = 0.72f; outRgb[2] = 0.45f; break;
+        case TYPE_GHOST:    outRgb[0] = 0.56f; outRgb[1] = 0.36f; outRgb[2] = 0.92f; break;
+        case TYPE_DRAGON:   outRgb[0] = 0.48f; outRgb[1] = 0.42f; outRgb[2] = 1.00f; break;
+        case TYPE_DARK:     outRgb[0] = 0.46f; outRgb[1] = 0.36f; outRgb[2] = 0.52f; break;
+        case TYPE_STEEL:    outRgb[0] = 0.78f; outRgb[1] = 0.86f; outRgb[2] = 0.94f; break;
+        default:            outRgb[0] = 1.00f; outRgb[1] = 0.96f; outRgb[2] = 0.88f; break;
+    }
+}
+
 static void Frame_FollowCamera(VoxelFrame *const f)
 {
     const bool inBattle3D = f->inBattle3D;
@@ -4034,9 +4638,85 @@ static void Frame_FollowCamera(VoxelFrame *const f)
                                                        &sBattleState.ground);
         }
         BattleCamera();
+        if (!sBattleFx.active)
+        {
+            sBattleFx.active = true;
+            sBattleFx.prevMs = f->startMs;
+            sBattleFx.flashTimer = 0.0f;
+            sBattleFx.shakeTimer = 0.0f;
+            for (int32_t b = 0; b < MAX_BATTLERS_COUNT; b++)
+                sBattleFx.prevHp[b] = gBattleMons[b].hp;
+        }
+        else
+        {
+            float dt = (float)((f->startMs - sBattleFx.prevMs) * 0.001);
+            if (dt < 0.0f) dt = 0.0f;
+            if (dt > 0.05f) dt = 0.05f;
+            sBattleFx.prevMs = f->startMs;
+
+            bool hitOccurred = false;
+            for (int32_t b = 0; b < MAX_BATTLERS_COUNT; b++)
+            {
+                const uint16_t curHp = gBattleMons[b].hp;
+                if (curHp < sBattleFx.prevHp[b])
+                    hitOccurred = true;
+                sBattleFx.prevHp[b] = curHp;
+            }
+            if (hitOccurred)
+            {
+                const bool isCrit = (gCritMultiplier > 1u);
+                uint8_t mType = TYPE_NORMAL;
+                if (gBattleStruct != NULL && (gBattleStruct->dynamicMoveType & 0x3Fu) != 0u)
+                    mType = (uint8_t)(gBattleStruct->dynamicMoveType & 0x3Fu);
+                else if (gCurrentMove != 0u)
+                    mType = gBattleMoves[gCurrentMove].type;
+
+                BattleTypeToFlashRgb(mType, sBattleFx.flashRgb);
+                if (isCrit)
+                {
+                    sBattleFx.flashRgb[0] = 0.72f + 0.28f * sBattleFx.flashRgb[0];
+                    sBattleFx.flashRgb[1] = 0.72f + 0.28f * sBattleFx.flashRgb[1];
+                    sBattleFx.flashRgb[2] = 0.72f + 0.28f * sBattleFx.flashRgb[2];
+                    sBattleFx.flashDur = 0.28f;
+                    sBattleFx.flashAlpha = 0.52f;
+                    sBattleFx.shakeDur = 0.24f;
+                    sBattleFx.shakeAmp = 0.22f;
+                }
+                else
+                {
+                    sBattleFx.flashDur = 0.18f;
+                    sBattleFx.flashAlpha = 0.28f;
+                    sBattleFx.shakeDur = 0.14f;
+                    sBattleFx.shakeAmp = 0.11f;
+                }
+                sBattleFx.flashTimer = sBattleFx.flashDur;
+                sBattleFx.shakeTimer = sBattleFx.shakeDur;
+            }
+            if (sBattleFx.flashTimer > 0.0f)
+            {
+                sBattleFx.flashTimer -= dt;
+                if (sBattleFx.flashTimer < 0.0f) sBattleFx.flashTimer = 0.0f;
+            }
+            if (sBattleFx.shakeTimer > 0.0f)
+            {
+                sBattleFx.shakeTimer -= dt;
+                if (sBattleFx.shakeTimer < 0.0f) sBattleFx.shakeTimer = 0.0f;
+            }
+            if (sBattleFx.shakeTimer > 0.0f && sBattleFx.shakeDur > 0.0f)
+            {
+                const float ratio = sBattleFx.shakeTimer / sBattleFx.shakeDur;
+                const float amp = sBattleFx.shakeAmp * ratio * ratio;
+                const float tSec = (float)(f->startMs * 0.001);
+                sCamera.targetX += sinf(tSec * 62.0f) * amp;
+                sCamera.targetZ += cosf(tSec * 49.0f) * amp * 0.7f;
+            }
+        }
     }
     else
     {
+        sBattleFx.active = false;
+        sBattleFx.flashTimer = 0.0f;
+        sBattleFx.shakeTimer = 0.0f;
         if (sBattleState.begun)
         {
             sBattleState.begun = false;
@@ -4071,6 +4751,22 @@ static void Frame_FollowCamera(VoxelFrame *const f)
 // Stage 2: metatile atlas slots for the current map (multi-atlas LRU, as Emerald 3DS).
 static void Frame_UpdateAtlas(const VoxelFrame *const f)
 {
+    {
+        static int32_t sLastReliefMode = -1;
+        const int32_t wantRelief = (GetHd2dPreset() != HD2D_PRESET_OFF) ? 1 : 0;
+        if (sLastReliefMode != wantRelief)
+        {
+            VoxelGrade_SetReliefEnabled(wantRelief != 0);
+            if (sLastReliefMode != -1)
+            {
+                EnsureWorkerIdle();
+                for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; ++s)
+                    sAtlasSlots[s].valid = false;
+                sNeedsFullWarmup = true;
+            }
+            sLastReliefMode = wantRelief;
+        }
+    }
     const VoxelMapInstance *const inst0 = f->inst0;
     const bool mapChanged = f->mapChanged;
     VitaPerf_SubBegin(VITA_PERF_T_ATLAS_SLOTS);
@@ -4321,6 +5017,19 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
     if (sVoxelAtmosphereStart == 0)
         sVoxelAtmosphereStart = SDL_GetPerformanceCounter();
     f->seconds = (float)((double)(SDL_GetPerformanceCounter() - sVoxelAtmosphereStart) / (double)SDL_GetPerformanceFrequency());
+    f->hd2dPreset = GetHd2dPreset();
+    f->hd2dMarkedGrade = (f->hd2dPreset != HD2D_PRESET_OFF);
+
+    const VitaDayNightLight *const dn = (!f->indoor) ? VitaDayNight_Get() : NULL;
+    if (f->hd2dPreset != HD2D_PRESET_OFF)
+    {
+        VitaAmbientAudio_SetScene(f->indoor, f->underground, (int32_t)f->weather,
+                                  f->weatherAmount, dn ? dn->glow : 0.0f);
+    }
+    else
+    {
+        VitaAmbientAudio_SetScene(true, false, 0, 0.0f, 0.0f);
+    }
 }
 
 // Whether a visible chunk must be rebuilt. `urgent`: drawn as it is, the chunk would be wrong,
@@ -4525,7 +5234,24 @@ static void Frame_SelectChunks(VoxelFrame *const f)
     const float camTargetX = sCamera.targetX;
     const float camTargetZ = sCamera.targetZ;
 
-    int32_t minTileY = (int32_t)floorf(camTargetZ - VOXEL_VIEW_NORTH_TILES);
+    // Procedural horizon/lateral culling scaled from the classic 40-deg reference camera
+    float northTiles = VOXEL_VIEW_NORTH_TILES;
+    float farScale = 1.0f;
+    if (!indoor)
+    {
+        const float deg2rad = 0.0174532925f;
+        const float pitchDeg = Voxel_ClampF(sCamera.pitch, 18.0f, 60.0f);
+        const float halfDeg = sCamera.fov * 0.5f;
+        const float classicUpper = (40.0f - halfDeg) * deg2rad;
+        const float curUpper = ((pitchDeg > halfDeg + 3.0f) ? (pitchDeg - halfDeg) : 3.0f) * deg2rad;
+        const float classicNorthRatio = (tanf(40.0f * deg2rad) / tanf(classicUpper)) - 1.0f;
+        const float curNorthRatio = (tanf(pitchDeg * deg2rad) / tanf(curUpper)) - 1.0f;
+        const float extraNorth = Voxel_ClampF((curNorthRatio - classicNorthRatio) * sCamera.distance, 0.0f, 12.0f);
+        northTiles += extraNorth;
+        farScale = 1.0f + extraNorth * 0.022f;
+    }
+
+    int32_t minTileY = (int32_t)floorf(camTargetZ - northTiles);
     int32_t maxTileY = (int32_t)ceilf(camTargetZ + VOXEL_VIEW_SOUTH_TILES);
 
     int32_t minChunkY = FloorDivChunk(minTileY - sChunkOriginY);
@@ -4598,8 +5324,8 @@ static void Frame_SelectChunks(VoxelFrame *const f)
         float chunkZ = (float)(sChunkOriginY + cy * CHUNK_SIZE);
         // Frustum width expands with distance north of camera:
         // Expanded lateral bounds, especially on the left (west) and south (bottom)
-        float lateralMarginLeft = (indoor || chunkZ < camTargetZ - VOXEL_VIEW_FAR_ROW_TILES) ? VOXEL_VIEW_FAR_LEFT : VOXEL_VIEW_NEAR_LEFT;
-        float lateralMarginRight = (indoor || chunkZ < camTargetZ - VOXEL_VIEW_FAR_ROW_TILES) ? VOXEL_VIEW_FAR_RIGHT : VOXEL_VIEW_NEAR_RIGHT;
+        float lateralMarginLeft = (indoor || chunkZ < camTargetZ - VOXEL_VIEW_FAR_ROW_TILES) ? (VOXEL_VIEW_FAR_LEFT * farScale) : VOXEL_VIEW_NEAR_LEFT;
+        float lateralMarginRight = (indoor || chunkZ < camTargetZ - VOXEL_VIEW_FAR_ROW_TILES) ? (VOXEL_VIEW_FAR_RIGHT * farScale) : VOXEL_VIEW_NEAR_RIGHT;
         int32_t rowMinTileX = (int32_t)floorf(camTargetX - lateralMarginLeft);
         int32_t rowMaxTileX = (int32_t)ceilf(camTargetX + lateralMarginRight);
         const int32_t baseMinChunkX = FloorDivChunk(rowMinTileX - sChunkOriginX);
@@ -4710,9 +5436,49 @@ static void Frame_SelectChunks(VoxelFrame *const f)
     f->visibleCount = visibleChunkCount;
 }
 
+// Populate active HD-2D point lights from cached street lamps / cave lantern (zero Core 2 race)
+static void UpdatePointLights(const VoxelFrame *const f)
+{
+    VoxelPointLights_Clear();
+    if (f->inBattle3D || f->hd2dPreset == HD2D_PRESET_OFF)
+        return;
+
+    if (f->underground)
+    {
+        // Warm explorer lantern in dark caves
+        VoxelPointLights_Add(f->playerX + 0.5f, sCamera.ground + 0.9f, f->playerZ + 0.5f,
+                             1.0f, 0.78f, 0.48f, 4.2f, 0.55f, 0xCA7E11u);
+    }
+
+    if (!f->indoor && VitaGame_IsOutdoor() && sLampsBuilt && sLampGroundCount >= 6)
+    {
+        const VitaDayNightLight *const dn = VitaDayNight_Get();
+        const float glow = (dn != NULL) ? dn->glow : 0.0f;
+        if (glow > 0.02f)
+        {
+            for (uint32_t i = 0; i + 5 < sLampGroundCount; i += 6)
+            {
+                const float lx = (sLampGroundScratch[i].x + sLampGroundScratch[i + 2].x) * 0.5f;
+                const float ly = sLampGroundScratch[i].y + 1.15f;
+                const float lz = (sLampGroundScratch[i].z + sLampGroundScratch[i + 2].z) * 0.5f;
+                const float dx = lx - f->playerX;
+                const float dz = lz - f->playerZ;
+                if (dx * dx + dz * dz <= 16.0f * 16.0f)
+                {
+                    VoxelPointLights_Add(lx, ly, lz, 1.0f, 0.68f, 0.34f,
+                                         3.6f, glow * 0.62f, i * 2654435761u);
+                }
+            }
+        }
+    }
+
+    VoxelPointLights_BeginFrame(f->seconds);
+}
+
 // Stage 7: entity billboards, their cast shadows and water reflections (field only).
 static void Frame_EmitEntities(const VoxelFrame *const f)
 {
+    UpdatePointLights(f);
     const bool inBattle3D = f->inBattle3D;
     const bool indoor = f->indoor;
     if (!inBattle3D)
@@ -4745,6 +5511,32 @@ static void Frame_EmitEntities(const VoxelFrame *const f)
         if (sEntityGlCount > 0)
         {
             PackVoxelVertices(sEntityVerts, sEntityGlVerts, sEntityGlCount, !indoor);
+            if (f->hd2dPreset != HD2D_PRESET_OFF && VoxelPointLights_Count() > 0)
+            {
+                for (uint32_t i = 0; i + 5 < sEntityGlCount; i += 6)
+                {
+                    const float cx = (sEntityGlVerts[i].x + sEntityGlVerts[i + 2].x) * 0.5f;
+                    const float cy = (sEntityGlVerts[i].y + sEntityGlVerts[i + 2].y) * 0.5f;
+                    const float cz = (sEntityGlVerts[i].z + sEntityGlVerts[i + 2].z) * 0.5f;
+                    float ar = 0.0f, ag = 0.0f, ab = 0.0f;
+                    VoxelPointLights_SampleAdd(cx, cy, cz, &ar, &ag, &ab);
+                    if (ar > 0.004f || ag > 0.004f || ab > 0.004f)
+                    {
+                        const int32_t dr = (int32_t)(ar * 255.0f + 0.5f);
+                        const int32_t dg = (int32_t)(ag * 255.0f + 0.5f);
+                        const int32_t db = (int32_t)(ab * 255.0f + 0.5f);
+                        for (uint32_t k = 0; k < 6; ++k)
+                        {
+                            int32_t r = (int32_t)sEntityGlVerts[i + k].r + dr;
+                            int32_t g = (int32_t)sEntityGlVerts[i + k].g + dg;
+                            int32_t b = (int32_t)sEntityGlVerts[i + k].b + db;
+                            sEntityGlVerts[i + k].r = (uint8_t)(r > 255 ? 255 : r);
+                            sEntityGlVerts[i + k].g = (uint8_t)(g > 255 ? 255 : g);
+                            sEntityGlVerts[i + k].b = (uint8_t)(b > 255 ? 255 : b);
+                        }
+                    }
+                }
+            }
         }
 
         sShadowGlCount = shadowBuilder.count;
@@ -4785,7 +5577,7 @@ static void Frame_EmitEntities(const VoxelFrame *const f)
                 sReflectionGlVerts[i].r = (uint8_t)(s * 180.0f);
                 sReflectionGlVerts[i].g = (uint8_t)(s * 210.0f);
                 sReflectionGlVerts[i].b = (uint8_t)(s * 255.0f);
-                sReflectionGlVerts[i].a = 140;
+                sReflectionGlVerts[i].a = (f->hd2dPreset != HD2D_PRESET_OFF && !indoor && f->weather == VOXEL_WEATHER_RAIN) ? 185 : 140;
             }
         }
         VitaPerf_SubEnd(VITA_PERF_T_ENTITIES);
@@ -4809,11 +5601,19 @@ static void Frame_BeginPasses(VoxelFrame *const f)
 
     const bool dioramaSetting = (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
     const bool isIndoor = (inst0 != NULL && inst0->indoor);
-    const bool dioramaActive = sDioramaFboReady && dioramaSetting && !isIndoor && (fadeAmount < 0.99f);
+    const bool hd2dOn = (f->hd2dPreset != HD2D_PRESET_OFF);
+    const bool dioramaActive = sDioramaFboReady && (fadeAmount < 0.99f)
+                             && ((dioramaSetting && (!isIndoor || hd2dOn)) || (f->inBattle3D && hd2dOn));
 
     if (dioramaActive)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, sDioramaFbo);
+        const GLuint wantTex = (f->hd2dPreset == HD2D_PRESET_HIGH) ? sDioramaColorTex : sDioramaColorTexFast;
+        if (wantTex != 0 && wantTex != sDioramaActiveTex)
+        {
+            sDioramaActiveTex = wantTex;
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sDioramaActiveTex, 0);
+        }
     }
     else
     {
@@ -4849,6 +5649,38 @@ static void Frame_BeginPasses(VoxelFrame *const f)
     f->renderW = renderW;
     f->renderH = renderH;
     f->dioramaActive = dioramaActive;
+
+    // Project player target onto screen Y [0..1] (top=0, bottom=1) so DoF focal plane tracks the player
+    {
+        const float dx = sCamera.targetX - sCamera.x;
+        const float dy = (sCamera.targetY + 0.6f) - sCamera.y;
+        const float dz = sCamera.targetZ - sCamera.z;
+        float fx = sCamera.targetX - sCamera.x;
+        float fy = sCamera.targetY - sCamera.y;
+        float fz = sCamera.targetZ - sCamera.z;
+        const float flen = sqrtf(fx * fx + fy * fy + fz * fz);
+        if (flen > 0.001f) { fx /= flen; fy /= flen; fz /= flen; }
+        // Camera right = normalize(forward x (0,1,0)) = (-fz, 0, fx)
+        float rx = -fz, rz = fx;
+        const float rlen = sqrtf(rx * rx + rz * rz);
+        if (rlen > 0.001f) { rx /= rlen; rz /= rlen; }
+        // Camera up = right x forward
+        const float ux = -rz * fy;
+        const float uy = rz * fx - rx * fz;
+        const float uz = rx * fy;
+        const float zCam = dx * fx + dy * fy + dz * fz;
+        const float yCam = dx * ux + dy * uy + dz * uz;
+        float sy = 0.54f;
+        if (zCam > 0.1f)
+        {
+            const float fProj = 1.0f / tanf(sCamera.fov * (3.14159265f / 360.0f));
+            const float ndcY = (yCam * fProj) / zCam;
+            sy = 0.5f - 0.5f * ndcY;
+        }
+        if (sy < 0.25f) sy = 0.25f;
+        if (sy > 0.78f) sy = 0.78f;
+        f->playerScreenY = sy;
+    }
 }
 
 // GL state of the 3D passes.
@@ -4932,16 +5764,67 @@ static void Pass_Ground(const VoxelFrame *const f)
     }
 }
 
-// Pass 2: trees and tall grass (tree atlas), from the chunk VBOs.
+// Pass 2: trees, tall grass and flowers (tree atlas), from the chunk VBOs.
 static void Pass_Trees(const VoxelFrame *const f)
 {
     VoxelChunkSlot *const *const visibleChunks = f->visible;
     const int32_t visibleChunkCount = f->visibleCount;
-    if (sTreeTex)
+    if (!sTreeTex)
+        return;
+
+    glBindTexture(GL_TEXTURE_2D, sTreeTex);
+
+    if (sFlowerFramesReady && f->hd2dPreset != HD2D_PRESET_OFF)
     {
-        glEnable(GL_ALPHA_TEST);
-        glAlphaFunc(GL_GREATER, 0.0f);
-        glBindTexture(GL_TEXTURE_2D, sTreeTex);
+        static const uint8_t kFlowerSeq[4] = { 0u, 1u, 0u, 2u };
+        const uint32_t step = (uint32_t)(f->seconds * (60.0f / 16.0f)) & 3u;
+        if (step != sLastFlowerStep)
+        {
+            sLastFlowerStep = step;
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 16, 16, GL_RGBA,
+                            GL_UNSIGNED_SHORT_5_5_5_1, sFlowerFrames[kFlowerSeq[step]]);
+        }
+    }
+
+    if (sTreeShaderReady && f->hd2dPreset != HD2D_PRESET_OFF)
+    {
+        if (sAppliedOffsetX != 0.0f || sAppliedOffsetZ != 0.0f)
+        {
+            glPopMatrix();
+            glPushMatrix();
+            sAppliedOffsetX = 0.0f;
+            sAppliedOffsetZ = 0.0f;
+        }
+
+        float proj[16], mv[16], mvp[16];
+        glGetFloatv(GL_PROJECTION_MATRIX, proj);
+        glGetFloatv(GL_MODELVIEW_MATRIX, mv);
+        for (int32_t c = 0; c < 4; ++c)
+        {
+            for (int32_t r = 0; r < 4; ++r)
+            {
+                mvp[c * 4 + r] = proj[0 * 4 + r] * mv[c * 4 + 0]
+                               + proj[1 * 4 + r] * mv[c * 4 + 1]
+                               + proj[2 * 4 + r] * mv[c * 4 + 2]
+                               + proj[3 * 4 + r] * mv[c * 4 + 3];
+            }
+        }
+
+        glDisable(GL_ALPHA_TEST);
+        glDisableClientState(GL_COLOR_ARRAY);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+
+        glUseProgram(sTreeShaderProg);
+        glUniformMatrix4fv(sTreeShaderUMvp, 1, GL_FALSE, mvp);
+        glUniform1f(sTreeShaderUTime, f->seconds);
+        glUniform2f(sTreeShaderUWind, 0.85f, 0.52f);
+        glUniform2f(sTreeShaderUPlayerXZ, sCamera.targetX, sCamera.targetZ);
+        glUniform1i(sTreeShaderUTex, 0);
+
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
 
         for (int32_t i = 0; i < visibleChunkCount; i++)
         {
@@ -4950,13 +5833,40 @@ static void Pass_Trees(const VoxelFrame *const f)
             if (count == 0) continue;
 
             glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
-            glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
-            glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
-            glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
-
-            ChunkOffsets_Apply(chunk);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
+            glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
+            glUniform3f(sTreeShaderUChunkDelta, chunk->drawOffsetX, 0.0f, chunk->drawOffsetZ);
             glDrawArrays(GL_TRIANGLES, (GLint)chunk->treeFirstVert, (GLsizei)count);
         }
+
+        glDisableVertexAttribArray(2);
+        glDisableVertexAttribArray(1);
+        glDisableVertexAttribArray(0);
+        glUseProgram(0);
+
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        glEnableClientState(GL_COLOR_ARRAY);
+        return;
+    }
+
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.0f);
+
+    for (int32_t i = 0; i < visibleChunkCount; i++)
+    {
+        const VoxelChunkSlot *const chunk = visibleChunks[i];
+        const uint32_t count = chunk->treeCount;
+        if (count == 0) continue;
+
+        glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
+        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
+        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
+        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
+
+        ChunkOffsets_Apply(chunk);
+        glDrawArrays(GL_TRIANGLES, (GLint)chunk->treeFirstVert, (GLsizei)count);
     }
 }
 
@@ -5234,6 +6144,414 @@ static void Pass_NightLamps(const VoxelFrame *const f)
     }
 }
 
+enum
+{
+    SFX_WATER_RIPPLE = 0,
+    SFX_WATER_GLINT  = 1,
+    SFX_WATER_MIST   = 2,
+    SFX_ASH_SETTLE   = 3,
+    SFX_GRASS_LEAF   = 4,
+    SFX_GRASS_ASH    = 5,
+    SURFACE_FX_CAP   = 64
+};
+
+typedef struct
+{
+    float   wx, wy, wz;
+    float   driftX, driftZ;
+    float   age, life;
+    uint8_t kind;
+} VoxelSurfaceFx;
+
+static VoxelSurfaceFx sSurfaceFx[SURFACE_FX_CAP] = {0};
+static uint32_t sSurfaceFxRng = 0x9E3779B9u;
+static double sSurfaceFxPrevMs = 0.0;
+static int32_t sLastGrassPlayerX = 0x7FFFFFFF;
+static int32_t sLastGrassPlayerZ = 0x7FFFFFFF;
+
+static inline float SurfaceFx_Rand01(void)
+{
+    sSurfaceFxRng = sSurfaceFxRng * 1664525u + 1013904223u;
+    return (float)((sSurfaceFxRng >> 8) & 0xFFFFu) * (1.0f / 65536.0f);
+}
+
+static float SurfaceWorldY(const float wx, const float wz)
+{
+    const VoxelMapInstance *const inst = VoxelWorld_GetInstanceAt((int32_t)floorf(wx), (int32_t)floorf(wz));
+    const float base = (inst != NULL) ? VoxelRelief_Base(inst) : 0.0f;
+    return base + VoxelRelief_SurfaceAt(wx, wz);
+}
+
+static void DrawSurfaceFx(const VoxelFrame *const f)
+{
+    if (f->indoor || f->inBattle3D || f->hd2dPreset == HD2D_PRESET_OFF)
+        return;
+
+    if (f->crossed || f->mapChanged)
+    {
+        for (int32_t i = 0; i < SURFACE_FX_CAP; ++i)
+            sSurfaceFx[i].age = sSurfaceFx[i].life;
+        sSurfaceFxPrevMs = f->startMs;
+        sLastGrassPlayerX = 0x7FFFFFFF;
+        sLastGrassPlayerZ = 0x7FFFFFFF;
+        return;
+    }
+
+    // Spawn leaf / ash puffs when the player steps onto a tall-grass, long-grass, or ash-grass cell
+    if (f->hd2dPreset != HD2D_PRESET_OFF)
+    {
+        float pwx = 0.0f, pwz = 0.0f;
+        VoxelWorld_GetPlayerWorldCoords(&pwx, &pwz);
+        const int32_t cellX = (int32_t)floorf(pwx);
+        const int32_t cellZ = (int32_t)floorf(pwz);
+        if (cellX != sLastGrassPlayerX || cellZ != sLastGrassPlayerZ)
+        {
+            const bool firstInit = (sLastGrassPlayerX == 0x7FFFFFFF);
+            sLastGrassPlayerX = cellX;
+            sLastGrassPlayerZ = cellZ;
+            if (!firstInit)
+            {
+                const u8 beh = (u8)VoxelWorld_GetMetatileBehavior(cellX, cellZ);
+                const bool isAshGrass = MetatileBehavior_IsAshGrass(beh);
+                const bool isGrass = isAshGrass || MetatileBehavior_IsTallGrass(beh) || MetatileBehavior_IsLongGrass(beh);
+                if (isGrass)
+                {
+                    int32_t burst = 0;
+                    for (int32_t i = 0; i < SURFACE_FX_CAP && burst < 5; ++i)
+                    {
+                        if (sSurfaceFx[i].age < sSurfaceFx[i].life)
+                            continue;
+                        const float ang = SurfaceFx_Rand01() * 6.2831853f;
+                        const float spd = 1.1f + SurfaceFx_Rand01() * 1.4f;
+                        sSurfaceFx[i].kind = isAshGrass ? SFX_GRASS_ASH : SFX_GRASS_LEAF;
+                        sSurfaceFx[i].wx = sCamera.targetX + (SurfaceFx_Rand01() - 0.5f) * 0.35f;
+                        sSurfaceFx[i].wy = sCamera.ground + 0.30f;
+                        sSurfaceFx[i].wz = sCamera.targetZ + (SurfaceFx_Rand01() - 0.5f) * 0.25f;
+                        sSurfaceFx[i].driftX = cosf(ang) * spd;
+                        sSurfaceFx[i].driftZ = sinf(ang) * spd;
+                        sSurfaceFx[i].age = 0.0f;
+                        sSurfaceFx[i].life = 0.42f + SurfaceFx_Rand01() * 0.16f;
+                        burst++;
+                    }
+                }
+            }
+        }
+    }
+
+    const bool isPausedHd2d = (f->hd2dPreset == HD2D_PRESET_HIGH && !f->inBattle3D && Ui_IsOpen());
+    float dt = (!isPausedHd2d && sSurfaceFxPrevMs > 0.0) ? (float)((f->startMs - sSurfaceFxPrevMs) * 0.001) : 0.0f;
+    if (dt < 0.0f) dt = 0.0f;
+    if (dt > 0.05f) dt = 0.05f;
+    sSurfaceFxPrevMs = f->startMs;
+
+    const VitaDayNightLight *const dn = VitaDayNight_Get();
+    const float daylight = (dn != NULL) ? dn->daylight : 1.0f;
+    const float glow     = (dn != NULL) ? dn->glow     : 0.0f;
+    const bool isRain    = (f->weather == VOXEL_WEATHER_RAIN && f->weatherAmount > 0.10f);
+    const bool isAsh     = (f->weather == VOXEL_WEATHER_ASH  && f->weatherAmount > 0.10f);
+    const bool isSand    = (f->weather == VOXEL_WEATHER_SAND && f->weatherAmount > 0.10f);
+    const bool allowMist = (!isRain && (glow > 0.10f || daylight < 0.55f));
+
+    for (int32_t i = 0; i < SURFACE_FX_CAP; ++i)
+    {
+        if (sSurfaceFx[i].age < sSurfaceFx[i].life)
+        {
+            sSurfaceFx[i].age += dt;
+            sSurfaceFx[i].wx  += sSurfaceFx[i].driftX * dt;
+            sSurfaceFx[i].wz  += sSurfaceFx[i].driftZ * dt;
+        }
+    }
+
+    int32_t spawned = 0;
+    const int32_t maxAttempts = (!isPausedHd2d && (sFrameCounter & 1u) == 0u) ? 24 : 0;
+    for (int32_t attempt = 0; attempt < maxAttempts && spawned < 5; ++attempt)
+    {
+        int32_t freeIdx = -1;
+        for (int32_t i = 0; i < SURFACE_FX_CAP; ++i)
+        {
+            if (sSurfaceFx[i].age >= sSurfaceFx[i].life)
+            {
+                freeIdx = i;
+                break;
+            }
+        }
+        if (freeIdx < 0)
+            break;
+
+        const float wx = sCamera.targetX + (SurfaceFx_Rand01() - 0.5f) * 24.0f;
+        const float wz = sCamera.targetZ - 14.0f + SurfaceFx_Rand01() * 18.0f;
+        const int32_t tx = (int32_t)floorf(wx);
+        const int32_t tz = (int32_t)floorf(wz);
+        const VoxelVisualShape shape = VoxelWorld_ClassifyTile(tx, tz);
+
+        if (shape == VOXEL_SHAPE_WATER)
+        {
+            const float surfY = SurfaceWorldY(wx, wz);
+            VoxelSurfaceFx *const s = &sSurfaceFx[freeIdx];
+            if (isRain)
+            {
+                s->kind = SFX_WATER_RIPPLE;
+                s->wx = wx;
+                s->wy = surfY + 0.045f;
+                s->wz = wz;
+                s->age = 0.0f;
+                s->life = 0.60f + SurfaceFx_Rand01() * 0.35f;
+                s->driftX = 0.0f;
+                s->driftZ = 0.0f;
+                spawned++;
+            }
+            else if ((allowMist && SurfaceFx_Rand01() < 0.35f) || SurfaceFx_Rand01() < 0.12f)
+            {
+                s->kind = SFX_WATER_MIST;
+                s->wx = wx;
+                s->wy = surfY + 0.16f;
+                s->wz = wz;
+                s->age = 0.0f;
+                s->life = 6.5f + SurfaceFx_Rand01() * 3.5f;
+                s->driftX = (SurfaceFx_Rand01() - 0.5f) * 0.10f;
+                s->driftZ = (SurfaceFx_Rand01() - 0.5f) * 0.07f;
+                spawned++;
+            }
+            else if (SurfaceFx_Rand01() < 0.08f
+                     && VoxelWorld_ClassifyTile(tx - 1, tz) == VOXEL_SHAPE_WATER
+                     && VoxelWorld_ClassifyTile(tx + 1, tz) == VOXEL_SHAPE_WATER
+                     && VoxelWorld_ClassifyTile(tx, tz - 1) == VOXEL_SHAPE_WATER
+                     && VoxelWorld_ClassifyTile(tx, tz + 1) == VOXEL_SHAPE_WATER)
+            {
+                int32_t activeGlints = 0;
+                for (int32_t g = 0; g < SURFACE_FX_CAP; ++g)
+                {
+                    if (sSurfaceFx[g].age < sSurfaceFx[g].life && sSurfaceFx[g].kind == SFX_WATER_GLINT)
+                        activeGlints++;
+                }
+                if (activeGlints < 6)
+                {
+                    const float cx = (float)tx + 0.25f + SurfaceFx_Rand01() * 0.50f;
+                    const float cz = (float)tz + 0.25f + SurfaceFx_Rand01() * 0.50f;
+                    s->kind = SFX_WATER_GLINT;
+                    s->wx = cx;
+                    s->wy = SurfaceWorldY(cx, cz) + 0.045f;
+                    s->wz = cz;
+                    s->age = 0.0f;
+                    s->life = 1.10f + SurfaceFx_Rand01() * 0.70f;
+                    s->driftX = 0.0f;
+                    s->driftZ = 0.0f;
+                    spawned++;
+                }
+            }
+        }
+        else if (shape == VOXEL_SHAPE_FLAT && VoxelWorld_GetCollision(tx, tz) == 0u)
+        {
+            if (isRain)
+            {
+                const float surfY = SurfaceWorldY(wx, wz);
+                VoxelSurfaceFx *const s = &sSurfaceFx[freeIdx];
+                s->kind = SFX_WATER_RIPPLE;
+                s->wx = wx;
+                s->wy = surfY + 0.045f;
+                s->wz = wz;
+                s->age = 0.0f;
+                s->life = 0.35f + SurfaceFx_Rand01() * 0.20f;
+                s->driftX = 0.0f;
+                s->driftZ = 0.0f;
+                spawned++;
+            }
+            else if (f->fogDensity > 0.01f && SurfaceFx_Rand01() < 0.22f)
+            {
+                const float surfY = SurfaceWorldY(wx, wz);
+                VoxelSurfaceFx *const s = &sSurfaceFx[freeIdx];
+                s->kind = SFX_WATER_MIST;
+                s->wx = wx;
+                s->wy = surfY + 0.16f;
+                s->wz = wz;
+                s->age = 0.0f;
+                s->life = 6.5f + SurfaceFx_Rand01() * 3.5f;
+                s->driftX = (SurfaceFx_Rand01() - 0.5f) * 0.10f;
+                s->driftZ = (SurfaceFx_Rand01() - 0.5f) * 0.07f;
+                spawned++;
+            }
+            else if (isSand && SurfaceFx_Rand01() < 0.45f)
+            {
+                const float surfY = SurfaceWorldY(wx, wz);
+                VoxelSurfaceFx *const s = &sSurfaceFx[freeIdx];
+                s->kind = SFX_WATER_MIST;
+                s->wx = wx;
+                s->wy = surfY + 0.12f;
+                s->wz = wz;
+                s->age = 0.0f;
+                s->life = 1.4f + SurfaceFx_Rand01() * 0.8f;
+                s->driftX = -3.8f - SurfaceFx_Rand01() * 1.8f;
+                s->driftZ = 0.9f + SurfaceFx_Rand01() * 0.5f;
+                spawned++;
+            }
+            else if (isAsh)
+            {
+                const float surfY = SurfaceWorldY(wx, wz);
+                VoxelSurfaceFx *const s = &sSurfaceFx[freeIdx];
+                s->kind = SFX_ASH_SETTLE;
+                s->wx = wx;
+                s->wy = surfY + 0.045f;
+                s->wz = wz;
+                s->age = 0.0f;
+                s->life = 0.70f + SurfaceFx_Rand01() * 0.50f;
+                s->driftX = 0.0f;
+                s->driftZ = 0.0f;
+                spawned++;
+            }
+        }
+    }
+
+    static const float qx[6] = {-1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f};
+    static const float qz[6] = {-1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f};
+    static const float qu[6] = { 0.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f};
+    static const float qv[6] = { 0.0f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f};
+
+    uint32_t nRipple = 0, nMist = 0, nGlint = 0, nLeaf = 0;
+    uint32_t offMist = SURFACE_FX_CAP * 6u;
+    uint32_t offGlint = SURFACE_FX_CAP * 12u;
+    uint32_t offLeaf = SURFACE_FX_CAP * 18u;
+
+    for (int32_t i = 0; i < SURFACE_FX_CAP; ++i)
+    {
+        const VoxelSurfaceFx *const s = &sSurfaceFx[i];
+        if (s->age >= s->life || s->life <= 0.0f)
+            continue;
+        const float t = s->age / s->life;
+        if (s->kind == SFX_WATER_RIPPLE && sRippleTex != 0)
+        {
+            const float rad = 0.14f + 0.42f * t;
+            const uint8_t a = (uint8_t)((1.0f - t) * 245.0f * f->weatherAmount);
+            if (a < 2u) continue;
+            for (int32_t k = 0; k < 6; ++k)
+            {
+                VoxelGlVertex *const v = &sBatchGlVerts[nRipple++];
+                v->x = s->wx + qx[k] * rad; v->y = s->wy; v->z = s->wz + qz[k] * rad;
+                v->u = qu[k]; v->v = qv[k];
+                v->r = 225; v->g = 242; v->b = 255; v->a = a;
+            }
+        }
+        else if (s->kind == SFX_WATER_MIST && sSoftMistTex != 0)
+        {
+            const float rad = isSand ? 1.15f : 1.65f;
+            float env = sinf(t * 3.14159265f);
+            env = env * env * (3.0f - 2.0f * env);
+            const uint8_t a = (uint8_t)(env * (isSand ? 115.0f : 48.0f));
+            if (a < 2u) continue;
+            const uint8_t mr = isSand ? 192 : 210;
+            const uint8_t mg = isSand ? 144 : 228;
+            const uint8_t mb = isSand ? 88  : 248;
+            for (int32_t k = 0; k < 6; ++k)
+            {
+                VoxelGlVertex *const v = &sBatchGlVerts[offMist + nMist++];
+                v->x = s->wx + qx[k] * rad; v->y = s->wy; v->z = s->wz + qz[k] * rad;
+                v->u = qu[k]; v->v = qv[k];
+                v->r = mr; v->g = mg; v->b = mb; v->a = a;
+            }
+        }
+        else if ((s->kind == SFX_WATER_GLINT || s->kind == SFX_ASH_SETTLE) && sLampPoolTex != 0)
+        {
+            const float env = sinf(t * 3.14159265f);
+            const float rad = (s->kind == SFX_ASH_SETTLE) ? 0.11f : (0.07f + 0.04f * env);
+            const uint8_t str = (uint8_t)(env * ((s->kind == SFX_ASH_SETTLE) ? 145.0f : (daylight > 0.45f ? 95.0f : 70.0f)));
+            if (str < 2u) continue;
+            const uint8_t cr = (s->kind == SFX_ASH_SETTLE) ? str : (daylight > 0.45f ? str : (uint8_t)(str * 0.78f));
+            const uint8_t cg = (s->kind == SFX_ASH_SETTLE) ? (uint8_t)(str * 0.55f) : (uint8_t)(str * 0.94f);
+            const uint8_t cb = (s->kind == SFX_ASH_SETTLE) ? (uint8_t)(str * 0.25f) : (daylight > 0.45f ? (uint8_t)(str * 0.75f) : str);
+            for (int32_t k = 0; k < 6; ++k)
+            {
+                VoxelGlVertex *const v = &sBatchGlVerts[offGlint + nGlint++];
+                v->x = s->wx + qx[k] * rad; v->y = s->wy; v->z = s->wz + qz[k] * rad;
+                v->u = qu[k]; v->v = qv[k];
+                v->r = cr; v->g = cg; v->b = cb; v->a = 255;
+            }
+        }
+        else if ((s->kind == SFX_GRASS_LEAF || s->kind == SFX_GRASS_ASH) && sSoftMistTex != 0)
+        {
+            const float arcY = sinf(t * 3.14159265f) * 0.42f;
+            const float rad = 0.14f;
+            const uint8_t a = (uint8_t)((1.0f - t) * 235.0f);
+            if (a < 2u) continue;
+            const bool isAsh = (s->kind == SFX_GRASS_ASH);
+            const uint8_t lr = isAsh ? 205 : 74;
+            const uint8_t lg = isAsh ? 210 : 186;
+            const uint8_t lb = isAsh ? 216 : 64;
+            for (int32_t k = 0; k < 6; ++k)
+            {
+                VoxelGlVertex *const v = &sBatchGlVerts[offLeaf + nLeaf++];
+                v->x = s->wx + qx[k] * rad;
+                v->y = s->wy + arcY + (1.0f - qz[k]) * rad;
+                v->z = s->wz + qz[k] * (rad * 0.5f);
+                v->u = qu[k]; v->v = qv[k];
+                v->r = lr; v->g = lg; v->b = lb; v->a = a;
+            }
+        }
+    }
+
+    if (nRipple == 0 && nMist == 0 && nGlint == 0 && nLeaf == 0)
+        return;
+
+    glDisable(GL_ALPHA_TEST);
+    glEnable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
+    glDepthMask(GL_FALSE);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+
+    if (nRipple > 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, sRippleTex);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].u);
+        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)nRipple);
+        sFrameDrawCalls++;
+        sFrameVertCount += nRipple;
+    }
+    if (nMist > 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, sSoftMistTex);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[offMist].x);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[offMist].u);
+        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[offMist].r);
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)nMist);
+        sFrameDrawCalls++;
+        sFrameVertCount += nMist;
+    }
+    if (nGlint > 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, sLampPoolTex);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[offGlint].x);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[offGlint].u);
+        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[offGlint].r);
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)nGlint);
+        sFrameDrawCalls++;
+        sFrameVertCount += nGlint;
+    }
+    if (nLeaf > 0)
+    {
+        glBindTexture(GL_TEXTURE_2D, sSoftMistTex);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[offLeaf].x);
+        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[offLeaf].u);
+        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[offLeaf].r);
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)nLeaf);
+        sFrameDrawCalls++;
+        sFrameVertCount += nLeaf;
+    }
+
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+}
+
+
+
 // Passes 5.4-5.8: 3D fog and sand banks, dust motes and weather particles.
 static void Pass_Atmosphere3D(const VoxelFrame *const f)
 {
@@ -5258,11 +6576,20 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
             DrawFogBanks(sSandBanks, weatherAmount, 224, 190, 136, seconds);
         }
 
-        // ---- PASS 5.6: 3D Sunlit Dust Motes ----
-        if (f->light.motes > 0.005f)
+        // ---- PASS 5.6: 3D Sunlit Dust Motes & Night Fireflies ----
         {
-            DrawMotes(f->light.motes, seconds);
+            const VitaDayNightLight *const dn = VitaDayNight_Get();
+            const float nightGlow = (dn != NULL) ? dn->glow : 0.0f;
+            const bool fireflies = (f->hd2dPreset != HD2D_PRESET_OFF && !f->underground && nightGlow > 0.25f && weather != VOXEL_WEATHER_RAIN);
+            const float moteStr = fireflies ? nightGlow : f->light.motes;
+            if (moteStr > 0.005f)
+            {
+                DrawMotes(moteStr, seconds, fireflies, f->hd2dPreset);
+            }
         }
+
+        // ---- PASS 5.7: World-anchored Surface FX (water ripples, water glints, low water mist, sand gusts, ash embers) ----
+        DrawSurfaceFx(f);
 
         // ---- PASS 5.8: 3D Weather Particles (Rain, Sandstorm, Volcanic Ash, Snow) ----
         if (weatherAmount > 0.005f)
@@ -5275,7 +6602,7 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
 
             if (wKind != NULL)
             {
-                DrawWeather(wKind, weatherAmount, bolt, seconds);
+                DrawWeather(wKind, weatherAmount, bolt, seconds, f->hd2dPreset);
             }
         }
     }
@@ -5312,10 +6639,20 @@ static void Pass_Atmosphere2D(const VoxelFrame *const f)
     glDisable(GL_ALPHA_TEST);
     glEnable(GL_BLEND);
 
-    // 1. Diagonal Sun Rays (VOXEL_WEATHER_SUN & clear sunny daylight)
-    if (!indoor && f->light.rays > 0.005f)
+    // 1. Diagonal Sun/Moon Rays (continuous SunPathAt / MoonPathAt)
+    if (!indoor)
     {
-        DrawRays(f->light.rays, seconds);
+        const uint32_t timeMs = VitaDayNight_GetTimeMs();
+        const VitaDayNightPath sunP = VitaDayNight_SunPathAt(timeMs);
+        const VitaDayNightPath moonP = VitaDayNight_MoonPathAt(timeMs);
+        if (f->light.rays > 0.005f)
+        {
+            DrawRays(f->light.rays, seconds, false, sunP.dx, f->hd2dPreset);
+        }
+        else if (f->hd2dPreset != HD2D_PRESET_OFF && moonP.strength > 0.1f && f->weatherAmount < 0.25f)
+        {
+            DrawRays(moonP.strength * 0.48f, seconds, true, moonP.dx, f->hd2dPreset);
+        }
     }
 
     // 2. Lightning Flash (thunderstorm bolt)
@@ -5477,6 +6814,10 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
     const int32_t scratchH = renderH / 2;
     const float uS = (float)scratchW / (float)VOXEL_SCRATCH_FBO_W;
     const float vS = (float)scratchH / (float)VOXEL_SCRATCH_FBO_H;
+    const bool hd2dOn = (f->hd2dPreset != HD2D_PRESET_OFF);
+    const bool hd2dHigh = (f->hd2dPreset == HD2D_PRESET_HIGH);
+    const bool useBlurFbo = (!hd2dOn || hd2dHigh || f->inBattle3D);
+    const bool bloomReady = hd2dOn && (sBloomFboA != 0 && sBloomFboB != 0);
     static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 
     glDisable(GL_DEPTH_TEST);
@@ -5494,27 +6835,148 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // 1. Downsample: one bilinear tap per half-size texel
+    VitaPerf_SubBegin(VITA_PERF_T_POST_DOF);
+    // 1. Downsample: 2x2 box filter in HD-2D to eliminate roof/wall horizontal stripe aliasing
     glBindFramebuffer(GL_FRAMEBUFFER, sScratchFbo);
     glViewport(0, 0, scratchW, scratchH);
-    glBindTexture(GL_TEXTURE_2D, sDioramaColorTex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, sDioramaActiveTex);
+    if (hd2dOn && VoxelHd2dShader_Ready())
     {
-        const float uvs[8] = { 0.0f, 0.0f, uMax, 0.0f, uMax, vMax, 0.0f, vMax };
-        glVertexPointer(2, GL_FLOAT, 0, quad);
-        glTexCoordPointer(2, GL_FLOAT, 0, uvs);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        VoxelHd2dShader_CopyBox2x2(sDioramaActiveTex, uMax, vMax,
+                                   0.5f / (float)VOXEL_DIORAMA_FBO_W,
+                                   0.5f / (float)VOXEL_DIORAMA_FBO_H);
+        sFrameDrawCalls++;
+        sFrameVertCount += 4u;
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     }
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    else
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        {
+            const float uvs[8] = { 0.0f, 0.0f, uMax, 0.0f, uMax, vMax, 0.0f, vMax };
+            glVertexPointer(2, GL_FLOAT, 0, quad);
+            glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        }
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
 
-    // 2. Wider blur -> sBlurTex
-    glBindFramebuffer(GL_FRAMEBUFFER, sBlurFbo);
-    glViewport(0, 0, scratchW, scratchH);
-    BlurTaps(sScratchColorTex, uS, vS, (float)VOXEL_SCRATCH_FBO_W, (float)VOXEL_SCRATCH_FBO_H, 1.0f, 1.0f);
+    // 2. Wider blur -> sBlurTex (480x272). Skipped in HD-2D LOW (60 FPS) or when menu is open.
+    if (useBlurFbo)
+    {
+        const float blurStep = hd2dHigh ? 1.55f : 1.0f;
+        glBindFramebuffer(GL_FRAMEBUFFER, sBlurFbo);
+        glViewport(0, 0, scratchW, scratchH);
+        BlurTaps(sScratchColorTex, uS, vS, (float)VOXEL_SCRATCH_FBO_W, (float)VOXEL_SCRATCH_FBO_H, blurStep, blurStep);
+    }
+    VitaPerf_SubEnd(VITA_PERF_T_POST_DOF);
 
-    // 3. The sharp scene to the screen, then the bands
+    // 2.5 Quarter-res HD-2D Bloom (240x136)
+    GLuint activeBloomTex = 0;
+    if (bloomReady)
+    {
+        VitaPerf_SubBegin(VITA_PERF_T_POST_BLOOM);
+        const int32_t bloomW = renderW / 4;
+        const int32_t bloomH = renderH / 4;
+        const float uB = (float)bloomW / (float)VOXEL_BLOOM_FBO_W;
+        const float vB = (float)bloomH / (float)VOXEL_BLOOM_FBO_H;
+
+        glBindFramebuffer(GL_FRAMEBUFFER, sBloomFboA);
+        glViewport(0, 0, bloomW, bloomH);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Bright-pass at 240x136 (bravely-emerald style: extract real 3D bright pixels with depth occlusion)
+        if (VoxelHd2dShader_Ready())
+        {
+            const VitaDayNightLight *const bdn = (!f->indoor) ? VitaDayNight_Get() : NULL;
+            const bool nightLampBoost = (bdn != NULL && bdn->glow > 0.20f);
+            const float thresh = (f->weather == VOXEL_WEATHER_SAND) ? 0.86f
+                               : (f->indoor ? 0.66f : (hd2dHigh ? (nightLampBoost ? 0.46f : 0.56f) : 0.66f));
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            VoxelHd2dShader_BrightPass(sScratchColorTex, uS, vS, thresh);
+            sFrameDrawCalls++;
+            sFrameVertCount += 4u;
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glEnable(GL_BLEND);
+        }
+        else
+        {
+            const float gain = f->indoor ? 0.35f : (hd2dHigh ? 0.65f : 0.45f);
+            const float uvs[8] = { 0.0f, 0.0f, uS, 0.0f, uS, vS, 0.0f, vS };
+            glBindTexture(GL_TEXTURE_2D, sScratchColorTex);
+            glDisable(GL_BLEND);
+            glColor4f(gain, gain, gain, 1.0f);
+            glVertexPointer(2, GL_FLOAT, 0, quad);
+            glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_DST_COLOR, GL_ZERO);
+            glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        }
+
+        // Sun/moon atmospheric bloom halo only (streetlamp bloom comes from bright-pass of 3D lamp glass)
+        if (!f->indoor && !f->inBattle3D && f->light.rays > 0.02f && sWeatherAtlasTex != 0)
+        {
+            static const float qx[6] = {-1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f};
+            static const float qy[6] = {-1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f};
+            const VitaDayNightPath sunP = VitaDayNight_SunPathAt(VitaDayNight_GetTimeMs());
+            const float sx = 0.5f - sunP.dx * 0.30f;
+            const float sy = 0.92f;
+            const float rx = 0.20f, ry = 0.24f;
+            const uint8_t sStr = (uint8_t)(Voxel_ClampF(f->light.rays, 0.0f, 1.0f) * 145.0f);
+            for (int32_t k = 0; k < 6; ++k)
+            {
+                VoxelGlVertex *const v = &sBatchGlVerts[k];
+                v->x = sx + qx[k] * rx;
+                v->y = sy + qy[k] * ry;
+                v->z = 0.0f;
+                v->u = (qx[k] > 0.0f) ? 0.5f : 0.0f;
+                v->v = (qy[k] > 0.0f) ? 1.0f : 0.5f;
+                v->r = sStr; v->g = (uint8_t)(sStr * 0.90f); v->b = (uint8_t)(sStr * 0.65f); v->a = 255;
+            }
+            glBindTexture(GL_TEXTURE_2D, sWeatherAtlasTex);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            glEnableClientState(GL_COLOR_ARRAY);
+            glVertexPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
+            glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].u);
+            glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+            glDisableClientState(GL_COLOR_ARRAY);
+        }
+
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        glDisable(GL_BLEND);
+
+        // In HIGH mode, run 2-pass Kawase blur (sBloomFboA -> sBloomFboB -> sBloomFboA) for large soft streetlamp halos
+        if (hd2dHigh)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, sBloomFboB);
+            glViewport(0, 0, bloomW, bloomH);
+            BlurTaps(sBloomTexA, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 1.50f, 1.50f);
+            glBindFramebuffer(GL_FRAMEBUFFER, sBloomFboA);
+            glViewport(0, 0, bloomW, bloomH);
+            BlurTaps(sBloomTexB, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 2.75f, 2.75f);
+            activeBloomTex = sBloomTexA;
+        }
+        else
+        {
+            activeBloomTex = sBloomTexA;
+        }
+        VitaPerf_SubEnd(VITA_PERF_T_POST_BLOOM);
+    }
+
+    VitaPerf_SubBegin(VITA_PERF_T_POST_COMPOSITE);
+    // 3. Final composite to FB 0 (960x544)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, renderW, renderH);
     glMatrixMode(GL_PROJECTION);
@@ -5523,32 +6985,223 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    glBindTexture(GL_TEXTURE_2D, sDioramaColorTex);
+    if (hd2dOn && VoxelHd2dShader_Ready())
     {
-        const float baseUvs[8] = { 0.0f, vMax, uMax, vMax, uMax, 0.0f, 0.0f, 0.0f };
+        // Stronger HD-2D split-tone tints + saturation + S-curve (requested more aggressive grading)
+        static const float kShadowTint[3][3] = {
+            { 0.84f, 0.89f, 1.12f }, // Day (crisp cool indigo shadows)
+            { 0.96f, 0.82f, 1.14f }, // Dusk (deep violet shadows)
+            { 0.74f, 0.82f, 1.18f }, // Night (rich midnight blue shadows)
+        };
+        static const float kHighTint[3][3] = {
+            { 1.03f, 0.99f, 0.88f }, // Day (warm golden highlights)
+            { 1.08f, 0.92f, 0.74f }, // Dusk (sunset amber)
+            { 0.94f, 0.98f, 1.06f }, // Night (cool silver moonlight)
+        };
+        static const float kLutCurve[3] = { 0.16f, 0.24f, 0.12f };
+
+        const VitaDayNightLight *const dn = (!f->indoor) ? VitaDayNight_Get() : NULL;
+        const float daylight = (dn != NULL) ? dn->daylight : 1.0f;
+        const float glow     = (dn != NULL) ? dn->glow     : 0.0f;
+        const float dusk     = Voxel_ClampF(glow * 4.0f, 0.0f, 1.0f) * Voxel_ClampF(daylight / 0.35f, 0.0f, 1.0f);
+        const float night    = Voxel_ClampF(1.0f - daylight / 0.35f, 0.0f, 1.0f);
+        const float day      = Voxel_ClampF(1.0f - dusk - night, 0.0f, 1.0f);
+        const float sum      = day + dusk + night;
+
+        float shadowTint[3], highTint[3];
+        for (int32_t k = 0; k < 3; ++k)
+        {
+            shadowTint[k] = (kShadowTint[0][k] * day + kShadowTint[1][k] * dusk + kShadowTint[2][k] * night) / sum;
+            highTint[k]   = (kHighTint[0][k]   * day + kHighTint[1][k]   * dusk + kHighTint[2][k]   * night) / sum;
+        }
+        const float baseCurve = (kLutCurve[0] * day + kLutCurve[1] * dusk + kLutCurve[2] * night) / sum;
+
+        const bool dofEnabled = !f->inBattle3D && (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
+        float yTop = f->playerScreenY - (hd2dHigh ? 0.11f : 0.16f);
+        float yBot = f->playerScreenY + (hd2dHigh ? 0.15f : 0.16f);
+        if (yTop < 0.16f) yTop = 0.16f;
+        if (yTop > 0.46f) yTop = 0.46f;
+        if (yBot < 0.58f) yBot = 0.58f;
+        if (yBot > 0.88f) yBot = 0.88f;
+        // In shader vUv.y=1 is top, vUv.y=0 is bottom -> invert screen-down Y
+        const float uvTop = 1.0f - yTop;
+        const float uvBot = 1.0f - yBot;
+        const float indoorScale = f->indoor ? 0.62f : 1.0f;
+        const float topAlpha = dofEnabled ? ((hd2dHigh ? 0.82f : VOXEL_DOF_TOP_ALPHA) * indoorScale) : 0.0f;
+        const float botAlpha = dofEnabled ? ((hd2dHigh ? 0.55f : VOXEL_DOF_BOTTOM_ALPHA) * indoorScale) : 0.0f;
+
+        const bool marked       = f->hd2dMarkedGrade;
+        const float bloomAmt    = (activeBloomTex != 0) ? (hd2dHigh ? 0.72f : 0.22f) : 0.0f;
+        const float gradeAmt    = marked ? (hd2dHigh ? 1.00f : 0.85f) : 0.25f;
+        const float saturation  = marked ? (hd2dHigh ? 1.16f : 1.10f) : 1.02f;
+        const float curveAmt    = marked ? (baseCurve * (hd2dHigh ? 1.15f : 0.85f)) : (baseCurve * 0.35f);
+        const float vignetteAmt = marked ? (hd2dHigh ? 0.22f : 0.15f) : 0.08f;
+        const float backBlur    = f->inBattle3D ? 1.0f : 0.0f;
+        const float backDim     = f->inBattle3D ? (hd2dHigh ? 0.45f : 0.35f) : 0.0f;
+
+        const float uB = (float)(renderW / 4) / (float)VOXEL_BLOOM_FBO_W;
+        const float vB = (float)(renderH / 4) / (float)VOXEL_BLOOM_FBO_H;
+        const GLuint sceneOrBattleTex = f->inBattle3D ? (useBlurFbo ? sBlurTex : sScratchColorTex) : sDioramaActiveTex;
+        const float uMain = f->inBattle3D ? uS : uMax;
+        const float vMain = f->inBattle3D ? vS : vMax;
+
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        glDisable(GL_BLEND);
+
+        float lowHpPulse = 0.0f;
+        if (f->inBattle3D && gBattleMons[0].maxHP > 0u && gBattleMons[0].hp > 0u)
+        {
+            const float hpRatio = (float)gBattleMons[0].hp / (float)gBattleMons[0].maxHP;
+            if (hpRatio < 0.25f)
+                lowHpPulse = (0.45f + 0.55f * sinf(f->seconds * 6.5f)) * (1.0f - hpRatio * 4.0f);
+        }
+
+        VoxelHd2dShader_Composite(sceneOrBattleTex,
+                                  useBlurFbo ? sBlurTex : sScratchColorTex,
+                                  (activeBloomTex != 0) ? activeBloomTex : sScratchColorTex,
+                                  uMain, vMain, uS, vS, uB, vB,
+                                  uvTop, uvBot, topAlpha, botAlpha,
+                                  bloomAmt, gradeAmt, curveAmt, vignetteAmt,
+                                  saturation, backBlur, backDim,
+                                  0.0f, 0.0f, lowHpPulse,
+                                  shadowTint, highTint);
+
+        sFrameDrawCalls++;
+        sFrameVertCount += 4u;
+        VitaPerf_SubEnd(VITA_PERF_T_POST_COMPOSITE);
+        return;
+    }
+
+    if (hd2dOn && f->inBattle3D)
+    {
+        // F5: Blurred & dark split-toned 3D battle stage (Octopath / Triangle Strategy framing)
+        glBindTexture(GL_TEXTURE_2D, useBlurFbo ? sBlurTex : sScratchColorTex);
+        glColor4f(0.58f, 0.62f, 0.74f, 1.0f);
+        const float uvs[8] = { 0.0f, vS, uS, vS, uS, 0.0f, 0.0f, 0.0f };
         glVertexPointer(2, GL_FLOAT, 0, quad);
-        glTexCoordPointer(2, GL_FLOAT, 0, baseUvs);
+        glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    }
+    else
+    {
+        glBindTexture(GL_TEXTURE_2D, sDioramaActiveTex);
+        {
+            const float baseUvs[8] = { 0.0f, vMax, uMax, vMax, uMax, 0.0f, 0.0f, 0.0f };
+            glVertexPointer(2, GL_FLOAT, 0, quad);
+            glTexCoordPointer(2, GL_FLOAT, 0, baseUvs);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        }
+
+        const bool dofEnabled = (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
+        if (dofEnabled)
+        {
+            float yTop = hd2dOn ? (f->playerScreenY - 0.16f) : (VOXEL_DOF_TOP_ROWS / 544.0f);
+            float yBot = hd2dOn ? (f->playerScreenY + 0.16f) : (1.0f - VOXEL_DOF_BOTTOM_ROWS / 544.0f);
+            if (hd2dOn)
+            {
+                if (yTop < 0.14f) yTop = 0.14f;
+                if (yTop > 0.44f) yTop = 0.44f;
+                if (yBot < 0.58f) yBot = 0.58f;
+                if (yBot > 0.88f) yBot = 0.88f;
+            }
+            const float indoorScale = f->indoor ? 0.62f : 1.0f;
+            const float topAlpha = VOXEL_DOF_TOP_ALPHA * indoorScale;
+            const float botAlpha = VOXEL_DOF_BOTTOM_ALPHA * indoorScale;
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnableClientState(GL_COLOR_ARRAY);
+
+            glBindTexture(GL_TEXTURE_2D, sScratchColorTex);
+            if (useBlurFbo)
+            {
+                DofBand(yTop, 0.0f, uS, vS, topAlpha, 0.0f, 0.55f);
+                DofBand(yBot, 1.0f, uS, vS, botAlpha, 0.0f, 0.55f);
+                glBindTexture(GL_TEXTURE_2D, sBlurTex);
+                DofBand(yTop, 0.0f, uS, vS, topAlpha, 0.55f, 1.0f);
+                DofBand(yBot, 1.0f, uS, vS, botAlpha, 0.55f, 1.0f);
+            }
+            else
+            {
+                // 60 FPS LOW mode: single smooth bilinear blur band from sScratchColorTex
+                DofBand(yTop, 0.0f, uS, vS, topAlpha * 0.85f, 0.0f, 1.0f);
+                DofBand(yBot, 1.0f, uS, vS, botAlpha * 0.85f, 0.0f, 1.0f);
+            }
+            glDisableClientState(GL_COLOR_ARRAY);
+        }
+    }
+
+    // Additive HD-2D Bloom overlay
+    if (activeBloomTex != 0)
+    {
+        const float uB = (float)(renderW / 4) / (float)VOXEL_BLOOM_FBO_W;
+        const float vB = (float)(renderH / 4) / (float)VOXEL_BLOOM_FBO_H;
+        const float bloomGain = hd2dHigh ? 0.36f : 0.24f;
+        const float bUvs[8] = { 0.0f, vB, uB, vB, uB, 0.0f, 0.0f, 0.0f };
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);
+        glBindTexture(GL_TEXTURE_2D, activeBloomTex);
+        glColor4f(bloomGain, bloomGain, bloomGain, 1.0f);
+        glVertexPointer(2, GL_FLOAT, 0, quad);
+        glTexCoordPointer(2, GL_FLOAT, 0, bUvs);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 
-    const float yTop = VOXEL_DOF_TOP_ROWS / 544.0f;
-    const float yBot = 1.0f - VOXEL_DOF_BOTTOM_ROWS / 544.0f;
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnableClientState(GL_COLOR_ARRAY);
-    // Light blur: fades in over the first 60 % of each band
-    glBindTexture(GL_TEXTURE_2D, sScratchColorTex);
-    DofBand(yTop, 0.0f, uS, vS, VOXEL_DOF_TOP_ALPHA, 0.0f, 0.6f);
-    DofBand(yBot, 1.0f, uS, vS, VOXEL_DOF_BOTTOM_ALPHA, 0.0f, 0.6f);
-    // Wider blur: only the outer 40 % of each band, strongest at the screen edge
-    glBindTexture(GL_TEXTURE_2D, sBlurTex);
-    DofBand(yTop, 0.0f, uS, vS, VOXEL_DOF_TOP_ALPHA, 0.6f, 1.0f);
-    DofBand(yBot, 1.0f, uS, vS, VOXEL_DOF_BOTTOM_ALPHA, 0.6f, 1.0f);
+    // Split-tone cinematic grading (GBA faithful vs HD-2D marked) + radial vignette combined into minimal passes
+    if (hd2dOn)
+    {
+        const bool marked = f->hd2dMarkedGrade;
+        glEnable(GL_BLEND);
 
+        // 1. Warm top-down sun wash + lifted slate-indigo shadows (untextured, disable TEXCOORD_ARRAY)
+        if (!f->inBattle3D)
+        {
+            const uint8_t topA = marked ? 46u : 10u;
+            const uint8_t botA = marked ? 16u : 0u;
+            uint32_t vTone = 0;
+            PushFlatVertex2D(&vTone, 0.0f, 0.0f, 255, 212, 148, topA);
+            PushFlatVertex2D(&vTone, 1.0f, 0.0f, 255, 212, 148, topA);
+            PushFlatVertex2D(&vTone, 1.0f, 1.0f, 28,  34,  62,  botA);
+            PushFlatVertex2D(&vTone, 0.0f, 0.0f, 255, 212, 148, topA);
+            PushFlatVertex2D(&vTone, 1.0f, 1.0f, 28,  34,  62,  botA);
+            PushFlatVertex2D(&vTone, 0.0f, 1.0f, 28,  34,  62,  botA);
+
+            glDisable(GL_TEXTURE_2D);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            glEnableClientState(GL_COLOR_ARRAY);
+            glVertexPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
+            glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
+            glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vTone);
+            glDisableClientState(GL_COLOR_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glEnable(GL_TEXTURE_2D);
+        }
+
+        // 2. Combined cool shadow split-tone + radial vignette in ONE GL_DST_COLOR pass
+        if (sVignetteTex != 0)
+        {
+            static const float vUvs[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+            const float coolR = marked ? 0.85f : 0.97f;
+            const float coolG = marked ? 0.91f : 0.98f;
+            const float coolB = 1.00f;
+            glBindTexture(GL_TEXTURE_2D, sVignetteTex);
+            glBlendFunc(GL_DST_COLOR, GL_ZERO);
+            glColor4f(coolR, coolG, coolB, 1.0f);
+            glVertexPointer(2, GL_FLOAT, 0, quad);
+            glTexCoordPointer(2, GL_FLOAT, 0, vUvs);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        }
+    }
+
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
     glDisable(GL_BLEND);
+    VitaPerf_SubEnd(VITA_PERF_T_POST_COMPOSITE);
 }
 
 // Pass 6: the GBA's 2D layer over the 3D world (text, menus, dialogue on BG0, the 3D battle
@@ -5567,6 +7220,115 @@ static void Pass_Overlay2D(const VoxelFrame *const f)
 
     if (inBattle3D || (REG_DISPCNT & 0x0100) || inFieldMove || inFlyAnim || inTransition)
     {
+        // In 3D battles, draw crisp foreground HD-2D weather/ambient particles over the blurred backdrop (1 draw call)
+        if (inBattle3D && fadeAmount < 0.99f && f->hd2dPreset != HD2D_PRESET_OFF && sWeatherAtlasTex != 0)
+        {
+            const VitaDayNightLight *const dn = (!f->indoor) ? VitaDayNight_Get() : NULL;
+            const bool night = (dn != NULL && dn->glow > 0.25f);
+            const bool isSand = (f->weather == VOXEL_WEATHER_SAND);
+            const bool isRain = (f->weather == VOXEL_WEATHER_RAIN);
+            const bool isAshOrSnow = (f->weather == VOXEL_WEATHER_ASH || f->weather == VOXEL_WEATHER_PARTICLES);
+            const uint8_t mr = isSand ? 235u : isRain ? 185u : isAshOrSnow ? 230u : (f->underground ? 255u : (night ? 185u : 255u));
+            const uint8_t mg = isSand ? 195u : isRain ? 215u : isAshOrSnow ? 235u : (f->underground ? 180u : (night ? 235u : 238u));
+            const uint8_t mb = isSand ? 135u : isRain ? 255u : isAshOrSnow ? 245u : (f->underground ? 120u : (night ? 255u : 175u));
+            const float secs = f->seconds;
+            const uint32_t pCount = (isSand || isRain) ? 64u : 28u;
+            uint32_t vBM = 0;
+            static const float mx[6] = {-1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f};
+            static const float my[6] = {-1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f};
+            for (uint32_t i = 0; i < pCount; ++i)
+            {
+                const float speedX = isSand ? 0.42f : isRain ? 0.14f : 0.022f;
+                const float speedY = isSand ? 0.06f : isRain ? 0.85f : -0.018f;
+                const float px = fmodf(0.037f * (float)i + secs * (speedX + 0.03f * (float)(i & 3u)), 1.0f);
+                const float py = fmodf(0.11f * (float)i + secs * (speedY + 0.04f * (float)(i & 3u)) + 10.0f, 0.90f);
+                const float pulse = 0.5f + 0.5f * sinf(secs * (1.8f + 0.4f * (float)(i & 3u)) + (float)i * 1.3f);
+                const uint8_t ma = (uint8_t)((isRain || isSand ? 0.45f : (0.24f + 0.50f * pulse * pulse)) * 255.0f);
+                const float rx = isRain ? 0.004f : isSand ? 0.018f : (0.011f + 0.006f * pulse);
+                const float ry = isRain ? 0.045f : isSand ? 0.008f : (rx * (960.0f / 544.0f));
+                const float u0 = 0.0f, u1 = 0.5f;
+                const float v0 = isRain ? 0.0f : 0.5f, v1 = isRain ? 0.5f : 1.0f;
+                for (int32_t k = 0; k < 6; ++k)
+                {
+                    VoxelGlVertex *const v = &sBatchGlVerts[vBM++];
+                    v->x = px + mx[k] * rx;
+                    v->y = py + my[k] * ry;
+                    v->z = 0.0f;
+                    v->u = (mx[k] > 0.0f) ? u1 : u0;
+                    v->v = (my[k] > 0.0f) ? v1 : v0;
+                    v->r = mr; v->g = mg; v->b = mb; v->a = ma;
+                }
+            }
+            glViewport(0, 0, VitaPlatform_GetRenderWidth(), VitaPlatform_GetRenderHeight());
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+            glOrtho(0.0, 1.0, 1.0, 0.0, -1.0, 1.0);
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
+            glDisable(GL_DEPTH_TEST);
+            glDepthMask(GL_FALSE);
+            glDisable(GL_ALPHA_TEST);
+            glEnable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, sWeatherAtlasTex);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, (isRain || isSand) ? GL_ONE_MINUS_SRC_ALPHA : GL_ONE);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            glEnableClientState(GL_COLOR_ARRAY);
+            glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
+            glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].u);
+            glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
+            glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vBM);
+            glDisableClientState(GL_COLOR_ARRAY);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glDisable(GL_BLEND);
+        }
+
+        // A3: Impact flash (white critical flash / move-type colored flash) in 3D battles
+        if (inBattle3D && fadeAmount < 0.99f && f->hd2dPreset != HD2D_PRESET_OFF && sBattleFx.flashTimer > 0.0f && sBattleFx.flashDur > 0.0f)
+        {
+            const float ratio = sBattleFx.flashTimer / sBattleFx.flashDur;
+            const float alpha = sBattleFx.flashAlpha * ratio * ratio;
+            const uint8_t fr = (uint8_t)(sBattleFx.flashRgb[0] * 255.0f);
+            const uint8_t fg = (uint8_t)(sBattleFx.flashRgb[1] * 255.0f);
+            const uint8_t fb = (uint8_t)(sBattleFx.flashRgb[2] * 255.0f);
+            const uint8_t fa = (uint8_t)(alpha * 255.0f);
+            if (fa > 1u)
+            {
+                static const float fx[6] = { 0.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f };
+                static const float fy[6] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f };
+                for (int32_t k = 0; k < 6; ++k)
+                {
+                    VoxelGlVertex *const v = &sBatchGlVerts[k];
+                    v->x = fx[k]; v->y = fy[k]; v->z = 0.0f;
+                    v->u = 0.0f; v->v = 0.0f;
+                    v->r = fr; v->g = fg; v->b = fb; v->a = fa;
+                }
+                glViewport(0, 0, VitaPlatform_GetRenderWidth(), VitaPlatform_GetRenderHeight());
+                glMatrixMode(GL_PROJECTION);
+                glLoadIdentity();
+                glOrtho(0.0, 1.0, 1.0, 0.0, -1.0, 1.0);
+                glMatrixMode(GL_MODELVIEW);
+                glLoadIdentity();
+                glDisable(GL_DEPTH_TEST);
+                glDepthMask(GL_FALSE);
+                glDisable(GL_ALPHA_TEST);
+                glDisable(GL_TEXTURE_2D);
+                glEnable(GL_BLEND);
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                glEnableClientState(GL_VERTEX_ARRAY);
+                glEnableClientState(GL_COLOR_ARRAY);
+                glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
+                glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
+                glDrawArrays(GL_TRIANGLES, 0, 6);
+                glDisableClientState(GL_COLOR_ARRAY);
+                glDisableClientState(GL_VERTEX_ARRAY);
+                glDisable(GL_BLEND);
+                glEnable(GL_TEXTURE_2D);
+            }
+        }
+
         // In 3D battles, draw smooth 32-level radial ovals beneath battling Pokémon using sLampPoolTex (16x16 RGBA5551)
         if (inBattle3D && fadeAmount < 0.99f && sLampPoolTex != 0)
         {
@@ -5849,9 +7611,31 @@ bool VoxelRenderer_RenderFrame(void)
 
     Frame_FollowCamera(&f);
     Frame_UpdateAtlas(&f);
-    Frame_AnimateTiles(&f);
+    const bool freezeMenuHd2d = (f.hd2dPreset == HD2D_PRESET_HIGH && !f.inBattle3D && Ui_IsOpen());
+    if (!freezeMenuHd2d)
+        Frame_AnimateTiles(&f);
     Frame_TrackWorldChanges(&f);
     Frame_ReadAtmosphere(&f);
+    {
+        static bool sPauseFrozenActive = false;
+        static float sPauseFrozenSeconds = 0.0f;
+        if (freezeMenuHd2d)
+        {
+            if (!sPauseFrozenActive)
+            {
+                sPauseFrozenSeconds = f.seconds;
+                sPauseFrozenActive = true;
+            }
+            else
+            {
+                f.seconds = sPauseFrozenSeconds;
+            }
+        }
+        else
+        {
+            sPauseFrozenActive = false;
+        }
+    }
     Frame_SelectChunks(&f);
     BuildFrameGrade(&f.grade, &f.light, f.indoor);
     Frame_EmitEntities(&f);

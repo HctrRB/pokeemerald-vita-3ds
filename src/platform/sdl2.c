@@ -10,6 +10,7 @@
 #include <setjmp.h>
 #include "vita/vita_perf.h"
 #include "vita/vita_platform.h"
+#include "vita/vita_ambient_audio.h"
 #include "platform/vita_controls.h"
 #include "platform/ui.h"
 #include "constants/moves.h"
@@ -461,13 +462,13 @@ int main(int argc, char **argv)
     // 1 s per retry (gpu_utils.c, gpu_alloc_mapped_aligned_unsafe_for_gpu). 40 MB of RAM hold
     // the whole circular pool plus vitaGL's ~2.5 MB of other buffers; 88 MB of CDRAM of the
     // 112 MB the console gives the app (user measurement 2026-11-14: 64/112 in use before).
-    if (!vglInitWithCustomSizes(8 * 1024 * 1024, 960, 544, 40 * 1024 * 1024, 88 * 1024 * 1024, 8 * 1024 * 1024, 0, SCE_GXM_MULTISAMPLE_NONE))
+    if (!vglInitWithCustomSizes(8 * 1024 * 1024, 960, 544, 64 * 1024 * 1024, 88 * 1024 * 1024, 8 * 1024 * 1024, 0, SCE_GXM_MULTISAMPLE_NONE))
     {
         VITA_LOG("vglInitWithCustomSizes failed!\n");
     }
     else
     {
-        VITA_LOG("vglInitWithCustomSizes succeeded (8MB pool, 40MB RAM, 88MB CDRAM, 8MB PHYCONT)\n");
+        VITA_LOG("vglInitWithCustomSizes succeeded (8MB pool, 64MB RAM, 88MB CDRAM, 8MB PHYCONT)\n");
     }
     VitaPerf_LogMemory("after vglInit");
 #endif

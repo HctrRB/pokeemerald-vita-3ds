@@ -158,6 +158,52 @@ VitaDayNightSun VitaDayNight_SunAt(const uint32_t timeMs)
     return sun;
 }
 
+VitaDayNightPath VitaDayNight_SunPathAt(const uint32_t timeMs)
+{
+    // Continuous daytime arc from 05:30 (330m) to 19:30 (1170m) for screen-space shafts & water glints.
+    // Never fed to VoxelLighting_SetSun, so chunks never rebuild from smooth sun motion.
+    const float minF = (float)(timeMs % VITA_DAYNIGHT_DAY_MS) / 60000.0f;
+    VitaDayNightPath path = {0.0f, 0.0f, 0.45f, 0.0f, 0.0f};
+    if (minF >= 330.0f && minF <= 1170.0f)
+    {
+        const float progress = (minF - 330.0f) / (1170.0f - 330.0f);
+        const float angle = progress * 3.141592654f;
+        const float altitude = sinf(angle);
+        path.dx = -1.25f * cosf(angle);
+        path.dy = 0.22f + 0.78f * altitude;
+        path.dz = -0.35f - 0.15f * altitude;
+        path.altitude = altitude;
+        path.strength = fminf(1.0f, altitude * 2.2f);
+    }
+    return path;
+}
+
+VitaDayNightPath VitaDayNight_MoonPathAt(const uint32_t timeMs)
+{
+    // Continuous nighttime arc from 19:30 (1170m) to 05:30 (330m).
+    float minF = (float)(timeMs % VITA_DAYNIGHT_DAY_MS) / 60000.0f;
+    VitaDayNightPath path = {0.0f, 0.0f, 0.45f, 0.0f, 0.0f};
+    if (minF >= 1170.0f || minF <= 330.0f)
+    {
+        if (minF < 330.0f)
+            minF += 1440.0f;
+        const float progress = (minF - 1170.0f) / (1440.0f - 1170.0f + 330.0f);
+        const float angle = progress * 3.141592654f;
+        const float altitude = sinf(angle);
+        path.dx = -1.10f * cosf(angle);
+        path.dy = 0.25f + 0.70f * altitude;
+        path.dz = -0.40f - 0.10f * altitude;
+        path.altitude = altitude;
+        path.strength = fminf(1.0f, altitude * 2.0f);
+    }
+    return path;
+}
+
+uint32_t VitaDayNight_GetTimeMs(void)
+{
+    return sClock.ready ? sClock.timeMs : (12u * 3600u * 1000u);
+}
+
 void VitaDayNight_Resume(void)
 {
     sResume = true;

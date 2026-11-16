@@ -351,6 +351,50 @@ static void EmitSmallCell(VoxelBuilder *builder, const VoxelMapInstance *inst, i
     builder->rounded = false;
 }
 
+/* Standing 3D tall grass card using the original GBA sprite at (80, 32) or ash-grass at (16, 112) in sTreeTex. */
+static void EmitTallGrass(VoxelBuilder *builder, int32_t x, int32_t y, bool isAsh)
+{
+    const float rise = 1.532089f * 0.42f, run = 1.285575f * 0.42f;
+    const float baseHeight = -0.10f;
+    const float wx = (float)x, wz = (float)y;
+    const float baseZ = wz + 0.825f;
+    const float u0 = isAsh ? TEX_U(16) : TEX_U(80);
+    const float u1 = isAsh ? TEX_U(32) : TEX_U(96);
+    const float v0 = isAsh ? TEX_V(112) : TEX_V(32);
+    const float v1 = isAsh ? TEX_V(128) : TEX_V(48);
+
+    builder->rounded = true;
+    VoxelBuilder_Quad(builder,
+        &(VoxelVertex){wx,        baseHeight + rise, baseZ - run, u0, v0, 1.0f},
+        &(VoxelVertex){wx + 1.0f, baseHeight + rise, baseZ - run, u1, v0, 1.0f},
+        &(VoxelVertex){wx + 1.0f, baseHeight,        baseZ,       u1, v1, 1.0f},
+        &(VoxelVertex){wx,        baseHeight,        baseZ,       u0, v1, 1.0f});
+    builder->rounded = false;
+}
+
+/* Standing 3D flowers using the original GBA flower sprite packed into (0, 112) of sTreeTex. */
+static void EmitFlowers(VoxelBuilder *builder, int32_t x, int32_t y)
+{
+    const float length = 0.65f, halfWidth = 0.36f;
+    const float rise = 0.766044f * length, run = 0.642788f * length;
+    const float baseHeight = -0.05f;
+    uint32_t h = (uint32_t)x * 73856093u ^ (uint32_t)y * 19349663u;
+
+    builder->rounded = true;
+    for (int32_t i = 0; i < 2; ++i)
+    {
+        const float cx = (float)x + 0.30f + 0.40f * (float)((h >> (i * 8)) & 0xFFu) / 255.0f;
+        const float baseZ = (float)y + 0.40f + 0.45f * (float)((h >> (7 + i * 9)) & 0xFFu) / 255.0f;
+
+        VoxelBuilder_Quad(builder,
+            &(VoxelVertex){cx - halfWidth, baseHeight + rise, baseZ - run, TEX_U(0),  TEX_V(112), 1.0f},
+            &(VoxelVertex){cx + halfWidth, baseHeight + rise, baseZ - run, TEX_U(16), TEX_V(112), 1.0f},
+            &(VoxelVertex){cx + halfWidth, baseHeight,        baseZ,       TEX_U(16), TEX_V(128), 1.0f},
+            &(VoxelVertex){cx - halfWidth, baseHeight,        baseZ,       TEX_U(0),  TEX_V(128), 1.0f});
+    }
+    builder->rounded = false;
+}
+
 /* A 2x2 tree's art: its crown (rows of `rowPx` texels), its trunk's ground,
  * and how far into the trunk row the crown's foot stands (`foot`, cells
  * from its north edge): on its trunk's shadow. The General's large tree,
@@ -567,6 +611,22 @@ void VoxelTree_EmitInstance(VoxelBuilder *builder, const VoxelMapInstance *inst,
                 EmitCell(builder, inst, inst->secondaryTileset, x, y, part, metatileId, rock);
                 /* At the tree's own lift, so both rows meet. */
                 EmitMissingRow(builder, inst, inst->secondaryTileset, x, y, part, metatileId, rock);
+                builder->lift = 0.0f;
+                builder->shift = 0.0f;
+            }
+            else if (VoxelWorld_IsTallGrassCell(x, y))
+            {
+                builder->lift = VoxelRelief_CellLift(inst, x, y);
+                builder->shift = VoxelRelief_CellShift(inst, x, y);
+                EmitTallGrass(builder, x, y, VoxelWorld_IsAshGrassCell(x, y));
+                builder->lift = 0.0f;
+                builder->shift = 0.0f;
+            }
+            else if (VoxelWorld_IsFlowerCell(x, y))
+            {
+                builder->lift = VoxelRelief_CellLift(inst, x, y);
+                builder->shift = VoxelRelief_CellShift(inst, x, y);
+                EmitFlowers(builder, x, y);
                 builder->lift = 0.0f;
                 builder->shift = 0.0f;
             }

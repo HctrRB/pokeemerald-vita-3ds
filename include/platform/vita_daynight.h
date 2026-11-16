@@ -44,12 +44,22 @@ typedef struct
     uint32_t key;
 } VitaDayNightSun;
 
+typedef struct
+{
+    float dx, dy, dz;
+    float altitude;
+    float strength;
+} VitaDayNightPath;
+
 uint32_t VitaDayNight_Speed(int32_t index);
 void VitaDayNight_Advance(VitaDayNightClock *clock, uint64_t nowMs, uint32_t localSeconds, int32_t speed);
 void VitaDayNight_Sync(VitaDayNightClock *clock, uint64_t nowMs, uint32_t localSeconds, int32_t speed);
 VitaDayNightLight VitaDayNight_At(uint32_t timeMs);
 VitaDayNightBlend VitaDayNight_Moonlight(const VitaDayNightLight *light, float fade, const float fadeRgb[3]);
 VitaDayNightSun VitaDayNight_SunAt(uint32_t timeMs);
+VitaDayNightPath VitaDayNight_SunPathAt(uint32_t timeMs);
+VitaDayNightPath VitaDayNight_MoonPathAt(uint32_t timeMs);
+uint32_t VitaDayNight_GetTimeMs(void);
 void VitaDayNight_Update(void);
 void VitaDayNight_Resume(void);
 const VitaDayNightLight *VitaDayNight_Get(void);
