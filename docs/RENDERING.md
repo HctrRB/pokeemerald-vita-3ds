@@ -26,6 +26,12 @@ backgrounds, sprites, windows, blending, mosaic, per-line scroll effects.
   middle 240 px at 816×544 (pillarboxed) with it off. The intro's leaves scene draws GPU margin
   art beside it (`vita_stage.c`). Filter: nearest or bilinear (`filter` setting). The day/night
   tint is applied as the quad colour.
+- **Extended sprite palettes (`gPlttExt`)**: 16 port-only 4bpp overworld sprite palettes
+  (`palette.h`, `sprite.c`) live after the 32 GBA palettes (`gPlttBufferUnfaded/Faded[PLTT_BUFFER_ALLOC]`)
+  so the follower, its Poké Ball and up to 6 visible wild Pokémon keep their HGSS colours without
+  competing for GBA OBJ slots 12–15. Fades and weather mirror `PALSLOT_NPC_1`. `DrawFrame()`
+  latches `gPlttExt`, `gOamExt` and `gPlttExtInUse` once per frame (zero cost when `gPlttExtInUse == 0`),
+  and `CtrVideo_ExtPalette()` feeds `voxel_entities.c` in 3D.
 
 ## 3D path: `VoxelRenderer_RenderFrame`
 

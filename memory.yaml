@@ -74,7 +74,16 @@ new_ui:
   - In the player's PC (ui_scr_playerpc.c), DECORATE and PUT AWAY hand control to GBA field tasks
     and UiPlayerPc_ReenterFromField reopens the tab on return.
   - Every menu opens on its first tab; circle held 1 s closes the whole UI.
-  - Menu themes: OPTIONS > GENERAL > DISPLAY > MENU COLOR (extra "ui_theme", ui_theme.c): RED
-    (default, Saira Condensed), EMERALD (Press Start 2P / VT323), CRYSTAL (M PLUS Rounded 1c),
+  - Menu themes: OPTIONS > GENERAL > DISPLAY > MENU COLOR (extra "ui_theme", ui_theme.c): GBA
+    (default, Press Start 2P / VT323, stepped 9-slice Gen 3 framing and scanlines via gbaFrame),
+    RED (Saira Condensed), EMERALD (Press Start 2P / VT323), CRYSTAL (M PLUS Rounded 1c),
     TROPICAL (Fredoka), ROYAL (Exo 2). Applied across every menu screen, the battle HUD
     (ui_battle_hud.c via UiW_ThemeBox), and zone signs (ui_sign.c); design/stitch mocks support ?theme=.
+
+ext_palettes:
+  - 16 extended overworld sprite palettes live behind the 32 GBA palettes (`gPlttBufferUnfaded/Faded`
+    sized `PLTT_BUFFER_ALLOC = 512 + 256`, `PLTT_BUFFER_SIZE` kept at 512 for non-field uses).
+  - Instead of widening `selectedPalettes` to 64 bits, ext palettes follow `PLTT_EXT_MODEL`
+    (`PALSLOT_NPC_1`, OBJ slot 2) in fades (`palette.c`) and weather (`field_weather.c`).
+  - `DrawFrame` latches `gPlttExt` and `gOamExt` once per frame (they only change in VBlank),
+    with zero overhead when `gPlttExtInUse == 0`.

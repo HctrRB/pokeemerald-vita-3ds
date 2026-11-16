@@ -13,10 +13,10 @@ phases:
   phase_5_typing_and_warnings: paused     # items 1, 3 and fixed-width types done; const pass pending now that UIs are replaced; tag rollback/pre-phase5
   phase_6_public_repo_and_docs: done      # fetch_assets, build_all, BUILD_YOUR_OWN/COMPILA_TU_VPK, NOTICE.md, full docs sync + dead-code & unused SDL2_image removal
   chunk_streaming_performance: done       # E0-E4 + no-wait frames; tags perf/e0 .. perf/nowait
-  native_ui_core_and_themes: done         # src/platform/ui/ Phases A-H, battle HUD Phases 0-6, 5 menu themes with baked fonts in 1024x2048 atlas v3, batch 1 screens (6c481fd), old 3DS UI removed
+  native_ui_core_and_themes: done         # src/platform/ui/ Phases A-H, battle HUD Phases 0-6, 6 menu themes (GBA default + RED/EMERALD/CRYSTAL/TROPICAL/ROYAL) + unified GBA Gen 3 x Vita 20-screen UI/mockup (clean VT323 in ui_atlas.bin 1024x928, alpha 152 translucency, centered signs, fixed PokéNav/Pass/Bag header, GBA bevel/shadow/highlight polish & full UI nav/hitbox audit), old 3DS UI removed
   native_ui_remaining_screens: pending    # batch 2 & 3 secondary GBA screens
   voxelgen_terrain_fixes: in_progress     # local untracked voxelgen/ quick relief + 3D viewer/editor, Route 119 bridge & Lilycove/Mirage Island fixes, wide building culling extent (83300a5)
-  ext_palettes_and_visible_wilds: pending # designed in docs/plan/PLAN_PALETAS_EXT.md
+  ext_palettes_and_visible_wilds: done    # F1-F7 implemented per docs/plan/PLAN_PALETAS_EXT.md
 
 tags:
   stable: stable/2026-11-05               # last tested build before the docs cleanup
@@ -54,10 +54,21 @@ open_issues:
     docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md (Route 119 long bridge, Lilycove and Mirage Island fixed locally).
 
 untested_on_hardware:
-  - Menu themes (RED default, EMERALD, CRYSTAL, TROPICAL, ROYAL), their 8-bit antialiased baked
-    theme fonts in ui_atlas.bin v3 (unpacked to RGBA8888 in ui_render.c/ui_sprites.c), themed
-    battle HUD (UiW_ThemeBox), and zone signs (ui_sign.c).
-  - PC boxes (ui_scr_pc.c) and player's PC (ui_scr_playerpc.c: items, mailbox / mail reading, room
+  - GBA Gen 3 x Vita UI skin (UI_THEME_GBA default, matched against design/stitch/gba_vita/index.html 20-screen mockup):
+    01_hub (centered zone sign + Hub plate, 2x2 dark status card, 2x3 mini-party, START menu) & 10_save;
+    02_party & 04_summary (clipped long Pokemon names / levels / abilities); 03_bag (redundant header box
+    removed, fixed 304px pager, gold 8-row ledger, Battle Pyramid bag); 05_battle_cmd & 06_battle_fight
+    (asymmetric plates + diagonal tails); 07_pokedex (alpha-152 translucency + clean header, cry_meter);
+    08_pokenav (redundant bottom mode dock removed; L/R & touch navigation + fixed Ribbon memo height); 09_card
+    (Gold Card + clipped Frontier Pass rows + R ribbon/badge cycling); 11_options (GBA top pager + curved UiW_GbaBox list/pills/help).
+  - GBA skin polish pass (ui_widgets.c: 9-slice vibrant Emerald frames, specular top highlights & bottom inner bevels,
+    Hp/Exp track borders & highlights, tiled backdrop scanlines, L/R & pager bevels) and UI navigation/hitbox audit fixes.
+  - Clean antialiased GBA typography (ui_atlas.bin 1024x928, 32 fonts, 3168 glyphs; UI_THEME_GBA
+    faceTitle=14, faceBody=15, faceSign=15), semi-transparent alpha-152 menu backdrops showing the
+    3D voxel world behind menus, non-GBA themes (RED/EMERALD/CRYSTAL/TROPICAL/ROYAL), and centered
+    biome zone entry plates (ui_sign.c, ui_scr_hub.c).
+  - PC boxes (ui_scr_pc.c: GBA Emerald skin + wallpaper drop shadow, centered box plate/L-R/info pills,
+    curved selection + pointer triangle, GBA popups) and player's PC (ui_scr_playerpc.c: items, mailbox / mail reading, room
     and Secret Base decoration return flow via UiPlayerPc_ReenterFromField).
   - Decoration shops (ui_scr_mart.c) and four-move forget-move screen (ui_scr_forget.c).
   - Naming keyboard (ui_scr_naming.c), Easy Chat (ui_scr_easychat.c), berry choice (ui_scr_berry.c),
@@ -68,6 +79,7 @@ untested_on_hardware:
   - Smooth fade into 3D wild battles (battle_setup.c).
   - Wide building culling extent (bldWest/East/North/South/Top in 83300a5, e.g. Rustboro's Devon Corp.).
   - Long-session stability with 40 MB RAM / 88 MB CDRAM vitaGL pools (aecb746).
+  - Extended sprite palettes (`gPlttExt`) for the follower, its Poké Ball and reflection, and visible wild Pokémon in the overworld (`visible_wild` [default FEW], `encounter_rate` [default NORMAL]).
 
 next_steps:
   - Test the current VPK (build_vita.ps1) on PS Vita against untested_on_hardware and inspect
@@ -75,8 +87,6 @@ next_steps:
   - Implement Batch 2 & 3 of remaining secondary GBA screens in src/platform/ui/: post-catch Pokedex
     entry, PC box summary, Move Relearner / Deleter, Contest / Frontier party choice, Battle Pyramid
     in-battle / toss bag, and Easy Chat Bard / quiz.
-  - Implement the extended sprite palette allocator (>16 concurrent sprite palette tags) and visible
-    wild Pokemon in the overworld per docs/plan/PLAN_PALETAS_EXT.md.
   - Continue map-by-map voxel terrain fixes (docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md,
     docs/plan/ESTUDIO_TERRENO_RUTA119.md) and let VoxelFile_Open try ux0:data/POKEVITA/voxel/ before
     app0:voxel/ so relief.bin edits can be tested without rebuilding the VPK.
