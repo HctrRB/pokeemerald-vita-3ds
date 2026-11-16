@@ -310,7 +310,7 @@ static u8 ChooseWildMonLevel(const struct WildPokemon *wildPokemon)
     return min + rand;
 }
 
-static u16 GetCurrentMapWildMonHeaderId(void)
+static u16 GetWildMonHeaderIdForMap(u8 mapGroup, u8 mapNum)
 {
     u16 i;
 
@@ -320,11 +320,10 @@ static u16 GetCurrentMapWildMonHeaderId(void)
         if (wildHeader->mapGroup == MAP_GROUP(MAP_UNDEFINED))
             break;
 
-        if (gWildMonHeaders[i].mapGroup == gSaveBlock1Ptr->location.mapGroup &&
-            gWildMonHeaders[i].mapNum == gSaveBlock1Ptr->location.mapNum)
+        if (wildHeader->mapGroup == mapGroup && wildHeader->mapNum == mapNum)
         {
-            if (gSaveBlock1Ptr->location.mapGroup == MAP_GROUP(MAP_ALTERING_CAVE) &&
-                gSaveBlock1Ptr->location.mapNum == MAP_NUM(MAP_ALTERING_CAVE))
+            if (mapGroup == MAP_GROUP(MAP_ALTERING_CAVE) &&
+                mapNum == MAP_NUM(MAP_ALTERING_CAVE))
             {
                 u16 alteringCaveId = VarGet(VAR_ALTERING_CAVE_WILD_SET);
                 if (alteringCaveId >= NUM_ALTERING_CAVE_TABLES)
@@ -338,6 +337,11 @@ static u16 GetCurrentMapWildMonHeaderId(void)
     }
 
     return HEADER_NONE;
+}
+
+static u16 GetCurrentMapWildMonHeaderId(void)
+{
+    return GetWildMonHeaderIdForMap(gSaveBlock1Ptr->location.mapGroup, gSaveBlock1Ptr->location.mapNum);
 }
 
 static u8 PickWildMonNature(void)
@@ -597,26 +601,42 @@ static u32 VisibleSetting(void)
 #define VISIBLE_MOST() sVisibleMost[VisibleSetting()]
 #define VISIBLE_REPLACES_RANDOM() (VisibleSetting() == ARRAY_COUNT(sVisibleMost) - 1)
 
-#define VW_MAX       12
-#define VW_MAGIC     0x5657
-#define VW_RANGE_X   11
-#define VW_RANGE_Y   6
-#define VW_NEAREST   3
-#define VW_FORGET    15
-#define VW_TRIES     48
-#define VW_GROW      12
-#define VW_GROW_BACK 8
-#define VW_VANISH    12
-#define VW_NONE      MAX_SPRITES
-#define VW_ICON_BYTES 0x200
-#define VW_ICON_FRAME 14
+#define VW_POOL_MAX      48
+#define VW_SLOTS         12
+#define VW_SLOT_NONE     0xFF
+#define VW_MAGIC         0x5657
+#define VW_VIEW_X        14
+#define VW_VIEW_NORTH    20
+#define VW_VIEW_SOUTH    8
+#define VW_SHOW_X        18
+#define VW_SHOW_NORTH    24
+#define VW_SHOW_SOUTH    11
+#define VW_HIDE_X        21
+#define VW_HIDE_NORTH    26
+#define VW_HIDE_SOUTH    14
+#define VW_NEAREST       3
+#define VW_MIN_SEP       2
+#define VW_FORGET_MAP    80
+#define VW_TRIES         48
+#define VW_GROW          12
+#define VW_VANISH        12
+#define VW_MAT_PER_FRAME 2
+#define VW_RES_LAND      64
+#define VW_RES_WATER     32
+#define VW_CONN_CAP      8
+#define VW_CONN_DEPTH    24
+#define VW_NONE          MAX_SPRITES
+#define VW_ICON_BYTES    0x200
+#define VW_ICON_FRAME    14
 
 struct VisibleWild
 {
     bool8 active, water, shiny;
     bool8 hgss;
     bool8 vanishing;
+    bool8 seenShiny;
     u8 spriteId;
+    u8 wildSlot;
     u8 matrix;
     u8 scaleTime, scaleFrames;
     u8 level, progress;
@@ -627,13 +647,70 @@ struct VisibleWild
     u32 personality;
 };
 
-static struct VisibleWild sVisible[VW_MAX];
+struct VisibleCoord
+{
+    s16 x;
+    s16 y;
+};
+
+static struct VisibleWild sVisible[VW_POOL_MAX];
+static struct VisibleCoord sLandCand[VW_RES_LAND];
+static struct VisibleCoord sWaterCand[VW_RES_WATER];
+static u16 sWildSlotMask;
+static u16 sVisibleTargetCount;
 static u8 sVisibleMapGroup = 0xFF, sVisibleMapNum = 0xFF;
 static bool8 sVisibleShifted;
+static bool8 sVisibleFromWarp;
 static u16 sVisibleSpawnTimer, sVisibleRetry;
 static u32 sVisibleFrames;
 
 #define VW_ABS(n) ((n) < 0 ? -(n) : (n))
+
+static bool8 VisibleInView(s16 x, s16 y, s16 px, s16 py)
+{
+    s16 dx = VW_ABS(x - px);
+    s16 dy = y - py;
+
+    return dx <= VW_VIEW_X && dy >= -VW_VIEW_NORTH && dy <= VW_VIEW_SOUTH;
+}
+
+static bool8 VisibleInShowRange(s16 x, s16 y, s16 px, s16 py)
+{
+    s16 dx = VW_ABS(x - px);
+    s16 dy = y - py;
+
+    return dx <= VW_SHOW_X && dy >= -VW_SHOW_NORTH && dy <= VW_SHOW_SOUTH;
+}
+
+static bool8 VisibleOutHideRange(s16 x, s16 y, s16 px, s16 py)
+{
+    s16 dx = VW_ABS(x - px);
+    s16 dy = y - py;
+
+    return dx > VW_HIDE_X || dy < -VW_HIDE_NORTH || dy > VW_HIDE_SOUTH;
+}
+
+static u8 VisibleAllocSlot(void)
+{
+    u32 i;
+
+    for (i = 0; i < VW_SLOTS; i++)
+    {
+        if (!(sWildSlotMask & (1u << i)))
+        {
+            sWildSlotMask |= (1u << i);
+            return (u8)i;
+        }
+    }
+    return VW_SLOT_NONE;
+}
+
+static void VisibleFreeSlot(struct VisibleWild *v)
+{
+    if (v->wildSlot < VW_SLOTS)
+        sWildSlotMask &= ~(1u << v->wildSlot);
+    v->wildSlot = VW_SLOT_NONE;
+}
 
 static u32 VisibleOtId(void)
 {
@@ -675,7 +752,7 @@ static void VisibleDropSprite(struct VisibleWild *v)
         }
         if (v->hgss)
         {
-            FollowerMon_WildFree(v - sVisible, sprite);
+            FollowerMon_WildFree(v->wildSlot, sprite);
         }
         else
         {
@@ -683,7 +760,7 @@ static void VisibleDropSprite(struct VisibleWild *v)
             bool8 shared = FALSE;
 
             FreeAndDestroyMonIconSprite(sprite);
-            for (i = 0; i < VW_MAX; i++)
+            for (i = 0; i < VW_POOL_MAX; i++)
                 if (&sVisible[i] != v && sVisible[i].active && !sVisible[i].hgss && VisibleSpriteValid(&sVisible[i])
                  && gMonIconPaletteIndices[sVisible[i].species] == gMonIconPaletteIndices[v->species])
                     shared = TRUE;
@@ -693,18 +770,23 @@ static void VisibleDropSprite(struct VisibleWild *v)
     }
     else if (v->hgss)
     {
-        FollowerMon_WildFree(v - sVisible, NULL);
+        FollowerMon_WildFree(v->wildSlot, NULL);
     }
+    VisibleFreeSlot(v);
     v->spriteId = VW_NONE;
     v->matrix = 0xFF;
+    v->scaleFrames = 0;
+    v->vanishing = FALSE;
 }
 
 static void VisibleForgetSprite(struct VisibleWild *v)
 {
     if (v->hgss)
-        FollowerMon_WildFree(v - sVisible, NULL);
+        FollowerMon_WildFree(v->wildSlot, NULL);
+    VisibleFreeSlot(v);
     v->spriteId = VW_NONE;
     v->matrix = 0xFF;
+    v->scaleFrames = 0;
 }
 
 static void VisibleRemove(struct VisibleWild *v)
@@ -718,16 +800,27 @@ static void VisibleRemoveAll(void)
 {
     u32 i;
 
-    for (i = 0; i < VW_MAX; i++)
+    for (i = 0; i < VW_POOL_MAX; i++)
         VisibleRemove(&sVisible[i]);
+    sWildSlotMask = 0;
+    sVisibleTargetCount = 0;
 }
 
-static u32 VisibleCount(void)
+static u32 VisibleActiveCount(void)
 {
     u32 i, count = 0;
 
-    for (i = 0; i < VW_MAX; i++)
+    for (i = 0; i < VW_POOL_MAX; i++)
         count += sVisible[i].active && !sVisible[i].vanishing;
+    return count;
+}
+
+static u32 VisibleSpriteCount(void)
+{
+    u32 i, count = 0;
+
+    for (i = 0; i < VW_POOL_MAX; i++)
+        count += sVisible[i].active && !sVisible[i].vanishing && sVisible[i].spriteId != VW_NONE;
     return count;
 }
 
@@ -735,7 +828,7 @@ static struct VisibleWild *VisibleAt(s16 x, s16 y, const struct VisibleWild *exc
 {
     u32 i;
 
-    for (i = 0; i < VW_MAX; i++)
+    for (i = 0; i < VW_POOL_MAX; i++)
     {
         struct VisibleWild *v = &sVisible[i];
 
@@ -745,6 +838,22 @@ static struct VisibleWild *VisibleAt(s16 x, s16 y, const struct VisibleWild *exc
             return v;
     }
     return NULL;
+}
+
+static bool8 VisibleNearAny(s16 x, s16 y, s16 minDist)
+{
+    u32 i;
+
+    for (i = 0; i < VW_POOL_MAX; i++)
+    {
+        const struct VisibleWild *v = &sVisible[i];
+
+        if (!v->active)
+            continue;
+        if (VW_ABS(v->x - x) + VW_ABS(v->y - y) < minDist)
+            return TRUE;
+    }
+    return FALSE;
 }
 
 static bool8 VisibleTileKind(s16 x, s16 y, bool8 water)
@@ -908,10 +1017,17 @@ static bool8 VisibleMakeSprite(struct VisibleWild *v, u8 grow)
     struct Sprite *sprite;
 
     v->matrix = 0xFF;
-    v->spriteId = FollowerMon_WildSprite(v - sVisible, v->species, v->personality, v->shiny);
+    v->wildSlot = VisibleAllocSlot();
+    if (v->wildSlot == VW_SLOT_NONE)
+    {
+        v->spriteId = VW_NONE;
+        return FALSE;
+    }
+    v->spriteId = FollowerMon_WildSprite(v->wildSlot, v->species, v->personality, v->shiny);
     v->hgss = v->spriteId < MAX_SPRITES;
     if (!v->hgss)
     {
+        VisibleFreeSlot(v);
         if (!VisibleLoadPalette(v->species))
         {
             v->spriteId = VW_NONE;
@@ -933,66 +1049,552 @@ static bool8 VisibleMakeSprite(struct VisibleWild *v, u8 grow)
     sprite->data[6] = 0;
     v->scaleFrames = 0;
     VisiblePlace(v);
-    VisibleStartScale(v, grow);
-    VisiblePlace(v);
+    if (grow > 0)
+    {
+        VisibleStartScale(v, grow);
+        VisiblePlace(v);
+    }
+    else if (v->hgss)
+    {
+        FollowerMon_WildFace(sprite, v->faceX, v->faceY, FALSE);
+    }
+    if (v->shiny && !v->seenShiny)
+    {
+        v->seenShiny = TRUE;
+        VisibleSparkle(v);
+        PlaySE(SE_SHINY);
+    }
     return TRUE;
+}
+
+static bool8 VisibleInitMon(struct VisibleWild *v, u16 headerId, s16 x, s16 y, bool8 water, u8 idleDelay)
+{
+    const struct WildPokemonInfo *info;
+    const struct WildPokemon *wild;
+
+    if (water && AreLegendariesInSootopolisPreventingEncounters())
+        return FALSE;
+    info = water ? gWildMonHeaders[headerId].waterMonsInfo : GetLandMonsInfo(headerId);
+    if (info == NULL)
+        return FALSE;
+    wild = &info->wildPokemon[water ? ChooseWildMonIndex_WaterRock() : ChooseWildMonIndex_Land()];
+    v->level = ChooseWildMonLevel(wild);
+    v->species = wild->species;
+    v->personality = ShinyOdds_WildPersonality(v->species, VisibleOtId());
+    v->shiny = GET_SHINY_VALUE(VisibleOtId(), v->personality) < SHINY_ODDS;
+    v->seenShiny = FALSE;
+    v->hgss = FALSE;
+    v->faceX = 0;
+    v->faceY = 1;
+    v->water = water;
+    v->x = x;
+    v->y = y;
+    v->dx = v->dy = 0;
+    v->progress = 0;
+    v->vanishing = FALSE;
+    v->spriteId = VW_NONE;
+    v->wildSlot = VW_SLOT_NONE;
+    v->matrix = 0xFF;
+    v->scaleTime = 0;
+    v->scaleFrames = 0;
+    v->idle = idleDelay + Random() % 90;
+    v->sparkle = 0;
+    v->active = TRUE;
+    return TRUE;
+}
+
+static struct VisibleWild *VisibleAllocEntity(void)
+{
+    u32 i;
+
+    for (i = 0; i < VW_POOL_MAX; i++)
+        if (!sVisible[i].active)
+            return &sVisible[i];
+    return NULL;
+}
+
+static u32 VisibleCountInRect(s16 x0, s16 y0, s16 x1, s16 y1)
+{
+    u32 i, count = 0;
+
+    for (i = 0; i < VW_POOL_MAX; i++)
+    {
+        const struct VisibleWild *v = &sVisible[i];
+
+        if (!v->active || v->vanishing)
+            continue;
+        if (v->x >= x0 && v->x <= x1 && v->y >= y0 && v->y <= y1)
+            count++;
+    }
+    return count;
+}
+
+static u32 VisiblePopulateRegion(u16 headerId, s16 x0, s16 y0, s16 x1, s16 y1, u32 maxCap, s16 px, s16 py, bool8 skipInView)
+{
+    const struct WildPokemonInfo *landInfo, *waterInfo;
+    u32 landSeen = 0, waterSeen = 0, landCount = 0, waterCount = 0;
+    u32 totalTiles, desired, existing, wantLand, wantWater, spawned = 0;
+    u32 percent, most, i;
+    s16 x, y;
+
+    if (headerId == HEADER_NONE || maxCap == 0)
+        return 0;
+    percent = EncounterRatePercent();
+    most = VISIBLE_MOST();
+    if (percent == 0 || most == 0)
+        return 0;
+
+    landInfo = GetLandMonsInfo(headerId);
+    waterInfo = AreLegendariesInSootopolisPreventingEncounters() ? NULL : gWildMonHeaders[headerId].waterMonsInfo;
+    if (landInfo == NULL && waterInfo == NULL)
+        return 0;
+
+    if (x0 < 0)
+        x0 = 0;
+    if (y0 < 0)
+        y0 = 0;
+    if (x1 >= gBackupMapLayout.width)
+        x1 = gBackupMapLayout.width - 1;
+    if (y1 >= gBackupMapLayout.height)
+        y1 = gBackupMapLayout.height - 1;
+
+    for (y = y0; y <= y1; y++)
+    {
+        for (x = x0; x <= x1; x++)
+        {
+            u32 behavior = MapGridGetMetatileBehaviorAt(x, y);
+
+            if (VW_ABS(x - px) < VW_NEAREST && VW_ABS(y - py) < VW_NEAREST)
+                continue;
+            if (skipInView && VisibleInView(x, y, px, py))
+                continue;
+            if (MapGridGetCollisionAt(x, y) != 0 || GetObjectEventIdByXY(x, y) != OBJECT_EVENTS_COUNT)
+                continue;
+            if (landInfo != NULL && MetatileBehavior_IsLandWildEncounter(behavior))
+            {
+                landSeen++;
+                if (landCount < VW_RES_LAND)
+                {
+                    sLandCand[landCount].x = x;
+                    sLandCand[landCount].y = y;
+                    landCount++;
+                }
+                else
+                {
+                    u32 r = Random() % landSeen;
+                    if (r < VW_RES_LAND)
+                    {
+                        sLandCand[r].x = x;
+                        sLandCand[r].y = y;
+                    }
+                }
+            }
+            else if (waterInfo != NULL && MetatileBehavior_IsWaterWildEncounter(behavior))
+            {
+                waterSeen++;
+                if (waterCount < VW_RES_WATER)
+                {
+                    sWaterCand[waterCount].x = x;
+                    sWaterCand[waterCount].y = y;
+                    waterCount++;
+                }
+                else
+                {
+                    u32 r = Random() % waterSeen;
+                    if (r < VW_RES_WATER)
+                    {
+                        sWaterCand[r].x = x;
+                        sWaterCand[r].y = y;
+                    }
+                }
+            }
+        }
+    }
+
+    totalTiles = landSeen + waterSeen;
+    if (totalTiles == 0)
+        return 0;
+
+    desired = (totalTiles * percent * most) / (16u * 100u * 8u);
+    if (desired < 2 && totalTiles >= 4)
+        desired = 2;
+    if (desired < most && totalTiles >= most * 6u)
+        desired = most;
+    if (desired > maxCap)
+        desired = maxCap;
+    existing = VisibleCountInRect(x0, y0, x1, y1);
+    if (existing >= desired)
+        return 0;
+    desired -= existing;
+
+    wantLand = (desired * landSeen + totalTiles / 2) / totalTiles;
+    if (landSeen > 0 && wantLand == 0 && desired > 0)
+        wantLand = 1;
+    if (wantLand > landCount)
+        wantLand = landCount;
+    wantWater = desired > wantLand ? desired - wantLand : 0;
+    if (wantWater > waterCount)
+        wantWater = waterCount;
+
+    for (i = 0; i < landCount && spawned < wantLand; i++)
+    {
+        u32 j = i + (Random() % (landCount - i));
+        struct VisibleCoord tmp = sLandCand[i];
+        struct VisibleWild *v;
+
+        sLandCand[i] = sLandCand[j];
+        sLandCand[j] = tmp;
+        if (VisibleNearAny(sLandCand[i].x, sLandCand[i].y, VW_MIN_SEP))
+            continue;
+        v = VisibleAllocEntity();
+        if (v == NULL)
+            break;
+        if (VisibleInitMon(v, headerId, sLandCand[i].x, sLandCand[i].y, FALSE, 30))
+            spawned++;
+    }
+
+    for (i = 0; i < waterCount && spawned < wantLand + wantWater; i++)
+    {
+        u32 j = i + (Random() % (waterCount - i));
+        struct VisibleCoord tmp = sWaterCand[i];
+        struct VisibleWild *v;
+
+        sWaterCand[i] = sWaterCand[j];
+        sWaterCand[j] = tmp;
+        if (VisibleNearAny(sWaterCand[i].x, sWaterCand[i].y, VW_MIN_SEP))
+            continue;
+        v = VisibleAllocEntity();
+        if (v == NULL)
+            break;
+        if (VisibleInitMon(v, headerId, sWaterCand[i].x, sWaterCand[i].y, TRUE, 30))
+            spawned++;
+    }
+
+    return spawned;
+}
+
+static void VisiblePrefetchTables(u16 headerId)
+{
+    const struct WildPokemonInfo *land, *water;
+    u16 species[LAND_WILD_COUNT + WATER_WILD_COUNT];
+    u32 i, j, count = 0;
+
+    if (headerId == HEADER_NONE)
+        return;
+    land = GetLandMonsInfo(headerId);
+    water = gWildMonHeaders[headerId].waterMonsInfo;
+    for (i = 0; land != NULL && i < LAND_WILD_COUNT; i++)
+        species[count++] = land->wildPokemon[i].species;
+    for (i = 0; water != NULL && i < WATER_WILD_COUNT; i++)
+        species[count++] = water->wildPokemon[i].species;
+    for (i = 0; i < count; i++)
+    {
+        for (j = 0; j < i && species[j] != species[i]; j++)
+            ;
+        if (j == i)
+            FollowerMon_WildPrefetch(species[i]);
+    }
+}
+
+static u16 VisibleLayoutAttr(const struct MapLayout *layout, u16 metatile)
+{
+    if (metatile < NUM_METATILES_IN_PRIMARY)
+        return layout->primaryTileset->metatileAttributes[metatile];
+    if (metatile < NUM_METATILES_TOTAL)
+        return layout->secondaryTileset->metatileAttributes[metatile - NUM_METATILES_IN_PRIMARY];
+    return 0;
+}
+
+static u32 VisiblePopulateNeighbour(const struct MapConnection *conn, u16 headerId, u32 maxCap, s16 px, s16 py, bool8 skipInView)
+{
+    const struct MapHeader *neighbour = GetMapHeaderFromConnection(conn);
+    const struct MapLayout *layout;
+    const struct WildPokemonInfo *landInfo, *waterInfo;
+    u32 landSeen = 0, waterSeen = 0, landCount = 0, waterCount = 0;
+    u32 totalTiles, desired, existing, wantLand, wantWater, spawned = 0;
+    u32 percent, most, i;
+    s16 nx0, ny0, nx1, ny1, nx, ny;
+    s16 gx0, gy0, gx1, gy1;
+    s16 mapW, mapH;
+
+    if (neighbour == NULL || neighbour->mapLayout == NULL || gMapHeader.mapLayout == NULL)
+        return 0;
+    layout = neighbour->mapLayout;
+    if (layout->map == NULL || layout->primaryTileset == NULL || layout->secondaryTileset == NULL)
+        return 0;
+
+    percent = EncounterRatePercent();
+    most = VISIBLE_MOST();
+    if (percent == 0 || most == 0 || maxCap == 0)
+        return 0;
+
+    landInfo = GetLandMonsInfo(headerId);
+    waterInfo = AreLegendariesInSootopolisPreventingEncounters() ? NULL : gWildMonHeaders[headerId].waterMonsInfo;
+    if (landInfo == NULL && waterInfo == NULL)
+        return 0;
+
+    mapW = gMapHeader.mapLayout->width;
+    mapH = gMapHeader.mapLayout->height;
+    nx0 = 0;
+    ny0 = 0;
+    nx1 = layout->width - 1;
+    ny1 = layout->height - 1;
+
+    switch (conn->direction)
+    {
+    case CONNECTION_NORTH:
+        if (layout->height > VW_CONN_DEPTH)
+            ny0 = layout->height - VW_CONN_DEPTH;
+        break;
+    case CONNECTION_SOUTH:
+        if (layout->height > VW_CONN_DEPTH)
+            ny1 = VW_CONN_DEPTH - 1;
+        break;
+    case CONNECTION_WEST:
+        if (layout->width > VW_CONN_DEPTH)
+            nx0 = layout->width - VW_CONN_DEPTH;
+        break;
+    case CONNECTION_EAST:
+        if (layout->width > VW_CONN_DEPTH)
+            nx1 = VW_CONN_DEPTH - 1;
+        break;
+    default:
+        return 0;
+    }
+
+    for (ny = ny0; ny <= ny1; ny++)
+    {
+        for (nx = nx0; nx <= nx1; nx++)
+        {
+            u16 raw = layout->map[ny * layout->width + nx];
+            u16 metatile = raw & MAPGRID_METATILE_ID_MASK;
+            u32 collision = (raw & MAPGRID_COLLISION_MASK) >> MAPGRID_COLLISION_SHIFT;
+            u32 behavior = UNPACK_BEHAVIOR(VisibleLayoutAttr(layout, metatile));
+            s16 gx, gy;
+
+            if (collision != 0)
+                continue;
+            switch (conn->direction)
+            {
+            case CONNECTION_NORTH:
+                gx = MAP_OFFSET + conn->offset + nx;
+                gy = MAP_OFFSET - (layout->height - ny);
+                break;
+            case CONNECTION_SOUTH:
+                gx = MAP_OFFSET + conn->offset + nx;
+                gy = MAP_OFFSET + mapH + ny;
+                break;
+            case CONNECTION_WEST:
+                gx = MAP_OFFSET - (layout->width - nx);
+                gy = MAP_OFFSET + conn->offset + ny;
+                break;
+            default:
+                gx = MAP_OFFSET + mapW + nx;
+                gy = MAP_OFFSET + conn->offset + ny;
+                break;
+            }
+            if (VW_ABS(gx - px) < VW_NEAREST && VW_ABS(gy - py) < VW_NEAREST)
+                continue;
+            if (skipInView && VisibleInView(gx, gy, px, py))
+                continue;
+
+            if (landInfo != NULL && MetatileBehavior_IsLandWildEncounter(behavior))
+            {
+                landSeen++;
+                if (landCount < VW_RES_LAND)
+                {
+                    sLandCand[landCount].x = gx;
+                    sLandCand[landCount].y = gy;
+                    landCount++;
+                }
+                else
+                {
+                    u32 r = Random() % landSeen;
+                    if (r < VW_RES_LAND)
+                    {
+                        sLandCand[r].x = gx;
+                        sLandCand[r].y = gy;
+                    }
+                }
+            }
+            else if (waterInfo != NULL && MetatileBehavior_IsWaterWildEncounter(behavior))
+            {
+                waterSeen++;
+                if (waterCount < VW_RES_WATER)
+                {
+                    sWaterCand[waterCount].x = gx;
+                    sWaterCand[waterCount].y = gy;
+                    waterCount++;
+                }
+                else
+                {
+                    u32 r = Random() % waterSeen;
+                    if (r < VW_RES_WATER)
+                    {
+                        sWaterCand[r].x = gx;
+                        sWaterCand[r].y = gy;
+                    }
+                }
+            }
+        }
+    }
+
+    totalTiles = landSeen + waterSeen;
+    if (totalTiles == 0)
+        return 0;
+
+    VisiblePrefetchTables(headerId);
+    desired = (totalTiles * percent * most) / (16u * 100u * 8u);
+    if (desired < 2 && totalTiles >= 4)
+        desired = 2;
+    if (desired > maxCap)
+        desired = maxCap;
+    switch (conn->direction)
+    {
+    case CONNECTION_NORTH:
+        gx0 = MAP_OFFSET + conn->offset + nx0;
+        gx1 = MAP_OFFSET + conn->offset + nx1;
+        gy0 = MAP_OFFSET - (layout->height - ny0);
+        gy1 = MAP_OFFSET - (layout->height - ny1);
+        break;
+    case CONNECTION_SOUTH:
+        gx0 = MAP_OFFSET + conn->offset + nx0;
+        gx1 = MAP_OFFSET + conn->offset + nx1;
+        gy0 = MAP_OFFSET + mapH + ny0;
+        gy1 = MAP_OFFSET + mapH + ny1;
+        break;
+    case CONNECTION_WEST:
+        gx0 = MAP_OFFSET - (layout->width - nx0);
+        gx1 = MAP_OFFSET - (layout->width - nx1);
+        gy0 = MAP_OFFSET + conn->offset + ny0;
+        gy1 = MAP_OFFSET + conn->offset + ny1;
+        break;
+    default:
+        gx0 = MAP_OFFSET + mapW + nx0;
+        gx1 = MAP_OFFSET + mapW + nx1;
+        gy0 = MAP_OFFSET + conn->offset + ny0;
+        gy1 = MAP_OFFSET + conn->offset + ny1;
+        break;
+    }
+    existing = VisibleCountInRect(gx0, gy0, gx1, gy1);
+    if (existing >= desired)
+        return 0;
+    desired -= existing;
+
+    wantLand = (desired * landSeen + totalTiles / 2) / totalTiles;
+    if (landSeen > 0 && wantLand == 0 && desired > 0)
+        wantLand = 1;
+    if (wantLand > landCount)
+        wantLand = landCount;
+    wantWater = desired > wantLand ? desired - wantLand : 0;
+    if (wantWater > waterCount)
+        wantWater = waterCount;
+
+    for (i = 0; i < landCount && spawned < wantLand; i++)
+    {
+        u32 j = i + (Random() % (landCount - i));
+        struct VisibleCoord tmp = sLandCand[i];
+        struct VisibleWild *v;
+
+        sLandCand[i] = sLandCand[j];
+        sLandCand[j] = tmp;
+        if (VisibleNearAny(sLandCand[i].x, sLandCand[i].y, VW_MIN_SEP))
+            continue;
+        v = VisibleAllocEntity();
+        if (v == NULL)
+            break;
+        if (VisibleInitMon(v, headerId, sLandCand[i].x, sLandCand[i].y, FALSE, 30))
+            spawned++;
+    }
+
+    for (i = 0; i < waterCount && spawned < wantLand + wantWater; i++)
+    {
+        u32 j = i + (Random() % (waterCount - i));
+        struct VisibleCoord tmp = sWaterCand[i];
+        struct VisibleWild *v;
+
+        sWaterCand[i] = sWaterCand[j];
+        sWaterCand[j] = tmp;
+        if (VisibleNearAny(sWaterCand[i].x, sWaterCand[i].y, VW_MIN_SEP))
+            continue;
+        v = VisibleAllocEntity();
+        if (v == NULL)
+            break;
+        if (VisibleInitMon(v, headerId, sWaterCand[i].x, sWaterCand[i].y, TRUE, 30))
+            spawned++;
+    }
+
+    return spawned;
+}
+
+static void VisiblePopulateMap(u16 mainHeaderId, s16 px, s16 py, bool8 shifted)
+{
+    u32 total = 0;
+
+    if (gMapHeader.mapLayout == NULL)
+        return;
+
+    sVisibleFromWarp = !shifted;
+
+    if (mainHeaderId != HEADER_NONE)
+    {
+        s16 x1 = MAP_OFFSET + gMapHeader.mapLayout->width - 1;
+        s16 y1 = MAP_OFFSET + gMapHeader.mapLayout->height - 1;
+
+        total += VisiblePopulateRegion(mainHeaderId, MAP_OFFSET, MAP_OFFSET, x1, y1, VW_POOL_MAX - VW_CONN_CAP, px, py, shifted);
+    }
+
+    if (gMapHeader.connections != NULL)
+    {
+        s32 i;
+        const struct MapConnection *conn = gMapHeader.connections->connections;
+
+        for (i = 0; i < gMapHeader.connections->count && total < VW_POOL_MAX; i++, conn++)
+        {
+            u16 connHeaderId;
+            u32 cap = VW_POOL_MAX - total;
+
+            if (conn->direction == CONNECTION_DIVE || conn->direction == CONNECTION_EMERGE)
+                continue;
+            connHeaderId = GetWildMonHeaderIdForMap(conn->mapGroup, conn->mapNum);
+            if (connHeaderId == HEADER_NONE)
+                continue;
+            if (cap > VW_CONN_CAP)
+                cap = VW_CONN_CAP;
+            total += VisiblePopulateNeighbour(conn, connHeaderId, cap, px, py, shifted);
+        }
+    }
+
+    sVisibleTargetCount = (u16)VisibleActiveCount();
 }
 
 static bool8 VisibleTrySpawn(u16 headerId)
 {
     struct ObjectEvent *player = &gObjectEvents[gPlayerAvatar.objectEventId];
-    struct VisibleWild *v = NULL;
-    const struct WildPokemonInfo *info;
-    const struct WildPokemon *wild;
-    u32 i, tries;
+    struct VisibleWild *v = VisibleAllocEntity();
+    u32 tries;
     s16 x, y;
     bool8 water;
 
-    for (i = 0; i < VW_MAX && v == NULL; i++)
-        if (!sVisible[i].active)
-            v = &sVisible[i];
     if (v == NULL)
         return FALSE;
     for (tries = 0; tries < VW_TRIES; tries++)
     {
-        x = player->currentCoords.x + (s16)(Random() % (2 * VW_RANGE_X + 1)) - VW_RANGE_X;
-        y = player->currentCoords.y + (s16)(Random() % (2 * VW_RANGE_Y + 1)) - VW_RANGE_Y;
+        x = player->currentCoords.x + (s16)(Random() % (2 * VW_VIEW_X + 1)) - VW_VIEW_X;
+        y = player->currentCoords.y + (s16)(Random() % (VW_VIEW_NORTH + VW_VIEW_SOUTH + 1)) - VW_VIEW_NORTH;
         if (VW_ABS(x - player->currentCoords.x) < VW_NEAREST && VW_ABS(y - player->currentCoords.y) < VW_NEAREST)
             continue;
         if (VisibleAt(x, y, NULL) != NULL)
             continue;
         water = MetatileBehavior_IsWaterWildEncounter(MapGridGetMetatileBehaviorAt(x, y));
-        info = water ? gWildMonHeaders[headerId].waterMonsInfo : GetLandMonsInfo(headerId);
-        if (info == NULL || !VisibleTileFits(x, y, water))
+        if (!VisibleTileFits(x, y, water))
             continue;
-        if (water && AreLegendariesInSootopolisPreventingEncounters())
+        if (!VisibleInitMon(v, headerId, x, y, water, VW_GROW + 30))
             continue;
-        wild = &info->wildPokemon[water ? ChooseWildMonIndex_WaterRock() : ChooseWildMonIndex_Land()];
-        v->level = ChooseWildMonLevel(wild);
         if (!IsWildLevelAllowedByRepel(v->level))
-            return FALSE;
-        v->species = wild->species;
-        v->personality = ShinyOdds_WildPersonality(v->species, VisibleOtId());
-        v->shiny = GET_SHINY_VALUE(VisibleOtId(), v->personality) < SHINY_ODDS;
-        v->faceX = 0;
-        v->faceY = 1;
-        v->water = water;
-        v->x = x;
-        v->y = y;
-        v->dx = v->dy = 0;
-        v->progress = 0;
-        v->vanishing = FALSE;
-        v->idle = VW_GROW + 30 + Random() % 90;
-        v->sparkle = 0;
-        if (!VisibleMakeSprite(v, VW_GROW))
-            return FALSE;
-        v->active = TRUE;
-        VisibleRustle(v);
-        if (v->shiny)
-        {
-            VisibleSparkle(v);
-            PlaySE(SE_SHINY);
-        }
+            return TRUE;
+        if (VisibleSpriteCount() < VISIBLE_MOST() && VisibleMakeSprite(v, VW_GROW))
+            VisibleRustle(v);
         return TRUE;
     }
     return FALSE;
@@ -1083,7 +1685,7 @@ void VisibleWild_CameraShift(s16 dx, s16 dy)
 {
     u32 i;
 
-    for (i = 0; i < VW_MAX; i++)
+    for (i = 0; i < VW_POOL_MAX; i++)
     {
         sVisible[i].x -= dx;
         sVisible[i].y -= dy;
@@ -1098,7 +1700,7 @@ bool8 VisibleWild_StepOnto(void)
     s16 px = player->currentCoords.x, py = player->currentCoords.y;
     u32 i;
 
-    for (i = 0; i < VW_MAX; i++)
+    for (i = 0; i < VW_POOL_MAX; i++)
     {
         struct VisibleWild *v = &sVisible[i];
 
@@ -1119,81 +1721,110 @@ bool8 VisibleWild_IsSprite(u8 spriteId)
         && gSprites[spriteId].data[7] == VW_MAGIC;
 }
 
-void VisibleWild_Update(void)
+static void VisibleStreamSprites(s16 px, s16 py, u32 most, bool8 settled)
 {
-    struct ObjectEvent *player;
-    u16 headerId;
-    u32 i, percent, most;
-    bool8 inWater, idle, settled;
+    u32 i, materialized = 0;
 
-    sVisibleFrames++;
-    most = VISIBLE_MOST();
-    if (!most || gMain.callback2 != CB2_Overworld)
+    for (i = 0; i < VW_POOL_MAX; i++)
     {
-        if (!most)
-            VisibleRemoveAll();
-        return;
+        struct VisibleWild *v = &sVisible[i];
+
+        if (!v->active || v->spriteId == VW_NONE || v->vanishing)
+            continue;
+        if (VisibleOutHideRange(v->x, v->y, px, py) || !IsWildLevelAllowedByRepel(v->level))
+            VisibleDropSprite(v);
     }
-    for (i = 0; i < VW_MAX; i++)
-        if (sVisible[i].active && sVisible[i].spriteId != VW_NONE && !VisibleSpriteValid(&sVisible[i]))
-            VisibleForgetSprite(&sVisible[i]);
-    if (gSaveBlock1Ptr->location.mapGroup != sVisibleMapGroup || gSaveBlock1Ptr->location.mapNum != sVisibleMapNum)
+
+    while (VisibleSpriteCount() > most)
     {
-        if (sVisibleShifted)
+        struct VisibleWild *farthest = NULL;
+        s32 maxDist = -1;
+
+        for (i = 0; i < VW_POOL_MAX; i++)
         {
-            for (i = 0; i < VW_MAX; i++)
+            struct VisibleWild *v = &sVisible[i];
+            s32 d;
+
+            if (!v->active || v->spriteId == VW_NONE || v->vanishing)
+                continue;
+            d = VW_ABS(v->x - px) + VW_ABS(v->y - py);
+            if (d > maxDist)
             {
-                if (!sVisible[i].active)
-                    continue;
-                if (!VisibleTileKind(sVisible[i].x, sVisible[i].y, sVisible[i].water))
-                    VisibleVanish(&sVisible[i]);
+                maxDist = d;
+                farthest = v;
             }
         }
-        else
-        {
-            VisibleRemoveAll();
-            sVisibleSpawnTimer = 15;
-        }
-        sVisibleMapGroup = gSaveBlock1Ptr->location.mapGroup;
-        sVisibleMapNum = gSaveBlock1Ptr->location.mapNum;
+        if (farthest == NULL)
+            break;
+        VisibleVanish(farthest);
     }
-    sVisibleShifted = FALSE;
 
-    headerId = GetCurrentMapWildMonHeaderId();
-    VisiblePrefetch(headerId);
-    player = &gObjectEvents[gPlayerAvatar.objectEventId];
-    inWater = VisiblePlayerInWater();
-    idle = !ArePlayerFieldControlsLocked() && !ScriptContext_IsEnabled()
-        && gPlayerAvatar.tileTransitionState == T_NOT_MOVING;
-    settled = FollowerMon_PalettesSettled();
+    if (!settled || sVisibleRetry)
+        return;
 
-    for (i = VW_MAX; i-- > 0 && VisibleCount() > most;)
-        if (sVisible[i].active && !sVisible[i].vanishing)
-            VisibleVanish(&sVisible[i]);
+    while (materialized < VW_MAT_PER_FRAME && VisibleSpriteCount() < most)
+    {
+        struct VisibleWild *best = NULL;
+        s32 bestDist = 0x7FFFFFFF;
 
-    if (sVisibleRetry)
-        sVisibleRetry--;
-    for (i = 0; i < VW_MAX; i++)
+        for (i = 0; i < VW_POOL_MAX; i++)
+        {
+            struct VisibleWild *v = &sVisible[i];
+            s16 adx, ady;
+            s32 d;
+
+            if (!v->active || v->spriteId != VW_NONE || v->vanishing)
+                continue;
+            if (!VisibleInShowRange(v->x, v->y, px, py))
+                continue;
+            if (!IsWildLevelAllowedByRepel(v->level))
+                continue;
+            adx = VW_ABS(v->x - px);
+            ady = VW_ABS(v->y - py);
+            d = adx + ady;
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = v;
+            }
+        }
+        if (best == NULL)
+            break;
+        {
+            bool8 inView = VisibleInView(best->x, best->y, px, py);
+            u8 grow = (inView && !sVisibleFromWarp) ? VW_GROW : 0;
+
+            if (!VisibleMakeSprite(best, grow))
+            {
+                sVisibleRetry = 30;
+                break;
+            }
+            if (grow > 0)
+                VisibleRustle(best);
+        }
+        materialized++;
+    }
+    if (materialized == 0 && settled)
+        sVisibleFromWarp = FALSE;
+}
+
+static void VisibleUpdateActive(s16 px, s16 py, bool8 inWater, bool8 idle)
+{
+    u32 i;
+
+    for (i = 0; i < VW_POOL_MAX; i++)
     {
         struct VisibleWild *v = &sVisible[i];
 
         if (!v->active)
             continue;
-        if (VW_ABS(v->x - player->currentCoords.x) > VW_FORGET || VW_ABS(v->y - player->currentCoords.y) > VW_FORGET)
+        if (VW_ABS(v->x - px) > VW_FORGET_MAP || VW_ABS(v->y - py) > VW_FORGET_MAP)
         {
             VisibleRemove(v);
             continue;
         }
         if (v->spriteId == VW_NONE)
-        {
-            if (!settled || sVisibleRetry || v->vanishing)
-                continue;
-            if (!VisibleMakeSprite(v, VW_GROW_BACK))
-            {
-                sVisibleRetry = 30;
-                continue;
-            }
-        }
+            continue;
         if (v->scaleFrames)
         {
             VisibleScaleStep(v);
@@ -1206,7 +1837,7 @@ void VisibleWild_Update(void)
         else if (idle)
         {
             bool8 touched = v->idle == 0xFFFF
-                || (v->x == player->currentCoords.x && v->y == player->currentCoords.y && !v->progress);
+                || (v->x == px && v->y == py && !v->progress);
 
             if (touched && v->water == inWater && (v->idle != 0xFFFF || IsWildLevelAllowedByRepel(v->level)))
             {
@@ -1215,7 +1846,8 @@ void VisibleWild_Update(void)
             }
             if (v->idle == 0xFFFF)
                 v->idle = 60;
-            VisibleMove(v, player->currentCoords.x, player->currentCoords.y, inWater);
+            if (v->x >= 0 && v->x < gBackupMapLayout.width && v->y >= 0 && v->y < gBackupMapLayout.height)
+                VisibleMove(v, px, py, inWater);
             if (v->shiny && ++v->sparkle >= 40)
             {
                 v->sparkle = 0;
@@ -1224,22 +1856,89 @@ void VisibleWild_Update(void)
         }
         VisiblePlace(v);
     }
+}
 
-    percent = EncounterRatePercent();
-    if (!idle || !settled || headerId == HEADER_NONE || percent == 0 || sWildEncountersDisabled)
+static void VisibleRespawnTick(u16 headerId, bool8 canSpawn, bool8 settled, u32 percent)
+{
+    if (!canSpawn || !settled || headerId == HEADER_NONE || percent == 0 || sWildEncountersDisabled)
+        return;
+    if (VisibleActiveCount() >= sVisibleTargetCount)
         return;
     if (sVisibleSpawnTimer)
     {
         sVisibleSpawnTimer--;
         return;
     }
-    if (VisibleCount() < most)
+    if (VisibleTrySpawn(headerId))
+        sVisibleSpawnTimer = 60 * 100 / percent;
+    else
+        sVisibleSpawnTimer = 15;
+}
+
+void VisibleWild_Update(void)
+{
+    struct ObjectEvent *player;
+    u16 headerId;
+    u32 i, percent, most;
+    bool8 inWater, idle, canSpawn, settled;
+
+    sVisibleFrames++;
+    most = VISIBLE_MOST();
+    if (!most || gMain.callback2 != CB2_Overworld)
     {
-        if (VisibleTrySpawn(headerId))
-            sVisibleSpawnTimer = 60 * 100 / percent;
-        else
-            sVisibleSpawnTimer = 15;
+        if (!most)
+            VisibleRemoveAll();
+        return;
     }
+    for (i = 0; i < VW_POOL_MAX; i++)
+        if (sVisible[i].active && sVisible[i].spriteId != VW_NONE && !VisibleSpriteValid(&sVisible[i]))
+        {
+            VisibleForgetSprite(&sVisible[i]);
+            sVisibleFromWarp = TRUE;
+        }
+
+    headerId = GetCurrentMapWildMonHeaderId();
+    player = &gObjectEvents[gPlayerAvatar.objectEventId];
+
+    if (gSaveBlock1Ptr->location.mapGroup != sVisibleMapGroup || gSaveBlock1Ptr->location.mapNum != sVisibleMapNum)
+    {
+        if (sVisibleShifted)
+        {
+            for (i = 0; i < VW_POOL_MAX; i++)
+            {
+                if (!sVisible[i].active)
+                    continue;
+                if (sVisible[i].x >= 0 && sVisible[i].x < gBackupMapLayout.width
+                 && sVisible[i].y >= 0 && sVisible[i].y < gBackupMapLayout.height
+                 && !VisibleTileKind(sVisible[i].x, sVisible[i].y, sVisible[i].water))
+                    VisibleVanish(&sVisible[i]);
+            }
+        }
+        else
+        {
+            VisibleRemoveAll();
+        }
+        sVisibleMapGroup = gSaveBlock1Ptr->location.mapGroup;
+        sVisibleMapNum = gSaveBlock1Ptr->location.mapNum;
+        if (!sWildEncountersDisabled)
+            VisiblePopulateMap(headerId, player->currentCoords.x, player->currentCoords.y, sVisibleShifted);
+        sVisibleSpawnTimer = 0;
+    }
+    sVisibleShifted = FALSE;
+
+    VisiblePrefetch(headerId);
+    inWater = VisiblePlayerInWater();
+    canSpawn = !ArePlayerFieldControlsLocked() && !ScriptContext_IsEnabled();
+    idle = canSpawn && gPlayerAvatar.tileTransitionState == T_NOT_MOVING;
+    settled = FollowerMon_PalettesSettled();
+    percent = EncounterRatePercent();
+
+    if (sVisibleRetry)
+        sVisibleRetry--;
+
+    VisibleStreamSprites(player->currentCoords.x, player->currentCoords.y, most, settled);
+    VisibleUpdateActive(player->currentCoords.x, player->currentCoords.y, inWater, idle);
+    VisibleRespawnTick(headerId, canSpawn, settled, percent);
 }
 
 bool8 StandardWildEncounter(u16 curMetatileBehavior, u16 prevMetatileBehavior)
