@@ -26,6 +26,12 @@ backgrounds, sprites, windows, blending, mosaic, per-line scroll effects.
   middle 240 px at 816×544 (pillarboxed) with it off. The intro's leaves scene draws GPU margin
   art beside it (`vita_stage.c`). Filter: nearest or bilinear (`filter` setting). The day/night
   tint is applied as the quad colour.
+- **Extended sprite palettes (`gPlttExt`)**: 16 port-only 4bpp overworld sprite palettes
+  (`palette.h`, `sprite.c`) live after the 32 GBA palettes (`gPlttBufferUnfaded/Faded[PLTT_BUFFER_ALLOC]`)
+  so the follower, its Poké Ball and up to 6 visible wild Pokémon keep their HGSS colours without
+  competing for GBA OBJ slots 12–15. Fades and weather mirror `PALSLOT_NPC_1`. `DrawFrame()`
+  latches `gPlttExt`, `gOamExt` and `gPlttExtInUse` once per frame (zero cost when `gPlttExtInUse == 0`),
+  and `CtrVideo_ExtPalette()` feeds `voxel_entities.c` in 3D.
 
 ## 3D path: `VoxelRenderer_RenderFrame`
 
@@ -65,16 +71,16 @@ Per frame (`VoxelRenderer_RenderFrame`):
 | Pass | Content | Notes |
 |---|---|---|
 | 1A / 1B | Ground and relief, then cliff cutouts | Opaque first for early-Z on the SGX543; cutouts with `GL_ALPHA_TEST` |
-| 2 | Trees and tall grass | Tree atlas |
+| 2 | Trees, tall grass, ash grass & flowers | Tree atlas (`sTreeTex`); HD-2D 30 FPS adds GLSL wind-sway & player-bend shader, animated GBA flower frames, and Fallarbor ash-grass sprite |
 | 3 | Buildings and indoor furniture | Building pages in an LRU cache, alpha test only on pages that need it |
 | 4 | Cast and decal shadows | One colour (`0xFF281408`) |
 | 4.5 | Reflections on water | |
 | 5 | Entity billboards, player silhouette behind roofs | `glDepthFunc(GL_GREATER)` for the silhouette |
 | 5.1 | Day/night modulation | Skipped when it would be a no-op |
-| 5.2 | Street lamps and light pools | |
-| 5.4–5.8 | Fog / sand banks, dust motes, weather particles | |
+| 5.2 | Street lamps, light pools & point-light emitters | `voxel_pointlights.c` |
+| 5.4–5.8 | Fog / sand banks, dust motes / fireflies, surface FX & weather particles | Water ripples/glints/mist, grass/ash step puffs (`DrawSurfaceFx`) |
 | 5.9 | 2D atmosphere: sun rays, moonlight, fades, lightning, cave gloom | |
-| DoF | Tilt-shift "diorama" blur | Scene rendered to a 960×544 FBO, downscaled to 1/4 (240×136) and composited as blurred top/bottom bands. Off indoors, during fades or with `voxel_blur` off |
+| DoF / Bloom | HD-2D post-processing (DoF, Kawase Bloom, Composite) | Scene rendered to a 960×544 RGBA8 FBO, downscaled to 1/4 (240×136) for `smoothstep` tilt-shift DoF + 2-pass Kawase bloom (`voxel_hd2d_shader.c`), split-tone & vignette. Off in `60 (CLASSIC)`, indoors (bloom), or during fades |
 | 6 | GBA overlay | See below |
 
 In the code each step is a `Frame_*` function (`Frame_FollowCamera`, `Frame_UpdateAtlas`,

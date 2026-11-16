@@ -36,6 +36,6 @@ Notes:
   text remains the build-selected Portuguese variant.
 - Test the reduced dynamic sprite-cell budget on a physical PS Vita before
   declaring complete hardware compatibility. The fixed atlas currently takes
-  1208 pixels, leaving 192 dynamic 64x64 cells in the 1024x2048 texture.
+  1144 pixels, leaving 192 dynamic 64x64 cells in the 1024x2048 texture.
 - A fork's customized boot artwork belongs in untracked
   `vita/sce_sys_custom/`, not the upstream code.

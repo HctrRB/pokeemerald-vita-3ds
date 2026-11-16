@@ -10,6 +10,7 @@
 #include <string.h>
 #include "platform/dma.h"
 #include "platform/framedraw.h"
+#include "palette.h"
 
 #if defined(PLATFORM_VITA) && defined(VITA_PARALLEL_DRAW)
 // Parallel drawing. The main thread runs the frame's per-scanline work (VCount/HBlank
@@ -36,6 +37,9 @@ static uint8_t *sLinePltt = PLTT;
 
 extern uint8_t gFastDrawRegCaps[DISPLAY_HEIGHT][CAPTURE_REGS_SIZE];
 extern uint8_t *gFastDrawPlttCaps[DISPLAY_HEIGHT];
+extern uint16_t gFastDrawExtPltt[16 * 16];
+extern uint8_t gFastDrawOamExt[128];
+extern uint16_t gFastDrawExtInUse;
 // Number of lines captured so far this frame. Workers start drawing a line as soon as it is
 // captured, so capturing and drawing overlap.
 extern SDL_atomic_t gFastDrawLinesCaptured;
@@ -1963,6 +1967,34 @@ static void DrawSpritesWinMask(struct scanlineData* scanline, uint16_t vcount)
     }
 }
 
+#if defined(PLATFORM_VITA) && defined(VITA_PARALLEL_DRAW)
+static inline uint16_t *ObjPalette(int32_t spriteIndex, uint32_t paletteNum)
+{
+    if (gFastDrawExtInUse != 0)
+    {
+        uint8_t mark = gFastDrawOamExt[spriteIndex];
+        if (mark != 0)
+            return &gFastDrawExtPltt[(uint32_t)(mark - 1) * 16];
+    }
+    return (uint16_t *)OBJ_PLTT + paletteNum * 16;
+}
+#else
+static uint16_t gFastDrawExtPltt[16 * 16];
+static uint8_t gFastDrawOamExt[128];
+static uint16_t gFastDrawExtInUse;
+
+static inline uint16_t *ObjPalette(int32_t spriteIndex, uint32_t paletteNum)
+{
+    if (gFastDrawExtInUse != 0)
+    {
+        uint8_t mark = gFastDrawOamExt[spriteIndex];
+        if (mark != 0)
+            return &gFastDrawExtPltt[(uint32_t)(mark - 1) * 16];
+    }
+    return (uint16_t *)OBJ_PLTT + paletteNum * 16;
+}
+#endif
+
 static void inline_hack DrawAffineSprite(int32_t SpriteIndex, struct scanlineData* scanline, uint16_t vcount, bool windowsEnabled, uint16_t* pixels, bool IsInsideWinIn)
 {
     struct OamData *oam = &((struct OamData *)OAM)[SpriteIndex];
@@ -2059,11 +2091,12 @@ static void inline_hack DrawAffineSprite(int32_t SpriteIndex, struct scanlineDat
         bool flipX  = !isAffine && ((oam->matrixNum >> 3) & 1);
         bool flipY  = !isAffine && ((oam->matrixNum >> 4) & 1);
         bool is8BPP  = oam->bpp & 1;
+        uint16_t *const spritePalette = is8BPP ? (uint16_t *)(PLTT + 0x200) : ObjPalette(SpriteIndex, oam->paletteNum);
 
         for (int32_t local_x = -half_width; local_x <= half_width; local_x++)
         {
             uint8_t *tiledata = (uint8_t *)objtiles;
-            uint16_t *palette = (uint16_t *)(PLTT + 0x200);
+            uint16_t *palette = spritePalette;
             int32_t local_mosaicX;
             int32_t tex_x;
             int32_t tex_y;
@@ -2119,7 +2152,6 @@ static void inline_hack DrawAffineSprite(int32_t SpriteIndex, struct scanlineDat
                     pixel >>= 4;
                 else
                     pixel &= 0xF;
-                palette += oam->paletteNum * 16;
             }
             else
             {
@@ -2237,8 +2269,7 @@ static void inline_hack DrawNonAffineSprite(int32_t SpriteIndex, struct scanline
         bool flipX  = !isAffine && ((oam->matrixNum >> 3) & 1);
         bool flipY  = !isAffine && ((oam->matrixNum >> 4) & 1);
         uint8_t *tiledata = (uint8_t *)objtiles;
-        uint16_t *palette = (uint16_t *)OBJ_PLTT;
-        palette += oam->paletteNum * 16; //choose the palette
+        uint16_t *palette = ObjPalette(SpriteIndex, oam->paletteNum);
         int32_t tex_y = local_y + (height / 2);
         if (flipY)
             tex_y = height - tex_y - 1;
@@ -3220,6 +3251,9 @@ bool8 gFastDrawCentredOnly = FALSE;
 #ifdef FAST_DRAW_PARALLEL
 uint8_t gFastDrawRegCaps[DISPLAY_HEIGHT][CAPTURE_REGS_SIZE];
 uint8_t *gFastDrawPlttCaps[DISPLAY_HEIGHT];
+uint16_t gFastDrawExtPltt[16 * 16];
+uint8_t gFastDrawOamExt[128];
+uint16_t gFastDrawExtInUse;
 SDL_atomic_t gFastDrawLinesCaptured;
 uint16_t *gFastDrawTexture;
 int32_t gFastDrawTexturePitch;
@@ -3423,6 +3457,15 @@ void GbaEngine_StepDirectHardwareEvents(void)
 void DrawFrame(uint16_t *pixels)
 {
     int32_t i;
+
+    // Latch ext palettes once per frame before workers start (ext palettes never change mid-frame).
+    uint16_t extInUse = gPlttExtInUse;
+    gFastDrawExtInUse = extInUse;
+    if (extInUse != 0)
+    {
+        memcpy(gFastDrawExtPltt, gPlttExt, sizeof(gFastDrawExtPltt));
+        memcpy(gFastDrawOamExt, gOamExt, sizeof(gFastDrawOamExt));
+    }
 
 #ifdef FAST_DRAW_PARALLEL
     Widescreen_PrepareDraw(); // before the workers start: they read gFastDrawWide

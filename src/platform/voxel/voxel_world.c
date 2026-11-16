@@ -719,6 +719,82 @@ uint32_t VoxelWorld_GetCollision(int32_t worldX, int32_t worldY)
     return (GetRawBlock(worldX, worldY, NULL) & MAPGRID_COLLISION_MASK) >> MAPGRID_COLLISION_SHIFT;
 }
 
+bool VoxelWorld_IsTallGrassCell(int32_t worldX, int32_t worldY)
+{
+    const u8 beh = (u8)VoxelWorld_GetMetatileBehavior(worldX, worldY);
+    return MetatileBehavior_IsTallGrass(beh) || MetatileBehavior_IsAshGrass(beh);
+}
+
+bool VoxelWorld_IsAshGrassCell(int32_t worldX, int32_t worldY)
+{
+    return MetatileBehavior_IsAshGrass((u8)VoxelWorld_GetMetatileBehavior(worldX, worldY));
+}
+
+#define FLOWER_TILE_FIRST 508
+#define FLOWER_TILE_LAST  511
+
+bool VoxelWorld_IsFlowerCell(int32_t worldX, int32_t worldY)
+{
+    static uint8_t sFlower[NUM_METATILES_IN_PRIMARY / 8];
+    static int sFlowerState;
+    uint8_t local[NUM_METATILES_IN_PRIMARY / 8];
+    const uint8_t *bits = sFlower;
+    const VoxelMapInstance *inst = NULL;
+    u16 block = GetRawBlock(worldX, worldY, &inst);
+    uint32_t id = block & MAPGRID_METATILE_ID_MASK;
+
+    if (inst == NULL || inst->primaryTileset != &gTileset_General)
+        return false;
+    if (id >= NUM_METATILES_IN_PRIMARY)
+    {
+        const struct Tileset *const sec = (const struct Tileset *)inst->secondaryTileset;
+        if (sec == NULL || sec->metatiles == NULL)
+            return false;
+        const uint32_t secIdx = id - NUM_METATILES_IN_PRIMARY;
+        if (secIdx >= (NUM_METATILES_TOTAL - NUM_METATILES_IN_PRIMARY))
+            return false;
+        const u16 *const smt = sec->metatiles + secIdx * 8u;
+        for (uint32_t t = 0; t < 8u; ++t)
+        {
+            const uint16_t tile = smt[t] & 0x3FFu;
+            if (tile >= FLOWER_TILE_FIRST && tile <= FLOWER_TILE_LAST)
+                return true;
+        }
+        return false;
+    }
+    if (__atomic_load_n(&sFlowerState, __ATOMIC_ACQUIRE) != 2)
+    {
+        const u16 *mt = gTileset_General.metatiles;
+        if (mt == NULL)
+            return false;
+        memset(local, 0, sizeof(local));
+        for (uint32_t m = 0; m < NUM_METATILES_IN_PRIMARY; ++m)
+        {
+            for (uint32_t t = 0; t < 8u; ++t)
+            {
+                uint16_t tile = mt[m * 8u + t] & 0x3FFu;
+                if (tile >= FLOWER_TILE_FIRST && tile <= FLOWER_TILE_LAST)
+                {
+                    local[m >> 3] |= (uint8_t)(1u << (m & 7u));
+                    break;
+                }
+            }
+        }
+        int expected = 0;
+        if (__atomic_compare_exchange_n(&sFlowerState, &expected, 1, false,
+                                          __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE))
+        {
+            memcpy(sFlower, local, sizeof(sFlower));
+            __atomic_store_n(&sFlowerState, 2, __ATOMIC_RELEASE);
+        }
+        else
+        {
+            bits = local;
+        }
+    }
+    return (bits[id >> 3] & (uint8_t)(1u << (id & 7u))) != 0u;
+}
+
 static u16 GetMetatileAttribute(const VoxelMapInstance *inst, int32_t metatileId)
 {
     const uint16_t *attributes;

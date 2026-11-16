@@ -56,11 +56,15 @@ static inline int32_t LookupFastId(const char *key)
     case 'e':
         if (strcmp(key, "exp_share") == 0) return FAST_EXTRA_EXP_SHARE;
         if (strcmp(key, "exp_catch") == 0) return FAST_EXTRA_EXP_CATCH;
+        if (strcmp(key, "encounter_rate") == 0) return FAST_EXTRA_ENCOUNTER_RATE;
         break;
     case 'f':
         if (strcmp(key, "follower") == 0) return FAST_EXTRA_FOLLOWER;
         if (strcmp(key, "field_hms") == 0) return FAST_EXTRA_FIELD_HMS;
         if (strcmp(key, "fast_eggs") == 0) return FAST_EXTRA_FAST_EGGS;
+        break;
+    case 'h':
+        if (strcmp(key, "hd2d_mode") == 0) return FAST_EXTRA_VOXEL_HD2D;
         break;
     case 'i':
         if (strcmp(key, "infinite_tms") == 0) return FAST_EXTRA_INFINITE_TMS;
@@ -96,6 +100,9 @@ static inline int32_t LookupFastId(const char *key)
         if (strcmp(key, "voxel_res") == 0) return FAST_EXTRA_VOXEL_RES;
         if (strcmp(key, "voxel_fps") == 0) return FAST_EXTRA_VOXEL_FPS;
         if (strcmp(key, "voxel_blur") == 0) return FAST_EXTRA_VOXEL_BLUR;
+        if (strcmp(key, "voxel_fov") == 0) return FAST_EXTRA_VOXEL_FOV;
+        if (strcmp(key, "voxel_grade") == 0) return FAST_EXTRA_VOXEL_GRADE;
+        if (strcmp(key, "visible_wild") == 0) return FAST_EXTRA_VISIBLE_WILD;
         break;
     default:
         break;
@@ -129,16 +136,19 @@ const char *const gVitaExtrasOffOn[2] = { "OFF", "ON" };
 static const char *const sSpeedValues[] = { "2X", "3X", "4X", "5X", NULL };
 static const char *const sFFButtonValues[] = { "HOLD", "TOGGLE", NULL };
 static const char *const sFilterValues[] = { "NEAREST", "BILINEAR", "SHARP", NULL };
-// Order = UI_THEME_* (src/platform/ui/ui_internal.h); RED is the default
-static const char *const sUiThemeValues[] = { "RED", "EMERALD", "CRYSTAL", "TROPICAL", "ROYAL", NULL };
+// Order = UI_THEME_* (src/platform/ui/ui_internal.h); GBA is the default
+static const char *const sUiThemeValues[] = { "GBA", "RED", "EMERALD", "CRYSTAL", "TROPICAL", "ROYAL", NULL };
 static const char *const sUiLanguageValues[] = { "ENGLISH", "PORTUGUÊS", NULL };
-static const char *const sVoxelFpsValues[] = { "30", "60", NULL };
+static const char *const sVoxelFpsValues[] = { "30 (HD-2D)", "60 (CLASSIC)", NULL };
+static const char *const sVoxelFovValues[] = { "35 DEG", "25 DEG", NULL };
 static const char *const sSaveSlotValues[] = { "SLOT 1", "SLOT 2", "SLOT 3", NULL };
 static const char *const sDayNightValues[] = { "OFF", "AUTO", NULL };
 static const char *const sClockSpeedValues[] = { "1X", "6X", "12X", "24X", "60X", "120X", "1000X", NULL };
 static const char *const sBattleSpeedValues[] = { "1X", "1.5X", "2X", "3X", "4X", NULL };
 static const char *const sLevelCapValues[] = { "OFF", "GYM CAP", "STRICT", NULL };
 static const char *const sShinyOddsValues[] = { "1/8192", "1/4096", "1/1024", "1/256", "1/64", "ALWAYS", NULL };
+static const char *const sVisibleWildValues[] = { "OFF", "FEW", "SOME", "MANY", NULL };
+static const char *const sEncounterRateValues[] = { "NORMAL", "OFF", "1/4", "1/2", "2X", NULL };
 static const char *const sActionSetValues[] = { "EXECUTE", NULL };
 static const char *const sGivePockets[] = { "ITEMS", "POKE BALLS", "TMS & HMS", "BERRIES", "KEY ITEMS", NULL };
 static const char *const sGiveCounts[] = { "1", "5", "10", "50", "99", NULL };
@@ -269,16 +279,18 @@ const VitaExtra gVitaExtras[] = {
     { VITA_TAB_GENERAL, "PACING",     "FAST FWD SPEED",    "speed",            4, 1, sSpeedValues,       NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "PACING",     "FF BUTTON MODE",    "ff_button",        2, 0, sFFButtonValues,    NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "DISPLAY",    "2D SCALER",         "filter",           3, 0, sFilterValues,      NULL, NULL, NULL },
-    { VITA_TAB_GENERAL, "DISPLAY",    "MENU COLOR",        "ui_theme",         5, 0, sUiThemeValues,     NULL, NULL, NULL },
+    { VITA_TAB_GENERAL, "DISPLAY",    "MENU COLOR",        "ui_theme",         6, 0, sUiThemeValues,     NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "DISPLAY",    "UI LANGUAGE",      "ui_lang",          2, 0, sUiLanguageValues,  NULL, NULL, NULL },
 
     // ---- [WORLD] ----
     { VITA_TAB_WORLD,   "RENDERER",   "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "DIORAMA BLUR (DOF)","voxel_blur",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "RENDERER",   "TARGET FRAMERATE",  "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "MODE / FRAMERATE",  "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "CAMERA ANGLE",      "voxel_fov",        2, 0, sVoxelFovValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "DAY / NIGHT CYCLE", "day_night",        2, 1, sDayNightValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "TIMED ENCOUNTERS",  "timed_encounters", 2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "CLOCK SPEED",       "clock_speed",      7, 0, sClockSpeedValues,  NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "ENCOUNTERS", "VISIBLE WILD",      "visible_wild",     4, 1, sVisibleWildValues, NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "COMPANION",  "HGSS FOLLOWER",     "follower",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "EXPLORATION","RUN INDOORS",       "run_indoors",      2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "EXPLORATION","AUTO RUN (NO B)",   "auto_run",         2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
@@ -303,6 +315,7 @@ const VitaExtra gVitaExtras[] = {
     { VITA_TAB_CHEATS,  "CONVENIENCE","TRADE EVO LV40",    "trade_evo",        2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_CHEATS,  "CONVENIENCE","FAST HATCH EGGS",   "fast_eggs",        2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_CHEATS,  "ENCOUNTERS", "SHINY ODDS",        "shiny_odds",       6, 0, sShinyOddsValues,   NULL, NULL, NULL },
+    { VITA_TAB_CHEATS,  "ENCOUNTERS", "ENCOUNTER RATE",    "encounter_rate",   5, 0, sEncounterRateValues, NULL, NULL, NULL },
     { VITA_TAB_CHEATS,  "ENCOUNTERS", "ALWAYS CATCH",      "always_catch",     2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_CHEATS,  "REWARDS",    "MAX MONEY ($999K)", "give_money",       0, 0, sActionSetValues,   ActionInfiniteMoney,     NULL, NULL },
     { VITA_TAB_CHEATS,  "ITEM SPAWN", "GIVE POCKET",       "give_pocket",      5, 0, sGivePockets,       NULL, NULL, NULL },

@@ -2252,6 +2252,24 @@ static u32 MakePersonalityShiny(u32 personality, u32 otId, u16 species)
     }
 }
 
+static u32 ApplyShinyOdds(u32 personality, u32 otId, u16 species)
+{
+    const int shinyOpt = VitaExtras_GetFast(FAST_EXTRA_SHINY_ODDS);
+    if (shinyOpt > 0)
+    {
+        static const u16 sOddsDenom[6] = { 8192, 4096, 1024, 256, 64, 1 };
+        const u16 denom = sOddsDenom[(shinyOpt < 6) ? shinyOpt : 0];
+        if (denom <= 1 || (Random() % denom) == 0)
+            return MakePersonalityShiny(personality, otId, species);
+    }
+    return personality;
+}
+
+u32 ShinyOdds_WildPersonality(u16 species, u32 otId)
+{
+    return ApplyShinyOdds(Random32(), otId, species);
+}
+
 void CreateBoxMon(struct BoxPokemon *boxMon, u16 species, u8 level, u8 fixedIV, u8 hasFixedPersonality, u32 fixedPersonality, u8 otIdType, u32 fixedOtId)
 {
     u8 speciesName[POKEMON_NAME_LENGTH + 1];
@@ -2293,18 +2311,13 @@ void CreateBoxMon(struct BoxPokemon *boxMon, u16 species, u8 level, u8 fixedIV, 
 
     SetBoxMonData(boxMon, MON_DATA_OT_ID, &value);
 
-    if (otIdType != OT_ID_RANDOM_NO_SHINY)
+    if (otIdType != OT_ID_RANDOM_NO_SHINY && !hasFixedPersonality)
     {
-        const int shinyOpt = VitaExtras_GetFast(FAST_EXTRA_SHINY_ODDS);
-        if (shinyOpt > 0)
+        u32 adjusted = ApplyShinyOdds(personality, value, species);
+        if (adjusted != personality)
         {
-            static const u16 sOddsDenom[6] = { 8192, 4096, 1024, 256, 64, 1 };
-            const u16 denom = sOddsDenom[(shinyOpt < 6) ? shinyOpt : 0];
-            if (denom <= 1 || (Random() % denom) == 0)
-            {
-                personality = MakePersonalityShiny(personality, value, species);
-                SetBoxMonData(boxMon, MON_DATA_PERSONALITY, &personality);
-            }
+            personality = adjusted;
+            SetBoxMonData(boxMon, MON_DATA_PERSONALITY, &personality);
         }
     }
 

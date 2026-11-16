@@ -40,6 +40,7 @@ find_program(VITA_CPP     arm-vita-eabi-cpp     HINTS "$ENV{VITASDK}/bin" REQUIR
 find_program(VITA_AS      arm-vita-eabi-as      HINTS "$ENV{VITASDK}/bin" REQUIRED)
 find_program(VITA_LD      arm-vita-eabi-ld      HINTS "$ENV{VITASDK}/bin" REQUIRED)
 find_program(VITA_OBJCOPY arm-vita-eabi-objcopy HINTS "$ENV{VITASDK}/bin" REQUIRED)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 set(GAME_DEFINES -DNONMATCHING -DPORTABLE -DPLATFORM_SDL2 -DPLATFORM_VITA -DRENDERER_FAST_DRAW -DVOXEL_SUPPORTED -DMODERN=1 -DUBFIX)
 option(VITA_LOGGING "Write VITA_LOG output to ux0:data/POKEVITA/debug.log" OFF)
@@ -282,10 +283,22 @@ foreach(VA IN LISTS VOXEL_ASSETS)
     list(APPEND VPK_FILE_DEPS "${VA}")
 endforeach()
 
-# Follower Pokemon HGSS assets read from app0:followers/
-if(EXISTS "${ROOT}/assets/followers")
-    list(APPEND VPK_FILE_ARGS -a "${ROOT}/assets/followers=followers")
-    list(APPEND VPK_FILE_DEPS "${ROOT}/assets/followers/sources.txt")
+# Follower Pokemon HGSS assets consolidated into app0:followers/followers.pak
+file(GLOB_RECURSE FOLLOWER_ASSETS CONFIGURE_DEPENDS
+    "${ROOT}/assets/followers/mon/*.bin"
+    "${ROOT}/assets/followers/text/*.bin")
+if(FOLLOWER_ASSETS)
+    set(FOLLOWERS_PAK "${CMAKE_BINARY_DIR}/followers.pak")
+    add_custom_command(
+        OUTPUT "${FOLLOWERS_PAK}"
+        COMMAND "${Python3_EXECUTABLE}" "${ROOT}/tools/pack_followers.py"
+            --input "${ROOT}/assets/followers"
+            --output "${FOLLOWERS_PAK}"
+        DEPENDS "${ROOT}/tools/pack_followers.py" ${FOLLOWER_ASSETS}
+        COMMENT "Packing followers.pak"
+        VERBATIM)
+    list(APPEND VPK_FILE_ARGS -a "${FOLLOWERS_PAK}=followers/followers.pak")
+    list(APPEND VPK_FILE_DEPS "${FOLLOWERS_PAK}")
 endif()
 
 # Intro/title margin tiles read from app0:ui/intro_margins.bin

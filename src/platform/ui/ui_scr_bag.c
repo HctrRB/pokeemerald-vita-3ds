@@ -19,11 +19,17 @@
 #define LIST_Y 106
 #define ROW_H 40
 #define ROWS 9
+#define GBA_LIST_X 358
+#define GBA_LIST_W 562
+#define GBA_LIST_Y 108
+#define GBA_ROW_H 38
+#define GBA_ROWS 8
 #define MAX_ROWS 64
 
 enum { ACT_USE, ACT_GIVE, ACT_TOSS, ACT_REGISTER, ACT_CANCEL, ACT_COUNT };
 static const char *const sActNames[ACT_COUNT] = { "USE", "GIVE", "TOSS", "REGISTER", "CANCEL" };
 static const char *const sPocketTabs[POCKETS_COUNT] = { "ITEMS", "POKé BALLS", "TMs & HMs", "BERRIES", "KEY ITEMS" };
+static const char *const sPocketShort[POCKETS_COUNT] = { "ITEMS", "BALLS", "TMs", "BERRIES", "KEY" };
 static const char *const sPocketCat[POCKETS_COUNT] = { "ITEM", "BALL", "TM / HM", "BERRY", "KEY ITEM" };
 static const char *const sSortNames[UI_SORT_COUNT] = { "NUMBER", "A TO Z", "MOST", "LEAST" };
 
@@ -38,6 +44,11 @@ static UiQty sQty;
 static int32_t sTabX[POCKETS_COUNT], sTabW[POCKETS_COUNT];
 static int32_t sActs[4], sActCount, sActX[4], sActW;
 
+static int32_t BagVisRows(void)
+{
+    return gUiTheme->gbaFrame ? GBA_ROWS : ROWS;
+}
+
 void UiBag_SetGiveTo(int32_t partySlot)
 {
     sGiveTo = partySlot;
@@ -46,7 +57,7 @@ void UiBag_SetGiveTo(int32_t partySlot)
 static void Refresh(void)
 {
     sCount = UiGame_PocketItems(sPocket, sRows, MAX_ROWS);
-    UiList_Reset(&sList[sPocket], sCount + 1, ROWS);      // + CLOSE BAG
+    UiList_Reset(&sList[sPocket], sCount + 1, BagVisRows());      // + CLOSE BAG
 }
 
 static uint16_t CurItem(void)
@@ -173,8 +184,18 @@ static void OpenMenu(void)
     BuildActs(item);
     char name[24];
     UiGame_ItemName(item, name, sizeof(name));
-    const int32_t row = sList[sPocket].sel - sList[sPocket].first;
-    UiMenu_Open(&sMenu, name, LIST_X + LIST_W - 260, LIST_Y + row * ROW_H, 240);
+    if (gUiTheme->gbaFrame)
+    {
+        const int32_t row = sList[sPocket].sel - sList[sPocket].first;
+        int32_t my = GBA_LIST_Y + row * GBA_ROW_H;
+        if (my > 270) my = 270;
+        UiMenu_Open(&sMenu, name, 738, my, 196);
+    }
+    else
+    {
+        const int32_t row = sList[sPocket].sel - sList[sPocket].first;
+        UiMenu_Open(&sMenu, name, LIST_X + LIST_W - 260, LIST_Y + row * ROW_H, 240);
+    }
     for (int32_t i = 0; i < sActCount; i++)
         UiMenu_Add(&sMenu, sActNames[sActs[i]], sActs[i]);
     UiMenu_Add(&sMenu, "CANCEL", ACT_CANCEL);
@@ -182,6 +203,7 @@ static void OpenMenu(void)
 
 static bool Update(const UiInput *in)
 {
+    const bool gba = gUiTheme->gbaFrame;
     if (sQty.open)
     {
         const int32_t n = UiQty_Update(&sQty, in);
@@ -211,9 +233,25 @@ static bool Update(const UiInput *in)
     }
     // Battle Pyramid: one list (ITEMS), no pockets and no sorting, as its GBA bag
     const bool pyr = UiGame_InPyramid();
-    int32_t tab = pyr ? -1 : UiKit_TabHit(in, sTabX, sTabW, POCKETS_COUNT);
-    if (!pyr && (in->pressed & VITA_BTN_L)) tab = (sPocket + POCKETS_COUNT - 1) % POCKETS_COUNT;
-    if (!pyr && (in->pressed & VITA_BTN_R)) tab = (sPocket + 1) % POCKETS_COUNT;
+    int32_t tab = -1;
+    if (!pyr)
+    {
+        if (gba)
+        {
+            if (UiHit(in, 66, 68, 44, 34)) tab = (sPocket + POCKETS_COUNT - 1) % POCKETS_COUNT;
+            else if (UiHit(in, 276, 68, 44, 34)) tab = (sPocket + 1) % POCKETS_COUNT;
+            else
+            {
+                for (int32_t i = 0; i < POCKETS_COUNT; i++)
+                    if (UiHit(in, 24 + i * 60, 110, 56, 28))
+                        tab = i;
+            }
+        }
+        else
+            tab = UiKit_TabHit(in, sTabX, sTabW, POCKETS_COUNT);
+        if (in->pressed & (VITA_BTN_L | VITA_BTN_LEFT)) tab = (sPocket + POCKETS_COUNT - 1) % POCKETS_COUNT;
+        if (in->pressed & (VITA_BTN_R | VITA_BTN_RIGHT)) tab = (sPocket + 1) % POCKETS_COUNT;
+    }
     if (tab >= 0 && tab != sPocket)
     {
         sPocket = tab;
@@ -221,7 +259,8 @@ static bool Update(const UiInput *in)
         Refresh();
         return true;
     }
-    if ((in->pressed & VITA_BTN_SELECT) && !pyr)
+    const bool sortHit = gba && !pyr && UiHit(in, 178, 256, 140, 72);
+    if (((in->pressed & (VITA_BTN_SELECT | VITA_BTN_TRIANGLE)) || sortHit) && !pyr)
     {
         sSort = (sSort + 1) % UI_SORT_COUNT;
         UiGame_SortPocket(sPocket, sSort);
@@ -230,16 +269,30 @@ static bool Update(const UiInput *in)
         Refresh();
         return true;
     }
-    // Card buttons (touch)
-    BuildActs(CurItem());
-    for (int32_t i = 0; i < sActCount; i++)
-        if (UiHit(in, sActX[i], 440, sActW, 40))
+    if (!gba)
+    {
+        // Card buttons (touch)
+        BuildActs(CurItem());
+        if (sActCount > 0)
         {
-            PlaySE(SE_SELECT);
-            DoAction(sActs[i]);
-            return true;
+            sActW = (272 - (sActCount - 1) * 6) / sActCount;
+            for (int32_t i = 0; i < sActCount; i++)
+                sActX[i] = 32 + i * (sActW + 6);
         }
-    const int32_t a = UiList_Update(&sList[sPocket], in, LIST_X, LIST_Y, LIST_W, ROW_H, false);
+        for (int32_t i = 0; i < sActCount; i++)
+            if (UiHit(in, sActX[i], 440, sActW, 40))
+            {
+                PlaySE(SE_SELECT);
+                DoAction(sActs[i]);
+                return true;
+            }
+    }
+    sList[sPocket].rows = BagVisRows();
+    const int32_t lx = gba ? GBA_LIST_X : LIST_X;
+    const int32_t ly = gba ? GBA_LIST_Y : LIST_Y;
+    const int32_t lw = gba ? GBA_LIST_W : LIST_W;
+    const int32_t rh = gba ? GBA_ROW_H : ROW_H;
+    const int32_t a = UiList_Update(&sList[sPocket], in, lx, ly, lw, rh, false);
     if (a >= 0)
     {
         PlaySE(SE_SELECT);
@@ -253,8 +306,207 @@ static bool Update(const UiInput *in)
     return true;
 }
 
+static void BuildGba(void)
+{
+    const bool pyr = UiGame_InPyramid();
+    char buf[128];
+    UiW_GbaTopBar(UI_GBA_BG_BAG, UI_SPR_START_BAG, pyr ? "BATTLE BAG" : "BAG", 0, 0, false, NULL);
+
+    int32_t rx = UI_SCREEN_W - 14;
+    UiW_GbaHelpBadge(&rx, "O", "CLOSE", true);
+    if (!pyr)
+        UiW_GbaHelpBadge(&rx, "TRI", "SORT", false);
+    UiW_GbaHelpBadge(&rx, "X", sGiveTo >= 0 ? "GIVE" : "OPTIONS", false);
+
+    // Left column (14, 60, 316, 372)
+    // 1. Pocket signboard (.bag-pocket-sign)
+    UiW_Bevel(14, 60, 316, pyr ? 52 : 86, 4, UI_RGBA(20, 26, 28, 255), UI_RGBA(40, 56, 64, 255), UI_RGBA(32, 46, 54, 255),
+              2, UI_RGBA(56, 104, 136, 255), UI_RGBA(28, 52, 68, 255), 3);
+    UiW_Bevel(24, 68, 34, 34, 4, UI_RGBA(40, 56, 64, 255), UI_RGBA(248, 224, 136, 255), UI_RGBA(224, 168, 48, 255),
+              1, UI_RGBA(255, 246, 200, 255), UI_RGBA(192, 136, 24, 255), 0);
+    UiDraw_Sprite(UI_SPR_BALL_POKE, 29, 73, 1);
+
+    UiW_Bevel(66, 68, 254, 34, 3, UI_RGBA(40, 56, 64, 255), UI_RGBA(248, 232, 152, 255), UI_RGBA(232, 200, 104, 255),
+              2, UI_RGBA(255, 253, 240, 255), UI_RGBA(208, 176, 80, 255), 2);
+    if (!pyr)
+    {
+        UiW_GbaArrowH(75, 80, false, UI_RGBA(255, 253, 240, 255));
+        UiW_GbaArrowH(74, 79, false, UI_RGBA(208, 48, 48, 255));
+    }
+    UiW_GbaTextCentred(UI_FACE_VT323, 28, 86, 68, 214, 34, pyr ? "PYRAMID BAG" : sPocketTabs[sPocket],
+                       UI_RGBA(40, 56, 64, 255), UI_RGBA(255, 253, 240, 255));
+    if (!pyr)
+    {
+        UiW_GbaArrowH(305, 80, true, UI_RGBA(255, 253, 240, 255));
+        UiW_GbaArrowH(304, 79, true, UI_RGBA(208, 48, 48, 255));
+    }
+
+    if (!pyr)
+    {
+        for (int32_t i = 0; i < POCKETS_COUNT; i++)
+        {
+            const int32_t tx = 24 + i * 60;
+            const bool on = (i == sPocket);
+            if (on)
+            {
+                UiW_GbaRingBox(tx, 110, 56, 28, 3, UI_RGBA(255, 90, 32, 255), UI_RGBA(255, 230, 57, 255),
+                               UI_RGBA(255, 246, 205, 255), UI_RGBA(248, 224, 136, 255), C_WHITE, 0);
+                UiW_GbaTextCentred(UI_FACE_VT323, 20, tx, 110, 56, 28, sPocketShort[i], UI_RGBA(41, 49, 49, 255), C_WHITE);
+            }
+            else
+            {
+                UiW_GbaBox(tx, 110, 56, 28, 3, UI_RGBA(16, 21, 24, 255), UI_RGBA(27, 40, 46, 255), UI_RGBA(27, 40, 46, 255), 0, 0);
+                UiW_GbaTextCentred(UI_FACE_VT323, 20, tx, 110, 56, 28, sPocketShort[i], UI_RGBA(156, 192, 202, 255), UI_GBA_SHAD_DARK);
+            }
+        }
+    }
+
+    // 2. Stage card (.gba-win.dark-well.bag-stage-card)
+    const int32_t stageY = pyr ? 120 : 154;
+    const int32_t stageH = 432 - stageY;
+    UiW_GbaWin(14, stageY, 316, stageH, UI_GBA_WIN_DARK);
+
+    // Green checkerboard mat (.bag-mat)
+    const int32_t matY = stageY + 18;
+    const int32_t matH = stageH - 36;
+    UiW_GbaBox(26, matY, 142, matH, 4, UI_RGBA(20, 26, 28, 255), UI_RGBA(62, 146, 68, 255), UI_RGBA(62, 146, 68, 255), UI_RGBA(148, 246, 148, 255), 0);
+    UiDraw_PushClip(29, matY + 3, 136, matH - 6);
+    for (int32_t cy = 0; cy < matH; cy += 16)
+        for (int32_t cx = ((cy / 16) & 1) ? 16 : 0; cx < 136; cx += 32)
+            UiDraw_Rect(29 + cx, matY + 3 + cy, 16, 16, UI_RGBA(88, 186, 88, 255));
+    UiDraw_PopClip();
+
+    const uint16_t bagBase = UiGame_PlayerIsMale() ? UI_SPR_BAG_MALE_FIRST : UI_SPR_BAG_FEMALE_FIRST;
+    UiDraw_Sprite((uint16_t)(bagBase + (pyr ? ITEMS_POCKET : sPocket)), 33, matY + (matH - 128) / 2, 2);
+
+    // 3 Stats cards beside mat (.bag-mini-box: 178, matY, 140, matH)
+    const int32_t boxX = 178, boxW = 140, boxH = 74;
+    // 1) MONEY box
+    UiW_GbaBox(boxX, matY, boxW, boxH, 3, UI_RGBA(20, 26, 28, 255), C_WHITE, C_WHITE, UI_GBA_SHAD_LIGHT, 2);
+    UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, matY + 8, "MONEY", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+    snprintf(buf, sizeof(buf), "$%d", (int)UiGame_Money());
+    UiW_GbaText(UI_FACE_VT323, 28, boxX + 10, matY + 34, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+
+    // 2) SORT BY / CAPACITY box (tap to cycle sort)
+    const int32_t b2Y = matY + 84;
+    UiW_GbaBox(boxX, b2Y, boxW, boxH, 3, UI_RGBA(20, 26, 28, 255), C_WHITE, C_WHITE, UI_GBA_SHAD_LIGHT, 2);
+    if (pyr)
+    {
+        UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, b2Y + 8, "CAPACITY", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+        snprintf(buf, sizeof(buf), "%d / %d", (int)sCount, PYRAMID_BAG_ITEMS_COUNT);
+        UiW_GbaText(UI_FACE_VT323, 28, boxX + 10, b2Y + 34, buf, UI_RGBA(32, 156, 8, 255), UI_GBA_SHAD_LIGHT);
+    }
+    else
+    {
+        UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, b2Y + 8, "SORT BY", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+        UiW_GbaText(UI_FACE_VT323, 28, boxX + 10, b2Y + 34, sSortNames[sSort], UI_RGBA(32, 156, 8, 255), UI_GBA_SHAD_LIGHT);
+    }
+
+    // 3) IN POCKET / GIVE TO box (.bag-mini-box)
+    const int32_t b3Y = b2Y + 84;
+    UiW_GbaBox(boxX, b3Y, boxW, boxH, 3, UI_RGBA(20, 26, 28, 255), C_WHITE, C_WHITE, UI_GBA_SHAD_LIGHT, 2);
+    if (sGiveTo >= 0)
+    {
+        UiMon gm;
+        UiGame_Mon(sGiveTo, &gm);
+        UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, b3Y + 8, "GIVE TO", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+        UiDraw_PushClip(boxX + 8, b3Y + 30, boxW - 14, 38);
+        UiW_GbaText(UI_FACE_VT323, 28, boxX + 10, b3Y + 34, gm.name, UI_RGBA(32, 104, 168, 255), UI_GBA_SHAD_LIGHT);
+        UiDraw_PopClip();
+    }
+    else
+    {
+        UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, b3Y + 8, "IN POCKET", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("%d KINDS"), (int)sCount);
+        UiW_GbaText(UI_FACE_VT323, 28, boxX + 10, b3Y + 34, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+    }
+
+    // Right gold ledger (.gba-win.bag-gold)
+    UiW_GbaWin(342, 60, 604, 372, UI_GBA_WIN_GOLD);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("%s POCKET"), pyr ? "PYRAMID" : sPocketTabs[sPocket]);
+    UiW_GbaTextMid(UI_FACE_VT323, 28, 362, 70, 32, buf, UI_RGBA(92, 50, 16, 255), UI_RGBA(255, 250, 224, 255));
+    UiW_GbaTextMid(UI_FACE_VT323, 28, 868, 70, 32, "QTY", UI_RGBA(92, 50, 16, 255), UI_RGBA(255, 250, 224, 255));
+    UiDraw_Rect(358, 103, 572, 3, UI_RGBA(200, 160, 56, 255));
+
+    UiList *const l = &sList[sPocket];
+    l->rows = GBA_ROWS;
+    UiDraw_PushClip(GBA_LIST_X, GBA_LIST_Y, GBA_LIST_W, GBA_ROWS * GBA_ROW_H);
+    for (int32_t r = 0; r < GBA_ROWS && l->first + r < sCount + 1; r++)
+    {
+        const int32_t i = l->first + r;
+        const int32_t y = GBA_LIST_Y + r * GBA_ROW_H;
+        const bool on = (i == l->sel);
+        if (on)
+        {
+            UiW_GbaBox(GBA_LIST_X, y + 1, GBA_LIST_W - 6, GBA_ROW_H - 2, 4, UI_RGBA(230, 148, 65, 255),
+                       UI_RGBA(255, 246, 205, 255), UI_RGBA(255, 246, 205, 255), C_WHITE, 0);
+            UiW_GbaArrowH(GBA_LIST_X + 9, y + 14, true, UI_GBA_SHAD_LIGHT);
+            UiW_GbaArrowH(GBA_LIST_X + 8, y + 13, true, UI_RGBA(230, 8, 8, 255));
+        }
+        else if (i < sCount)
+        {
+            for (int32_t dx = 8; dx < GBA_LIST_W - 14; dx += 10)
+                UiDraw_Rect(GBA_LIST_X + dx, y + GBA_ROW_H - 2, 6, 2, UI_RGBA(226, 212, 152, 255));
+        }
+        if (i == sCount)
+        {
+            UiW_GbaTextMid(UI_FACE_VT323, 28, GBA_LIST_X + 60, y, GBA_ROW_H, "CLOSE BAG",
+                           on ? UI_RGBA(49, 49, 49, 255) : UI_RGBA(106, 100, 84, 255), UI_GBA_SHAD_LIGHT);
+            continue;
+        }
+        UiSpr_ItemIcon(sRows[i].item, GBA_LIST_X + 26, y + 7, 1);
+        char name[24];
+        UiGame_ItemName(sRows[i].item, name, sizeof(name));
+        const int32_t nw = UiW_GbaTextMid(UI_FACE_VT323, 28, GBA_LIST_X + 60, y, GBA_ROW_H, name, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        if (UiGame_RegisteredItem() == sRows[i].item)
+            UiW_Chip(GBA_LIST_X + 70 + nw, y + 6, "SEL", true);
+        if (sPocket != KEYITEMS_POCKET)
+        {
+            snprintf(buf, sizeof(buf), "x%2u", (unsigned)sRows[i].qty);
+            UiW_GbaTextMid(UI_FACE_VT323, 28, GBA_LIST_X + GBA_LIST_W - 16 - UiText_Width(UI_FACE_VT323, 28, buf),
+                           y, GBA_ROW_H, buf, UI_RGBA(74, 74, 82, 255), UI_GBA_SHAD_LIGHT);
+        }
+    }
+    UiDraw_PopClip();
+    UiW_ScrollBar(924, GBA_LIST_Y, GBA_ROWS * GBA_ROW_H, l->first, GBA_ROWS, sCount + 1);
+
+    // Bottom GBA footer description (.gba-msg)
+    UiW_GbaMsg(14, 438, 932, 98, false, true);
+    UiW_GbaBox(38, 454, 66, 66, 4, UI_RGBA(40, 56, 64, 255), C_WHITE, C_WHITE, UI_GBA_SHAD_LIGHT, 0);
+    const uint16_t item = CurItem();
+    if (item == ITEM_NONE)
+    {
+        UiDraw_Sprite(UI_SPR_BALL_POKE, 59, 475, 1);
+        UiW_GbaTextMid(UI_FACE_VT323, 28, 118, 444, 86, sCount ? "Close the BAG and return to the game." : "This pocket is currently empty.",
+                       UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+    }
+    else
+    {
+        UiSpr_ItemIcon(item, 47, 463, 2);
+        char name[24];
+        UiGame_ItemName(item, name, sizeof(name));
+        const int32_t tw = UiW_GbaText(UI_FACE_PS2P, 16, 118, 452, name, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        if (sPocket != KEYITEMS_POCKET)
+        {
+            snprintf(buf, sizeof(buf), UiLocale_Translate("IN BAG: x%u"), (unsigned)sRows[l->sel].qty);
+            UiW_GbaText(UI_FACE_PS2P, 16, 134 + tw, 452, buf, UI_RGBA(32, 156, 8, 255), UI_GBA_SHAD_LIGHT);
+        }
+        UiGame_ItemDescription(item, buf, sizeof(buf));
+        UiW_GbaTextWrapped(UI_FACE_VT323, 28, 118, 476, 786, 26, buf, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT, 2);
+    }
+    if (sMenu.open)
+        UiMenu_Draw(&sMenu);
+    if (sQty.open)
+        UiQty_Draw(&sQty, item);
+}
+
 static void Build(void)
 {
+    if (gUiTheme->gbaFrame)
+    {
+        BuildGba();
+        return;
+    }
     const bool pyr = UiGame_InPyramid();
     const char *pocketTabs[POCKETS_COUNT];
     for (int32_t i = 0; i < POCKETS_COUNT; ++i)

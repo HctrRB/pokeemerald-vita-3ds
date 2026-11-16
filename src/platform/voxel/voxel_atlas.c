@@ -441,6 +441,8 @@ static bool ComposeAt(const struct AtlasSource *src, const uint16_t *entries,
         }
 #undef LINEAR_TEXEL
     }
+    if (!black)
+        VoxelGrade_ApplyTileRelief16x16(dest, width, height, baseX, baseY);
     return black;
 }
 

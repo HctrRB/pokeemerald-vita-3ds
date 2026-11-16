@@ -1,14 +1,12 @@
 // Zone sign of the new UI (design/stitch/_tools/_sign_badge.html): replaces the GBA map name popup
 // (map_name_popup.c) when the new UI is on. It is an overlay, not a screen: the game keeps its
 // input. The name sits on the GBA popup's own plate of that zone (wood, marble, stone, brick, sea),
-// at x2; towns and cities add their sign's motto (the game's own text, ui_town_signs.h) in a box
-// below, in the theme's regular-weight text face. Slides in, stays, slides out.
+// at x2. Slides in, stays, slides out.
 
 #include <stdio.h>
 #include <string.h>
 #include "ui_internal.h"
 #include "ui_game.h"
-#include "ui_town_signs.h"
 #include "platform/ui.h"
 
 #include "global.h"
@@ -34,14 +32,6 @@ void Ui_HideZoneSign(void)
         sTicks = SLIDE;
 }
 
-static const char *Motto(uint16_t sec)
-{
-    for (size_t i = 0; i < sizeof(sTownSigns) / sizeof(sTownSigns[0]); i++)
-        if (sTownSigns[i].mapSec == sec)
-            return sTownSigns[i].motto;
-    return NULL;
-}
-
 // Core 1, from Ui_Tick while no screen is open: draws into the list being built
 bool UiSign_Draw(void)
 {
@@ -56,40 +46,22 @@ bool UiSign_Draw(void)
 
     char name[32];
     UiGame_MapSecName(sSec, name, sizeof(name));
-    const char *motto = UiLocale_Translate(Motto(sSec));
     const UiTheme *t = gUiTheme;
     bool8 underwater = FALSE;
     const uint8_t plateTheme = MapNamePopUp_ThemeForUi(sSec, &underwater);
 
     // The name: EMERALD keeps its title face (Press Start 2P 16), the others the sign face
     const bool pixel = t->faceSign == UI_FACE_VT323;
-    const uint8_t nameFace = pixel ? UI_FACE_PS2P : t->faceSign, namePx = pixel ? 16 : UI_BODY_PX;
-    const int32_t nameW = UiText_Width(nameFace, namePx, name);
+    const uint8_t nameFace = pixel ? UI_FACE_PS2P : t->faceSign;
+    const uint8_t namePx = pixel ? 16 : (t->faceSign == 15 ? 32 : UI_BODY_PX);
+    const int32_t nameW = UiText_InkWidth(nameFace, namePx, name);
     int32_t w = nameW + 96;
-    if (w < 240) w = 240;
-    if (w > 440) w = 440;
-    const int32_t x = 16, y = 12 - off, plateH = 80;
+    if (w < 260) w = 260;
+    if (w > 460) w = 460;
+    const int32_t x = 16, y = 12 - off;
     UiSpr_ZonePlate(plateTheme, underwater, x, y, w);
-    UiText_DrawMid(nameFace, namePx, x + (w - nameW) / 2, y + 16, plateH - 32, name, UI_RGBA(43, 43, 51, 255));
-
-    if (motto)
-    {
-        // The motto drops down under the plate once it has slid in: the theme's dark colour at
-        // 67 %, the text face at regular weight, white
-        const int32_t bw = w - 24 < 376 ? 376 : w - 24, bx = x + 12, by = y + plateH - 2, lineH = 30;
-        const int32_t lines = UiW_TextWrappedF(t->faceSign, UI_BODY_PX, 0, 0, bw - 32, lineH, motto, 0, 4);
-        const int32_t full = 22 + lines * lineH;
-        int32_t drop = age <= SLIDE ? 0 : (age - SLIDE) * full / 10;
-        if (drop > full) drop = full;
-        if (sTicks < SLIDE) drop = full * sTicks / SLIDE;
-        if (drop > 0)
-        {
-            UiDraw_PushClip(bx, by, bw, drop);
-            UiDraw_Rect(bx, by, bw, full, (t->darkBot & 0x00FFFFFFu) | (171u << 24));
-            UiDraw_Rect(bx, by + full - 2, bw, 2, UI_RGBA(0, 0, 0, 102));
-            UiW_TextWrappedF(t->faceSign, UI_BODY_PX, bx + 16, by + 10, bw - 32, lineH, motto, UI_RGBA(255, 255, 255, 255), 4);
-            UiDraw_PopClip();
-        }
-    }
+    UiDraw_PushClip(x + 12, y + 6, w - 24, 58);
+    UiText_DrawCentred(nameFace, namePx, x + 12, y + 6, w - 24, 58, name, UI_RGBA(43, 43, 51, 255));
+    UiDraw_PopClip();
     return true;
 }

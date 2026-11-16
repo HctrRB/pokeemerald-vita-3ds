@@ -1,0 +1,96 @@
+# Current state and next steps. Earlier logs: docs/history/handoff_2026-11-05.yaml and the
+# performance study docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
+last_updated: "2026-11-16"
+branch: main
+current_milestone: "HD-2D 30 FPS upgrade, native UI completion, voxel terrain fixes & hardware verification"
+
+phases:
+  phase_0_safety_net: done
+  phase_1_file_cleanup: done
+  phase_2_documentation: done
+  phase_3_wide_scene: done            # stage scenes, pass 6 masks, 240-px overlay; HM banner deferred
+  phase_4_structure_readability: paused   # 4a done (RenderFrame split); 4b/4c (voxel_renderer.c file split) left; tag rollback/pre-phase4
+  phase_5_typing_and_warnings: paused     # items 1, 3 and fixed-width types done; const pass pending now that UIs are replaced; tag rollback/pre-phase5
+  phase_6_public_repo_and_docs: done      # fetch_assets, build_all, BUILD_YOUR_OWN/COMPILA_TU_VPK, NOTICE.md, full docs sync + dead-code & unused SDL2_image removal
+  chunk_streaming_performance: done       # E0-E4 + no-wait frames; tags perf/e0 .. perf/nowait
+  native_ui_core_and_themes: done         # src/platform/ui/ Phases A-H, battle HUD Phases 0-6, 6 menu themes (GBA default + RED/EMERALD/CRYSTAL/TROPICAL/ROYAL) + unified GBA Gen 3 x Vita 20-screen UI/mockup (clean VT323 in ui_atlas.bin 1024x928, alpha 152 translucency, centered signs, fixed PokéNav/Pass/Bag header, GBA bevel/shadow/highlight polish & full UI nav/hitbox audit), old 3DS UI removed
+  native_ui_remaining_screens: pending    # batch 2 & 3 secondary GBA screens
+  voxelgen_terrain_fixes: in_progress     # local untracked voxelgen/ quick relief + 3D viewer/editor, Route 119 bridge & Lilycove/Mirage Island fixes, wide building culling extent (83300a5)
+  ext_palettes_and_visible_wilds: done    # F1-F7 implemented per docs/plan/PLAN_PALETAS_EXT.md
+  hd2d_30fps_upgrade: done                # 30 FPS HD-2D post-FX (Kawase bloom, DoF, split-tone, point lights, foliage sway/anim/ash-grass, surface FX); 60 (CLASSIC) untouched
+
+tags:
+  stable: stable/2026-11-05               # last tested build before the docs cleanup
+  rollback_pre_perf: rollback/pre-perf-streaming
+  rollback_pre_phase4: rollback/pre-phase4
+  rollback_pre_phase5: rollback/pre-phase5
+
+performance_sesion_27:   # logs/sesion 27, 60 FPS, 3D
+  - Frame mean / p95 / p99: 7.5 / 14.3 / 19.7 ms; >16.7 ms 1.65 %, >33.3 ms 0.01 % (was 12.7 % and
+    0.83 % before the work). No visible holes; chunk builds on Core 2, Core 0 waits gone.
+  - GBA menus and the battle HUD have since been replaced by the native touch UI in
+    src/platform/ui/ (~0.8 ms Core 0 / ~0.3 ms Core 1 in session 31, down from 5-18 ms in Pass 6).
+
+vita3k:
+  - Vita3K (A:\juegos\Vita3k, v0.2.1) boots the game with the Vulkan backend but shows a black
+    screen (vitaGL output not presented); the OpenGL backend crashes the emulator. Visual checks
+    and performance numbers are taken on hardware.
+
+open_issues:
+  - Secondary screens still falling back to GBA (Pass 6): post-catch Pokedex entry over 3D battle,
+    summary opened from a PC box (sBoxCursorArea), Move Relearner / Deleter, Contest / Battle
+    Frontier party choice, Battle Pyramid bag in battle and its "bag full: toss" step, and Easy
+    Chat Bard song / quiz variants. Link / recorded battles, Wally's catching tutorial and Battle
+    Arena judgment intentionally keep the GBA HUD. Walda's FRIENDS wallpaper ignores tile frames.
+  - Chunk worker shares Core 2 with DrawWorker1/2: overlay scanlines 3.5 -> 5 ms on average when
+    running together. Fix if needed: lower VoxelChunkWorker priority below DrawWorker1/2 (docs/THREADS.md).
+  - Long mountain chunks cost 15-35 ms on Core 2; lighting is most of it (E5b pending).
+  - Map crossing frame still costs 10-20 ms when an atlas slot has to be composed from scratch
+    (ComposeAtlasSlot is not spread over frames; extensions are).
+  - Entity snapshot double buffer can be overwritten while Core 0 reads it at 30 FPS (docs/THREADS.md).
+  - Long-session CDRAM stability (>30 min play) still needs hardware verification after raising
+    vitaGL pools to 40 MB RAM / 88 MB CDRAM (aecb746) to stop chunk VBO fragmentation; also monitor
+    intermittent stalls caused by synchronous memory card writes (ui_stall.c, 120-frame perf_frames.csv flush).
+  - Faulty voxel terrain and black relief-mesh holes on routes and caves catalogued in
+    docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md (Route 119 long bridge, Lilycove and Mirage Island fixed locally).
+
+untested_on_hardware:
+  - GBA Gen 3 x Vita UI skin (UI_THEME_GBA default, matched against design/stitch/gba_vita/index.html 20-screen mockup):
+    01_hub (centered zone sign + Hub plate, 2x2 dark status card, 2x3 mini-party, START menu) & 10_save;
+    02_party & 04_summary (clipped long Pokemon names / levels / abilities); 03_bag (redundant header box
+    removed, fixed 304px pager, gold 8-row ledger, Battle Pyramid bag); 05_battle_cmd & 06_battle_fight
+    (asymmetric plates + diagonal tails); 07_pokedex (alpha-152 translucency + clean header, cry_meter);
+    08_pokenav (redundant bottom mode dock removed; L/R & touch navigation + fixed Ribbon memo height); 09_card
+    (Gold Card + clipped Frontier Pass rows + R ribbon/badge cycling); 11_options (GBA top pager + curved UiW_GbaBox list/pills/help).
+  - GBA skin polish pass (ui_widgets.c: 9-slice vibrant Emerald frames, specular top highlights & bottom inner bevels,
+    Hp/Exp track borders & highlights, tiled backdrop scanlines, L/R & pager bevels) and UI navigation/hitbox audit fixes.
+  - Clean antialiased GBA typography (ui_atlas.bin 1024x928, 32 fonts, 3168 glyphs; UI_THEME_GBA
+    faceTitle=14, faceBody=15, faceSign=15), semi-transparent alpha-152 menu backdrops showing the
+    3D voxel world behind menus, non-GBA themes (RED/EMERALD/CRYSTAL/TROPICAL/ROYAL), and centered
+    biome zone entry plates (ui_sign.c, ui_scr_hub.c).
+  - PC boxes (ui_scr_pc.c: GBA Emerald skin + wallpaper drop shadow, centered box plate/L-R/info pills,
+    curved selection + pointer triangle, GBA popups) and player's PC (ui_scr_playerpc.c: items, mailbox / mail reading, room
+    and Secret Base decoration return flow via UiPlayerPc_ReenterFromField).
+  - Decoration shops (ui_scr_mart.c) and four-move forget-move screen (ui_scr_forget.c).
+  - Naming keyboard (ui_scr_naming.c), Easy Chat (ui_scr_easychat.c), berry choice (ui_scr_berry.c),
+    contest appeal choice (ui_contest.c), Day Care / tutor party choice (ui_scr_choose.c), multi-battle
+    party and Battle Pyramid field bag.
+  - Dialogue mirrors (ui_mirror.c) in 2D evolution, egg-hatch and trade scenes, and hold-frame flicker
+    suppression after PokeNav calls / YES-NO boxes.
+  - Smooth fade into 3D wild battles (battle_setup.c).
+  - Wide building culling extent (bldWest/East/North/South/Top in 83300a5, e.g. Rustboro's Devon Corp.).
+  - Long-session stability with 40 MB RAM / 88 MB CDRAM vitaGL pools (aecb746).
+  - Extended sprite palettes (`gPlttExt`) for the follower, its Poké Ball and reflection, and visible wild Pokémon in the overworld (`visible_wild` [default FEW], `encounter_rate` [default NORMAL]).
+  - HD-2D 30 FPS final ash-grass polish (`19bb1ab`): `gTileset_Fallarbor` `MB_ASHGRASS` 3D sprite in Route 113 switching to green `MB_TALL_GRASS` on step (core HD-2D 30 FPS pass—DoF, 2-pass Kawase bloom, point lights, foliage wind-sway/player-bend shader, flower frame anim, grass step particles, softer fog—already verified at 30.1 FPS / 60.0 Hz / 0 holes in `logs/sesion 43/perf_summary.txt`).
+
+next_steps:
+  - Test the current VPK (build_vita.ps1) on PS Vita against untested_on_hardware and inspect
+    ux0:data/POKEVITA/perf_summary.txt (free CDRAM and PHYCONT).
+  - Implement Batch 2 & 3 of remaining secondary GBA screens in src/platform/ui/: post-catch Pokedex
+    entry, PC box summary, Move Relearner / Deleter, Contest / Frontier party choice, Battle Pyramid
+    in-battle / toss bag, and Easy Chat Bard / quiz.
+  - Continue map-by-map voxel terrain fixes (docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md,
+    docs/plan/ESTUDIO_TERRENO_RUTA119.md) and let VoxelFile_Open try ux0:data/POKEVITA/voxel/ before
+    app0:voxel/ so relief.bin edits can be tested without rebuilding the VPK.
+  - Resume Refactoring Phase 4b/4c (split voxel_renderer.c modules) and Phase 5 (const pass in
+    src/platform/) per docs/plan/ESTUDIO_REFACTORIZACION.md.

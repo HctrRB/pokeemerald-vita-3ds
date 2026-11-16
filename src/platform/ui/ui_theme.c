@@ -1,6 +1,6 @@
 // Menu themes of the new UI (OPTIONS > GENERAL > DISPLAY > MENU COLOR, extra "ui_theme").
-// RED is the default. EMERALD is the original design/stitch look; the others come from the
-// 3DS-style variants reviewed on 2026-11-13 (crystal, tropical, royal).
+// GBA is the default. EMERALD is the original design/stitch look; RED and the others come from
+// the 3DS-style variants reviewed on 2026-11-13 (crystal, tropical, royal).
 
 #include "ui_internal.h"
 #include "platform/vita_extras.h"
@@ -8,6 +8,33 @@
 #define RGB(r, g, b) UI_RGBA(r, g, b, 255)
 
 static const UiTheme sThemes[UI_THEME_COUNT] = {
+    [UI_THEME_GBA] = {
+        .name = "GBA",
+        .faceTitle = 14, .faceBody = 15, .faceSign = 15,   // Clean antialiased VT323 matching mockup
+        .frameA = UI_RGBA(35, 88, 82, 152), .barTop = RGB(46, 59, 64), .barBot = RGB(32, 41, 45), .barLine = RGB(115, 205, 164),
+        .onFrame = RGB(255, 255, 255), .onSoft = RGB(168, 224, 208), .title = RGB(255, 230, 57),
+        .paper0 = RGB(255, 255, 255), .paper1 = RGB(244, 244, 234), .paper2 = RGB(232, 232, 216), .paperEdge = RGB(40, 48, 48),
+        .paperShade = RGB(216, 221, 208), .paperStrip = RGB(40, 56, 64), .stripInk = RGB(255, 255, 255), .stripSoft = RGB(255, 230, 57),
+        .rowA = RGB(255, 255, 255), .rowB = RGB(244, 244, 234), .rowLine = RGB(216, 220, 208), .ink = RGB(48, 48, 48), .inkSoft = RGB(112, 120, 112),
+        .selTop = RGB(255, 246, 205), .selBot = RGB(252, 232, 146), .selEdge = RGB(216, 80, 32), .selInk = RGB(32, 24, 8), .selArrow = RGB(230, 8, 8),
+        .tabTop = RGB(255, 230, 57), .tabBot = RGB(232, 184, 24), .tabEdge = RGB(40, 48, 48), .tabHi = RGB(255, 248, 184), .tabInk = RGB(40, 48, 48),
+        .rail = RGB(22, 32, 36), .railEdge = RGB(56, 152, 120),
+        .keyTop = RGB(56, 152, 120), .keyBot = RGB(36, 108, 82), .keyLight = RGB(115, 205, 164), .keyDark = RGB(24, 68, 52), .keyInk = RGB(255, 255, 255),
+        .capTop = RGB(35, 51, 57), .capBot = RGB(24, 38, 44), .capEdge = RGB(40, 48, 48), .capHi = RGB(115, 205, 164),
+        .darkTop = RGB(35, 51, 57), .darkBot = RGB(27, 44, 50), .darkEdge = RGB(40, 48, 48), .darkHi = RGB(115, 205, 164),
+        .winTop = RGB(44, 134, 104), .winBot = RGB(23, 94, 71), .winInk = RGB(255, 255, 255),
+        .chipTop = RGB(62, 144, 112), .chipBot = RGB(40, 112, 84), .chipEdge = RGB(40, 48, 48), .chipInk = RGB(255, 255, 255),
+        .dlgEdge = RGB(40, 48, 48), .dlgTop = RGB(255, 255, 255), .dlgBot = RGB(248, 246, 236), .dlgShade = RGB(216, 221, 208),
+        .btnTop = { RGB(56, 152, 120), RGB(224, 138, 42), RGB(216, 64, 48) }, .btnBot = { RGB(36, 108, 82), RGB(184, 102, 26), RGB(168, 40, 28) },
+        .btnEdge = RGB(40, 48, 48), .btnInk = RGB(255, 255, 255),
+        .accent = 0, .gold = RGB(255, 230, 57), .dim = UI_RGBA(16, 28, 28, 168), .shadowCol = UI_RGBA(0, 0, 0, 110),
+        .plateTop = RGB(255, 251, 230), .plateBot = RGB(234, 226, 186), .plateEdge = RGB(40, 48, 48), .plateShade = RGB(200, 192, 152), .plateRing = RGB(115, 205, 164),
+        .lvInk = RGB(48, 48, 48), .hpInk = RGB(255, 230, 57), .gauge = RGB(40, 48, 48),
+        .cmdTop = { RGB(232, 72, 72), RGB(232, 152, 40), RGB(48, 168, 88), RGB(72, 120, 200) },
+        .cmdBot = { RGB(192, 40, 40), RGB(192, 112, 16), RGB(32, 128, 64), RGB(48, 88, 160) },
+        .cmdEdge = RGB(40, 48, 48), .cmdInk = RGB(255, 255, 255), .em = RGB(230, 8, 8),
+        .radius = 6, .selRadius = 4, .edge = 3, .shadow = 4, .shadowR = 6, .chamfer = false, .gloss = false, .bevel = true, .stripes = false, .gbaFrame = true,
+    },
     [UI_THEME_RED] = {
         .name = "RED",
         .faceTitle = 2, .faceBody = 3, .faceSign = 10,   // Saira Condensed
@@ -145,10 +172,10 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
     },
 };
 
-const UiTheme *gUiTheme = &sThemes[UI_THEME_RED];
+const UiTheme *gUiTheme = &sThemes[UI_THEME_GBA];
 
 void UiTheme_Refresh(void)
 {
     const int v = VitaExtras_GetFast(FAST_EXTRA_UI_THEME);
-    gUiTheme = &sThemes[v >= 0 && v < UI_THEME_COUNT ? v : UI_THEME_RED];
+    gUiTheme = &sThemes[v >= 0 && v < UI_THEME_COUNT ? v : UI_THEME_GBA];
 }

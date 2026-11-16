@@ -1499,6 +1499,7 @@ void CB1_Overworld(void)
 {
     if (gMain.callback2 == CB2_Overworld)
         DoCB1_Overworld(gMain.newKeys, gMain.heldKeys);
+    VisibleWild_Update();
     FollowerMon_Update();
 }
 

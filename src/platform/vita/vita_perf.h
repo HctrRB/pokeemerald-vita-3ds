@@ -64,6 +64,9 @@ typedef enum
     VITA_PERF_T_LIGHT_API,       // in chunk builds: all time inside the lighting entry points
     VITA_PERF_T_UI2_RENDER,      // new UI: Core 0 pass (vertices + draw call)
     VITA_PERF_T_UI2_TICK,        // new UI: Core 1 time to build the list drawn this frame
+    VITA_PERF_T_POST_DOF,        // HD-2D post: downsample + Kawase blur
+    VITA_PERF_T_POST_BLOOM,      // HD-2D post: bright pass + emitters + bloom blur
+    VITA_PERF_T_POST_COMPOSITE,  // HD-2D post: final composite + split-tone + vignette
     VITA_PERF_T_COUNT
 } VitaPerfTimer;
 

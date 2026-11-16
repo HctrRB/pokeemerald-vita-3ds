@@ -7,14 +7,22 @@
 
 #include "3ds_field_view.h"
 #include "3ds_platform.h"
+#include "platform/vita_extras.h"
 #include "voxel_camera.h"
 #include "voxel_relief.h"
 #include "voxel_world.h"
 
 #define VOXEL_DEG_TO_RAD (3.14159265358979323846f / 180.0f)
 #define VOXEL_FOLLOW 0.15f
-/* The follow camera's vertical field of view. */
+/* The follow camera's vertical field of view and pitch presets. */
 #define VOXEL_CAMERA_FOV 35.0f
+#define VOXEL_CAMERA_PITCH_DEFAULT 35.0f
+#define VOXEL_CAMERA_PITCH_LOW 25.0f
+
+static float DesiredPitch(void)
+{
+    return VitaExtras_GetFast(FAST_EXTRA_VOXEL_FOV) ? VOXEL_CAMERA_PITCH_LOW : VOXEL_CAMERA_PITCH_DEFAULT;
+}
 
 /* ── The swoop's end pose (VoxelCamera_Swoop; its pitch is in the header) ── */
 /* The field of view stays the follow camera's; at the top the projection
@@ -57,7 +65,7 @@ void VoxelCamera_Init(VoxelCamera *cam)
     cam->targetX = 0.0f;
     cam->targetY = 0.0f;
     cam->targetZ = 0.0f;
-    cam->pitch = 40.0f;
+    cam->pitch = DesiredPitch();
     cam->yaw = 0.0f;
     cam->distance = 9.0f;
     cam->fov = VOXEL_CAMERA_FOV;
@@ -101,8 +109,9 @@ static void AdaptDistance(VoxelCamera *cam)
         if (scale > 5.0f)
             scale = 5.0f;
     }
+    cam->fov = VOXEL_CAMERA_FOV;
     cam->distance = ((8.0f + scale) * 0.90f) * 100.0f / (float)CtrSettings_VoxelZoom();
-    cam->pitch = (float)CtrSettings_VoxelPitch();
+    cam->pitch = DesiredPitch();
 }
 
 static float Between(float value, float lo, float hi)

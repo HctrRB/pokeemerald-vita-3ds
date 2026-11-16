@@ -5,6 +5,7 @@
 #include "pokemon_icon.h"
 #include "platform/vita_extras.h"
 #include "platform/vita_daynight.h"
+#include "platform/vita_pak.h"
 
 #define CtrLog_Write(...) ((void)0)
 
@@ -16,6 +17,10 @@ static void *VitaData_Load(const char *path, u32 *outSize)
     long size;
 
     *outSize = 0;
+    buf = VitaPak_LoadFollower(path, outSize);
+    if (buf != NULL)
+        return buf;
+
     snprintf(fullPath, sizeof(fullPath), "app0:%s", path);
     f = fopen(fullPath, "rb");
     if (!f)
@@ -63,6 +68,9 @@ static bool8 VitaData_Exists(const char *path)
 {
     char fullPath[256];
     FILE *f;
+
+    if (VitaPak_FollowerExists(path))
+        return TRUE;
 
     snprintf(fullPath, sizeof(fullPath), "app0:%s", path);
     f = fopen(fullPath, "rb");
@@ -505,27 +513,60 @@ const struct ObjectEventGraphicsInfo *FollowerMon_GraphicsInfo(void)
     return &sGraphicsInfo;
 }
 
+static u8 LoadExtOrFallbackPalette(u16 tag, const u16 *colors, bool8 *isExt)
+{
+    struct SpritePalette pal = {colors, tag};
+    u8 slot = LoadSpritePaletteExt(&pal);
+
+    if (slot != 0xFF)
+    {
+        *isExt = TRUE;
+        if (gMain.callback2 == CB2_Overworld)
+            UpdateSpritePaletteExtWithWeather(slot);
+        return slot;
+    }
+
+    *isExt = FALSE;
+    slot = LoadSpritePalette(&pal);
+    if (slot != 0xFF && gMain.callback2 == CB2_Overworld)
+        UpdateSpritePaletteWithWeather(slot);
+    return slot;
+}
+
 /* Each time the follower's sprite is made (event_object_movement.c): its ext
  * palette, loaded again if the field freed it (a battle, a menu). */
 void FollowerMon_BindSprite(struct Sprite *sprite)
 {
-    u8 slot = IndexOfSpritePaletteTag(FOLLOWER_PAL_TAG);
+    u8 slot;
+    bool8 isExt;
 
     if (sFollower.file == NULL)
         return;
-    if (slot == 0xFF)
+
+    slot = IndexOfSpritePaletteExtTag(FOLLOWER_PAL_TAG);
+    if (slot != 0xFF)
+    {
+        SetSpriteExtPalette(sprite, slot);
+        return;
+    }
+
+    slot = IndexOfSpritePaletteTag(FOLLOWER_PAL_TAG);
+    if (slot != 0xFF)
+    {
+        sprite->oam.paletteNum = slot;
+        return;
+    }
+
     {
         const u16 *colors = (const u16 *)(sFollower.file + FMN_HEADER) + (sFollower.shiny ? 16 : 0);
-        struct SpritePalette pal = {colors, FOLLOWER_PAL_TAG};
-
-        slot = LoadSpritePalette(&pal);
-        if (slot == 0xFF)
-            return;
-
-        if (gMain.callback2 == CB2_Overworld)
-            UpdateSpritePaletteWithWeather(slot);
+        slot = LoadExtOrFallbackPalette(FOLLOWER_PAL_TAG, colors, &isExt);
     }
-    sprite->oam.paletteNum = slot;
+    if (slot == 0xFF)
+        return;
+    if (isExt)
+        SetSpriteExtPalette(sprite, slot);
+    else
+        sprite->oam.paletteNum = slot;
 }
 
 static void RemoveFollower(void)
@@ -544,16 +585,117 @@ static void RemoveFollower(void)
  * A file let go is freed one creation later, as the follower's: a frame copy
  * from it may still be queued for VBlank.
  */
-u8 FollowerMon_WildSprite(u32 slot, u16 species, u32 personality, bool8 shiny) { (void)slot; (void)species; (void)personality; (void)shiny; return MAX_SPRITES; }
-void FollowerMon_WildPrefetch(u16 species) { (void)species; }
-void FollowerMon_WildFace(struct Sprite *sprite, s8 dx, s8 dy, bool8 walking) { (void)sprite; (void)dx; (void)dy; (void)walking; }
-void FollowerMon_WildFree(u32 slot, struct Sprite *sprite) { (void)slot; (void)sprite; }
+#define WILD_SLOTS       12
+#define WILD_PAL_TAG     0x7F01   /* + slot (0x7F01..0x7F0C) */
+
+static struct
+{
+    u8 *file;
+    u8 *stale;
+    struct SpriteFrameImage frames[FMN_FRAMES];
+} sWild[WILD_SLOTS];
+
+u8 FollowerMon_WildSprite(u32 slot, u16 species, u32 personality, bool8 shiny)
+{
+    struct SpriteTemplate template = {0};
+    char key[8];
+    u32 frameBytes, i;
+    u8 *file, spriteId, pal;
+
+    if (slot >= WILD_SLOTS)
+        return MAX_SPRITES;
+    free(sWild[slot].stale);
+    sWild[slot].stale = NULL;
+    MonKey(key, species, personality);
+    if (key[0] == '\0')
+        return MAX_SPRITES;
+    frameBytes = LoadFmn(key, &file);
+    if (frameBytes == 0)
+        return MAX_SPRITES;
+    FreeSpritePaletteByTag(WILD_PAL_TAG + slot);    /* another one's colours, left by a reset field */
+    pal = LoadSpritePaletteExt(&(const struct SpritePalette){
+        (const u16 *)(file + FMN_HEADER) + (shiny ? 16 : 0), WILD_PAL_TAG + slot});
+    if (pal == 0xFF)
+    {
+        free(file);
+        return MAX_SPRITES;
+    }
+    UpdateSpritePaletteExtWithWeather(pal);
+    for (i = 0; i < FMN_FRAMES; i++)
+    {
+        sWild[slot].frames[i].data = file + FMN_HEADER + FMN_PALETTES + i * frameBytes;
+        sWild[slot].frames[i].size = frameBytes;
+    }
+    template.tileTag = TAG_NONE;
+    template.paletteTag = TAG_NONE;
+    template.oam = file[4] == 64 ? &gObjectEventBaseOam_64x64 : &gObjectEventBaseOam_32x32;
+    template.anims = sAnimTable_Follower;
+    template.images = sWild[slot].frames;
+    template.affineAnims = gDummySpriteAffineAnimTable;
+    template.callback = SpriteCallbackDummy;
+    spriteId = CreateSprite(&template, 0, 0, 0);
+    if (spriteId >= MAX_SPRITES)
+    {
+        FreeSpritePaletteByTag(WILD_PAL_TAG + slot);
+        free(file);
+        return MAX_SPRITES;
+    }
+    SetSpriteExtPalette(&gSprites[spriteId], pal);
+    StartSpriteAnim(&gSprites[spriteId], ANIM_STD_FACE_SOUTH);
+    sWild[slot].file = file;
+    return spriteId;
+}
+
+/* The files a species may be shown on (male or female, Unown A), read ahead
+ * for the visible wild ones of a map's tables. */
+void FollowerMon_WildPrefetch(u16 species)
+{
+    char key[8], other[8];
+
+    MonKey(key, species, 0);        /* female where it can be */
+    MonKey(other, species, 0xFC);   /* male where it can be; Unown A either way */
+    PrefetchKey(key);
+    if (strcmp(other, key) != 0)
+        PrefetchKey(other);
+}
+
+/* Which way it looks, walking or standing. */
+void FollowerMon_WildFace(struct Sprite *sprite, s8 dx, s8 dy, bool8 walking)
+{
+    u8 anim;
+
+    if (dy < 0)
+        anim = ANIM_STD_FACE_NORTH;
+    else if (dx < 0)
+        anim = ANIM_STD_FACE_WEST;
+    else if (dx > 0)
+        anim = ANIM_STD_FACE_EAST;
+    else
+        anim = ANIM_STD_FACE_SOUTH;
+    if (walking)
+        anim += ANIM_STD_GO_SOUTH - ANIM_STD_FACE_SOUTH;
+    if (sprite->animNum != anim)
+        StartSpriteAnim(sprite, anim);
+}
+
+/* Its sprite gone (or, if still there, destroyed now). */
+void FollowerMon_WildFree(u32 slot, struct Sprite *sprite)
+{
+    if (slot >= WILD_SLOTS)
+        return;
+    if (sprite != NULL)
+        DestroySprite(sprite);
+    FreeSpritePaletteByTag(WILD_PAL_TAG + slot);
+    free(sWild[slot].stale);
+    sWild[slot].stale = sWild[slot].file;
+    sWild[slot].file = NULL;
+}
 
 /*
  * Its Poke Ball, a moment where it goes in or comes out: Emerald's own ball
  * picture (the battle's) on an ext palette, opening or closing on the tile.
  */
-#define BALL_PAL_TAG 0x7F07
+#define BALL_PAL_TAG 0x7F20
 #define BALL_FRAMES  24           /* going in: the ball closes and stays a moment */
 #define POP_FRAMES   10           /* coming out: the follower shows, the ball goes, once it is open */
 
@@ -612,6 +754,7 @@ static void ShowBall(struct ObjectEvent *follower, bool8 opening)
     const struct CompressedSpritePalette *palette = &gBallSpritePalettes[BALL_POKE];
     u16 colors[16];
     u8 pal;
+    bool8 isExt;
 
     if (sBall < MAX_SPRITES && gSprites[sBall].inUse && gSprites[sBall].callback == SpriteCB_FollowerBall)
         DestroySprite(&gSprites[sBall]);
@@ -620,13 +763,9 @@ static void ShowBall(struct ObjectEvent *follower, bool8 opening)
         return;
     LZ77UnCompWram(palette->data, colors);
     FreeSpritePaletteByTag(BALL_PAL_TAG);
-    {
-        struct SpritePalette sp = {colors, BALL_PAL_TAG};
-        pal = LoadSpritePalette(&sp);
-    }
+    pal = LoadExtOrFallbackPalette(BALL_PAL_TAG, colors, &isExt);
     if (pal == 0xFF)
         return;
-    UpdateSpritePaletteWithWeather(pal);
     if (GetSpriteTileStartByTag(gBallSpriteSheets[BALL_POKE].tag) == 0xFFFF)
         LoadCompressedSpriteSheetUsingHeap(&gBallSpriteSheets[BALL_POKE]);
     template.tileTag = gBallSpriteSheets[BALL_POKE].tag;
@@ -646,7 +785,10 @@ static void ShowBall(struct ObjectEvent *follower, bool8 opening)
             return;
         }
         gSprites[sBall].oam.priority = player->oam.priority;
-        gSprites[sBall].oam.paletteNum = pal;
+        if (isExt)
+            SetSpriteExtPalette(&gSprites[sBall], pal);
+        else
+            gSprites[sBall].oam.paletteNum = pal;
     }
     gSprites[sBall].coordOffsetEnabled = TRUE;
     gSprites[sBall].data[1] = follower->currentCoords.x;
@@ -1216,6 +1358,13 @@ void FollowerMon_ReleaseAll(void)
     sTexts = NULL;
     sTextsSize = 0;
     sTextsTried = FALSE;
+
+    for (i = 0; i < WILD_SLOTS; i++)
+    {
+        free(sWild[i].file);
+        free(sWild[i].stale);
+        sWild[i].file = sWild[i].stale = NULL;
+    }
 }
 
 /*

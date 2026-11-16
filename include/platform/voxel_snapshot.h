@@ -8,6 +8,7 @@
 typedef struct {
     struct ObjectEvent objectEvents[OBJECT_EVENTS_COUNT];
     struct Sprite sprites[OBJECT_EVENTS_COUNT];
+    u8 extPalettes[OBJECT_EVENTS_COUNT];
     float playerWorldX;
     float playerWorldZ;
     int16_t mapGroup;

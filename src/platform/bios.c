@@ -7,8 +7,10 @@ u16 INTR_CHECK;
 void *INTR_VECTOR;
 uint8_t REG_BASE[0x400] __attribute__ ((aligned (4)));
 uint8_t PLTT[PLTT_SIZE] __attribute__ ((aligned (4)));
+uint16_t gPlttExt[16 * 16] __attribute__ ((aligned (4)));
 uint8_t VRAM_[VRAM_SIZE] __attribute__ ((aligned (4)));
 uint8_t OAM[OAM_SIZE] __attribute__ ((aligned (4)));
+uint8_t gOamExt[128] __attribute__ ((aligned (4)));
 uint8_t FLASH_BASE[131072] __attribute__ ((aligned (4)));
 struct SoundInfo *SOUND_INFO_PTR;
 

@@ -6,6 +6,7 @@
 #include <math.h>
 #include <string.h>
 #include "platform.h"
+#include "platform/vita_extras.h"
 
 #define DEG_TO_RAD (3.14159265358979323846f / 180.0f)
 
@@ -26,7 +27,7 @@
 #define VOXEL_DISTANCE 13.0f
 #define VOXEL_GROUND_DROP 1.0f
 #define VOXEL_PERSON_HEIGHT 2.0f
-#define VOXEL_REACH_MAX 22.0f
+#define VOXEL_REACH_MAX 28.0f
 
 void CtrFieldView_Flat(CtrFieldView *view)
 {
@@ -142,7 +143,7 @@ void CtrFieldView_SetVoxelShift(int32_t x, int32_t y)
 const CtrFieldView *CtrFieldView_Current(void)
 {
     bool voxel = Platform_GetSetting(PLATFORM_SETTING_VOXEL_3D) != 0;
-    int32_t pitch = 40;
+    int32_t pitch = VitaExtras_GetFast(FAST_EXTRA_VOXEL_FOV) ? 25 : 35;
     int32_t zoom = 100;
     int32_t key = voxel ? 1 + ((pitch & 0xFF) << 1) + ((zoom & 0x3FF) << 9) : 0;
     int32_t shiftX = voxel ? sVoxelShiftX : sFlatShiftX;

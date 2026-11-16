@@ -9593,13 +9593,15 @@ u8 *GetBoxNamePtr(u8 boxId)
 #ifdef PLATFORM_VITA
 // New UI: a box wallpaper's LZ77 tiles and tilemap (20 x 18) and its two palettes (frame, bg),
 // as LoadWallpaperGfx loads them; the FRIENDS one takes Walda's pattern and colours
-void PokeStorage_WallpaperForUi(u8 wallpaperId, const u32 **tiles, const u32 **tilemap, u16 *pal32)
+void PokeStorage_WallpaperForUi(u8 wallpaperId, const u32 **tiles, const u32 **tilemap, u16 *pal32, const u32 **iconTiles)
 {
     const struct Wallpaper *w;
     if (wallpaperId != WALLPAPER_FRIENDS)
     {
         w = &sWallpapers[wallpaperId < WALLPAPER_FRIENDS ? wallpaperId : 0];
         CpuCopy16(w->palettes, pal32, 0x40);
+        if (iconTiles != NULL)
+            *iconTiles = NULL;
     }
     else
     {
@@ -9607,6 +9609,8 @@ void PokeStorage_WallpaperForUi(u8 wallpaperId, const u32 **tiles, const u32 **t
         CpuCopy16(w->palettes, pal32, 0x40);
         CpuCopy16(GetWaldaWallpaperColorsPtr(), &pal32[1], 4);
         CpuCopy16(GetWaldaWallpaperColorsPtr(), &pal32[17], 4);
+        if (iconTiles != NULL)
+            *iconTiles = sWaldaWallpaperIcons[GetWaldaWallpaperIconId()];
     }
     *tiles = w->tiles;
     *tilemap = w->tilemap;

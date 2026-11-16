@@ -4,13 +4,17 @@ Unofficial native PS Vita port of Pokémon Emerald, built from the
 [pret/pokeemerald](https://github.com/pret/pokeemerald) decompilation. It is not an emulator:
 the game's C code is compiled for the Vita's ARM CPU, and a platform layer supplies what the GBA
 hardware did. On top of it, the port brings the features of
-[Emerald 3DS](https://github.com/ZallaxDev/emerald-3ds) to the Vita with vitaGL:
+[Emerald 3DS](https://github.com/ZallaxDev/emerald-3ds) to the Vita with vitaGL, plus an optional
+**HD-2D** visual mode and 25° camera angle inspired by
+[Bravely Emerald](https://github.com/marcoscodas/bravely-emerald):
 
-- a 3D voxel overworld built live from the game's maps, with sun, shadows, day/night and weather;
+- a 3D voxel overworld built live from the game's maps, with sun, shadows, day/night, weather,
+  and an optional **HD-2D** post-processing mode;
 - 3D battles on a stage taken from the map where the battle starts;
-- a new touch interface over the 3D world that replaces the GBA menus and boxes, with five
-  menu themes;
-- HGSS follower Pokémon, an accelerated clock, time-based encounters and optional QoL extras.
+- a new touch interface over the 3D world that replaces the GBA menus and boxes, with six
+  menu themes (including the new **GBA** skin as default);
+- HGSS follower Pokémon, visible wild Pokémon in the overworld, an accelerated clock, time-based
+  encounters and optional QoL extras.
 
 The full list is under [Features](#features).
 
@@ -26,15 +30,40 @@ The full list is under [Features](#features).
 > holds the game's code and text in decompiled form. A built VPK contains Nintendo's data:
 > **do not distribute builds**.
 
+## Screenshots
+
+### Visual modes: 3D Normal · 3D HD-2D · Classic 2D
+
+| 3D Normal | 3D HD-2D | Classic 2D |
+|---|---|---|
+| ![3D Normal](docs/screenshots/mode_3d_normal.jpg) | ![3D HD-2D](docs/screenshots/mode_3d_hd2d.jpg) | ![Classic 2D](docs/screenshots/mode_2d_classic.jpg) |
+
+### New native touch UI (GBA theme)
+
+| Pokédex | Party | Hub & START Menu |
+|---|---|---|
+| ![Pokédex](docs/screenshots/ui_gba_pokedex.jpg) | ![Party](docs/screenshots/ui_gba_party.jpg) | ![Hub & START Menu](docs/screenshots/ui_gba_hub.jpg) |
+
+### 25° camera & overworld
+
+| Town & water | Route 119 (rain & waterfall) | Tall grass & wild Pokémon |
+|---|---|---|
+| ![25° camera town](docs/screenshots/camera_25deg_town.jpg) | ![25° camera Route 119](docs/screenshots/camera_25deg_route119.jpg) | ![25° camera tall grass](docs/screenshots/camera_25deg_grass.jpg) |
+
 ## Features
 
 ### 3D world
 
 - Voxel overworld built live from the game's maps: sun and shadows, day/night cycle, weather,
-  depth of field, water reflections, 3D buildings and trees. 30 or 60 FPS (OPTIONS > WORLD).
+  water reflections, 3D buildings and trees. 30 or 60 FPS (OPTIONS > WORLD), plus classic 2D mode.
+- **HD-2D mode** (OPTIONS > WORLD): tilt-shift depth of field, bloom and light emitters, split-tone
+  colour grading and vignette, street lamp / cave lantern point lights, dynamic sun/moon light
+  shafts, night fireflies, swaying foliage, 16×16 Sobel tile relief, soft contact shadows, HD-2D
+  rain and adjustable camera angle (including 25°).
 - 3D battles: the stage is picked from the map around the player, and the camera glides from
   the field into it.
-- Wild encounters in the 3D world fade smoothly into the battle.
+- Visible wild Pokémon in the overworld (configurable density and encounter rate) with extended
+  sprite palettes, fading smoothly into 3D battles.
 - HGSS follower Pokémon, an accelerated clock and time-based encounters.
 
 ### New interface
@@ -58,9 +87,9 @@ Drawn natively at 960×544 over the 3D world. Every screen works with the button
   double battles, YES / NO, level-up stats and the Safari Zone; bag and party in battle (multi
   battles included); the Battle Pyramid bag.
 - **Field**: dialogue box, YES / NO, choice lists (PC menus, NPC questions), money box, item
-  obtained, PokéNav calls and zone signs with each town's motto, plus dialogue mirrors in 2D
-  evolution, egg-hatch and trade scenes.
-- **Menu themes** (OPTIONS > GENERAL > MENU COLOR): RED (default), EMERALD, CRYSTAL, TROPICAL
+  obtained, PokéNav calls and zone signs, plus dialogue mirrors in 2D evolution, egg-hatch and
+  trade scenes.
+- **Menu themes** (OPTIONS > GENERAL > MENU COLOR): GBA (default), RED, EMERALD, CRYSTAL, TROPICAL
   and ROYAL. Each has its own colours, box shapes, bevels and font, and applies to every screen,
   the battle HUD and the zone signs.
 
@@ -144,7 +173,7 @@ src/platform/voxel/                  3D voxel world
 src/platform/ui/                     the new interface (screens, widgets, themes)
 src/platform/vita/                   Vita-specific features (clock, encounters, extras, stage)
 assets/                              port data packed into the VPK (voxel, UI atlas, followers)
-tools/                               pret host tools, UI atlas builder (tools/ui2), generators
+tools/                               pret host tools, UI atlas builder (tools/ui2), follower packer, generators
 design/stitch/                       HTML mocks of the new interface
 docs/                                technical documentation
 ```
@@ -217,6 +246,9 @@ Buttons can be remapped in Options. Settings and saves live in `ux0:data/POKEVIT
 - **Zallax** and the Emerald 3DS contributors: [Emerald 3DS](https://github.com/ZallaxDev/emerald-3ds),
   the source of most of what this port adds: the voxel world, the 3D battles, the followers, the
   extras and the look of the interface.
+- **marcoscodas**: [Bravely Emerald](https://github.com/marcoscodas/bravely-emerald), visual
+  design and shader reference for the HD-2D post-processing mode, point lights, light shafts,
+  foliage sway, tile relief and 25° camera tilt.
 - **gradenGnostic** and contributors:
   [pokeemerald-multiplatform](https://github.com/gradenGnostic/pokeemerald-multiplatform), the SDL2
   platform layer and voxel renderer this port starts from.

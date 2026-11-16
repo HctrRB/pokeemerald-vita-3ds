@@ -2364,6 +2364,7 @@ void UpdateObjectEventCoordsForCameraUpdate(void)
             }
         }
         FollowerMon_CameraShift(dx, dy);
+        VisibleWild_CameraShift(dx, dy);
     }
 }
 

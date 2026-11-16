@@ -273,6 +273,12 @@ static u16 sSpriteTileRangeTags[MAX_SPRITES];
 static u16 sSpriteTileRanges[MAX_SPRITES * 2];
 static struct AffineAnimState sAffineAnimStates[OAM_MATRIX_COUNT];
 static u16 sSpritePaletteTags[16];
+EWRAM_DATA static u16 sSpritePaletteExtTags[PLTT_EXT_COUNT] = {
+    TAG_NONE, TAG_NONE, TAG_NONE, TAG_NONE, TAG_NONE, TAG_NONE, TAG_NONE, TAG_NONE,
+    TAG_NONE, TAG_NONE, TAG_NONE, TAG_NONE, TAG_NONE, TAG_NONE, TAG_NONE, TAG_NONE,
+};
+EWRAM_DATA static u8 sSpriteExt[MAX_SPRITES + 1] = {0};
+EWRAM_DATA static u8 sOamExtBuild[128] = {0};
 
 // iwram common
 COMMON_DATA u32 gOamMatrixAllocBitmap = 0;
@@ -296,6 +302,7 @@ void ResetSpriteData(void)
 {
     ResetOamRange(0, 128);
     ResetAllSprites();
+    memset(sSpriteExt, 0, sizeof(sSpriteExt));
     ClearSpriteCopyRequests();
     ResetAffineAnimData();
     FreeSpriteTileRanges();
@@ -532,6 +539,8 @@ void AddSpritesToOamBuffer(void)
     }
 
     memset(gScreenOam, 0, sizeof(gScreenOam));
+    if (gPlttExtInUse != 0)
+        memset(sOamExtBuild, 0, sizeof(sOamExtBuild));
 
     while (i < MAX_SPRITES)
     {
@@ -545,6 +554,12 @@ void AddSpritesToOamBuffer(void)
             }
             u8 prevOam = oamIndex;
             bool8 full = AddSpriteToOamBuffer(sprite, &oamIndex);
+            if (gPlttExtInUse != 0)
+            {
+                u8 ext = GetSpriteExtPalette(sprite);
+                if (ext != 0xFF && oamIndex > prevOam)
+                    memset(&sOamExtBuild[prevOam], (u8)(ext + 1), oamIndex - prevOam);
+            }
             if (!sprite->coordOffsetEnabled)
             {
                 for (u8 k = prevOam; k < oamIndex; k++)
@@ -606,6 +621,7 @@ u8 CreateSpriteAt(u8 index, const struct SpriteTemplate *template, s16 x, s16 y,
     struct Sprite *sprite = &gSprites[index];
 
     ResetSprite(sprite);
+    sSpriteExt[index] = 0;
 
     sprite->inUse = TRUE;
     sprite->animBeginning = TRUE;
@@ -691,6 +707,9 @@ void DestroySprite(struct Sprite *sprite)
                 FREE_SPRITE_TILE(i);
         }
         ResetSprite(sprite);
+        ptrdiff_t idx = sprite - gSprites;
+        if (idx >= 0 && idx <= MAX_SPRITES)
+            sSpriteExt[idx] = 0;
     }
 }
 
@@ -704,7 +723,11 @@ void ResetOamRange(u8 start, u8 end)
 void LoadOam(void)
 {
     if (!gMain.oamLoadDisabled)
+    {
         CpuCopy32(gMain.oamBuffer, (void *)OAM, sizeof(gMain.oamBuffer));
+        if (gPlttExtInUse != 0)
+            memcpy(gOamExt, sOamExtBuild, sizeof(gOamExt));
+    }
 }
 
 void ClearSpriteCopyRequests(void)
@@ -1648,6 +1671,9 @@ void FreeAllSpritePalettes(void)
     gReservedSpritePaletteCount = 0;
     for (i = 0; i < 16; i++)
         sSpritePaletteTags[i] = TAG_NONE;
+    gPlttExtInUse = 0;
+    for (i = 0; i < PLTT_EXT_COUNT; i++)
+        sSpritePaletteExtTags[i] = TAG_NONE;
 }
 
 u8 LoadSpritePalette(const struct SpritePalette *palette)
@@ -1718,6 +1744,64 @@ void FreeSpritePaletteByTag(u16 tag)
     u8 index = IndexOfSpritePaletteTag(tag);
     if (index != 0xFF)
         sSpritePaletteTags[index] = TAG_NONE;
+    index = IndexOfSpritePaletteExtTag(tag);
+    if (index != 0xFF)
+    {
+        sSpritePaletteExtTags[index] = TAG_NONE;
+        gPlttExtInUse &= (u16)~(1u << index);
+    }
+}
+
+u8 IndexOfSpritePaletteExtTag(u16 tag)
+{
+    for (u8 i = 0; i < PLTT_EXT_COUNT; i++)
+    {
+        if (sSpritePaletteExtTags[i] == tag)
+            return i;
+    }
+    return 0xFF;
+}
+
+u8 AllocSpritePaletteExt(u16 tag)
+{
+    u8 index = IndexOfSpritePaletteExtTag(TAG_NONE);
+    if (index == 0xFF)
+        return 0xFF;
+    sSpritePaletteExtTags[index] = tag;
+    gPlttExtInUse |= (u16)(1u << index);
+    return index;
+}
+
+u8 LoadSpritePaletteExt(const struct SpritePalette *palette)
+{
+    u8 index = IndexOfSpritePaletteExtTag(palette->tag);
+    if (index != 0xFF)
+        return index;
+    index = AllocSpritePaletteExt(palette->tag);
+    if (index == 0xFF)
+        return 0xFF;
+    LoadPalette(palette->data, PLTT_EXT_ID(index), PLTT_SIZE_4BPP);
+    return index;
+}
+
+void SetSpriteExtPalette(struct Sprite *sprite, u8 extIndex)
+{
+    if (sprite == NULL)
+        return;
+    ptrdiff_t idx = sprite - gSprites;
+    if (idx < 0 || idx > MAX_SPRITES)
+        return;
+    sSpriteExt[idx] = (extIndex < PLTT_EXT_COUNT) ? (u8)(extIndex + 1) : 0;
+}
+
+u8 GetSpriteExtPalette(const struct Sprite *sprite)
+{
+    if (sprite == NULL)
+        return 0xFF;
+    ptrdiff_t idx = sprite - gSprites;
+    if (idx < 0 || idx > MAX_SPRITES)
+        return 0xFF;
+    return (sSpriteExt[idx] == 0) ? 0xFF : (u8)(sSpriteExt[idx] - 1);
 }
 
 void SetSubspriteTables(struct Sprite *sprite, const struct SubspriteTable *subspriteTables)

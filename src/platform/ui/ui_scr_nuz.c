@@ -130,8 +130,8 @@ static void Build(void)
     char buf[64];
     const char *leader = "";
     const uint8_t cap = VitaNuzlocke_GetLevelCap(VitaNuzlocke_CountBadges(), &leader);
-    UiKit_Header("NUZLOCKE", sTabs, 3, sTab, sTabX, sTabW, 12);
-    snprintf(buf, sizeof(buf), "NEXT: %s (CAP LV.%u)", leader ? leader : "-", (unsigned)cap);
+    UiKit_Header("NUZLOCKE", sTabs, 4, sTab, sTabX, sTabW, 12);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("NEXT: %s (CAP LV.%u)"), leader ? leader : "-", (unsigned)cap);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     UiW_Panel(16, 60, 584, 432);
     UiW_PanelHead(16, 60, 584, sTab == 0 ? "ENCOUNTERS" : sTab == 1 ? "SQUAD VITAL STATUS" : sTab == 2 ? "RULES" : "SETTINGS",
@@ -184,6 +184,7 @@ static void Build(void)
         else
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, y + 4, sResetArmed ? "RESET TRACKER? (X)" : "RESET TRACKER", on ? ink : UI_COL_HP_LOW);
     }
+    UiW_ScrollBar(588, LIST_Y, ROWS * ROW_H, l->first, ROWS, Count());
     UiW_Panel(612, 60, 332, 200);
     if (sTab == 0 && sAreaCount)
     {
@@ -198,7 +199,7 @@ static void Build(void)
         UiMon m;
         UiGame_Mon(l->sel, &m);
         UiText_Draw(UI_FACE_PS2P, 16, 628, 76, m.name, UI_COL_INK);
-        snprintf(buf, sizeof(buf), Fallen(l->sel) ? "Fainted: it can no longer be used." : "Alive. Level cap: %u", (unsigned)cap);
+        snprintf(buf, sizeof(buf), Fallen(l->sel) ? "Fainted: it can no longer be used." : UiLocale_Translate("Alive. Level cap: %u"), (unsigned)cap);
         UiW_TextWrapped(628, 104, 300, 30, buf, UI_COL_INK, 3);
     }
     else if (sTab == 3)
@@ -224,6 +225,7 @@ static void Build(void)
     }
     int32_t fx = 16;
     if (sTab == 0) UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Change state");
+    else if (sTab == 3) UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Change");
     UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
     UiKit_FooterClock();
 }

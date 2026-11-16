@@ -1,0 +1,89 @@
+# Long-lived decisions and constraints. Keep entries short and only for things that are not
+# obvious from the code. Full history until 2026-11-05: docs/history/memory_2026-11-05.yaml.
+
+project:
+  name: pokeemerald-vita-3ds
+  target: PS Vita (Cortex-A9 x3 user cores, PowerVR SGX543MP4+, 512 MB RAM)
+  toolchain: VitaSDK 2026.08 in MSYS2, CMake, vitaGL
+  branch: main (published on GitHub at HctrRB/pokeemerald-vita-3ds; history squashed on 2026-11-05)
+  language: English for code, comments and documentation (decided 2026-11-05)
+
+licensing:
+  - Files derived from Emerald 3DS (ZallaxDev/emerald-3ds v0.5.0) are CC BY-NC-SA 4.0; MIT covers
+    only the multiplatform layer and original Vita code. See NOTICE.md.
+  - Reference checkout of Emerald 3DS: C:\Users\hrast\Projects\emerald-3ds (bcae4b7).
+
+gpu_and_threads:
+  - Never change the affinity of SDK threads (SceGxmDisplayQueue, vitaGL, audio). Moving the GXM
+    display queue off Core 0 crashed the GPU.
+  - Dynamic geometry streams from client arrays; static chunk geometry uses one GL buffer per
+    chunk slot filled once at build time. A per-frame vglBufferData path crashed the GPU.
+  - Chunk worker (Core 2) is protected by a window, not locks: every voxel module reads the world
+    through globals and fills caches on lookups. A job starts after vglSwapBuffers; a 3D frame
+    that starts while it runs only does work that touches none of its state and calls
+    EnsureWorkerIdle() before anything that would. New Core 0 voxel code must do the same
+    (docs/THREADS.md, "The chunk worker").
+  - Core 1 (AgbMain) is the master clock at 60.00 Hz, paced on the audio queue. In 3D, Core 0
+    renders once per game frame (twice per frame at 30 FPS, the default) by waiting on
+    sFrameReadySem; its own 60 Hz timer drifted and repeated/skipped game frames. Core 0 never
+    writes game state.
+  - vitaGL's glTexSubImage2D copies a whole texture drawn in the last 4 swaps: textures rewritten
+    at run time use spares or are written in place (docs/RENDERING.md).
+  - Animated atlas tiles may only be refreshed from BG VRAM for the active atlas slot (VRAM holds
+    only the current map's tileset).
+  - Opaque passes keep alpha test and blending off for SGX543 early-Z; fullscreen blended quads
+    are avoided.
+
+storage:
+  app_assets: app0:voxel/, app0:ui/, app0:ui2/, app0:followers/followers.pak (PKF1 container)
+  user_data: ux0:data/POKEVITA/ (saves/, pokeemerald.cfg, settings.txt, debug.log, perf_*)
+  notes:
+    - Logging to the memory card can stall for hundreds of ms: never log per frame.
+
+widescreen:
+  - widescreen.c is what makes GBA screens panoramic (288-px lines). The user's console has it
+    enabled through pokeemerald.cfg. Approved replacement: "Wide Scene" (docs/plan/ANALISIS_WIDESCREEN.md),
+    recycling Emerald 3DS's scene classification and margin policies, not its GPU compositor.
+
+menus:
+  - The GBA menus and the GBA overlay over 3D were replaced by the native touch UI in
+    src/platform/ui/ rather than optimising GBA menu code (decision of 2026-11-05).
+
+new_ui:
+  - Only active UI: src/platform/ui/ is always enabled when app0:ui2/ui_atlas.bin loads; the old
+    3DS-style Vita UI (vita_ui*.c, vita_battle_hud.c, vita_shop_ui.c, vita_world_ui.c) and the
+    ui_v2 toggle were removed on 2026-11-13 (6c481fd).
+  - Single 1024x2048 RGBA8888 texture (UI_TEX_W = 1024, UI_TEX_H = 2048, UI_DYN_Y = 1024), unpacked
+    from 16-bit texels (bit 0 = 1: RGB555 opaque; bit 0 = 0, non-zero: white with 8-bit alpha in
+    bits 8..1 for antialiased theme fonts): top half (rows 0..1023) loaded from
+    app0:ui2/ui_atlas.bin (format v3 UI2A, tools/ui2/build_atlas.py); bottom half (rows 1024..2047,
+    256 cells of 64x64) holds runtime-decoded GBA sprites in ui_sprites.c.
+  - Type: EMERALD theme uses VT323 32 for body text (28 dropped: unreadable on hardware), VT323 40
+    for dialogues, Press Start 2P 16 for footers/labels and zone sign motto, and 24 for large titles;
+    the other themes bake their own four font roles via tools/ui2/bake_theme_fonts.py.
+  - Three screen-opening modes in ui_core.c: normal field overlay (Open, freezes field via
+    LockPlayerFieldControls), script-driven (UiCore_OpenFromScript, script task keeps waiting for
+    !Ui_IsOpen()), and full-screen hosted replacement (UiCore_OpenHosted / CB2_UiHost, keeps GBA
+    sprites/tasks running and runs scene resets before opening).
+  - Game windows are mirrored, not rewritten (ui_mirror.c): Core 1 reads TextPrinter and menu
+    state (gUiPrinterStart, gUiDialogFrameShown, gUiChoice*, GetMoneyBoxWindowForUi) plus window 0
+    in 2D evolution, egg-hatch and trade scenes (EvolutionScene_IsActiveForUi, EggHatch_IsActiveForUi,
+    Trade_IsAnimActiveForUi) over an opaque bottom band; pass 6 skips the field GBA frame while
+    every BG0 window has a mirror (Ui_MirrorCovers). Page breaks / scrolls apply when the next
+    character prints (the game consumes them before waiting for A).
+  - In the player's PC (ui_scr_playerpc.c), DECORATE and PUT AWAY hand control to GBA field tasks
+    and UiPlayerPc_ReenterFromField reopens the tab on return.
+  - Every menu opens on its first tab; circle held 1 s closes the whole UI.
+  - Menu themes: OPTIONS > GENERAL > DISPLAY > MENU COLOR (extra "ui_theme", ui_theme.c): GBA
+    (default, Press Start 2P / VT323, stepped 9-slice Gen 3 framing and scanlines via gbaFrame),
+    RED (Saira Condensed), EMERALD (Press Start 2P / VT323), CRYSTAL (M PLUS Rounded 1c),
+    TROPICAL (Fredoka), ROYAL (Exo 2). Applied across every menu screen, the battle HUD
+    (ui_battle_hud.c via UiW_ThemeBox), and zone signs (ui_sign.c); design/stitch mocks support ?theme=.
+
+ext_palettes:
+  - 16 extended overworld sprite palettes live behind the 32 GBA palettes (`gPlttBufferUnfaded/Faded`
+    sized `PLTT_BUFFER_ALLOC = 512 + 256`, `PLTT_BUFFER_SIZE` kept at 512 for non-field uses).
+  - Instead of widening `selectedPalettes` to 64 bits, ext palettes follow `PLTT_EXT_MODEL`
+    (`PALSLOT_NPC_1`, OBJ slot 2) in fades (`palette.c`) and weather (`field_weather.c`).
+  - `DrawFrame` latches `gPlttExt` and `gOamExt` once per frame (they only change in VBlank),
+    with zero overhead when `gPlttExtInUse == 0`.

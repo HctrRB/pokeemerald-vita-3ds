@@ -1,6 +1,6 @@
 // Core 0 pass of the new UI: draws the latest list published by Core 1 over the frame (after the
 // 3D passes or the 2D GBA frame, before the swap). Core 1 already emitted the vertices, so this
-// is one bind and one draw call: one RGBA5551 texture (fonts, GBA sprites, a white block for solid
+// is one bind and one draw call: one RGBA8888 texture (fonts, GBA sprites, a white block for solid
 // fills and gradients, and 64x64 cells of sprites decoded at run time).
 // After the first frame only new sprite cells are written, straight into the texture memory and
 // never into a cell drawn in the last frames, so it never hits vitaGL's copy-on-write of textures
@@ -29,17 +29,18 @@ static bool EnsureTexture(void)
     if (pixels == NULL || w != UI_TEX_W || h == 0 || h > UI_DYN_Y)
         return false;
     // Whole texture: the fixed atlas on top, the run-time sprite cells below start empty
-    uint16_t *full = calloc((size_t)UI_TEX_W * UI_TEX_H, sizeof(uint16_t));
+    uint32_t *full = calloc((size_t)UI_TEX_W * UI_TEX_H, sizeof(uint32_t));
     if (full == NULL)
         return false;
-    memcpy(full, pixels, (size_t)w * h * sizeof(uint16_t));
+    for (size_t i = 0, n = (size_t)w * h; i < n; i++)
+        full[i] = Ui_UnpackTexel(pixels[i]);
     glGenTextures(1, &sTexture);
     glBindTexture(GL_TEXTURE_2D, sTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, UI_TEX_W, UI_TEX_H, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, full);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, UI_TEX_W, UI_TEX_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, full);
     free(full);
 
     return true;

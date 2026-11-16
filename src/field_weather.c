@@ -65,6 +65,8 @@ EWRAM_DATA static u8 ALIGNED(2) sFieldEffectPaletteColorMapTypes[32] = {0};
 
 static const u8 *sPaletteColorMapTypes;
 
+#define WEATHER_PAL(i) sPaletteColorMapTypes[((i) >= 32) ? (16 + PLTT_EXT_MODEL) : (i)]
+
 // The drought weather effect uses a precalculated color lookup table. Presumably this
 // is because the underlying color shift calculation is slow.
 static const u16 sDroughtWeatherColors[][0x1000] = {
@@ -467,13 +469,20 @@ static void ApplyColorMap(u8 startPalIndex, u8 numPalettes, s8 colorMapIndex)
     {
         colorMapIndex--;
         palOffset = PLTT_ID(startPalIndex);
-        numPalettes += startPalIndex;
+        numPalettes = (startPalIndex == 0 && numPalettes == 32 && gPlttExtInUse != 0)
+            ? (32 + PLTT_EXT_COUNT) : (startPalIndex + numPalettes);
         curPalIndex = startPalIndex;
 
         // Loop through the specified palette range and apply necessary color maps.
         while (curPalIndex < numPalettes)
         {
-            if (sPaletteColorMapTypes[curPalIndex] == COLOR_MAP_NONE)
+            if (curPalIndex >= 32 && !(gPlttExtInUse & (1u << (curPalIndex - 32))))
+            {
+                palOffset += 16;
+                curPalIndex++;
+                continue;
+            }
+            if (WEATHER_PAL(curPalIndex) == COLOR_MAP_NONE)
             {
                 // No palette change.
                 CpuFastCopy(&gPlttBufferUnfaded[palOffset], &gPlttBufferFaded[palOffset], PLTT_SIZE_4BPP);
@@ -483,7 +492,7 @@ static void ApplyColorMap(u8 startPalIndex, u8 numPalettes, s8 colorMapIndex)
             {
                 u8 r, g, b;
 
-                if (sPaletteColorMapTypes[curPalIndex] == COLOR_MAP_CONTRAST || curPalIndex - 16 == gWeatherPtr->contrastColorMapSpritePalIndex)
+                if (WEATHER_PAL(curPalIndex) == COLOR_MAP_CONTRAST || curPalIndex - 16 == gWeatherPtr->contrastColorMapSpritePalIndex)
                     colorMap = gWeatherPtr->contrastColorMaps[colorMapIndex];
                 else
                     colorMap = gWeatherPtr->darkenedContrastColorMaps[colorMapIndex];
@@ -507,12 +516,19 @@ static void ApplyColorMap(u8 startPalIndex, u8 numPalettes, s8 colorMapIndex)
         // A negative gammIndex value means that the blending will come from the special Drought weather's palette tables.
         colorMapIndex = -colorMapIndex - 1;
         palOffset = PLTT_ID(startPalIndex);
-        numPalettes += startPalIndex;
+        numPalettes = (startPalIndex == 0 && numPalettes == 32 && gPlttExtInUse != 0)
+            ? (32 + PLTT_EXT_COUNT) : (startPalIndex + numPalettes);
         curPalIndex = startPalIndex;
 
         while (curPalIndex < numPalettes)
         {
-            if (sPaletteColorMapTypes[curPalIndex] == COLOR_MAP_NONE)
+            if (curPalIndex >= 32 && !(gPlttExtInUse & (1u << (curPalIndex - 32))))
+            {
+                palOffset += 16;
+                curPalIndex++;
+                continue;
+            }
+            if (WEATHER_PAL(curPalIndex) == COLOR_MAP_NONE)
             {
                 // No palette change.
                 CpuFastCopy(&gPlttBufferUnfaded[palOffset], &gPlttBufferFaded[palOffset], PLTT_SIZE_4BPP);
@@ -534,6 +550,8 @@ static void ApplyColorMap(u8 startPalIndex, u8 numPalettes, s8 colorMapIndex)
     {
         // No palette blending.
         CpuFastCopy(&gPlttBufferUnfaded[PLTT_ID(startPalIndex)], &gPlttBufferFaded[PLTT_ID(startPalIndex)], numPalettes * PLTT_SIZE_4BPP);
+        if (startPalIndex == 0 && numPalettes == 32 && gPlttExtInUse != 0)
+            CpuFastCopy(&gPlttBufferUnfaded[PLTT_EXT_OFFSET], &gPlttBufferFaded[PLTT_EXT_OFFSET], PLTT_EXT_SIZE);
     }
 }
 
@@ -548,13 +566,20 @@ static void ApplyColorMapWithBlend(u8 startPalIndex, u8 numPalettes, s8 colorMap
     u8 bBlend = color.b;
 
     palOffset = PLTT_ID(startPalIndex);
-    numPalettes += startPalIndex;
+    numPalettes = (startPalIndex == 0 && numPalettes == 32 && gPlttExtInUse != 0)
+        ? (32 + PLTT_EXT_COUNT) : (startPalIndex + numPalettes);
     colorMapIndex--;
     curPalIndex = startPalIndex;
 
     while (curPalIndex < numPalettes)
     {
-        if (sPaletteColorMapTypes[curPalIndex] == COLOR_MAP_NONE)
+        if (curPalIndex >= 32 && !(gPlttExtInUse & (1u << (curPalIndex - 32))))
+        {
+            palOffset += 16;
+            curPalIndex++;
+            continue;
+        }
+        if (WEATHER_PAL(curPalIndex) == COLOR_MAP_NONE)
         {
             // No color map. Simply blend the colors.
             BlendPalette(palOffset, 16, blendCoeff, blendColor);
@@ -564,7 +589,7 @@ static void ApplyColorMapWithBlend(u8 startPalIndex, u8 numPalettes, s8 colorMap
         {
             u8 *colorMap;
 
-            if (sPaletteColorMapTypes[curPalIndex] == COLOR_MAP_DARK_CONTRAST)
+            if (WEATHER_PAL(curPalIndex) == COLOR_MAP_DARK_CONTRAST)
                 colorMap = gWeatherPtr->darkenedContrastColorMaps[colorMapIndex];
             else
                 colorMap = gWeatherPtr->contrastColorMaps[colorMapIndex];
@@ -603,10 +628,16 @@ static void ApplyDroughtColorMapWithBlend(s8 colorMapIndex, u8 blendCoeff, u16 b
     rBlend = color.r;
     gBlend = color.g;
     bBlend = color.b;
+    u16 endPalIndex = (gPlttExtInUse != 0) ? (32 + PLTT_EXT_COUNT) : 32;
     palOffset = 0;
-    for (curPalIndex = 0; curPalIndex < 32; curPalIndex++)
+    for (curPalIndex = 0; curPalIndex < endPalIndex; curPalIndex++)
     {
-        if (sPaletteColorMapTypes[curPalIndex] == COLOR_MAP_NONE)
+        if (curPalIndex >= 32 && !(gPlttExtInUse & (1u << (curPalIndex - 32))))
+        {
+            palOffset += 16;
+            continue;
+        }
+        if (WEATHER_PAL(curPalIndex) == COLOR_MAP_NONE)
         {
             // No color map. Simply blend the colors.
             BlendPalette(palOffset, 16, blendCoeff, blendColor);
@@ -781,7 +812,10 @@ void FadeScreen(u8 mode, s8 delay)
     if (fadeOut)
     {
         if (useWeatherPal)
-            CpuFastCopy(gPlttBufferFaded, gPlttBufferUnfaded, PLTT_SIZE);
+        {
+            u32 copySize = (gPlttExtInUse != 0) ? (PLTT_SIZE + PLTT_EXT_SIZE) : PLTT_SIZE;
+            CpuFastCopy(gPlttBufferFaded, gPlttBufferUnfaded, copySize);
+        }
 
         BeginNormalPaletteFade(PALETTES_ALL, delay, 0, 16, fadeColor);
         gWeatherPtr->palProcessingState = WEATHER_PAL_STATE_SCREEN_FADING_OUT;
@@ -807,9 +841,8 @@ bool8 IsWeatherNotFadingIn(void)
     return (gWeatherPtr->palProcessingState != WEATHER_PAL_STATE_SCREEN_FADING_IN);
 }
 
-void UpdateSpritePaletteWithWeather(u8 spritePaletteIndex)
+static void UpdateWeatherSpritePaletteByIndex(u16 paletteIndex, bool8 allowFogLighten)
 {
-    u16 paletteIndex = 16 + spritePaletteIndex;
     u16 i;
 
     switch (gWeatherPtr->palProcessingState)
@@ -817,7 +850,7 @@ void UpdateSpritePaletteWithWeather(u8 spritePaletteIndex)
     case WEATHER_PAL_STATE_SCREEN_FADING_IN:
         if (gWeatherPtr->fadeInFirstFrame)
         {
-            if (gWeatherPtr->currWeather == WEATHER_FOG_HORIZONTAL)
+            if (allowFogLighten && gWeatherPtr->currWeather == WEATHER_FOG_HORIZONTAL)
                 MarkFogSpritePalToLighten(paletteIndex);
             paletteIndex = PLTT_ID(paletteIndex);
             for (i = 0; i < 16; i++)
@@ -832,7 +865,7 @@ void UpdateSpritePaletteWithWeather(u8 spritePaletteIndex)
     // WEATHER_PAL_STATE_CHANGING_WEATHER
     // WEATHER_PAL_STATE_CHANGING_IDLE
     default:
-        if (gWeatherPtr->currWeather != WEATHER_FOG_HORIZONTAL)
+        if (!allowFogLighten || gWeatherPtr->currWeather != WEATHER_FOG_HORIZONTAL)
         {
             ApplyColorMap(paletteIndex, 1, gWeatherPtr->colorMapIndex);
         }
@@ -843,6 +876,17 @@ void UpdateSpritePaletteWithWeather(u8 spritePaletteIndex)
         }
         break;
     }
+}
+
+void UpdateSpritePaletteWithWeather(u8 spritePaletteIndex)
+{
+    UpdateWeatherSpritePaletteByIndex(16 + spritePaletteIndex, TRUE);
+}
+
+void UpdateSpritePaletteExtWithWeather(u8 extIndex)
+{
+    if (extIndex < PLTT_EXT_COUNT)
+        UpdateWeatherSpritePaletteByIndex(32 + extIndex, FALSE);
 }
 
 void ApplyWeatherColorMapToPal(u8 paletteIndex)

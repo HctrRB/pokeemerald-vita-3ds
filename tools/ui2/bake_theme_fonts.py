@@ -13,6 +13,7 @@ tools/ui2/build_atlas.py.
 import html
 import json
 import os
+import pathlib
 import subprocess
 import sys
 
@@ -20,7 +21,7 @@ from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FONTS = os.path.join(HERE, "fonts")
-URL = "http://localhost:8765/_tools/theme_font_bake.html"
+URL = pathlib.Path(os.path.join(HERE, "..", "..", "design", "stitch", "_tools", "theme_font_bake.html")).resolve().as_uri()
 BROWSERS = [r"C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe",
             r"C:\Program Files\Google\Chrome\Application\chrome.exe",
             r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"]
@@ -50,20 +51,28 @@ def main():
     cx = cy = row_h = 0
     fonts = []
     for f in data:
-        rf = ref_fonts[ROLE_REF[f["px"]]]
-        ref_cap = cap_height(rf["glyphs"], lambda g: g[4])
-        cap = next(len(g["rows"]) for g in f["glyphs"] if g["cp"] == 72)
+        if f["face"] == 15:
+            rf = ref_fonts.get((1, f["px"]))
+            if rf is None:
+                rf24 = ref_fonts[(1, 24)]
+                rf = {"ascent": round(rf24["ascent"] * f["px"] / 24), "lineH": f["px"], "glyphs": rf24["glyphs"]}
+        else:
+            rf = ref_fonts[ROLE_REF[f["px"]]]
+        ref_cap = cap_height(rf["glyphs"], lambda g: g[4]) if f["px"] != 20 else round(cap_height(rf["glyphs"], lambda g: g[4]) * 20 / 24)
+        cap_rows = next(g["rows"] for g in f["glyphs"] if g["cp"] == 72)
+        cap = sum(1 for r in cap_rows if max(bytes.fromhex(r), default=0) >= 128)
         ascent = rf["ascent"] - (ref_cap - cap) // 2
         glyphs = []
         for g in f["glyphs"]:
             h = len(g["rows"])
-            w = len(g["rows"][0]) if h else 0
+            w = len(g["rows"][0]) // 2 if h else 0
             if cx + w + 1 > W:
                 cx, cy, row_h = 0, cy + row_h + 1, 0
             for j, row in enumerate(g["rows"]):
-                for i, bit in enumerate(row):
-                    if bit == "1":
-                        sheet.putpixel((cx + i, cy + j), (255, 255, 255, 255))
+                row_bytes = bytes.fromhex(row)
+                for i, a in enumerate(row_bytes):
+                    if a > 0:
+                        sheet.putpixel((cx + i, cy + j), (255, 255, 255, a))
             glyphs.append([g["cp"], cx, cy, w, h, g["xoff"], g["yoff"], g["adv"]])
             cx += w + 1
             row_h = max(row_h, h)

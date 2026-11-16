@@ -8,7 +8,8 @@ contest icons. Sprites that depend on the species or the item (Pokémon icons an
 item icons, footprints) are decoded at run time from the game's own tables into the cells below
 this part (src/platform/ui/ui_sprites.c).
 
-RGBA5551 keeps the GBA's 5-bit colour exactly; fonts and sprites only use full or no alpha.
+RGBA5551 keeps the GBA's 5-bit colour exactly (bit 0 = 1); antialiased font glyphs with partial
+alpha pack their 8-bit alpha in bits 8-1 with bit 0 = 0, unpacked to RGBA8888 on upload.
 Only the type sizes chosen on the console are kept (decision D2): Press Start 2P 16 / 24 and
 VT323 32. Run from the repository root:
 
@@ -23,7 +24,7 @@ Format v3 (little endian), read by src/platform/ui/ui_assets.c:
     fontCount   x { u8 face, u8 px, u8 ascent, u8 lineH, u16 firstGlyph, u16 glyphCount }
     glyphCount  x { u16 codepoint, u16 x, u16 y, u8 w, u8 h, s8 xoff, s8 yoff, u8 adv, u8 pad }
     spriteCount x { u16 id, u16 x, u16 y, u16 w, u16 h }
-    texW * texH x u16 RGBA5551 (as GL_UNSIGNED_SHORT_5_5_5_1: R in bits 15-11, alpha in bit 0)
+    texW * texH x u16 packed texel (bit 0 = 1: RGBA5551; bit 0 = 0, != 0: white with 8-bit alpha in bits 8-1)
 """
 import json
 import os
@@ -42,7 +43,7 @@ THEME_PNG = os.path.join(HERE, "fonts", "theme_fonts.png")
 THEME_JSON = os.path.join(HERE, "fonts", "theme_fonts.json")
 OUT = os.path.join(ROOT, "assets", "ui2", "ui_atlas.bin")
 OUT_H = os.path.join(ROOT, "src", "platform", "ui", "ui_sprite_ids.h")
-KEEP = {(0, 16), (0, 24), (1, 32), (1, 40)}                   # (face, px): D2
+KEEP = {(0, 16), (0, 24), (1, 24), (1, 28), (1, 32), (1, 40)}   # (face, px): D2 + compact VT323 sizes
 TEX_W = 1024
 MAX_FIXED_H = 1280                                   # = UI_DYN_Y in ui_internal.h                                    # the dynamic cells start below (ui_sprites.c)
 ASSETS = os.path.join(ROOT, "design", "stitch", "_assets")   # GBA art exported by export_assets.py
@@ -181,7 +182,11 @@ def sprite_list():
     return out
 
 
-def rgba5551(r, g, b, a):
+def pack_texel(r, g, b, a):
+    if a == 0:
+        return 0
+    if r == 255 and g == 255 and b == 255 and a < 255:
+        return a << 1
     if a < 128:
         return 0
     return ((r >> 3) << 11) | ((g >> 3) << 6) | ((b >> 3) << 1) | 1
@@ -277,22 +282,33 @@ def main():
     if os.path.exists(THEME_JSON):
         theme_src = Image.open(THEME_PNG).convert("RGBA")
         sources += [(f, theme_src) for f in json.load(open(THEME_JSON, encoding="utf-8"))["fonts"]]
-    for f, src in sources:
+    glyph_sources = []
+    for f, f_src in sources:
         first = len(glyphs)
         for cp, gx, gy, w, h, xoff, yoff, adv in f["glyphs"]:
-            x, y = place(w, h)
-            for j in range(h):
-                for i in range(w):
-                    if src.getpixel((gx + i, gy + j))[3] >= 128:
-                        atlas.putpixel((x + i, y + j), (255, 255, 255, 255))
-            glyphs.append((cp, x, y, w, h, max(-128, min(127, xoff)), max(-128, min(127, yoff)), adv))
-        # Put Portuguese glyphs directly after the original font glyphs, preserving each face.
-        for cp, mask, xoff, yoff, adv in portuguese_accents(f, src):
+            glyph_sources.append((f_src, gx, gy, w, h))
+            glyphs.append([cp, 0, 0, w, h, max(-128, min(127, xoff)), max(-128, min(127, yoff)), adv])
+        # Keep the PT-BR accents in their matching font face while using
+        # v0.5's size-sorted atlas packer for both base and composed glyphs.
+        for cp, mask, xoff, yoff, adv in portuguese_accents(f, f_src):
             w, h = mask.size
-            x, y = place(w, h)
-            atlas.paste(mask, (x, y))
-            glyphs.append((cp, x, y, w, h, max(-128, min(127, xoff)), max(-128, min(127, yoff)), adv))
+            glyph_sources.append((mask, 0, 0, w, h))
+            glyphs.append([cp, 0, 0, w, h, max(-128, min(127, xoff)), max(-128, min(127, yoff)), adv])
+
         fonts.append((f["face"], f["px"], f["ascent"], f["lineH"], first, len(glyphs) - first))
+
+    glyph_order = sorted((i for i, (_, _, _, w, h) in enumerate(glyph_sources) if w > 0 and h > 0),
+                         key=lambda i: -glyph_sources[i][4])
+    for i in glyph_order:
+        f_src, gx, gy, w, h = glyph_sources[i]
+        x, y = place(w, h)
+        glyphs[i][1] = x
+        glyphs[i][2] = y
+        for j in range(h):
+            for k in range(w):
+                a = f_src.getpixel((gx + k, gy + j))[3]
+                if a > 0:
+                    atlas.putpixel((x + k, y + j), (255, 255, 255, a))
 
     # Sprites, tallest first so they pack in few rows
     named = sprite_list()
@@ -318,7 +334,7 @@ def main():
         out += struct.pack("<HHHHH", sid, x, y, w, h)
     for y in range(tex_h):
         for x in range(TEX_W):
-            out += struct.pack("<H", rgba5551(*atlas.getpixel((x, y))))
+            out += struct.pack("<H", pack_texel(*atlas.getpixel((x, y))))
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "wb") as fh:
         fh.write(out)

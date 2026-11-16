@@ -142,6 +142,30 @@ int32_t UiMenu_Update(UiMenu *m, const UiInput *in)
 void UiMenu_Draw(const UiMenu *m)
 {
     const int32_t h = 44 + m->count * MENU_ROW + 12;
+    if (gUiTheme->gbaFrame)
+    {
+        UiW_GbaWin(m->x, m->y, m->w, h, UI_GBA_WIN_GOLD);
+        UiW_GbaSectionStrip(m->x + 8, m->y + 8, m->w - 16, 30, UI_GBA_TAG_GOLD, m->title, NULL);
+        for (int32_t i = 0; i < m->count; i++)
+        {
+            const int32_t y = m->y + 44 + i * MENU_ROW;
+            const bool sel = (i == m->list.sel);
+            if (sel)
+            {
+                UiW_GbaBox(m->x + 10, y, m->w - 20, MENU_ROW - 2, 4, UI_RGBA(230, 148, 65, 255),
+                           UI_RGBA(255, 246, 205, 255), UI_RGBA(248, 232, 168, 255), C_WHITE, 0);
+                UiW_GbaArrowH(m->x + 21, y + (MENU_ROW - 12) / 2 + 1, true, UI_GBA_SHAD_LIGHT);
+                UiW_GbaArrowH(m->x + 20, y + (MENU_ROW - 12) / 2, true, UI_RGBA(230, 8, 8, 255));
+            }
+            else if (i < m->count - 1)
+            {
+                UiDraw_Rect(m->x + 14, y + MENU_ROW - 2, m->w - 28, 2, UI_RGBA(213, 213, 205, 255));
+            }
+            UiW_GbaTextMid(UI_FACE_VT323, UI_BODY_PX, m->x + 36, y, MENU_ROW - 2, m->labels[i],
+                           UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        }
+        return;
+    }
     UiW_Window(m->x, m->y, m->w, h, m->title);
     for (int32_t i = 0; i < m->count; i++)
     {
@@ -174,7 +198,7 @@ int32_t UiQty_Update(UiQty *q, const UiInput *in)
     if (q->value > q->max) q->value = (before == q->max) ? 1 : q->max;
     if (q->value != before)
         PlaySE(SE_SELECT);
-    if (in->pressed & VITA_BTN_CIRCLE) { q->open = false; PlaySE(SE_SELECT); return 0; }
+    if ((in->pressed & VITA_BTN_CIRCLE) || (in->tap && !UiHit(in, 280, 190, 400, 190))) { q->open = false; PlaySE(SE_SELECT); return 0; }
     if ((in->pressed & VITA_BTN_CROSS) || UiHit(in, q->okX, q->stepY, 120, 40)) { q->open = false; PlaySE(SE_SELECT); return q->value; }
     return -1;
 }
@@ -183,6 +207,21 @@ void UiQty_Draw(UiQty *q, uint16_t itemId)
 {
     const int32_t x = 280, y = 190, w = 400, h = 190;   // room under the stepper for a total line
     UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
+    if (gUiTheme->gbaFrame)
+    {
+        UiW_GbaWin(x, y, w, h, UI_GBA_WIN_GOLD);
+        UiW_GbaSectionStrip(x + 8, y + 8, w - 16, 30, UI_GBA_TAG_GOLD, q->title, NULL);
+        if (itemId)
+        {
+            UiW_GbaBox(x + 16, y + 66, 56, 56, 4, UI_RGBA(24, 32, 32, 255), C_WHITE, C_WHITE, UI_GBA_SHAD_LIGHT, 0);
+            UiSpr_ItemIcon(itemId, x + 20, y + 70, 2);
+        }
+        q->stepY = y + 76;
+        UiW_Stepper(x + 80, q->stepY, q->value, &q->minusX, &q->plusX);
+        q->okX = x + w - 136;
+        UiW_Button(q->okX, q->stepY, 120, "OK", UI_BTN_GREEN, false);
+        return;
+    }
     UiW_Window(x, y, w, h, q->title);
     if (itemId)
         UiSpr_ItemIcon(itemId, x + 20, y + 72, 2);
@@ -199,7 +238,9 @@ int32_t UiKit_Header(const char *title, const char *const *tabs, int32_t n, int3
     UiW_HeaderTitle(title);
     if (n <= 0)
         return 0;
-    const int32_t x = 16 + UiText_Width(UI_FACE_PS2P, 16, title) + 48 + 12;
+    const int32_t x = gUiTheme->gbaFrame
+        ? 268
+        : 16 + UiText_Width(UI_FACE_PS2P, 16, title) + 48 + 12;
     return UiW_TabsPad(x, tabs, n, cur, tabX, tabW, pad);
 }
 

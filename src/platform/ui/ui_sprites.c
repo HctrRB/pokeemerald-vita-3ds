@@ -27,7 +27,7 @@
 #endif
 
 extern const u8 *const gMonFootprintTable[];
-extern void PokeStorage_WallpaperForUi(u8 wallpaperId, const u32 **tiles, const u32 **tilemap, u16 *pal32);
+extern void PokeStorage_WallpaperForUi(u8 wallpaperId, const u32 **tiles, const u32 **tilemap, u16 *pal32, const u32 **iconTiles);
 extern void Mail_StationeryForUi(u8 mailType, const u32 **tiles, const u32 **tilemap, u16 *palette);
 extern bool8 Decoration_PictureForUi(u8 decor, u8 *tiles, u16 *palette, u8 *w, u8 *h);
 extern void MapNamePopUp_GfxForUi(u8 theme, bool8 underwater, const u8 **inner, const u8 **outline, const u16 **palette);
@@ -45,9 +45,13 @@ static void ComposeWallpaper(int32_t id)
     static uint8_t tiles[256 * 32];
     static uint16_t tmap[32 * 32];
     static uint16_t pal32[32];
-    const u32 *tilesLz, *mapLz;
-    PokeStorage_WallpaperForUi((u8)id, &tilesLz, &mapLz, pal32);
+    const u32 *tilesLz = NULL, *mapLz = NULL, *iconLz = NULL;
+    memset(tiles, 0, sizeof(tiles));
+    memset(tmap, 0, sizeof(tmap));
+    PokeStorage_WallpaperForUi((u8)id, &tilesLz, &mapLz, pal32, &iconLz);
     LZ77UnCompWram(tilesLz, tiles);
+    if (iconLz != NULL)
+        LZ77UnCompWram(iconLz, tiles + 0x800);
     LZ77UnCompWram(mapLz, tmap);
     uint16_t pal[2][16];
     for (int32_t p = 0; p < 2; p++)
@@ -178,9 +182,9 @@ static void ComposePopup(int32_t key)
     sPopupKey = key;
 }
 
-#define UI_SPR_RING 16             // staging slots (64x64 RGBA5551 = 8 KB each)
-#define UI_SPR_DECODES_PER_TICK 4  // bounds the Core 1 cost of opening a full screen
-#define UI_SPR_IDLE_TICKS 16       // a cell is reusable after this many ticks without being drawn
+#define UI_SPR_RING 64             // staging slots (64x64 RGBA5551 = 8 KB each)
+#define UI_SPR_DECODES_PER_TICK 16 // bounds the Core 1 cost of opening a full screen (allows full 9-cell wallpaper + party in 1 tick)
+#define UI_SPR_IDLE_TICKS 4        // a cell is reusable after this many ticks without being drawn (triple-buffered draw lists)
 
 enum { KIND_MON_ICON = 1, KIND_MON_FRONT, KIND_MON_FRONT_SHINY, KIND_ITEM, KIND_FOOTPRINT, KIND_TRAINER, KIND_WALLPAPER, KIND_POPUP, KIND_DECOR, KIND_MAIL };
 #define KEY(kind, id) (((uint32_t)(kind) << 16) | (uint32_t)(id))
@@ -553,9 +557,9 @@ void UiSpr_FlushUploads(void)
     if (tail == head)
         return;
 #ifdef PLATFORM_VITA
-    uint16_t *const texels = (uint16_t *)vglGetTexDataPointer(GL_TEXTURE_2D);
+    uint32_t *const texels = (uint32_t *)vglGetTexDataPointer(GL_TEXTURE_2D);
 #else
-    uint16_t *const texels = NULL;
+    uint32_t *const texels = NULL;
 #endif
     for (; tail != head; tail++)
     {
@@ -565,11 +569,19 @@ void UiSpr_FlushUploads(void)
         if (texels != NULL)
         {
             for (uint32_t r = 0; r < UI_CELL; r++)
-                memcpy(&texels[(cy + r) * UI_TEX_W + cx], &up->pixels[r * UI_CELL], UI_CELL * sizeof(uint16_t));
+            {
+                uint32_t *dst = &texels[(cy + r) * UI_TEX_W + cx];
+                const uint16_t *src = &up->pixels[r * UI_CELL];
+                for (uint32_t c = 0; c < UI_CELL; c++)
+                    dst[c] = Ui_UnpackTexel(src[c]);
+            }
         }
         else
         {
-            glTexSubImage2D(GL_TEXTURE_2D, 0, (GLint)cx, (GLint)cy, UI_CELL, UI_CELL, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, up->pixels);
+            static uint32_t cellRgba[UI_CELL * UI_CELL];
+            for (uint32_t i = 0; i < UI_CELL * UI_CELL; i++)
+                cellRgba[i] = Ui_UnpackTexel(up->pixels[i]);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, (GLint)cx, (GLint)cy, UI_CELL, UI_CELL, GL_RGBA, GL_UNSIGNED_BYTE, cellRgba);
         }
     }
     __atomic_store_n(&sTail, head, __ATOMIC_RELEASE);

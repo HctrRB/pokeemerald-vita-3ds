@@ -243,6 +243,11 @@ void VoxelEntities_PublishSnapshot(void)
         if (obj->active && obj->spriteId < MAX_SPRITES)
         {
             snap->sprites[i] = gSprites[obj->spriteId];
+            snap->extPalettes[i] = GetSpriteExtPalette(&gSprites[obj->spriteId]);
+        }
+        else
+        {
+            snap->extPalettes[i] = 0xFF;
         }
     }
 
@@ -560,7 +565,7 @@ static void PictureSize(const struct Sprite *sprite, const struct ObjectEvent *o
  * something the picture depends on actually changed.
  */
 static bool RefreshSlot(uint32_t index, const struct Sprite *sprite, const struct ObjectEvent *obj,
-                        uint16_t *atlas)
+                        u8 extPalette, uint16_t *atlas)
 {
     VoxelSpriteSlot *slot = &sSlots[index];
     /* Static, not automatic: this runs in the VBlank handler and 4.5 KiB of
@@ -574,8 +579,10 @@ static bool RefreshSlot(uint32_t index, const struct Sprite *sprite, const struc
     bool flipY = sprite->oam.affineMode == ST_OAM_AFFINE_OFF
               && (sprite->oam.matrixNum & 0x10) != 0;
     u32 sourceBytes, paletteBytes;
-    u8 extPalette = color256 ? 0xFF : GetSpriteExtPalette(sprite);
     bool changed;
+
+    if (color256)
+        extPalette = 0xFF;
 
     PictureSize(sprite, obj, &w, &h);
     if (!VoxelSlots_Fits((uint32_t)w, (uint32_t)h, color256, VOXEL_SPRITE_SLOT_DIM,
@@ -1605,7 +1612,7 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
             continue;
         if (!Shop_IsBuyMenuActive())
         {
-            if (RefreshSlot(i, sprite, obj, atlas))
+            if (RefreshSlot(i, sprite, obj, snap->extPalettes[i], atlas))
             {
                 ++updates;
                 sDirtySlots |= 1u << i;
@@ -1866,7 +1873,7 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
         const VoxelObjectCard *reference;
         int32_t h, x, base;
 
-        if (RefreshSlot(effect->slot, sprite, NULL, atlas))
+        if (RefreshSlot(effect->slot, sprite, NULL, GetSpriteExtPalette(sprite), atlas))
         {
             ++updates;
             sDirtySlots |= 1u << effect->slot;
