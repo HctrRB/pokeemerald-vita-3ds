@@ -148,7 +148,7 @@ static void GroupLabel(int32_t index, char *out, size_t cap)
     if (sAlpha)
     {
         const int32_t g = sGroupIds[index];
-        if (g == 0) snprintf(out, cap, "OTHERS");
+        if (g == 0) snprintf(out, cap, UiLocale_Translate("OTHERS"));
         else snprintf(out, cap, "%c", 'A' + g - 1);
     }
     else

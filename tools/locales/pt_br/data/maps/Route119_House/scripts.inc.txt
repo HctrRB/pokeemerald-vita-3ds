@@ -1,0 +1,5 @@
+[Route119_House_Text_RumorAboutCaveOfOrigin] 838f12cca2
+Ouvi falar de uma caverna chamada\nCAVERNA DA ORIGEM.\pDizem que o espírito dos POKéMON\nrevive lá. Será que algo assim\lpode mesmo acontecer?$
+
+[Route119_House_Text_Wingull] d6ce32141e
+WINGULL: Pihyoh!$

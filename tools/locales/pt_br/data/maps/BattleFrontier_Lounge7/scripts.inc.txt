@@ -1,0 +1,95 @@
+[BattleFrontier_Lounge7_Text_LeftTutorIntro] 48a372b0a8
+Buhahaha!\pOlhando agora você não diria, mas\neu já fui uma TREINADORA e tanto.\pEu era famosa como a BELDADE mais\nforte da região, viu?\p… … … … … …\pO que foi?\nNão acredita em mim.\pNão sou como aquela fanfarrona ali.\nEu tenho talento de verdade!\pVou te provar.\nPosso ensinar golpes especiais, e\lainda fofos, aos seus POKéMON.\pMas as aulas não são de graça.\nQue tal pagar os golpes com uns\lPontos de Batalha?$
+
+[BattleFrontier_Lounge7_Text_LeftTutorWelcomeBack] ccb1adff4b
+Buhahaha!\pVoltou pra aprender golpes POKéMON\nespeciais, e ainda fofos?$
+
+[BattleFrontier_Lounge7_Text_TeachWhichMove] 2e5eb59d49
+Pois bem, olhe aqui!\nQue golpe eu devo ensinar?$
+
+[BattleFrontier_Lounge7_Text_MoveWillBeXBattlePoints] c51b321876
+O golpe {STR_VAR_1}, é?\nFica {STR_VAR_2} Pontos de Batalha, tá?$
+
+[BattleFrontier_Lounge7_Text_TeachMoveToWhichMon] bdd0f7fe2e
+Pois bem, agora escolha o POKéMON\nque vai aprender o golpe.$
+
+[BattleFrontier_Lounge7_Text_HaventGotEnoughPoints] eb30f81bc8
+Mas o quê…\nVocê não tem Pontos de Batalha\lsuficientes!$
+
+[BattleFrontier_Lounge7_Text_IllTakeBattlePoints] 1c4f6facfb
+Viu como eu sou habilidosa?\nVou ficar com os Pontos, obrigada!$
+
+[BattleFrontier_Lounge7_Text_YouDontWantTo] ebb947ffe7
+O que é isso?\nNão quer…\pSe quiser ver a minha habilidade,\nvenha me ver quando quiser!$
+
+[BattleFrontier_Lounge7_Text_RightTutorIntro] ee619ba94c
+Ihihihi!\pSei que é difícil de ver agora, mas\neu já fui uma TREINADORA fantástica.\pEu era famosa como a NADADORA mais\ninvencível da região, viu?\p… … … … … …\pO que houve?\nNão acredita em mim.\pNão sou como aquela palhaça ali.\nEu tenho experiência de verdade!\pPosso provar.\nPosso ensinar golpes fortes, e\lainda bonitos, aos seus POKéMON.\pMas as aulas não são de graça.\nQue tal pagar os golpes com uns\lPontos de Batalha?$
+
+[BattleFrontier_Lounge7_Text_RightTutorWelcomeBack] 2756096e51
+Ihihihi!\pVeio aprender golpes POKéMON fortes,\ne ainda bonitos?$
+
+[BattleFrontier_Lounge7_Text_ThinkLadiesDontGetAlong] 556a11f094
+Pelo jeito que aquelas senhoras falam\nmal uma da outra, você deve achar\lque elas não se dão bem.\pMas, se fosse verdade, elas não\nficariam juntas aqui, não é?$
+
+[BattleFrontier_Lounge7_Text_LadiesWereStrongAndBeautiful] cd290fefcf
+Quando eu era só um JOVEM\nTREINADOR, aquelas senhoras eram\lfortes e lindas.\pEram ídolos entre nós, TREINADORES.\pMesmo agora, a idade não diminuiu\no talento delas.\pNa verdade, os golpes dos POKéMON\ndelas estão ainda mais refinados.\pMas… Por algum motivo, não consigo\nevitar sentir isto…\pO tempo é tão cruel…$
+
+[BattleFrontier_Lounge7_Text_SoftboiledDesc] 66fa79fb7a
+Recupera até\nmetade dos PS\nmáximos.$
+
+[BattleFrontier_Lounge7_Text_SeismicTossDesc] a412844b68
+Tira tantos PS\nquanto o nível\ndo usuário.$
+
+[BattleFrontier_Lounge7_Text_DreamEaterDesc] 1cad60daea
+Rouba metade do\ndano de um alvo\nadormecido.$
+
+[BattleFrontier_Lounge7_Text_MegaPunchDesc] 714fffa4eb
+Um soco dado\ncom uma força\nincrível.$
+
+[BattleFrontier_Lounge7_Text_MegaKickDesc] 8dab66cd29
+Um chute\nfortíssimo, com\nmuita força.$
+
+[BattleFrontier_Lounge7_Text_BodySlamDesc] d8081474c3
+Uma pancada com\no corpo que pode\nparalisar.$
+
+[BattleFrontier_Lounge7_Text_RockSlideDesc] ae5f267fc2
+Arremessa rochas\nenormes. Pode\nfazer hesitar.$
+
+[BattleFrontier_Lounge7_Text_CounterDesc] bbb3320afb
+Devolve um golpe\nfísico com o\ndobro da força.$
+
+[BattleFrontier_Lounge7_Text_ThunderWaveDesc] 1b15c7bfc2
+Um choque fraco\nque paralisa\no alvo.$
+
+[BattleFrontier_Lounge7_Text_SwordsDanceDesc] fd0818fa87
+Uma dança de\nluta que sobe\nmuito o ATAQUE.$
+
+[BattleFrontier_Lounge7_Text_DefenseCurlDesc] aea93d6e72
+Se enrola pra\nesconder pontos\nfracos. Sobe DEF.$
+
+[BattleFrontier_Lounge7_Text_SnoreDesc] 12882ad43f
+Ataque barulhento\nque só funciona\ndormindo.$
+
+[BattleFrontier_Lounge7_Text_MudSlapDesc] db838a4a29
+Joga lama na\ncara do alvo e\nbaixa a PRECISÃO.$
+
+[BattleFrontier_Lounge7_Text_SwiftDesc] 7a099afd5e
+Raios em forma\nde estrela que\nnunca erram.$
+
+[BattleFrontier_Lounge7_Text_IcyWindDesc] db039a785d
+Um ataque gelado\nque baixa a\nVELOC. do alvo.$
+
+[BattleFrontier_Lounge7_Text_EndureDesc] b754817b81
+Aguenta qualquer\nataque por 1\nturno com 1 PS.$
+
+[BattleFrontier_Lounge7_Text_PsychUpDesc] 4499ec2c5f
+Copia os efeitos\ndo alvo para\no usuário.$
+
+[BattleFrontier_Lounge7_Text_IcePunchDesc] 7e9a3a04f6
+Um soco gelado\nque pode\ncongelar o alvo.$
+
+[BattleFrontier_Lounge7_Text_ThunderPunchDesc] 5e99d5aee8
+Um soco elétrico\nque pode\nparalisar o alvo.$
+
+[BattleFrontier_Lounge7_Text_FirePunchDesc] b0468e068b
+Um soco de fogo\nque pode\nqueimar o alvo.$

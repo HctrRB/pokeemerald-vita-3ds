@@ -37,41 +37,42 @@ Route110_TrickHousePuzzle1_EventScript_Robin::
 	end
 
 Route110_TrickHousePuzzle1_Text_WroteSecretCodeLockOpened::
-	.string "{PLAYER} wrote down the secret code\n"
-	.string "on the door.\p"
-	.string "“TRICK MASTER is fabulous.”\n"
+	.string "{PLAYER} escreveu a senha secreta\n"
+	.string "na porta.\p"
+	.string "“O MESTRE DOS TRUQUES é fabuloso.”\n"
 	.string "… … … … … … … …\p"
-	.string "The lock clicked open!$"
+	.string "A fechadura abriu com um clique!$"
 
 Route110_TrickHousePuzzle1_Text_SallyIntro:
-	.string "I'll hack and slash my way to victory\n"
-	.string "with the CUT we just learned!$"
+	.string "Vou cortar e picar até a vitória\n"
+	.string "com o CORTAR que acabamos de aprender!$"
 
 Route110_TrickHousePuzzle1_Text_SallyDefeat:
-	.string "Why are you so serious?$"
+	.string "Por que tanta seriedade?$"
 
 Route110_TrickHousePuzzle1_Text_SallyPostBattle:
-	.string "I never get tired of hacking\n"
-	.string "and slashing!$"
+	.string "Nunca me canso de cortar\n"
+	.string "e picar!$"
 
 Route110_TrickHousePuzzle1_Text_EddieIntro:
-	.string "I wandered into this weird house\n"
-	.string "by accident…$"
+	.string "Entrei nesta casa esquisita\n"
+	.string "sem querer…$"
 
 Route110_TrickHousePuzzle1_Text_EddieDefeat:
-	.string "And now I've lost…$"
+	.string "E agora perdi…$"
 
 Route110_TrickHousePuzzle1_Text_EddiePostBattle:
-	.string "I lost my way, I lost a battle, and I'm\n"
-	.string "now even more lost… I can't get out…$"
+	.string "Me perdi, perdi a batalha e agora estou\n"
+	.string "mais perdido ainda… Não consigo sair…$"
 
 Route110_TrickHousePuzzle1_Text_RobinIntro:
-	.string "Just who is the TRICK MASTER?$"
+	.string "Quem é, afinal, o MESTRE DOS TRUQUES?$"
 
 Route110_TrickHousePuzzle1_Text_RobinDefeat:
-	.string "I lost while I was lost in thought!$"
+	.string "Perdi enquanto estava perdida\n"
+	.string "nos pensamentos!$"
 
 Route110_TrickHousePuzzle1_Text_RobinPostBattle:
-	.string "You're strong!\n"
-	.string "Just who are you?$"
+	.string "Que força!\n"
+	.string "Quem é você, afinal?$"
 

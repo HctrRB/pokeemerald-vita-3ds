@@ -1,0 +1,8 @@
+[SootopolisCity_House2_Text_DidYouKnowAboutMtPyreOrbs] 1691cac292
+O MONTE PYRE…\pNo topo, há dois orbes lado a lado.\nVocê sabia?$
+
+[SootopolisCity_House2_Text_YesTwoOrbsSideBySide] 02383b91d1
+Sim, dois orbes lado a lado…\pVer os dois juntos…\nDe algum jeito, acalma…$
+
+[SootopolisCity_House2_Text_OughtToVisitAndSee] 68d1e3f9ab
+É mesmo?\nTalvez devesse ir lá ver…$

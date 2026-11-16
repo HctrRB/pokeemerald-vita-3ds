@@ -1,0 +1,47 @@
+[SSTidalCorridor_Text_ScottBattleFrontierInvite] 950b5aa832
+SCOTT: Ora, oi, oi!\n{PLAYER}{KUN}, {PLAYER}{KUN}!\pSurgiu um assunto e preciso\ndesembarcar, mas que bom te ver!\pParabéns pelo topo da LIGA!\pTem um lugar pra onde eu queria\nconvidar alguém como você.\pÉ a…\nFRONTEIRA DE BATALHA!\pComo é o lugar?\nVocê vai entender quando vir!\pJá falei com o CAPITÃO do navio\nsobre isso.\pDa próxima vez que pegar a balsa,\nvai dar pra navegar até a\lFRONTEIRA DE BATALHA.\pCerto, {PLAYER}{KUN}, te espero na\nFRONTEIRA DE BATALHA!$
+
+[SSTidal_Text_FastCurrentsHopeYouEnjoyVoyage] 6ea1cdf70d
+Esta balsa foi feita pra cortar\ncorrentezas fortes.\pDesejamos uma boa viagem.\nFique à vontade pra explorar o navio.$
+
+[SSTidal_Text_HopeYouEnjoyVoyage] 1574fb17c0
+Desejamos uma boa viagem na\nnossa balsa.$
+
+[SSTidal_Text_MadeLandInSlateport] 9ebdd190f4
+Chegamos à CIDADE DE SLATEPORT.\nObrigado por viajar com a gente.$
+
+[SSTidal_Text_MadeLandInLilycove] c6e7cafc3d
+Chegamos à CIDADE DE LILYCOVE.\nObrigado por viajar com a gente.$
+
+[SSTidalCorridor_Text_CanRestInCabin2] dadf7fdbc5
+Ainda vai demorar pra chegar, eu acho.\pSe quiser, descanse na sua cabine.\nA sua é a nº 2.\pA cama lá é macia e fofinha.\nPosso garantir que é confortável!$
+
+[SSTidalCorridor_Text_WeveArrived] a46a78a865
+Chegamos!$
+
+[SSTidalCorridor_Text_VisitOtherCabins] fdd46839e5
+Visite as outras cabines.\nTREINADORES entediados com a viagem\lvão estar loucos pra batalhar.$
+
+[SSTidalCorridor_Text_EnjoyYourCruise] 126f6842de
+Aproveite o cruzeiro!$
+
+[SSTidalCorridor_Text_HorizonSpreadsBeyondPorthole] f3eb62386c
+O horizonte se estende além da\njanela.$
+
+[SSTidalCorridor_Text_BrineyWelcomeAboard] fdccca57de
+SR. BRINEY: Boas-vindas a bordo,\n{PLAYER}{KUN}!\pMe fizeram capitão honorário do\nS.S. TIDAL!\pAgora pode me chamar de CAPITÃO\nBRINEY!\pSabe, eu já tinha me aposentado,\nmas, quando vi este navio majestoso…\pDigamos que acordou a minha alma\nde marinheiro!$
+
+[SSTidalCorridor_Text_Peeko] 7444de52ef
+PEEKO: Pihyo pihyohyo…$
+
+[SSTidalCorridor_Text_Cabin1] d956781017
+Cabine 1$
+
+[SSTidalCorridor_Text_Cabin2] e5a623381c
+Cabine 2$
+
+[SSTidalCorridor_Text_Cabin3] eb2c034955
+Cabine 3$
+
+[SSTidalCorridor_Text_Cabin4] daca6094ac
+Cabine 4$

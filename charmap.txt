@@ -42,6 +42,11 @@
 SUPER_ER    = 2C
 '&'         = 2D
 '+'         = 2E
+@ Extra Portuguese letters (ZallaxDev localization)
+'Ã'         = 2F
+'Õ'         = 30
+'ã'         = 31
+'õ'         = 32
 LV          = 34
 '='         = 35
 ';'         = 36

@@ -1,0 +1,26 @@
+[Route118_Text_StevenQuestions] 5f8a94a702
+STEVEN: Oi, {PLAYER}{KUN}!\pSou eu, o STEVEN!\nNos vimos na caverna perto de DEWFORD.\pConheceu muitos tipos de POKéMON\ndesde a última vez?\pHá muitos e muitos tipos de POKéMON\nneste nosso mundo enorme.\pSe quiser treinar só os seus\nfavoritos, tudo bem.\pTalvez seja mais divertido treinar\ntodo tipo de POKéMON.\pComo TREINADOR de POKéMON,\no que você acha?\pClaro, não é da minha conta.\pSeria bom a gente se encontrar\nde novo em algum lugar.$
+
+[Route118_Text_YouAgreeGoodRodIsGood] f48b0c1684
+Hmm!\nA VARA BOA é boa mesmo!\pNão concorda?$
+
+[Route118_Text_IdenticalMindsTakeThis] d31b07af07
+Hmm!\nPensamos igualzinho!\pHmm!\nTome esta VARA BOA!$
+
+[Route118_Text_TryYourLuckFishing] a3c9dee4b7
+Onde tiver água, tente a sorte\nna pesca.$
+
+[Route118_Text_DontYouLikeToFish] 29135364a6
+Você não gosta de pescar?$
+
+[Route118_Text_TryCatchingMonWithGoodRod] bc527fdf99
+Tente pescar todo tipo de POKéMON\ncom a sua VARA BOA.$
+
+[Route118_Text_CanCrossRiversWithSurf] 293a9a60f3
+Mesmo sem barco, dá pra atravessar\nrios e o mar se você tiver um\lPOKéMON que saiba SURFAR.\pDá pra contar com os POKéMON pra\ntanta coisa!$
+
+[Route118_Text_RouteSignMauville] 1e8b1d4884
+ROTA 118\n{LEFT_ARROW} CIDADE DE MAUVILLE$
+
+[Route118_Text_RouteSign119] 01dbf6a240
+ROTA 118\n{UP_ARROW} ROTA 119$

@@ -1,0 +1,5 @@
+[VerdanturfTown_House_Text_TrainersGatherAtPokemonLeague] 776eddf8d5
+Bem longe, no fundo da CIDADE DE\nEVER GRANDE, fica a LIGA POKéMON.\pOs TREINADORES que se juntam lá são\ntodos assustadoramente habilidosos.$
+
+[VerdanturfTown_House_Text_DefeatEliteFourInARow] 290630142b
+Na LIGA POKéMON, acho que as regras\ndizem que você tem que enfrentar a\lELITE DOS QUATRO em sequência.\pSe perder pra qualquer um deles, tem\nque recomeçar o desafio do\lprimeiro.$

@@ -1,0 +1,11 @@
+[Route111_OldLadysRestStop_Text_RestUpHere] f9e73ad46a
+Ai, ai, ai.\nOs seus POKéMON não estão exaustos?\pSe quiser, descanse aqui.\nÉ uma ótima ideia! Faça isso.$
+
+[Route111_OldLadysRestStop_Text_TakeYourTimeRestUp] 7f54c48ee5
+Isso mesmo.\nDescanse com calma!$
+
+[Route111_OldLadysRestStop_Text_StillTiredTakeAnotherRest] 352b8efbab
+Ai, ai, ai.\nOs seus POKéMON ainda estão cansados?\pDescanse mais um pouco aqui.\nÉ uma ótima ideia. Faça isso.$
+
+[Route111_OldLadysRestStop_Text_DontNeedToBeShy] c010dd9052
+Ah, é?\nNão precisa ficar com vergonha.$

@@ -43,32 +43,32 @@ VerdanturfTown_BattleTentCorridor_Movement_AttendantEnterDoor:
 /* Leftover text from when this was a Contest Hall in R/S*/
 /* Unused*/
 VerdanturfTown_ContestHall_Text_WhichContestYouEntering:
-	.string "Which CONTEST are you entering?\n"
-	.string "Want a piece of advice?\p"
-	.string "In any CONTEST, for example, a CUTE\n"
-	.string "CONTEST, I don't think they judge you\l"
-	.string "only on cuteness in the first round.\p"
-	.string "You need to work out ways for raising\n"
-	.string "POKéMON better.$"
+	.string "Em qual CONCURSO você vai entrar?\n"
+	.string "Quer um conselho?\p"
+	.string "Em qualquer CONCURSO, por exemplo um\n"
+	.string "CONCURSO DE FOFURA, acho que não\l"
+	.string "julgam só a fofura na primeira etapa.\p"
+	.string "Você precisa achar jeitos de criar\n"
+	.string "os POKéMON cada vez melhor.$"
 
 /* Unused*/
 VerdanturfTown_ContestHall_Text_RaisedMonToBeCute:
-	.string "I raised my POKéMON to be cute.\p"
-	.string "I found out you can put POKéMON in\n"
-	.string "a CONTEST for cuteness!\p"
-	.string "I'm so glad I raised my POKéMON with\n"
-	.string "loving care…$"
+	.string "Criei o meu POKéMON pra ser fofo.\p"
+	.string "Descobri que dá pra pôr POKéMON\n"
+	.string "num CONCURSO de fofura!\p"
+	.string "Que bom que criei o meu POKéMON\n"
+	.string "com tanto carinho…$"
 
 /* Unused*/
 VerdanturfTown_ContestHall_Text_MyMonRules:
-	.string "My POKéMON rules!\p"
-	.string "It's cool, tough yet beautiful, cute,\n"
-	.string "and smart. It's complete!\p"
-	.string "I may as well go for wins in every\n"
-	.string "single CONTEST.$"
+	.string "O meu POKéMON é o máximo!\p"
+	.string "É estiloso, forte e ainda bonito,\n"
+	.string "fofo e esperto. É completo!\p"
+	.string "Bem que eu podia ganhar em todos\n"
+	.string "os CONCURSOS.$"
 
 /* Unused*/
 VerdanturfTown_ContestHall_Text_NormalRankStage:
-	.string "POKéMON CONTESTS\n"
-	.string "NORMAL RANK STAGE!$"
+	.string "CONCURSOS POKéMON\n"
+	.string "PALCO DO NÍVEL NORMAL!$"
 

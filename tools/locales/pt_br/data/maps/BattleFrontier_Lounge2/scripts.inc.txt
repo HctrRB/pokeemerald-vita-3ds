@@ -1,0 +1,104 @@
+[BattleFrontier_Lounge2_Text_FrontierManiacIntro] d8d9e93c9c
+E aí! Em notícias da FRONTEIRA DE\nBATALHA, sou o nº 1.\pPode me chamar de MANÍACO DA\nFRONTEIRA.\pSó confirmando: você é TREINADOR,\nnão é?\pVou contar com prazer as notícias\nmais quentes da FRONTEIRA.$
+
+[BattleFrontier_Lounge2_Text_SwingByForTheLatestWord] a8499dabc7
+E aí! Veio me arrancar as últimas\nnovidades? Tá bom, então!$
+
+[BattleFrontier_Lounge2_Text_MyInformationsBeenUsefulRight] 855383dec2
+E aí? E aí? E aí?\pAs minhas informações foram muito\núteis, né?$
+
+[BattleFrontier_Lounge2_Text_FacilityIsHottest] 561004c10a
+Vejamos…\pParece que o lugar do momento é\n{STR_VAR_1}.$
+
+[BattleFrontier_Lounge2_Text_BattleTowerIsHottest] 9cd21aa204
+Vejamos…\pParece que o mais quente é a\nTORRE DE BATALHA: {STR_VAR_1}.$
+
+[BattleFrontier_Lounge2_Text_SalonMaidenIsThere] 4f50e16a09
+Aposto que você não sabia!\pUm dos TREINADORES de elite que o\nSCOTT chama de CÉREBROS DA FRONTEIRA\lestá lá.\pQuem comanda o lugar é uma\nTREINADORA misteriosa, a DAMA DO\lSALÃO.$
+
+[BattleFrontier_Lounge2_Text_SalonMaidenSilverMons] 04451db5b4
+Já batalhou com a DAMA DO SALÃO?\pQuando ela está medindo o oponente,\nparece que usa estes POKéMON:\pum POKéMON PSI de PSÍQUICO,\num POKéMON VULCÃO de FOGO\le um POKéMON DORMINHOCO de NORMAL.$
+
+[BattleFrontier_Lounge2_Text_SalonMaidenGoldMons] cadcb94927
+Já batalhou com a DAMA DO SALÃO\nfalando sério?\pQuando ela batalha com tudo,\nparece que usa estes POKéMON:\pum POKéMON EON de DRAGÃO e PSÍQUICO,\num POKéMON TROVÃO de ELÉTRICO\le um POKéMON DORMINHOCO de NORMAL.$
+
+[BattleFrontier_Lounge2_Text_DomeAceIsThere] 240fced11b
+Aposto que você não sabia!\pUm dos TREINADORES de elite que o\nSCOTT chama de CÉREBROS DA FRONTEIRA\lestá lá.\pQuem comanda o lugar é um\nTREINADOR exibido, o ÁS DA CÚPULA.$
+
+[BattleFrontier_Lounge2_Text_DomeAceSilverMons] 60835b50f6
+Já batalhou com o ÁS DA CÚPULA?\pQuando pega leve com o oponente,\nele usa estes três POKéMON:\pum POKéMON DRAGÃO de DRAGÃO e\lVOADOR, um POKéMON PEIXE-LAMA de\lÁGUA e TERRA e um POKéMON CHAMA\lde FOGO e VOADOR.$
+
+[BattleFrontier_Lounge2_Text_DomeAceGoldMons] 2adc0c64a2
+Já batalhou com o ÁS DA CÚPULA\nfalando sério?\pQuando mostra a sua estratégia,\nele usa estes três POKéMON:\pum POKéMON EON de DRAGÃO e VOADOR,\num POKéMON PEIXE-LAMA de ÁGUA e\lTERRA e um POKéMON PERNA FERRO\lde AÇO e PSÍQUICO.$
+
+[BattleFrontier_Lounge2_Text_FactoryHeadIsThere] e5c4e21ff5
+Aposto que você não sabia!\pUm dos TREINADORES de elite que o\nSCOTT chama de CÉREBROS DA FRONTEIRA\lestá lá.\pQuem comanda o lugar é um\nTREINADOR esquisito, o CHEFE DA\lFÁBRICA.$
+
+[BattleFrontier_Lounge2_Text_FactoryHeadSilverMons] 39b02edc37
+Já batalhou com o CHEFE DA FÁBRICA?\pDeixa eu pensar… Quando vai batalhar,\nele só pega três POKéMON de aluguel.\pEle batalha praticamente nas mesmas\ncondições que você.$
+
+[BattleFrontier_Lounge2_Text_FactoryHeadGoldMons] 03eafa9bf7
+Já batalhou com o CHEFE DA FÁBRICA\nfalando sério?\pMesmo quando batalha a sério, ele\nainda pega três POKéMON de aluguel.\pEle batalha praticamente nas mesmas\ncondições que você.$
+
+[BattleFrontier_Lounge2_Text_PikeQueenIsThere] e8776687dd
+Aposto que você não sabia!\pUm dos TREINADORES de elite que o\nSCOTT chama de CÉREBROS DA FRONTEIRA\lestá lá.\pQuem comanda o lugar é uma\nTREINADORA assustadora, a RAINHA\lDO PICO.$
+
+[BattleFrontier_Lounge2_Text_PikeQueenSilverMons] 28ec74363d
+Já batalhou com a RAINHA DO PICO?\pQuando está de bom humor, dizem que\nela usa estes três POKéMON:\pum POKéMON COBRA PRESA de VENENO,\num POKéMON FUNGO de INSETO e PEDRA\le um POKéMON TERNO de ÁGUA.$
+
+[BattleFrontier_Lounge2_Text_PikeQueenGoldMons] e9a028698b
+Já batalhou com a RAINHA DO PICO\nfalando sério?\pQuando está irritada de verdade,\ndizem que ela usa estes POKéMON:\pum POKéMON COBRA PRESA de VENENO,\num POKéMON COBRA FERRO de AÇO e\lTERRA e um POKéMON ATROZ de ÁGUA\le VOADOR.$
+
+[BattleFrontier_Lounge2_Text_ArenaTycoonIsThere] c3eee884a6
+Aposto que você não sabia!\pUm dos TREINADORES de elite que o\nSCOTT chama de CÉREBROS DA FRONTEIRA\lestá lá.\pQuem comanda o lugar é uma\nTREINADORA fofa, a MAGNATA DA ARENA.$
+
+[BattleFrontier_Lounge2_Text_ArenaTycoonSilverMons] 95bb7c4b80
+Já batalhou com a MAGNATA DA ARENA?\pQuando avalia o oponente, parece\nque ela usa estes POKéMON:\pum POKéMON MONOCHIFRE de INSETO e\lLUTADOR, um POKéMON LUAR de\lSOMBRIO e um POKéMON CASCA VAZIA\lde INSETO e FANTASMA.$
+
+[BattleFrontier_Lounge2_Text_ArenaTycoonGoldMons] ad551e7771
+Já batalhou com a MAGNATA DA ARENA\nfalando sério?\pQuando batalha pra valer, parece que\nela usa estes POKéMON:\pum POKéMON LUAR de SOMBRIO, um\nPOKéMON SOMBRA de FANTASMA e VENENO\le um POKéMON COGUMELO de PLANTA\le LUTADOR.$
+
+[BattleFrontier_Lounge2_Text_PalaceMavenIsThere] 240219f8a5
+Aposto que você não sabia!\pUm dos TREINADORES de elite que o\nSCOTT chama de CÉREBROS DA FRONTEIRA\lestá lá.\pQuem comanda o lugar é um\nTREINADOR sinistro, o SÁBIO DO\lPALÁCIO.$
+
+[BattleFrontier_Lounge2_Text_PalaceMavenSilverMons] cc56ce4063
+Já batalhou com o SÁBIO DO PALÁCIO?\pQuando testa o espírito do oponente,\ndizem que ele usa estes POKéMON:\pum POKéMON MORCEGO de VENENO e\lVOADOR, um POKéMON PREGUIÇA de\lNORMAL e um POKéMON TRANSPORTE\lde ÁGUA e GELO.$
+
+[BattleFrontier_Lounge2_Text_PalaceMavenGoldMons] 94aa18721a
+Já batalhou com o SÁBIO DO PALÁCIO\nfalando sério?\pQuando põe toda a força na batalha,\ndizem que ele usa estes POKéMON:\pum POKéMON LENDÁRIO de FOGO,\num POKéMON PREGUIÇA de NORMAL\le um POKéMON AURORA de ÁGUA.$
+
+[BattleFrontier_Lounge2_Text_PyramidKingIsThere] 3de4b176e7
+Aposto que você não sabia!\pUm dos TREINADORES de elite que o\nSCOTT chama de CÉREBROS DA FRONTEIRA\lestá lá.\pQuem comanda o lugar é um\nTREINADOR esquentado, o REI DA\lPIRÂMIDE.$
+
+[BattleFrontier_Lounge2_Text_PyramidKingSilverMons] 26829cc863
+Já batalhou com o REI DA PIRÂMIDE?\pQuando testa a força do oponente,\nparece que ele usa estes POKéMON:\pum POKéMON PICO ROCHA de PEDRA,\num POKéMON ICEBERG de GELO\le um POKéMON FERRO de AÇO.$
+
+[BattleFrontier_Lounge2_Text_PyramidKingGoldMons] 5204a14400
+Já batalhou com o REI DA PIRÂMIDE\nfalando sério?\pQuando está cheio de força, parece\nque ele usa estes POKéMON:\pum POKéMON CONGELANTE de GELO e\lVOADOR, um POKéMON ELÉTRICO de\lELÉTRICO e VOADOR e um POKéMON\lCHAMA de FOGO e VOADOR.$
+
+[BattleFrontier_Lounge2_Text_DoubleBattleAdvice1] 21881e3627
+Claro, tem vários lugares com\nBATALHAS DUPLAS.\pMas as SALAS DE BATALHA DUPLA da\nTORRE DE BATALHA são, tipo, o básico!\pÉ lá que você aprende como funcionam\nas BATALHAS DUPLAS aqui na\lFRONTEIRA DE BATALHA.$
+
+[BattleFrontier_Lounge2_Text_DoubleBattleAdvice2] b89c3dbe76
+Cuidado nas batalhas daqui.\pDizem que tem TREINADORES com\nestratégias feitas só pras\lBATALHAS DUPLAS.$
+
+[BattleFrontier_Lounge2_Text_DoubleBattleAdvice3] 8edc76aa32
+Quando estiver confiante e à vontade\nnas BATALHAS DUPLAS daqui, pense em\ldesafiar outros lugares com\lBATALHAS DUPLAS.$
+
+[BattleFrontier_Lounge2_Text_MultiBattleAdvice] 14ceba7156
+Todo tipo de TREINADOR se reúne no\nSALÃO DE BATALHA.\pPense só: você pode encontrar\namigos ou seguidores!\lOlhe com atenção!$
+
+[BattleFrontier_Lounge2_Text_LinkMultiBattleAdvice] 27fa9a163c
+Se estiver com um amigo, vá pra\nSALA DE BATALHA MÚLTIPLA POR LINK.\pJogando com um amigo forte, espere\noponentes duros!$
+
+[BattleFrontier_Lounge2_Text_NewsGatheringPower] 3482d13a94
+Que poder de apurar notícias!\nO meu mestre é único!$
+
+[BattleFrontier_Lounge2_Text_AmazingPowersOfObservation] 6a83d3fdb0
+Que poder de observação!\nO meu mestre é único!$
+
+[BattleFrontier_Lounge2_Text_AmazingPowerOfPersuasion] e2ae2f7ae3
+Que poder de persuasão!\nO meu mestre é único!$
+
+[BattleFrontier_Lounge2_Text_ThisPlaceIsScaringMe] cd86e8db8f
+…Que lugar é este?\nEstá me dando medo…$

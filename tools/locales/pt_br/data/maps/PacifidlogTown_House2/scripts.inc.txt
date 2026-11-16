@@ -1,0 +1,32 @@
+[PacifidlogTown_House2_Text_ChairmansYoungerBrotherOnVacation] 93a57c73d9
+Hã-hã!\pSou a pessoa mais importante do\nFÃ-CLUBE POKéMON: o irmão mais novo\ldo PRESIDENTE.\pEstou aqui curtindo as férias com\nos POKéMON, isso mesmo.$
+
+[PacifidlogTown_House2_Text_AhYourPokemon] 1c2432aee3
+Ah!\nO seu POKéMON…$
+
+[PacifidlogTown_House2_Text_AdoringPokemonTakeThis] 9c0946db64
+Dá pra ver que ele gosta muito de você.\pUm POKéMON tão carinhoso e adorável\nmerece uma MT como esta, não?$
+
+[PacifidlogTown_House2_Text_PutInSomeMoreEffort] 1ba22f3487
+Hum…\nNão é ruim, mas também não é bom.\pVocê, como TREINADOR, precisa se\nesforçar mais.$
+
+[PacifidlogTown_House2_Text_ViciousPokemonTakeThis] 7222d22d49
+Ele tem um olhar feroz.\pUm POKéMON assustador desses\nmerece uma MT como esta.$
+
+[PacifidlogTown_House2_Text_ExplainReturnFrustration] 27c648330e
+Se um POKéMON gosta muito de você,\no poder de RETORNO aumenta.\pSe ele não gosta, o poder de\nFRUSTRAÇÃO é que aumenta.$
+
+[PacifidlogTown_House2_Text_GetGoodTMInXDays] de984393df
+Ah, sim. Em uns {STR_VAR_1} dias, devo\nreceber uma ou duas MT boas.\pVenha me ver então. Te dou uma MT\nque combine com o seu POKéMON.$
+
+[PacifidlogTown_House2_Text_Rurii] 3fd82a6482
+AZURILL: Rurii.$
+
+[PacifidlogTown_House2_Text_VeryFriendlyWithTrainer] c24a402400
+Parece que ele se dá muito bem com\no TREINADOR.$
+
+[PacifidlogTown_House2_Text_Rururi] f0e692729e
+AZURILL: Rururi!$
+
+[PacifidlogTown_House2_Text_DoesntLikeTrainerVeryMuch] 51bfbec63e
+Parece que ele não gosta muito do\nTREINADOR.$

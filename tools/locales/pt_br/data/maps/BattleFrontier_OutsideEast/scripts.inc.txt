@@ -1,0 +1,95 @@
+[BattleFrontier_OutsideEast_Text_BattleTowerSign] d705e59f18
+Esta é a TORRE DE BATALHA!\nMantenha a sequência de vitórias\lcomo o TREINADOR mais forte!$
+
+[BattleFrontier_OutsideEast_Text_BattlePalaceSign] d83be12f40
+Este é o PALÁCIO DE BATALHA!\nDe olho nas batalhas POKéMON!$
+
+[BattleFrontier_OutsideEast_Text_BattleArenaSign] 0175d9e024
+Esta é a ARENA DE BATALHA!\nQue venham as equipes mais fortes!$
+
+[BattleFrontier_OutsideEast_Text_BattlePyramidSign] ac2a56a8ed
+Esta é a PIRÂMIDE DE BATALHA!\nAvance pela Missão de Batalha!$
+
+[BattleFrontier_OutsideEast_Text_RankingHallSign] f53f6f620e
+SALÃO DO RANKING DA FRONTEIRA\nMire em novos recordes!$
+
+[BattleFrontier_OutsideEast_Text_ExchangeCornerSign] 7ec09717bc
+CENTRAL DE TROCAS DE PONTOS\nTroque os seus Pontos de Batalha!$
+
+[BattleFrontier_OutsideEast_Text_BattleTowerFeelsSpecial] 691ef24726
+Uau!\nQue enorme!\pA TORRE DE BATALHA parece especial.\nÉ diferente das outras.$
+
+[BattleFrontier_OutsideEast_Text_ConquerLeagueAndFrontier] 239510d624
+A minha grande ambição é conquistar a\nFRONTEIRA DE BATALHA e a LIGA\lPOKéMON.\pE, se o meu sonho se realizar…\pE-eu vou perguntar à MIMI, a vizinha,\nse ela quer ser minha amiga!$
+
+[BattleFrontier_OutsideEast_Text_PyramidTooHarsh] 28b4d07b42
+A PIRÂMIDE DE BATALHA é dura demais!\nNão consigo chegar ao topo!\pSem opção, talvez eu possa escalar\npor fora…$
+
+[BattleFrontier_OutsideEast_Text_ThriveInDarkness] 5ce18c2e3e
+Eu floresço na escuridão…\nSim… O que é digno de mim?\lNada menos que a PIRÂMIDE…\pQue tal vagar na escuridão, em\ndesespero total e absoluto?$
+
+[BattleFrontier_OutsideEast_Text_PutTogetherUltimateTeam] d86321cad5
+Fiquei uma semana sem dormir, mas\nmontei a equipe definitiva!\pNão me vejo perdendo, sério.\nVamos invadir a ARENA DE BATALHA!$
+
+[BattleFrontier_OutsideEast_Text_DidScottBringYouHere] f44fa545a7
+O SCOTT também te trouxe?\nQual é a desse cara?\pParece que ele sabe mesmo achar\nTREINADORES talentosos, mas…\pNunca vi ele batalhando.$
+
+[BattleFrontier_OutsideEast_Text_BelieveInYouBuddy] 2f74295828
+ZIGG!\nEu acredito em você, amiguinho!\pSe ganhar, faço todos os petiscos\nque o meu ZIGG gosta!$
+
+[BattleFrontier_OutsideEast_Text_ZigzagoonLooksVacant] f213caa53b
+O ZIGZAGOON parece aéreo…$
+
+[BattleFrontier_OutsideEast_Text_PeopleCallMeBusybody] 6bd6d15218
+Dizem que eu sou intrometida,\nmas não consigo evitar.\pO seu chapéu está torto!\nAi, lixo no chão!\lOpa, já está quase na hora da janta!\pNão sei se aguento só assistir no\nPALÁCIO DE BATALHA…$
+
+[BattleFrontier_OutsideEast_Text_OnceBeatGymLeader] 546563b7c9
+Posso não impressionar agora, mas\njá venci um LÍDER de GINÁSIO.\pQuem sabe eu não tento a glória\nde novo.$
+
+[BattleFrontier_OutsideEast_Text_FastOnBikeAndBattles] 3ecf26ee28
+Sou rápido de BICICLETA, e na\nbatalha também.\pVenço num piscar de olhos!$
+
+[BattleFrontier_OutsideEast_Text_BetterThanDaddyAtPokemon] 4d99be7a00
+Sou melhor que o meu papai\nem POKéMON.$
+
+[BattleFrontier_OutsideEast_Text_GoRackUpSomeWinsForDaddy] 68e84f7ff1
+Vai, minha fofura!\nGanha umas vitórias pro papai!\pVocê é igualzinha à sua mãe,\nentão vai arrasar!$
+
+[BattleFrontier_OutsideEast_Text_HeardPrettyGirlAtBattleArena] 937d329b91
+Não foi fácil chegar aqui, mas eu\nouvi falar de uma moça linda de\lmorrer na ARENA DE BATALHA.\pE sabe o que eu achei no lugar\ndela?\pUm bando de lutadores suados,\nfedidos e primitivos!$
+
+[BattleFrontier_OutsideEast_Text_SometimesImportantOldManInThere] 3430983233
+Às vezes vejo um velhinho com cara\nde importante entrando ali.\pEle tem uns POKéMON incríveis.\nMas parece ser bem gente boa.$
+
+[BattleFrontier_OutsideEast_Text_LegendOfBattlePyramid] 66cad4317b
+Conhece?\nA lenda da PIRÂMIDE DE BATALHA?\pQuando vier um TREINADOR confiante\nbuscando o topo dourado, surgirá\lum homem entre os homens.\pNão conhece essa lenda?\nClaro que não!\lAcabei de inventar!\pO que significa?\nIsso, amigo, não posso dizer!$
+
+[BattleFrontier_OutsideEast_Text_GotWipedOut] 9656b55144
+Cara! Ai, cara!\nEu nunca tinha perdido!\pMas fui arrasado sem dó nenhuma!\pE ainda me dizem que não tenho\ntalento?! Cara!$
+
+[BattleFrontier_OutsideEast_Text_ToughTrainerInBattleTower] cd2c33ce24
+Esse cara topou com um TREINADOR\nterrivelmente forte no desafio da\lTORRE DE BATALHA.\pAgora olha pra ele…\pTome cuidado se um dia for à\nTORRE DE BATALHA.$
+
+[BattleFrontier_OutsideEast_Text_EnoughBattlePointsForDoll] dbfb346f40
+Isso!\nFinalmente tenho Pontos de Batalha!\pAcho que vou trocar por mais um\nBONECO de pelúcia gigante!$
+
+[BattleFrontier_OutsideEast_Text_LikeToHaveNameRecordedHere] 7a0d8c7c70
+Ah, é, tá!\nEntão este é o SALÃO DO RANKING!\pQuero entrar pra história como um\nsupercampeão e ter o meu nome\lregistrado aqui pra sempre.$
+
+[BattleFrontier_OutsideEast_Text_CanDoAnythingWithYou] d99c2cbcdf
+Com você do meu lado, consigo tudo.$
+
+[BattleFrontier_OutsideEast_Text_PowerOfOurLoveWillOvercome] 12c08b6ae8
+Ai, querido, você é maravilhoso!\pAi, não aguento mais esperar!\pVamos pra uma SALA DE BATALHA\nMÚLTIPLA agora mesmo!\pSe a gente se juntar no SALÃO DE\nBATALHA, o poder do nosso amor\lvence todo mundo!\pDiante da gente, querido, tudo vai\ncair que nem dominó!$
+
+[BattleFrontier_OutsideEast_Text_FrontierNotExclusivelyForToughTrainers] f3c32ce332
+A FRONTEIRA DE BATALHA não é só\npara TREINADORES fortes.\pParece que muita gente com\nhabilidades especiais foi convidada.\pAquele SCOTT…\pTalvez tenha construído este lugar\ncom um objetivo maior…$
+
+[BattleFrontier_OutsideEast_Text_OddTreeHereSeemsToWiggle] 65c9e658ef
+Com licença, jovem.\nVocê enxerga bem?\pTem uma árvore estranha mais pra\nfrente, e pros meus olhos cansados\lela parece se mexer.$
+
+[BattleFrontier_OutsideEast_Text_OnceAnOddTreePastHere] 546f69dfc2
+Com licença, jovem.\nVocê tem boa memória?\pTenho a impressão de que já houve\numa árvore estranha mais pra frente.$
+
+[BattleFrontier_OutsideEast_Text_StickyMonWithLongTail] bcb7f00090
+E-eu…\nEu vi!\pTinha um POKéMON meio grudento de\nrabo comprido lá na frente!\pEle se escondia debaixo de uma\npedra e não parava de me encarar!$

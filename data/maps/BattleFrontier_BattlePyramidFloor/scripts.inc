@@ -126,606 +126,609 @@ BattlePyramid_Retire::
 
 /* Also used by Trainer Hill*/
 BattleFacility_TrainerBattle_PlaceholderText:
-	.string "This is a sample message.$"
+	.string "Esta é uma mensagem de exemplo.$"
 
 gText_BattlePyramidConfirmRest::
-	.string "Your BATTLE PYRAMID quest will be\n"
-	.string "saved so that you may quit for now.\l"
-	.string "Is that okay?$"
+	.string "A sua missão na PIRÂMIDE DE BATALHA\n"
+	.string "será salva pra você parar por agora.\l"
+	.string "Tudo bem?$"
 
 gText_BattlePyramidConfirmRetire::
-	.string "Are you sure you want to quit your\n"
-	.string "PYRAMID quest?$"
+	.string "Tem certeza de que quer abandonar\n"
+	.string "a missão na PIRÂMIDE?$"
 
 BattlePyramid_Text_ExitHintUp1::
-	.string "This floor's exit is in\n"
-	.string "that direction: {UP_ARROW}$"
+	.string "A saída deste andar fica\n"
+	.string "naquela direção: {UP_ARROW}$"
 
 BattlePyramid_Text_ExitHintLeft1::
-	.string "This floor's exit is in\n"
-	.string "that direction: {LEFT_ARROW}$"
+	.string "A saída deste andar fica\n"
+	.string "naquela direção: {LEFT_ARROW}$"
 
 BattlePyramid_Text_ExitHintRight1::
-	.string "This floor's exit is in\n"
-	.string "that direction: {RIGHT_ARROW}$"
+	.string "A saída deste andar fica\n"
+	.string "naquela direção: {RIGHT_ARROW}$"
 
 BattlePyramid_Text_ExitHintDown1::
-	.string "This floor's exit is in\n"
-	.string "that direction: {DOWN_ARROW}$"
+	.string "A saída deste andar fica\n"
+	.string "naquela direção: {DOWN_ARROW}$"
 
 BattlePyramid_Text_ExitHintUp2::
-	.string "The exit on this floor is in\n"
-	.string "the {UP_ARROW} direction.$"
+	.string "A saída deste andar fica\n"
+	.string "na direção {UP_ARROW}.$"
 
 BattlePyramid_Text_ExitHintLeft2::
-	.string "The exit on this floor is in\n"
-	.string "the {LEFT_ARROW} direction.$"
+	.string "A saída deste andar fica\n"
+	.string "na direção {LEFT_ARROW}.$"
 
 BattlePyramid_Text_ExitHintRight2::
-	.string "The exit on this floor is in\n"
-	.string "the {RIGHT_ARROW} direction.$"
+	.string "A saída deste andar fica\n"
+	.string "na direção {RIGHT_ARROW}.$"
 
 BattlePyramid_Text_ExitHintDown2::
-	.string "The exit on this floor is in\n"
-	.string "the {DOWN_ARROW} direction.$"
+	.string "A saída deste andar fica\n"
+	.string "na direção {DOWN_ARROW}.$"
 
 BattlePyramid_Text_ExitHintUp3::
-	.string "The exit is over\n"
-	.string "that {UP_ARROW} way.$"
+	.string "A saída é\n"
+	.string "pra lá {UP_ARROW}.$"
 
 BattlePyramid_Text_ExitHintLeft3::
-	.string "The exit is over\n"
-	.string "that {LEFT_ARROW} way.$"
+	.string "A saída é\n"
+	.string "pra lá {LEFT_ARROW}.$"
 
 BattlePyramid_Text_ExitHintRight3::
-	.string "The exit is over\n"
-	.string "that {RIGHT_ARROW} way.$"
+	.string "A saída é\n"
+	.string "pra lá {RIGHT_ARROW}.$"
 
 BattlePyramid_Text_ExitHintDown3::
-	.string "The exit is over\n"
-	.string "that {DOWN_ARROW} way.$"
+	.string "A saída é\n"
+	.string "pra lá {DOWN_ARROW}.$"
 
 BattlePyramid_Text_ExitHintUp4::
-	.string "On this floor, the exit is somewhere\n"
-	.string "in the {UP_ARROW} direction.$"
+	.string "Neste andar, a saída fica em algum\n"
+	.string "lugar na direção {UP_ARROW}.$"
 
 BattlePyramid_Text_ExitHintLeft4::
-	.string "On this floor, the exit is somewhere\n"
-	.string "in the {LEFT_ARROW} direction.$"
+	.string "Neste andar, a saída fica em algum\n"
+	.string "lugar na direção {LEFT_ARROW}.$"
 
 BattlePyramid_Text_ExitHintRight4::
-	.string "On this floor, the exit is somewhere\n"
-	.string "in the {RIGHT_ARROW} direction.$"
+	.string "Neste andar, a saída fica em algum\n"
+	.string "lugar na direção {RIGHT_ARROW}.$"
 
 BattlePyramid_Text_ExitHintDown4::
-	.string "On this floor, the exit is somewhere\n"
-	.string "in the {DOWN_ARROW} direction.$"
+	.string "Neste andar, a saída fica em algum\n"
+	.string "lugar na direção {DOWN_ARROW}.$"
 
 BattlePyramid_Text_ExitHintUp5::
-	.string "The exit?\n"
-	.string "It's that {UP_ARROW} way.$"
+	.string "A saída?\n"
+	.string "É pra lá {UP_ARROW}.$"
 
 BattlePyramid_Text_ExitHintLeft5::
-	.string "The exit?\n"
-	.string "It's that {LEFT_ARROW} way.$"
+	.string "A saída?\n"
+	.string "É pra lá {LEFT_ARROW}.$"
 
 BattlePyramid_Text_ExitHintRight5::
-	.string "The exit?\n"
-	.string "It's that {RIGHT_ARROW} way.$"
+	.string "A saída?\n"
+	.string "É pra lá {RIGHT_ARROW}.$"
 
 BattlePyramid_Text_ExitHintDown5::
-	.string "The exit?\n"
-	.string "It's that {DOWN_ARROW} way.$"
+	.string "A saída?\n"
+	.string "É pra lá {DOWN_ARROW}.$"
 
 BattlePyramid_Text_ExitHintUp6::
-	.string "The exit happens to be in\n"
-	.string "the {UP_ARROW} direction.$"
+	.string "Por acaso, a saída fica\n"
+	.string "na direção {UP_ARROW}.$"
 
 BattlePyramid_Text_ExitHintLeft6::
-	.string "The exit happens to be in\n"
-	.string "the {LEFT_ARROW} direction.$"
+	.string "Por acaso, a saída fica\n"
+	.string "na direção {LEFT_ARROW}.$"
 
 BattlePyramid_Text_ExitHintRight6::
-	.string "The exit happens to be in\n"
-	.string "the {RIGHT_ARROW} direction.$"
+	.string "Por acaso, a saída fica\n"
+	.string "na direção {RIGHT_ARROW}.$"
 
 BattlePyramid_Text_ExitHintDown6::
-	.string "The exit happens to be in\n"
-	.string "the {DOWN_ARROW} direction.$"
+	.string "Por acaso, a saída fica\n"
+	.string "na direção {DOWN_ARROW}.$"
 
 BattlePyramid_Text_EightItemsRemaining1::
-	.string "Are you looking for items?\p"
-	.string "There are eight items left to\n"
-	.string "be found.$"
+	.string "Procurando itens?\p"
+	.string "Ainda faltam oito itens pra\n"
+	.string "achar.$"
 
 BattlePyramid_Text_SevenItemsRemaining1::
-	.string "Are you looking for items?\p"
-	.string "There are seven items left to\n"
-	.string "be found.$"
+	.string "Procurando itens?\p"
+	.string "Ainda faltam sete itens pra\n"
+	.string "achar.$"
 
 BattlePyramid_Text_SixItemsRemaining1::
-	.string "Are you looking for items?\p"
-	.string "There are six items left to\n"
-	.string "be found.$"
+	.string "Procurando itens?\p"
+	.string "Ainda faltam seis itens pra\n"
+	.string "achar.$"
 
 BattlePyramid_Text_FiveItemsRemaining1::
-	.string "Are you looking for items?\p"
-	.string "There are five items left to\n"
-	.string "be found.$"
+	.string "Procurando itens?\p"
+	.string "Ainda faltam cinco itens pra\n"
+	.string "achar.$"
 
 BattlePyramid_Text_FourItemsRemaining1::
-	.string "Are you looking for items?\p"
-	.string "There are four items left to\n"
-	.string "be found.$"
+	.string "Procurando itens?\p"
+	.string "Ainda faltam quatro itens pra\n"
+	.string "achar.$"
 
 BattlePyramid_Text_ThreeItemsRemaining1::
-	.string "Are you looking for items?\p"
-	.string "There are three items left to\n"
-	.string "be found.$"
+	.string "Procurando itens?\p"
+	.string "Ainda faltam três itens pra\n"
+	.string "achar.$"
 
 BattlePyramid_Text_TwoItemsRemaining1::
-	.string "Are you looking for items?\p"
-	.string "There are two items left to\n"
-	.string "be found.$"
+	.string "Procurando itens?\p"
+	.string "Ainda faltam dois itens pra\n"
+	.string "achar.$"
 
 BattlePyramid_Text_OneItemRemaining1::
-	.string "Are you looking for items?\p"
-	.string "There is one item left to\n"
-	.string "be found.$"
+	.string "Procurando itens?\p"
+	.string "Falta achar só um item.$"
 
 BattlePyramid_Text_ZeroItemsRemaining1::
-	.string "Are you looking for items?\p"
-	.string "There isn't anything left to\n"
-	.string "be found!$"
+	.string "Procurando itens?\p"
+	.string "Não sobrou nada pra achar!$"
 
 BattlePyramid_Text_EightItemsRemaining2::
-	.string "Because you won, I'll tell you\n"
-	.string "a little secret!\p"
-	.string "There are eight items\n"
-	.string "lying around here.$"
+	.string "Como você ganhou, vou contar\n"
+	.string "um segredinho!\p"
+	.string "Tem oito itens jogados\n"
+	.string "por aqui.$"
 
 BattlePyramid_Text_SevenItemsRemaining2::
-	.string "Because you won, I'll tell you\n"
-	.string "a little secret!\p"
-	.string "There are seven items left\n"
-	.string "lying around here.$"
+	.string "Como você ganhou, vou contar\n"
+	.string "um segredinho!\p"
+	.string "Ainda tem sete itens jogados\n"
+	.string "por aqui.$"
 
 BattlePyramid_Text_SixItemsRemaining2::
-	.string "Because you won, I'll tell you\n"
-	.string "a little secret!\p"
-	.string "There are six items left\n"
-	.string "lying around here.$"
+	.string "Como você ganhou, vou contar\n"
+	.string "um segredinho!\p"
+	.string "Ainda tem seis itens jogados\n"
+	.string "por aqui.$"
 
 BattlePyramid_Text_FiveItemsRemaining2::
-	.string "Because you won, I'll tell you\n"
-	.string "a little secret!\p"
-	.string "There are five items left\n"
-	.string "lying around here.$"
+	.string "Como você ganhou, vou contar\n"
+	.string "um segredinho!\p"
+	.string "Ainda tem cinco itens jogados\n"
+	.string "por aqui.$"
 
 BattlePyramid_Text_FourItemsRemaining2::
-	.string "Because you won, I'll tell you\n"
-	.string "a little secret!\p"
-	.string "There are four items left\n"
-	.string "lying around here.$"
+	.string "Como você ganhou, vou contar\n"
+	.string "um segredinho!\p"
+	.string "Ainda tem quatro itens jogados\n"
+	.string "por aqui.$"
 
 BattlePyramid_Text_ThreeItemsRemaining2::
-	.string "Because you won, I'll tell you\n"
-	.string "a little secret!\p"
-	.string "There are three items left\n"
-	.string "lying around here.$"
+	.string "Como você ganhou, vou contar\n"
+	.string "um segredinho!\p"
+	.string "Ainda tem três itens jogados\n"
+	.string "por aqui.$"
 
 BattlePyramid_Text_TwoItemsRemaining2::
-	.string "Because you won, I'll tell you\n"
-	.string "a little secret!\p"
-	.string "There are two items left\n"
-	.string "lying around here.$"
+	.string "Como você ganhou, vou contar\n"
+	.string "um segredinho!\p"
+	.string "Ainda tem dois itens jogados\n"
+	.string "por aqui.$"
 
 BattlePyramid_Text_OneItemRemaining2::
-	.string "Because you won, I'll tell you\n"
-	.string "a little secret!\p"
-	.string "There is just one item\n"
-	.string "lying around here.$"
+	.string "Como você ganhou, vou contar\n"
+	.string "um segredinho!\p"
+	.string "Só tem um item jogado\n"
+	.string "por aqui.$"
 
 BattlePyramid_Text_ZeroItemsRemaining2::
-	.string "Because you won, I'll tell you\n"
-	.string "a little secret!\p"
-	.string "There isn't anything left\n"
-	.string "lying around here.$"
+	.string "Como você ganhou, vou contar\n"
+	.string "um segredinho!\p"
+	.string "Não sobrou nenhum item\n"
+	.string "por aqui.$"
 
 BattlePyramid_Text_EightItemsRemaining3::
-	.string "How's your stock of items holding up?\p"
-	.string "I reckon there are eight items left\n"
-	.string "waiting to be found on this floor.$"
+	.string "Como vão os seus itens?\p"
+	.string "Acho que ainda faltam oito itens\n"
+	.string "pra achar neste andar.$"
 
 BattlePyramid_Text_SevenItemsRemaining3::
-	.string "How's your stock of items holding up?\p"
-	.string "I reckon there are seven items left\n"
-	.string "waiting to be found on this floor.$"
+	.string "Como vão os seus itens?\p"
+	.string "Acho que ainda faltam sete itens\n"
+	.string "pra achar neste andar.$"
 
 BattlePyramid_Text_SixItemsRemaining3::
-	.string "How's your stock of items holding up?\p"
-	.string "I reckon there are six items left\n"
-	.string "waiting to be found on this floor.$"
+	.string "Como vão os seus itens?\p"
+	.string "Acho que ainda faltam seis itens\n"
+	.string "pra achar neste andar.$"
 
 BattlePyramid_Text_FiveItemsRemaining3::
-	.string "How's your stock of items holding up?\p"
-	.string "I reckon there are five items left\n"
-	.string "waiting to be found on this floor.$"
+	.string "Como vão os seus itens?\p"
+	.string "Acho que ainda faltam cinco itens\n"
+	.string "pra achar neste andar.$"
 
 BattlePyramid_Text_FourItemsRemaining3::
-	.string "How's your stock of items holding up?\p"
-	.string "I reckon there are four items left\n"
-	.string "waiting to be found on this floor.$"
+	.string "Como vão os seus itens?\p"
+	.string "Acho que ainda faltam quatro itens\n"
+	.string "pra achar neste andar.$"
 
 BattlePyramid_Text_ThreeItemsRemaining3::
-	.string "How's your stock of items holding up?\p"
-	.string "I reckon there are three items left\n"
-	.string "waiting to be found on this floor.$"
+	.string "Como vão os seus itens?\p"
+	.string "Acho que ainda faltam três itens\n"
+	.string "pra achar neste andar.$"
 
 BattlePyramid_Text_TwoItemsRemaining3::
-	.string "How's your stock of items holding up?\p"
-	.string "I reckon there are two items left\n"
-	.string "waiting to be found on this floor.$"
+	.string "Como vão os seus itens?\p"
+	.string "Acho que ainda faltam dois itens\n"
+	.string "pra achar neste andar.$"
 
 BattlePyramid_Text_OneItemRemaining3::
-	.string "How's your stock of items holding up?\p"
-	.string "I reckon there's but one item left\n"
-	.string "waiting to be found on this floor.$"
+	.string "Como vão os seus itens?\p"
+	.string "Acho que só falta um item pra\n"
+	.string "achar neste andar.$"
 
 BattlePyramid_Text_ZeroItemsRemaining3::
-	.string "How's your stock of items holding up?\p"
-	.string "I reckon there are no more items\n"
-	.string "waiting to be found on this floor.\l"
-	.string "You take care now!$"
+	.string "Como vão os seus itens?\p"
+	.string "Acho que não tem mais itens pra\n"
+	.string "achar neste andar. Se cuida!$"
 
 BattlePyramid_Text_EightItemsRemaining4::
-	.string "You're strong, so you've earned\n"
-	.string "a hint!\p"
-	.string "There appear to be eight more\n"
-	.string "items on the ground.$"
+	.string "Você é forte, então merece\n"
+	.string "uma dica!\p"
+	.string "Parece que tem mais oito itens\n"
+	.string "no chão.$"
 
 BattlePyramid_Text_SevenItemsRemaining4::
-	.string "You're strong, so you've earned\n"
-	.string "a hint!\p"
-	.string "There appear to be seven more\n"
-	.string "items on the ground.$"
+	.string "Você é forte, então merece\n"
+	.string "uma dica!\p"
+	.string "Parece que tem mais sete itens\n"
+	.string "no chão.$"
 
 BattlePyramid_Text_SixItemsRemaining4::
-	.string "You're strong, so you've earned\n"
-	.string "a hint!\p"
-	.string "There appear to be six more\n"
-	.string "items on the ground.$"
+	.string "Você é forte, então merece\n"
+	.string "uma dica!\p"
+	.string "Parece que tem mais seis itens\n"
+	.string "no chão.$"
 
 BattlePyramid_Text_FiveItemsRemaining4::
-	.string "You're strong, so you've earned\n"
-	.string "a hint!\p"
-	.string "There appear to be five more\n"
-	.string "items on the ground.$"
+	.string "Você é forte, então merece\n"
+	.string "uma dica!\p"
+	.string "Parece que tem mais cinco itens\n"
+	.string "no chão.$"
 
 BattlePyramid_Text_FourItemsRemaining4::
-	.string "You're strong, so you've earned\n"
-	.string "a hint!\p"
-	.string "There appear to be four more\n"
-	.string "items on the ground.$"
+	.string "Você é forte, então merece\n"
+	.string "uma dica!\p"
+	.string "Parece que tem mais quatro itens\n"
+	.string "no chão.$"
 
 BattlePyramid_Text_ThreeItemsRemaining4::
-	.string "You're strong, so you've earned\n"
-	.string "a hint!\p"
-	.string "There appear to be three more\n"
-	.string "items on the ground.$"
+	.string "Você é forte, então merece\n"
+	.string "uma dica!\p"
+	.string "Parece que tem mais três itens\n"
+	.string "no chão.$"
 
 BattlePyramid_Text_TwoItemsRemaining4::
-	.string "You're strong, so you've earned\n"
-	.string "a hint!\p"
-	.string "There appear to be two more\n"
-	.string "items on the ground.$"
+	.string "Você é forte, então merece\n"
+	.string "uma dica!\p"
+	.string "Parece que tem mais dois itens\n"
+	.string "no chão.$"
 
 BattlePyramid_Text_OneItemRemaining4::
-	.string "You're strong, so you've earned\n"
-	.string "a hint!\p"
-	.string "There appears to be only one more\n"
-	.string "item on the ground.$"
+	.string "Você é forte, então merece\n"
+	.string "uma dica!\p"
+	.string "Parece que só tem mais um item\n"
+	.string "no chão.$"
 
 BattlePyramid_Text_ZeroItemsRemaining4::
-	.string "You're strong, so you've earned\n"
-	.string "a hint!\p"
-	.string "There appear to be no more\n"
-	.string "items on the ground.$"
+	.string "Você é forte, então merece\n"
+	.string "uma dica!\p"
+	.string "Parece que não tem mais itens\n"
+	.string "no chão.$"
 
 BattlePyramid_Text_EightItemsRemaining5::
-	.string "On this floor of the PYRAMID,\n"
-	.string "I hear there are eight items…$"
+	.string "Neste andar da PIRÂMIDE, dizem\n"
+	.string "que há oito itens…$"
 
 BattlePyramid_Text_SevenItemsRemaining5::
-	.string "On this floor of the PYRAMID,\n"
-	.string "I hear there are seven items…$"
+	.string "Neste andar da PIRÂMIDE, dizem\n"
+	.string "que há sete itens…$"
 
 BattlePyramid_Text_SixItemsRemaining5::
-	.string "On this floor of the PYRAMID,\n"
-	.string "I hear there are six items…$"
+	.string "Neste andar da PIRÂMIDE, dizem\n"
+	.string "que há seis itens…$"
 
 BattlePyramid_Text_FiveItemsRemaining5::
-	.string "On this floor of the PYRAMID,\n"
-	.string "I hear there are five items…$"
+	.string "Neste andar da PIRÂMIDE, dizem\n"
+	.string "que há cinco itens…$"
 
 BattlePyramid_Text_FourItemsRemaining5::
-	.string "On this floor of the PYRAMID,\n"
-	.string "I hear there are four items…$"
+	.string "Neste andar da PIRÂMIDE, dizem\n"
+	.string "que há quatro itens…$"
 
 BattlePyramid_Text_ThreeItemsRemaining5::
-	.string "On this floor of the PYRAMID,\n"
-	.string "I hear there are three items…$"
+	.string "Neste andar da PIRÂMIDE, dizem\n"
+	.string "que há três itens…$"
 
 BattlePyramid_Text_TwoItemsRemaining5::
-	.string "On this floor of the PYRAMID,\n"
-	.string "I hear there are two items…$"
+	.string "Neste andar da PIRÂMIDE, dizem\n"
+	.string "que há dois itens…$"
 
 BattlePyramid_Text_OneItemRemaining5::
-	.string "On this floor of the PYRAMID,\n"
-	.string "I hear there is one item…$"
+	.string "Neste andar da PIRÂMIDE, dizem\n"
+	.string "que há um item…$"
 
 BattlePyramid_Text_ZeroItemsRemaining5::
-	.string "On this floor of the PYRAMID,\n"
-	.string "I hear there are no items…$"
+	.string "Neste andar da PIRÂMIDE, dizem\n"
+	.string "que não há itens…$"
 
 BattlePyramid_Text_EightItemsRemaining6::
-	.string "Have you collected any items?\p"
-	.string "I believe there are eight more\n"
-	.string "items on this floor.$"
+	.string "Já juntou algum item?\p"
+	.string "Acho que há mais oito itens\n"
+	.string "neste andar.$"
 
 BattlePyramid_Text_SevenItemsRemaining6::
-	.string "Have you collected any items?\p"
-	.string "I believe there are seven more\n"
-	.string "items on this floor.$"
+	.string "Já juntou algum item?\p"
+	.string "Acho que há mais sete itens\n"
+	.string "neste andar.$"
 
 BattlePyramid_Text_SixItemsRemaining6::
-	.string "Have you collected any items?\p"
-	.string "I believe there are six more\n"
-	.string "items on this floor.$"
+	.string "Já juntou algum item?\p"
+	.string "Acho que há mais seis itens\n"
+	.string "neste andar.$"
 
 BattlePyramid_Text_FiveItemsRemaining6::
-	.string "Have you collected any items?\p"
-	.string "I believe there are five more\n"
-	.string "items on this floor.$"
+	.string "Já juntou algum item?\p"
+	.string "Acho que há mais cinco itens\n"
+	.string "neste andar.$"
 
 BattlePyramid_Text_FourItemsRemaining6::
-	.string "Have you collected any items?\p"
-	.string "I believe there are four more\n"
-	.string "items on this floor.$"
+	.string "Já juntou algum item?\p"
+	.string "Acho que há mais quatro itens\n"
+	.string "neste andar.$"
 
 BattlePyramid_Text_ThreeItemsRemaining6::
-	.string "Have you collected any items?\p"
-	.string "I believe there are three more\n"
-	.string "items on this floor.$"
+	.string "Já juntou algum item?\p"
+	.string "Acho que há mais três itens\n"
+	.string "neste andar.$"
 
 BattlePyramid_Text_TwoItemsRemaining6::
-	.string "Have you collected any items?\p"
-	.string "I believe there are two more\n"
-	.string "items on this floor.$"
+	.string "Já juntou algum item?\p"
+	.string "Acho que há mais dois itens\n"
+	.string "neste andar.$"
 
 BattlePyramid_Text_OneItemRemaining6::
-	.string "Have you collected any items?\p"
-	.string "I believe there is one more\n"
-	.string "item on this floor.$"
+	.string "Já juntou algum item?\p"
+	.string "Acho que há mais um item\n"
+	.string "neste andar.$"
 
 BattlePyramid_Text_ZeroItemsRemaining6::
-	.string "Have you collected any items?\p"
-	.string "I believe there are no more\n"
-	.string "items on this floor.$"
+	.string "Já juntou algum item?\p"
+	.string "Acho que não há mais itens\n"
+	.string "neste andar.$"
 
 BattlePyramid_Text_SevenTrainersRemaining1::
-	.string "You were really awesome!\p"
-	.string "But there are still seven tough\n"
-	.string "TRAINERS other than me!$"
+	.string "Você foi demais!\p"
+	.string "Mas ainda tem sete TREINADORES\n"
+	.string "fortes além de mim!$"
 
 BattlePyramid_Text_SixTrainersRemaining1::
-	.string "You were really awesome!\p"
-	.string "But there are still six tough\n"
-	.string "TRAINERS other than me!$"
+	.string "Você foi demais!\p"
+	.string "Mas ainda tem seis TREINADORES\n"
+	.string "fortes além de mim!$"
 
 BattlePyramid_Text_FiveTrainersRemaining1::
-	.string "You were really awesome!\p"
-	.string "But there are still five tough\n"
-	.string "TRAINERS other than me!$"
+	.string "Você foi demais!\p"
+	.string "Mas ainda tem cinco TREINADORES\n"
+	.string "fortes além de mim!$"
 
 BattlePyramid_Text_FourTrainersRemaining1::
-	.string "You were really awesome!\p"
-	.string "But there are still four tough\n"
-	.string "TRAINERS other than me!$"
+	.string "Você foi demais!\p"
+	.string "Mas ainda tem quatro TREINADORES\n"
+	.string "fortes além de mim!$"
 
 BattlePyramid_Text_ThreeTrainersRemaining1::
-	.string "You were really awesome!\p"
-	.string "But there are still three tough\n"
-	.string "TRAINERS other than me!$"
+	.string "Você foi demais!\p"
+	.string "Mas ainda tem três TREINADORES\n"
+	.string "fortes além de mim!$"
 
 BattlePyramid_Text_TwoTrainersRemaining1::
-	.string "You were really awesome!\p"
-	.string "But there are still two tough\n"
-	.string "TRAINERS other than me!$"
+	.string "Você foi demais!\p"
+	.string "Mas ainda tem dois TREINADORES\n"
+	.string "fortes além de mim!$"
 
 BattlePyramid_Text_OneTrainersRemaining1::
-	.string "You were really awesome!\p"
-	.string "But there's still one tough\n"
-	.string "TRAINER other than me!$"
+	.string "Você foi demais!\p"
+	.string "Mas ainda tem um TREINADOR\n"
+	.string "forte além de mim!$"
 
 BattlePyramid_Text_ZeroTrainersRemaining1::
-	.string "You were really awesome!\p"
-	.string "There's no one left that\n"
-	.string "can beat you!$"
+	.string "Você foi demais!\p"
+	.string "Não sobrou ninguém que\n"
+	.string "consiga te vencer!$"
 
 BattlePyramid_Text_SevenTrainersRemaining2::
-	.string "This is so upsetting!\p"
-	.string "But there are seven TRAINERS left!\n"
-	.string "Someone will humble you!$"
+	.string "Que raiva!\p"
+	.string "Mas ainda faltam sete TREINADORES!\n"
+	.string "Alguém vai te dar uma lição!$"
 
 BattlePyramid_Text_SixTrainersRemaining2::
-	.string "This is so upsetting!\p"
-	.string "But there are six TRAINERS left!\n"
-	.string "Someone will humble you!$"
+	.string "Que raiva!\p"
+	.string "Mas ainda faltam seis TREINADORES!\n"
+	.string "Alguém vai te dar uma lição!$"
 
 BattlePyramid_Text_FiveTrainersRemaining2::
-	.string "This is so upsetting!\p"
-	.string "But there are five TRAINERS left!\n"
-	.string "Someone will humble you!$"
+	.string "Que raiva!\p"
+	.string "Mas ainda faltam cinco TREINADORES!\n"
+	.string "Alguém vai te dar uma lição!$"
 
 BattlePyramid_Text_FourTrainersRemaining2::
-	.string "This is so upsetting!\p"
-	.string "But there are four TRAINERS left!\n"
-	.string "Someone will humble you!$"
+	.string "Que raiva!\p"
+	.string "Mas ainda faltam quatro TREINADORES!\n"
+	.string "Alguém vai te dar uma lição!$"
 
 BattlePyramid_Text_ThreeTrainersRemaining2::
-	.string "This is so upsetting!\p"
-	.string "But there are three TRAINERS left!\n"
-	.string "Someone will humble you!$"
+	.string "Que raiva!\p"
+	.string "Mas ainda faltam três TREINADORES!\n"
+	.string "Alguém vai te dar uma lição!$"
 
 BattlePyramid_Text_TwoTrainersRemaining2::
-	.string "This is so upsetting!\p"
-	.string "But there are two TRAINERS left!\n"
-	.string "Someone will humble you!$"
+	.string "Que raiva!\p"
+	.string "Mas ainda faltam dois TREINADORES!\n"
+	.string "Alguém vai te dar uma lição!$"
 
 BattlePyramid_Text_OneTrainersRemaining2::
-	.string "This is so upsetting!\p"
-	.string "But there's one TRAINER left!\n"
-	.string "I'm sure you will be humbled!$"
+	.string "Que raiva!\p"
+	.string "Mas ainda falta um TREINADOR!\n"
+	.string "Você vai levar uma lição!$"
 
 BattlePyramid_Text_ZeroTrainersRemaining2::
-	.string "This is so upsetting!\p"
-	.string "But there are no more TRAINERS\n"
-	.string "who can engage you!$"
+	.string "Que raiva!\p"
+	.string "Mas não sobrou nenhum TREINADOR\n"
+	.string "pra te encarar!$"
 
 BattlePyramid_Text_SevenTrainersRemaining3::
-	.string "That's pretty impressive!\p"
-	.string "But there are seven more TRAINERS\n"
-	.string "on this floor. Can you beat them all?$"
+	.string "Bem impressionante!\p"
+	.string "Mas ainda faltam sete TREINADORES\n"
+	.string "neste andar. Consegue vencer todos?$"
 
 BattlePyramid_Text_SixTrainersRemaining3::
-	.string "That's pretty impressive!\p"
-	.string "But there are six more TRAINERS\n"
-	.string "on this floor. Can you beat them all?$"
+	.string "Bem impressionante!\p"
+	.string "Mas ainda faltam seis TREINADORES\n"
+	.string "neste andar. Consegue vencer todos?$"
 
 BattlePyramid_Text_FiveTrainersRemaining3::
-	.string "That's pretty impressive!\p"
-	.string "But there are five more TRAINERS\n"
-	.string "on this floor. Can you beat them all?$"
+	.string "Bem impressionante!\p"
+	.string "Mas ainda faltam cinco TREINADORES\n"
+	.string "neste andar. Consegue vencer todos?$"
 
 BattlePyramid_Text_FourTrainersRemaining3::
-	.string "That's pretty impressive!\p"
-	.string "But there are four more TRAINERS\n"
-	.string "on this floor. Can you beat them all?$"
+	.string "Bem impressionante!\p"
+	.string "Mas ainda faltam quatro TREINADORES\n"
+	.string "neste andar. Consegue vencer todos?$"
 
 BattlePyramid_Text_ThreeTrainersRemaining3::
-	.string "That's pretty impressive!\p"
-	.string "But there are three more TRAINERS\n"
-	.string "on this floor. Can you beat them all?$"
+	.string "Bem impressionante!\p"
+	.string "Mas ainda faltam três TREINADORES\n"
+	.string "neste andar. Consegue vencer todos?$"
 
 BattlePyramid_Text_TwoTrainersRemaining3::
-	.string "That's pretty impressive!\p"
-	.string "But there are two more TRAINERS\n"
-	.string "on this floor. Can you beat them both?$"
+	.string "Bem impressionante!\p"
+	.string "Mas ainda faltam dois TREINADORES\n"
+	.string "neste andar. Consegue vencer os dois?$"
 
 BattlePyramid_Text_OneTrainersRemaining3::
-	.string "That's pretty impressive!\p"
-	.string "But there's still one more TRAINER\n"
-	.string "on this floor. Can you prevail?$"
+	.string "Bem impressionante!\p"
+	.string "Mas ainda falta um TREINADOR\n"
+	.string "neste andar. Consegue vencer?$"
 
 BattlePyramid_Text_ZeroTrainersRemaining3::
-	.string "That's pretty impressive!\p"
-	.string "You've gone through all the TRAINERS\n"
-	.string "on this floor.$"
+	.string "Bem impressionante!\p"
+	.string "Você passou por todos os\n"
+	.string "TREINADORES deste andar.$"
 
 BattlePyramid_Text_SevenTrainersRemaining4::
-	.string "Maybe you could sweep through\n"
-	.string "the seven TRAINERS left on this floor.$"
+	.string "Talvez você vença os sete\n"
+	.string "TREINADORES que faltam neste andar.$"
 
 BattlePyramid_Text_SixTrainersRemaining4::
-	.string "Maybe you could sweep through\n"
-	.string "the six TRAINERS left on this floor.$"
+	.string "Talvez você vença os seis\n"
+	.string "TREINADORES que faltam neste andar.$"
 
 BattlePyramid_Text_FiveTrainersRemaining4::
-	.string "Maybe you could sweep through\n"
-	.string "the five TRAINERS left on this floor.$"
+	.string "Talvez você vença os cinco\n"
+	.string "TREINADORES que faltam neste andar.$"
 
 BattlePyramid_Text_FourTrainersRemaining4::
-	.string "Maybe you could sweep through\n"
-	.string "the four TRAINERS left on this floor.$"
+	.string "Talvez você vença os quatro\n"
+	.string "TREINADORES que faltam neste andar.$"
 
 BattlePyramid_Text_ThreeTrainersRemaining4::
-	.string "Maybe you could sweep through\n"
-	.string "the three TRAINERS left on this floor.$"
+	.string "Talvez você vença os três\n"
+	.string "TREINADORES que faltam neste andar.$"
 
 BattlePyramid_Text_TwoTrainersRemaining4::
-	.string "Maybe you could sweep through\n"
-	.string "the two TRAINERS left on this floor.$"
+	.string "Talvez você vença os dois\n"
+	.string "TREINADORES que faltam neste andar.$"
 
 BattlePyramid_Text_OneTrainersRemaining4::
-	.string "Maybe you could complete your sweep\n"
-	.string "with the one TRAINER left on this floor.$"
+	.string "Talvez você complete a limpa com\n"
+	.string "o TREINADOR que falta neste andar.$"
 
 BattlePyramid_Text_ZeroTrainersRemaining4::
-	.string "There isn't a single person left who\n"
-	.string "can defeat you now…$"
+	.string "Não sobrou ninguém que\n"
+	.string "consiga te vencer agora…$"
 
 BattlePyramid_Text_SevenTrainersRemaining5::
-	.string "You may have what it takes to beat\n"
-	.string "the seven expert TRAINERS who remain.$"
+	.string "Talvez você tenha o que é preciso\n"
+	.string "pra vencer os sete TREINADORES que\l"
+	.string "restam.$"
 
 BattlePyramid_Text_SixTrainersRemaining5::
-	.string "You may have what it takes to beat\n"
-	.string "the six expert TRAINERS who remain.$"
+	.string "Talvez você tenha o que é preciso\n"
+	.string "pra vencer os seis TREINADORES que\l"
+	.string "restam.$"
 
 BattlePyramid_Text_FiveTrainersRemaining5::
-	.string "You may have what it takes to beat\n"
-	.string "the five expert TRAINERS who remain.$"
+	.string "Talvez você tenha o que é preciso\n"
+	.string "pra vencer os cinco TREINADORES que\l"
+	.string "restam.$"
 
 BattlePyramid_Text_FourTrainersRemaining5::
-	.string "You may have what it takes to beat\n"
-	.string "the four expert TRAINERS who remain.$"
+	.string "Talvez você tenha o que é preciso\n"
+	.string "pra vencer os quatro TREINADORES que\l"
+	.string "restam.$"
 
 BattlePyramid_Text_ThreeTrainersRemaining5::
-	.string "You may have what it takes to beat\n"
-	.string "the three expert TRAINERS who remain.$"
+	.string "Talvez você tenha o que é preciso\n"
+	.string "pra vencer os três TREINADORES que\l"
+	.string "restam.$"
 
 BattlePyramid_Text_TwoTrainersRemaining5::
-	.string "You may have what it takes to beat\n"
-	.string "the two expert TRAINERS who remain.$"
+	.string "Talvez você tenha o que é preciso\n"
+	.string "pra vencer os dois TREINADORES que\l"
+	.string "restam.$"
 
 BattlePyramid_Text_OneTrainersRemaining5::
-	.string "You may have what it takes to beat\n"
-	.string "the one expert TRAINER who remains.$"
+	.string "Talvez você tenha o que é preciso\n"
+	.string "pra vencer o último TREINADOR.$"
 
 BattlePyramid_Text_ZeroTrainersRemaining5::
-	.string "Your skills are beyond reproach.\p"
-	.string "There are no more TRAINERS here\n"
-	.string "who have any chance of beating you.$"
+	.string "A sua habilidade é impecável.\p"
+	.string "Não há mais TREINADORES aqui com\n"
+	.string "chance de te vencer.$"
 
 BattlePyramid_Text_SevenTrainersRemaining6::
-	.string "Can you keep winning against\n"
-	.string "the seven remaining TRAINERS?$"
+	.string "Consegue continuar vencendo os\n"
+	.string "sete TREINADORES que restam?$"
 
 BattlePyramid_Text_SixTrainersRemaining6::
-	.string "Can you keep winning against\n"
-	.string "the six remaining TRAINERS?$"
+	.string "Consegue continuar vencendo os\n"
+	.string "seis TREINADORES que restam?$"
 
 BattlePyramid_Text_FiveTrainersRemaining6::
-	.string "Can you keep winning against\n"
-	.string "the five remaining TRAINERS?$"
+	.string "Consegue continuar vencendo os\n"
+	.string "cinco TREINADORES que restam?$"
 
 BattlePyramid_Text_FourTrainersRemaining6::
-	.string "Can you keep winning against\n"
-	.string "the four remaining TRAINERS?$"
+	.string "Consegue continuar vencendo os\n"
+	.string "quatro TREINADORES que restam?$"
 
 BattlePyramid_Text_ThreeTrainersRemaining6::
-	.string "Can you keep winning against\n"
-	.string "the three remaining TRAINERS?$"
+	.string "Consegue continuar vencendo os\n"
+	.string "três TREINADORES que restam?$"
 
 BattlePyramid_Text_TwoTrainersRemaining6::
-	.string "Can you keep winning against\n"
-	.string "the two remaining TRAINERS?$"
+	.string "Consegue continuar vencendo os\n"
+	.string "dois TREINADORES que restam?$"
 
 BattlePyramid_Text_OneTrainersRemaining6::
-	.string "Can you keep winning against\n"
-	.string "the last remaining TRAINER?$"
+	.string "Consegue vencer o último\n"
+	.string "TREINADOR que resta?$"
 
 BattlePyramid_Text_ZeroTrainersRemaining6::
-	.string "There aren't any TRAINERS left that\n"
-	.string "can take you on now…$"
+	.string "Não sobrou nenhum TREINADOR que\n"
+	.string "possa te encarar agora…$"

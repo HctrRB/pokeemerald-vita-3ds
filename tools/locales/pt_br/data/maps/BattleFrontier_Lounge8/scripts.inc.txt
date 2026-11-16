@@ -1,0 +1,8 @@
+[BattleFrontier_Lounge8_Text_WhatATrainerNeeds] 34fc9579b7
+Do que um TREINADOR precisa…\pConhecimento…\nEstratégia…\lSorte…\lGarra…\lEspírito…\lCoragem…\lE talento…\pBom, tenho tudo isso!\nVou ser imbatível em todo prédio!\pHã? POKéMON?\nO que é isso?$
+
+[BattleFrontier_Lounge8_Text_KnowAboutFrontierBrains] ddbf2baba2
+Conhece os CÉREBROS DA FRONTEIRA?\pÉ como o SCOTT chama os sete\nTREINADORES especiais que comandam\las sete instalações da FRONTEIRA.$
+
+[BattleFrontier_Lounge8_Text_ToldMeIHaveTalentForBattling] bd3b96ea1a
+Na TORRE DE BATALHA, uma moça mais\nvelha me disse que tenho muito\ltalento pra batalhar!\pMas eu gosto mais de CONCURSOS\nPOKéMON!\pSó que sou ruim nos CONCURSOS!\pAcho que ter talento e gostar de\nalguma coisa não é a mesma coisa.$

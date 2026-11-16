@@ -1,0 +1,38 @@
+[AquaHideout_B2F_Text_MattIntro] c589354aa7
+Hehehe…\pJá chegou aqui, é?\nSubestimamos você!\pMas acabou!\pSou bem superior aos CAPANGAS que\nvocê viu até agora.\pNão estou enrolando pra ganhar tempo.\nVou te esmagar!$
+
+[AquaHideout_B2F_Text_MattDefeat] f548e394c2
+Hehehe…\nEntão eu também perdi…$
+
+[AquaHideout_B2F_Text_OurBossGotThroughHisPreparations] 252a84acd9
+Hehehe!\pEnquanto eu brincava com você, o\nnosso CHEFE terminou os preparativos!$
+
+[AquaHideout_B2F_Text_MattPostBattle] 5cf6611fcd
+Hehehe!\pO nosso CHEFE já partiu pra uma\ncaverna no fundo do mar!\pSe for atrás dele, é melhor procurar\nno mar imenso depois de LILYCOVE.\pMas será que vai achar?\nHehehe!$
+
+[AquaHideout_B2F_Text_Grunt4Intro] 5bf2e88e00
+Wahahah, cansei de esperar!\nVocê também me deve uma batalha!$
+
+[AquaHideout_B2F_Text_Grunt4Defeat] 2f7f3d8c6b
+Cansado de esperar…\nE derrotado, tonto…$
+
+[AquaHideout_B2F_Text_Grunt4PostBattle] b07616b2dc
+CHEFE…\nIsso já basta?$
+
+[AquaHideout_B2F_Text_Grunt6Intro] 8a93f1a911
+Os painéis de teletransporte, o\norgulho do ESCONDERIJO!\pVocê não faz ideia de onde está,\nnão é?\pDeixar o inimigo confuso e cansado,\ne aí atacar! Esse é o plano!$
+
+[AquaHideout_B2F_Text_Grunt6Defeat] 8208f73286
+Qual é a sua?\nVocê nem se cansou!$
+
+[AquaHideout_B2F_Text_Grunt6PostBattle] f0a31ca93b
+Falando nisso… Não lembro onde\nguardei a BOLA MESTRA.\pSe eu não vigiar ela, o CHEFE vai\nme dar uma bronca…$
+
+[AquaHideout_B2F_Text_Grunt8Intro] c4e255ac27
+Quando entrei na EQUIPE AQUA, a\nprimeira coisa que tive que aprender\lfoi como os painéis se ligavam.$
+
+[AquaHideout_B2F_Text_Grunt8Defeat] 8f9007584d
+Estava ocupado demais pensando\nnos painéis…$
+
+[AquaHideout_B2F_Text_Grunt8PostBattle] e19f3852d5
+Vou ter que aprender a batalhar\nmelhor…$

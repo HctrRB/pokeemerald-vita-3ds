@@ -263,7 +263,7 @@ static void BuildStatus(void)
     {
         char name[24];
         UiGame_ItemName(reg, name, sizeof(name));
-        snprintf(buf, sizeof(buf), "SEL: %s", name);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("SEL: %s"), name);
         const int32_t w = UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf) + 48;
         UiW_Capsule(x, 116, w, 32);
         UiSpr_ItemIcon(reg, x + 6, 120, 1);
@@ -272,12 +272,12 @@ static void BuildStatus(void)
     }
     if (UiGame_InSafari())
     {
-        snprintf(buf, sizeof(buf), "SAFARI BALLS %u", (unsigned)UiGame_SafariBalls());
+        snprintf(buf, sizeof(buf), UiLocale_Translate("SAFARI BALLS %u"), (unsigned)UiGame_SafariBalls());
         x += StatusCapsule(x, 116, buf, UI_COL_ON_FRAME) + 8;
     }
     else if (UiGame_RepelSteps() > 0)
     {
-        snprintf(buf, sizeof(buf), "REPEL %u", (unsigned)UiGame_RepelSteps());
+        snprintf(buf, sizeof(buf), UiLocale_Translate("REPEL %u"), (unsigned)UiGame_RepelSteps());
         x += StatusCapsule(x, 116, buf, UI_COL_ON_FRAME) + 8;
     }
     // AUTO RUN toggle (touch), only with the RUNNING SHOES

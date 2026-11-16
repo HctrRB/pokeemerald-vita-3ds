@@ -85,6 +85,6 @@ BattleFrontier_BattleArenaCorridor_Movement_AttendantMoveOutOfWay:
 	step_end
 
 BattleFrontier_BattleArenaCorridor_Text_PleaseStepIn:
-	.string "Your battles shall be waged in\n"
-	.string "the next room. Please step in!$"
+	.string "As suas batalhas serão na próxima\n"
+	.string "sala. Entre, por favor!$"
 

@@ -153,7 +153,7 @@ static void DoAction(int32_t act)
     case ACT_TOSS:
     {
         char title[24];
-        snprintf(title, sizeof(title), "TOSS");
+        snprintf(title, sizeof(title), UiLocale_Translate("TOSS"));
         UiQty_Open(&sQty, title, sRows[sList[sPocket].sel].qty);
         break;
     }
@@ -266,7 +266,7 @@ static void Build(void)
         UiMon m;
         UiGame_Mon(sGiveTo, &m);
         char buf[40];
-        snprintf(buf, sizeof(buf), "GIVE TO %s", m.name);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("GIVE TO %s"), m.name);
         const int32_t w = UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf) + 24;
         UiW_Capsule(UI_SCREEN_W - 180 - w, 8, w, 32);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, UI_SCREEN_W - 180 - w + 12, 8, buf, UI_COL_ON_FRAME);
@@ -279,7 +279,7 @@ static void Build(void)
     {
         // PYRAMID BAG: kinds used of the 10 slots
         UiText_Draw(UI_FACE_PS2P, 16, 32, 76, "PYRAMID BAG", UI_COL_TITLE);
-        snprintf(buf, sizeof(buf), "%d / %d kinds", (int)sCount, PYRAMID_BAG_ITEMS_COUNT);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("%d / %d kinds"), (int)sCount, PYRAMID_BAG_ITEMS_COUNT);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 32, 100, buf, UI_COL_ON_SOFT);
         for (int32_t i = 0; i < PYRAMID_BAG_ITEMS_COUNT; i++)
             UiW_Bar(32 + i * 27, 156, 23, 16, i < sCount ? 100 : 0, gUiTheme->tabTop, gUiTheme->tabBot);
@@ -289,7 +289,7 @@ static void Build(void)
         const uint16_t bagBase = UiGame_PlayerIsMale() ? UI_SPR_BAG_MALE_FIRST : UI_SPR_BAG_FEMALE_FIRST;
         UiDraw_Sprite((uint16_t)(bagBase + sPocket), 22, 64, 2);
         UiText_Draw(UI_FACE_PS2P, 16, 160, 100, sPocketTabs[sPocket], UI_COL_TITLE);
-        snprintf(buf, sizeof(buf), "%d kinds", (int)sCount);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("%d kinds"), (int)sCount);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 160, 122, buf, UI_COL_ON_SOFT);
     }
 
@@ -331,7 +331,7 @@ static void Build(void)
     UiW_Panel(332, 60, 612, 432);
     snprintf(buf, sizeof(buf), "%s POCKET", sPocketTabs[sPocket]);
     char sortBuf[24];
-    snprintf(sortBuf, sizeof(sortBuf), "Sort: %s", sSortNames[sSort]);
+    snprintf(sortBuf, sizeof(sortBuf), UiLocale_Translate("Sort: %s"), sSortNames[sSort]);
     UiW_PanelHead(332, 60, 612, buf, sortBuf);
     const UiList *l = &sList[sPocket];
     UiDraw_PushClip(LIST_X, LIST_Y, LIST_W, ROWS * ROW_H);

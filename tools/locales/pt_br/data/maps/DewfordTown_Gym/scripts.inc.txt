@@ -1,0 +1,98 @@
+[DewfordTown_Gym_Text_GymGuideAdvice] 13208af495
+E aí, tudo certo, {PLAYER}, rumo\nao título de CAMPEÃO?\pO LÍDER DE GINÁSIO de DEWFORD, BRAWLY,\ncomanda POKéMON do tipo LUTADOR.\pEnfrentá-lo com POKéMON do tipo\nNORMAL é pedir pra ter problema.\pPOKéMON LUTADORES dão uma surra\nem POKéMON NORMAIS,\lentão cuidado!\pE pior: o GINÁSIO é escuro como\no fundo do mar.\pMas ele vai clareando quando você\nvence os TREINADORES do caminho.\pBom, vai fundo!$
+
+[DewfordTown_Gym_Text_GymGuidePostVictory] af7708d4d5
+Uau! Ficou claro demais aqui!\pO seu futuro também é brilhante!$
+
+[DewfordTown_Gym_Text_TakaoIntro] 285ea40da8
+Quem pode mais, chora menos!\nVem!$
+
+[DewfordTown_Gym_Text_TakaoDefeat] 7bd3649e52
+Faltou força…$
+
+[DewfordTown_Gym_Text_TakaoPostBattle] 4682acde90
+A sua técnica venceu a minha força!\nMerece elogios!$
+
+[DewfordTown_Gym_Text_JocelynIntro] 0f4c4ae541
+Não precisa nem chamar o BRAWLY!\pEu acabo com você!$
+
+[DewfordTown_Gym_Text_JocelynDefeat] 39240b89ec
+Mas… Como?\nComo eu perdi tão fácil?$
+
+[DewfordTown_Gym_Text_JocelynPostBattle] c1903804d5
+Não vou desperdiçar esta derrota.\nVou usar como motivação pra treinar!\pUm dia vou virar LÍDER DE GINÁSIO…\pNão, vou ser CAMPEÃ da LIGA\nPOKéMON!$
+
+[DewfordTown_Gym_Text_LauraIntro] 7fba008f89
+Nem pense em me ignorar!\nNão é culpa minha se você chorar!$
+
+[DewfordTown_Gym_Text_LauraDefeat] 4c865d0d71
+Buáááááá!\nPerdi!$
+
+[DewfordTown_Gym_Text_LauraPostBattle] c585aa073e
+Eu batalho no escuro pra deixar meu\ncoração mais forte.\pMas, como é tão escuro, nunca\nconsigo ver o rosto do BRAWLY…$
+
+[DewfordTown_Gym_Text_LilithIntro] 1633880913
+Hihihi…\nTropeçando no escuro, é?$
+
+[DewfordTown_Gym_Text_LilithDefeat] a19b47897b
+Ah, você…\nNão quero nem te conhecer!$
+
+[DewfordTown_Gym_Text_LilithPostBattle] 976eb2f621
+Bem que você merecia se perder e\nvoltar pra entrada de novo!$
+
+[DewfordTown_Gym_Text_BrendenIntro] e456296bcb
+Vou te mostrar a garra de um\nhomem do mar!$
+
+[DewfordTown_Gym_Text_BrendenDefeat] 5f13c092f6
+Como isso aconteceu?\nNão é do meu feitio perder assim!$
+
+[DewfordTown_Gym_Text_BrendenPostBattle] dcbeede35e
+Ah, é! Você merece ver o\nnosso LÍDER DE GINÁSIO.$
+
+[DewfordTown_Gym_Text_CristianIntro] f861f52c27
+Se quer passar, vai ter que\npassar por mim!$
+
+[DewfordTown_Gym_Text_CristianDefeat] 6efe2ad166
+Grrrrr!\nFui completamente superado!$
+
+[DewfordTown_Gym_Text_CristianPostBattle] 5dea2cf086
+Você venceu!\nVai atrás dessa INSÍGNIA!$
+
+[DewfordTown_Gym_Text_BrawlyIntro] 90fc080cc4
+Eu sou o BRAWLY!\nO LÍDER DE GINÁSIO de DEWFORD!\pFui sacudido pelas ondas bravas desta\nregião e fiquei forte na caverna\lescura como breu!\pEntão você quer me desafiar?\nVamos ver do que você é capaz!$
+
+[DewfordTown_Gym_Text_BrawlyDefeat] 77196aae56
+Uau, nossa! Você fez uma onda bem\nmaior do que eu esperava!\pVocê me afogou!\pTá bom, você me pegou.\nPegue esta INSÍGNIA!$
+
+[DewfordTown_Gym_Text_ReceivedKnuckleBadge] 33b273f6c4
+{PLAYER} recebeu a INSÍGNIA DO PUNHO\ndo BRAWLY.$
+
+[DewfordTown_Gym_Text_KnuckleBadgeInfoTakeThis] a172732fb1
+A INSÍGNIA DO PUNHO faz todos os\nPOKéMON até o Nível 30, até os de\ltroca, obedecerem sem discutir.\pE você vai poder usar a MO CLARÃO\nfora das batalhas.\pSe quiser, use esta MÁQUINA TÉCNICA\ntambém.$
+
+[DewfordTown_Gym_Text_ExplainBulkUp] 08ecda6b70
+Essa MT08 tem FORÇA BRUTA.\pÉ um golpe que aumenta o ATAQUE\ne a DEFESA.\p… … … … … …$
+
+[DewfordTown_Gym_Text_RegisteredBrawly] b61ba49aba
+O LÍDER DE GINÁSIO BRAWLY foi\nregistrado no POKéNAV.$
+
+[DewfordTown_Gym_Text_BrawlyPostBattle] 103b357da4
+Já vejo o seu talento virando uma onda\ngigante que vai causar uma tempestade\lde espanto entre os TREINADORES!$
+
+[DewfordTown_Gym_Text_GymStatue] 44fb35c30c
+GINÁSIO POKéMON DE DEWFORD$
+
+[DewfordTown_Gym_Text_GymStatueCertified] 930c913be6
+GINÁSIO POKéMON DE DEWFORD\pTREINADORES APROVADOS POR BRAWLY:\n{PLAYER}$
+
+[DewfordTown_Gym_Text_BrawlyPreRematch] 4e407b9411
+BRAWLY: A onda pode recuar, mas\nsempre volta pra praia.\pUma onda gigante de talento como\nvocê… Eu sabia que ia voltar!\pMostra o quanto você\nsubiu!$
+
+[DewfordTown_Gym_Text_BrawlyRematchDefeat] 230967d490
+Uau!\nMe afoguei de novo!$
+
+[DewfordTown_Gym_Text_BrawlyPostRematch] 340078c512
+BRAWLY: Batalhar é vasto e profundo.\nNão dá pra ver o fundo.\lÉ igualzinho ao mar de HOENN!$
+
+[DewfordTown_Gym_Text_BrawlyRematchNeedTwoMons] e50664b882
+BRAWLY: A onda pode recuar, mas\nsempre volta pra praia.\pUma onda gigante de talento como\nvocê… Eu sabia que ia voltar!\pHã? Você só tem um POKéMON\nque pode batalhar.\pDesculpa, mas queria que você voltasse\ncom pelo menos dois POKéMON.$

@@ -1,0 +1,17 @@
+[gText_PkmnTransferredSomeonesPC] 072714d00a
+{STR_VAR_2} foi enviado ao\nPC DE ALGUÉM.\pEle foi colocado na\nCAIXA “{STR_VAR_1}”.$
+
+[gText_PkmnTransferredLanettesPC] 54646c52d8
+{STR_VAR_2} foi enviado ao\nPC de LANETTE.\pEle foi colocado na\nCAIXA “{STR_VAR_1}”.$
+
+[gText_PkmnTransferredSomeonesPCBoxFull] 6e0fe6a68a
+A CAIXA “{STR_VAR_3}” do\nPC DE ALGUÉM estava cheia.\p{STR_VAR_2} foi enviado à\nCAIXA “{STR_VAR_1}”.$
+
+[gText_PkmnTransferredLanettesPCBoxFull] 00578b1d99
+A CAIXA “{STR_VAR_3}” do\nPC de LANETTE estava cheia.\p{STR_VAR_2} foi enviado à\nCAIXA “{STR_VAR_1}”.$
+
+[gText_NoMoreRoomForPokemon] 7cd45c50af
+Não há mais espaço para POKéMON!\pAs CAIXAS de POKéMON estão cheias\ne não aceitam mais nenhum!$
+
+[gText_NicknameThisPokemon] 87f0d70ff6
+Quer dar um apelido a\neste {STR_VAR_1}?$

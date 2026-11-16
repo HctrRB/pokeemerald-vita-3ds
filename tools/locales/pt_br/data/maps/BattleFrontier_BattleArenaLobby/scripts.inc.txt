@@ -1,0 +1,95 @@
+[BattleFrontier_BattleArenaLobby_Text_WelcomeToBattleArena] 66cd978c25
+Onde o espírito de luta dos\nTREINADORES é posto à prova!\pBoas-vindas à ARENA DE BATALHA!\pSou o guia do Torneio de Nocaute!$
+
+[BattleFrontier_BattleArenaLobby_Text_WishToTakeChallenge] 5f70035f42
+Agora, deseja encarar o desafio da\nARENA DE BATALHA?$
+
+[BattleFrontier_BattleArenaLobby_Text_AwaitAnotherChallenge] 2fc893949e
+Aguardamos o seu desafio em outra\nocasião!$
+
+[BattleFrontier_BattleArenaLobby_Text_ExplainChallenge] dd160b1d3f
+Na ARENA DE BATALHA, fazemos o\nTorneio de Nocaute.\pTodo participante entra com uma\nequipe de três POKéMON.\pOs três POKéMON ficam na ordem em\nque vão entrar.\pNa batalha, os POKéMON entram um\nde cada vez, na ordem definida.\pDepois que um POKéMON entra, fica\nem campo até a disputa se decidir.\pSe nada se decidir em três turnos,\nvai pra decisão dos juízes.\pSe quiser interromper o desafio,\nsalve o jogo.\pSe não salvar, não vai poder\ncontinuar o desafio.\pSe vencer sete TREINADORES em\nsequência, damos Pontos de Batalha.$
+
+[BattleFrontier_BattleArenaLobby_Text_OkayToSave] 1aaaa2af9a
+Antes de te levar à ARENA DE\nBATALHA, preciso salvar. Tudo bem?$
+
+[BattleFrontier_BattleArenaLobby_Text_WhichLevelMode] aa1652f7b8
+A ARENA DE BATALHA tem duas\nmodalidades, Nível 50 e Nível Livre.\lQual você escolhe?$
+
+[BattleFrontier_BattleArenaLobby_Text_SelectThreeMons] 4944b81f5b
+Muito bem, agora escolha os seus\ntrês POKéMON, por favor.$
+
+[BattleFrontier_BattleArenaLobby_Text_NotEnoughValidMonsLvOpen] a05a7eb110
+Ilustre desafiante!\pVocê não tem os três POKéMON\nexigidos pra inscrição.\pPra participar, precisa de três\nPOKéMON de espécies diferentes.\pTambém não podem segurar o mesmo\ntipo de item.\pOVOS{STR_VAR_1} proibidos.\pQuando estiver tudo pronto, volte,\npor favor.$
+
+[BattleFrontier_BattleArenaLobby_Text_NotEnoughValidMonsLv50] e8a9c2c3eb
+Ilustre desafiante!\pVocê não tem os três POKéMON\nexigidos pra inscrição.\pPra participar, precisa de três\nPOKéMON de espécies diferentes.\pOs três precisam ser de nível\n50 ou menos.\pTambém não podem segurar o mesmo\ntipo de item.\pOVOS{STR_VAR_1} proibidos.\pQuando estiver tudo pronto, volte,\npor favor.$
+
+[BattleFrontier_BattleArenaLobby_Text_GuideYouToArena] e28f166275
+Agora vou te levar à\nARENA DE BATALHA.$
+
+[BattleFrontier_BattleArenaLobby_Text_DidntSaveBeforeShuttingDown] 26dc4307a0
+Ilustre desafiante!\pVocê não salvou antes de desligar,\nnão foi?\pÉ uma pena, mas isso anulou o\nseu desafio.\pClaro, você pode começar um\ndesafio novo.$
+
+[BattleFrontier_BattleArenaLobby_Text_CongratsOnSevenWins] 0e5a7509c3
+Parabéns pela esplêndida sequência\nde vitórias sobre sete TREINADORES!$
+
+[BattleFrontier_BattleArenaLobby_Text_RecordAchievement] 3c7e533b6c
+A sua conquista será registrada.\nAguarde enquanto salvo o jogo.$
+
+[BattleFrontier_BattleArenaLobby_Text_PresentYouWithPrize] 25eeb106f1
+Pra comemorar as 7 vitórias seguidas,\naqui está este prêmio.$
+
+[BattleFrontier_BattleArenaLobby_Text_ReceivedPrize] 1b34ee42d5
+{PLAYER} recebeu o prêmio:\n{STR_VAR_1}.$
+
+[BattleFrontier_BattleArenaLobby_Text_BagFullReturnForPrize] 9c713cca83
+Opa?\nA sua BOLSA parece cheia.\pAbra espaço e volte pra pegar o\nseu prêmio.$
+
+[BattleFrontier_BattleArenaLobby_Text_ThankYouWaitWhileSave] 3d7057aeb6
+Muito obrigado por participar!\pAguarde enquanto salvo o jogo.$
+
+[BattleFrontier_BattleArenaLobby_Text_AwaitAnotherChallenge2] 2fc893949e
+Aguardamos o seu desafio em outra\nocasião!$
+
+[BattleFrontier_BattleArenaLobby_Text_LookingForwardToArrivalSaveGame] b9dbf18fe1
+Estávamos esperando a sua chegada.\pAntes de te levar à ARENA DE\nBATALHA, preciso salvar o jogo.\lAguarde, por favor.$
+
+[BattleFrontier_BattleArenaLobby_Text_RecordLastMatch] 49b43b00d4
+Quer gravar a sua última batalha da\nARENA no PASSE DA FRONTEIRA?$
+
+[BattleFrontier_BattleArenaLobby_Text_BadIdeaToNotAttack] c06514d52f
+Perdi na decisão do JUIZ…\pAcho que não foi boa ideia usar só\ngolpes de defesa e não atacar…$
+
+[BattleFrontier_BattleArenaLobby_Text_LandingHitsWorked] 9e48418ca3
+Ganhei na decisão!\pAcertar golpes sem parar nos POKéMON\ndo oponente funcionou!$
+
+[BattleFrontier_BattleArenaLobby_Text_MatchWasDeclaredDraw] dede4776eb
+A nossa batalha deu empate.\pQuando o tempo acabou, o meu POKéMON\ne o do oponente tinham quase a\lmesma quantidade de PS.$
+
+[BattleFrontier_BattleArenaLobby_Text_OrderOfMonsImportant] 630dc2669e
+Na ARENA DE BATALHA, a ordem dos\nPOKéMON é importantíssima.\pPor exemplo, se o seu primeiro\nPOKéMON tem desvantagens de tipo,\lfaça o segundo ter golpes\lsuperefetivos contra o que vence\lo primeiro.\pAcho que é um bom jeito de montar\numa equipe eficiente.$
+
+[BattleFrontier_BattleArenaLobby_Text_RulesAreListed] 24acd37071
+Aqui estão as regras do Torneio de\nNocaute.$
+
+[BattleFrontier_BattleArenaLobby_Text_ReadWhichHeading] d059e37e85
+Qual tópico você quer ler?$
+
+[BattleFrontier_BattleArenaLobby_Text_ExplainBattleRules] 24d4d1e069
+O Torneio de Nocaute tem regras\nespeciais, diferentes das batalhas\lcomuns.\pPrimeiro, cada batalha dura só\ntrês turnos.\pSe não se decidir em três turnos,\nvai pra decisão dos juízes.\pO JUIZ escolhe o vencedor pelo\njeito como os POKéMON batalharam.\pE um POKéMON não pode ser trocado\naté a disputa dele se decidir.$
+
+[BattleFrontier_BattleArenaLobby_Text_ExplainMindRules] 24b243ecef
+O primeiro critério é “Mente”.\nAvalia o quanto os POKéMON foram\lagressivos.\pA nota se baseia em quantas vezes\nos TREINADORES mandaram usar\lgolpes ofensivos.$
+
+[BattleFrontier_BattleArenaLobby_Text_ExplainSkillRules] 59fcbc7621
+O segundo critério é “Técnica”.\nAvalia o quanto os golpes foram\lbem usados.\pSe um golpe funcionou, a nota de\nTécnica sobe.\pSe um golpe falhou, a nota de\nTécnica desce.\pNum golpe ofensivo, a nota sobe se\nfoi “superefetivo” e desce se foi\l“pouco efetivo”.\pA nota de Técnica não sobe com\ngolpes como PROTEÇÃO e DETECTAR.\pSe o oponente usou PROTEÇÃO ou\nDETECTAR e o seu POKéMON errou o\lgolpe, a nota de Técnica não desce.$
+
+[BattleFrontier_BattleArenaLobby_Text_ExplainBodyRules] dcae0e4939
+O terceiro critério é “Físico”.\nSe baseia em quantos PS sobraram\lno fim da batalha.\pA nota leva em conta os PS do POKéMON\nno começo da batalha e o que\lsobrou no fim.$
+
+[BattleFrontier_BattleArenaLobby_Text_CongratsOnDefeatingTycoon] 6e6ae94422
+Uma vitória arrancada da MAGNATA DA\nARENA e sete TREINADORES vencidos!\pParabéns por um desafio\nesplêndido!$
+
+[BattleFrontier_BattleArenaLobby_Text_PleaseAcceptBattlePoints] b2c554f52f
+Ilustre desafiante, pelo seu espírito\nincansável, aceite estes Pontos\lde Batalha.$

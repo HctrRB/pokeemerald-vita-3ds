@@ -1,0 +1,5 @@
+[PacifidlogTown_House1_Text_RegiStory] 1ee4f0db13
+Na região de HOENN há três POKéMON\nque representam o poder da pedra,\ldo gelo e do aço.\pDizem que cada um se esconde no\nfundo de uma caverna.\pFoi a história que ouvi quando era\nbem pequeno.$
+
+[PacifidlogTown_House1_Text_SixDotsOpenThreeDoors] a2787bb2b8
+“Seis pontos abrem três portas.”\pO vovô dizia isso, mas não sei o que\nele queria dizer.$

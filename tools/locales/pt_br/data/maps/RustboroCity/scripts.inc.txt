@@ -1,0 +1,143 @@
+[RustboroCity_Text_WeShortenItToDevon] f173294991
+A CORPORAÇÃO DEVON…\nTodo mundo chama só de DEVON.\pEssa empresa faz tudo quanto é\nproduto útil.$
+
+[RustboroCity_Text_SneakyLookingManWentAroundCorner] 6d7aa84099
+Hm? Um homem com cara de suspeito?\pAgora que você falou, sim, um sujeito\nesquisito virou aquela esquina.$
+
+[RustboroCity_Text_HaveYouChallengedGym] c1bf7a48df
+Já encarou o desafio do GINÁSIO\nPOKéMON?\pAcho que é quando pega a INSÍGNIA\nbrilhante na mão que quem treina\lentende o que se espera dele.$
+
+[RustboroCity_Text_HeyThatsRustborosGymBadge] 7f646b8ae8
+Ei, essa é a INSÍGNIA do GINÁSIO de\nRUSTBORO!\pDe todas as INSÍGNIAS, a de\nRUSTBORO é a mais legal, eu acho.$
+
+[RustboroCity_Text_YoureNewAroundHere] 4ed9374199
+Ué? Quem é você?\nNunca te vi por aqui.\pVocê acabou de se transferir pra\nESCOLA DE TREINADORES POKéMON?$
+
+[RustboroCity_Text_GymLeaderIsntEasyWithFire] 1c9c50f57d
+Desafiei a LÍDER DE GINÁSIO, mas…\pNão vai ser fácil vencer com os meus\nPOKéMON do tipo FOGO…\pPOKéMON de FOGO não se dão bem\ncontra POKéMON do tipo PEDRA…$
+
+[RustboroCity_Text_MrBrineyWalksInTheTunnel] fa72f78024
+O velho marinheiro SR. BRINEY mora\nnuma casinha à beira-mar.\pDe vez em quando, ele passeia\npelo túnel.$
+
+[RustboroCity_Text_MrBrineyLovesPeeko] ba7d61d0e4
+O velho marinheiro SR. BRINEY mora\nnuma casinha à beira-mar.\pEle disse que ia fazer compras em\nSLATEPORT pra PEEKO, o bichinho dele.\pAquele velho lobo do mar deve gostar\nmuito mesmo da PEEKO.$
+
+[RustboroCity_Text_WowYouHavePokemon] 669988b5b9
+Nossa, você também tem POKéMON.\pQuando eu crescer, também vou\nviajar com POKéMON.$
+
+[RustboroCity_Text_CatchRarePokemonIfIGoToSchool] 716d8b79ac
+ESCOLA DE TREINADORES POKéMON!\pSe eu estudar nessa escola, vou\npegar POKéMON raros com facilidade?$
+
+[RustboroCity_Text_PokemonCanChangeLookFromExp] 2d63a86cdb
+Se um POKéMON ganha experiência\nnas batalhas, às vezes a aparência\ldele muda.$
+
+[RustboroCity_Text_PokemonChangeShape] fb08ea3ada
+Um POKéMON muda de forma?\nSe isso acontecer, que susto!$
+
+[RustboroCity_Text_TradePokemonGrowFast] 3a6d053be5
+Um POKéMON que você ganha numa troca\ncresce rápido.\pMas, se você não tiver certas\nINSÍGNIAS, ele pode não obedecer…$
+
+[RustboroCity_Text_OutOfTheWay] 10f78cc5f2
+Sai!\nSai da frente!$
+
+[RustboroCity_Text_WaitDontTakeMyGoods] 073e71272a
+Espera! Por favooor!\pNão leva as minhas PEÇAS!$
+
+[RustboroCity_Text_HelpMeIWasRobbed] 6afa9a5855
+Ah, é você!\pVocê treina POKéMON muito bem, você\nme ajudou no BOSQUE DE PETALBURG!\pMe ajuda! A EQUIPE AQUA me roubou!\nPreciso recuperar as PEÇAS DEVON!\pSe eu não conseguir…\nVou me meter numa baita encrenca.$
+
+[RustboroCity_Text_ShadyCharacterTookOffTowardsTunnel] b19832e5dc
+Aquele sujeito esquisito, acho que ele\nfugiu pro túnel ali adiante.$
+
+[RustboroCity_Text_YouGotItThankYou] ac3b8f395e
+Ah! Como foi?\nE as PEÇAS DEVON?\pConseguiu!\nVocê recuperou!\pVocê treina POKéMON muito bem mesmo!\pJá sei! Como agradecimento, vou te\ndar mais uma GRANDE BOLA!$
+
+[RustboroCity_Text_YoureLoadedWithItems] 5e06127f5f
+A sua BOLSA está cheia de itens.\nNão dá pra te dar esta GRANDE BOLA.$
+
+[RustboroCity_Text_PleaseComeWithMe] b4ac49faaa
+Com licença, por favor!\nVenha comigo, por favor!$
+
+[RustboroCity_Text_MayHiLetsRegister] f8480c9125
+MAY: Ah, oi, {PLAYER}{KUN}!\pVocê pôs o sistema de CHAMADAS\nno seu POKéNAV!\pVamos registrar um ao outro pra gente\nse falar a qualquer hora!\p… … … … … …$
+
+[RustboroCity_Text_RegisteredMay] f6041d5436
+A MAY foi registrada\nno POKéNAV.$
+
+[RustboroCity_Text_MayPassedBrineyWantToBattle] 0e2d163eb1
+MAY: Ah, falando nisso, passei pelo\nSR. BRINEY no BOSQUE DE PETALBURG.\pAcho que ele estava voltando pra\ncasinha dele à beira-mar.\pComo vai a sua POKéDEX, {PLAYER}{KUN}?\nA minha está indo bem!\pEntão…\nQue tal uma batalhinha?$
+
+[RustboroCity_Text_MayOhHaventRaisedPokemonEnough] bea2ab92a3
+MAY: Ué, o que foi?\pVocê não pegou nem treinou muito\nos seus POKéMON?\pIsso não é nada bom pra quem treina!$
+
+[RustboroCity_Text_MayWantToBattle] f85bf52934
+MAY: E aí, o que acha?\nQue tal uma batalhinha aqui?$
+
+[RustboroCity_Text_MayImNotGoingToLose] c49df1aa04
+MAY: Você acabou de começar,\n{PLAYER}{KUN}. Eu não vou perder!$
+
+[RustboroCity_Text_MayDefeat] 658b9a1c59
+Eita!\nVocê é melhor do que eu esperava!$
+
+[RustboroCity_Text_MayMrBrineyHint] 0ce63aad9f
+MAY: Ah, falando nisso, o SR. BRINEY,\nque eu acabei de encontrar…\p{PLAYER}{KUN}, você acabou de se mudar,\nentão talvez não saiba, mas o\lSR. BRINEY já foi um marinheiro\lmuito respeitado.$
+
+[RustboroCity_Text_BrendanHiLetsRegister] 9346fff083
+BRENDAN: Ah, e aí, {PLAYER}!\pVocê pôs o sistema de CHAMADAS\nno seu POKéNAV! Legal!\pVamos registrar um ao outro pra gente\nse falar a qualquer hora!\p… … … … … …$
+
+[RustboroCity_Text_RegisteredBrendan] b315378813
+O BRENDAN foi registrado\nno POKéNAV.$
+
+[RustboroCity_Text_BrendanPassedBrineyWantToBattle] e82d84e7f5
+BRENDAN: Falando nisso, {PLAYER}, passei\npelo SR. BRINEY no BOSQUE DE PETALBURG.\pAposto que ele estava voltando pra\ncasinha dele à beira-mar.\p{PLAYER}, como vai a sua POKéDEX?\nJá preencheu alguma página?\pA minha está demais.\pQuer uma batalha pra ver o quanto\nvocê evoluiu?$
+
+[RustboroCity_Text_BrendanNoConfidenceInPokemon] 0754344c67
+BRENDAN: Que foi? Não confia nos\nseus POKéMON?$
+
+[RustboroCity_Text_BrendanWantToBattle] d76835d346
+BRENDAN: E aí?\nQuer batalhar comigo?$
+
+[RustboroCity_Text_BrendanIWontGoEasy] 5a8fe1842d
+BRENDAN: Sei que você acabou de\ncomeçar, mas não vou pegar leve!$
+
+[RustboroCity_Text_BrendanDefeat] 25c927ce95
+Hmm…\nVocê é bem boa.$
+
+[RustboroCity_Text_BrendanMrBrineyHint] 1d6721a883
+BRENDAN: Falando nisso, conhece o\nSR. BRINEY? Aquele que eu encontrei?\pAposto que você não sabia, porque\nacabou de se mudar, {PLAYER}, mas\lo SR. BRINEY foi um grande marinheiro.$
+
+[RustboroCity_Text_TunnelNearingCompletion] 922e4f681f
+“Túnel que poupa tempo quase\npronto!”\p…É o que diz a placa, mas tem\num “X” enorme pintado de vermelho\lpor cima…$
+
+[RustboroCity_Text_DevonCorpSign] 2c5f084f8e
+CORPORAÇÃO DEVON\p“Tudo o que você precisa no dia a dia,\na gente faz.”$
+
+[RustboroCity_Text_GymSign] 8323181cf8
+GINÁSIO POKéMON DE RUSTBORO\nLÍDER: ROXANNE\p“A aluna nota 10 que ama PEDRAS!”$
+
+[RustboroCity_Text_DevonCorpBranchOfficeSign] ba280dcc1b
+FILIAL DA CORP. DEVON\p“Acesso restrito a funcionários\nda DEVON e pessoal autorizado.”$
+
+[RustboroCity_Text_CitySign] 8ab25bc594
+CIDADE DE RUSTBORO\p“A cidade que busca unir natureza\ne ciência.”$
+
+[RustboroCity_Text_TrainersSchoolSign] 42721957f5
+ESCOLA DE TREINADORES POKéMON\p“A gente ensina tudo sobre\nPOKéMON!”$
+
+[RustboroCity_Text_CuttersHouse] 247330f033
+CASA DO CORTADOR$
+
+[RustboroCity_Text_DevelopedNewPokenavFeature] e09aef509b
+Estive criando uma função nova\npro POKéNAV…\pE ficou ótima!\p{PLAYER}, posso ver esse POKéNAV?\nAquele que o nosso PRESIDENTE te deu?$
+
+[RustboroCity_Text_AddedMatchCallPleaseCallMrStone] 33b4fcd280
+Pronto, {PLAYER}!\pColoquei uma função nova chamada\nCHAMADAS no seu POKéNAV.\pCom as CHAMADAS, você conversa\ncom as pessoas registradas\lno seu POKéNAV.\p{PLAYER}, o nosso PRESIDENTE STONE já\ndeve estar registrado no seu POKéNAV.\pExperimenta.\nLigue pro nosso PRESIDENTE, por favor.$
+
+[RustboroCity_Text_PleaseSelectPokenav] c5fe21e8e0
+Selecione o POKéNAV, por favor.$
+
+[RustboroCity_Text_IdBetterGetBackToWork] a7f4ba1317
+Bom, melhor eu voltar ao trabalho.\nSe cuida, {PLAYER}!$
+
+[RustboroCity_Text_YouCanHave2On2Battle] 79055d823b
+Sabia disso?\pDá pra ter uma batalha de 2 contra 2\nmesmo sem estar com outro TREINADOR.\pSe dois TREINADORES te virem quando\nvocê tiver dois ou mais POKéMON,\leles te desafiam juntos.\pNão seria demais vencer dois\nTREINADORES sem ajuda?$

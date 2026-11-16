@@ -1,0 +1,8 @@
+[SootopolisCity_House4_Text_AncientTreasuresWaitingInSea] 5e6c0c9626
+Escuta, que vou te contar uma coisa\nboa.\pDizem que tem uma ruína antiga no\nmar aqui perto.\pPode ter tesouros lá embaixo\nesperando pra serem achados.$
+
+[SootopolisCity_House4_Text_StrollUnderwaterWithPokemon] 0d329fc649
+Tesouros antigos…\pSeria bom se existissem, mas, mesmo\nque não, seria tão lindo dar um\lpasseio debaixo d'água com os\lmeus POKéMON.$
+
+[SootopolisCity_House4_Text_Azumarill] 1ad1c1d471
+AZUMARILL: Maruriii.$

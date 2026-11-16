@@ -1,0 +1,11 @@
+[Route114_FossilManiacsHouse_Text_HaveThisToDigLikeMyBrother] a2c6d5c480
+O meu irmão mais velho é o MANÍACO\nPOR FÓSSEIS… Um cara legal que ama\lFÓSSEIS…\pEle também adora cavar buracos…\nCavou este buraco sozinho…\pPode ficar com isto, pra CAVAR\nburacos igual ao meu irmão…$
+
+[Route114_FossilManiacsHouse_Text_DigReturnsYouToEntrance] 1bab42f557
+Se um POKéMON usar CAVAR dentro de\numa caverna, você volta pra entrada…$
+
+[Route114_FossilManiacsHouse_Text_RocksFillDisplayCase] 2e1c611d3c
+Pedras de formas estranhas enchem\na vitrine…$
+
+[Route114_FossilManiacsHouse_Text_CrammedWithBooks] 352f4db13a
+A COMPOSIÇÃO DOS ESTRATOS…\nCOMO A CHUVA MOLDA A TERRA…\lPEDRAS, SOLO E ROCHA…\pEstá abarrotada de livros.$

@@ -1,0 +1,8 @@
+[SootopolisCity_House1_Text_DevelopedThisTM] e7f28dda64
+Há trinta anos fico em SOOTOPOLIS\naperfeiçoando as minhas técnicas.\pCriei uma MT arrasadora.\nEla agora é sua!$
+
+[SootopolisCity_House1_Text_ExplainBrickBreak] 3e3a722b7f
+A MT31 contém QUEBRA-TELHA! Um golpe\ntão terrível que nem consigo descrever.$
+
+[SootopolisCity_House1_Text_Kecleon] c20cd27902
+KECLEON: Puu puhiaah.$

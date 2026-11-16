@@ -1,0 +1,11 @@
+[Route121_Text_OkayMoveOutToMtPyre] c1f25946f6
+Certo!\nVamos partir pro MONTE PYRE!$
+
+[Route121_Text_AheadLoomsMtPyre] 4fbb4b331f
+Lá na frente se ergue o MONTE PYRE…\pÉ um monumento natural aos espíritos\ndos POKéMON que partiram…$
+
+[Route121_Text_MtPyrePierSign] 0a22e71ca1
+PÍER DO MONTE PYRE\p…A placa está velha e gasta.\nMal dá pra ler as palavras…$
+
+[Route121_Text_SafariZoneSign] 18739e5693
+“Cheia de POKéMON raros!”\nZONA DE SAFÁRI$

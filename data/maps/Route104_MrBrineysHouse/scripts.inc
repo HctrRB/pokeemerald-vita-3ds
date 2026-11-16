@@ -95,64 +95,64 @@ Route104_MrBrineysHouse_EventScript_Peeko::
 	end
 
 Route104_MrBrineysHouse_Text_WaitUpPeeko:
-	.string "MR. BRINEY: Hold on, lass!\n"
-	.string "Wait up, PEEKO!$"
+	.string "SR. BRINEY: Calma aí, mocinha!\n"
+	.string "Me espera, PEEKO!$"
 
 Route104_MrBrineysHouse_Text_ItsYouLetsSailToDewford:
-	.string "Hm? You're {PLAYER}{KUN}!\n"
-	.string "You saved my darling PEEKO!\l"
-	.string "We owe so much to you!\p"
-	.string "What's that?\n"
-	.string "You want to sail with me?\p"
+	.string "Hm? Você é {PLAYER}{KUN}!\n"
+	.string "Você salvou a minha querida PEEKO!\l"
+	.string "Devemos tanto a você!\p"
+	.string "Como é?\n"
+	.string "Você quer navegar comigo?\p"
 	.string "Hmhm…\p"
-	.string "You have a LETTER bound for DEWFORD\n"
-	.string "and a package for SLATEPORT, then?\p"
-	.string "Quite the busy life you must lead!\p"
-	.string "But, certainly, what you're asking is\n"
-	.string "no problem at all.\p"
-	.string "You've come to the right man!\n"
-	.string "We'll set sail for DEWFORD.$"
+	.string "Então você tem uma CARTA para DEWFORD\n"
+	.string "e um pacote para SLATEPORT?\p"
+	.string "Que vida corrida você deve levar!\p"
+	.string "Mas, claro, o que você está pedindo\n"
+	.string "não é problema nenhum.\p"
+	.string "Veio falar com a pessoa certa!\n"
+	.string "Vamos zarpar para DEWFORD.$"
 
 Route104_MrBrineysHouse_Text_SetSailForDewford:
-	.string "MR. BRINEY: DEWFORD it is, then!\p"
-	.string "Anchors aweigh!\n"
-	.string "PEEKO, we're setting sail, my darling!$"
+	.string "SR. BRINEY: Então é DEWFORD!\p"
+	.string "Levantar âncora!\n"
+	.string "PEEKO, minha querida, vamos zarpar!$"
 
 Route104_MrBrineysHouse_Text_DeclineDeliverySail:
-	.string "MR. BRINEY: Is that so?\n"
-	.string "Your deliveries can wait?\p"
-	.string "You just go on and tell me whenever\n"
-	.string "you want to set sail!$"
+	.string "SR. BRINEY: É mesmo?\n"
+	.string "As entregas podem esperar?\p"
+	.string "É só me avisar quando quiser\n"
+	.string "zarpar!$"
 
 Route104_MrBrineysHouse_Text_NeedToMakeDeliveriesSailToDewford:
-	.string "MR. BRINEY: Ahoy!\n"
-	.string "I know exactly what you want to say!\p"
-	.string "You're to deliver a LETTER to DEWFORD\n"
-	.string "and a package to SLATEPORT.\p"
-	.string "What you need me to do is no problem\n"
-	.string "at all--I'm the man for the job!\p"
-	.string "First, we'll set sail for DEWFORD.$"
+	.string "SR. BRINEY: Ahoy!\n"
+	.string "Eu sei bem o que você quer dizer!\p"
+	.string "Você vai entregar uma CARTA em DEWFORD\n"
+	.string "e um pacote em SLATEPORT.\p"
+	.string "O que você precisa não é problema\n"
+	.string "nenhum. Sou a pessoa certa pra isso!\p"
+	.string "Primeiro, vamos zarpar para DEWFORD.$"
 
 Route104_MrBrineysHouse_Text_NeedToDeliverPackageSailToDewford:
-	.string "MR. BRINEY: Ahoy!\n"
-	.string "I know exactly what you want to say!\p"
-	.string "You're to deliver a package to\n"
-	.string "CAPT. STERN in SLATEPORT.\p"
-	.string "What you need me to do is no problem\n"
-	.string "at all--I'm the man for the job!\p"
-	.string "First, we'll set sail for DEWFORD.$"
+	.string "SR. BRINEY: Ahoy!\n"
+	.string "Eu sei bem o que você quer dizer!\p"
+	.string "Você vai entregar um pacote ao\n"
+	.string "CAP. STERN, em SLATEPORT.\p"
+	.string "O que você precisa não é problema\n"
+	.string "nenhum. Sou a pessoa certa pra isso!\p"
+	.string "Primeiro, vamos zarpar para DEWFORD.$"
 
 Route104_MrBrineysHouse_Text_WhereAreWeBound:
-	.string "MR. BRINEY: Ahoy!\n"
-	.string "For you, I'll go out to sea anytime!\p"
-	.string "Now, my friend, where are we bound?$"
+	.string "SR. BRINEY: Ahoy!\n"
+	.string "Por você, eu vou pro mar quando for!\p"
+	.string "Agora, meu amigo, para onde vamos?$"
 
 Route104_MrBrineysHouse_Text_TellMeWheneverYouWantToSail:
-	.string "MR. BRINEY: Is that so?\n"
-	.string "Well, PEEKO owes her life to you.\p"
-	.string "You just go on and tell me whenever\n"
-	.string "you want to set sail!$"
+	.string "SR. BRINEY: É mesmo?\n"
+	.string "Bom, a PEEKO deve a vida a você.\p"
+	.string "É só me avisar quando quiser\n"
+	.string "zarpar!$"
 
 Route104_MrBrineysHouse_Text_Peeko:
-	.string "PEEKO: Pii piihyoro!$"
+	.string "PEEKO: Piii piiriu!$"
 

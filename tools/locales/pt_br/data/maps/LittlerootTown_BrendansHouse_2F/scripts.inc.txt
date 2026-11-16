@@ -1,0 +1,14 @@
+[PlayersHouse_2F_Text_ClockIsStopped] ad18c722f5
+O relógio está parado…\pMelhor acertar e ligar!$
+
+[PlayersHouse_2F_Text_HowDoYouLikeYourRoom] 341edffe71
+MAMÃE: {PLAYER}, gostou do seu\nquarto novo?\pÓtimo! Tudo bem arrumadinho!\pLá embaixo também já terminaram\nde arrumar a mudança.\pPOKéMON de mudança são tão práticos!\pAh, confira se está tudo certo\nem cima da sua escrivaninha.$
+
+[PlayersHouse_2F_Text_Notebook] 4f057d1f1e
+{PLAYER} abriu o caderno.\pREGRA DE AVENTURA Nº 1\nAbra o MENU com START.\pREGRA DE AVENTURA Nº 2\nRegistre o seu progresso com SALVAR.\pAs outras páginas estão em branco…$
+
+[Common_Text_LookCloserAtMap] 7aeae6237f
+{PLAYER} olhou de perto o mapa\nda região de HOENN.$
+
+[PlayersHouse_2F_Text_ItsAGameCube] e3f6145633
+É um Nintendo GameCube.\pUm Game Boy Advance está conectado\npara servir de Controle.$

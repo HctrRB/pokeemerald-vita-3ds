@@ -1,0 +1,83 @@
+[MossdeepCity_SpaceCenter_2F_Text_MossdeepIdealForRockets] d1be973005
+MOSSDEEP tem tempo quase sempre\nensolarado, e os ventos são estáveis.\pÉ o lugar ideal pra lançar foguetes.$
+
+[MossdeepCity_SpaceCenter_2F_Text_WhyWouldMagmaStealRocketFuel] eb361755a5
+Pra que a EQUIPE MAGMA ia querer\nroubar o nosso combustível?$
+
+[MossdeepCity_SpaceCenter_2F_Text_WouldveLikedToBeAstronaut] 35d4567b68
+Se eu fosse um pouco mais novo,\nqueria ter sido astronauta…\pNão… Não é tarde demais!\nEu posso e vou tentar!$
+
+[MossdeepCity_SpaceCenter_2F_Text_MagmaCantGetAwayWithThis] dba5094ac9
+Se a EQUIPE MAGMA levar o\ncombustível, não vou poder ir pro\lespaço!\pNão podemos deixar passar um\nabsurdo desses!$
+
+[MossdeepCity_SpaceCenter_2F_Text_WishOrdinaryPeopleCouldGoIntoSpace] 839a8f4ae1
+Queria que um dia pessoas comuns\npudessem ir pro espaço…$
+
+[MossdeepCity_SpaceCenter_2F_Text_DoesMagmaWantToGoToSpace] 7cdae866d8
+EQUIPE MAGMA…\nEles também querem ir pro espaço?$
+
+[MossdeepCity_SpaceCenter_2F_Text_YoureOutnumberedTakeUsOn] d016952095
+Qual é a sua?\pÉ três contra um, e você ainda\nquer enfrentar a gente?$
+
+[MossdeepCity_SpaceCenter_2F_Text_GoodAnswer] 01e0abe4d1
+Boa resposta!\nÉ o que alguém esperto faria!$
+
+[MossdeepCity_SpaceCenter_2F_Text_Grunt5Intro] e93d730db7
+Ousadia demais, hein?\nTá, eu vou primeiro!$
+
+[MossdeepCity_SpaceCenter_2F_Text_Grunt5Defeat] c839de03d7
+Perdi!\nMas!$
+
+[MossdeepCity_SpaceCenter_2F_Text_Grunt6Intro] 7a4548eb05
+Ainda é cedo pra relaxar!\nAgora sou eu!$
+
+[MossdeepCity_SpaceCenter_2F_Text_Grunt6Defeat] e78bcbad4f
+Também perdi!\nMas!$
+
+[MossdeepCity_SpaceCenter_2F_Text_Grunt7Intro] ffe7a9b1ef
+Aposto que você quer um descanso.\nMas eu não vou deixar!$
+
+[MossdeepCity_SpaceCenter_2F_Text_Grunt7Defeat] 447c95c968
+A gente é que devia ter descansado…\nÉ isso que devia ter feito…$
+
+[MossdeepCity_SpaceCenter_2F_Text_Grunt6PostBattle] 1fe0202d7b
+Três aqui, e olha a situação\nvergonhosa em que nos metemos.$
+
+[MossdeepCity_SpaceCenter_2F_Text_Grunt7PostBattle] d544ebba66
+Nós três perdendo assim…\nFicamos três vezes pior que o normal!$
+
+[MossdeepCity_SpaceCenter_2F_Text_Grunt5PostBattle] cd322e7edd
+Será que a gente está sendo útil\npro nosso líder?$
+
+[MossdeepCity_SpaceCenter_2F_Text_WellTakeCareOfYou] c63603bca6
+Hehehe!\pViemos até aqui buscar combustível,\ne alguém atrapalha de novo!\pSe você também vai se meter, a\ngente cuida de você de uma vez!$
+
+[MossdeepCity_SpaceCenter_2F_Text_MaxieDontInterfere] d93eba34d0
+MAXIE: Saia do caminho!\nNão ouse atrapalhar!$
+
+[MossdeepCity_SpaceCenter_2F_Text_StevenWhyStealRocketFuel] 4b6e6743b4
+STEVEN: EQUIPE MAGMA…\pPra que roubar combustível de\nfoguete?$
+
+[MossdeepCity_SpaceCenter_2F_Text_MaxieUseFuelToEruptVolcano] dfbee37297
+MAXIE: Fufufu… Já que está tão\ncurioso, merece uma explicação.\pVamos despejar a carga toda no\nMONTE CHIMNEY!\pSem o GROUDON, não precisamos mais\ndaquele monte de escória!\pEntão vamos usar a força do\ncombustível pra fazer o vulcão\lentrar em erupção!\pVai ser selvagem!$
+
+[MossdeepCity_SpaceCenter_2F_Text_StevenAreYouReadyToBattle] e107803d25
+STEVEN: {PLAYER}{KUN}!\nVai me ajudar?\pVamos batalhar juntos!\nPronto pra isso?$
+
+[MossdeepCity_SpaceCenter_2F_Text_StevenHurryGetReadyQuickly] e95435a8d8
+STEVEN: Então, rápido!\nPrepare-se logo!$
+
+[MossdeepCity_SpaceCenter_2F_Text_JustWantToExpandLand] 245cd8b2a1
+Tudo o que eu quero…\nSó quero expandir a terra firme…$
+
+[MossdeepCity_SpaceCenter_Text_TabithaDefeat] 12d7f674bf
+Estou com o nosso líder…$
+
+[MossdeepCity_SpaceCenter_2F_Text_MaxieWeFailedIsAquaAlsoMisguided] daa3e4c9b1
+MAXIE: Não conseguimos fazer o vulcão\nentrar em erupção…\pNão conseguimos controlar o GROUDON\ndepois de despertá-lo…\pO nosso objetivo de expandir a terra\nestá errado?\p… … … … … …\n… … … … … …\pSe…\nSe nós, da MAGMA, estamos errados…\l… … … … … …\pEntão o objetivo da EQUIPE AQUA de\nexpandir o mar também estaria errado?$
+
+[MossdeepCity_SpaceCenter_2F_Text_MaxieWeWillGiveUp] d22b689fe6
+MAXIE: Muito bem…\nVamos desistir do combustível…\pParece que há assuntos mais\nimportantes que preciso examinar…$
+
+[MossdeepCity_SpaceCenter_2F_Text_StevenThankYouComeSeeMeAtHome] 06d7faee00
+STEVEN: Ufa, que tensão.\n{PLAYER}{KUN}, obrigado.\pTenho algo pra te dar como\nagradecimento pela ajuda.\pPor favor, venha me ver em casa\ndepois disto.\pAh, sim, eu não moro na CIDADE DE\nRUSTBORO. Moro aqui mesmo, nesta ilha.$

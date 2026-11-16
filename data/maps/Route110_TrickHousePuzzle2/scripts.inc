@@ -100,42 +100,42 @@ Route110_TrickHousePuzzle2_EventScript_Georgia::
 	end
 
 Route110_TrickHousePuzzle2_Text_WroteSecretCodeLockOpened:
-	.string "{PLAYER} wrote down the secret code\n"
-	.string "on the door.\p"
-	.string "“TRICK MASTER is smart.”\n"
+	.string "{PLAYER} escreveu a senha secreta\n"
+	.string "na porta.\p"
+	.string "“O MESTRE DOS TRUQUES é esperto.”\n"
 	.string "… … … … … … … …\p"
-	.string "The lock clicked open!$"
+	.string "A fechadura abriu com um clique!$"
 
 Route110_TrickHousePuzzle2_Text_TedIntro:
-	.string "Which switch closes which hole?$"
+	.string "Qual botão fecha qual buraco?$"
 
 Route110_TrickHousePuzzle2_Text_TedDefeat:
-	.string "After that battle, I'm even more\n"
-	.string "confused!$"
+	.string "Depois dessa batalha, fiquei ainda\n"
+	.string "mais confuso!$"
 
 Route110_TrickHousePuzzle2_Text_TedPostBattle:
-	.string "Can I get you to push all the buttons\n"
-	.string "for me?$"
+	.string "Você aperta todos os botões\n"
+	.string "pra mim?$"
 
 Route110_TrickHousePuzzle2_Text_PaulIntro:
-	.string "Oh! You're on your second TRICK HOUSE\n"
-	.string "challenge!$"
+	.string "Ah! Você está no segundo desafio da\n"
+	.string "CASA DOS TRUQUES!$"
 
 Route110_TrickHousePuzzle2_Text_PaulDefeat:
-	.string "You're good at battling too?$"
+	.string "Você também batalha bem?$"
 
 Route110_TrickHousePuzzle2_Text_PaulPostBattle:
-	.string "The TRICK MASTER rigged all the tricks\n"
-	.string "in this house all by himself.$"
+	.string "O MESTRE DOS TRUQUES montou todos os\n"
+	.string "truques desta casa sozinho.$"
 
 Route110_TrickHousePuzzle2_Text_GeorgiaIntro:
-	.string "I want to make my own GYM one day.\n"
-	.string "So, I'm studying how to set traps.$"
+	.string "Quero ter o meu GINÁSIO um dia.\n"
+	.string "Então estudo como montar armadilhas.$"
 
 Route110_TrickHousePuzzle2_Text_GeorgiaDefeat:
-	.string "I didn't study battling enough!$"
+	.string "Não estudei batalha o suficiente!$"
 
 Route110_TrickHousePuzzle2_Text_GeorgiaPostBattle:
-	.string "You're strong, aren't you?\n"
-	.string "Maybe even enough to be a GYM LEADER!$"
+	.string "Você é forte, né?\n"
+	.string "Talvez até pra ser LÍDER DE GINÁSIO!$"
 

@@ -1,0 +1,5 @@
+[OldaleTown_House2_Text_PokemonLevelUp] f0b8f2dd29
+Batalhando, os POKéMON acabam subindo\nde nível e ficando mais fortes.$
+
+[OldaleTown_House2_Text_YoullGoFurtherWithStrongPokemon] 72b1c9ec6d
+Se os POKéMON que estão com você\nficarem mais fortes, você vai poder ir\lbem mais longe daqui.$

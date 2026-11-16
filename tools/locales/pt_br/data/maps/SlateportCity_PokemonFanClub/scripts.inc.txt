@@ -1,0 +1,65 @@
+[SlateportCity_PokemonFanClub_Text_MeetChairman] e7bfca4784
+Ahem! Eu sou o PRESIDENTE do\nFÃ-CLUBE POKéMON!\pSendo o PRESIDENTE, naturalmente\nsou o mais importante!\pNinguém me vence em criar POKéMON.\nNinguém!\pBom, deixa eu te contar sobre os\nCONCURSOS POKéMON.\pSão eventos pra exibir os POKéMON\npara o mundo todo ver!\pMas são em cidades distantes, então\nnão consigo participar tanto.\pPor isso a gente se reúne aqui pra\nexibir os nossos POKéMON e ver\los dos outros.$
+
+[SlateportCity_PokemonFanClub_Text_LikeToSeeEnteredContestPokemon] 8a80e68242
+Os POKéMON de quem já participou\nde um CONCURSO POKéMON…\lIsso eu gostaria de ver.$
+
+[SlateportCity_PokemonFanClub_Text_AllowMeToExamineYourPokemon] 10569fc39c
+Ahem! Vejo que você participou de\num CONCURSO POKéMON!\pPor favor! Deixe-me examinar como\nvocê criou os seus POKéMON.\pMe encanta demais ver POKéMON\ncriados por outros TREINADORES.\pAs expressões felizes dos POKéMON\ncriados com o devido cuidado…\pO olhar gentil de quem cuidou e\ncriou o POKéMON…\pSó de pensar, meu coração transborda\nde alegria.\pAh! Peço desculpas!\nPerdoe esta minha tagarelice!\pPor favor! Deixe-me examinar o quanto\no seu POKéMON cresceu!$
+
+[SlateportCity_PokemonFanClub_Text_HowIsYourPokemonGrowing] ce2f3cc070
+Como vai o seu POKéMON?\nDeixe-me examinar.$
+
+[SlateportCity_PokemonFanClub_Text_HmHmISee] 6d7e7ec297
+Hm, hm…\nEntendo…$
+
+[SlateportCity_PokemonFanClub_Text_GiveMonMorePokeblocks] 55dab9b313
+Hmmm… Não está ruim, mas também\nnão está bom…\pVocê precisa se esforçar mais pra\ncriar este POKéMON!\pPor exemplo, posso sugerir que\nvocê dê mais {POKEBLOCK}S a ele?$
+
+[SlateportCity_PokemonFanClub_Text_NoSpaceForReward] f7877b580b
+Ah, puxa…\pO seu POKéMON está crescendo bem,\nentão você merece um prêmio.\pMas não tem espaço pra ele\nna sua BOLSA.$
+
+[SlateportCity_PokemonFanClub_Text_MonMostImpressiveGiveItThis] 2167fd5e4a
+O seu {STR_VAR_1} está crescendo\nde um jeito impressionante!\lÉ um belo exemplar!\pMas! Se você der isto a ele, vai\ncrescer ainda melhor! Com certeza!$
+
+[SlateportCity_PokemonFanClub_Text_ExplainRedScarf] 12ca412cbb
+Dê esse LENÇO VERMELHO pra um POKéMON\nsegurar.\pTodo mundo vai reconhecer o estilo\ndesse POKéMON!$
+
+[SlateportCity_PokemonFanClub_Text_ExplainBlueScarf] 75000a2aa2
+Dê esse LENÇO AZUL pra um POKéMON\nsegurar.\pA beleza dele vai se destacar\nmuito mais!$
+
+[SlateportCity_PokemonFanClub_Text_ExplainPinkScarf] 4c5c1bc03c
+Dê esse LENÇO ROSA pra um POKéMON\nsegurar.\pVai realçar ainda mais a fofura\ndo POKéMON!$
+
+[SlateportCity_PokemonFanClub_Text_ExplainGreenScarf] 55b6db8d37
+Dê esse LENÇO VERDE pra um POKéMON\nsegurar.\pIsso vai aumentar a\nesperteza do POKéMON!$
+
+[SlateportCity_PokemonFanClub_Text_ExplainYellowScarf] 2a62c78a08
+Dê esse LENÇO AMARELO pra um POKéMON\nsegurar.\pVai reforçar muito a força\ndo seu POKéMON!$
+
+[SlateportCity_PokemonFanClub_Text_NothingElseToGiveYou] 6749d0a502
+Desculpe, mas não tenho mais nada pra\nte dar! Nadinha!\pAfinal, você tem o dom de criar\nPOKéMON sem precisar\lde item nenhum!$
+
+[SlateportCity_PokemonFanClub_Text_ShowMePokemonThatLoveYou] c5e334c6a9
+Adoro ver POKéMON que amam\nquem os treina.\pOs POKéMON sentem muito o que\nquem os treina sente.\pSe tratar os seus POKéMON com amor\ne carinho, eles vão te amar também.\pQuando os seus POKéMON passarem a te\namar, venha me mostrar.$
+
+[SlateportCity_PokemonFanClub_Text_PokemonAdoresYou] de0ef79c93
+O seu POKéMON te adora de verdade.\pPra você, que trata os POKéMON com\ntanto carinho, um presente do\lFÃ-CLUBE!$
+
+[SlateportCity_PokemonFanClub_Text_TreatPokemonWithLove] cd9f102cbc
+Os POKéMON sentem muito o que\nquem os treina sente.\pSe tratar os seus POKéMON com amor\ne carinho, eles vão te amar também.$
+
+[SlateportCity_PokemonFanClub_Text_PokemonDontLikeFainting] 290253cfef
+Se você deixa um POKéMON desmaiar\ntoda hora na batalha, ele fica magoado.\pLogo, vai confiar menos em\nquem o treina.\pOu seja, com certeza não vai\ngostar muito de você.$
+
+[SlateportCity_PokemonFanClub_Text_MonEnjoyedProtein] 9b1a57d400
+Será que os POKéMON gostam que usem\nitens neles?\pO meu ficou todo feliz quando dei\numa PROTEÍNA pra ele.$
+
+[SlateportCity_PokemonFanClub_Text_Skitty] bac30747ce
+SKITTY: Ffffnyaaaah…$
+
+[SlateportCity_PokemonFanClub_Text_Zigzagoon] aa4ac73931
+ZIGZAGOON: Kyuuu…$
+
+[SlateportCity_PokemonFanClub_Text_Azumarill] 3522d6fd17
+AZUMARILL: Marimari?$

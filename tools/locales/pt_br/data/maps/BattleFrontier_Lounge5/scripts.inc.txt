@@ -1,0 +1,83 @@
+[BattleFrontier_Lounge5_Text_NatureGirlGreeting] a0c9540309
+Ehehe!\nEu sei o que os POKéMON pensam!\pPor favor!\nPosso ver os seus POKéMON?$
+
+[BattleFrontier_Lounge5_Text_NatureGirlNoneShown] 927ca53a59
+Buu!\nMão de vaca!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlHardy] 94ac501e20
+Humhum…\pEste diz que gosta de batalhar!\nBatalha mesmo com muito dodói!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlLonely] a8bb5cff4e
+Humhum…\pEste diz que gosta de ser sapeca!\nMas, se tiver dodói demais,\lele revida!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlBrave] d8f899ab85
+Humhum…\pEste diz que gosta de batalhar!\nMas, se tiver dodói demais,\lele se preocupa consigo!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlAdamant] 94ac501e20
+Humhum…\pEste diz que gosta de batalhar!\nBatalha mesmo com muito dodói!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlNaughty] d051111e74
+Humhum…\pEste diz que se cuida!\nMas, se tiver dodói demais,\lele revida!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlBold] b2051a2951
+Humhum…\pEste diz que gosta de ser sapeca!\nMas, se tiver dodói demais,\lele se preocupa consigo!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlDocileNaiveQuietQuirky] 94ac501e20
+Humhum…\pEste diz que gosta de batalhar!\nBatalha mesmo com muito dodói!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlRelaxed] a8bb5cff4e
+Humhum…\pEste diz que gosta de ser sapeca!\nMas, se tiver dodói demais,\lele revida!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlImpish] d8f899ab85
+Humhum…\pEste diz que gosta de batalhar!\nMas, se tiver dodói demais,\lele se preocupa consigo!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlLax] e311f7489a
+Humhum…\pEste diz que gosta de ser sapeca!\nÉ sapeca mesmo com muito dodói!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlTimid] f39ff67060
+Humhum…\pEste diz que gosta de batalhar!\nMas, se tiver dodói demais,\lele fica sapeca!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlHasty] 94ac501e20
+Humhum…\pEste diz que gosta de batalhar!\nBatalha mesmo com muito dodói!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlSerious] e311f7489a
+Humhum…\pEste diz que gosta de ser sapeca!\nÉ sapeca mesmo com muito dodói!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlJolly] b2051a2951
+Humhum…\pEste diz que gosta de ser sapeca!\nMas, se tiver dodói demais,\lele se preocupa consigo!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlModest] 2981417b03
+Humhum…\pEste diz que se cuida!\nSe preocupa consigo, tendo muito\lou pouco dodói!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlMild] 7503f0ee09
+Humhum…\pEste diz que se cuida!\nMas, se tiver dodói demais,\lele fica sapeca!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlBashful] 564ad1f142
+Humhum…\pEste diz que se cuida!\nSe preocupa consigo mesmo com\lmuito dodói!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlRash] e311f7489a
+Humhum…\pEste diz que gosta de ser sapeca!\nÉ sapeca mesmo com muito dodói!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlCalm] 564ad1f142
+Humhum…\pEste diz que se cuida!\nSe preocupa consigo mesmo com\lmuito dodói!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlGentle] d051111e74
+Humhum…\pEste diz que se cuida!\nMas, se tiver dodói demais,\lele revida!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlSassy] f39ff67060
+Humhum…\pEste diz que gosta de batalhar!\nMas, se tiver dodói demais,\lele fica sapeca!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlCareful] 7503f0ee09
+Humhum…\pEste diz que se cuida!\nMas, se tiver dodói demais,\lele fica sapeca!$
+
+[BattleFrontier_Lounge5_Text_NatureGirlEgg] 1b1df65cb2
+Que bobagem! O OVO está dormindo!\nNão dá pra falar com ele!$
+
+[BattleFrontier_Lounge5_Text_LadyClaimsSheUnderstandsPokemon] f3b934f729
+Que graça!\nAquela mocinha diz que entende\los POKéMON!$
+
+[BattleFrontier_Lounge5_Text_GirlSayingSomethingProfound] 7eec78d283
+Tenho a impressão de que a menininha\nestá dizendo algo profundo.$
+
+[BattleFrontier_Lounge5_Text_GirlPlaysAtRedHouseALot] ac390a33a8
+Eu sei uma coisa!\pAquela menininha brinca muito na\ncasa vermelha!$

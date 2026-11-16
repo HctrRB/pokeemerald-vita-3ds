@@ -59,25 +59,25 @@ EverGrandeCity_GlaciasRoom_EventScript_Defeated::
 	end
 
 EverGrandeCity_GlaciasRoom_Text_IntroSpeech:
-	.string "Welcome, my name is GLACIA\n"
-	.string "of the ELITE FOUR.\p"
-	.string "I've traveled from afar to HOENN\n"
-	.string "so that I may hone my ice skills.\p"
-	.string "But all I have seen are challenges by\n"
-	.string "weak TRAINERS and their POKéMON.\p"
-	.string "What about you?\p"
-	.string "It would please me to no end if I could\n"
-	.string "go all out against you!$"
+	.string "Boas-vindas. Meu nome é GLACIA,\n"
+	.string "da ELITE DOS QUATRO.\p"
+	.string "Vim de longe até HOENN pra\n"
+	.string "aperfeiçoar as minhas técnicas de gelo.\p"
+	.string "Mas só vi desafios de TREINADORES\n"
+	.string "fracos e dos seus POKéMON.\p"
+	.string "E você?\p"
+	.string "Me deixaria muito feliz poder ir\n"
+	.string "com tudo contra você!$"
 
 EverGrandeCity_GlaciasRoom_Text_Defeat:
-	.string "You and your POKéMON…\n"
-	.string "How hot your spirits burn!\p"
-	.string "The all-consuming heat overwhelms.\p"
-	.string "It's no surprise that my icy skills\n"
-	.string "failed to harm you.$"
+	.string "Você e os seus POKéMON…\n"
+	.string "Como arde o espírito de vocês!\p"
+	.string "Esse calor devastador é demais.\p"
+	.string "Não é surpresa as minhas técnicas\n"
+	.string "de gelo não te ferirem.$"
 
 EverGrandeCity_GlaciasRoom_Text_PostBattleSpeech:
-	.string "Advance to the next room.\p"
-	.string "And there, confirm the truly fearsome\n"
-	.string "side of the POKéMON LEAGUE.$"
+	.string "Siga pra próxima sala.\p"
+	.string "E lá, conheça o lado realmente\n"
+	.string "temível da LIGA POKéMON.$"
 

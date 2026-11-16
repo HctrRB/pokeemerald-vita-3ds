@@ -1,0 +1,14 @@
+[BattleFrontier_BattlePalaceCorridor_Text_PeopleAndMonAreSame] ddadeb2857
+Pessoas e POKéMON, no fundo,\nsão iguais…\pA natureza de cada um faz com que\nseja bom em umas coisas e não\lem outras.$
+
+[BattleFrontier_BattlePalaceCorridor_Text_LetMonDoWhatItLikes] 3647f6d2c1
+Em vez de forçar um POKéMON a fazer\no que não gosta, deixe-o fazer o\lque gosta e sabe fazer bem.\pSe coloque no lugar do POKéMON e\npense em que golpes ele gostaria.$
+
+[BattleFrontier_BattlePalaceCorridor_Text_MonDifferentWhenCornered] 6aa3bab488
+A natureza de um POKéMON é uma\ncoisa notável…\pAlguns POKéMON agem de um jeito\ntotalmente diferente quando\lencurralados.$
+
+[BattleFrontier_BattlePalaceCorridor_Text_BeginningToUnderstandNature] 4390ee6cdb
+Está começando a entender como a\nnatureza faz um POKéMON agir?$
+
+[BattleFrontier_BattlePalaceCorridor_Text_HeartfeltBondBetweenYouAndMons] 8316e8a796
+Ah… Vejo um laço forte e sincero\nentre você e os seus POKéMON…$

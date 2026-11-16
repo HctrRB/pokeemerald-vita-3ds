@@ -25,16 +25,16 @@ SlateportCity_PokemonCenter_1F_EventScript_Woman::
 	end
 
 SlateportCity_PokemonCenter_1F_Text_RaiseDifferentTypesOfPokemon:
-	.string "Want a tip for battling?\p"
-	.string "I'd say it's raising different kinds\n"
-	.string "of POKéMON in a balanced manner.\p"
-	.string "It's no good to make just one\n"
-	.string "POKéMON strong.\p"
-	.string "If it has a type disadvantage,\n"
-	.string "it might not stand a chance.$"
+	.string "Quer uma dica pra batalhar?\p"
+	.string "Eu diria que é criar tipos diferentes\n"
+	.string "de POKéMON, de forma equilibrada.\p"
+	.string "Não adianta deixar só um\n"
+	.string "POKéMON forte.\p"
+	.string "Se ele estiver em desvantagem de tipo,\n"
+	.string "pode não ter a menor chance.$"
 
 SlateportCity_PokemonCenter_1F_Text_TradedMonWithFriend:
-	.string "I trade POKéMON with my friends.\p"
-	.string "If a traded POKéMON is holding an\n"
-	.string "item, it makes me twice as happy!$"
+	.string "Eu troco POKéMON com os meus amigos.\p"
+	.string "Se o POKéMON da troca vem segurando\n"
+	.string "um item, fico duas vezes mais feliz!$"
 

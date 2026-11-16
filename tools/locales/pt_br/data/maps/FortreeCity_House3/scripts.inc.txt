@@ -1,0 +1,5 @@
+[FortreeCity_House3_Text_MetStevenHadAmazingPokemon] d5dab3960e
+Falando de POKéDEX, lembrei de uma\ncoisa.\pConheci um TREINADOR, o STEVEN,\nquando procurava pedras raras.\pNossa, ele tinha uns POKéMON\nincríveis.\pNão eram só raros: eram treinados\na um nível assustador!\pEle pode ser até mais forte que a\nLÍDER do GINÁSIO desta cidade…$
+
+[FortreeCity_House3_Text_OhYouHavePokedex] 667acf31fc
+O que é isso aí com você?\p… … … … … …\pAh, se chama POKéDEX?\nQue demais!$

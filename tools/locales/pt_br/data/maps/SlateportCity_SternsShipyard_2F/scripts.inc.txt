@@ -1,0 +1,5 @@
+[SlateportCity_SternsShipyard_2F_Text_ShipDesignMoreLikeBuilding] 859eb90158
+Projetar um navio grande é mais como\nfazer um prédio grande do que montar\lum meio de transporte.$
+
+[SlateportCity_SternsShipyard_2F_Text_FloatsBecauseBuoyancy] f6832372a8
+Não acha estranho que um navio\nfeito de ferro pesado flutue?\pEle flutua por causa de um princípio\nchamado empuxo.$

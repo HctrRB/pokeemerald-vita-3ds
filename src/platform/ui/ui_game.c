@@ -51,6 +51,8 @@ static uint16_t GbaToLatin1(uint8_t c)
     switch (c)
     {
     case CHAR_SPACE: case CHAR_SPACER: return ' ';
+    case CHAR_A_TILDE: return 0xC3; case CHAR_O_TILDE: return 0xD5;
+    case CHAR_a_TILDE: return 0xE3; case CHAR_o_TILDE: return 0xF5;
     case CHAR_A_GRAVE: return 0xC0; case CHAR_A_ACUTE: return 0xC1; case CHAR_A_CIRCUMFLEX: return 0xC2;
     case CHAR_C_CEDILLA: return 0xC7; case CHAR_E_GRAVE: return 0xC8; case CHAR_E_ACUTE: return 0xC9;
     case CHAR_E_CIRCUMFLEX: return 0xCA; case CHAR_E_DIAERESIS: return 0xCB; case CHAR_I_GRAVE: return 0xCC;
@@ -232,7 +234,7 @@ bool UiGame_Mon(int32_t slot, UiMon *out)
     GetMonData(mon, MON_DATA_NICKNAME, nick);
     nick[POKEMON_NAME_LENGTH] = EOS;
     if (out->egg)
-        snprintf(out->name, sizeof(out->name), "EGG");
+        snprintf(out->name, sizeof(out->name), UiLocale_Translate("EGG"));
     else
         UiGame_Text(nick, out->name, sizeof(out->name));
     return true;
@@ -427,14 +429,14 @@ bool UiGame_ShareHp(int32_t from, int32_t to, char *msg, size_t cap)
     const uint16_t maxB = (uint16_t)GetMonData(b, MON_DATA_MAX_HP);
     if (from == to || GetMonData(b, MON_DATA_IS_EGG) || hpB == 0 || hpB >= maxB)
     {
-        snprintf(msg, cap, "It can't be used on that POKéMON.");
+        snprintf(msg, cap, UiLocale_Translate("It can't be used on that POKéMON."));
         return false;
     }
-    if (hpA <= cost) { snprintf(msg, cap, "Not enough HP left."); return false; }
+    if (hpA <= cost) { snprintf(msg, cap, UiLocale_Translate("Not enough HP left.")); return false; }
     const uint16_t give = (uint16_t)((maxB - hpB) < cost ? (maxB - hpB) : cost);
     const uint16_t na = (uint16_t)(hpA - cost), nb = (uint16_t)(hpB + give);
     SetMonData(a, MON_DATA_HP, &na);
     SetMonData(b, MON_DATA_HP, &nb);
-    snprintf(msg, cap, "HP was restored by %u point(s).", (unsigned)give);
+    snprintf(msg, cap, UiLocale_Translate("HP was restored by %u point(s)."), (unsigned)give);
     return true;
 }

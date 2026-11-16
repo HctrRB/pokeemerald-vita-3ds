@@ -128,14 +128,14 @@ UiBattleUse UiGame_BattleUse(uint16_t item, char *msg, size_t cap)
     msg[0] = '\0';
     if (!UiGame_BattleItemUsable(item))
     {
-        snprintf(msg, cap, "It can't be used now.");
+        snprintf(msg, cap, UiLocale_Translate("It can't be used now."));
         return UI_BUSE_FAIL;
     }
     if (fn == ItemUseInBattle_PokeBall)
     {
         if (IsPlayerPartyAndPokemonStorageFull())
         {
-            snprintf(msg, cap, "The BOX is full! You can't throw it.");
+            snprintf(msg, cap, UiLocale_Translate("The BOX is full! You can't throw it."));
             return UI_BUSE_FAIL;
         }
         RemoveBagItem(item, 1);
@@ -145,7 +145,7 @@ UiBattleUse UiGame_BattleUse(uint16_t item, char *msg, size_t cap)
         const u16 partyId = gBattlerPartyIndexes[gBattlerInMenuId];
         if (ExecuteTableBasedItemEffect(&gPlayerParty[partyId], item, (u8)partyId, 0))
         {
-            snprintf(msg, cap, "It won't have any effect.");
+            snprintf(msg, cap, UiLocale_Translate("It won't have any effect."));
             return UI_BUSE_FAIL;
         }
         RemoveBagItem(item, 1);
@@ -154,7 +154,7 @@ UiBattleUse UiGame_BattleUse(uint16_t item, char *msg, size_t cap)
     {
         if (gBattleTypeFlags & BATTLE_TYPE_TRAINER)
         {
-            snprintf(msg, cap, "This isn't the time to use that!");
+            snprintf(msg, cap, UiLocale_Translate("This isn't the time to use that!"));
             return UI_BUSE_FAIL;
         }
         RemoveBagItem(item, 1);
@@ -171,14 +171,14 @@ UiItemResult UiGame_BattleItemOnMon(int32_t slot, uint16_t item, int32_t moveIdx
     struct Pokemon *mon = &gPlayerParty[slot];
     if (GetMonData(mon, MON_DATA_IS_EGG))
     {
-        snprintf(msg, cap, "It can't be used on an EGG.");
+        snprintf(msg, cap, UiLocale_Translate("It can't be used on an EGG."));
         return UI_ITEM_FAIL;
     }
     if (moveIdx < 0 && GetItemBattleFunc(item) == ItemUseInBattle_PPRecovery && (item == ITEM_ETHER || item == ITEM_MAX_ETHER))
         return UI_ITEM_CHOOSE_MOVE;
     if (ExecuteTableBasedItemEffect(mon, item, (u8)slot, (u8)(moveIdx < 0 ? 0 : moveIdx)))
     {
-        snprintf(msg, cap, "It won't have any effect.");
+        snprintf(msg, cap, UiLocale_Translate("It won't have any effect."));
         return UI_ITEM_FAIL;
     }
     if (item != ITEM_BLUE_FLUTE && item != ITEM_RED_FLUTE && item != ITEM_YELLOW_FLUTE)

@@ -1,0 +1,5 @@
+[MauvilleCity_Mart_Text_ItemsToTemporarilyElevateStats] b413fbbdcd
+Tem itens que aumentam os atributos\ndos POKéMON por um tempo.\pOs que eu sei que se usam na batalha\nsão ATAQUE X e DEFESA X…\pAcho que existem outros\nparecidos.$
+
+[MauvilleCity_Mart_Text_DecisionsDetermineBattle] 0cb9c50d3a
+Usar um golpe, ou usar um item\nno lugar…\pAcho que são as decisões de quem treina\nque decidem como a batalha termina.$

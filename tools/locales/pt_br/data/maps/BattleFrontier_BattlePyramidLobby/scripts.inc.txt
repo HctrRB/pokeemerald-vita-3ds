@@ -1,0 +1,191 @@
+[BattleFrontier_BattlePyramidLobby_Text_WelcomeToBattlePyramid] 67e1975a67
+Onde a coragem dos TREINADORES\né posta à prova!\pBoas-vindas à PIRÂMIDE DE BATALHA!\pSou o guia da\nMissão de Batalha.$
+
+[BattleFrontier_BattlePyramidLobby_Text_EmbarkOnChallenge] 4c9a6e656d
+Tem coragem de embarcar no desafio\nda Missão de Batalha?$
+
+[BattleFrontier_BattlePyramidLobby_Text_AwaitFutureChallenge] 6d156a642d
+Aguardamos o seu desafio no futuro!$
+
+[BattleFrontier_BattlePyramidLobby_Text_ExplainBattlePyramid] 31f8a63f04
+A Missão de Batalha é um evento em\nque você explora a PIRÂMIDE e tenta\lchegar ao topo.\pNa PIRÂMIDE há sete andares de\nlabirintos, cheios de TREINADORES\lhábeis e também POKéMON selvagens.\pVocê entra com três POKéMON, sem\nnenhum deles segurar item.\pNa subida, você recebe uma BOLSA\nDE BATALHA pros itens.\pSe falhar no desafio, todo item da\nBOLSA DE BATALHA desaparece.\pSe quiser interromper o desafio,\nescolha “PAUSAR” e salve o jogo.\pSe não salvar antes de interromper,\no desafio será anulado.$
+
+[BattleFrontier_BattlePyramidLobby_Text_WhichLevelMode] 1ab5842b1b
+A PIRÂMIDE tem duas modalidades,\nNível 50 e Nível Livre.\lEm qual vai entrar?$
+
+[BattleFrontier_BattlePyramidLobby_Text_SelectThreeMons] 352af13564
+Muito bem. Agora escolha os três\nPOKéMON que vão te acompanhar.$
+
+[BattleFrontier_BattlePyramidLobby_Text_NotEnoughValidMonsLvOpen] df3311eda7
+Um probleminha!\pParece que você não tem os três\nPOKéMON aptos pro desafio.\pLembre também de tirar todos os\nitens dos seus POKéMON.\pOVOS{STR_VAR_1} proibidos.\pQuando estiver tudo pronto, venha\nfalar comigo.$
+
+[BattleFrontier_BattlePyramidLobby_Text_NotEnoughValidMonsLv50] a4d06248a2
+Um probleminha!\pParece que você não tem os três\nPOKéMON aptos pro desafio.\pOs três POKéMON precisam ser\ndiferentes e de nível 50 ou menos.\pLembre também de tirar todos os\nitens dos seus POKéMON.\pOVOS{STR_VAR_1} proibidos.\pQuando estiver tudo pronto, venha\nfalar comigo.$
+
+[BattleFrontier_BattlePyramidLobby_Text_OkayToSaveBeforeChallenge] fc89cd5a62
+Antes de entrar na PIRÂMIDE DE\nBATALHA, o jogo precisa ser salvo.\lTudo bem?$
+
+[BattleFrontier_BattlePyramidLobby_Text_ShowYouIntoPyramid] cc4ca28c55
+Muito bem. Agora vou te levar pra\nPIRÂMIDE DE BATALHA.$
+
+[BattleFrontier_BattlePyramidLobby_Text_WeWillHoldBagForSafekeeping] dc1b98d44f
+Vamos guardar a sua BOLSA, {PLAYER},\nenquanto você explora.$
+
+[BattleFrontier_BattlePyramidLobby_Text_PleaseTakePreviousBattleBag] 54035997b3
+Em troca, leve esta BOLSA DE\nBATALHA, a que você usou antes.$
+
+[BattleFrontier_BattlePyramidLobby_Text_PleaseTakeThisBattleBag] e509281095
+Em troca, leve esta\nBOLSA DE BATALHA.$
+
+[BattleFrontier_BattlePyramidLobby_Text_ExchangedBagForBattleBag] cb96504ec3
+{PLAYER} trocou a BOLSA pela\nBOLSA DE BATALHA.$
+
+[BattleFrontier_BattlePyramidLobby_Text_StepOnFloorPanel] c76cd83ba2
+Ao pisar neste painel, você vai\npra um andar mais alto da PIRÂMIDE.\pEspero que a sua missão corra\nem segurança!$
+
+[BattleFrontier_BattlePyramidLobby_Text_DidntSaveBeforeQuittingTakeBag] bc88a3f746
+Um grande problema!\pVocê não salvou antes de encerrar\no desafio da última vez.\pPor isso, sinto dizer, o seu desafio\nfoi anulado.\pAqui está a BOLSA que guardamos\npra você.\p{PLAYER} pegou a BOLSA de volta.$
+
+[BattleFrontier_BattlePyramidLobby_Text_YouveConqueredPyramid] 4f75dfb61e
+Que ótimo ver você de volta!\pVocê conquistou a PIRÂMIDE!\nEsplêndido!$
+
+[BattleFrontier_BattlePyramidLobby_Text_MonHoldingItemCannotTake] b4bcd54eb3
+Ah, um probleminha.\pPelo menos um POKéMON está\nsegurando um item.\pSinto dizer, mas itens obtidos na\nPIRÂMIDE não podem sair dela.$
+
+[BattleFrontier_BattlePyramidLobby_Text_HeldItemsMovedToBag] 8e66903585
+Todos os itens dos seus POKéMON vão\npra BOLSA DE BATALHA, {PLAYER}.$
+
+[BattleFrontier_BattlePyramidLobby_Text_BagCannotHoldPickItemsToKeep] 42371bc88d
+Sinto dizer, mas a BOLSA DE BATALHA\nnão comporta todos os seus itens.\pEscolha os itens que vão ficar na\nBOLSA DE BATALHA e com os POKéMON.$
+
+[BattleFrontier_BattlePyramidLobby_Text_LeastOneMonHoldingItem] 4ae7d133cd
+Pelo menos um POKéMON ainda está\nsegurando um item.$
+
+[BattleFrontier_BattlePyramidLobby_Text_PickItemsToKeep] 6d49e4e5b6
+Escolha os itens que vão ficar na\nBOLSA DE BATALHA e com os POKéMON.$
+
+[BattleFrontier_BattlePyramidLobby_Text_ReturnedEverythingMonsHeld] 6615106fee
+{PLAYER} devolveu tudo o que os\nPOKéMON seguravam.$
+
+[BattleFrontier_BattlePyramidLobby_Text_UsedBattleBagWillBeKept] 8d36058ef7
+A BOLSA DE BATALHA que você usou\nfica guardada pro próximo desafio.\p{PLAYER} entregou a BOLSA DE BATALHA\ne recebeu a BOLSA de volta.$
+
+[BattleFrontier_BattlePyramidLobby_Text_RecordResultsWait] 07e61f8e4c
+Preciso registrar os seus resultados.\nAguarde, por favor.$
+
+[BattleFrontier_BattlePyramidLobby_Text_ForConqueringPyramidTakeThis] 38e45f81db
+De lembrança por conquistar a\nPIRÂMIDE DE BATALHA, leve isto.$
+
+[BattleFrontier_BattlePyramidLobby_Text_ReceivedPrizeItem] 1b34ee42d5
+{PLAYER} recebeu o prêmio:\n{STR_VAR_1}.$
+
+[BattleFrontier_BattlePyramidLobby_Text_BagIsFull] 1986db194d
+…Ah…\nA sua BOLSA parece estar cheia.\pVolte depois de arrumar o que tem\nna BOLSA.$
+
+[BattleFrontier_BattlePyramidLobby_Text_DisappointingHereIsBag] 3c46cdfe7d
+Que decepção pra você…\pAqui está a BOLSA que guardamos\npra você.\p{PLAYER} pegou a BOLSA de volta.$
+
+[BattleFrontier_BattlePyramidLobby_Text_LookForwardToNextChallenge] 38a17e5219
+Aguardamos o seu próximo\ndesafio!$
+
+[BattleFrontier_BattlePyramidLobby_Text_HereIsPrize] a4fe0d4807
+Estávamos esperando a sua chegada!\pAqui está o seu prêmio por\nconquistar a PIRÂMIDE.$
+
+[BattleFrontier_BattlePyramidLobby_Text_TellYouWhatMisfortunesAwait] 0f6cb316f0
+Boas-vindas…\pVou te contar com prazer que\ndesgraças esperam na PIRÂMIDE…$
+
+[BattleFrontier_BattlePyramidLobby_Text_Aah] 42e907927b
+… … … … … …\n… … … … … …\p… … … … … …\nAah!$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintParalysis] e215d19a09
+Vejo uma chuva de faíscas…\p…E nela vejo os seus POKéMON\nlutando contra a paralisia…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintPoison] 312fe156d1
+Vejo veneno…\p…E vejo os seus POKéMON sofrendo\ncom os efeitos do veneno…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintBurn] 533f2c9b05
+Vejo chamas vermelhas e vivas…\p…E vejo os seus POKéMON sofrendo\ncom queimaduras…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintPPWaste] 18652f218f
+Sinto a pressão terrível de uma\nraiva não correspondida…\pÉ uma maldição…\p…E vejo os seus POKéMON sem Pontos\nde Poder, sem outra saída a não ser\lusar INSISTÊNCIA…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintLevitate] 7eae50732c
+Vejo POKéMON pairando no alto…\p…E vejo os seus POKéMON frustrados\ncom golpes TERRESTRES sem efeito…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintTrapAbility] ed3577bdbb
+Sinto uma energia tremenda subindo\ndo chão lá embaixo…\p…E vejo os seus POKéMON sem conseguir\nescapar das garras desse poder…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintIce] d2556e2307
+Vejo POKéMON de GELO…\p…E vejo os seus POKéMON enfrentando\no congelamento do gelo…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintExplosion] 4c53b9ff70
+Vejo uma rajada de golpes que põem\nem perigo quem os usa…\p…E vejo os seus POKéMON caindo\ndiante deles…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintPsychic] e03f87e11d
+Vejo POKéMON PSÍQUICOS…\p…E vejo os seus POKéMON atormentados\npor golpes PSÍQUICOS…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintRock] 0619dd2ab5
+Vejo POKéMON de PEDRA…\p…E vejo os seus POKéMON sofrendo\ncom golpes de PEDRA…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintFighting] f4c94ef98b
+Vejo POKéMON LUTADORES…\p…E vejo os seus POKéMON surrados\npor golpes de LUTADOR…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintWeather] e64a747526
+DANÇA CHUVA… DIA DE SOL…\nTEMPESTADE DE AREIA… GRANIZO…\pVejo POKéMON que ficam mais fortes\ncom o clima…\p…E vejo os seus POKéMON confusos\ncom golpes de vários tipos…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintBug] fcb1ebea6d
+Vejo POKéMON INSETO…\p…E vejo os seus POKéMON sofrendo\ncom vários tipos de ataque…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintDark] 052b8c33d7
+Vejo POKéMON SOMBRIOS…\p…E vejo os seus POKéMON sofrendo\ncom golpes SOMBRIOS…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintWater] 2c75e79910
+Vejo POKéMON de ÁGUA…\p…E vejo os seus POKéMON sofrendo\ncom golpes de ÁGUA…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintGhost] 432d2941d4
+Vejo POKéMON FANTASMA…\p…E vejo os seus POKéMON sofrendo\ncom golpes FANTASMA…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintSteel] 4b2f294762
+Vejo POKéMON de AÇO…\p…E vejo os seus POKéMON sofrendo\ncom golpes poderosíssimos…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintFlyingDragon] e974d1c2c0
+Vejo POKéMON voadores…\p…E vejo os seus POKéMON sofrendo\ncom golpes poderosíssimos…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintStoneEvolve] e4af7170df
+Vejo os que evoluíram com o poder\ndas pedras…\pTambém sinto fogo, água e\neletricidade…\p…E vejo os seus POKéMON sofrendo\ncom esses três poderes…$
+
+[BattleFrontier_BattlePyramidLobby_Text_HintNormal] 11ead28ce1
+Vejo POKéMON NORMAIS…\p…E vejo os seus POKéMON sofrendo\ncom golpes poderosíssimos…$
+
+[BattleFrontier_BattlePyramidLobby_Text_BelieveMyFortunesOrNot] 1503c8f9d8
+Acreditar ou não nas minhas\nprevisões é escolha sua…\pO futuro pode mudar a qualquer hora…\nDesejo uma travessia segura…$
+
+[BattleFrontier_BattlePyramidLobby_Text_TrainersNoticeRunning] 843bf06b8c
+Sabia?\pSe você correr, os TREINADORES podem\nnotar e vir atrás de uma batalha.\pEntão, se quiser evitar TREINADORES,\nnão chame atenção: passe por eles\lcom cuidado e em silêncio.$
+
+[BattleFrontier_BattlePyramidLobby_Text_LostLotOfItems] 55cc63be91
+Aaaaaaaaargh!\pEu tinha um monte de itens, mas\nperdi todos quando perdi!\pAaaaaaaaargh!$
+
+[BattleFrontier_BattlePyramidLobby_Text_YouveDefeatedPyramidKing] 763e281ffb
+Boas-vindas de volta!\nVocê fez o impensável!\pVenceu o REI DA PIRÂMIDE e\nconquistou a PIRÂMIDE DE BATALHA!$
+
+[BattleFrontier_BattlePyramidLobby_Text_GiveYouTheseBattlePoints] f3147bbdad
+Jovem!\nPela sua coragem, aqui estão\los seus Pontos de Batalha!$
+
+[BattleFrontier_BattlePyramidLobby_Text_RulesAreListed] cae1773b47
+Aqui estão as regras da Missão\nde Batalha.$
+
+[BattleFrontier_BattlePyramidLobby_Text_ReadWhichHeading] d059e37e85
+Qual tópico você quer ler?$
+
+[BattleFrontier_BattlePyramidLobby_Text_ExplainMonRules] b18afef330
+Quando a PIRÂMIDE é conquistada, os\nPOKéMON selvagens dela trocam por\loutras espécies.\pExplore, observe e descubra que\nPOKéMON selvagens pode encontrar.$
+
+[BattleFrontier_BattlePyramidLobby_Text_ExplainTrainerRules] 2c7080da0d
+TREINADORES esperam você dentro\nda PIRÂMIDE.\pEm cada andar, há até oito\nTREINADORES.\pAo vencer um TREINADOR, você ganha\numa dica útil pra aventura.$
+
+[BattleFrontier_BattlePyramidLobby_Text_ExplainMazeRules] 63adff7b68
+Os labirintos da PIRÂMIDE mudam toda\nvez que você entra.\pOs labirintos são mal iluminados.\nAvance com cuidado.\pA luz fica mais forte sempre que você\nvence um POKéMON selvagem ou um\lTREINADOR.$
+
+[BattleFrontier_BattlePyramidLobby_Text_ExplainBagRules] fad8311452
+A BOLSA DE BATALHA serve de BOLSA\ndentro da PIRÂMIDE.\pHá duas BOLSAS DE BATALHA: uma pro\nNível 50 e outra pro Nível Livre.\pCada uma guarda até 99 unidades de\ndez tipos de itens.\pO conteúdo da BOLSA DE BATALHA se\nperde se você falhar na missão.$

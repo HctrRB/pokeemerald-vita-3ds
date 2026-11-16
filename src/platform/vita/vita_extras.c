@@ -88,6 +88,7 @@ static inline int32_t LookupFastId(const char *key)
         break;
     case 'u':
         if (strcmp(key, "ui_theme") == 0) return FAST_EXTRA_UI_THEME;
+        if (strcmp(key, "ui_lang") == 0) return FAST_EXTRA_UI_LANGUAGE;
         break;
     case 'v':
         if (strcmp(key, "voxel_3d") == 0) return FAST_EXTRA_VOXEL_3D;
@@ -130,6 +131,7 @@ static const char *const sFFButtonValues[] = { "HOLD", "TOGGLE", NULL };
 static const char *const sFilterValues[] = { "NEAREST", "BILINEAR", "SHARP", NULL };
 // Order = UI_THEME_* (src/platform/ui/ui_internal.h); RED is the default
 static const char *const sUiThemeValues[] = { "RED", "EMERALD", "CRYSTAL", "TROPICAL", "ROYAL", NULL };
+static const char *const sUiLanguageValues[] = { "ENGLISH", "PORTUGUÊS", NULL };
 static const char *const sVoxelFpsValues[] = { "30", "60", NULL };
 static const char *const sSaveSlotValues[] = { "SLOT 1", "SLOT 2", "SLOT 3", NULL };
 static const char *const sDayNightValues[] = { "OFF", "AUTO", NULL };
@@ -268,6 +270,7 @@ const VitaExtra gVitaExtras[] = {
     { VITA_TAB_GENERAL, "PACING",     "FF BUTTON MODE",    "ff_button",        2, 0, sFFButtonValues,    NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "DISPLAY",    "2D SCALER",         "filter",           3, 0, sFilterValues,      NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "DISPLAY",    "MENU COLOR",        "ui_theme",         5, 0, sUiThemeValues,     NULL, NULL, NULL },
+    { VITA_TAB_GENERAL, "DISPLAY",    "UI LANGUAGE",      "ui_lang",          2, 1, sUiLanguageValues,  NULL, NULL, NULL },
 
     // ---- [WORLD] ----
     { VITA_TAB_WORLD,   "RENDERER",   "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },

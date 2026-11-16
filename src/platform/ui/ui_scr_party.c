@@ -338,7 +338,7 @@ static void BuildInfo(int32_t slot)
     }
     UiGame_Summary(slot, &s);
     UiKit_GenderShiny(520 + UiText_Width(UI_FACE_PS2P, 16, m.name) + 10, 80, m.gender, m.shiny);
-    snprintf(buf, sizeof(buf), "No.%03u %s", (unsigned)s.dexNo, s.species);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("No.%03u %s"), (unsigned)s.dexNo, s.species);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 520, 104, buf, UI_COL_INK);
     UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + s.types[0]), 520, 144, 2);
     if (s.types[1] != s.types[0])
@@ -355,7 +355,7 @@ static void BuildInfo(int32_t slot)
         if (r == 1) snprintf(buf, sizeof(buf), "%s", s.nature);
         if (r == 2) snprintf(buf, sizeof(buf), "%s", s.ability);
         if (r == 4) snprintf(buf, sizeof(buf), "%s Lv%u", s.metAt, (unsigned)s.metLevel);
-        if (r == 5) { if (s.item) UiGame_ItemName(s.item, buf, sizeof(buf)); else snprintf(buf, sizeof(buf), "NONE"); }
+        if (r == 5) { if (s.item) UiGame_ItemName(s.item, buf, sizeof(buf)); else snprintf(buf, sizeof(buf), UiLocale_Translate("NONE")); }
         if (r == 3)
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 520, y - 4, s.abilityDesc, UI_COL_INK_SOFT);
         else
@@ -395,7 +395,7 @@ static void BuildSkills(int32_t slot)
         }
     }
     UiW_Inset(360, 394, 572, 82);
-    snprintf(buf, sizeof(buf), "NATURE %s", s.nature);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("NATURE %s"), s.nature);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 376, 400, buf, UI_COL_INK);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 376, 434, "Red: raised  Blue: lowered", UI_COL_INK_SOFT);
 }
@@ -430,7 +430,7 @@ static void BuildMoves(int32_t slot, bool contest)
             Hearts(820, y + 20, mv.appeal, false);
         else
         {
-            snprintf(buf, sizeof(buf), "PP %u/%u", (unsigned)mv.pp, (unsigned)mv.maxPp);
+            snprintf(buf, sizeof(buf), UiLocale_Translate("PP %u/%u"), (unsigned)mv.pp, (unsigned)mv.maxPp);
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 916 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), y + 8, buf, ink);
         }
     }
@@ -624,7 +624,7 @@ static bool TargetUpdate(const UiInput *in)
             // Already holding one: confirm the swap, as the game does
             char old[24], title[40];
             UiGame_ItemName(m.item, old, sizeof(old));
-            snprintf(title, sizeof(title), "SWAP %s?", old);
+            snprintf(title, sizeof(title), UiLocale_Translate("SWAP %s?"), old);
             UiMenu_Open(&sMoveMenu, title, 348, 200, 420);
             UiMenu_Add(&sMoveMenu, "YES", 1);
             UiMenu_Add(&sMoveMenu, "NO", 9);

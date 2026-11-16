@@ -1,0 +1,50 @@
+[Route110_TrickHouseEnd_Text_YouveMadeItToMe] e2ae6e4f6d
+Aak!\nVocê chegou até mim?\lHmmm… Que esperteza!$
+
+[Route110_TrickHouseEnd_Text_AllNightToPlantTrees] d78532daa0
+Passei a noite toda plantando aquelas\nárvores todas…\pVocê quase chega à minha grandeza, só\nfaltam um, dois, três, quatro,\lcinco, seis!$
+
+[Route110_TrickHouseEnd_Text_AllNightToMakeMaze] b6bf12bbb4
+Passei a noite fazendo o labirinto…\pVocê quase chega à minha grandeza, só\nfaltam um, dois, três, quatro, cinco!$
+
+[Route110_TrickHouseEnd_Text_AllNightToPreparePanels] 5672f49bf2
+Passei a noite toda preparando os\npainéis das paredes…\pVocê quase chega à minha grandeza, só\nfaltam um, dois, três, quatro!$
+
+[Route110_TrickHouseEnd_Text_AllNightToShoveBoulders] 131930ae41
+Passei a noite toda empurrando aquelas\npedras pra dentro…\pVocê quase chega à minha grandeza, só\nfaltam um, dois, três!$
+
+[Route110_TrickHouseEnd_Text_AllNightToMakeMechadolls] 5d1acedc5f
+Passei uma noite fazendo os ROBONECOS\ne outra pensando no quiz…\pVocê quase chega à minha grandeza, só\nfaltam um, dois!$
+
+[Route110_TrickHouseEnd_Text_AllNightToInstallDoors] 7cc9994185
+Passei a noite toda instalando\nas portas…\pVocê quase chega à minha grandeza!$
+
+[Route110_TrickHouseEnd_Text_AllNightSettingUpArrows] d41f034b8a
+Passei a noite toda montando as setas…\pVocê chegou à minha grandeza!$
+
+[Route110_TrickHouseEnd_Text_AllNightPolishingFloors] fae47e58f0
+Passei a noite toda encerando o chão…\pVocê está acima da minha grandeza!\nTalvez…$
+
+[Route110_TrickHouseEnd_Text_FountainOfIdeasRunDry] 271b2a7b7f
+O-o que eu faço?\nA minha fonte de ideias de truques\lsecou…\pTalvez seja hora de rodar o país em\nbusca de novos truques…$
+
+[Route110_TrickHouseEnd_Text_DefeatedMePreferWhichTent] 73c0240500
+Odeio admitir a derrota, mas você\nme superou!\pMesmo assim, o meu carisma deve ter\nte fisgado pra você me visitar\lde novo e de novo. Só pode!\pMas isso não tem nada a ver com\na minha derrota!\pEm honra à amizade entre você, que\nnão desiste, e o gênio que sou eu,\lexijo que fique com esta lembrança!\pNa verdade são duas: a TENDA\nVERMELHA e a TENDA AZUL.\lQual você prefere?$
+
+[Route110_TrickHouseEnd_Text_NoRoomInPC] 9224ab0274
+O quê? Não tem espaço no seu PC?\nO que eu faço com isso?\pBem que eu queria reclamar, mas sou\nbonzinho demais, então volte depois!$
+
+[Route110_TrickHouseEnd_Text_LeavingOnJourney] 7598bfc4a3
+… … … … … …\pVou partir numa jornada de descoberta.\nUma busca por novos truques.\pEspero que um dia você venha me\ndivertir de novo.\pE agora, adeus!$
+
+[Route110_TrickHouseEnd_Text_YouHaveEarnedThisReward] c8de37be72
+Muito bem!\nVocê mereceu este prêmio!$
+
+[Route110_TrickHouseEnd_Text_NoRoomForThis] 3d67497f51
+O quê? Não tem espaço pra isto?\nQue tipo de itens você carrega?\pMas tudo bem, já que chegou até mim,\no seu prêmio fica comigo até mais tarde.$
+
+[Route110_TrickHouseEnd_Text_MakeNewTricksToStumpYou] 041783ec9e
+Tira esse sorrisinho da cara!\nÉ cedo demais pra achar que ganhou!\pVou criar novos truques pra te\nderrubar, ah, se vou.\pVolte pro próximo capítulo\nemocionante!$
+
+[Route110_TrickHouseEnd_Text_YoureIgnoringMe] cca6b50ee6
+Ora, ora! Agora você me ignora?\nIsso, sim, parte o meu coração!$

@@ -1,0 +1,11 @@
+[SootopolisCity_Mart_Text_PPUpIsGreat] 2bc792504c
+O PP UP é ótimo!\pEle aumenta os PONTOS DE PODER, os\nPP, de um golpe POKéMON.$
+
+[SootopolisCity_Mart_Text_TooScaryOutside] d273c9916a
+O que…\nO que está acontecendo?\pQuero muito saber, mas dá medo\ndemais sair.$
+
+[SootopolisCity_Mart_Text_FullRestoreItemOfDreams] 0b92e7e01f
+Conhece a RESTAURAÇÃO TOTAL?\pRecupera todos os PS!\nCura todos os problemas de status!\pÉ mesmo o item dos sonhos!$
+
+[SootopolisCity_Mart_Text_DidSomethingAwaken] 013b940043
+Este tempo…\nSerá que algo despertou?$

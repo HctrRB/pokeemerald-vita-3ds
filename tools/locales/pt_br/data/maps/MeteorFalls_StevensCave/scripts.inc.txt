@@ -1,0 +1,8 @@
+[MeteorFalls_StevensCave_Text_ShouldKnowHowGoodIAmExpectWorst] 4fe1efd46e
+STEVEN: Nossa, {PLAYER}{KUN}.\nEstou impressionado que me achou.\pVocê, hã… me acha só um maníaco\npor pedras?\pNão, não pode ser.\pLutamos lado a lado no CENTRO\nESPACIAL de SOOTOPOLIS.\pVocê deve saber muito bem o quanto\neu sou bom.\pCerto, {PLAYER}{KUN}, se vai me desafiar\npra valer, espere o pior!$
+
+[MeteorFalls_StevensCave_Text_StevenDefeat] 2a324c2e7d
+Você…\nNão imaginava que tinha tanta força…$
+
+[MeteorFalls_StevensCave_Text_MyPredictionCameTrue] a94ca14839
+STEVEN: Pensando bem, desde que nos\nvimos na CAVERNA GRANITO, em DEWFORD,\ltive esse pressentimento.\pAchei que um dia você ia chegar\nao topo da LIGA.\pCostumo acertar as minhas previsões.\pE pra onde você vai agora?\p… … … … … …\n… … … … … …\pFufufu, nem eu sei te dizer.$

@@ -299,219 +299,219 @@ BattleFrontier_OutsideWest_EventScript_PokefanF::
 	end
 
 BattleFrontier_OutsideWest_Text_BattleDomeSign:
-	.string "This is the BATTLE DOME!\n"
-	.string "Your path to the invincible superstar!$"
+	.string "Esta é a CÚPULA DE BATALHA!\n"
+	.string "O seu caminho pro estrelato!$"
 
 BattleFrontier_OutsideWest_Text_BattleFactorySign:
-	.string "This is the BATTLE FACTORY!\n"
-	.string "Seek out the toughest POKéMON!$"
+	.string "Esta é a FÁBRICA DE BATALHA!\n"
+	.string "Em busca dos POKéMON mais fortes!$"
 
 BattleFrontier_OutsideWest_Text_BattlePikeSign:
-	.string "This is the BATTLE PIKE!\n"
-	.string "Choose one of three paths!$"
+	.string "Este é o PICO DE BATALHA!\n"
+	.string "Escolha um de três caminhos!$"
 
 BattleFrontier_OutsideWest_Text_ThisIsBattleTower:
-	.string "This is the BATTLE TOWER.\p"
-	.string "TRAINERS bring their best-raised\n"
-	.string "POKéMON for elimination-style matches.$"
+	.string "Esta é a TORRE DE BATALHA.\p"
+	.string "TREINADORES trazem os seus melhores\n"
+	.string "POKéMON pra batalhas eliminatórias.$"
 
 BattleFrontier_OutsideWest_Text_MayISeeYourTicket:
-	.string "Hello, are you here for the ferry?\n"
-	.string "May I see your TICKET?$"
+	.string "Olá, veio pegar a balsa?\n"
+	.string "Posso ver o seu BILHETE?$"
 
 BattleFrontier_OutsideWest_Text_MustHaveTicketToBoard:
-	.string "{PLAYER} doesn't have the TICKET…\p"
-	.string "I'm terribly sorry.\p"
-	.string "You must have a TICKET to board\n"
-	.string "the ferry.$"
+	.string "{PLAYER} não tem o BILHETE…\p"
+	.string "Sinto muito.\p"
+	.string "É preciso ter um BILHETE pra\n"
+	.string "embarcar na balsa.$"
 
 BattleFrontier_OutsideWest_Text_WhereWouldYouLikeToGo:
-	.string "{PLAYER} flashed the TICKET.\p"
-	.string "Perfect! That's all you need!\p"
-	.string "And where would you like to go?$"
+	.string "{PLAYER} mostrou o BILHETE.\p"
+	.string "Perfeito! É só isso!\p"
+	.string "E pra onde você quer ir?$"
 
 BattleFrontier_OutsideWest_Text_SlateportItIs:
-	.string "SLATEPORT CITY it is, then!$"
+	.string "Pra CIDADE DE SLATEPORT, então!$"
 
 BattleFrontier_OutsideWest_Text_LilycoveItIs:
-	.string "LILYCOVE CITY it is, then!$"
+	.string "Pra CIDADE DE LILYCOVE, então!$"
 
 BattleFrontier_OutsideWest_Text_SailWithUsAnotherTime:
-	.string "Please sail with us another time!$"
+	.string "Viaje com a gente outra hora!$"
 
 BattleFrontier_OutsideWest_Text_PleaseBoardFerry:
-	.string "Please board the ferry and wait for\n"
-	.string "departure.$"
+	.string "Embarque na balsa e aguarde a\n"
+	.string "partida, por favor.$"
 
 BattleFrontier_OutsideWest_Text_ThenWhereWouldYouLikeToGo:
-	.string "Then, where would you like to go?$"
+	.string "Então, pra onde você quer ir?$"
 
 BattleFrontier_OutsideWest_Text_BestOutOfAllMyFriends:
-	.string "I'm the best out of all my friends.\n"
-	.string "But here…\l"
-	.string "I've been useless!$"
+	.string "Sou o melhor de todos os meus amigos.\n"
+	.string "Mas aqui…\l"
+	.string "Não sirvo pra nada!$"
 
 BattleFrontier_OutsideWest_Text_CantFindBattleTower:
-	.string "I want to go to the BATTLE TOWER,\n"
-	.string "but I can't find it even though I have\l"
-	.string "a map of the BATTLE FRONTIER.\p"
-	.string "This place is just too big!$"
+	.string "Quero ir à TORRE DE BATALHA, mas não\n"
+	.string "acho, mesmo com o mapa da FRONTEIRA.\p"
+	.string "Este lugar é grande demais!$"
 
 BattleFrontier_OutsideWest_Text_GotSeasickOnWayHere:
-	.string "I wanted to take a challenge as soon\n"
-	.string "as I arrived here.\p"
-	.string "But on the way, I got seasick…\n"
-	.string "Urrrrp…$"
+	.string "Eu queria encarar um desafio assim\n"
+	.string "que chegasse.\p"
+	.string "Mas no caminho fiquei enjoado…\n"
+	.string "Urrrgh…$"
 
 BattleFrontier_OutsideWest_Text_OnlyToughTrainersBroughtHere:
-	.string "It's not as if just anyone can come\n"
-	.string "here, you know?\p"
-	.string "Only those TRAINERS who've been\n"
-	.string "recognized as tough are brought here.\p"
-	.string "That's why many TRAINERS don't even\n"
-	.string "know about the BATTLE FRONTIER.$"
+	.string "Não é qualquer um que vem aqui,\n"
+	.string "sabia?\p"
+	.string "Só trazem TREINADORES reconhecidos\n"
+	.string "como fortes.\p"
+	.string "Por isso muitos TREINADORES nem\n"
+	.string "conhecem a FRONTEIRA DE BATALHA.$"
 
 BattleFrontier_OutsideWest_Text_SureWeCanChallengeWithNoMons:
-	.string "Hey, bro…\p"
-	.string "Are you sure we can make challenges\n"
-	.string "even if we don't have any POKéMON?$"
+	.string "Ei, mano…\p"
+	.string "Tem certeza que dá pra encarar os\n"
+	.string "desafios mesmo sem ter POKéMON?$"
 
 BattleFrontier_OutsideWest_Text_BigGuySaidIllLendYouMons:
-	.string "Uh…\n"
-	.string "I'm sure it'll be okay.\p"
-	.string "I think…\p"
-	.string "But remember that big scary guy?\n"
-	.string "He said, “I'll lend you POKéMON!”$"
+	.string "Hã…\n"
+	.string "Tenho certeza que vai dar certo.\p"
+	.string "Acho…\p"
+	.string "Mas lembra daquele grandão\n"
+	.string "assustador? Ele disse: “Eu empresto\l"
+	.string "POKéMON pra vocês!”$"
 
 BattleFrontier_OutsideWest_Text_WhosRaisingThoseRentalMons:
-	.string "That's the BATTLE FACTORY.\n"
-	.string "You can rent strong POKéMON there.\p"
-	.string "But it makes me wonder.\n"
-	.string "Who's raising those rental POKéMON?$"
+	.string "Ali é a FÁBRICA DE BATALHA.\n"
+	.string "Dá pra alugar POKéMON fortes lá.\p"
+	.string "Mas fico pensando.\n"
+	.string "Quem treina esses POKéMON de aluguel?$"
 
 BattleFrontier_OutsideWest_Text_ScaredOfPikeBecauseSeviper:
-	.string "I'm scared of going into the BATTLE\n"
-	.string "PIKE because of SEVIPER…\p"
-	.string "B-but I came all the way here, so I will\n"
-	.string "try to conquer everything!\l"
-	.string "…Shudder…$"
+	.string "Tenho medo de entrar no PICO DE\n"
+	.string "BATALHA por causa do SEVIPER…\p"
+	.string "M-mas vim até aqui, então vou tentar\n"
+	.string "conquistar tudo!\l"
+	.string "…Brrr…$"
 
 BattleFrontier_OutsideWest_Text_LetsPlayRockPaperScissors:
-	.string "Let's play rock, paper, scissors!\n"
-	.string "One, two, three!\p"
+	.string "Vamos jogar pedra, papel e tesoura!\n"
+	.string "Jo-ken-pô!\p"
 	.string "… … … … … …$"
 
 BattleFrontier_OutsideWest_Text_WonIllTakePikeChallenge:
-	.string "Yay! I won!\n"
-	.string "I will take the BATTLE PIKE challenge!$"
+	.string "Oba! Ganhei!\n"
+	.string "Vou encarar o desafio do PICO!$"
 
 BattleFrontier_OutsideWest_Text_LostIllPutOffPikeChallenge:
-	.string "Oh, no…\n"
-	.string "I lost.\p"
-	.string "I guess I'm not very lucky today.\n"
-	.string "I'll put off my BATTLE PIKE challenge\l"
-	.string "until tomorrow.$"
+	.string "Ah, não…\n"
+	.string "Perdi.\p"
+	.string "Acho que não estou com sorte hoje.\n"
+	.string "Vou deixar o desafio do PICO DE\l"
+	.string "BATALHA pra amanhã.$"
 
 BattleFrontier_OutsideWest_Text_ChooseFishingOverBattling:
-	.string "I believe I'm the only person here who,\n"
-	.string "for some unknown reason, would choose\l"
-	.string "fishing over battling.\p"
-	.string "Huh? You can't catch anything here?\n"
-	.string "That's disappointing…$"
+	.string "Acho que sou a única pessoa aqui que,\n"
+	.string "sei lá por quê, prefere pescar a\l"
+	.string "batalhar.\p"
+	.string "Hã? Não dá pra pescar nada aqui?\n"
+	.string "Que decepção…$"
 
 BattleFrontier_OutsideWest_Text_KeepBattlingUntilIGetSymbol:
-	.string "Today, I'm going to keep battling, no\n"
-	.string "matter what, until I get a Symbol.$"
+	.string "Hoje vou batalhar sem parar, custe o\n"
+	.string "que custar, até ganhar um Símbolo.$"
 
 BattleFrontier_OutsideWest_Text_YoureOffToChallengeDome:
-	.string "Oh? You're off to challenge\n"
-	.string "the BATTLE DOME?\p"
-	.string "I'll wish you the best of luck.\n"
-	.string "Let us both win our way up and meet\l"
-	.string "in challenges.$"
+	.string "Ah? Vai desafiar a CÚPULA DE\n"
+	.string "BATALHA?\p"
+	.string "Desejo toda a sorte.\n"
+	.string "Que nós dois subamos vencendo e nos\l"
+	.string "encontremos nos desafios.$"
 
 BattleFrontier_OutsideWest_Text_DomeIsHereGrandpa:
-	.string "Grandpa, over here!\n"
-	.string "The BATTLE DOME is here!\l"
-	.string "Go get 'em, Grandpa!$"
+	.string "Vovô, aqui!\n"
+	.string "A CÚPULA DE BATALHA é aqui!\l"
+	.string "Vai lá, vovô!$"
 
 BattleFrontier_OutsideWest_Text_WontLetGentlemenBeatMe:
-	.string "Ah, so this here is the BATTLE DOME?\n"
-	.string "I won't let GENTLEMEN beat me!\p"
-	.string "But where is the entrance?$"
+	.string "Ah, então esta é a CÚPULA DE\n"
+	.string "BATALHA? Não vou perder pros\l"
+	.string "CAVALHEIROS!\p"
+	.string "Mas onde é a entrada?$"
 
 BattleFrontier_OutsideWest_Text_NothingHereNotLongAgo:
-	.string "There used to be nothing here not all\n"
-	.string "that long ago.\p"
-	.string "But, now look at this place! Amazing!\n"
-	.string "I'll bring my mother out to see this.$"
+	.string "Até pouco tempo atrás, não tinha\n"
+	.string "nada aqui.\p"
+	.string "Mas olha este lugar agora! Incrível!\n"
+	.string "Vou trazer a minha mãe pra ver.$"
 
 BattleFrontier_OutsideWest_Text_FinallyArrivedAtFrontier:
-	.string "I've finally arrived at the BATTLE\n"
-	.string "FRONTIER!\p"
-	.string "I'm sure to grab attention with\n"
-	.string "my looks and ability!$"
+	.string "Finalmente cheguei à FRONTEIRA DE\n"
+	.string "BATALHA!\p"
+	.string "Com a minha beleza e o meu talento,\n"
+	.string "vou chamar atenção, com certeza!$"
 
 BattleFrontier_OutsideWest_Text_SquareFilledWithToughPeople:
-	.string "Munch, munch…\p"
-	.string "It looks like this square's filled with\n"
-	.string "tough people.\p"
-	.string "Munch, munch…$"
+	.string "Nhac, nhac…\p"
+	.string "Parece que esta praça está cheia\n"
+	.string "de gente forte.\p"
+	.string "Nhac, nhac…$"
 
 BattleFrontier_OutsideWest_Text_MetOlderGirlAtPike:
-	.string "Crunch, munch…\p"
-	.string "A while back, I met this older girl\n"
-	.string "at the BATTLE PIKE.\p"
-	.string "She had these eyes that were scary\n"
-	.string "in a real ornery way.\p"
-	.string "Crunch, munch…\p"
-	.string "She got all furious: “Will you quit\n"
-	.string "eating!” Then she whaled on me.\p"
-	.string "It was a hair-raising kind of\n"
-	.string "scary experience, sure enough.\p"
-	.string "Crunch, munch…$"
+	.string "Crec, nhac…\p"
+	.string "Um tempo atrás, conheci uma moça\n"
+	.string "mais velha no PICO DE BATALHA.\p"
+	.string "Ela tinha uns olhos assustadores,\n"
+	.string "bem mal-humorados.\p"
+	.string "Crec, nhac…\p"
+	.string "Ela ficou furiosa: “Quer parar de\n"
+	.string "comer?!” E aí me deu uma surra.\p"
+	.string "Foi de arrepiar, pode acreditar.\p"
+	.string "Crec, nhac…$"
 
 BattleFrontier_OutsideWest_Text_LastTimeOurEyesMet:
-	.string "Huh? Will you listen to yourself?\n"
-	.string "That's nothing!\p"
-	.string "Why, the last time I cheered for him,\n"
-	.string "our eyes met and sparks flew!$"
+	.string "Hã? Você se ouve falando?\n"
+	.string "Isso não é nada!\p"
+	.string "Da última vez que torci por ele, os\n"
+	.string "nossos olhares se cruzaram e\l"
+	.string "saiu faísca!$"
 
 BattleFrontier_OutsideWest_Text_DomeAceLookedBecauseOfMyCheering:
-	.string "Whaaaaaat?!\n"
-	.string "Pfft!\p"
-	.string "That only happened because\n"
-	.string "I happened to be sitting next to you!\p"
-	.string "The DOME ACE only looked our way\n"
-	.string "because my cheering was so loud!$"
+	.string "Quêêê?!\n"
+	.string "Ah, tá!\p"
+	.string "Isso só aconteceu porque eu estava\n"
+	.string "sentada do seu lado!\p"
+	.string "O ÁS DA CÚPULA só olhou pra cá\n"
+	.string "porque eu torci alto demais!$"
 
 BattleFrontier_OutsideWest_Text_DomeAceIsMine:
-	.string "Oh, shush!\n"
-	.string "Keep that racket down!\p"
-	.string "You fair-weather fans should stick\n"
-	.string "to cheering for some GYM LEADER!\p"
-	.string "The DOME ACE is mine!\n"
-	.string "The only idol for me!$"
+	.string "Ah, silêncio!\n"
+	.string "Menos barulho!\p"
+	.string "Vocês, fãs de ocasião, deviam torcer\n"
+	.string "pra algum LÍDER de GINÁSIO!\p"
+	.string "O ÁS DA CÚPULA é meu!\n"
+	.string "O meu único ídolo!$"
 
 BattleFrontier_OutsideWest_Text_FansOverThereUsedToBeTrainers:
-	.string "Those people squabbling over there…\p"
-	.string "It's hard to believe, but they once\n"
-	.string "were TRAINERS, and good ones, too.\p"
-	.string "They used to be incredibly tough,\n"
-	.string "and they were famous, too.\p"
-	.string "But they were obliterated by this\n"
-	.string "certain TRAINER at a tournament.\p"
-	.string "They were so thoroughly whipped,\n"
-	.string "they became smitten by the TRAINER.\p"
-	.string "Now they're just fans of the TRAINER.\n"
-	.string "They go cheer for their idol at the\l"
-	.string "BATTLE DOME every day now.$"
+	.string "Aquelas pessoas discutindo ali…\p"
+	.string "É difícil acreditar, mas já foram\n"
+	.string "TREINADORAS, e das boas.\p"
+	.string "Eram fortíssimas e famosas também.\p"
+	.string "Mas foram arrasadas por um certo\n"
+	.string "TREINADOR num torneio.\p"
+	.string "Apanharam tanto que se apaixonaram\n"
+	.string "pelo TREINADOR.\p"
+	.string "Agora são só fãs dele. Vão torcer\n"
+	.string "pelo ídolo na CÚPULA DE BATALHA\l"
+	.string "todo dia.$"
 
 BattleFrontier_OutsideWest_Text_MonWithLongTailInFrontier:
-	.string "I heard a rumor that someone saw\n"
-	.string "a POKéMON with an unusually long tail\l"
-	.string "somewhere in the BATTLE FRONTIER.\p"
-	.string "It must be adorable. I'm sure of it…\p"
-	.string "Oh, challenges can wait. I feel driven\n"
-	.string "to find the delightful creature!$"
+	.string "Ouvi um boato de que alguém viu um\n"
+	.string "POKéMON de rabo muito comprido em\l"
+	.string "algum lugar da FRONTEIRA.\p"
+	.string "Deve ser uma graça. Tenho certeza…\p"
+	.string "Ah, os desafios podem esperar. Tenho\n"
+	.string "que achar essa criaturinha!$"
 

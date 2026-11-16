@@ -1,0 +1,8 @@
+[EverGrandeCity_PokemonCenter_1F_Text_LeagueAfterVictoryRoad] 169af823a9
+A LIGA POKéMON fica a pouca distância\ndepois da ESTRADA DA VITÓRIA.\pSe chegou até aqui, que escolha você\ntem além de seguir em frente?$
+
+[EverGrandeCity_PokemonCenter_1F_Text_BelieveInYourPokemon] a7441358a7
+A longa e penosa ESTRADA DA VITÓRIA…\pÉ como reviver o caminho que a gente\npercorreu na vida…\pAcredite nos seus POKéMON e dê o\nseu melhor!$
+
+[EverGrandeCity_PokemonCenter_1F_Text_ScottHappyForYou] 624a3d50ef
+SCOTT: {PLAYER}{KUN}, você lutou até\nchegar à LIGA POKéMON!\pFico feliz por você!\nValeu a pena torcer por você!\p{PLAYER}{KUN}, se você chegar ao topo\nda LIGA POKéMON…\pEu entro em contato.\pCerto, {PLAYER}{KUN}.\nVá atrás da glória!$

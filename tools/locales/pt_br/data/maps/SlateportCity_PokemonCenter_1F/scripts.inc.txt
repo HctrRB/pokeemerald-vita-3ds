@@ -1,0 +1,5 @@
+[SlateportCity_PokemonCenter_1F_Text_RaiseDifferentTypesOfPokemon] 90dfc92371
+Quer uma dica pra batalhar?\pEu diria que é criar tipos diferentes\nde POKéMON, de forma equilibrada.\pNão adianta deixar só um\nPOKéMON forte.\pSe ele estiver em desvantagem de tipo,\npode não ter a menor chance.$
+
+[SlateportCity_PokemonCenter_1F_Text_TradedMonWithFriend] 657506921f
+Eu troco POKéMON com os meus amigos.\pSe o POKéMON da troca vem segurando\num item, fico duas vezes mais feliz!$

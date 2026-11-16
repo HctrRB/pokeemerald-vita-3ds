@@ -51,7 +51,7 @@ static void Build(void)
 {
     char buf[48], name[16];
     UiKit_Header("TRAINER CARD", sTabs, 2, sTab, sTabX, sTabW, 12);
-    snprintf(buf, sizeof(buf), "IDNo. %05u", (unsigned)(gSaveBlock2Ptr->playerTrainerId[0] | (gSaveBlock2Ptr->playerTrainerId[1] << 8)));
+    snprintf(buf, sizeof(buf), UiLocale_Translate("IDNo. %05u"), (unsigned)(gSaveBlock2Ptr->playerTrainerId[0] | (gSaveBlock2Ptr->playerTrainerId[1] << 8)));
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     UiGame_PlayerName(name, sizeof(name));
     if (sTab == 0)
@@ -88,7 +88,7 @@ static void Build(void)
         if (FlagGet(FLAG_BADGE01_GET + sBadge))
             snprintf(buf, sizeof(buf), "%s BADGE", sBadgeNames[sBadge]);
         else
-            snprintf(buf, sizeof(buf), "Not obtained yet.");
+            snprintf(buf, sizeof(buf), UiLocale_Translate("Not obtained yet."));
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 492, 316, buf, UI_COL_INK);
     }
     else

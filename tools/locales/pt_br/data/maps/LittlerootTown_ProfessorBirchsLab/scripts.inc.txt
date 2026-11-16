@@ -1,0 +1,149 @@
+[LittlerootTown_ProfessorBirchsLab_Text_BirchAwayOnFieldwork] 7b1194251c
+Hã? O PROF. BIRCH?\pO PROF. está fazendo trabalho de campo.\nLogo, ele não está aqui.\pAh, deixe eu explicar o que é isso.\pÉ estudar as coisas no ambiente\nnatural, como campos e montanhas,\lem vez de num laboratório.\pO PROF. não é de ficar na escrivaninha.\nEle prefere sair e ver as coisas\lcom os próprios olhos a ler sobre\lelas aqui dentro.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BirchIsntOneForDeskWork] 3dff6aa6e4
+O PROF. não é de ficar na escrivaninha.\nEle prefere sair e ver as coisas\lcom os próprios olhos a ler sobre\lelas aqui dentro.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BirchEnjoysRivalsHelpToo] ef61d8f93e
+O PROF. BIRCH estuda os habitats\ne a distribuição dos POKéMON.\pO PROF. adora a ajuda de {RIVAL}.\nDá para ver o carinho entre os dois.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_LikeYouToHavePokemon] 9744c0d01c
+PROF. BIRCH: Então, {PLAYER}{KUN}.\pO seu pai me falou muito de você.\pOuvi dizer que você ainda não tem\no seu próprio POKéMON.\pMas, na batalha de agora há pouco,\nvocê se saiu muito bem!\pAcho que o sangue do seu pai corre\nmesmo nas suas veias!\pAh, sim. Como agradecimento por me\nsalvar, quero que fique com o POKéMON\lque você usou.\p{PLAYER} recebeu {STR_VAR_1}!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_WhyNotGiveNicknameToMon] af3d9f6f6e
+PROF. BIRCH: E por que não dar\num apelido para {STR_VAR_1}?$
+
+[LittlerootTown_ProfessorBirchsLab_Text_MightBeGoodIdeaToGoSeeRival] 1edbe62134
+PROF. BIRCH: Se você se dedicar aos\nPOKéMON e ganhar experiência, acho que\lterá um enorme talento para treinar.\pLá em casa, {RIVAL} também estuda\nPOKéMON enquanto me ajuda.\p{PLAYER}{KUN}, não acha que seria uma\nboa ideia ir ver {RIVAL}?$
+
+[LittlerootTown_ProfessorBirchsLab_Text_GetRivalToTeachYou] b233d4a679
+PROF. BIRCH: Ótimo!\n{RIVAL} também vai gostar.\pPeça para {RIVAL} te ensinar o que\né ser TREINADOR de POKéMON.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_DontBeThatWay] e0f78d5fee
+PROF. BIRCH: Ora, não seja assim.\nVá conhecer a minha cria!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BirchRivalGoneHome] eb0364c43e
+PROF. BIRCH: {RIVAL}?\nAcho que foi para casa.\pOu está fuçando no mato alto\nde novo em algum lugar…\pSe você ou os seus POKéMON cansarem,\nvá descansar em casa.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_HeardYouBeatRivalTakePokedex] 4d176b8b00
+PROF. BIRCH: Oh, olá, {PLAYER}{KUN}!\pSoube que você venceu {RIVAL} logo\nna primeira vez. Excelente!\p{RIVAL} me ajuda na pesquisa\nhá muito tempo.\p{RIVAL} já tem muita experiência\nem batalhas.\pTome, {PLAYER}{KUN}. Encomendei isto para\na minha pesquisa, mas acho que você\ldeve ficar com esta POKéDEX.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_ReceivedPokedex] 18e1dd48ae
+{PLAYER} recebeu a POKéDEX!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_ExplainPokedex] 6414c7df4c
+PROF. BIRCH: A POKéDEX é uma ferramenta\nde alta tecnologia que registra sozinha\ltodo POKéMON que você vê ou captura.\p{RIVAL} leva a sua para todo\nlugar.\pSempre que captura um POKéMON raro\ne registra os dados na POKéDEX,\l{RIVAL} vai atrás de mim no campo\lsó para me mostrar.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_CountlessPokemonAwait] d8e30f1d8b
+PROF. BIRCH: Incontáveis POKéMON\nesperam por você!\pAh, já estou com vontade de sair\npara o trabalho de campo de novo!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_MayGotPokedexTooTakeThese] 069ba07bb9
+MAY: Uau, {PLAYER}{KUN}!\nVocê também ganhou uma POKéDEX!\pQue legal! Igual a mim!\nTambém tenho algo para você!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_CatchCutePokemonWithPokeBalls] c2a6fe1620
+MAY: É divertido ter um montão de\nPOKéMON!\pVou procurar em todo canto, porque\nquero POKéMON diferentes.\pSe eu achar POKéMON fofos, vou\ncapturar com POKé BOLAS!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_OhYourBagsFull] b4d8bf5a64
+Oh? A sua BOLSA está cheia.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_MayWhereShouldIGoNext] 4942a381d7
+MAY: Aonde será que eu vou procurar\nPOKéMON agora?$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BrendanGotPokedexTooTakeThese] 9c2505532c
+BRENDAN: Hum…\nEntão você também ganhou uma POKéDEX.\pBom, então tome.\nVou te dar isto.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_CatchCoolPokemonWithPokeBalls] b05a4b3f33
+BRENDAN: Sabe, é mais divertido ter\num montão de POKéMON.\pVou explorar todo canto para achar\nPOKéMON diferentes.\pSe eu achar POKéMON maneiros, pode\napostar que vou pegar com POKé BOLAS.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_HeyYourBagsFull] 408786b5e6
+Ei, a sua BOLSA está cheia.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BrendanWhereShouldIGoNext] a1fd04ce9e
+BRENDAN: Onde será que eu procuro\nPOKéMON agora…$
+
+[LittlerootTown_ProfessorBirchsLab_Text_SeriousLookingMachine] 640ab90ecc
+É uma máquina de aparência séria.\nO PROF. deve usar isto na pesquisa.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_PCUsedForResearch] 7e1c8ca490
+É um PC usado para pesquisa.\nMelhor não mexer nele.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_CrammedWithBooksOnPokemon] a4e8c70318
+Está lotada de livros sobre POKéMON.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BookTooHardToRead] 092bdf2320
+É um livro difícil demais de ler.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_OtherRegionsUpgradeToNational] 00ba98367b
+PROF. BIRCH: Bem…\p{PLAYER}{KUN} e {RIVAL}, vocês dois me\najudaram a estudar os POKéMON.\pGraças a vocês, novas descobertas\nestão vindo à tona.\pParece que na região de HOENN também\nhá POKéMON de outras regiões.\pIsso mostra como os ambientes\nnaturais de HOENN são ricos\le variados.\pPor isso, acho necessário atualizar\nas suas POKéDEX para o\lModo NACIONAL.\pVamos, deixem-me ver as POKéDEX.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_MayUpgradeSoCool] dad6a34572
+MAY: Hehehe!\pQue legal até a minha POKéDEX\nser atualizada!\pÉ porque você saiu e capturou\num montão de POKéMON, {PLAYER}{KUN}!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BrendanYouCanThankMe] b769261b8a
+BRENDAN: Eu rodei HOENN inteira\nconferindo os POKéMON.\pPode me agradecer pela POKéDEX\nno Modo NACIONAL.\pÉ, você tem sorte, {PLAYER}!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_OkayAllDone] a0a9b41385
+PROF. BIRCH: Pronto, terminei!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_PokedexUpgradedToNational] 5a0a083cf8
+A POKéDEX de {PLAYER} foi atualizada\npara o Modo NACIONAL!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_GrassyPatchWaiting2] 905c05fab4
+PROF. BIRCH: Mas escute.\nVocê chegou ao topo da LIGA, mas\la sua jornada POKéMON não acabou.\pO caminho dos POKéMON não\ntem fim.\pEm algum lugar, há um matinho\nesperando por você!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_MayTakeBreakFromFieldwork] 3e335e5406
+MAY: Acho que vou dar um tempo\nno trabalho de campo.\pVou ajudar o PROF. aqui por\num tempinho.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BrendanTakeBreakFromFieldwork] 64f338dce6
+BRENDAN: Por enquanto, estou dando\num tempo no trabalho de campo.\pVou ajudar o PROF. aqui por\num tempo.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_CompletedDexChoosePokemon] 2a84ae34bf
+PROF. BIRCH: Oh, {PLAYER}{KUN}!\nVamos dar uma olhada na sua POKéDEX.\p… … … … … …\n… … … … … …\pSim, não há dúvida.\pVocê completou mesmo a POKéDEX\nda região de HOENN.\pIsso é mais que impressionante.\pTenho um presente para você.\pConsidere uma forma de agradecer\npelo trabalho fantástico que fez.\pO presente é um POKéMON raro, que só\nexiste em outra região!\pPode escolher qualquer um destes\ntrês POKéMON!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_CanHaveAnyOneOfRarePokemon] c8d5b09d0d
+PROF. BIRCH: Estes POKéMON raros\nsó existem em outra região!\pPode escolher qualquer um destes\ntrês POKéMON!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_YoullTakeCyndaquil] a50758ceec
+PROF. BIRCH: O POKéMON de FOGO\nCYNDAQUIL chamou a sua atenção!\pVocê tem bom olho, como sempre!\pEntão vai ficar com CYNDAQUIL?$
+
+[LittlerootTown_ProfessorBirchsLab_Text_YoullTakeTotodile] 0531196e90
+PROF. BIRCH: O POKéMON de ÁGUA\nTOTODILE é a sua escolha!\pVocê sabe escolher bem.\pEntão vai ficar com TOTODILE?$
+
+[LittlerootTown_ProfessorBirchsLab_Text_YoullTakeChikorita] 8dfb92e269
+PROF. BIRCH: O POKéMON de PLANTA\nCHIKORITA é a sua escolha!\pVocê sabe mesmo o que está fazendo.\pEntão vai ficar com CHIKORITA?$
+
+[LittlerootTown_ProfessorBirchsLab_Text_TakeYourTimeAllInvaluable] c62634139f
+PROF. BIRCH: Pense com calma antes\nde decidir.\pTodos são POKéMON valiosíssimos.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_PickedFinePokemon] 2b53d2ccba
+PROF. BIRCH: Entendo!\nVocê escolheu um ótimo POKéMON!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_ReceivedJohtoStarter] 155597167f
+{PLAYER} recebeu {STR_VAR_1}\ndo PROF. BIRCH!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_NicknameJohtoStarter] 41ba541ab7
+Quer dar um apelido para\n{STR_VAR_1}?$
+
+[LittlerootTown_ProfessorBirchsLab_Text_GrassyPatchWaiting] d4f640260d
+PROF. BIRCH: Escute, {PLAYER}{KUN}.\nVocê completou a POKéDEX de HOENN,\lmas a sua jornada POKéMON não acabou.\pO caminho dos POKéMON não\ntem fim.\pEm algum lugar, há um matinho\nesperando por você!$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BetterLeaveOthersAlone] 734576b17f
+Você recebeu o POKéMON prometido.\nMelhor deixar os outros em paz.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_DontHaveAnyRoomForPokemon] ee2dbc82b9
+Oh, você não tem espaço para\neste POKéMON.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_MayWhatNextImStayingHere] 4ddfff047a
+MAY: {PLAYER}{KUN}, e depois disso…\nO que você vai fazer?\pVai continuar batalhando e\naprimorando as suas habilidades?\pOu vai tentar completar a\nPOKéDEX NACIONAL?\pEu vou ficar aqui ajudando o PROF.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BrendanPreferCollectingSlowly] 2767217ac4
+BRENDAN: Em vez de colecionar\nPOKéMON, prefiro treinar com calma\le constância o que eu escolhi.$
+
+[LittlerootTown_ProfessorBirchsLab_Text_MayHaveYouGoneToBattleFrontier] 53709b4a5b
+MAY: Oh, oi, {PLAYER}{KUN}!\nVocê já foi àquele lugar,\la FRONTEIRA DE BATALHA?$
+
+[LittlerootTown_ProfessorBirchsLab_Text_BrendanHaveYouGoneToBattleFrontier] 9366c25ae6
+BRENDAN: Ei, {PLAYER}!\nVocê já foi até aquele lugar,\la FRONTEIRA DE BATALHA?$
+
+[LittlerootTown_ProfessorBirchsLab_Text_ScottAboardSSTidalCall] 526434d548
+… … … … … …\n… … … … … Bipe!\pSCOTT: Oi, oi, {PLAYER}!\nSou eu, o SCOTT.\pEstou a bordo do S.S. TIDAL agora.\nÉ ótimo estar no mar!\pAliás…\pTem um lugar para onde eu queria\nte convidar para uma visita.\pSe tiver interesse, pegue uma balsa\nem SLATEPORT ou em LILYCOVE.\pEu te conto os detalhes quando\na gente se encontrar. Vou esperar!\p… … … … … …\n… … … … … Clique!$

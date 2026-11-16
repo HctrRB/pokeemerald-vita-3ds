@@ -1,0 +1,8 @@
+[LilycoveCity_DepartmentStore_3F_Text_ItemsBestForTougheningPokemon] 75ec6e71ba
+Pra fortalecer POKéMON rápido, itens\nsão o melhor.\pPROTEÍNA aumenta o ATAQUE,\ne CÁLCIO aumenta o AT. ESP.$
+
+[LilycoveCity_DepartmentStore_3F_Text_WantMoreEndurance] 1f8381b694
+Quero que os meus POKéMON aguentem\nmais.\pNão sei se aumento a DEFESA com\nFERRO ou a DEF. ESP. com ZINCO.$
+
+[LilycoveCity_DepartmentStore_3F_Text_GaveCarbosToSpeedUpMon] 5540082cf4
+Dei CARBONO pro meu POKéMON, e a\nVELOC. dele aumentou.$

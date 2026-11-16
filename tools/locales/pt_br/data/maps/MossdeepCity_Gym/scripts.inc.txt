@@ -1,0 +1,155 @@
+[MossdeepCity_Gym_Text_GymGuideAdvice] aeb8eaa2b2
+E aí, como vai, {PLAYER},\nfutura estrela da LIGA?\pOs LÍDERES deste GINÁSIO usam\nPOKéMON do tipo PSÍQUICO.\pSe for contra eles com POKéMON de\nLUTADOR ou VENENO, eles vão causar\lum dano terrível!\pE ainda vêm com ataques combinados\nimpressionantes!\pPra ganhar, mostre a eles como você\né unido aos seus POKéMON. Manda ver!$
+
+[MossdeepCity_Gym_Text_GymGuidePostVictory] b7b7b53ac7
+Uau, você é incrível!\nQue TREINADOR fora de série!$
+
+[MossdeepCity_Gym_Text_PrestonIntro] 1b977a97ab
+Batalhas dependem da força do\nespírito! Quem tem espírito fraco\lnunca vence!$
+
+[MossdeepCity_Gym_Text_PrestonDefeat] afbf1da719
+Perdi!\nPreciso fortalecer o espírito de novo!$
+
+[MossdeepCity_Gym_Text_PrestonPostBattle] 9a5029870a
+Os indecisos perdem.\nFica o meu aviso.$
+
+[MossdeepCity_Gym_Text_VirgilIntro] 82a90ff895
+Mostre o seu talento!$
+
+[MossdeepCity_Gym_Text_VirgilDefeat] 0a2cb41800
+Que talento espetacular!$
+
+[MossdeepCity_Gym_Text_VirgilPostBattle] e19ffed541
+Se existem prodígios no mundo, são\nos nossos LÍDERES de GINÁSIO!\pMas talvez você tenha ainda mais\ntalento que eles…$
+
+[MossdeepCity_Gym_Text_BlakeIntro] 3fd413b407
+Fufufufu… Veja eu levitar uma POKé\nBOLA com telecinese!\pUoooooooooaaar!\n… … … … … … …\pÀs vezes eu saio de sintonia…$
+
+[MossdeepCity_Gym_Text_BlakeDefeat] 2fb97aebcf
+As minhas batalhas POKéMON também\nsaíram de sintonia!$
+
+[MossdeepCity_Gym_Text_BlakePostBattle] 81e26ccf3d
+A POKé BOLA era pesada demais pra\nlevantar com a mente. Mas esta bola\lde poeira…\pFuuuuuuuuuuuuuh!\n… … … … … …\pNão, não estou roubando!\nNão assoprei! Juro!$
+
+[MossdeepCity_Gym_Text_HannahIntro] 99f7660bc8
+Quando perder pra mim, não se cobre\ndemais.\pNão é fraqueza sua: eu é que sou\nforte demais!$
+
+[MossdeepCity_Gym_Text_HannahDefeat] c4132dd90b
+Você é forte demais!$
+
+[MossdeepCity_Gym_Text_HannahPostBattle] 4c1c9a416b
+Não vou me abater por perder.\nSó preciso treinar mais.\pPensamento positivo: esse é o meu\nponto forte!$
+
+[MossdeepCity_Gym_Text_SamanthaIntro] fea00ca6f2
+Estou vendo…\nEstou vendo o seu futuro…\pSe me vencer, eu conto o seu futuro!$
+
+[MossdeepCity_Gym_Text_SamanthaDefeat] 4770c63c6e
+Eu me rendo!$
+
+[MossdeepCity_Gym_Text_SamanthaPostBattle] b6a3350469
+Você vai travar uma batalha\nintensíssima com os nossos LÍDERES…\pO resultado…\nNão vai ouvir de mim!$
+
+[MossdeepCity_Gym_Text_MauraIntro] 768edb6b6c
+Os caminhos que você percorreu…\nO que você viveu…\pVenha com tudo o que aprendeu!$
+
+[MossdeepCity_Gym_Text_MauraDefeat] b47c700ed6
+Você trilhou um caminho de grandeza!$
+
+[MossdeepCity_Gym_Text_MauraPostBattle] 740a4d3600
+Um futuro brilhante espera quem\ntrabalhou com dedicação.\pPra quem ficou à toa, no fim só\nresta o desespero.\pAqui se faz, aqui se paga…$
+
+[MossdeepCity_Gym_Text_SylviaIntro] 5fad0e919b
+Nem que custe a vida, vou vencer\nesta batalha!$
+
+[MossdeepCity_Gym_Text_SylviaDefeat] 302c824af3
+O que você faz…\nMe apavora…$
+
+[MossdeepCity_Gym_Text_SylviaPostBattle] 23f10a6a2f
+Como ousa me vencer…\pNão vai ser culpa minha se algo\nterrível te acontecer…$
+
+[MossdeepCity_Gym_Text_NateIntro] 942b87c3f9
+Hohoho.\pVou te mostrar como o tipo PSÍQUICO\npode ser tenaz.$
+
+[MossdeepCity_Gym_Text_NateDefeat] 0c82c933ff
+Oh! Ora, ora!\nO seu estilo de batalha é fantástico!$
+
+[MossdeepCity_Gym_Text_NatePostBattle] ea3bcd9286
+Eu… Eu não me a-abalo com derrotas,\npor p-piores que sejam.$
+
+[MossdeepCity_Gym_Text_KathleenIntro] f0aab3266d
+Vou te fazer passar um momento\nhorrível e apavorante!$
+
+[MossdeepCity_Gym_Text_KathleenDefeat] 5696e822fb
+N-nãããão!$
+
+[MossdeepCity_Gym_Text_KathleenPostBattle] c755fab99f
+A sua vitalidade é contagiosa!\nSai de perto de mim, rápido!$
+
+[MossdeepCity_Gym_Text_CliffordIntro] 173a1d3d34
+Posso não estar no auge, mas\nsugiro que não me subestime.$
+
+[MossdeepCity_Gym_Text_CliffordDefeat] 9dd17d2bfe
+Ah, você transborda o poder da\njuventude!$
+
+[MossdeepCity_Gym_Text_CliffordPostBattle] 0583b4a716
+Parece que não consegui superar a\nsua energia jovem.$
+
+[MossdeepCity_Gym_Text_MaceyIntro] 51c3712a5f
+Você não vai chegar até o fim!\nNão se depender de mim!$
+
+[MossdeepCity_Gym_Text_MaceyDefeat] f65e55af4c
+Como você pode ser tão absurdamente\nforte?$
+
+[MossdeepCity_Gym_Text_MaceyPostBattle] d8efff292e
+Hunf! Você pode ser forte, mas não\ncombina com o tipo PSÍQUICO!\pO seu jeito de batalhar é meio bruto!$
+
+[MossdeepCity_Gym_Text_NicholasIntro] 783bc83dfb
+Uoooar! Prove o meu superpoder de\nbatalha POKéMON!$
+
+[MossdeepCity_Gym_Text_NicholasDefeat] 7fbaa2c3f1
+Oh!\nAcabaram comigo!$
+
+[MossdeepCity_Gym_Text_NicholasPostBattle] 2288df19c8
+Certo! Acho que agora vou criar um\nsuperpoder POKéMON invencível.$
+
+[MossdeepCity_Gym_Text_TateAndLizaIntro] 8c5eac96d7
+TATE: Hehehe… Levou um susto?\pLIZA: Fufufu… Levou um susto?\pTATE: Por serem dois LÍDERES?\nLIZA: Por serem dois LÍDERES?\pTATE: Somos gêmeos!\nLIZA: Somos gêmeos!\pTATE: Não precisamos falar porque…\nLIZA: Cada um sabe o que…\pTATE: O outro está pensando…\nLIZA: Tudo na nossa mente!\pTATE: Esta nossa combinação…\nLIZA: Consegue vencer?$
+
+[MossdeepCity_Gym_Text_TateAndLizaDefeat] e706474fd6
+TATE: O quê?! A nossa combinação…\nLIZA: Foi despedaçada!\pTATE: Não tem jeito. Você venceu…\nLIZA: Então, em reconhecimento, tome.$
+
+[MossdeepCity_Gym_Text_ReceivedMindBadge] 375167ef06
+{PLAYER} recebeu a INSÍGNIA DA MENTE\nde TATE e LIZA.$
+
+[MossdeepCity_Gym_Text_ExplainMindBadgeTakeThis] 5059f4dc8e
+TATE: A INSÍGNIA DA MENTE aumenta o\nAT. ESP. e a DEF. ESP. dos POKéMON.\pLIZA: E deixa usar o golpe de MO\nMERGULHO fora da batalha.\pTATE: Leve isto também.$
+
+[MossdeepCity_Gym_Text_ExplainCalmMind] 96214231f3
+TATE: Essa MT04 contém…\nLIZA: MENTE CALMA!\pTATE: Aumenta o AT. ESP. e…\nLIZA: Aumenta a DEF. ESP.!\pTATE: É um golpe perfeito…\nLIZA: Pra POKéMON PSÍQUICOS!\p… … … … … …$
+
+[MossdeepCity_Gym_Text_RegisteredTateAndLiza] f719e7d2a5
+Os LÍDERES TATE & LIZA foram\nregistrados no POKéNAV.$
+
+[MossdeepCity_Gym_Text_TateAndLizaPostBattle] cc6ed3ab4f
+TATE: Parece que o laço entre você e\nos seus POKéMON é bem mais forte\lque o nosso laço de gêmeos.\pLIZA: Você vai ficar ainda mais forte!\nBatalhamos com você, então sabemos.$
+
+[MossdeepCity_Gym_Text_TateAndLizaNeedTwoMons] 6245c69fe2
+TATE: Hehehe… Levou um susto?\pLIZA: Por serem dois LÍDERES?\pTATE: Ops, você só tem um…\nLIZA: POKéMON que pode batalhar.\pTATE: Assim não dá pra batalhar!\pLIZA: Se quiser nos desafiar,\ntraga mais POKéMON.$
+
+[MossdeepCity_Gym_Text_GymStatue] ad2ce84e7c
+GINÁSIO POKéMON DE MOSSDEEP$
+
+[MossdeepCity_Gym_Text_GymStatueCertified] 64af8edc83
+GINÁSIO POKéMON DE MOSSDEEP\pAPROVADOS POR LIZA E TATE:\n{PLAYER}$
+
+[MossdeepCity_Gym_Text_TateAndLizaPreRematch] e0205ec3c4
+TATE: POKéMON…\nLIZA: POKéMON…\pTATE: Mudando a equipe…\nLIZA: O estilo de batalha muda.\pTATE: Mas eu…\nLIZA: Mas eu…\pTATE: Sempre vou estar com a LIZA!\nLIZA: Sempre vou estar com o TATE!\pTATE: A nossa combinação…\nLIZA: Vamos mostrar de novo e de novo!$
+
+[MossdeepCity_Gym_Text_TateAndLizaRematchDefeat] 443eddd98c
+TATE: Você e os seus POKéMON…\nLIZA: Parecem irmãos!$
+
+[MossdeepCity_Gym_Text_TateAndLizaPostRematch] ef6fdd2e37
+TATE: Você pode nos derrubar,\nmas nunca ficamos no chão!\pLIZA: Porque nós dois sempre\napoiamos um ao outro!$
+
+[MossdeepCity_Gym_Text_TateAndLizaRematchNeedTwoMons] 3703c28b35
+TATE: Você voltou…\nLIZA: Você voltou…\pTATE: Pra uma revanche.\nLIZA: Pra uma revanche.\pTATE: Mas…\nLIZA: Pra nossa batalha…\pTATE: Você trouxe só um POKéMON!\nLIZA: Você trouxe só um POKéMON!\pTATE: Precisa trazer pelo menos…\nLIZA: Dois POKéMON quando voltar.$

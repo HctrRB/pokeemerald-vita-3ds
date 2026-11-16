@@ -160,8 +160,8 @@ static void NavEnter(void)
 
 static void Filter(char *buf, size_t cap)
 {
-    if (sMethod == UI_WILD_GRASS && UiGame_TimedEncounters()) snprintf(buf, cap, "GRASS · %s", sTimes[sPhase]);
-    else if (sMethod == UI_WILD_FISH) snprintf(buf, cap, "FISH · %s", sRod ? sRods[sRod] : "ALL RODS");
+    if (sMethod == UI_WILD_GRASS && UiGame_TimedEncounters()) snprintf(buf, cap, UiLocale_Translate("GRASS · %s"), sTimes[sPhase]);
+    else if (sMethod == UI_WILD_FISH) snprintf(buf, cap, UiLocale_Translate("FISH · %s"), sRod ? sRods[sRod] : "ALL RODS");
     else snprintf(buf, cap, "%s", sMethods[sMethod]);
 }
 
@@ -312,7 +312,7 @@ static void DrawFeed(void)
         UiW_Row(FEED_X + 8, y, FEED_W - 28, 40, on, i);
         const uint32_t ink = on ? UI_COL_SELECT_INK : UI_COL_INK;
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, FEED_X + 24, y + 4, sBlocks[i].name, ink);
-        snprintf(buf, sizeof(buf), "Lv%u F%u", (unsigned)sBlocks[i].level, (unsigned)sBlocks[i].feel);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("Lv%u F%u"), (unsigned)sBlocks[i].level, (unsigned)sBlocks[i].feel);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, FEED_X + FEED_W - 40 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), y + 4, buf, on ? ink : UI_COL_INK_SOFT);
     }
     UiDraw_PopClip();
@@ -524,7 +524,7 @@ static void BuildCondTab(void)
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 928 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, v), y, v, UI_COL_INK);
     }
     char buf[32];
-    snprintf(buf, sizeof(buf), "SHEEN %u / 255", (unsigned)c[5]);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("SHEEN %u / 255"), (unsigned)c[5]);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 676, 330, buf, UI_COL_INK);
     UiW_Bar(676, 366, 252, 10, c[5] * 100 / 255, UI_RGBA(124, 192, 242, 255), UI_COL_EXP);
     // Always shown; without the POKéBLOCK CASE (SLATEPORT contest hall) it only explains why
@@ -647,7 +647,7 @@ static void FlyBuild(void)
     int32_t n = 0;
     for (uint16_t s = 0; s < MAPSEC_NONE; s++) n += sFlyable[s];
     char buf[48], name[24];
-    snprintf(buf, sizeof(buf), "Destinations: %d", (int)n);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("Destinations: %d"), (int)n);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     MapDraw(true, sFrame);
     const uint16_t sec = MapSec();

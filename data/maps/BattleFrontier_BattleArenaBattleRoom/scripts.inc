@@ -486,146 +486,145 @@ BattleFrontier_BattleArenaBattleRoom_Movement_GretaWalkBackToCenter:
 	step_end
 
 BattleFrontier_BattleArenaBattleRoom_Text_PlayerStepForward:
-	.string "REFEREE: TRAINER {PLAYER}!\n"
-	.string "Step forward, please!$"
+	.string "JUIZ: TREINADOR {PLAYER}!\n"
+	.string "Dê um passo à frente, por favor!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_OpponentStepForward:
-	.string "REFEREE: TRAINER {STR_VAR_1}!\n"
-	.string "Step forward, please!$"
+	.string "JUIZ: TREINADOR {STR_VAR_1}!\n"
+	.string "Dê um passo à frente, por favor!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_SetKOTourneyBegin:
-	.string "REFEREE: Set KO Tourney!\n"
-	.string "Begin!$"
+	.string "JUIZ: Torneio de Nocaute!\n"
+	.string "Comecem!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_WinnerIsPlayer:
-	.string "REFEREE: The winner is {PLAYER}!$"
+	.string "JUIZ: Vitória de {PLAYER}!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_WinnerIsOpponent:
-	.string "REFEREE: The winner is {STR_VAR_1}!$"
+	.string "JUIZ: Vitória de {STR_VAR_1}!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_MonsWillBeRestored:
-	.string "Your POKéMON will be restored to\n"
-	.string "full health.$"
+	.string "Os seus POKéMON serão totalmente\n"
+	.string "recuperados.$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_ReadyFor2ndOpponent:
-	.string "Next up, your second opponent!\n"
-	.string "Are you ready to move on?$"
+	.string "A seguir, o seu segundo oponente!\n"
+	.string "Está tudo pronto pra seguir?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_ReadyFor3rdOpponent:
-	.string "Next up, your third opponent!\n"
-	.string "Are you ready to move on?$"
+	.string "A seguir, o seu terceiro oponente!\n"
+	.string "Está tudo pronto pra seguir?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_ReadyFor4thOpponent:
-	.string "Next up, your fourth opponent!\n"
-	.string "Are you ready to move on?$"
+	.string "A seguir, o seu quarto oponente!\n"
+	.string "Está tudo pronto pra seguir?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_ReadyFor5thOpponent:
-	.string "Next up, your fifth opponent!\n"
-	.string "Are you ready to move on?$"
+	.string "A seguir, o seu quinto oponente!\n"
+	.string "Está tudo pronto pra seguir?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_ReadyFor6thOpponent:
-	.string "Next up, your sixth opponent!\n"
-	.string "Are you ready to move on?$"
+	.string "A seguir, o seu sexto oponente!\n"
+	.string "Está tudo pronto pra seguir?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_ReadyFor7thOpponent:
-	.string "Next up, your seventh opponent!\n"
-	.string "Are you ready to move on?$"
+	.string "A seguir, o seu sétimo oponente!\n"
+	.string "Está tudo pronto pra seguir?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_SaveAndShutDown:
-	.string "Would you like to save the game and\n"
-	.string "shut down now?$"
+	.string "Quer salvar o jogo e desligar agora?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_RetireFromChallenge:
-	.string "Would you like to retire from your\n"
-	.string "Set KO Tourney challenge?$"
+	.string "Quer desistir do desafio do\n"
+	.string "Torneio de Nocaute?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_SavingPleaseWait:
-	.string "I am saving your game data.\n"
-	.string "Please wait.$"
+	.string "Estou salvando os dados do jogo.\n"
+	.string "Aguarde, por favor.$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_RecordLastBattle:
-	.string "Would you like to record your last\n"
-	.string "battle on your FRONTIER PASS?$"
+	.string "Quer gravar a sua última batalha\n"
+	.string "no PASSE DA FRONTEIRA?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_NowFaceTycoon:
-	.string "My dear challenger!\p"
-	.string "Your skill level is truly astounding!\p"
-	.string "We now would like you to face our\n"
-	.string "leader, the ARENA TYCOON!$"
+	.string "Ilustre desafiante!\p"
+	.string "O seu nível de habilidade é mesmo\n"
+	.string "impressionante!\p"
+	.string "Agora queremos que enfrente a nossa\n"
+	.string "líder, a MAGNATA DA ARENA!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_PreparedForTycoon:
-	.string "A battle with the ARENA TYCOON!\n"
-	.string "Are you prepared?$"
+	.string "Uma batalha com a MAGNATA DA ARENA!\n"
+	.string "Está tudo pronto?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_MakeWayForGreta:
-	.string "REFEREE: The ARENA TYCOON!\n"
-	.string "Make way for GRETA!$"
+	.string "JUIZ: A MAGNATA DA ARENA!\n"
+	.string "Abram alas pra GRETA!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_GretaYoureChallenger:
-	.string "GRETA: Hey!\n"
-	.string "Howdy!\p"
-	.string "…Wait, are you the challenger?$"
+	.string "GRETA: Ei!\n"
+	.string "E aí!\p"
+	.string "…Pera, é você quem vai me desafiar?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_IsThatRight:
-	.string "Is that right? Hmm…\n"
-	.string "Hmhm…$"
+	.string "É mesmo? Hum…\n"
+	.string "Humhum…$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_YouLookWeakTakeThingsEasy:
-	.string "I don't know how to say it, but…\n"
-	.string "To put it bluntly, you look pretty weak.\l"
-	.string "Are you sure you're up for me?\p"
-	.string "Hmm…\p"
-	.string "Well, all right!\n"
-	.string "We'll take things easy to start with!$"
+	.string "Não sei como dizer, mas…\n"
+	.string "Falando francamente, você não parece\l"
+	.string "muito forte. Vai dar conta?\p"
+	.string "Hum…\p"
+	.string "Bom, tá bem!\n"
+	.string "Vamos começar pegando leve!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_IgniteMyPassionForBattle:
-	.string "Okay! Let's see you ignite my passion\n"
-	.string "for battle!$"
+	.string "Certo! Vamos ver se você acende\n"
+	.string "a minha paixão por batalhas!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_GretaYoureToughAfterAll:
-	.string "GRETA: Ow, wait a second!\n"
-	.string "You are tough after all!\p"
-	.string "I like you!\n"
-	.string "Let's see your FRONTIER PASS.$"
+	.string "GRETA: Ai, pera aí!\n"
+	.string "Você tem força mesmo!\p"
+	.string "Gostei de você!\n"
+	.string "Deixa eu ver o seu PASSE DA FRONTEIRA.$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_ReceivedGutsSymbol:
-	.string "The Guts Symbol was embossed on\n"
-	.string "the FRONTIER PASS!$"
+	.string "O Símbolo da Garra foi gravado no\n"
+	.string "PASSE DA FRONTEIRA!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_GoingToBeFunNextTime:
-	.string "Hmm…\p"
-	.string "It's going to be fun the next time!\n"
-	.string "I'm looking forward to it!$"
+	.string "Hum…\p"
+	.string "Da próxima vez vai ser divertido!\n"
+	.string "Estou ansiosa!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_GretaLookingForwardToSeeingAgain:
-	.string "GRETA: Hey! Howdy!\n"
-	.string "You finally won your way up to me!\p"
-	.string "I was getting worried waiting for you!\n"
-	.string "I was really looking forward to seeing\l"
-	.string "you again!$"
+	.string "GRETA: Ei! E aí!\n"
+	.string "Finalmente você chegou até mim!\p"
+	.string "Já estava preocupada esperando!\n"
+	.string "Eu estava louca pra te ver de novo!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_SoAreYouReady:
 	.string "… … …\n"
-	.string "So, are you ready?$"
+	.string "Então, tudo pronto?$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_WontAllowHalfheartedEffort:
-	.string "I won't allow a halfhearted effort!\n"
-	.string "Be ready for a thrashing!$"
+	.string "Não aceito esforço pela metade!\n"
+	.string "Prepare-se pra apanhar!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_LetsGetThisStarted:
-	.string "Come on, REFEREE!\n"
-	.string "Let's get this started!$"
+	.string "Vamos, JUIZ!\n"
+	.string "Pode começar!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_GretaBlownAway:
-	.string "GRETA: Gaaah! Blown away!\n"
-	.string "Let's see your FRONTIER PASS!$"
+	.string "GRETA: Aaah! Fui arrasada!\n"
+	.string "Deixa eu ver o seu PASSE DA FRONTEIRA!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_GutsSymbolTookGoldenShine:
-	.string "The Guts Symbol took on\n"
-	.string "a golden shine!$"
+	.string "O Símbolo da Garra ganhou um\n"
+	.string "brilho dourado!$"
 
 BattleFrontier_BattleArenaBattleRoom_Text_IfWeBattleAgainWontLose:
-	.string "Arrrgh!\n"
-	.string "This is so infuriating!\p"
-	.string "If we ever battle again, I won't lose!\n"
-	.string "Don't you forget it! Bye-bye!$"
+	.string "Aaargh!\n"
+	.string "Que raiva!\p"
+	.string "Se batalharmos de novo, não perco!\n"
+	.string "Não esqueça! Tchauzinho!$"

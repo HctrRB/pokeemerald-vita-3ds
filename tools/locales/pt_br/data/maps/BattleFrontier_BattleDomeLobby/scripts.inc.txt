@@ -1,0 +1,122 @@
+[BattleFrontier_BattleDomeLobby_Text_WelcomeSingleBattle] 66e2628618
+Onde a estratégia dos TREINADORES\né posta à prova!\pBoas-vindas à CÚPULA DE BATALHA!\pSou o guia do Torneio de BATALHA\nSIMPLES.$
+
+[BattleFrontier_BattleDomeLobby_Text_TakeSinglesChallenge] 934c64ac87
+Quer encarar o Torneio de\nBATALHA SIMPLES?$
+
+[BattleFrontier_BattleDomeLobby_Text_HopeToSeeYouAgain] edad93ef51
+Esperamos ver você de novo.$
+
+[BattleFrontier_BattleDomeLobby_Text_ExplainSinglesChallenge] 1af61f5665
+O Torneio de BATALHA SIMPLES é\nexatamente o que o nome diz:\lum torneio de BATALHAS SIMPLES.\pCada TREINADOR participante inscreve\ntrês POKéMON.\pEm cada batalha, um dos três\nPOKéMON fica na reserva.\pOs outros dois batalham um de\ncada vez.\pEscolha os dois POKéMON da batalha\ndepois de ver o trio do oponente.\pVocê vence o torneio derrotando\nquatro TREINADORES.\pQuem vence o torneio ganha\nPontos de Batalha.\pSe quiser interromper o torneio,\nsalve o jogo.\pSe não salvar antes de interromper,\no desafio será anulado.$
+
+[BattleFrontier_BattleDomeLobby_Text_OkayToSaveBeforeChallenge] 6a66736f2b
+Antes de te levar à CÚPULA, preciso\nsalvar o jogo. Tudo bem?$
+
+[BattleFrontier_BattleDomeLobby_Text_WhichLevelMode] d8574dd33b
+O torneio tem duas modalidades,\nNível 50 e Nível Livre.\lQual você escolhe?$
+
+[BattleFrontier_BattleDomeLobby_Text_SelectThreeMons] a476f3f3d2
+Agora escolha os três POKéMON\nque vão participar, por favor.$
+
+[BattleFrontier_BattleDomeLobby_Text_NotEnoughValidMonsLvOpen] 334ce4346f
+Com licença!\pVocê não tem três POKéMON aptos.\pE os POKéMON precisam segurar\nitens diferentes.\pOVOS{STR_VAR_1} proibidos.\pVolte quando estiver tudo pronto.$
+
+[BattleFrontier_BattleDomeLobby_Text_NotEnoughValidMonsLv50] 040db04edb
+Com licença!\pVocê não tem três POKéMON aptos.\pPra entrar, precisa de três POKéMON\ndiferentes de nível 50 ou menos.\pEles também precisam segurar itens\ndiferentes.\pOVOS{STR_VAR_1} proibidos.\pVolte quando estiver tudo pronto.$
+
+[BattleFrontier_BattleDomeLobby_Text_ShowYouToBattleDome] 3a1664c282
+Agora vou te levar à\nCÚPULA DE BATALHA.$
+
+[BattleFrontier_BattleDomeLobby_Text_DidntSaveBeforeQuitting] 23b819eebf
+Com licença!\pVocê não salvou antes de sair do\ndesafio da última vez.\pPor isso, o seu desafio até aqui foi\ndesclassificado. Sinto muito!$
+
+[BattleFrontier_BattleDomeLobby_Text_CongratsForWinningTourney] 23dc4f543e
+Parabéns pela vitória no\nTorneio de Batalha!$
+
+[BattleFrontier_BattleDomeLobby_Text_HereIsYourPrize] 2f99e23664
+Aqui está o seu prêmio pela vitória\nno Torneio de Batalha.$
+
+[BattleFrontier_BattleDomeLobby_Text_ReceivedPrize] 1b34ee42d5
+{PLAYER} recebeu o prêmio:\n{STR_VAR_1}.$
+
+[BattleFrontier_BattleDomeLobby_Text_BagFullMakeRoom] bc435f03c8
+Ah, parece que a sua BOLSA está cheia.\pAbra espaço na BOLSA e venha\nfalar comigo.$
+
+[BattleFrontier_BattleDomeLobby_Text_ThankYouForPlaying] 4c057a289e
+Obrigado por participar!$
+
+[BattleFrontier_BattleDomeLobby_Text_RecordWillBeSaved] 6e89c3c9d3
+O seu resultado será salvo.\nAguarde, por favor.$
+
+[BattleFrontier_BattleDomeLobby_Text_WeveBeenWaitingForYou] 03dccd1c3b
+Estávamos esperando você!$
+
+[BattleFrontier_BattleDomeLobby_Text_OkayToSaveBeforeChallenge2] 6a66736f2b
+Antes de te levar à CÚPULA, preciso\nsalvar o jogo. Tudo bem?$
+
+[BattleFrontier_BattleDomeLobby_Text_WelcomeDoubleBattle] 07be390c4c
+Onde a estratégia dos TREINADORES\né posta à prova!\pBoas-vindas à CÚPULA DE BATALHA!\pSou o guia do Torneio de BATALHA\nDUPLA.$
+
+[BattleFrontier_BattleDomeLobby_Text_TakeDoublesChallenge] ee309194d3
+Quer encarar o Torneio de\nBATALHA DUPLA?$
+
+[BattleFrontier_BattleDomeLobby_Text_ExplainDoublesChallenge] 9cd95b54b9
+O Torneio de BATALHA DUPLA é\nexatamente o que o nome diz:\lum torneio de BATALHAS DUPLAS.\pCada TREINADOR participante inscreve\ntrês POKéMON.\pEm cada batalha, um dos três\nPOKéMON fica na reserva.\pOs outros dois participam de uma\nBATALHA DUPLA.\pEscolha os dois POKéMON da batalha\ndepois de ver o trio do oponente.\pVocê vence o torneio derrotando\nquatro TREINADORES.\pQuem vence o torneio ganha\nPontos de Batalha.\pSe quiser interromper o torneio,\nsalve o jogo.\pSe não salvar antes de interromper,\no desafio será anulado.$
+
+[BattleFrontier_BattleDomeLobby_Text_PrevTourneyResultsSinglesLv50] 70d89c475d
+São os resultados do último Torneio\nde BATALHA SIMPLES Nível 50.$
+
+[BattleFrontier_BattleDomeLobby_Text_PrevTourneyResultsDoublesLv50] b6ccbbd3fb
+São os resultados do último Torneio\nde BATALHA DUPLA Nível 50.$
+
+[BattleFrontier_BattleDomeLobby_Text_PrevTourneyResultsSinglesLvOpen] 6789f2d05b
+São os resultados do último Torneio\nde BATALHA SIMPLES Nível Livre.$
+
+[BattleFrontier_BattleDomeLobby_Text_PrevTourneyResultsDoublesLvOpen] c99217c4c5
+São os resultados do último Torneio\nde BATALHA DUPLA Nível Livre.$
+
+[BattleFrontier_BattleDomeLobby_Text_LastWinnerWasTough] 8a669e591d
+Você viu?\nO último Torneio de Batalha?\pQuem venceu, {STR_VAR_1}, era forte\ndemais.\pConfira os resultados no monitor\nao lado do PC.$
+
+[BattleFrontier_OutsideWest_Text_LongDreamedAboutBattleFrontier] d97fe55c41
+A FRONTEIRA DE BATALHA…\nSonhei muito com um lugar assim.$
+
+[BattleFrontier_OutsideWest_Text_BattleDomeSign2] 3a64906193
+A CÚPULA DE BATALHA\nVire a superestrela imbatível!$
+
+[BattleFrontier_OutsideWest_Text_QuestionMarkUnderConstruction] 0ce7186f3b
+??????\nEm obras!$
+
+[BattleFrontier_BattleDomeLobby_Text_WinnersGainReputation] 9cbf213889
+Quem emenda vitórias em torneios\nna CÚPULA DE BATALHA ganha fama\lde estrela.\pEssa fama atrai TREINADORES fortes\npra CÚPULA DE BATALHA.\pUma verdadeira superestrela é quem\ncontinua vencendo torneios.$
+
+[BattleFrontier_BattleDomeLobby_Text_TrashedInFirstRound] adfd678277
+Peguei um dos favoritos do torneio\nlogo na primeira fase.\pClaro que levei uma surra…$
+
+[BattleFrontier_BattleDomeLobby_Text_NeedToCheckOpponentCarefully] e6c51ee97f
+Eu teria ganhado se tivesse deixado\neste POKéMON na reserva.\pVeja bem os POKéMON do oponente\nantes de escolher os seus.$
+
+[BattleFrontier_BattleDomeLobby_Text_CongratsDefeatedTucker] dc8f71fc69
+Parabéns!\pVocê venceu o ÁS DA CÚPULA e\nganhou o Torneio de Batalha!$
+
+[BattleFrontier_BattleDomeLobby_Text_AwardTheseBattlePoints] be294312cb
+Em reconhecimento à sua estratégia,\nque foi uma beleza, aqui estão os\lseus Pontos de Batalha!$
+
+[BattleFrontier_BattleDomeLobby_Text_RecordLastMatch] 68da1a2797
+Quer gravar a sua última batalha\nda CÚPULA no PASSE DA FRONTEIRA?$
+
+[BattleFrontier_BattleDomeLobby_Text_RulesAreListed] 323646ba46
+Aqui estão as regras do Torneio\nde Batalha.$
+
+[BattleFrontier_BattleDomeLobby_Text_ReadWhichHeading] d059e37e85
+Qual tópico você quer ler?$
+
+[BattleFrontier_BattleDomeLobby_Text_ExplainMatchupRules] 1b5e119474
+Os confrontos do torneio são\nsorteados pela força dos POKéMON\ldos TREINADORES.\pAssim, TREINADORES fortes não se\nenfrentam logo de cara.$
+
+[BattleFrontier_BattleDomeLobby_Text_ExplainTourneyTree] 64b9610bf5
+A tabela do torneio, que chamamos\nde “Chave”, pode ser vista na Sala\lde Espera com qualquer guia.\pA Chave do Torneio mostra vários\ntipos de informação.\pEntre eles: os resultados do torneio\nanterior, os POKéMON dos TREINADORES\le o estilo de batalha de cada um.$
+
+[BattleFrontier_BattleDomeLobby_Text_ExplainDoubleKORules] 892dfdcdb2
+Se os POKéMON desmaiarem ao mesmo\ntempo (nocaute duplo) numa batalha\ldo torneio, os JUÍZES analisam a\lbatalha e declaram o vencedor.$

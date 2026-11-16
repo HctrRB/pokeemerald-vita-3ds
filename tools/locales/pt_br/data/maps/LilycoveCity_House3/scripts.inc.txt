@@ -1,0 +1,23 @@
+[LilycoveCity_House3_Text_LearnFromMasterOfPokeblocks] 51ca768490
+Ora, ora! Viajando por conta própria?\nNessa idade! Que bom pra você!\pOs meus filhos podiam aprender\numa coisa ou outra com você!\pEu? Sou mestra em {POKEBLOCK}S.\pSe eu me esforçar só um pouquinho,\nfaço {POKEBLOCK}S ótimos.\pQuer aprender comigo, uma mestra\nem {POKEBLOCK}S?$
+
+[LilycoveCity_House3_Text_OhAreYouSure] 398b54dccd
+Hã? Tem certeza?\pNão dá pra fazer tudo sozinho\nsempre, meu bem!$
+
+[LilycoveCity_House3_Text_ExplainPokeblocks] 89bc46174f
+Ah, que bom! Que cabeça boa!\nÉ meio longo, então preste atenção!\pPronto?\pOlhando os {POKEBLOCK}S, você vê que\neles têm uma nota de textura.\pQuanto menor a nota, melhor.\nNão esqueça disso!\pUm {POKEBLOCK} bom tem nota de\ntextura baixa e nível alto.\pUm POKéMON também come mais\n{POKEBLOCK}S bons do que comuns.\pE isto é importante.\pPra fazer {POKEBLOCK}S macios, use\nFRUTAS de tipos diferentes.\pNão seja pão-duro: o tipo de FRUTA\nafeta a maciez dos {POKEBLOCK}S.\pE mais uma coisa.\pQuanto mais gente batendo FRUTAS,\nmais macios os {POKEBLOCK}S.\pPor isso, converse com outras\npessoas e façam {POKEBLOCK}S juntos.\pÉ basicamente isso que você precisa\npra fazer {POKEBLOCK}S bons.\pSe todos tivessem POKéMON queridos,\n{POKEBLOCK}S macios e uma família amorosa,\lo mundo seria mais feliz.\pNão desista, meu bem!$
+
+[LilycoveCity_House3_Text_HappyToHaveQuadruplets] 6897a3db35
+Quando a minha esposa teve\nquadrigêmeos, levei um susto e tanto.\pMas agora, vendo eles brincarem\njuntos, fico feliz.$
+
+[LilycoveCity_House3_Text_GoingToWinMultiBattles] 1d35b9baaa
+Estamos fazendo BATALHAS MÚLTIPLAS,\nmas sei que eu vou ganhar.$
+
+[LilycoveCity_House3_Text_LikeMixingAtRecordCorner] 5e9bb528ab
+A gente gosta de misturar coisas\nno CANTO DOS RECORDES.\pMas o que é que se mistura?$
+
+[LilycoveCity_House3_Text_MakePokeblocksWithBerryBlender] c8dcc42b75
+Vamos fazer {POKEBLOCK}S super com um\nLIQUIDIFICADOR DE FRUTAS!$
+
+[LilycoveCity_House3_Text_GoingToEnterContest] 20e77ddcbe
+Quero mostrar como o meu POKéMON é\nforte, então vamos entrar num\lCONCURSO juntos.$

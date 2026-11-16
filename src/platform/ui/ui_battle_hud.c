@@ -214,7 +214,7 @@ static void Plate(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool turn
 
     if (mine && (gBattleTypeFlags & BATTLE_TYPE_SAFARI))
     {
-        snprintf(buf, sizeof(buf), "SAFARI BALLS  %u", (unsigned)gNumSafariBalls);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("SAFARI BALLS  %u"), (unsigned)gNumSafariBalls);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y + 40, buf, UI_COL_INK);
         return;
     }
@@ -354,9 +354,21 @@ static void PromptText(u8 b, bool safari)
     char name[24];
     if (safari) UiGame_PlayerName(name, sizeof(name));
     else UiGame_Text(gBattleMons[b].nickname, name, sizeof(name));
-    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 22, "What will", UI_COL_INK);
-    const int32_t w = UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 72, name, TH->em);
-    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28 + w, BOX_Y + 72, " do?", UI_COL_INK);
+    if (UiLocale_IsPortuguese())
+    {
+        // First line: O que MUDKIP; second line: irá fazer agora?
+        const int32_t lead = UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 22,
+                                          "O que ", UI_COL_INK);
+        UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28 + lead, BOX_Y + 22, name, TH->em);
+        UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 72,
+                    "irá fazer agora?", UI_COL_INK);
+    }
+    else
+    {
+        UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 22, "What will", UI_COL_INK);
+        const int32_t w = UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 72, name, TH->em);
+        UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28 + w, BOX_Y + 72, " do?", UI_COL_INK);
+    }
 }
 
 static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)

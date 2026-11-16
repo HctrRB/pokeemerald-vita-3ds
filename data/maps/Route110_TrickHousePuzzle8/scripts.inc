@@ -28,44 +28,44 @@ Route110_TrickHousePuzzle8_EventScript_Leroy::
 	end
 
 Route110_TrickHousePuzzle8_Text_WroteSecretCodeLockOpened::
-	.string "{PLAYER} wrote down the secret code\n"
-	.string "on the door.\p"
-	.string "“TRICK MASTER I love.”\n"
+	.string "{PLAYER} escreveu a senha secreta\n"
+	.string "na porta.\p"
+	.string "“Eu amo o MESTRE DOS TRUQUES.”\n"
 	.string "… … … … … … … …\p"
-	.string "The lock clicked open!$"
+	.string "A fechadura abriu com um clique!$"
 
 Route110_TrickHousePuzzle8_Text_VincentIntro:
-	.string "Not many TRAINERS have made it\n"
-	.string "this far.$"
+	.string "Poucos TREINADORES chegaram\n"
+	.string "até aqui.$"
 
 Route110_TrickHousePuzzle8_Text_VincentDefeat:
-	.string "That must mean you're tough, too…$"
+	.string "Então você também tem força…$"
 
 Route110_TrickHousePuzzle8_Text_VincentPostBattle:
-	.string "You've beaten the POKéMON LEAGUE\n"
-	.string "CHAMPION? That's too much!$"
+	.string "Você venceu o CAMPEÃO da LIGA\n"
+	.string "POKéMON? Aí já é demais!$"
 
 Route110_TrickHousePuzzle8_Text_KeiraIntro:
-	.string "Consider yourself lucky to be\n"
-	.string "battling me!$"
+	.string "Considere-se com sorte por batalhar\n"
+	.string "comigo!$"
 
 Route110_TrickHousePuzzle8_Text_KeiraDefeat:
-	.string "This isn't right!\n"
-	.string "I can't lose!$"
+	.string "Isso não está certo!\n"
+	.string "Eu não posso perder!$"
 
 Route110_TrickHousePuzzle8_Text_KeiraPostBattle:
-	.string "It's a miracle that you beat me.\n"
-	.string "You can brag about it.$"
+	.string "É um milagre você ter me vencido.\n"
+	.string "Pode se gabar disso.$"
 
 Route110_TrickHousePuzzle8_Text_LeroyIntro:
-	.string "You've been slugging through the TRICK\n"
-	.string "HOUSE challenge, too.$"
+	.string "Você também está encarando o desafio\n"
+	.string "da CASA DOS TRUQUES.$"
 
 Route110_TrickHousePuzzle8_Text_LeroyDefeat:
-	.string "I see…\n"
-	.string "You possess an extraordinary style.$"
+	.string "Entendo…\n"
+	.string "Você tem um estilo extraordinário.$"
 
 Route110_TrickHousePuzzle8_Text_LeroyPostBattle:
-	.string "Seeing someone like you should please\n"
-	.string "the TRICK MASTER.$"
+	.string "Ver alguém como você deve agradar\n"
+	.string "o MESTRE DOS TRUQUES.$"
 

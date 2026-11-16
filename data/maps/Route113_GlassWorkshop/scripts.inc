@@ -292,89 +292,89 @@ Route113_GlassWorkshop_EventScript_NinjaBoy::
 	end
 
 Route113_GlassWorkshop_Text_GoCollectAshWithThis:
-	.string "This area is covered in volcanic ash,\n"
-	.string "huff-puff!\p"
-	.string "I'm specially gifted, huff-puff.\p"
-	.string "I make glass out of volcanic ash\n"
-	.string "and make items, huff-puff.\p"
-	.string "Go collect ashes with this, huff-puff.$"
+	.string "Esta área é coberta de cinza\n"
+	.string "vulcânica, uf-uf!\p"
+	.string "Tenho um dom especial, uf-uf.\p"
+	.string "Faço vidro com cinza vulcânica e\n"
+	.string "faço itens, uf-uf.\p"
+	.string "Vá juntar cinza com isto, uf-uf.$"
 
 Route113_GlassWorkshop_Text_ExplainSootSack:
-	.string "Just take that SOOT SACK and walk\n"
-	.string "through piles of ash, huff-puff.\p"
-	.string "And it will fill up with the volcanic ash,\n"
-	.string "huff-puff.\p"
-	.string "Once you think you've collected a good\n"
-	.string "amount, come see me, huff-puff.$"
+	.string "É só levar essa SACOLA e andar pelos\n"
+	.string "montes de cinza, uf-uf.\p"
+	.string "Ela vai se encher de cinza vulcânica,\n"
+	.string "uf-uf.\p"
+	.string "Quando achar que juntou bastante,\n"
+	.string "venha falar comigo, uf-uf.$"
 
 Route113_GlassWorkshop_Text_LetsSeeCollectedAshes:
-	.string "Have you collected ashes, huff-puff?\n"
-	.string "Let me see, huff-puff.$"
+	.string "Juntou cinza, uf-uf?\n"
+	.string "Deixa eu ver, uf-uf.$"
 
 Route113_GlassWorkshop_Text_NotEnoughAshNeedX:
 	.string "Hmmm…\n"
-	.string "There's not enough ash here, huff-puff.\l"
-	.string "I can't make glass with this, huff-puff.\p"
-	.string "Let's see… {STR_VAR_1} is the number of steps\n"
-	.string "you'll need to walk for me to make you\l"
-	.string "a BLUE FLUTE, huff-puff.$"
+	.string "Não tem cinza suficiente, uf-uf.\l"
+	.string "Não dá pra fazer vidro, uf-uf.\p"
+	.string "Vejamos… Você precisa andar\n"
+	.string "{STR_VAR_1} passos pra eu fazer\l"
+	.string "uma FLAUTA AZUL, uf-uf.$"
 
 Route113_GlassWorkshop_Text_WhichGlassItemWoudYouLike:
 	.string "Oh!\n"
-	.string "You've got a lot of ashes, huff-puff!\p"
-	.string "I'll make you a glass item, huff-puff!\n"
-	.string "Which one would you like, huff-puff?$"
+	.string "Você juntou muita cinza, uf-uf!\p"
+	.string "Vou fazer uma peça de vidro, uf-uf!\n"
+	.string "Qual você quer, uf-uf?$"
 
 Route113_GlassWorkshop_Text_IsThatTheItemForYou:
-	.string "A {STR_VAR_1}, huff-puff?\n"
-	.string "Is that the one for you, huff-puff?$"
+	.string "{STR_VAR_1}, uf-uf?\n"
+	.string "É essa que você quer, uf-uf?$"
 
 Route113_GlassWorkshop_Text_WhichWouldYouLike:
-	.string "Which one would you like, huff-puff?$"
+	.string "Qual você quer, uf-uf?$"
 
 Route113_GlassWorkshop_Text_IllMakeItemForYou:
-	.string "A {STR_VAR_1} it is, then, huff-puff!\p"
-	.string "Okay! I'll make it for you, huff-puff.\n"
-	.string "Just wait a little while, huff-puff.$"
+	.string "{STR_VAR_1}, então, uf-uf!\p"
+	.string "Certo! Vou fazer pra você, uf-uf.\n"
+	.string "Espere um pouquinho, uf-uf.$"
 
 Route113_GlassWorkshop_Text_NotEnoughAshToMakeItem:
-	.string "A {STR_VAR_1}, huff-puff?\p"
-	.string "There's not enough ash here to make\n"
-	.string "that, though, huff-puff.\p"
-	.string "Let's see… {STR_VAR_2} is the number of steps\n"
-	.string "you'll need to walk through volcanic ash\l"
-	.string "for me to make that item, huff-puff.\p"
-	.string "Which item would you rather have me\n"
-	.string "make instead, huff-puff?$"
+	.string "{STR_VAR_1}, uf-uf?\p"
+	.string "Mas não tem cinza suficiente pra\n"
+	.string "fazer isso, uf-uf.\p"
+	.string "Vejamos… Você precisa andar\n"
+	.string "{STR_VAR_2} passos pela cinza\l"
+	.string "pra eu fazer esse item, uf-uf.\p"
+	.string "Qual item você prefere que eu faça,\n"
+	.string "então, uf-uf?$"
 
 Route113_GlassWorkshop_Text_AllThatAshButDontWantAnything:
-	.string "You've collected all that ash, but you\n"
-	.string "don't want anything, huff-puff?$"
+	.string "Juntou toda essa cinza e não quer\n"
+	.string "nada, uf-uf?$"
 
 Route113_GlassWorkshop_Text_IveFinishedGlassItem:
-	.string "Ah, I've finished your {STR_VAR_1}.\n"
-	.string "Take it, huff-puff.$"
+	.string "Ah, terminei: {STR_VAR_1}.\n"
+	.string "Pode levar, uf-uf.$"
 
 Route113_GlassWorkshop_Text_NoRoomInBag:
-	.string "Oh?\n"
-	.string "You've no room in your BAG, huff-puff.\p"
-	.string "I'll hold on to it, so come back later,\n"
-	.string "huff-puff.$"
+	.string "Opa?\n"
+	.string "Não tem espaço na BOLSA, uf-uf.\p"
+	.string "Eu guardo pra você. Volte depois,\n"
+	.string "uf-uf.$"
 
 Route113_GlassWorkshop_Text_NoRoomInPC:
-	.string "Oh?\n"
-	.string "You've no room in your PC, huff-puff?\p"
-	.string "I'll hold on to it, so come back later,\n"
-	.string "huff-puff.$"
+	.string "Opa?\n"
+	.string "Não tem espaço no PC, uf-uf?\p"
+	.string "Eu guardo pra você. Volte depois,\n"
+	.string "uf-uf.$"
 
 Route113_GlassWorkshop_Text_HaventGotYourSootSack:
-	.string "Hah? You haven't got your SOOT SACK\n"
-	.string "with you, huff-puff.\p"
-	.string "You have to keep it with you to collect\n"
-	.string "volcanic ash, huff-puff.$"
+	.string "Hã? Você não está com a SACOLA,\n"
+	.string "uf-uf.\p"
+	.string "Tem que levar ela junto pra juntar\n"
+	.string "cinza vulcânica, uf-uf.$"
 
 Route113_GlassWorkshop_Text_FunToBlowGlassFlute:
-	.string "It's fun to blow a glass flute while\n"
-	.string "my boss is talking.\p"
-	.string "Huff-huff! Puff-puff!$"
+	.string "É divertido soprar uma flauta de\n"
+	.string "vidro enquanto o chefe fala.\p"
+	.string "Uf-uf! Puf-puf!$"
 

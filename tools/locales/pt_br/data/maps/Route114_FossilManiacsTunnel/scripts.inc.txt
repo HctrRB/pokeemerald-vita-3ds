@@ -1,0 +1,11 @@
+[Route114_FossilManiacsTunnel_Text_LookInDesertForFossils] 82541aee74
+Eu sou o MANÍACO POR FÓSSEIS…\nUm cara legal que ama FÓSSEIS…\pQuer um FÓSSIL?\pMas os FÓSSEIS daqui são todos\nmeus… Nenhum pra você…\pSe não aguentar ficar sem um FÓSSIL,\nprocure num deserto com pedras\le areia que podem esconder\lFÓSSEIS…$
+
+[Route114_FossilManiacsTunnel_Text_DevonCorpRevivingFossils] 50fb616705
+Você achou um FÓSSIL, não achou?\nQue legal… Que sonho…\pO que vai fazer com esse FÓSSIL?\pPelo que ouvi, a DEVON está\npesquisando como reviver POKéMON\lde FÓSSEIS…\pEu amo os meus FÓSSEIS, então\nnunca faria uma coisa dessas…$
+
+[Route114_FossilManiacsTunnel_Text_FossilsAreWonderful] ac0ec1a1da
+FÓSSEIS são tão… Maravilhosos…\nQue sonho…$
+
+[Route114_FossilManiacsTunnel_Text_NotSafeThatWay] b7b5ee796c
+Ah…\nPor ali não é seguro…\pEu estava cavando, sabe…\nQuando a parede inteira desabou…\pAcho que agora tem uma caverna\nenorme lá embaixo…\pMas deixei quieto, porque acho que\nnão tem FÓSSIL nenhum lá…$

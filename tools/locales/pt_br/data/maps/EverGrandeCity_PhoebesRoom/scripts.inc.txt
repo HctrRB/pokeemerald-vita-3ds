@@ -1,0 +1,8 @@
+[EverGrandeCity_PhoebesRoom_Text_IntroSpeech] b4c2c01931
+Ahahaha!\pSou a PHOEBE, da ELITE DOS QUATRO.\nTreinei no MONTE PYRE.\pEnquanto treinava, ganhei o dom de\nme comunicar com POKéMON FANTASMA.\pÉ, o laço que criei com os POKéMON\né fortíssimo.\pEntão vem, tenta só ver se consegue\naté causar dano nos meus POKéMON!$
+
+[EverGrandeCity_PhoebesRoom_Text_Defeat] ca4ac344c1
+Ah, droga.\nAcabei perdendo.$
+
+[EverGrandeCity_PhoebesRoom_Text_PostBattleSpeech] 3ad2a78031
+Também tem um laço forte entre você\ne os seus POKéMON.\pEu não percebi, então é natural\nque eu tenha perdido.\pÉ, quero ver até onde esse laço\nvai te levar.\pVai, pode seguir pra próxima sala.$

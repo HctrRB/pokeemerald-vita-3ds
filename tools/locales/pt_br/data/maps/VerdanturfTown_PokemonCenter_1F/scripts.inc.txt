@@ -1,0 +1,5 @@
+[VerdanturfTown_PokemonCenter_1F_Text_FaithInYourPokemon] 66d53ac1c0
+Ninguém treina POKéMON de verdade\nse não tiver fé nos\lseus POKéMON.\pSó quem acredita nos POKéMON que\nbatalham consegue vencer até\lo fim.$
+
+[VerdanturfTown_PokemonCenter_1F_Text_VisitForBattleTent] 135d5c28b5
+O motivo de alguém visitar\nVERDANTURF…\pÉ a TENDA DE BATALHA. Nem\nprecisa dizer.\pOu você veio ver alguém\naqui?$

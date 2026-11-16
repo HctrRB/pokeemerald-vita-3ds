@@ -1,0 +1,44 @@
+[SlateportCity_ContestHall_Text_AdviceForContests] 0cd8ce8db0
+Quer uma dica esperta pros\nCONCURSOS?\pUsar certos golpes depois de outros\ncertos tipos de golpe às vezes chama\lmais atenção.\pSe souber o que está fazendo, dá\npra ganhar muitos pontos de apelo.\pClaro, os oponentes podem tentar\natrapalhar o seu POKéMON.$
+
+[SlateportCity_ContestHall_Text_MyPapaIsContestJudge] 5b2432a80c
+O meu pai é JUIZ DE CONCURSO.\pO que será que eu vou ser quando\ncrescer, JUIZ ou LÍDER DE GINÁSIO?$
+
+[SlateportCity_ContestHall_Text_ImLikeMajorlyCheesed] 78b57e209f
+Ei, cara, estou, tipo, muito bolado,\nsabe. Tipo, eu só queria saber por que\lo meu POKéMON nunca ganhava,\ltipo, qual é?\pAí, tipo, dei a minha opinião pro\nJUIZ, sabe, é de graça.\pE ele nem quis me ouvir, tipo, qual é!\nTipo, que mancada, cara!\pEi, tipo, você! Fica na sua, tá?\nSó, sabe, pega isto aqui!$
+
+[SlateportCity_ContestHall_Text_ExplainTorment] ea690dafd6
+Isso é, tipo, a MT41, sabe?\nÉ ATORMENTAR, tá me ouvindo?\pTipo, não deixa o outro usar o\nmesmo golpe duas vezes, sacou?\pE, ó, escuta aqui, tipo, não estou\nte atormentando, não!$
+
+[SlateportCity_ContestHall_Text_MCStepUpTakePartInContest] 4f91b5b572
+APRESENTADOR: Ora, ora, ora!\nMas que POKéMON elegante, hein?\pPor favor! Venha participar dos\nnossos esplêndidos CONCURSOS!\pVocê vai se sair bem! Tenho certeza!\nOs meus olhos nunca me enganam!$
+
+[SlateportCity_ContestHall_Text_JudgeWouldntDoToMissContest] 06caaa970c
+JUIZ: Ora, olá!\nVejo que você treina POKéMON!\pEntão não pode perder um\nCONCURSO POKéMON!\pPegue um PASSE DE CONCURSO em\nVERDANTURF e participe quando quiser!$
+
+[SlateportCity_ContestHall_Text_ItsAppealTime] c68114cc4e
+Hora da apresentação!\nCom o que eu começo?$
+
+[SlateportCity_ContestHall_Text_DidntPayAttentionToAppeal] 9909a707f7
+Não deram muita atenção pra\napresentação do meu POKéMON…\pHunf, esse JUIZ não reconhece uma\ncoisa boa quando vê.$
+
+[SlateportCity_ContestHall_Text_RewardWithSageAdvice] 9bb5ed98b2
+Ah, oi! Você deve ser muito fã pra\nchegar tão perto da ação.\pVou recompensar o seu entusiasmo\ncom este sábio conselho.\pSe um golpe faz sucesso,\na plateia fica empolgada.\pO POKéMON que se apresenta bem\nquando todo mundo está empolgado…\pBom, é claro que algo de bom\nvai acontecer!$
+
+[SlateportCity_ContestHall_Text_MoreFreakedOutThanMon] e9eee4cecf
+Não consigo! Estou mais nervoso\nque o meu POKéMON.\pEstou tremendo e com o coração\na mil!$
+
+[SlateportCity_ContestHall_Text_BattleAndContestAlike] 5c7ef91f71
+Uma batalha e um CONCURSO não são\niguais, mas também se parecem.\pVocê precisa se esforçar e acreditar\nno POKéMON que criou.$
+
+[SlateportCity_ContestHall_Text_MonLooksOnTopOfGame] 71a9002abb
+Aquele POKéMON parece estar em\nótima forma, né?\pUm POKéMON que vai bem na segunda\netapa parece mais tranquilo\lnas apresentações.$
+
+[SlateportCity_ContestHall_Text_MyMonBetterThanThatLot] 983eb60738
+Olha só que cena triste!\pHeh, o meu POKéMON é muito melhor\nque aqueles ali!$
+
+[SlateportCity_ContestHall_Text_GetUrgeToMoveWithMon] 944aca6f04
+Não dá vontade de dançar junto com os\nPOKéMON quando eles fazem uma\lapresentação cheia de energia?$
+
+[SlateportCity_ContestHall_Text_HyperRankStage] 74325dee64
+CONCURSOS POKéMON\nPALCO DO NÍVEL HIPER!$

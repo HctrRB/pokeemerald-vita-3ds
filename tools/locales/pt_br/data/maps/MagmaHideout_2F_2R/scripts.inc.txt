@@ -1,0 +1,35 @@
+[MagmaHideout_2F_2R_Text_Grunt15Intro] 616571e8ab
+Não tenho nada contra você.\nSó estou cumprindo ordens!$
+
+[MagmaHideout_2F_2R_Text_Grunt15Defeat] 29a90ce9f6
+Posso ter perdido, mas…$
+
+[MagmaHideout_2F_2R_Text_Grunt15PostBattle] 6e102260a0
+Desenterramos uma coisa inacreditável!\nE pegamos o ORBE AZUL!\pAgora só falta o nosso líder…\nFufufu… Fwahahaha!$
+
+[MagmaHideout_2F_2R_Text_Grunt6Intro] bb1f525169
+Não aguento calor. Talvez eu devesse\nter entrado na EQUIPE AQUA…$
+
+[MagmaHideout_2F_2R_Text_Grunt6Defeat] 9d2c6689b0
+É, acho que não nasci pra\nEQUIPE MAGMA…$
+
+[MagmaHideout_2F_2R_Text_Grunt6PostBattle] 4672cc2e44
+Num lugar desses, você não sente\nsaudade do mar?$
+
+[MagmaHideout_2F_2R_Text_Grunt7Intro] 4542593412
+Às vezes dá pra sentir tremores aqui.\pSerá o vulcão sacudindo?\nOu será o GROU…\pOpa!\nNão, não, esquece!$
+
+[MagmaHideout_2F_2R_Text_Grunt7Defeat] a400ca382f
+Você batalha com fogo.\nIgual a um vulcão!$
+
+[MagmaHideout_2F_2R_Text_Grunt7PostBattle] f800e29a5b
+Você ganhou por sorte desta vez,\nmas isso não importa.\pO objetivo da EQUIPE MAGMA está\nquase cumprido!$
+
+[MagmaHideout_2F_2R_Text_Grunt8Intro] 3a887a74cd
+Um dos nossos estava surtando porque\nperdeu o EMBLEMA MAGMA…\pPera aí!\nFoi você que achou?$
+
+[MagmaHideout_2F_2R_Text_Grunt8Defeat] 195926fbf3
+Não consigo acreditar nisso…$
+
+[MagmaHideout_2F_2R_Text_Grunt8PostBattle] aa34a3fa1d
+Estou com a sensação de que o nosso\nplano vai fracassar…$

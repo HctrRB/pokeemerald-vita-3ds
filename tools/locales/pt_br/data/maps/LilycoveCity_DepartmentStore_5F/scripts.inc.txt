@@ -1,0 +1,11 @@
+[LilycoveCity_DepartmentStore_5F_Text_PlaceFullOfCuteDolls] 256d6489d6
+Este lugar está cheio de BONECOS\nfofos.\pEu devia comprar uns pra mim, e não\nsó pros meus filhos.$
+
+[LilycoveCity_DepartmentStore_5F_Text_GettingDollInsteadOfPokemon] 1b0db0b333
+Ainda sou pequeno pra treinar\nPOKéMON, então vou levar um BONECO\lfofo no lugar.$
+
+[LilycoveCity_DepartmentStore_5F_Text_SellManyCuteMatsHere] bf4488dfcc
+Vendem muitos TAPETES fofos aqui.\pQual será que eu levo?\nTalvez eu compre todos…$
+
+[LilycoveCity_DepartmentStore_5F_Text_ClosedRooftopForWeather] 9a22b92b88
+Acho que fecharam o terraço porque\no tempo está maluco hoje.$

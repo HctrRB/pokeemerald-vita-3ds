@@ -22,6 +22,14 @@
 #include "graphics.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#ifdef PLATFORM_VITA
+#include "platform/ui/ui_locale.h"
+static const u32 sEmeraldVersionPtGfx[] = INCBIN_U32("graphics/title_screen/emerald_version_pt.8bpp.lz");
+// Keep the copyright sprites unchanged; only the 5 title prompt sprites differ
+// between English and Brazilian Portuguese.
+static const u32 sTitlePressStartPtGfx[] = INCBIN_U32("graphics/title_screen/press_start_pt.4bpp.lz");
+static const u32 sTitlePressStartEnGfx[] = INCBIN_U32("graphics/title_screen/press_start_en.4bpp.lz");
+#endif
 
 enum {
     TAG_VERSION = 1000,
@@ -184,6 +192,18 @@ static const struct SpriteTemplate sVersionBannerRightSpriteTemplate =
     .callback = SpriteCB_VersionBannerRight,
 };
 
+#ifdef PLATFORM_VITA
+static const struct CompressedSpriteSheet sSpriteSheet_EmeraldVersionPt[] =
+{
+    {
+        .data = sEmeraldVersionPtGfx,
+        .size = 0x1000,
+        .tag = TAG_VERSION
+    },
+    {},
+};
+#endif
+
 static const struct CompressedSpriteSheet sSpriteSheet_EmeraldVersion[] =
 {
     {
@@ -301,6 +321,27 @@ static const struct CompressedSpriteSheet sSpriteSheet_PressStart[] =
     },
     {},
 };
+
+#ifdef PLATFORM_VITA
+static const struct CompressedSpriteSheet sSpriteSheet_PressStartPt[] =
+{
+    {
+        .data = sTitlePressStartPtGfx,
+        .size = 0x520,
+        .tag = TAG_PRESS_START_COPYRIGHT
+    },
+    {},
+};
+static const struct CompressedSpriteSheet sSpriteSheet_PressStartEn[] =
+{
+    {
+        .data = sTitlePressStartEnGfx,
+        .size = 0x520,
+        .tag = TAG_PRESS_START_COPYRIGHT
+    },
+    {},
+};
+#endif
 
 static const struct SpritePalette sSpritePalette_PressStart[] =
 {
@@ -610,8 +651,21 @@ void CB2_InitTitleScreen(void)
         ResetSpriteData();
         FreeAllSpritePalettes();
         gReservedSpritePaletteCount = 9;
+#ifdef PLATFORM_VITA
+        if (UiLocale_IsPortuguese())
+            LoadCompressedSpriteSheet(&sSpriteSheet_EmeraldVersionPt[0]);
+        else
+            LoadCompressedSpriteSheet(&sSpriteSheet_EmeraldVersion[0]);
+#else
         LoadCompressedSpriteSheet(&sSpriteSheet_EmeraldVersion[0]);
+#endif
+#ifdef PLATFORM_VITA
+        LoadCompressedSpriteSheet(UiLocale_IsPortuguese()
+                                  ? &sSpriteSheet_PressStartPt[0]
+                                  : &sSpriteSheet_PressStartEn[0]);
+#else
         LoadCompressedSpriteSheet(&sSpriteSheet_PressStart[0]);
+#endif
         LoadCompressedSpriteSheet(&sPokemonLogoShineSpriteSheet[0]);
         LoadPalette(gTitleScreenEmeraldVersionPal, OBJ_PLTT_ID(0), PLTT_SIZE_4BPP);
         LoadSpritePalette(&sSpritePalette_PressStart[0]);

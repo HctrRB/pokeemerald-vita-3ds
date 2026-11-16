@@ -1,0 +1,77 @@
+[DewfordTown_Text_TinyIslandCommunity] ba0ed1af68
+DEWFORD é uma comunidade numa ilhinha.\nSe algo vira moda aqui, todo mundo\ladere na hora.$
+
+[DewfordTown_Text_TownSign] 01292ca4b4
+CIDADE DE DEWFORD\n“Uma ilhinha no mar azul.”$
+
+[DewfordTown_Text_GymSign] 0a5dee15ab
+GINÁSIO POKéMON DE DEWFORD\nLÍDER: BRAWLY\l“Uma onda gigante na luta!”$
+
+[DewfordTown_Text_HallSign] 664dbc8af9
+SALÃO DE DEWFORD\n“Onde todo mundo troca informações!”$
+
+[Route104_Text_LandedInDewfordDeliverLetter] 11b0a5cc61
+SR. BRINEY: Ahoy!\nChegamos a DEWFORD.\pImagino que você vai entregar aquela\nCARTA para, quem era mesmo, o STEVEN!$
+
+[DewfordTown_Text_SetSailBackToPetalburg] 9d10a052b2
+SR. BRINEY: Já entregou a sua\nCARTA?\pOu queria voltar navegando\npara PETALBURG?$
+
+[DewfordTown_Text_PetalburgWereSettingSail2] db131e3025
+SR. BRINEY: Então é PETALBURG!\pLevantar âncora!\nPEEKO, minha querida, vamos zarpar!$
+
+[DewfordTown_Text_GoDeliverIllBeWaiting] 6b3108eb33
+SR. BRINEY: Então vá entregar a\nCARTA. Eu fico esperando.$
+
+[DewfordTown_Text_BrineyLandedInDewford] dede7ad429
+SR. BRINEY: Ahoy!\nChegamos a DEWFORD!\pÉ só me avisar quando quiser\nzarpar de novo!$
+
+[DewfordTown_Text_WhereAreWeBound] c0039783b1
+SR. BRINEY: Ahoy!\nPor você, eu vou pro mar quando for!\pAgora, meu amigo, para onde vamos?$
+
+[DewfordTown_Text_PetalburgWereSettingSail] 67b78ac0cc
+SR. BRINEY: PETALBURG, é?\pLevantar âncora!\nPEEKO, minha querida, vamos zarpar!$
+
+[DewfordTown_Text_SlateportWereSettingSail] 1f7486a7fb
+SR. BRINEY: SLATEPORT, é?\pLevantar âncora!\nPEEKO, minha querida, vamos zarpar!$
+
+[DewfordTown_Text_JustTellMeWhenYouNeedToSetSail] 29f54d80de
+SR. BRINEY: É só me avisar quando\nprecisar zarpar de novo!$
+
+[DewfordTown_Text_GettingItchToFish] f8c596fabb
+Este é um ponto de pesca famoso.\nDeu vontade de pescar?$
+
+[DewfordTown_Text_GiveYouOneOfMyRods] de774b1e7b
+Gostei de ouvir, gostei mesmo!\pVou te dar uma das minhas VARAS\nde pesca.$
+
+[DewfordTown_Text_ThrowInFishingAdvice] 31637cac59
+E, de bônus, ainda te dou uma\ndica de pesca!\pPrimeiro, fique de frente pra água\ne use a VARA.\pConcentre-se…\nSe algo morder, puxe a VARA.\pÀs vezes você fisga algo na hora,\nmas, com os peixes maiores, tem\lque acertar o tempo dos puxões\lpra trazer pra fora.$
+
+[DewfordTown_Text_ThatsTooBadThen] a6cf72b783
+Ah, é?\nQue pena, então.$
+
+[DewfordTown_Text_HowsYourFishing] 73c3af544f
+E aí!\nComo vai a pescaria?$
+
+[DewfordTown_Text_GreatHaulInSomeBigOnes] 49f7389d9e
+É mesmo! Que ótimo!\nPegue uns bem grandes!$
+
+[DewfordTown_Text_FishingAdvice] 8011c94edd
+Ei, não desanima!\nVou te dar uma dica de pesca.\pPrimeiro, fique de frente pra água\ne use a VARA.\pConcentre-se…\nSe algo morder, puxe a VARA.\pÀs vezes você fisga algo na hora,\nmas, com os peixes maiores, tem\lque acertar o tempo dos puxões\lpra trazer pra fora.$
+
+[DewfordTown_Text_XIsTheBiggestHappeningThingRight] 859307ea24
+Eu curto o que está na moda e bombando.\nEstou sempre de olho.\pEscuta, já ouviu falar desse novo\n“{STR_VAR_1}”?\pIsso aí!\nClaro que você conhece!\pQuer dizer, puxa,\n“{STR_VAR_1}”…\lÉ o que tem de mais legal!\pDe onde quer que você venha,\n“{STR_VAR_1}”\lé o que mais está bombando, né?$
+
+[DewfordTown_Text_TellMeWhatsNewAndIn] 37c039b465
+Hã?\nNão é o que está bombando?\pBom, então você tem que me contar:\no que é novidade e o que está na moda?$
+
+[DewfordTown_Text_OfCourseIKnowAboutThat] 04d22016ab
+Hã?\n“{STR_VAR_2}”?\p… …\p…Hã… É! Isso mesmo!\nÉ, eu sabia! Sabia o tempo todo!\pClaro que eu conheço!\n“{STR_VAR_2}”, né?\pÉ, isso aí, é a moda!\nNão é que “{STR_VAR_2}”\lé o máximo?\pÉ o que há de mais moderno.\nAchou que eu não ia saber?\p“{STR_VAR_1}”…\nIsso é, tipo, coisa do passado.\pAgora, “{STR_VAR_2}” é\no que está em sintonia com os tempos!$
+
+[DewfordTown_Text_XHuhIThinkYIsCool] 347863be65
+Hmm…\n“{STR_VAR_2}”, é?\pMas, pessoalmente, acho que\n“{STR_VAR_1}”\lé que é legal de verdade.$
+
+[DewfordTown_Text_HearOfAnyTrendsComeShareWithMe] bbfe65317b
+Bom, se souber de alguma moda nova,\nvem me contar, tá?$
+
+[DewfordTown_Text_YeahDefinitionOfInRightNow] 7f16642f1c
+É, com certeza!\p“{STR_VAR_1}” é a\ndefinição de moda agora.$

@@ -1,0 +1,17 @@
+[SeafloorCavern_Room3_Text_ShellyIntro] 5b7f9f7407
+Ahahahaha!\pComo chegou aqui sem submarino?\nQue criança impressionante!\pMas… Não dá pra deixar você se\nmetendo aqui.\pE eu quero o troco pelo que houve\nno INSTITUTO DO CLIMA…\pVou te dar um gostinho de dor!\nConforme-se!$
+
+[SeafloorCavern_Room3_Text_ShellyDefeat] c2ef5c87a9
+Ahahahaha!\pAi!$
+
+[SeafloorCavern_Room3_Text_ShellyPostBattle] 1e2fcb7a0d
+Ahahahaha!\nVocê é forte demais.\pQue pena você não ser da EQUIPE\nAQUA.\pPodia curtir o mundo fabuloso que o\nnosso CHEFE prometeu, como um\lde nós…$
+
+[SeafloorCavern_Room3_Text_Grunt5Intro] 7e104f45e0
+Pro nosso sonho virar realidade,\nprecisamos do poder dos POKéMON.\pMas intrometidos como você usam\no poder dos POKéMON pra atrapalhar\laté num lugar destes!\pA vida não funciona do jeito que\na gente precisa!$
+
+[SeafloorCavern_Room3_Text_Grunt5Defeat] d665e1c370
+Guah!$
+
+[SeafloorCavern_Room3_Text_Grunt5PostBattle] ee6853ceaa
+Sabe, a gente não ousa questionar\nos motivos do nosso líder.\pMas aqui está você, uma criança\nqualquer, enfrentando o nosso CHEFE.\pTalvez…\nVocê seja alguém especial…$

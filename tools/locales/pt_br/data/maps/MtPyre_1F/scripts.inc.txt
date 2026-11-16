@@ -1,0 +1,11 @@
+[MtPyre_1F_Text_TakeThisForYourOwnGood] 2d8a3107ce
+Todo tipo de ser vagueia pelas\nencostas do MONTE PYRE…\pNão se sabe o que pode acontecer.\nLeve isto. É para o seu bem.$
+
+[MtPyre_1F_Text_ExplainCleanseTag] a1d1b45834
+Deixe um POKéMON segurar esse\nTALISMÃ PURO.\pEle ajuda a afastar POKéMON\nselvagens.$
+
+[MtPyre_1F_Text_ComeToPayRespects] 886e050439
+Veio prestar homenagem aos espíritos\ndos POKéMON que partiram?\pVocê deve gostar muito dos seus\nPOKéMON.$
+
+[MtPyre_1F_Text_RestingPlaceOfZigzagoon] d2a1f3cf71
+Aqui descansa o meu ZIGZAGOON.\nEu gostava tanto dele…$

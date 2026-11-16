@@ -1,0 +1,29 @@
+[gText_WouldYouLikeToRestYourPkmn] d3e82f7875
+Olá, e boas-vindas ao\nCENTRO POKéMON.\pNós recuperamos totalmente os seus\nPOKéMON cansados.\pGostaria de deixar os seus POKéMON?$
+
+[gText_IllTakeYourPkmn] 5a2247027c
+Certo, vou levar os seus POKéMON\npor alguns segundos.$
+
+[gText_RestoredPkmnToFullHealth] 1a4ec100f7
+Obrigada por esperar.\pOs seus POKéMON estão\ntotalmente recuperados.$
+
+[gText_WeHopeToSeeYouAgain] 407712edb8
+Esperamos te ver de novo!$
+
+[gText_WelcomeCutShort] de3ae202ed
+Olá, e boas-vindas ao\nCENTRO POKéMON.\pNós recuperamos totalmente os seus\nPOKéMON cansados.\pGostaria de…$
+
+[gText_NoticesGoldCard] 97bda7925c
+E-esse cartão…\nSerá que é… O CARTÃO DE OURO?!\pOh, que dourado brilhante!\nAs quatro estrelas parecem cintilar!\pJá vi vários TREINADORES com um\nCARTÃO DE PRATA, mas, {PLAYER},\lé a primeira vez que vejo alguém\lcom um CARTÃO DE OURO!\pCerto, {PLAYER}, me conceda a honra\nde cuidar dos seus POKéMON!$
+
+[gText_YouWantTheUsual] 43369e159b
+Que alegria te ver, {PLAYER}!\nO de sempre, não é?$
+
+[gText_IllTakeYourPkmn2] 5a2247027c
+Certo, vou levar os seus POKéMON\npor alguns segundos.$
+
+[gText_ThankYouForWaiting] 609b561c07
+Obrigada por esperar.$
+
+[gText_WeHopeToSeeYouAgain2] 407712edb8
+Esperamos te ver de novo!$

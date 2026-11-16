@@ -56,7 +56,7 @@ bool UiSign_Draw(void)
 
     char name[32];
     UiGame_MapSecName(sSec, name, sizeof(name));
-    const char *motto = Motto(sSec);
+    const char *motto = UiLocale_Translate(Motto(sSec));
     const UiTheme *t = gUiTheme;
     bool8 underwater = FALSE;
     const uint8_t plateTheme = MapNamePopUp_ThemeForUi(sSec, &underwater);

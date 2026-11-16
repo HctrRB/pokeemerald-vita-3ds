@@ -1,0 +1,8 @@
+[FallarborTown_Mart_Text_DecidingSkittyEvolve] 66db9dfbb4
+Não consigo decidir se faço o meu\nSKITTY evoluir ou não.\pÉ só usar esta PEDRA DA LUA, mas é\ntão difícil decidir…\pSe ele evoluir, vai ficar muito mais\nforte.\pMas também vai ficar tão diferente.$
+
+[FallarborTown_Mart_Text_Skitty] ff9bd9f5ad
+SKITTY: Miau?$
+
+[FallarborTown_Mart_Text_SellNuggetIFound] 19589c88e3
+Esta PEPITA que achei aqui…\nAcho que vou ter que vender, já\lque não serve pra mais nada.$

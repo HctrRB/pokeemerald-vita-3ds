@@ -1,0 +1,77 @@
+[DewfordTown_Hall_Text_CantImagineLifeWithoutTrend] 9d19d18fa8
+O que está na moda? Ora, só pode ser\n“{STR_VAR_1}”!\pNem imagino como seria a vida\nsem “{STR_VAR_1}”!$
+
+[DewfordTown_Hall_Text_GettingBoredOfTrend] 0f8c3c84dd
+O que está na moda? Ora, só pode ser\n“{STR_VAR_1}”!\pMas já estou meio enjoado.\pPreciso procurar a próxima moda.$
+
+[DewfordTown_Hall_Text_TeachingMonAboutTrend] ca5244b672
+Estou ensinando o meu POKéMON sobre\n“{STR_VAR_1}”,\lmas não está indo bem.\pAcho que é demais pra ele.$
+
+[DewfordTown_Hall_Text_DeepLinkBetweenXAndY] bf40f9f548
+Estou estudando o modernoso\n“{STR_VAR_1}” agora.\pÉ verdade que tem uma ligação forte\nentre “{STR_VAR_1}”\le “{STR_VAR_2}”?$
+
+[DewfordTown_Hall_Text_MyHunchWasRight] 18fd87cb91
+Ah!\nEntão eu estava certo!\pEstou um passo mais perto de ficar\nna moda, oba!$
+
+[DewfordTown_Hall_Text_NotEasyToKeepUp] 2940466c36
+O quê?!\nÉ mesmo?!\pNão é fácil pra um velho como eu\nacompanhar as modas!$
+
+[DewfordTown_Hall_Text_TVShowAboutTrend] 285e51cf64
+Essa história toda de\n“{STR_VAR_1}”…\lNão tem um programa de TV sobre isso?$
+
+[DewfordTown_Hall_Text_IsTrendMorePopularAcrossSea] a945f2c6c6
+Do outro lado do mar…\p“{STR_VAR_1}”\nfaz ainda mais sucesso?$
+
+[DewfordTown_Hall_Text_CollectTrendMerchandise] b2b71806d6
+Eu coleciono produtos oficiais\nlicenciados de\l“{STR_VAR_1}”.\pTenho BONECOS oficiais de\n“{STR_VAR_1}”…\pRoupas oficiais da marca\n“{STR_VAR_1}”…\pE livros ilustrados licenciados\nde “{STR_VAR_1}”.\pHehe, são meus!\nNão vou dividir nada com você!$
+
+[DewfordTown_Hall_Text_BooksAboutTrend] a7c5dd869d
+COMO DISTINGUIR O BOM\n“{STR_VAR_1}” DO\lMAU “{STR_VAR_1}”…\pA LIGAÇÃO ENTRE\n“{STR_VAR_1}” E OS\lPOKéMON…\pO ÚTIL\n“{STR_VAR_1}”…\pA estante está lotada de livros sobre\n“{STR_VAR_1}”.$
+
+[DewfordTown_Hall_Text_TrendsScream] a81c689a7e
+O título é “O GRITO DE\n{STR_VAR_1}”.$
+
+[DewfordTown_Hall_Text_TrendsSmile] 8dd2b3f45e
+O título é “O SORRISO DE\n{STR_VAR_1}”.$
+
+[DewfordTown_Hall_Text_LastTrend] 07c4b95c32
+O título é “O ÚLTIMO\n{STR_VAR_1}”.$
+
+[DewfordTown_Hall_Text_BirthOfTrend] 47a861f5f9
+O título é “O NASCIMENTO DE\n{STR_VAR_1}”.$
+
+[DewfordTown_Hall_Text_SawTrendCoolestThing] 106e9a27b0
+Eu vi “{STR_VAR_1}”!\nLegal, né?\pÉ, tipo, a coisa mais legal que tem!\pFoi incrível!\nEra de verdade, ah, se era!$
+
+[DewfordTown_Hall_Text_AllegedTrendNotAuthentic] 26d7db43a0
+Ah, não, não, não.\pEsse tal de\n“{STR_VAR_1}”\lque você diz que viu, não é.\pO original é muito…\nComo posso dizer?\lMais afiado, e mais suave!\pAh, tanto faz. É impressionante!$
+
+[DewfordTown_Hall_Text_ComposedTrendThemeSong] 80fbe7c879
+Ei, escuta, compus uma música-tema\npara “{STR_VAR_1}”.\p“{STR_VAR_1}”\nfaz o maior sucesso agora.\pBeleza, escuta!\n… …\pAh!\n{STR_VAR_1}!\pMaravilhoso\n{STR_VAR_1}!$
+
+[DewfordTown_Hall_Text_WorkOnYourSinging] 18c8e8afe4
+… …\pOuso dizer, meu caro, que valeria a\npena treinar o seu canto antes de\lse meter com\l“{STR_VAR_1}”.$
+
+[DewfordTown_Hall_Text_OrganizeTrendParty] 7657e5d96d
+Enfim, como eu dizia, a gente devia\nse juntar e organizar uma festa de\l“{STR_VAR_1}”\lna ilha.$
+
+[DewfordTown_Hall_Text_BrilliantIndeed] 1096042b09
+Ah, que ideia esplêndida!\pVai decidir de uma vez por todas\nquem é o melhor em\l“{STR_VAR_1}”.\lBrilhante, de fato!\pA partir de hoje, nossa vida vai girar\nem torno de “{STR_VAR_1}”!$
+
+[DewfordTown_Hall_Text_TrendHasBecomePartOfLife] 44bd06a798
+Mas eu estava pensando…\pVocê não concorda que\n“{STR_VAR_1}”\ldeixou de ser só moda e virou\lparte do nosso dia a dia?$
+
+[DewfordTown_Hall_Text_TrendWeighsHeavilyOnMind] d51d134204
+Como disse?\nTanto assim, é?\pMas é verdade que\n“{STR_VAR_1}”\lpesa na cabeça da gente, acordado\lou dormindo.\pSem dúvida, você é o PROFESSOR de\n“{STR_VAR_1}”,\lmeu caro!$
+
+[DewfordTown_Hall_Text_IfWeTeamUpWellBeInvincible] 320b190bdd
+Se você e eu formarmos uma dupla,\nninguém vai nos vencer em tudo que\lfor “{STR_VAR_1}”!$
+
+[DewfordTown_Hall_Text_WellBeTrendDuo] f82a7ed569
+Na mosca, meu amigo!\pSeremos a DUPLA\n“{STR_VAR_1}”!\pNão é uma bela imagem?\nHahahah!$
+
+[DewfordTown_Hall_Text_GiveYouSludgeBomb] effd8edf9b
+Pra mim, BOMBA LODO está no auge\nda popularidade. É a tal.\pHã? Você está me dizendo que não\nconhece BOMBA LODO?\pIsso é de dar dó.\nVou te dar uma.$
+
+[DewfordTown_Hall_Text_LoveSludgeBombButTrendInToo] 982a6a630b
+Eu adoro BOMBA LODO.\pMas POKéMON com o golpe\n“{STR_VAR_1}”\ltambém estão na moda.$

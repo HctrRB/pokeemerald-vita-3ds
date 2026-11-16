@@ -1,0 +1,26 @@
+[LilycoveCity_CoveLilyMotel_2F_Text_ShowMeCompletedDex] eb79f068bf
+Eu sou o DESIGNER DO JOGO.\pAh, é mesmo?\nVocê está montando uma POKéDEX?\pÉ difícil completar, mas não\ndesista.\pSe completar, venha me mostrar.$
+
+[LilycoveCity_CoveLilyMotel_2F_Text_FilledPokedexGiveYouThis] 9f9949671e
+Uau! Que incrível!\nÉ, incrível demais!\pEsta POKéDEX está completa!\nVocê ama mesmo os POKéMON!\pEstou muito impressionado!\pDeixa eu te dar uma coisa pelo\nseu feito!$
+
+[LilycoveCity_CoveLilyMotel_2F_Text_ImTheProgrammer] 5f1ed88a21
+Eu? Está falando comigo?\nSou o PROGRAMADOR.\pComo serão os CAÇA-NÍQUEIS daqui?$
+
+[LilycoveCity_CoveLilyMotel_2F_Text_ImTheGraphicArtist] bcb750a9fd
+Sou o ARTISTA GRÁFICO! Os POKéMON\nde HOENN não são interessantes?$
+
+[LilycoveCity_CoveLilyMotel_2F_Text_GirlsAreCute] 9d6e83a0fc
+As meninas NADADORAS de boia são\nfofas, né? Batalhar com uma delas…\pUhu, que demais!\pE as GÊMEAS! Não são fofas?\nUma batalha 2 contra 2 com GÊMEAS…\pUhu, divertido demais!$
+
+[LilycoveCity_CoveLilyMotel_2F_Text_SeaBreezeTicklesHeart] 840ed4e571
+A brisa do mar faz cócegas no\ncoração. Que delícia aqui!$
+
+[LilycoveCity_CoveLilyMotel_2F_Text_NeverLeaveWithoutGameBoy] 63c8022cba
+Nunca se sabe quando e onde alguém\nvai te desafiar.\pPor isso nunca saio de casa sem o\nmeu GAME BOY ADVANCE.$
+
+[LilycoveCity_CoveLilyMotel_2F_Text_SnoozingPreferBattles] 2e13d883d7
+SCOTT: … … … … …\n… … … … … Zzz…\p… … … … … Hã?!\nAi, desculpa, desculpa! Cochilei!\pVim conferir esse tal de CONCURSO\nPOKéMON.\pTenho que admitir, parece bem\ndivertido, mas…\pSou dos tradicionais: prefiro\nbatalhas e TREINADORES fortes.\pMas isso sou eu.\p{PLAYER}{KUN}, espero que você curta\ntudo: GINÁSIOS, CONCURSOS, TENDA\lDE BATALHA, tudo mesmo!$
+
+[LilycoveCity_CoveLilyMotel_2F_Text_ContestsDoTakeStrategy] 464768dbd3
+SCOTT: Acho que é preciso estratégia\npra ganhar um CONCURSO.\pCriar estratégias de CONCURSO é um\njeito de virar um TREINADOR melhor.$

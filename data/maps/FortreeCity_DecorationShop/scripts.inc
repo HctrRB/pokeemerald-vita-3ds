@@ -54,15 +54,15 @@ FortreeCity_DecorationShop_PokemartDecor_Chairs:
 	pokemartlistend
 
 FortreeCity_DecorationShop_Text_MerchandiseSentToPC:
-	.string "Merchandise you buy here is sent to\n"
-	.string "your own PC.\p"
-	.string "That's fantastic! I wish they could\n"
-	.string "also deliver me home like that.$"
+	.string "O que você compra aqui vai direto\n"
+	.string "pro seu PC.\p"
+	.string "Incrível! Queria que me entregassem\n"
+	.string "em casa desse jeito também.$"
 
 FortreeCity_DecorationShop_Text_BuyingDeskForDolls:
-	.string "I'm buying a pretty desk and I'm\n"
-	.string "putting my cute DOLLS on it.\p"
-	.string "If I don't, when I decorate my\n"
-	.string "SECRET BASE, my DOLLS will get\l"
-	.string "dirty or poked with splinters.$"
+	.string "Vou comprar uma mesa bonita e botar\n"
+	.string "as minhas BONECAS fofas em cima.\p"
+	.string "Senão, quando eu decorar a minha\n"
+	.string "BASE SECRETA, as BONECAS vão se\l"
+	.string "sujar ou pegar farpas.$"
 

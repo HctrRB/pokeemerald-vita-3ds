@@ -1,0 +1,8 @@
+[RustboroCity_Mart_Text_BuyingHealsInCaseOfShroomish] e35448ae6f
+Estou comprando CURA PARALISIA e\nANTÍDOTOS.\pCaso eu encontre SHROOMISH no\nBOSQUE DE PETALBURG.$
+
+[RustboroCity_Mart_Text_ShouldBuySuperPotionsInstead] 6389e30466
+Meu POKéMON evoluiu.\nAgora ele tem muitos PS.\pDevia comprar SUPERPOÇÕES pra ele\nem vez de POÇÕES comuns.$
+
+[RustboroCity_Mart_Text_GettingEscapeRopeJustInCase] 5da6e4c039
+Vou levar uma CORDA DE FUGA, caso\neu me perca numa caverna.\pÉ só usar pra voltar até\na entrada.$

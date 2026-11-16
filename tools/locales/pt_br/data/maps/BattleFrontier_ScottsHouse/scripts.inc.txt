@@ -1,0 +1,50 @@
+[BattleFrontier_ScottsHouse_Text_WelcomeToBattleFrontier] 5a6d609b23
+SCOTT: Ora, olá, boas-vindas!\nHehe… Desculpe o aperto.\pEnfim, {PLAYER}{KUN}, deixe-me dar as\nboas-vindas oficiais à FRONTEIRA.\pÉ o meu sonho realizado.\nLevou anos e anos, mas finalmente\ldei forma ao meu sonho.$
+
+[BattleFrontier_ScottsHouse_Text_HowMuchEffortItTookToMakeReal] af972dfa95
+Pensando bem, foi uma jornada\nlonguíssima…\pSaí de casa sozinho em busca de\nTREINADORES fortes.\pNinguém imagina quanto esforço e\ntempo foram precisos pra isto existir.$
+
+[BattleFrontier_ScottsHouse_Text_HaveThisAsMementoOfOurPathsCrossing] b2495e6e4d
+Mas isso é passado.\nNão adianta ficar remoendo!\pSó quero que você aproveite as\nbatalhas aqui à vontade.\p{PLAYER}{KUN}, fique com isto de\nlembrança de todas as vezes que\lnos cruzamos pelo caminho.$
+
+[BattleFrontier_ScottsHouse_Text_ObtainedXBattlePoints] cc286bc14d
+{PLAYER} recebeu\n{STR_VAR_1} Ponto(s) de Batalha.$
+
+[BattleFrontier_ScottsHouse_Text_ExplainBattlePoints] ab24887186
+SCOTT: Dá pra ver os seus Pontos de\nBatalha no PASSE DA FRONTEIRA.\pQuanto mais sucesso você tiver aqui\nna FRONTEIRA, mais Pontos de\lBatalha vai juntar.\pUse os Pontos como quiser, trocando\npor itens, por exemplo.$
+
+[BattleFrontier_ScottsHouse_Text_ExpectingGreatThings] 0a0b32c7bf
+Espero grandes coisas de você!$
+
+[BattleFrontier_ScottsHouse_Text_WhyIGoSeekingTrainers] 055656e20f
+SCOTT: Cada TREINADOR é único.\nCada um tem a sua própria vida.\pMas, numa batalha, não importa\nquem eles são.\pSão todos iguais!\pAmo a pureza da batalha, onde\ntodo mundo é igual.\pPor isso vou a todo lugar procurar\nTREINADORES que levam a batalha a\lsério e convido eles pra cá.$
+
+[BattleFrontier_ScottsHouse_Text_HaveYouMetFrontierBrain] 172f95dba7
+SCOTT: Já conheceu algum\nCÉREBRO DA FRONTEIRA?\pMelhor ainda, já ganhou algum\nsímbolo deles?\pEscolhi a dedo os CÉREBROS DA\nFRONTEIRA como os mais fortes.\pMas tenho certeza de que a sua\nforça vai espantar até eles!$
+
+[BattleFrontier_ScottsHouse_Text_MayFindWildMonsInFrontier] 039235575d
+SCOTT: Você não treina só pra\nbatalhar, né?\pAcho que lembro de você montando\numa POKéDEX também.\pPois adivinha?\pDá pra encontrar POKéMON selvagens\nem algum lugar da FRONTEIRA…\lFufufu!$
+
+[BattleFrontier_ScottsHouse_Text_YouveCollectedAllSilverSymbols] 5f41a57aa5
+SCOTT: Está curtindo a FRONTEIRA\nDE BATALHA?\p…Espera aí…\nOh!\pO seu PASSE DA FRONTEIRA!\nVocê juntou todos os símbolos\lde prata!\pIsso é mais que impressionante!\nVocê é forte, como eu suspeitava!\pNormalmente eu não faria isso, mas\né uma ocasião especial!\pQuero que fique com isto.\nTenho certeza de que vai usar bem.$
+
+[BattleFrontier_ScottsHouse_Text_YouveCollectedAllGoldSymbols] ebbc46d507
+SCOTT: Espero que esteja curtindo\ntudo na FRONTEIRA DE BATALHA.\p…Espera aí…\nNão acredito no que vejo!\pO seu PASSE DA FRONTEIRA!\nVocê juntou todos os símbolos\lde ouro!\pIsso é mais que estupendo!\nVocê é incrível, como eu suspeitava!\p… … … … … …\p{PLAYER}, você tem que aceitar isto!\pAcho que vai saber dar valor ao\nmeu presente!$
+
+[BattleFrontier_ScottsHouse_Text_SoGladIBroughtYouHere] ae8e6d2b60
+Tenho mesmo o dom de reconhecer um\nbom TREINADOR quando vejo um.\pQue bom que tive a visão de te\ntrazer pra cá!$
+
+[BattleFrontier_ScottsHouse_Text_BerryPocketStuffed] 42cfc1bc7f
+O seu BOLSO DE FRUTAS parece\nestar lotado.$
+
+[BattleFrontier_ScottsHouse_Text_Beat50TrainersInARow] 74620a85d8
+SCOTT: Oh, fiquei sabendo de você!\nVocê dominou a TORRE DE BATALHA!\lVenceu 50 TREINADORES seguidos?\pFantástico!\nQuero que fique com isto!$
+
+[BattleFrontier_ScottsHouse_Text_Beat100TrainersInARow] af157bd144
+SCOTT: Nossa! Fiquei sabendo de você!\nVocê arrasou na TORRE DE BATALHA!\lVenceu 100 TREINADORES seguidos?\pIsso é espetacular demais!\nVocê tem que ficar com isto!$
+
+[BattleFrontier_ScottsHouse_Text_ExpectingToHearEvenGreaterThings] e9346b93cc
+Agora espero ouvir coisas ainda\nmaiores sobre você!$
+
+[BattleFrontier_ScottsHouse_Text_ComeBackForThisLater] 34eb2dfc1f
+Opa, bom, se estiver carregando\ncoisa demais, volte depois pra pegar.$

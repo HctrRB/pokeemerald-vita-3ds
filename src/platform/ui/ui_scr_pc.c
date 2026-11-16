@@ -349,7 +349,7 @@ static void Release(void)
     else
         ZeroBoxMonAt(Box(), (u8)sPos);
     PlaySE(SE_SELECT);
-    snprintf(b, sizeof(b), "Bye-bye, %s!", name);
+    snprintf(b, sizeof(b), UiLocale_Translate("Bye-bye, %s!"), name);
     Msg(NULL, a, b, NULL, NULL);
 }
 
@@ -835,7 +835,7 @@ static void DrawDetail(void)
     const uint16_t it = HeldItemOf(bm);
     UiText_Draw(UI_FACE_PS2P, 16, 716, 156, "ITEM", UI_COL_INK_SOFT);
     if (it != ITEM_NONE) { UiSpr_ItemIcon(it, 716, 176, 1); UiGame_ItemName(it, buf, sizeof(buf)); }
-    else snprintf(buf, sizeof(buf), "NONE");
+    else snprintf(buf, sizeof(buf), UiLocale_Translate("NONE"));
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, it ? 746 : 716, 172, buf, it ? UI_COL_INK : UI_COL_INK_SOFT);
     if (egg)
         return;
@@ -872,7 +872,7 @@ static void Build(void)
     // Party
     char buf[64];
     UiW_Panel(16, 60, 180, 432);
-    snprintf(buf, sizeof(buf), "PARTY %d/6", (int)PartyCount());
+    snprintf(buf, sizeof(buf), UiLocale_Translate("PARTY %d/6"), (int)PartyCount());
     UiText_Draw(UI_FACE_PS2P, 16, 30, 72, buf, UI_COL_INK);
     const bool partyOk = sMode != MODE_WITHDRAW;
     for (int32_t i = 0; i < PARTY_SIZE; i++)

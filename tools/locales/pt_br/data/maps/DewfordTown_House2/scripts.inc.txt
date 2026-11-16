@@ -1,0 +1,11 @@
+[DewfordTown_House2_Text_WantYouToHaveSilkScarf] b48e127211
+Encha os olhos com isto!\pÉ um LENÇO DE SEDA. É o que há de\nmais moderno na moda, viu!\pAh, estou vendo seus olhos brilhando!\nVocê aprecia o meu estilo deslumbrante!\pAh, que amor!\nTome. Quero que fique com ele!$
+
+[DewfordTown_House2_Text_NoRoom] e14b6e4f07
+Ah, não tem espaço?\pEntão, escute bem, este LENÇO é\nindispensável! Eu venderia todos\los meus itens pra ter um!$
+
+[DewfordTown_House2_Text_ExplainSilkScarf] 76e779f017
+O LENÇO DE SEDA aumenta a força dos\ngolpes do tipo NORMAL.\pÉ um LENÇO maravilhoso que combina\ncom quase todo POKéMON!$
+
+[DewfordTown_House2_Text_BrawlySoCool] ff876f6a29
+Nossa, você atravessou o mar só pra\nvisitar DEWFORD?\pSerá que veio por causa do que\nouviu falar do BRAWLY?\pEle é tão legal…\nTodo mundo é fã dele.$

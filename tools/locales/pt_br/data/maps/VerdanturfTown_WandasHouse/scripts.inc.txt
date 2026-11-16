@@ -1,0 +1,35 @@
+[VerdanturfTown_WandasHouse_Text_StrongerSpeech] 43f180580c
+WALLY: Perdi pra você, {PLAYER}, mas não\nestou mais pra baixo.\pPorque agora tenho um novo objetivo.\nJunto com o meu RALTS, vou desafiar\los GINÁSIOS POKéMON e virar um\lgrande TREINADOR.\pFica de olho em mim, {PLAYER}.\nVou ficar mais forte que você.\pQuando isso acontecer, vou te\ndesafiar pra outra batalha.$
+
+[VerdanturfTown_WandasHouse_Text_StrongerSpeechShort] 6cb83246ac
+WALLY: Fica de olho em mim, {PLAYER}.\nVou ficar mais forte que você.\pQuando isso acontecer, vou te\ndesafiar pra outra batalha.$
+
+[VerdanturfTown_WandasHouse_Text_WallysNextDoor] 3abe20c629
+TIO: Ah! {PLAYER}{KUN}!\nO WALLY está na casa ao lado.\pMas, olha, tenho uma coisa pra\nte contar.\pA natureza daqui está fazendo\nmaravilhas pela saúde do WALLY.\pTalvez não seja só a natureza.\nPodem ser os POKéMON que estão dando\lesperança ao menino.$
+
+[VerdanturfTown_WandasHouse_Text_WallySlippedOff] 023553f4ce
+O WALLY foi embora…\nSaiu escondido, sozinho…$
+
+[VerdanturfTown_WandasHouse_Text_WallyGoneThatFar] a02a15ca62
+TIO: É mesmo?\nO WALLY foi tão longe assim\lsozinho…\pBom, tenho que dar o braço a torcer:\nele é filho do meu irmão caçula.$
+
+[VerdanturfTown_WandasHouse_Text_MeetWanda] c4b92f3fc0
+WANDA: Quem é você?\nAh, claro, já sei!\pVocê é {PLAYER}, de quem o WALLY\nme falou.\pEu sou prima do WALLY.\nPrazer em te conhecer!\pAcho que o WALLY ficou muito mais\nanimado e saudável desde que\lveio pra cá.$
+
+[VerdanturfTown_WandasHouse_Text_DontWorryAboutWally] aaad203565
+WANDA: Não se preocupe com o WALLY.\nEle vai ficar bem.\pEu conheço o meu priminho, e ele\ntambém tem POKéMON com ele.$
+
+[VerdanturfTown_WandasHouse_Text_CanSeeGirlfriendEveryDay] 30da99be77
+Graças a você, posso ver a minha\nnamorada todo dia.\lSe estou feliz? Pode apostar!$
+
+[VerdanturfTown_WandasHouse_Text_DaughtersBoyfriendDriven] d6e7a5d052
+O namorado da minha filha é uma pessoa\nmuito determinada e apaixonada.\pEle está cavando um túnel sem parar\nsó pra poder ver a minha filha.\pA minha filha está meio preocupada,\nentão vai muito até o túnel.$
+
+[VerdanturfTown_WandasHouse_Text_DaughtersBoyfriendWasDigging] 9a7a30091b
+É impressionante. O namorado da minha\nfilha cavava o túnel com as mãos!\pÉ inacreditável!$
+
+[VerdanturfTown_WandasHouse_Text_IfAnythingHappenedToWally] 4dec5be398
+Se acontecesse alguma coisa com o\nWALLY, eu nunca mais ia conseguir\lolhar nos olhos dos pais dele,\lem PETALBURG…$
+
+[VerdanturfTown_WandasHouse_Text_WallyWasInEverGrande] 9e2b1faa67
+O WALLY estava em EVER GRANDE?\pOs pais dele, em PETALBURG, iam ficar\nboquiabertos com isso!$

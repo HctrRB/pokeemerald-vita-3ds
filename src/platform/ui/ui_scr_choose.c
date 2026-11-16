@@ -175,7 +175,7 @@ static void Build(void)
     if (sKind == UI_CHOOSE_TUTOR)
     {
         UiGame_MoveName(TutorMove(), mv, sizeof(mv));
-        snprintf(buf, sizeof(buf), "TEACH · %s", mv);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("TEACH · %s"), mv);
         UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     }
     else if (sKind == UI_CHOOSE_DAYCARE)

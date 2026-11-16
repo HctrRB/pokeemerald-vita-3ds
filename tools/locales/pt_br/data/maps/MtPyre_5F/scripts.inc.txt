@@ -1,0 +1,8 @@
+[MtPyre_4F_Text_TashaIntro] ee157c3f1d
+Eu adoro tudo o que é horripilante…\nÉ como uma doença…\pQuando estou aqui…\nTremo de medo…$
+
+[MtPyre_4F_Text_TashaDefeat] 79d238bbb4
+Perder, eu não gosto…$
+
+[MtPyre_4F_Text_TashaPostBattle] 124790a978
+Quero ver coisas medonhas…\nNão consigo ir embora…\pFique…\nNão quer ficar comigo?$

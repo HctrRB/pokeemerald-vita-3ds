@@ -1,0 +1,44 @@
+[Route113_GlassWorkshop_Text_GoCollectAshWithThis] b569af88ac
+Esta área é coberta de cinza\nvulcânica, uf-uf!\pTenho um dom especial, uf-uf.\pFaço vidro com cinza vulcânica e\nfaço itens, uf-uf.\pVá juntar cinza com isto, uf-uf.$
+
+[Route113_GlassWorkshop_Text_ExplainSootSack] ad6f874bec
+É só levar essa SACOLA e andar pelos\nmontes de cinza, uf-uf.\pEla vai se encher de cinza vulcânica,\nuf-uf.\pQuando achar que juntou bastante,\nvenha falar comigo, uf-uf.$
+
+[Route113_GlassWorkshop_Text_LetsSeeCollectedAshes] a76caadd8a
+Juntou cinza, uf-uf?\nDeixa eu ver, uf-uf.$
+
+[Route113_GlassWorkshop_Text_NotEnoughAshNeedX] bef7a33e8f
+Hmmm…\nNão tem cinza suficiente, uf-uf.\lNão dá pra fazer vidro, uf-uf.\pVejamos… Você precisa andar\n{STR_VAR_1} passos pra eu fazer\luma FLAUTA AZUL, uf-uf.$
+
+[Route113_GlassWorkshop_Text_WhichGlassItemWoudYouLike] d26dd1385d
+Oh!\nVocê juntou muita cinza, uf-uf!\pVou fazer uma peça de vidro, uf-uf!\nQual você quer, uf-uf?$
+
+[Route113_GlassWorkshop_Text_IsThatTheItemForYou] 3d897db32c
+{STR_VAR_1}, uf-uf?\nÉ essa que você quer, uf-uf?$
+
+[Route113_GlassWorkshop_Text_WhichWouldYouLike] c922f6f1aa
+Qual você quer, uf-uf?$
+
+[Route113_GlassWorkshop_Text_IllMakeItemForYou] 021153d7f8
+{STR_VAR_1}, então, uf-uf!\pCerto! Vou fazer pra você, uf-uf.\nEspere um pouquinho, uf-uf.$
+
+[Route113_GlassWorkshop_Text_NotEnoughAshToMakeItem] 9a732b0b38
+{STR_VAR_1}, uf-uf?\pMas não tem cinza suficiente pra\nfazer isso, uf-uf.\pVejamos… Você precisa andar\n{STR_VAR_2} passos pela cinza\lpra eu fazer esse item, uf-uf.\pQual item você prefere que eu faça,\nentão, uf-uf?$
+
+[Route113_GlassWorkshop_Text_AllThatAshButDontWantAnything] 9c925524c4
+Juntou toda essa cinza e não quer\nnada, uf-uf?$
+
+[Route113_GlassWorkshop_Text_IveFinishedGlassItem] 1ede563d08
+Ah, terminei: {STR_VAR_1}.\nPode levar, uf-uf.$
+
+[Route113_GlassWorkshop_Text_NoRoomInBag] 97285c4caf
+Opa?\nNão tem espaço na BOLSA, uf-uf.\pEu guardo pra você. Volte depois,\nuf-uf.$
+
+[Route113_GlassWorkshop_Text_NoRoomInPC] 0da0d1cf4e
+Opa?\nNão tem espaço no PC, uf-uf?\pEu guardo pra você. Volte depois,\nuf-uf.$
+
+[Route113_GlassWorkshop_Text_HaventGotYourSootSack] 55b630d385
+Hã? Você não está com a SACOLA,\nuf-uf.\pTem que levar ela junto pra juntar\ncinza vulcânica, uf-uf.$
+
+[Route113_GlassWorkshop_Text_FunToBlowGlassFlute] ca4af8ae09
+É divertido soprar uma flauta de\nvidro enquanto o chefe fala.\pUf-uf! Puf-puf!$

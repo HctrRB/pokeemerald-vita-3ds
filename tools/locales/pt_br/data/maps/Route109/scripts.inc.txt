@@ -1,0 +1,47 @@
+[DewfordTown_Text_BrineyLandedInSlateportDeliverGoods] dda70f0a9b
+SR. BRINEY: Ahoy!\nChegamos a SLATEPORT!\pImagino que você vai visitar o CAP.\nSTERN e entregar as PEÇAS DEVON?$
+
+[Route109_Text_BrineySailToDewfordQuestion] 44a2181f72
+SR. BRINEY: Achei que você ia\nentregar as PEÇAS DEVON.\pQuer voltar navegando\npara DEWFORD, então?$
+
+[Route109_Text_BrineyDewfordItIs] 23a7c02289
+SR. BRINEY: Então é DEWFORD!\pLevantar âncora!\nPEEKO, minha querida, vamos zarpar!$
+
+[Route109_Text_BrineyDeliverDevonGoods] e2636db108
+SR. BRINEY: Então vá entregar as\nPEÇAS DEVON. Eu fico esperando.$
+
+[DewfordTown_Text_BrineyLandedInSlateport] 0f234c36db
+SR. BRINEY: Ahoy! Chegamos a\nSLATEPORT!\pÉ só me avisar quando quiser\nzarpar de novo!$
+
+[Route109_Text_BrineyWhereAreWeBound] c0039783b1
+SR. BRINEY: Ahoy!\nPor você, eu vou pro mar quando for!\pAgora, meu amigo, para onde vamos?$
+
+[Route109_Text_BrineyTellMeWhenYouNeedToSail] 29f54d80de
+SR. BRINEY: É só me avisar quando\nprecisar zarpar de novo!$
+
+[Route109_Text_ChillAtMyPapasSpot] 9ace4c38d5
+Ô, TREINADORES!\nSe a batalha está quente,\lou se tá de boa a gente,\lvem curtir no meu pai, que é demais!$
+
+[Route109_Text_LittleKidsDartAround] 1c5d75a60b
+Criança pequena corre pra todo lado\ntão rápido…\pNão dá pra tirar os olhos nem por um\ninstante. É muito cansativo.\pAs minhas estão com os meus POKéMON,\nentão devem estar bem, mas…$
+
+[Route109_Text_SandCastleTakingLongTime] 81895f3db1
+O nosso castelo de areia está\ndemorando pra ficar pronto.$
+
+[Route109_Text_YouCanHaveThis] 3af7c26e15
+Pode ficar com isto!$
+
+[Route109_Text_WereGoingToMakeBigCastle] 6d85dff8c1
+A gente vai pegar toda a areia da\npraia e fazer um castelo enorme!\pE aí a gente vai ser rei e\nrainha.\pE você pode trabalhar pra gente.$
+
+[Route109_Text_ZigzagoonPicksUpLitter] 2324a11550
+A água por aqui é limpa.\pMas, às vezes, peço pro ZIGZAGOON\ncatar o lixo da beira da praia.\pA água suja vira chuva e cai nos\nnossos rios, que a gente bebe…\pSe a gente polui o mar, um dia isso\nvolta pra gente.$
+
+[Route109_Text_ZigzagoonCry] f65b743bde
+ZIGZAGOON: Guguu?$
+
+[Route109_Text_SeashoreHouseSign] b6188759f1
+CASA DE PRAIA\p“Batalhas quentes na areia quente!\nO lugar dos TREINADORES fervendo!”$
+
+[Route109_Text_TrainerTipsSign] b89b232c0b
+DICAS DE TREINADOR\pPOKéMON do mesmo nível nem sempre\ntêm os mesmos atributos.\pDizem que POKéMON criados por\nTREINADORES ficam mais fortes que\los selvagens.$

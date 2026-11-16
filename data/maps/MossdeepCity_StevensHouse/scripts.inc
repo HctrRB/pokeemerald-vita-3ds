@@ -149,66 +149,66 @@ MossdeepCity_StevensHouse_EventScript_DiveItemBall::
 
 MossdeepCity_StevensHouse_Text_YouveEarnedHMDive:
 	.string "STEVEN: {PLAYER}{KUN}…\p"
-	.string "As you can see, there's not much here,\n"
-	.string "but this is my home.\p"
-	.string "Thank you for all that you've done.\p"
-	.string "This is my token of appreciation.\n"
-	.string "It's the HIDDEN MACHINE DIVE.\p"
-	.string "No need to be shy--you've earned\n"
-	.string "this HM.$"
+	.string "Como você vê, não tem muita coisa\n"
+	.string "aqui, mas esta é a minha casa.\p"
+	.string "Obrigado por tudo o que você fez.\p"
+	.string "Isto é um sinal da minha gratidão.\n"
+	.string "É a MÁQUINA OCULTA MERGULHO.\p"
+	.string "Não precisa ter vergonha: você\n"
+	.string "merece esta MO.$"
 
 MossdeepCity_StevensHouse_Text_ExplainDive:
-	.string "STEVEN: While you're using SURF, you\n"
-	.string "should notice dark patches of water.\p"
-	.string "Use DIVE if you come to deep water\n"
-	.string "like it. You'll drop to the seafloor.\p"
-	.string "When you want to come back up, use\n"
-	.string "DIVE again.\p"
-	.string "In some places, it won't be possible\n"
-	.string "for you to surface, though.$"
+	.string "STEVEN: Usando SURFAR, você vai notar\n"
+	.string "manchas escuras na água.\p"
+	.string "Use MERGULHO quando achar águas\n"
+	.string "fundas assim. Você desce até o fundo.\p"
+	.string "Quando quiser subir, use MERGULHO\n"
+	.string "de novo.\p"
+	.string "Mas, em alguns lugares, não vai dar\n"
+	.string "pra voltar à superfície.$"
 
 MossdeepCity_StevensHouse_Text_UnderwateCavernBetweenMossdeepSootopolis:
-	.string "STEVEN: Apparently, there's an\n"
-	.string "underwater cavern between\l"
-	.string "MOSSDEEP and SOOTOPOLIS.\p"
-	.string "You know, the one that CAPT. STERN\n"
-	.string "found in his submarine.$"
+	.string "STEVEN: Parece que tem uma caverna\n"
+	.string "submarina entre MOSSDEEP e\l"
+	.string "SOOTOPOLIS.\p"
+	.string "Sabe, aquela que o CAP. STERN achou\n"
+	.string "com o submarino dele.$"
 
 MossdeepCity_StevensHouse_Text_TakeBallContainingBeldum:
-	.string "{PLAYER} checked the POKé BALL.\p"
-	.string "It contained the POKéMON\n"
+	.string "{PLAYER} conferiu a POKé BOLA.\p"
+	.string "Dentro estava o POKéMON\n"
 	.string "BELDUM.\p"
-	.string "Take the POKé BALL?$"
+	.string "Pegar a POKé BOLA?$"
 
 MossdeepCity_StevensHouse_Text_ObtainedBeldum:
-	.string "{PLAYER} obtained a BELDUM.$"
+	.string "{PLAYER} recebeu um BELDUM.$"
 
 /* Unused*/
 MossdeepCity_StevensHouse_Text_NoSpaceForAnotherMon:
-	.string "There is no space for another POKéMON.$"
+	.string "Não há espaço pra outro POKéMON.$"
 
 MossdeepCity_StevensHouse_Text_LeftPokeBallWhereItWas:
-	.string "{PLAYER} left the POKé BALL where\n"
-	.string "it was.$"
+	.string "{PLAYER} deixou a POKé BOLA onde\n"
+	.string "estava.$"
 
 MossdeepCity_StevensHouse_Text_LetterFromSteven:
-	.string "It's a letter.\p"
+	.string "É uma carta.\p"
 	.string "… … … … … …\p"
-	.string "To {PLAYER}{KUN}…\p"
-	.string "I've decided to do a little soul-\n"
-	.string "searching and train on the road.\p"
-	.string "I don't plan to return home for some\n"
-	.string "time.\p"
-	.string "I have a favor to ask of you.\p"
-	.string "I want you to take the POKé BALL on\n"
-	.string "the desk.\p"
-	.string "Inside it is a BELDUM, my favorite\n"
-	.string "POKéMON.\p"
-	.string "I'm counting on you.\p"
-	.string "May our paths cross someday.\p"
+	.string "Para {PLAYER}{KUN}…\p"
+	.string "Decidi fazer uma busca interior e\n"
+	.string "treinar pela estrada.\p"
+	.string "Não pretendo voltar pra casa tão cedo.\p"
+	.string "Quero te pedir um favor.\p"
+	.string "Quero que você pegue a POKé BOLA\n"
+	.string "que está na mesa.\p"
+	.string "Dentro dela está um BELDUM, o meu\n"
+	.string "POKéMON favorito.\p"
+	.string "Conto com você.\p"
+	.string "Que os nossos caminhos se cruzem\n"
+	.string "um dia.\p"
 	.string "STEVEN STONE$"
 
 MossdeepCity_StevensHouse_Text_CollectionOfRareRocks:
-	.string "It's a collection of rare rocks and\n"
-	.string "stones assembled by STEVEN.$"
+	.string "É uma coleção de pedras raras\n"
+	.string "juntada pelo STEVEN.$"
 

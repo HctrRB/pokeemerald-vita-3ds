@@ -1,0 +1,29 @@
+[MeteorFalls_1F_1R_Text_WithThisMeteorite] 4b83844b42
+Hehehe!\pCom este METEORITO, aquela coisa\nno MONTE CHIMNEY vai…$
+
+[MeteorFalls_1F_1R_Text_DontExpectMercyFromMagma] 88a9203f07
+Hã?\pNão sei quem você é, mas, se ficar\nno caminho da EQUIPE MAGMA, não\lespere piedade!$
+
+[MeteorFalls_1F_1R_Text_HoldItRightThereMagma] da1be21fb7
+Parados aí, EQUIPE MAGMA!\pVocês estão muito enganados se acham\nque o mundo é de vocês!$
+
+[MeteorFalls_1F_1R_Text_BeSeeingYouTeamAqua] b29c3ff7ad
+Hehehe!\nAté a EQUIPE AQUA apareceu!\pMas dá trabalho demais lidar com\nvocês todos…\pHeh, não importa!\pJá temos o METEORITO, então vamos\npro MONTE CHIMNEY!\pHehehe! Até mais, seus bobalhões\nda EQUIPE AQUA!$
+
+[MeteorFalls_1F_1R_Text_ArchieSeenYouBefore] 281ead993e
+ARCHIE: Eu não te vi antes?\nNo MUSEU de SLATEPORT?\pAh, então o seu nome é {PLAYER}.\pNaquela hora, achei que você fosse\num capanga da EQUIPE MAGMA.\pHunf…\nVocê é uma criança esquisita.\pA EQUIPE MAGMA é um grupo perigoso\nde fanáticos.\pEles destroem tudo, dizendo que\nquerem expandir a terra firme.\pSão os rivais de nós, a EQUIPE AQUA,\nque ama o mar!$
+
+[MeteorFalls_1F_1R_Text_BossWeShouldChaseMagma] 4cfc5a3f15
+CHEFE, temos que ir atrás da\nEQUIPE MAGMA…$
+
+[MeteorFalls_1F_1R_Text_ArchieYesNoTellingWhatMagmaWillDo] 361396cf82
+ARCHIE: Sim, sim, temos que ir!\nPrecisamos correr.\pNão dá pra saber o que a EQUIPE MAGMA\nvai fazer no MONTE CHIMNEY!$
+
+[MeteorFalls_1F_1R_Text_ArchieFarewell] 1396759050
+ARCHIE: {PLAYER}, fique de olho na\nEQUIPE MAGMA você também.\pAdeus!$
+
+[MeteorFalls_1F_1R_Text_MeetProfCozmo] a65800e284
+Eu… Eu sou o COZMO…\nSou PROFESSOR…\pA EQUIPE MAGMA me pediu pra guiar\neles até a CATARATA DOS METEOROS…\pMas me enganaram.\nAté levaram o meu METEORITO…\pE aí outro bando parecido, a\nEQUIPE AQUA, apareceu.\pDepois disso…\nNão entendi mais nada.\pMas essa EQUIPE MAGMA…\pO que eles vão fazer com o METEORITO\nno MONTE CHIMNEY?$
+
+[MeteorFalls_1F_1R_Text_WhatsTeamMagmaDoingAtMtChimney] 08c5f1f7dd
+PROF. COZMO: Mas essa EQUIPE MAGMA…\pO que eles vão fazer com o METEORITO\nno MONTE CHIMNEY?$

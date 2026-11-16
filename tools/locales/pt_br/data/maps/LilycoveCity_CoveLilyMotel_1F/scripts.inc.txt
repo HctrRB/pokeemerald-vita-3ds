@@ -1,0 +1,20 @@
+[LilycoveCity_CoveLilyMotel_1F_Text_GuestsDoubledByMascot] 3b72b49f3c
+Hum, então dobraram os hóspedes\nusando POKéMON como atração?\pHum, talvez eu devesse fazer de um\nPOKéMON fofo o mascote da pousada.\pSerá que assim vêm mais hóspedes?$
+
+[LilycoveCity_CoveLilyMotel_1F_Text_NoGuestsWithTeamAqua] 6cf78e7cde
+Ai, desculpa, desculpa!\nEu estava vidrada na TV!\pDesde que a EQUIPE AQUA chegou à\ncidade, os turistas sumiram.$
+
+[LilycoveCity_CoveLilyMotel_1F_Text_CantSeeTheTV] c994780dcf
+Ei, sai da frente!\nNão consigo ver a TV!$
+
+[LilycoveCity_CoveLilyMotel_1F_Text_MonFoundLostItem] fc150aaf36
+Incrível! Um POKéMON achou um objeto\nque alguém perdeu?\pQue coisa. Se a gente tivesse um\nPOKéMON esperto assim…\pDava pra achar tudo o que os\nhóspedes perdessem…$
+
+[LilycoveCity_CoveLilyMotel_1F_Text_HeardAquaHideoutBusted] fafb717f3d
+Ai, desculpa, desculpa!\nEu estava vidrada na TV!\pOuvi dizer que alguém desmontou o\nESCONDERIJO da EQUIPE AQUA.\pGraças a isso, um grupo grande\nacabou de fazer reserva.\pEra uma empresa chamada… Hã…\nGAME alguma coisa…$
+
+[LilycoveCity_CoveLilyMotel_1F_Text_HouseSittingMonCaughtBurglar] 0ff2094c85
+Incrível! Um POKéMON que cuidava da\ncasa pegou um ladrão?\pQue coisa. Se a gente tivesse um\nPOKéMON forte como segurança…\pDava pra oferecer mais segurança\npros hóspedes.$
+
+[LilycoveCity_CoveLilyMotel_1F_Text_BetterGetWorkingOnGuestsDinner] 58237a4304
+Ai, desculpa, desculpa!\nEu estava vidrada na TV.\pAh, sim. Um grupo grande de hóspedes\nchegou agora há pouco.\pSe registraram como GAME FREAK,\nentão devem fazer jogos.\pIh, melhor eu ir fazer o jantar\ndeles!$

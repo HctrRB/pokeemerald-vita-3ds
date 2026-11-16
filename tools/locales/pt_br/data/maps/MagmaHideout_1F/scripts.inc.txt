@@ -1,0 +1,17 @@
+[MagmaHideout_1F_Text_Grunt1Intro] 2b8dbf9925
+Quando a EQUIPE MAGMA faz a chamada,\na gente pega as guardas importantes\lna ordem da fila.\pPor isso me largaram neste canto.\nEu sempre chego atrasado na chamada!$
+
+[MagmaHideout_1F_Text_Grunt1Defeat] 938d012a57
+Também chego atrasado nos treinos!\pOdeio admitir, mas sou fracote…$
+
+[MagmaHideout_1F_Text_Grunt1PostBattle] 3d4d2619dd
+Tá, vou tentar me esforçar um\npouquinho mais daqui pra frente…$
+
+[MagmaHideout_1F_Text_Grunt2Intro] 18cf3afcea
+O nosso líder mandou a gente cavar\no MONTE CHIMNEY, e a gente cavou.\pE, no meio da escavação, achamos\numa coisa de cair o queixo!\pO que a gente achou?\pFuhahaha!\nConto se você me vencer!$
+
+[MagmaHideout_1F_Text_Grunt2Defeat] 732011921b
+Argh!\nDerrubado!$
+
+[MagmaHideout_1F_Text_Grunt2PostBattle] f6f5cbd630
+Mudei de ideia, não vou contar.\nVocê descobre quando chegar lá!\pSurpresa é melhor no final,\nnão acha?$

@@ -48,6 +48,10 @@
 #define CHAR_SUPER_ER          0x2C
 #define CHAR_AMPERSAND         0x2D
 #define CHAR_PLUS              0x2E
+#define CHAR_A_TILDE           0x2F
+#define CHAR_O_TILDE           0x30
+#define CHAR_a_TILDE           0x31
+#define CHAR_o_TILDE           0x32
 //
 #define CHAR_LV                0x34
 #define CHAR_EQUALS            0x35

@@ -1,0 +1,47 @@
+[RusturfTunnel_Text_ComeAndGetSome] a4adead2ee
+Quê, vai encarar?\nEntão vem!$
+
+[RusturfTunnel_Text_Peeko] 646c3158bc
+PEEKO: Piii piriu!$
+
+[RusturfTunnel_Text_GruntIntro] d4177e4e09
+Arre, que vá tudo pro fundo do mar!\pEsse POKéMON refém não valeu\nde nada!\pE pensar que eu fugi…\nPor este túnel que não dá em nada!\pEi! Você!\nQuer batalhar comigo, é?$
+
+[RusturfTunnel_Text_GruntDefeat] aca0d80d53
+Urrrgh! Minha carreira no crime\nchegou a um beco sem saída!$
+
+[RusturfTunnel_Text_GruntTakePackage] c2e767a116
+Isso não está certo…\pO CHEFE disse que ia ser um serviço\nfácil e tranquilo.\pEra só roubar um pacote da DEVON.\pTsc!\nSe quer tanto de volta, pega!$
+
+[RusturfTunnel_Text_PeekoGladToSeeYouSafe] 8e643939c7
+PEEKO!\nQue alegria ver você bem!$
+
+[RusturfTunnel_Text_ThankYouLetsGoHomePeeko] 8971f89561
+A PEEKO deve a vida a você!\pMe chamam de SR. BRINEY.\nE você, quem é?\p… … … … … … … …\n… … … … … … … …\pAh, então você é {PLAYER}{KUN}!\nMuito obrigado, de coração!\pSe algum dia algo te preocupar,\nnão hesite em me contar!\pVocê costuma me achar na minha casinha\nà beira-mar, perto do BOSQUE.\pVem, PEEKO, vamos pra casa.\pPEEKO: Piriu!$
+
+[RusturfTunnel_Text_WhyCantTheyKeepDigging] a253b11703
+… …\pPor que eles não continuam cavando?\nA rocha é dura demais?\pA minha amada me espera na CIDADE DE\nVERDANTURF, logo depois daqui…\pSe RUSTBORO e VERDANTURF fossem\nligadas por este túnel, eu poderia\lvisitá-la todo dia…\pMas isso…\nO que eu faço?$
+
+[RusturfTunnel_Text_ToGetToVerdanturf] 4bc15bae85
+Pra ir de RUSTBORO a VERDANTURF,\nvocê tem que ir a DEWFORD e depois\lpassar por SLATEPORT e MAUVILLE…$
+
+[RusturfTunnel_Text_YouShatteredBoulderTakeHM] c015dd3da6
+Uau! Você quebrou aquela pedra\nque bloqueava o caminho.\pPra mostrar o quanto eu agradeço,\nquero que fique com esta MO.$
+
+[RusturfTunnel_Text_ExplainStrength] 83180dd84f
+Essa MO tem o golpe FORÇA.\pSe um POKéMON musculoso aprender,\nconsegue mover até pedras\lenormes.$
+
+[RusturfTunnel_Text_WandaReunion] 0ddf4d077c
+WANDA!\nAgora posso te ver quando quiser!\pWANDA: Que… maravilha.\pPor favor, descanse lá em casa.$
+
+[RusturfTunnel_Text_BoyfriendOnOtherSideOfRock] 21c5f0e5c0
+Do outro lado desta pedra…\nO meu namorado está lá.\pEle… Ele não está cavando o túnel\nsó pra me ver.\pEle machuca as mãos trabalhando\npelo bem de todo mundo.$
+
+[RusturfTunnel_Text_MikeIntro] 38b1bec6b5
+Como se chama um homem selvagem nas\nmontanhas? Homem da montanha, né?\pEntão por que não chamam um POKéMON\nnas montanhas de POKéMON da montanha?$
+
+[RusturfTunnel_Text_MikeDefeat] d1388a1857
+Meus POKéMON…\nFicaram sem energia…$
+
+[RusturfTunnel_Text_MikePostBattle] ac0da68248
+Pararam a obra aqui pra proteger os\nPOKéMON, né?\lQue história bonita!$

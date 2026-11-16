@@ -1,0 +1,8 @@
+[MossdeepCity_Mart_Text_ReviveIsFantastic] da8d83697b
+O REVIVER é fantástico!\pDê pra um POKéMON desmaiado, e ele\nlevanta.\pMas cuidado: o REVIVER não recupera\nos PP gastos dos golpes.$
+
+[MossdeepCity_Mart_Text_MaxRepelLastsLongest] c282ed0985
+O REPELENTE MÁXIMO afasta todos os\nPOKéMON fracos.\pDe todos os REPELENTES, é o que\ndura mais.$
+
+[MossdeepCity_Mart_Text_NetAndDiveBallsRare] 19c004834e
+A BOLA TELA e a BOLA MERGULHO são\nPOKé BOLAS raras, só de MOSSDEEP.\pA BOLA TELA funciona bem contra\nPOKéMON de INSETO e de ÁGUA.\pA BOLA MERGULHO é melhor com\nPOKéMON do fundo do mar.$

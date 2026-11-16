@@ -1,0 +1,17 @@
+[PacifidlogTown_House3_Text_WillingToTradeIt] 259d90aeae
+Olha só este {STR_VAR_2}!\pÉ o {STR_VAR_2} que peguei ontem pra\ncomemorar o meu aniversário!\pAh, já vi que você quer!\nAfinal, ele não tem preço!\pVou te dizer uma coisa. Talvez eu\ntroque ele por um {STR_VAR_1}.$
+
+[PacifidlogTown_House3_Text_ItsSubtlyDifferentThankYou] 2d0f745115
+Ah, então isto é um {STR_VAR_1}?\pParece um {STR_VAR_2}, mas é\nsutilmente diferente.\pObrigado!$
+
+[PacifidlogTown_House3_Text_WontAcceptAnyLessThanRealMon] 7792b82b3e
+Não, não, não! Só aceito um\n{STR_VAR_1} de verdade!$
+
+[PacifidlogTown_House3_Text_NotDesperateOrAnything] 9297b6cfc4
+Ah, então você não vai trocar?\pTudo bem. Não estou desesperado\npra trocar nem nada.$
+
+[PacifidlogTown_House3_Text_ReallyWantedToGetBagon] a8eddb996d
+Sei que podia procurar um sozinho,\nmas…\pMas eu queria muito um BAGON que\noutro TREINADOR pegou…$
+
+[PacifidlogTown_House3_Text_IsThatAPokedex] de009a8667
+Isso é uma POKéDEX?\pVocê conheceu um monte de POKéMON\ndiferentes?\pQueria ser como você.$

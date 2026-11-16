@@ -1,0 +1,17 @@
+[SeafloorCavern_Room4_Text_Grunt3Intro] 3d42ae2356
+Quem é você?\nPor onde você entrou?$
+
+[SeafloorCavern_Room4_Text_Grunt3Defeat] 8aa34973ae
+Perdi…$
+
+[SeafloorCavern_Room4_Text_Grunt3PostBattle] ed4c8b59fc
+Não acho a saída!\pNão estou com medo. Não me entenda\nmal!$
+
+[SeafloorCavern_Room4_Text_Grunt4Intro] 8a6299dca9
+Quem é você?\nAonde pensa que vai?$
+
+[SeafloorCavern_Room4_Text_Grunt4Defeat] 6f9b88838e
+Não consegui vencer!$
+
+[SeafloorCavern_Room4_Text_Grunt4PostBattle] 9d0aa3e6a6
+O meu parceiro esqueceu o mapa\nno submarino!\pDá pra ser mais inútil?$

@@ -1,0 +1,26 @@
+[FallarborTown_CozmosHouse_Text_MeteoriteWillNeverBeMineNow] 824d7e237d
+PROF. COZMO: Ah…\nNunca devia ter caído na conversa\lda EQUIPE MAGMA e contado onde\lachar METEORITOS…\pAquele METEORITO da CATARATA DOS\nMETEOROS… Nunca vai ser meu…$
+
+[FallarborTown_CozmosHouse_Text_IsThatMeteoriteMayIHaveIt] 5b41ce0aab
+Oh!\nHã?\pEsse item…\pSerá que é…\pÉ o METEORITO que a EQUIPE MAGMA\nlevou da CATARATA DOS METEOROS?\pPor favor, pode me dar?\pNão estou pedindo de graça.\nQue tal em troca desta MT?$
+
+[FallarborTown_CozmosHouse_Text_PleaseUseThisTM] 084075ec71
+PROF. COZMO: Esta MT representa\na minha gratidão.\lPor favor, use!$
+
+[FallarborTown_CozmosHouse_Text_ReallyGoingToHelpMyResearch] ed82149a6c
+PROF. COZMO: Ah, não acredito.\nIsso é muito, muito bom!\pVai ajudar demais a minha pesquisa!$
+
+[FallarborTown_CozmosHouse_Text_CrushedWithDisappointment] 5808e5a63e
+PROF. COZMO: Ah, mas…\nEstou arrasado de decepção…$
+
+[FallarborTown_CozmosHouse_Text_MayIHaveMeteorite] 441161bd6b
+PROF. COZMO: Por favor, pode me dar\nesse METEORITO?\pNão estou pedindo de graça.\nQue tal em troca desta MT?$
+
+[FallarborTown_CozmosHouse_Text_CozmoWentToMeteorFalls] 57354edbe0
+O PROF. COZMO foi pra CATARATA DOS\nMETEOROS, na ROTA 114, com uns\lcaras da EQUIPE MAGMA.$
+
+[FallarborTown_CozmosHouse_Text_FeelSorryForCozmo] 822bd15555
+Coitado do PROF. COZMO…\nEle está tão deprimido… Dá dó.$
+
+[FallarborTown_CozmosHouse_Text_CozmoIsSoHappy] cf99df9115
+Olha o PROF. COZMO…\nEle está tão feliz! Que fofo.$

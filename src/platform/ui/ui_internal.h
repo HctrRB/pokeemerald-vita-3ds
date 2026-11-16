@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "ui_locale.h"
 
 #define UI_SCREEN_W 960
 #define UI_SCREEN_H 544
@@ -125,7 +126,7 @@ enum { UI_FACE_PS2P = 0, UI_FACE_VT323 = 1 };
 // and, below, 64x64 cells for sprites decoded at run time from the game's tables (ui_sprites.c).
 #define UI_TEX_W 1024
 #define UI_TEX_H 2048
-#define UI_DYN_Y 1024
+#define UI_DYN_Y 1280
 #define UI_CELL 64
 #define UI_CELL_COLS (UI_TEX_W / UI_CELL)
 #define UI_CELL_COUNT (UI_CELL_COLS * ((UI_TEX_H - UI_DYN_Y) / UI_CELL))

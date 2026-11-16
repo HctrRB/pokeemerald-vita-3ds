@@ -1,0 +1,11 @@
+[LavaridgeTown_HerbShop_Text_WelcomeToHerbShop] 57c2b05dda
+Bem-vindo à LOJA DE ERVAS, remédios\neficazes e baratinhos!$
+
+[LavaridgeTown_HerbShop_Text_YouveComeToLookAtHerbalMedicine] 2f3e3a4469
+Veio ver os remédios de ervas de\nLAVARIDGE?\pIsso é muito louvável.\pGostei de você! Tome isto!$
+
+[LavaridgeTown_HerbShop_Text_ExplainCharcoal] ce290f3148
+Esse CARVÃO que te dei é usado pra\nfazer remédios de ervas.\pE faz maravilhas quando um POKéMON\nsegura ele.\pAumenta o poder dos golpes de FOGO.$
+
+[LavaridgeTown_HerbShop_Text_HerbalMedicineWorksButMonWillDislike] a2bf231c3e
+Remédio de erva funciona que é uma\nbeleza. Mas o seu POKéMON vai ficar\lchateado com você. Deve ser amargo!$

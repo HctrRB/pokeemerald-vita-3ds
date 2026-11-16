@@ -1,0 +1,26 @@
+[MossdeepCity_StevensHouse_Text_YouveEarnedHMDive] ce5ca58044
+STEVEN: {PLAYER}{KUN}…\pComo você vê, não tem muita coisa\naqui, mas esta é a minha casa.\pObrigado por tudo o que você fez.\pIsto é um sinal da minha gratidão.\nÉ a MÁQUINA OCULTA MERGULHO.\pNão precisa ter vergonha: você\nmerece esta MO.$
+
+[MossdeepCity_StevensHouse_Text_ExplainDive] d8b6d9d6c1
+STEVEN: Usando SURFAR, você vai notar\nmanchas escuras na água.\pUse MERGULHO quando achar águas\nfundas assim. Você desce até o fundo.\pQuando quiser subir, use MERGULHO\nde novo.\pMas, em alguns lugares, não vai dar\npra voltar à superfície.$
+
+[MossdeepCity_StevensHouse_Text_UnderwateCavernBetweenMossdeepSootopolis] 23783e2a92
+STEVEN: Parece que tem uma caverna\nsubmarina entre MOSSDEEP e\lSOOTOPOLIS.\pSabe, aquela que o CAP. STERN achou\ncom o submarino dele.$
+
+[MossdeepCity_StevensHouse_Text_TakeBallContainingBeldum] ae09bf8513
+{PLAYER} conferiu a POKé BOLA.\pDentro estava o POKéMON\nBELDUM.\pPegar a POKé BOLA?$
+
+[MossdeepCity_StevensHouse_Text_ObtainedBeldum] ec4d2bef60
+{PLAYER} recebeu um BELDUM.$
+
+[MossdeepCity_StevensHouse_Text_NoSpaceForAnotherMon] 93b8757678
+Não há espaço pra outro POKéMON.$
+
+[MossdeepCity_StevensHouse_Text_LeftPokeBallWhereItWas] fdad41c840
+{PLAYER} deixou a POKé BOLA onde\nestava.$
+
+[MossdeepCity_StevensHouse_Text_LetterFromSteven] 72c32b57ce
+É uma carta.\p… … … … … …\pPara {PLAYER}{KUN}…\pDecidi fazer uma busca interior e\ntreinar pela estrada.\pNão pretendo voltar pra casa tão cedo.\pQuero te pedir um favor.\pQuero que você pegue a POKé BOLA\nque está na mesa.\pDentro dela está um BELDUM, o meu\nPOKéMON favorito.\pConto com você.\pQue os nossos caminhos se cruzem\num dia.\pSTEVEN STONE$
+
+[MossdeepCity_StevensHouse_Text_CollectionOfRareRocks] 07bccb33b1
+É uma coleção de pedras raras\njuntada pelo STEVEN.$

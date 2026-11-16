@@ -1,0 +1,17 @@
+[PetalburgCity_PokemonCenter_1F_Text_PCStorageSystem] bf08283986
+Esse Sistema de Armazenamento de\nPOKéMON pelo PC…\pQuem inventou deve ser algum tipo\nde gênio da ciência!$
+
+[PetalburgCity_PokemonCenter_1F_Text_OranBerryRegainedHP] 4d9afb9bef
+Quando meu POKéMON comeu uma\nFRUTA ORAN, recuperou PS!$
+
+[PetalburgCity_PokemonCenter_1F_Text_ManyTypesOfPokemon] 281d54db0d
+Existem muitos tipos de POKéMON.\pTodo tipo tem pontos fortes e\nfracos contra outros tipos.\pDependendo dos tipos dos POKéMON,\na batalha pode ser fácil ou difícil.$
+
+[PetalburgCity_PokemonCenter_1F_Text_TreeckoIsGrassType] 4b344a76ad
+Por exemplo, o seu TREECKO\né do tipo PLANTA.\pEle é forte contra os tipos ÁGUA e\nTERRESTRE.\pMas é fraco contra POKéMON do\ntipo FOGO.$
+
+[PetalburgCity_PokemonCenter_1F_Text_TorchicIsFireType] a3ab9cb175
+Por exemplo, o seu TORCHIC\né do tipo FOGO.\pEle é forte contra os tipos PLANTA e\nINSETO.\pMas é fraco contra POKéMON do\ntipo ÁGUA.$
+
+[PetalburgCity_PokemonCenter_1F_Text_MudkipIsWaterType] a5d5c2292b
+Por exemplo, o seu MUDKIP\né do tipo ÁGUA.\pEle é forte contra o tipo FOGO.\pMas é fraco contra POKéMON dos\ntipos PLANTA e ELÉTRICO.$

@@ -1,0 +1,14 @@
+[SlateportCity_BattleTentLobby_Text_CouldntFindMonForMe] 8437290003
+Então, tipo, não achei nenhum POKéMON\nque fosse, tipo, a minha cara.\pAí pensei, tipo, vou reclamar\npro cara ali, né?\pE ele nem quis me ouvir, tipo, qual é!\nTipo, que mancada, cara!\pEi, tipo, você! Fica na sua, tá?\nSó, sabe, pega isto aqui!$
+
+[SlateportCity_BattleTentLobby_Text_ExplainTorment] ea690dafd6
+Isso é, tipo, a MT41, sabe?\nÉ ATORMENTAR, tá me ouvindo?\pTipo, não deixa o outro usar o\nmesmo golpe duas vezes, sacou?\pE, ó, escuta aqui, tipo, não estou\nte atormentando, não!$
+
+[SlateportCity_BattleTentLobby_Text_IllTryUsingBugMons] 088e402e6a
+Não gosto muito de POKéMON INSETO,\nmas acho que vou usar uns pra\lvariar.\pVai saber, posso até passar a\ngostar deles!$
+
+[SlateportCity_BattleTentLobby_Text_BattleEvenWithoutToughMons] a3a8289e2b
+Aqui dá pra batalhar à vontade, mesmo\nsem ter POKéMON fortes.$
+
+[SlateportCity_BattleTentLobby_Text_NiceIfMoreSelection] fb930c2693
+Não seria legal se tivesse mais\nopções pra escolher?$

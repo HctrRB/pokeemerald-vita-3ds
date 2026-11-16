@@ -1,0 +1,11 @@
+[MossdeepCity_House1_Text_HmmYourPokemon] 15edc25c9d
+Hum!\nO seu {STR_VAR_1}…$
+
+[MossdeepCity_House1_Text_ItLikesXPokeblocks] 4d2f6c3bc6
+Gosta de {STR_VAR_1}S,\nnão gosta?\pNão, tenho certeza! Com certeza\ngosta de {STR_VAR_1}S!$
+
+[MossdeepCity_House1_Text_DoesntLikeOrDislikePokeblocks] 7f48b25d7f
+Parece que não gosta nem desgosta\nde nenhum {POKEBLOCK}.$
+
+[MossdeepCity_House1_Text_HusbandCanTellPokeblockMonLikes] 7ad2ad2010
+O meu marido sabe só de olhar que\n{POKEBLOCK} um POKéMON prefere.$

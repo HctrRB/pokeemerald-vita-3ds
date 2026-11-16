@@ -1,0 +1,35 @@
+[Route119_WeatherInstitute_1F_Text_Grunt1Intro] 3735724464
+O CHEFE se interessou pela pesquisa\nque fazem aqui e mandou a gente.\pPare de se meter!$
+
+[Route119_WeatherInstitute_1F_Text_Grunt1Defeat] e699d7c7e3
+Droga…\nDerrotado por uma criança…$
+
+[Route119_WeatherInstitute_1F_Text_Grunt1PostBattle] 7742073e28
+O nosso CHEFE sabe de tudo.\pMas eu sou só um CAPANGA. Como vou\nsaber o que ele está pensando?$
+
+[Route119_WeatherInstitute_1F_Text_Grunt4Intro] f8a87b408d
+Hã?\nO que uma criança faz aqui?$
+
+[Route119_WeatherInstitute_1F_Text_Grunt4Defeat] 43031ce3d5
+Hã?\nEu perdi?!$
+
+[Route119_WeatherInstitute_1F_Text_Grunt4PostBattle] 1e301eb52c
+Ah, não…\nVou levar bronca por perder pra\luma criança…\pVou é tirar um cochilo na cama…$
+
+[Route119_WeatherInstitute_1F_Text_EveryoneWentUpstairs] 44a7ced0b3
+Enquanto eu dormia, todo mundo\nsubiu!$
+
+[Route119_WeatherInstitute_1F_Text_WowYoureStrong] cdea0c4f29
+Uau, você é forte demais!\pQueria ser TREINADOR POKéMON\nque nem você!$
+
+[Route119_WeatherInstitute_1F_Text_ProfStudyingRain] 9f62035b23
+O PROFESSOR ama a chuva.\nIsso é fato.\pMas, se não parar de chover, o povo\nse complica. Isso também é fato.\pPor isso, o PROFESSOR estuda se dá\npra aproveitar a chuva pra algo bom.$
+
+[Route119_WeatherInstitute_1F_Text_NoticingAbnormalWeather] 6d1e380d71
+No 2º andar do INSTITUTO, estudamos\no clima da região de HOENN.\pUltimamente, notamos casos isolados\ne passageiros de seca e de chuva\lforte…$
+
+[Route119_WeatherInstitute_1F_Text_WhatWereAquasUpTo] e840449abc
+Olá!\nVocê salvou a gente!\pSó não entendo o que aquela\nEQUIPE AQUA estava aprontando.$
+
+[Route119_WeatherInstitute_1F_Text_TakeRestInBed] b47a5c76d3
+Tem uma cama…\nVamos descansar.$

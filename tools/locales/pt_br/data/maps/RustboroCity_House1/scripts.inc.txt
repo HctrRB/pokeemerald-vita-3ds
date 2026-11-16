@@ -1,0 +1,17 @@
+[RustboroCity_House1_Text_IllTradeIfYouWant] c0cde28d73
+Hã? O meu POKéMON é fofo?\nClaro, eu sei.\pMas, se você quer mesmo, eu topo\ntrocar com você.\pTroco o meu {STR_VAR_2} por\num {STR_VAR_1}, se você quiser.$
+
+[RustboroCity_House1_Text_PleaseBeGoodToMyPokemon] d20b9e23bf
+Hehehe…\nCuide bem do meu POKéMON, tá?$
+
+[RustboroCity_House1_Text_DoesntLookLikeMonToMe] 92aa4faa42
+Hã? Isso não parece nem um pouco\ncom um {STR_VAR_1}.$
+
+[RustboroCity_House1_Text_YouDontWantToThatsOkay] 67eb391c78
+Ah, se não quiser, tudo bem.\nMas o meu POKéMON é fofo, viu…$
+
+[RustboroCity_House1_Text_AnyPokemonCanBeCute] a0a5b38ed6
+Todo POKéMON pode ser fofo, se você\ncriar com cuidado e carinho.$
+
+[RustboroCity_House1_Text_AllSortsOfPlaces] d15cb9b5e2
+Em tudo quanto é lugar tem tudo\nquanto é tipo de POKéMON e de gente.\pAcho isso fascinante, então vou\na tudo quanto é lugar.$

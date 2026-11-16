@@ -37,22 +37,23 @@ MossdeepCity_Mart_EventScript_Sailor::
 	end
 
 MossdeepCity_Mart_Text_ReviveIsFantastic:
-	.string "REVIVE is fantastic!\p"
-	.string "Give it to a fainted POKéMON,\n"
-	.string "and the POKéMON will arise.\p"
-	.string "But be careful, REVIVE doesn't restore\n"
-	.string "the used-up PP of moves.$"
+	.string "O REVIVER é fantástico!\p"
+	.string "Dê pra um POKéMON desmaiado, e ele\n"
+	.string "levanta.\p"
+	.string "Mas cuidado: o REVIVER não recupera\n"
+	.string "os PP gastos dos golpes.$"
 
 MossdeepCity_Mart_Text_MaxRepelLastsLongest:
-	.string "MAX REPEL keeps all weak POKéMON away.\p"
-	.string "Out of all the REPEL sprays, it lasts\n"
-	.string "the longest.$"
+	.string "O REPELENTE MÁXIMO afasta todos os\n"
+	.string "POKéMON fracos.\p"
+	.string "De todos os REPELENTES, é o que\n"
+	.string "dura mais.$"
 
 MossdeepCity_Mart_Text_NetAndDiveBallsRare:
-	.string "The NET and DIVE BALLS are rare POKé\n"
-	.string "BALLS that are only made in MOSSDEEP.\p"
-	.string "A NET BALL is effective against\n"
-	.string "BUG-type and WATER-type POKéMON.\p"
-	.string "A DIVE BALL works best on POKéMON\n"
-	.string "at the bottom of the sea.$"
+	.string "A BOLA TELA e a BOLA MERGULHO são\n"
+	.string "POKé BOLAS raras, só de MOSSDEEP.\p"
+	.string "A BOLA TELA funciona bem contra\n"
+	.string "POKéMON de INSETO e de ÁGUA.\p"
+	.string "A BOLA MERGULHO é melhor com\n"
+	.string "POKéMON do fundo do mar.$"
 

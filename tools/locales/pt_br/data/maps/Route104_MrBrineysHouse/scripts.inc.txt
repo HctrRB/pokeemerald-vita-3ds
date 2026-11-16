@@ -1,0 +1,26 @@
+[Route104_MrBrineysHouse_Text_WaitUpPeeko] 1940bd5823
+SR. BRINEY: Calma aí, mocinha!\nMe espera, PEEKO!$
+
+[Route104_MrBrineysHouse_Text_ItsYouLetsSailToDewford] 77a42342db
+Hm? Você é {PLAYER}{KUN}!\nVocê salvou a minha querida PEEKO!\lDevemos tanto a você!\pComo é?\nVocê quer navegar comigo?\pHmhm…\pEntão você tem uma CARTA para DEWFORD\ne um pacote para SLATEPORT?\pQue vida corrida você deve levar!\pMas, claro, o que você está pedindo\nnão é problema nenhum.\pVeio falar com a pessoa certa!\nVamos zarpar para DEWFORD.$
+
+[Route104_MrBrineysHouse_Text_SetSailForDewford] 23a7c02289
+SR. BRINEY: Então é DEWFORD!\pLevantar âncora!\nPEEKO, minha querida, vamos zarpar!$
+
+[Route104_MrBrineysHouse_Text_DeclineDeliverySail] c2a2c68827
+SR. BRINEY: É mesmo?\nAs entregas podem esperar?\pÉ só me avisar quando quiser\nzarpar!$
+
+[Route104_MrBrineysHouse_Text_NeedToMakeDeliveriesSailToDewford] 749884f465
+SR. BRINEY: Ahoy!\nEu sei bem o que você quer dizer!\pVocê vai entregar uma CARTA em DEWFORD\ne um pacote em SLATEPORT.\pO que você precisa não é problema\nnenhum. Sou a pessoa certa pra isso!\pPrimeiro, vamos zarpar para DEWFORD.$
+
+[Route104_MrBrineysHouse_Text_NeedToDeliverPackageSailToDewford] cdf4af1954
+SR. BRINEY: Ahoy!\nEu sei bem o que você quer dizer!\pVocê vai entregar um pacote ao\nCAP. STERN, em SLATEPORT.\pO que você precisa não é problema\nnenhum. Sou a pessoa certa pra isso!\pPrimeiro, vamos zarpar para DEWFORD.$
+
+[Route104_MrBrineysHouse_Text_WhereAreWeBound] c0039783b1
+SR. BRINEY: Ahoy!\nPor você, eu vou pro mar quando for!\pAgora, meu amigo, para onde vamos?$
+
+[Route104_MrBrineysHouse_Text_TellMeWheneverYouWantToSail] 231bcbed95
+SR. BRINEY: É mesmo?\nBom, a PEEKO deve a vida a você.\pÉ só me avisar quando quiser\nzarpar!$
+
+[Route104_MrBrineysHouse_Text_Peeko] fe97d4c30b
+PEEKO: Piii piiriu!$

@@ -51,39 +51,38 @@ PacifidlogTown_House3_EventScript_Girl::
 	end
 
 PacifidlogTown_House3_Text_WillingToTradeIt:
-	.string "Check out this {STR_VAR_2}!\p"
-	.string "It's the {STR_VAR_2} that I caught\n"
-	.string "yesterday to celebrate my birthday!\p"
-	.string "Oh, I can see that you want it!\n"
-	.string "After all, it's priceless!\p"
-	.string "I'll tell you what. I might be willing\n"
-	.string "to trade it for a {STR_VAR_1}.$"
+	.string "Olha só este {STR_VAR_2}!\p"
+	.string "É o {STR_VAR_2} que peguei ontem pra\n"
+	.string "comemorar o meu aniversário!\p"
+	.string "Ah, já vi que você quer!\n"
+	.string "Afinal, ele não tem preço!\p"
+	.string "Vou te dizer uma coisa. Talvez eu\n"
+	.string "troque ele por um {STR_VAR_1}.$"
 
 PacifidlogTown_House3_Text_ItsSubtlyDifferentThankYou:
-	.string "Oh, so this is a {STR_VAR_1}?\p"
-	.string "It's sort of like a {STR_VAR_2},\n"
-	.string "and yet it's subtly different.\p"
-	.string "Thank you!$"
+	.string "Ah, então isto é um {STR_VAR_1}?\p"
+	.string "Parece um {STR_VAR_2}, mas é\n"
+	.string "sutilmente diferente.\p"
+	.string "Obrigado!$"
 
 PacifidlogTown_House3_Text_WontAcceptAnyLessThanRealMon:
-	.string "No, no, no! I won't accept any\n"
-	.string "less than a real {STR_VAR_1}!$"
+	.string "Não, não, não! Só aceito um\n"
+	.string "{STR_VAR_1} de verdade!$"
 
 PacifidlogTown_House3_Text_NotDesperateOrAnything:
-	.string "Oh, so you're not going to go through\n"
-	.string "with this?\p"
-	.string "That's cool. I'm not desperate to make\n"
-	.string "a trade or anything.$"
+	.string "Ah, então você não vai trocar?\p"
+	.string "Tudo bem. Não estou desesperado\n"
+	.string "pra trocar nem nada.$"
 
 PacifidlogTown_House3_Text_ReallyWantedToGetBagon:
-	.string "I know I could go looking for one\n"
-	.string "on my own, but…\p"
-	.string "But I really wanted to get a BAGON\n"
-	.string "that another TRAINER caught…$"
+	.string "Sei que podia procurar um sozinho,\n"
+	.string "mas…\p"
+	.string "Mas eu queria muito um BAGON que\n"
+	.string "outro TREINADOR pegou…$"
 
 PacifidlogTown_House3_Text_IsThatAPokedex:
-	.string "Is that a POKéDEX?\p"
-	.string "Did you get to meet a lot of different\n"
-	.string "POKéMON?\p"
-	.string "I wish I was like you.$"
+	.string "Isso é uma POKéDEX?\p"
+	.string "Você conheceu um monte de POKéMON\n"
+	.string "diferentes?\p"
+	.string "Queria ser como você.$"
 

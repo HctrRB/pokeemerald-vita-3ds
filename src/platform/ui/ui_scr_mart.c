@@ -291,7 +291,7 @@ static void Build(void)
             UiSpr_Decoration(item, 36, 80, 48);
             DecorName(item, name, sizeof(name));
             UiText_Draw(UI_FACE_PS2P, 16, 100, 82, name, UI_COL_INK);
-            snprintf(buf, sizeof(buf), "In PC: x%u", (unsigned)OwnedDecor(item));
+            snprintf(buf, sizeof(buf), UiLocale_Translate("In PC: x%u"), (unsigned)OwnedDecor(item));
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 100, 104, buf, UI_COL_INK);
             UiGame_Text(gDecorations[item].description, buf, sizeof(buf));
             UiW_TextWrapped(32, 140, 280, 30, buf, UI_COL_INK, 4);
@@ -303,7 +303,7 @@ static void Build(void)
         UiSpr_ItemIcon(item, 36, 80, 2);
         UiGame_ItemName(item, name, sizeof(name));
         UiText_Draw(UI_FACE_PS2P, 16, 100, 82, name, UI_COL_INK);
-        snprintf(buf, sizeof(buf), "In bag: x%u", (unsigned)Owned(item));
+        snprintf(buf, sizeof(buf), UiLocale_Translate("In bag: x%u"), (unsigned)Owned(item));
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 100, 104, buf, UI_COL_INK);
         UiGame_ItemDescription(item, buf, sizeof(buf));
         UiW_TextWrapped(32, 140, 280, 30, buf, UI_COL_INK, 4);

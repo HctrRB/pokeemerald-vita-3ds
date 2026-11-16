@@ -285,7 +285,7 @@ bool UiMirror_Draw(void)
             UiSpr_ItemIcon(sShownItem, x + 26, y - 86, 2);
             char buf[48];
             const int32_t pk = UiGame_ItemPocket(sShownItem) + 1;
-            snprintf(buf, sizeof(buf), "Put away in the %s POCKET", pk >= 1 && pk <= 5 ? pockets[pk] : "");
+            snprintf(buf, sizeof(buf), UiLocale_Translate("Put away in the %s POCKET"), pk >= 1 && pk <= 5 ? pockets[pk] : "");
             const int32_t cw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf) + 24;
             UiW_Capsule(x + 112, y - 52, cw, 34);
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 124, y - 51, buf, UI_COL_ON_FRAME);
@@ -298,7 +298,7 @@ bool UiMirror_Draw(void)
     {
         // Money box (shops, games): top right
         char money[24];
-        snprintf(money, sizeof(money), "MONEY $%u", (unsigned)UiGame_Money());
+        snprintf(money, sizeof(money), UiLocale_Translate("MONEY $%u"), (unsigned)UiGame_Money());
         const int32_t mw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, money) + 28;
         UiW_DialogBox(UI_SCREEN_W - 48 - mw, 16, mw, 44);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, UI_SCREEN_W - 48 - mw + 14, 20, money, UI_COL_INK);

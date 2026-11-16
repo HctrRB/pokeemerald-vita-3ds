@@ -1,0 +1,77 @@
+[BattleFrontier_BattleTowerBattleRoom_Text_RestoreMonsToFullHealth] d9000e5bda
+Vamos recuperar totalmente os\nseus POKéMON.$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_ReadyForOpponent] 85eb870c83
+Agora é o oponente nº {STR_VAR_1}.\nEstá tudo pronto?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_ReadyFor2ndOpponent] 8c8a66dfdc
+Você vai enfrentar o oponente nº 2.\nEstá tudo pronto?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_ReadyFor3rdOpponent] 52e997eb18
+Você vai enfrentar o oponente nº 3.\nEstá tudo pronto?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_ReadyFor4thOpponent] aea9acc8b3
+Você vai enfrentar o oponente nº 4.\nEstá tudo pronto?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_ReadyFor5thOpponent] cc0eaa24c4
+Você vai enfrentar o oponente nº 5.\nEstá tudo pronto?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_ReadyFor6thOpponent] 0381379465
+Você vai enfrentar o oponente nº 6.\nEstá tudo pronto?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_ReadyFor7thOpponent] 5641ee1029
+Você vai enfrentar o oponente nº 7.\nEstá tudo pronto?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_RecordYourBattle] 3aead366a1
+Gravar a batalha no\nPASSE DA FRONTEIRA?$
+
+[BattleFrontier_BattleTowerLobby_Text_BattleRecordedOnPass] 97ca68d630
+A batalha de {PLAYER} foi gravada\nno PASSE DA FRONTEIRA.$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_SaveAndQuitGame] d6632fe4e1
+Quer salvar e sair do jogo?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_SavingPleaseWait] 10f5098460
+Salvando os dados da batalha.\nAguarde, por favor.$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_CancelYourChallenge] 5ec4856ada
+Quer cancelar o desafio da SALA\nDE BATALHA?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_RecordCouldntBeSaved] d65072437a
+Houve algum erro.\nNão foi possível salvar o resultado.$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_SalonMaidenOnHerWay] 5c48a6e956
+Com licença, mas…\pA nossa líder, a DAMA DO SALÃO, está\nvindo pra cá querendo batalhar.\pEla deve chegar logo.$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_ReadyForSalonMaiden] a9bb25739b
+Você vai enfrentar a DAMA DO SALÃO.\nEstá tudo pronto?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_GreetingsImAnabel] c10b61946d
+Saudações…\nMeu nome é ANABEL.\pSou a DAMA DO SALÃO e comando a\nTORRE DE BATALHA…\pOuvi vários boatos sobre você…\pSinceramente, o que ouvi não me\nparece nada atraente…\pO motivo de eu ter vindo te ver…\nBem, só há um motivo…$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_LetMeSeeYourTalent] a67734a08a
+Mostre-me todo o seu talento…$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_AnabelTalentShallBeRecognized] 007ac97642
+ANABEL: Fufufu, muito bem…\pO seu PASSE DA FRONTEIRA, por favor…\nO seu talento será reconhecido.$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_ReceivedAbilitySymbol] 324e50483d
+O Símbolo do Talento foi gravado no\nPASSE DA FRONTEIRA!$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_UntilNextTime] 212c39afd6
+… … … … … …\pVocê confia no seu talento de\nbatalha POKéMON, não é?\pPeço que continue batalhando e\nvencendo.\pVou esperar por você.\nAté a próxima…$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_AnabelYouCameBack] 887ced565f
+ANABEL: Você voltou mesmo pra\nme ver…\p… … … … … …\pVenceu batalhas seguidas pra me\nver… Não vou precisar me segurar…\pFaz tempo demais…\pTempo demais desde que batalhei\nsem pensar em nada…$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_LetsBeginShallWe] 920e4412a6
+Vamos começar?$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_AnabelCongratsYourPassPlease] 11584e1712
+ANABEL: Fufu, parabéns…\nO seu PASSE DA FRONTEIRA, por favor…$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_AbilitySymbolTookGoldenShine] 58137a6577
+O Símbolo do Talento ganhou um\nbrilho dourado!$
+
+[BattleFrontier_BattleTowerBattleRoom_Text_WishICouldBattleYouAgain] b45342ccf5
+Foi divertido…\pNunca tive uma batalha POKéMON tão\nagradável…\pQueria poder batalhar com você\nde novo…$

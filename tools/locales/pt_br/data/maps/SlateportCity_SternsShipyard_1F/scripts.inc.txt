@@ -1,0 +1,26 @@
+[SlateportCity_SternsShipyard_1F_Text_CantMakeHeadsOrTails] ebe4f4d895
+Hum… Se isto vai aqui, e aquilo\nvai ali…\pEntão onde vai esta coisa?\nE aquele troço ali?\pAaargh! Não estou entendendo\nnada disto!$
+
+[SlateportCity_SternsShipyard_1F_Text_MeetDockDeliverToStern] 5ae229e817
+Hm?\nOi, eu sou o DOCK.\pO CAP. STERN me encomendou o\nprojeto de uma balsa.\pAh! Isso aí…\nSão as PEÇAS DEVON?\pMas, hmm…\nAssim não dá…\pO CAP. STERN saiu pra algum lugar.\nDisse que tinha um trabalho a fazer.\pVocê pode ir achar o CAP. STERN\ne entregar isso a ele?$
+
+[SlateportCity_SternsShipyard_1F_Text_CouldYouFindStern] 63602148f6
+DOCK: Aonde será que o CAP. STERN\nfoi?\pVocê pode achar o CAP. STERN e\nentregar esse pacote a ele?$
+
+[SlateportCity_SternsShipyard_1F_Text_CouldUseAdviceFromVeteran] 80c207409c
+DOCK: Construir navios é uma arte.\pMuita coisa não se resolve só\nfazendo contas.\pEu precisava muito do conselho de um\nveterano que conheça o mar…$
+
+[SlateportCity_SternsShipyard_1F_Text_BrineyJoinedUs] a9ed557c9e
+DOCK: Oi! O SR. BRINEY veio nos\najudar.\pGraças ao velho marinheiro, a balsa\nestá ficando pronta aos poucos.$
+
+[SlateportCity_SternsShipyard_1F_Text_FerryIsReady] 181e10efbe
+DOCK: A balsa finalmente está pronta!\pA nova S.S. TIDAL é mesmo uma\nmaravilha da tecnologia!\pMas tenho a sensação de que dá pra\nfazer algo ainda melhor.\pSabe, a tecnologia nunca para\nde avançar.$
+
+[SlateportCity_SternsShipyard_1F_Text_DecidedToHelpDock] c5874d306f
+SR. BRINEY: Ah, {PLAYER}{KUN}!\nQuanto tempo!\pÉ, desde que te conheci, este velho lobo\ndo mar anda cheio de energia!\pEntão resolvi ajudar o DOCK a fazer\numa balsa.\pAfinal, uma balsa leva muita\ngente.\pMas, sabe, esse DOCK é mesmo\nespecial.\pCom o talento dele pra tecnologia e\na minha experiência, com certeza a\lgente constrói um baita navio!$
+
+[SlateportCity_SternsShipyard_1F_Text_SeaIsLikeLivingThing] 0a3ea454c1
+As estações, o tempo, onde a lua\nfica no céu…\pEssas e outras coisas fazem\no mar mudar de cara.\pÉ isso aí!\nO mar é como um ser vivo!$
+
+[SlateportCity_SternsShipyard_1F_Text_GetSeasickEasily] 93ad826720
+Eu enjoo no mar muito fácil.\nEntão eu ajudo aqui, em vez disso.$

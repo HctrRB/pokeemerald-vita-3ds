@@ -1,0 +1,26 @@
+[LilycoveCity_MoveDeletersHouse_Text_ICanMakeMonForgetMove] 48a48dd9bf
+Hã…\nAh, sim, eu sou o APAGADOR DE GOLPES.\pFaço POKéMON esquecerem golpes.\pQuer que eu faça isso?$
+
+[LilycoveCity_MoveDeletersHouse_Text_WhichMonShouldForget] c3149430b8
+Qual POKéMON vai esquecer um golpe?$
+
+[LilycoveCity_MoveDeletersHouse_Text_WhichMoveShouldBeForgotten] 022372a9d5
+Que golpe deve ser esquecido?$
+
+[LilycoveCity_MoveDeletersHouse_Text_MonOnlyKnowsOneMove] 92c0147b8f
+{STR_VAR_1} só sabe um golpe,\nentão não pode esquecer…$
+
+[LilycoveCity_MoveDeletersHouse_Text_MonsMoveShouldBeForgotten] 604e961790
+Hum! {STR_VAR_2} de {STR_VAR_1}?\nEsse golpe deve ser esquecido?$
+
+[LilycoveCity_MoveDeletersHouse_Text_MonHasForgottenMove] 3dd52fde80
+Funcionou perfeitamente!\p{STR_VAR_1} esqueceu\n{STR_VAR_2} completamente.$
+
+[LilycoveCity_MoveDeletersHouse_Text_ComeAgain] edcf92df3f
+Volte se tiver golpes que precisem\nser esquecidos.$
+
+[LilycoveCity_MoveDeletersHouse_Text_EggCantForgetMoves] ab5c07b506
+Quê?\nOVO nenhum deveria saber golpes.$
+
+[LilycoveCity_MoveDeletersHouse_Text_CantForgetSurf] 599766d941
+Hum!\pO seu {STR_VAR_1} parece não querer\nesquecer SURFAR.$

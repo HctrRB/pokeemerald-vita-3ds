@@ -1,0 +1,116 @@
+[LavaridgeTown_Gym_1F_Text_GymGuideAdvice] ab8bf3f2fd
+E aí, como vai, {PLAYER},\nfutura estrela da LIGA?\pFLANNERY, a LÍDER do GINÁSIO de\nLAVARIDGE, usa POKéMON de FOGO.\pA paixão dela pelos POKéMON queima\nmais forte que um vulcão.\pNão chegue perto demais: você vai\nse queimar! Jogue água nela e\lmanda ver!$
+
+[LavaridgeTown_Gym_1F_Text_GymGuidePostVictory] 93e47d5c50
+Uau! Que batalha escaldante!$
+
+[LavaridgeTown_Gym_1F_Text_ColeIntro] 6ad5d451b8
+Aiaiaiaiai!\nNossa, como é quente!$
+
+[LavaridgeTown_Gym_1F_Text_ColeDefeat] a117d22357
+O suor está caindo nos meus olhos…$
+
+[LavaridgeTown_Gym_1F_Text_ColePostBattle] fde6290271
+Ficar enterrado na areia quente\nmelhora a circulação.\pFaz bem pra dor nas juntas.$
+
+[LavaridgeTown_Gym_1F_Text_AxleIntro] 25eacd2276
+Estou tentando relaxar.\nNão venha me estressar!$
+
+[LavaridgeTown_Gym_1F_Text_AxleDefeat] 0852ddeedb
+Tomara que a FLANNERY te torre!$
+
+[LavaridgeTown_Gym_1F_Text_AxlePostBattle] 5046158508
+Aaah… Ufa…\pFicar muito tempo enterrado na areia\nquente cansa a gente…$
+
+[LavaridgeTown_Gym_B1F_Text_KeeganIntro] 6fe701dd71
+Você já deve estar sem fôlego.\nQuer descansar na areia quente,\lnão quer?\pMas saiba que manter a força de\nvontade é uma habilidade importante\lpra todo TREINADOR.$
+
+[LavaridgeTown_Gym_B1F_Text_KeeganDefeat] 8b01ec5d0e
+Quem brinca com fogo se queima…$
+
+[LavaridgeTown_Gym_B1F_Text_KeeganPostBattle] 40045981e9
+A sua habilidade é real…\nMas a nossa LÍDER FLANNERY é forte.\pSe não tomar cuidado, você vai\nse queimar feio.$
+
+[LavaridgeTown_Gym_1F_Text_GeraldIntro] ebf85e7db5
+Os seus POKéMON aguentam\n200 graus de calor?$
+
+[LavaridgeTown_Gym_1F_Text_GeraldDefeat] d242c9a326
+Não queimou o bastante…$
+
+[LavaridgeTown_Gym_1F_Text_GeraldPostBattle] 4202ae5894
+A temperatura do magma é de\n200 graus.\pOs seus POKéMON me venceram, então\nsobrevivem fácil no magma.$
+
+[LavaridgeTown_Gym_1F_Text_DanielleIntro] 2bfea4cb84
+Hã…\nTá bom, vou batalhar com você.$
+
+[LavaridgeTown_Gym_1F_Text_DanielleDefeat] 5e6247d784
+Ah, mas você é forte demais.$
+
+[LavaridgeTown_Gym_1F_Text_DaniellePostBattle] 44ea4b55b8
+Vou ser uma TREINADORA linda e forte\nque nem a FLANNERY.$
+
+[LavaridgeTown_Gym_B1F_Text_JaceIntro] 9524dd7b20
+Vamos, anda logo!\nAntes que o meu ânimo esfrie!$
+
+[LavaridgeTown_Gym_B1F_Text_JaceDefeat] 8bde16835c
+Está tão quente, mas o meu coração\nficou gelado…$
+
+[LavaridgeTown_Gym_B1F_Text_JacePostBattle] d9aeb04c1a
+Com esse espírito de luta queimando\naí dentro, você pode ter chance\lcontra a nossa LÍDER.$
+
+[LavaridgeTown_Gym_B1F_Text_JeffIntro] 27787a3c22
+Está vendo como as chamas ardem?\nÉ que elas já sentem a minha vitória!$
+
+[LavaridgeTown_Gym_B1F_Text_JeffDefeat] 9257e18e41
+Alguma coisa deu errado.$
+
+[LavaridgeTown_Gym_B1F_Text_JeffPostBattle] 3dc24515cc
+E daí? E daí, hein?\nEu ando descalço em brasa!\p…Nem pense em tentar isso!$
+
+[LavaridgeTown_Gym_B1F_Text_EliIntro] 6eafc61304
+Adoro montanhas, mas adoro\nprincipalmente vulcões.$
+
+[LavaridgeTown_Gym_B1F_Text_EliDefeat] 518a02ec9a
+Bom, parece que perdi sem nunca\nter o controle.$
+
+[LavaridgeTown_Gym_B1F_Text_EliPostBattle] 9b6149024a
+Fico aqui porque virei fã do poder\nda FLANNERY.\pHehehehe.$
+
+[LavaridgeTown_Gym_1F_Text_FlanneryIntro] 2228129d3d
+Boas-vindas… Não, espera.\pTREINADOR insignificante, que bom\nque chegou até aqui!\pFui encarregada de… Não, espera.\pEu sou a FLANNERY, a LÍDER deste\nGINÁSIO!\pHã…\nNão me subestime, mesmo que eu\lseja LÍDER há pouco tempo!\pCom as técnicas herdadas do meu avô,\nvou, hã… mostrar os golpes quentes\lque aperfeiçoamos nesta terra!$
+
+[LavaridgeTown_Gym_1F_Text_FlanneryDefeat] 4466f30db5
+Ah…\nAcho que me esforcei demais…\pEu… Virei LÍDER de GINÁSIO há\npouco tempo.\pTentei ser alguém que eu não sou.\pTenho que agir do meu jeito. Senão,\nos meus POKéMON ficam confusos.\pObrigada por me ensinar isso.\nPor isso, você merece isto.$
+
+[LavaridgeTown_Gym_1F_Text_ReceivedHeatBadge] 90924ce8f0
+{PLAYER} recebeu a INSÍGNIA DO CALOR\nda FLANNERY.$
+
+[LavaridgeTown_Gym_1F_Text_ExplainHeatBadgeTakeThis] f3ba202cf2
+Com a INSÍGNIA DO CALOR, todos os\nPOKéMON até o NV. 50, mesmo os\lrecebidos em trocas, vão te\lobedecer direitinho.\pE os POKéMON podem usar o golpe\nde MO FORÇA fora da batalha.\pIsto é um sinal da minha gratidão.\nPode pegar sem vergonha!$
+
+[LavaridgeTown_Gym_1F_Text_ExplainOverheat] a6f240ce42
+Essa MT50 contém SUPERAQUECER.\pEsse golpe causa um dano enorme\nno oponente.\pMas também reduz muito o AT. ESP.\nde quem usa. Talvez não seja bom\lpra batalhas longas.$
+
+[LavaridgeTown_Gym_1F_Text_RegisteredFlannery] 7747fd43f3
+A LÍDER FLANNERY foi registrada\nno POKéNAV.$
+
+[LavaridgeTown_Gym_1F_Text_FlanneryPostBattle] bcd065515a
+A sua força me lembra alguém…\pAh! Já sei! Você luta igual ao NORMAN,\no LÍDER do GINÁSIO de PETALBURG.$
+
+[LavaridgeTown_Gym_1F_Text_GymStatue] b7027ccd59
+GINÁSIO POKéMON DE LAVARIDGE$
+
+[LavaridgeTown_Gym_1F_Text_GymStatueCertified] 76393c830d
+GINÁSIO POKéMON DE LAVARIDGE\pTREINADORES APROVADOS POR FLANNERY:\n{PLAYER}$
+
+[LavaridgeTown_Gym_1F_Text_FlanneryPreRematch] f3dfddc5e9
+FLANNERY: Perder uma batalha não\nvai me desanimar.\pEu amo os POKéMON.\nAmo batalhar.\lE… amo este GINÁSIO!\pVamos trocar golpes superquentes\nem outra batalha!$
+
+[LavaridgeTown_Gym_1F_Text_FlanneryRematchDefeat] 8a5d0f987e
+Ufa!\nQuase entrei em erupção!$
+
+[LavaridgeTown_Gym_1F_Text_FlanneryPostRematch] 830bec4188
+FLANNERY: Perdi, mas fiquei\ncompletamente satisfeita.\pNão é sempre que tenho uma\nbatalha tão quente assim.\pVamos ter outra dessas um dia!$
+
+[LavaridgeTown_Gym_1F_Text_FlanneryRematchNeedTwoMons] d67ce14251
+FLANNERY: Perder uma batalha não\nvai me desanimar.\pEu amo os POKéMON.\nAmo batalhar.\lE… amo este GINÁSIO!\pVamos trocar golpes superquentes\nem outra batalha!\pOpa, espera. Você só tem um POKéMON\nque pode batalhar?\pDesculpa, mas, quando vier me ver,\ntraga pelo menos dois POKéMON.$

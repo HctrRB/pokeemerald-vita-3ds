@@ -58,6 +58,7 @@ static const struct { const char *key, *help; } sExtraHelp[] = {
     { "ff_button", "Hold the button, or press it once to toggle." },
     { "filter", "How the 2D screens are scaled to the Vita display." },
     { "ui_theme", "Colour and style of the menus." },
+    { "ui_lang", "Display language of Vita menus. Game text stays in PT-BR." },
     { "voxel_3d", "Draw the overworld as a 3D voxel diorama." },
     { "voxel_blur", "Blur the far background of the diorama." },
     { "voxel_fps", "Frame rate of the 3D world. 60 uses more battery." },
@@ -162,7 +163,7 @@ static void ExtraValue(const VitaExtra *ex, char *out, size_t cap)
     if (ex->text != NULL)
         UiGame_Text(ex->text(), out, cap);
     else if (ex->count == 0)
-        snprintf(out, cap, "EXECUTE");
+        snprintf(out, cap, UiLocale_Translate("EXECUTE"));
     else
     {
         const int v = VitaExtras_Get(ex->key);

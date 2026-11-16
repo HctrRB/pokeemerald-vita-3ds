@@ -227,9 +227,12 @@ target_compile_options(pokeemerald PRIVATE ${PLATFORM_COMPILE_OPTIONS})
 # (e.g. SDL2 built with the vitaGL backend also needs vitaGL and its dependencies).
 # vitaGL renders the 3D world, GBA stage and native UI; SDL2 is kept for audio, timers, semaphores and threads.
 find_package(SDL2 REQUIRED CONFIG)
+# A separately built vitaGL (make NO_SPLASHSCREEN=1) can be selected without
+# replacing the global VitaSDK library used by other projects.
+set(VITA_GL_LIBRARY "vitaGL" CACHE STRING "vitaGL library or no-splash static archive")
 target_link_libraries(pokeemerald PRIVATE
     SDL2::SDL2-static
-    vitaGL
+    "${VITA_GL_LIBRARY}"
     vitashark
     mathneon
     SceShaccCgExt
@@ -303,6 +306,12 @@ foreach(UA IN LISTS UI2_ASSETS)
     list(APPEND VPK_FILE_ARGS -a "${UA}=ui2/${UA_NAME}")
     list(APPEND VPK_FILE_DEPS "${UA}")
 endforeach()
+
+# Custom Wolff's Room startup logo (raw RGBA data, not the source PNG).
+if(EXISTS "${ROOT}/assets/splash/wolff_paw.rgba")
+    list(APPEND VPK_FILE_ARGS -a "${ROOT}/assets/splash/wolff_paw.rgba=splash/wolff_paw.rgba")
+    list(APPEND VPK_FILE_DEPS "${ROOT}/assets/splash/wolff_paw.rgba")
+endif()
 
 set(PARAM_SFO "${CMAKE_BINARY_DIR}/param.sfo")
 add_custom_command(

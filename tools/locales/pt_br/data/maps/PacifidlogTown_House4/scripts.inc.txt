@@ -1,0 +1,14 @@
+[PacifidlogTown_House4_Text_PeopleSawHighFlyingPokemon] e0cf848d71
+O pessoal disse que viu um POKéMON\nvoando bem alto sobre HOENN.\pEle voa o tempo todo?\nNão precisa descansar em algum lugar?$
+
+[PacifidlogTown_House4_Text_SkyPokemon] 4bfea4e8eb
+Um POKéMON do céu!\nUm POKéMON do céu!$
+
+[PacifidlogTown_House4_Text_WhereDidYouComeFrom] cf22ec82c8
+De onde você veio?$
+
+[PacifidlogTown_House4_Text_YesTown] e46cac2691
+Sim?\nCIDADE DO SIM?\pNunca ouvi falar de um lugar assim.$
+
+[PacifidlogTown_House4_Text_YouHaveToComeFromSomewhere] 1b8a2a88e7
+Não? Isso não faz sentido.\nVocê tem que ter vindo de algum lugar.\pAh! Espera! Não vai me dizer que\nnasceu no fundo do mar?$

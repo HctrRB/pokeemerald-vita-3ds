@@ -1,0 +1,14 @@
+[BattleFrontier_Lounge6_Text_WouldYouLikeToTrade] aa398e8e3d
+O meu POKéMON é um {STR_VAR_2}.\nConhece?\lÉ fofo e bem bonzinho.\pEste pequeno eu trocaria com\norgulho!\pQuer me dar um {STR_VAR_1}\npelo meu {STR_VAR_2}?$
+
+[BattleFrontier_Lounge6_Text_PromiseIllBeGoodToIt] d31950ba5e
+Ah, que fofo!\nObrigada!\lPrometo cuidar bem dele!\pAh! Espero que cuide bem do meu\n{STR_VAR_2} também!$
+
+[BattleFrontier_Lounge6_Text_DontTradeForAnythingButMon] ab324e5717
+Ah, desculpe!\nSó troco por um {STR_VAR_1}.$
+
+[BattleFrontier_Lounge6_Text_WellThatsFineToo] 6c3aa9e2c9
+Ah, não quer?\nBom, tudo bem também.\lVenha nos visitar de novo.$
+
+[BattleFrontier_Lounge6_Text_SkittySoMuchCuterThanImagined] 635685f256
+Hihi!\nO SKITTY é muito mais fofo do que\leu imaginava. Que alegria!$

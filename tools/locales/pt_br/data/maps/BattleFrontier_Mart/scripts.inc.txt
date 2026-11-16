@@ -1,0 +1,8 @@
+[BattleFrontier_Mart_Text_ChaperonGrandson] 1287aee35d
+Viemos acompanhar o nosso neto.\pMas, já que estamos aqui, pensamos\nem levar umas lembrancinhas.$
+
+[BattleFrontier_Mart_Text_ProteinMakeNiceGift] 49af1afed1
+Querido, o que acha disto?\nNão seria um bom presente?\pÉ… PRO-TE-Í-NA?\nParece gostoso, não parece?$
+
+[BattleFrontier_Mart_Text_FacilitiesDontAllowItems] cc96c313a3
+Muitas instalações da FRONTEIRA não\ndeixam usar itens nas batalhas.\pEssa regra deixa tudo ainda mais\ndifícil!$

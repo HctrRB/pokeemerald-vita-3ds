@@ -1,0 +1,8 @@
+[PacifidlogTown_House5_Text_CantSeeMirageIslandToday] 92d45fd488
+Não dá pra ver a ILHA MIRAGEM hoje…$
+
+[PacifidlogTown_House5_Text_CanSeeMirageIslandToday] 03f3f70b17
+Oh! Minha nossa!\nDá pra ver a ILHA MIRAGEM hoje!$
+
+[PacifidlogTown_House5_Text_MirageIslandAppearDependingOnWeather] 91dfced01d
+A ILHA MIRAGEM…\pEla deve aparecer e sumir conforme\no tempo, que cria as miragens.\pOu será que ela aparece e some de\nverdade?$

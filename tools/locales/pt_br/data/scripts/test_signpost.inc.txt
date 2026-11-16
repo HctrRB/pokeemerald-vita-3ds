@@ -1,0 +1,2 @@
+[Text_ThisIsATestSignpostMsg] b78d05bc6b
+Esta é uma mensagem de teste.\nIsto é uma placa.$

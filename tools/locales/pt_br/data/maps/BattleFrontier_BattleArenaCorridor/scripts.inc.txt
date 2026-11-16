@@ -1,0 +1,2 @@
+[BattleFrontier_BattleArenaCorridor_Text_PleaseStepIn] 14ba057e5b
+As suas batalhas serão na próxima\nsala. Entre, por favor!$

@@ -1,0 +1,26 @@
+[RivalsHouse_2F_Text_MayWhoAreYou] 27ee5986dc
+Hã?\nQuem… Quem é você?\p… … … … … … … …\n… … … … … … … …\pAh, você é {PLAYER}{KUN}.\nEntão a sua mudança foi hoje.\pHum… Eu sou a MAY.\nPrazer em te conhecer!\pEu…\nEu sonho em fazer amizade com\lPOKéMON do mundo inteiro.\pEu… Eu ouvi falar de você, {PLAYER}{KUN},\npelo meu pai, o PROF. BIRCH.\pEu esperava que você fosse legal,\n{PLAYER}{KUN}, e que fôssemos amigos.\pAi, que bobagem, não é?\nEu… Eu acabei de te conhecer, {PLAYER}{KUN}.\pHehehe…\pAh, não! Eu esqueci!\pEu ia ajudar o papai a capturar\nalguns POKéMON selvagens!\p{PLAYER}{KUN}, a gente se vê!$
+
+[RivalsHouse_2F_Text_MayGettingReady] 44e1db1915
+POKéMON recuperados!\nItens prontos, e…$
+
+[RivalsHouse_2F_Text_BrendanWhoAreYou] 5a77bb58ee
+Ei!\nVocê…\pQuem é você?\pAh, você é {PLAYER}, não é?\nSe mudou aqui para o lado, certo?\pEu não sabia que você era menina.\pO papai, o PROF. BIRCH, disse que o\nnovo vizinho era filho de um LÍDER DE\lGINÁSIO, então achei que fosse menino.\pMeu nome é BRENDAN.\nEntão, oi, vizinha!\pHã? Ei, {PLAYER}, você não tem\num POKéMON?\pQuer que eu vá capturar um para você?\pAh, droga, eu esqueci…\pEu tenho que ajudar o meu pai a\ncapturar alguns POKéMON selvagens.\pFica para outra vez, tá?$
+
+[RivalsHouse_2F_Text_BrendanGettingReady] 8072d579e9
+POKéMON recuperados…\nItens na BOLSA, e…$
+
+[RivalsHouse_2F_Text_ItsRivalsPokeBall] 9b9f880b32
+É a POKé BOLA de {RIVAL}!\pMelhor deixar onde está.$
+
+[RivalsHouse_2F_Text_MayJustCheckingMyPokedex] 8d46bdb2be
+MAY: {PLAYER}{KUN}!\pEu estava olhando a minha POKéDEX.\pAinda tem muitos POKéMON que eu\njá vi, mas não capturei.\pE tem muitos outros que eu\nacho que vão evoluir.\pAonde será que eu vou capturar\nPOKéMON agora?$
+
+[RivalsHouse_2F_Text_MayWhereShouldIGoNext] c20c7856ee
+MAY: Aonde será que eu vou capturar\nPOKéMON agora?\pNão seria engraçado se a gente se\nencontrasse por aí, {PLAYER}{KUN}?$
+
+[RivalsHouse_2F_Text_BrendanJustCheckingMyPokedex] b5b1e9aec5
+BRENDAN: Ei, é {PLAYER}.\pEu estava conferindo a minha POKéDEX.\pEu sei que ainda falta capturar\nmuitos POKéMON, mas ela\lestá ficando bem completa.\pOlhar esta POKéDEX me dá vontade\nde cair na estrada de novo.$
+
+[RivalsHouse_2F_Text_BrendanWhereShouldIGoNext] 7c3655a074
+BRENDAN: Está difícil decidir onde\nvou capturar POKéMON agora.\pEi, {PLAYER}, se eu te encontrar por aí\ncapturando POKéMON, a gente pode\lbatalhar, se você quiser.$

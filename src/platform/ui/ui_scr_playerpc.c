@@ -387,7 +387,7 @@ static void MailGiveAsk(void)
         ToastText(gText_NoPokemon);
         return;
     }
-    snprintf(sQuestion, sizeof(sQuestion), "Give the MAIL to which POKéMON?");
+    snprintf(sQuestion, sizeof(sQuestion), UiLocale_Translate("Give the MAIL to which POKéMON?"));
     UiMenu_Open(&sMenu, "GIVE TO", 560, 100, 300);
     for (int32_t i = 0; i < CalculatePlayerPartyCount(); i++)
     {
@@ -792,7 +792,7 @@ static void Build(void)
         BuildDecor();
     else if (sTab == TAB_ITEMS)
     {
-        snprintf(buf, sizeof(buf), "STORED %u / %u", (unsigned)CountUsedPCItemSlots(), (unsigned)PC_ITEMS_COUNT);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("STORED %u / %u"), (unsigned)CountUsedPCItemSlots(), (unsigned)PC_ITEMS_COUNT);
         UiW_HeaderValue(buf, UI_COL_ON_FRAME);
         // Item card
         UiW_Panel(16, 60, 312, 216);
@@ -805,7 +805,7 @@ static void Build(void)
             uint16_t inPc = 0;
             for (int32_t i = 0; i < PC_ITEMS_COUNT; i++)
                 if (gSaveBlock1Ptr->pcItems[i].itemId == item) inPc += gSaveBlock1Ptr->pcItems[i].quantity;
-            snprintf(buf, sizeof(buf), "PC x%u · BAG x%u", (unsigned)inPc, (unsigned)CountTotalItemQuantityInBag(item));
+            snprintf(buf, sizeof(buf), UiLocale_Translate("PC x%u · BAG x%u"), (unsigned)inPc, (unsigned)CountTotalItemQuantityInBag(item));
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 100, 102, buf, UI_COL_INK);
             UiGame_ItemDescription(item, buf, sizeof(buf));
             UiW_TextWrapped(32, 144, 280, 30, buf, UI_COL_INK, 4);
@@ -859,7 +859,7 @@ static void Build(void)
     }
     else
     {
-        snprintf(buf, sizeof(buf), "MAIL %u / %u", (unsigned)sCount, (unsigned)(MAIL_COUNT - PARTY_SIZE));
+        snprintf(buf, sizeof(buf), UiLocale_Translate("MAIL %u / %u"), (unsigned)sCount, (unsigned)(MAIL_COUNT - PARTY_SIZE));
         UiW_HeaderValue(buf, UI_COL_ON_FRAME);
         UiW_Panel(16, 60, 420, 432);
         UiW_PanelHead(16, 60, 420, "STORED MAIL", NULL);

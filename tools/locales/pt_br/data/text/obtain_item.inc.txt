@@ -1,0 +1,26 @@
+[gText_ObtainedTheItem] 93580f3714
+Obteve {STR_VAR_2}!$
+
+[gText_TheBagIsFull] b547b9c2c4
+A BOLSA está cheia…$
+
+[gText_PutItemInPocket] 54d6ba9342
+{PLAYER} guardou {STR_VAR_2}\nno bolso {STR_VAR_3}.$
+
+[gText_PlayerFoundOneItem] 1fdc249f79
+{PLAYER} achou {STR_VAR_2}!$
+
+[gText_TooBadBagIsFull] 9b81d84920
+Que pena!\nA BOLSA está cheia…$
+
+[gText_PlayerPutItemInBag] 2e6013ec81
+{PLAYER} guardou {STR_VAR_2}\nna BOLSA.$
+
+[gText_ObtainedTheDecor] 93580f3714
+Obteve {STR_VAR_2}!$
+
+[gText_NoRoomLeftForAnother] 114dee2f5e
+Que pena! Não há espaço para\nmais um(a) {STR_VAR_2}…$
+
+[gText_TheDecorWasTransferredToThePC] b3d55a8913
+{STR_VAR_2} foi enviado(a)\npara o PC.$

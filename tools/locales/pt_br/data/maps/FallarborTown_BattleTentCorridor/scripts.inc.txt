@@ -1,0 +1,11 @@
+[FallarborTown_ContestHall_Text_DoAllRightInPreliminary] a031fc9f91
+A gente vai bem na etapa preliminar,\nmas nunca ganha nas apresentações…\pTalvez eu tenha que ver o que os\noutros participantes fazem…$
+
+[FallarborTown_ContestHall_Text_MonAllTheseRibbons] 3b7816484e
+Olha!\nO meu POKéMON ganhou estas FITAS!\pOs seus POKéMON já ganharam FITAS?\nDá pra ver no seu POKéNAV.$
+
+[FallarborTown_ContestHall_Text_CantWinEverywhere] 16d2a1bfe9
+Não venço LÍDERES de GINÁSIO…\pNão ganho nenhum CONCURSO…\pJá fui pra tudo quanto é lugar,\ne tudo à toa…$
+
+[FallarborTown_ContestHall_Text_SuperRankStage] 4ec1aea4b2
+CONCURSOS POKéMON\nPALCO DO NÍVEL SUPER!$

@@ -1,0 +1,8 @@
+[LavaridgeTown_PokemonCenter_1F_Text_TrainersPokemonSpendTimeTogether] b20ca1723f
+Acho que os POKéMON se aproximam dos\nTREINADORES quando ficam juntos.\pQuanto mais tempo, melhor.\nÉ o que eu acho.$
+
+[LavaridgeTown_PokemonCenter_1F_Text_HotSpringCanInvigorate] 082de5c0b6
+É meio mágico como só ficar numa\npiscina termal já dá energia.\pQueria poder deixar os meus POKéMON\nde molho também.$
+
+[LavaridgeTown_PokemonCenter_1F_Text_TrainersShouldRestToo] 20e3e8bb95
+Hohoho! Ei, criança, dá pra chegar\nnas fontes termais por aqui.\pSe os POKéMON descansam, os\nTREINADORES também devem descansar.$

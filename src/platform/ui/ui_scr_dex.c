@@ -231,9 +231,9 @@ static void Build(void)
 {
     char buf[32];
     UiKit_Header("POKéDEX", sModeTabs, IsNationalPokedexEnabled() ? 2 : 1, sMode, sTabX, sTabW, 12);
-    snprintf(buf, sizeof(buf), "SEEN %u · OWN %u", (unsigned)GetHoennPokedexCount(FLAG_GET_SEEN), (unsigned)GetHoennPokedexCount(FLAG_GET_CAUGHT));
+    snprintf(buf, sizeof(buf), UiLocale_Translate("SEEN %u · OWN %u"), (unsigned)GetHoennPokedexCount(FLAG_GET_SEEN), (unsigned)GetHoennPokedexCount(FLAG_GET_CAUGHT));
     if (sMode == 1)
-        snprintf(buf, sizeof(buf), "SEEN %u · OWN %u", (unsigned)GetNationalPokedexCount(FLAG_GET_SEEN), (unsigned)GetNationalPokedexCount(FLAG_GET_CAUGHT));
+        snprintf(buf, sizeof(buf), UiLocale_Translate("SEEN %u · OWN %u"), (unsigned)GetNationalPokedexCount(FLAG_GET_SEEN), (unsigned)GetNationalPokedexCount(FLAG_GET_CAUGHT));
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     BuildCard();
     UiW_Panel(416 - 0 + 0, 60, 528, 432);
@@ -316,7 +316,7 @@ static void DetBuild(void)
     char buf[200], name[16];
     UiKit_Header("POKéDEX", sDetTabs, 4, sDetTab, sDetTabX, sDetTabW, 12);
     Name(nat, name, sizeof(name));
-    snprintf(buf, sizeof(buf), "No.%03u %s", (unsigned)nat, name);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("No.%03u %s"), (unsigned)nat, name);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     if (sDetTab == 1)
     {
@@ -382,7 +382,7 @@ static void DetBuild(void)
         UiSpr_TrainerSized(UiGame_PlayerIsMale() ? TRAINER_PIC_BRENDAN : TRAINER_PIC_MAY, 400 - tsz / 2, 460 - tsz, tsz, tsz);
         UiSpr_MonFrontSized(species, 760 - ms / 2, 460 - ms, ms, ms);
         UiGame_PlayerName(name, sizeof(name));
-        snprintf(buf, sizeof(buf), "Size compared with %s", name);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("Size compared with %s"), name);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 296, 84, buf, UI_COL_INK_SOFT);
     }
     int32_t fx = 16;

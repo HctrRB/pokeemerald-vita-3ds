@@ -352,7 +352,11 @@ int32_t UiW_TextWrappedF(uint8_t face, uint8_t px, int32_t x, int32_t y, int32_t
 {
     char line[160];
     int32_t lines = 0;
-    const char *p = text;
+    // Translate the complete help text before splitting it into visual lines.
+    // Translating each wrapped fragment cannot match dictionary entries.
+    const char *p = UiLocale_Translate(text);
+    if (p == NULL)
+        return 0;
     while (*p && lines < maxLines)
     {
         size_t len = 0, lastSpace = 0;
