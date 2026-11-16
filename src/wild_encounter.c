@@ -603,7 +603,7 @@ static u32 VisibleSetting(void)
 #define VW_RANGE_Y   6
 #define VW_NEAREST   3
 #define VW_FORGET    15
-#define VW_TRIES     24
+#define VW_TRIES     48
 #define VW_GROW      12
 #define VW_GROW_BACK 8
 #define VW_VANISH    12
@@ -938,7 +938,7 @@ static bool8 VisibleMakeSprite(struct VisibleWild *v, u8 grow)
     return TRUE;
 }
 
-static void VisibleTrySpawn(u16 headerId)
+static bool8 VisibleTrySpawn(u16 headerId)
 {
     struct ObjectEvent *player = &gObjectEvents[gPlayerAvatar.objectEventId];
     struct VisibleWild *v = NULL;
@@ -952,7 +952,7 @@ static void VisibleTrySpawn(u16 headerId)
         if (!sVisible[i].active)
             v = &sVisible[i];
     if (v == NULL)
-        return;
+        return FALSE;
     for (tries = 0; tries < VW_TRIES; tries++)
     {
         x = player->currentCoords.x + (s16)(Random() % (2 * VW_RANGE_X + 1)) - VW_RANGE_X;
@@ -970,7 +970,7 @@ static void VisibleTrySpawn(u16 headerId)
         wild = &info->wildPokemon[water ? ChooseWildMonIndex_WaterRock() : ChooseWildMonIndex_Land()];
         v->level = ChooseWildMonLevel(wild);
         if (!IsWildLevelAllowedByRepel(v->level))
-            return;
+            return FALSE;
         v->species = wild->species;
         v->personality = ShinyOdds_WildPersonality(v->species, VisibleOtId());
         v->shiny = GET_SHINY_VALUE(VisibleOtId(), v->personality) < SHINY_ODDS;
@@ -985,7 +985,7 @@ static void VisibleTrySpawn(u16 headerId)
         v->idle = VW_GROW + 30 + Random() % 90;
         v->sparkle = 0;
         if (!VisibleMakeSprite(v, VW_GROW))
-            return;
+            return FALSE;
         v->active = TRUE;
         VisibleRustle(v);
         if (v->shiny)
@@ -993,8 +993,9 @@ static void VisibleTrySpawn(u16 headerId)
             VisibleSparkle(v);
             PlaySE(SE_SHINY);
         }
-        return;
+        return TRUE;
     }
+    return FALSE;
 }
 
 static void VisiblePrefetch(u16 headerId)
@@ -1151,7 +1152,7 @@ void VisibleWild_Update(void)
         else
         {
             VisibleRemoveAll();
-            sVisibleSpawnTimer = 30;
+            sVisibleSpawnTimer = 15;
         }
         sVisibleMapGroup = gSaveBlock1Ptr->location.mapGroup;
         sVisibleMapNum = gSaveBlock1Ptr->location.mapNum;
@@ -1232,9 +1233,13 @@ void VisibleWild_Update(void)
         sVisibleSpawnTimer--;
         return;
     }
-    sVisibleSpawnTimer = 120 * 100 / percent;
     if (VisibleCount() < most)
-        VisibleTrySpawn(headerId);
+    {
+        if (VisibleTrySpawn(headerId))
+            sVisibleSpawnTimer = 120 * 100 / percent;
+        else
+            sVisibleSpawnTimer = 15;
+    }
 }
 
 bool8 StandardWildEncounter(u16 curMetatileBehavior, u16 prevMetatileBehavior)
