@@ -8,6 +8,16 @@
 
 #define PLTT_BUFFER_SIZE (PLTT_SIZE / sizeof(u16))
 
+// Extended overworld sprite palettes (stored right after the 32 GBA palettes).
+// Fades and weather treat them identically to PALSLOT_NPC_1 (index 2 in OBJ).
+#define PLTT_EXT_COUNT      16
+#define PLTT_EXT_OFFSET     PLTT_BUFFER_SIZE
+#define PLTT_EXT_SIZE       (PLTT_EXT_COUNT * 16 * sizeof(u16))
+#define PLTT_BUFFER_ALLOC   (PLTT_BUFFER_SIZE + PLTT_EXT_COUNT * 16)
+#define PLTT_EXT_ID(n)      (PLTT_EXT_OFFSET + PLTT_ID(n))
+#define PLTT_EXT_MODEL      2
+#define PLTT_EXT_MODEL_BIT  (1u << (16 + PLTT_EXT_MODEL))
+
 #define PALETTE_FADE_STATUS_DELAY 2
 #define PALETTE_FADE_STATUS_ACTIVE 1
 #define PALETTE_FADE_STATUS_DONE 0
@@ -55,8 +65,14 @@ struct PaletteFadeControl
 extern struct PaletteFadeControl gPaletteFade;
 extern u32 gPlttBufferTransferPending;
 extern u8 ALIGNED(4) gPaletteDecompressionBuffer[];
-extern u16 ALIGNED(4) gPlttBufferUnfaded[PLTT_BUFFER_SIZE];
-extern u16 ALIGNED(4) gPlttBufferFaded[PLTT_BUFFER_SIZE];
+extern u16 ALIGNED(4) gPlttBufferUnfaded[PLTT_BUFFER_ALLOC];
+extern u16 ALIGNED(4) gPlttBufferFaded[PLTT_BUFFER_ALLOC];
+extern u16 gPlttExtInUse;
+
+static inline u16 PlttExt_Selected(u32 selectedPalettes)
+{
+    return (selectedPalettes & PLTT_EXT_MODEL_BIT) ? gPlttExtInUse : 0;
+}
 
 void LoadCompressedPalette(const u32 *src, u16 offset, u16 size);
 void LoadPalette(const void *src, u16 offset, u16 size);

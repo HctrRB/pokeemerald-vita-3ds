@@ -47,6 +47,7 @@ extern unsigned short INTR_CHECK;
 extern void * INTR_VECTOR;
 
 extern unsigned char PLTT[PLTT_SIZE] __attribute__ ((aligned (4)));
+extern unsigned short gPlttExt[16 * 16] __attribute__ ((aligned (4)));
 #endif
 
 #define BG_PLTT       PLTT
@@ -84,6 +85,7 @@ extern unsigned char VRAM_[VRAM_SIZE] __attribute__ ((aligned (4)));
 #define OAM      0x7000000
 #else
 extern unsigned char OAM[OAM_SIZE] __attribute__ ((aligned (4)));
+extern unsigned char gOamExt[128] __attribute__ ((aligned (4)));
 #endif
 
 #define ROM_HEADER_SIZE   0xC0
