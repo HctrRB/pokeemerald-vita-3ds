@@ -564,8 +564,8 @@ static void WriteSummaryBlock(void)
     fprintf(sSummaryFile, "================================================================================\n\n");
 
     fflush(sSummaryFile);
-    if (sCsvFile != NULL)
-        fflush(sCsvFile);
+    // Avoid synchronous fflush(sCsvFile) every 120 frames on Core 0 to prevent SD card stalls;
+    // stdio buffering + VitaPerf_Shutdown() handle CSV flushing safely.
 }
 
 void VitaPerf_EndFrame(const bool didRender3D, const uint32_t targetFps)

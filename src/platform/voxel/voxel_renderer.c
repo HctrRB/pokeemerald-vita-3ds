@@ -138,21 +138,30 @@ static GLuint sWeatherAtlasTex = 0;
 #define VOXEL_SCRATCH_FBO_H 272
 #define VOXEL_BLOOM_FBO_W   240
 #define VOXEL_BLOOM_FBO_H   136
+#define VOXEL_POST_TARGET_BUFFERS 2u
 
-static GLuint sDioramaFbo = 0;
-static GLuint sDioramaColorTex = 0;
-static GLuint sDioramaColorTexFast = 0;
-static GLuint sDioramaActiveTex = 0;
-static GLuint sDioramaDepthRb = 0;
-static GLuint sScratchFbo = 0;
-static GLuint sScratchColorTex = 0;
-// The wider blur level of the depth of field (Pass_DepthOfField), half resolution like the scratch
-static GLuint sBlurFbo = 0;
-static GLuint sBlurTex = 0;
-static GLuint sBloomFboA = 0;
-static GLuint sBloomTexA = 0;
-static GLuint sBloomFboB = 0;
-static GLuint sBloomTexB = 0;
+// Double-buffered post-processing targets prevent Core 0 from stalling in vitaGL/SceGxm
+// when frame N+1 begins writing to FBOs while frame N is still finishing on the GPU.
+typedef struct
+{
+    GLuint dioramaFbo;
+    GLuint dioramaColorTex;
+    GLuint dioramaColorTexFast;
+    GLuint dioramaActiveTex;
+    GLuint dioramaDepthRb;
+    GLuint scratchFbo;
+    GLuint scratchColorTex;
+    // The wider blur level of the depth of field (Pass_DepthOfField), half resolution like the scratch
+    GLuint blurFbo;
+    GLuint blurTex;
+    GLuint bloomFboA;
+    GLuint bloomTexA;
+    GLuint bloomFboB;
+    GLuint bloomTexB;
+} PostRenderTargets;
+
+static PostRenderTargets sPostTargets[VOXEL_POST_TARGET_BUFFERS];
+static uint32_t sPostTargetIndex = 0u;
 static bool sDioramaFboReady = false;
 
 typedef enum
@@ -211,6 +220,7 @@ typedef struct
 } VoxelAtlasSlot;
 
 static VoxelAtlasSlot sAtlasSlots[VOXEL_ATLAS_SLOTS];
+static uint32_t sSlotPendingPrimary[VOXEL_ATLAS_SLOTS][16];
 static int32_t sActiveAtlasSlot = -1;
 
 // Shared zero-allocation scratch buffers for unswizzling building pages, metatile atlases, and sprite atlases
@@ -1547,8 +1557,6 @@ static VoxelChunkSlot *GetAvailableChunkSlot(int32_t chunkX, int32_t chunkY)
     return oldest;
 }
 
-static void AtlasSpares_PageReplaced(int32_t slotIdx, uint32_t page);
-
 // Process all pending atlas job pages: unswizzle and upload to hardware textures
 static void ProcessAtlasJobPages(VoxelAtlasSlot *slot, VoxelAtlasJob *job)
 {
@@ -1574,7 +1582,6 @@ static void ProcessAtlasJobPages(VoxelAtlasSlot *slot, VoxelAtlasJob *job)
             }
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_ATLAS_W, VOXEL_ATLAS_H,
                          0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, slot->linear[page]);
-            AtlasSpares_PageReplaced((int32_t)(slot - sAtlasSlots), page);
             if (page + 1 > slot->pageCount)
                 slot->pageCount = page + 1;
         }
@@ -1621,43 +1628,9 @@ static GLuint CreateRgba5551Texture(uint32_t width, uint32_t height, const void 
     return tex;
 }
 
-static inline bool TextureIdleLongEnough(uint32_t idleSince)
-{
-    return (uint32_t)(sFrameCounter - idleSince) >= VOXEL_TEX_IDLE_FRAMES;
-}
-
-// Animated atlas pages: one spare per page, for the active slot only (pages 0-1 hold the
-// current map's metatiles, the only ones animated). Rows are 16 px bands of the page.
 #define VOXEL_ANIM_PAGES 2u
-#define VOXEL_ATLAS_ROW_COUNT (VOXEL_ATLAS_H / VOXEL_ATLAS_SLOT)
-#define VOXEL_ATLAS_ALL_ROWS ((uint32_t)((1ull << VOXEL_ATLAS_ROW_COUNT) - 1u))
 
-typedef struct
-{
-    GLuint spare;       // the copy not drawn
-    int32_t ownerSlot;      // atlas slot whose page it mirrors, -1 for none
-    uint32_t idleSince; // sFrameCounter when the spare stopped being drawn
-    uint32_t spareStale; // rows the spare lacks
-    uint32_t drawnStale; // rows the drawn texture lacks (composed, not uploaded yet)
-} VoxelAtlasPageSpare;
-
-static VoxelAtlasPageSpare sAtlasSpares[VOXEL_ANIM_PAGES];
-
-static void AtlasSpares_Reset(bool deleteTextures)
-{
-    for (uint32_t p = 0; p < VOXEL_ANIM_PAGES; p++)
-    {
-        if (deleteTextures && sAtlasSpares[p].spare)
-            glDeleteTextures(1, &sAtlasSpares[p].spare);
-        sAtlasSpares[p].spare = 0;
-        sAtlasSpares[p].ownerSlot = -1;
-        sAtlasSpares[p].idleSince = 0;
-        sAtlasSpares[p].spareStale = VOXEL_ATLAS_ALL_ROWS;
-        sAtlasSpares[p].drawnStale = 0;
-    }
-}
-
-// Uploads `rows` of a page from the slot's linear copy into `tex` in one call.
+// Uploads `rows` of a page from the slot's linear copy into `tex` in one call (host/non-Vita fallback).
 static void UploadAtlasRows(GLuint tex, const uint16_t *linear, uint32_t rows)
 {
     if (rows == 0)
@@ -1675,74 +1648,8 @@ static void UploadAtlasRows(GLuint tex, const uint16_t *linear, uint32_t rows)
     VitaPerf_AddCount(VITA_PERF_C_ATLAS_UPLOADS, 1);
 }
 
-// Makes page `page` of `slotIdx` the one its spare mirrors. A page left behind by another
-// slot gets its pending rows written straight into its drawn texture (rare: slot switch).
-static VoxelAtlasPageSpare *AtlasSpares_Claim(int32_t slotIdx, uint32_t page)
-{
-    VoxelAtlasPageSpare *const spare = &sAtlasSpares[page];
-    if (spare->ownerSlot != slotIdx)
-    {
-        if (spare->ownerSlot >= 0 && spare->drawnStale != 0)
-        {
-            const VoxelAtlasSlot *const old = &sAtlasSlots[spare->ownerSlot];
-            if (old->tex[page])
-                UploadAtlasRows(old->tex[page], old->linear[page], spare->drawnStale);
-        }
-        spare->ownerSlot = slotIdx;
-        spare->spareStale = VOXEL_ATLAS_ALL_ROWS;
-        spare->drawnStale = 0;
-    }
-    return spare;
-}
-
-// A page was rewritten whole with glTexImage2D: its drawn texture is current, the spare is not.
-static void AtlasSpares_PageReplaced(int32_t slotIdx, uint32_t page)
-{
-    if (page < VOXEL_ANIM_PAGES && sAtlasSpares[page].ownerSlot == slotIdx)
-    {
-        sAtlasSpares[page].spareStale = VOXEL_ATLAS_ALL_ROWS;
-        sAtlasSpares[page].drawnStale = 0;
-    }
-}
-
-// Brings the spare of an animated page up to date and swaps it in, once it has been idle
-// long enough. Returns the number of 16 px rows written (0 when it has to wait).
-static uint32_t AtlasSpares_Present(int32_t slotIdx, uint32_t page)
-{
-    VoxelAtlasSlot *const slot = &sAtlasSlots[slotIdx];
-    VoxelAtlasPageSpare *const spare = &sAtlasSpares[page];
-    uint32_t rowsWritten;
-
-    if (spare->ownerSlot != slotIdx || spare->drawnStale == 0 || !slot->tex[page])
-        return 0;
-    if (!spare->spare)
-    {
-        // First use: a new texture is never in flight, so it is created already current.
-        spare->spare = CreateRgba5551Texture(VOXEL_ATLAS_W, VOXEL_ATLAS_H, slot->linear[page]);
-        rowsWritten = VOXEL_ATLAS_ROW_COUNT;
-    }
-    else
-    {
-        if (!TextureIdleLongEnough(spare->idleSince))
-            return 0;
-        UploadAtlasRows(spare->spare, slot->linear[page], spare->spareStale);
-        rowsWritten = (uint32_t)__builtin_popcount(spare->spareStale);
-    }
-
-    const GLuint drawn = slot->tex[page];
-    slot->tex[page] = spare->spare;
-    spare->spare = drawn;
-    spare->idleSince = sFrameCounter;
-    spare->spareStale = spare->drawnStale;
-    spare->drawnStale = 0;
-    if (slotIdx == sActiveAtlasSlot)
-        sAtlasTex[page] = slot->tex[page];
-    return rowsWritten;
-}
-
-// Writes `rows` of a page straight into its drawn texture's memory, as the sprite atlas does:
-// for the slots of neighbouring maps, which have no spare. The GPU may still be reading it for
-// the previous frame: at worst a wave shows its next frame one frame early.
+// Writes `rows` of a page straight into its drawn texture's memory on Vita (vglGetTexDataPointer)
+// so active and neighbouring map slots update in the exact same frame without vitaGL GC copies.
 static void WriteAtlasRowsDirect(GLuint tex, const uint16_t *linear, uint32_t rows)
 {
     if (rows == 0 || !tex)
@@ -1863,6 +1770,7 @@ static bool ComposeAtlasSlot(VoxelAtlasSlot *slot, const VoxelMapInstance *inst)
     slot->secondaryTileset = inst->secondaryTileset;
     slot->stamp = sFrameCounter;
     slot->pageCount = 0;
+    memset(sSlotPendingPrimary[slot - sAtlasSlots], 0, sizeof(sSlotPendingPrimary[0]));
 
     VoxelAtlasJob job;
     if (VoxelAtlas_JobBegin(&job, inst, slot->linear[0], NULL))
@@ -2019,7 +1927,6 @@ static void AtlasExtend_Step(void)
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_ATLAS_W, VOXEL_ATLAS_H,
                              0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, slot->linear[page]);
             }
-            AtlasSpares_PageReplaced(sExtendSlot, page);
             if (page + 1 > slot->pageCount)
                 slot->pageCount = page + 1;
         }
@@ -2048,7 +1955,7 @@ static int32_t EnsureAtlasSlotForInstance(const VoxelMapInstance *inst)
         }
     }
 
-    int32_t victimSlot = 0;
+    int32_t victimSlot = -1;
     uint32_t oldestStamp = UINT32_MAX;
     for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
     {
@@ -2057,12 +1964,30 @@ static int32_t EnsureAtlasSlotForInstance(const VoxelMapInstance *inst)
             victimSlot = s;
             break;
         }
-        if (s != sActiveAtlasSlot && sAtlasSlots[s].stamp < oldestStamp)
+        if (s != sActiveAtlasSlot && s != sExtendSlot
+            && (uint32_t)(sFrameCounter - sAtlasSlots[s].stamp) > 1u
+            && sAtlasSlots[s].stamp < oldestStamp)
         {
             oldestStamp = sAtlasSlots[s].stamp;
             victimSlot = s;
         }
     }
+    if (victimSlot < 0)
+    {
+        oldestStamp = UINT32_MAX;
+        for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
+        {
+            if (s != sActiveAtlasSlot && s != sExtendSlot && sAtlasSlots[s].stamp < oldestStamp)
+            {
+                oldestStamp = sAtlasSlots[s].stamp;
+                victimSlot = s;
+            }
+        }
+    }
+    if (victimSlot < 0)
+        victimSlot = (sActiveAtlasSlot == 0) ? 1 : 0;
+    if (victimSlot == sExtendSlot)
+        AtlasExtend_Cancel();
 
     if (sAtlasSlots[victimSlot].valid)
         VitaPerf_MarkEvent(VITA_PERF_E_ATLAS_EVICT);
@@ -2222,59 +2147,81 @@ static void PrepareChunkJob(VoxelChunkJobInput *in, int32_t chunkX, int32_t chun
     }
 }
 
-static void PackGroundIntoJob(VoxelChunkJobOutput *out, const VoxelBuilder *builder, int32_t aSlot, bool outdoor)
+static uint8_t sScratchTriBucket[SCRATCH_VERTICES / 3];
+
+static void PackGroundIntoJob(VoxelChunkJobOutput *const out, const VoxelBuilder *const builder,
+                              const int32_t aSlot, const bool outdoor)
 {
     if (builder->count == 0)
         return;
 
     const VoxelAtlasSlot *const atlasSlot = &sAtlasSlots[aSlot];
+    const uint32_t triCount = builder->count / 3u;
+    uint32_t bucketCounts[VOXEL_MAX_ATLAS_PAGES * 2u] = {0};
+    uint32_t bucketOffsets[VOXEL_MAX_ATLAS_PAGES * 2u] = {0};
+    uint32_t bucketEnd[VOXEL_MAX_ATLAS_PAGES * 2u] = {0};
+
+    for (uint32_t t = 0; t < triCount; t++)
+    {
+        const uint32_t i = t * 3u;
+        uint32_t triPage = (uint32_t)(sScratch[i].u * 0.5f);
+        if (triPage >= VOXEL_MAX_ATLAS_PAGES)
+            triPage = 0;
+        const uint32_t cutPass = IsAtlasTriangleCutout(atlasSlot, triPage, &sScratch[i]) ? 1u : 0u;
+        const uint32_t bucket = (triPage << 1u) | cutPass;
+        sScratchTriBucket[t] = (uint8_t)bucket;
+        bucketCounts[bucket]++;
+    }
+
+    uint32_t cursor = out->groundTotalCount;
     for (uint32_t page = 0; page < VOXEL_MAX_ATLAS_PAGES; page++)
     {
         for (uint32_t cutPass = 0; cutPass < 2u; cutPass++)
         {
-            const bool wantCutout = (cutPass != 0u);
-            const uint16_t firstVert = (uint16_t)out->groundTotalCount;
-            uint16_t vertCount = 0;
+            const uint32_t bucket = (page << 1u) | cutPass;
+            const uint32_t room = (cursor < CHUNK_GROUND_TOTAL_CAP)
+                ? (CHUNK_GROUND_TOTAL_CAP - cursor) / 3u : 0u;
+            const uint32_t fitTris = (bucketCounts[bucket] <= room) ? bucketCounts[bucket] : room;
 
-            for (uint32_t i = 0; i + 2 < builder->count; i += 3)
+            bucketOffsets[bucket] = cursor;
+            bucketEnd[bucket] = cursor + fitTris * 3u;
+            if (fitTris > 0 && out->groundSpanCount < MAX_CHUNK_GROUND_SPANS)
             {
-                uint32_t triPage = (uint32_t)(sScratch[i].u * 0.5f);
-                if (triPage >= VOXEL_MAX_ATLAS_PAGES)
-                    triPage = 0;
-                if (triPage != page)
-                    continue;
-                if (IsAtlasTriangleCutout(atlasSlot, page, &sScratch[i]) != wantCutout)
-                    continue;
-
-                if (out->groundTotalCount + 3 <= CHUNK_GROUND_TOTAL_CAP)
-                {
-                    for (uint32_t j = 0; j < 3; j++)
-                    {
-                        VoxelGlVertex *dst = &out->groundVerts[out->groundTotalCount++];
-                        dst->x = sScratch[i + j].x;
-                        dst->y = sScratch[i + j].y;
-                        dst->z = sScratch[i + j].z;
-                        dst->u = sScratch[i + j].u - (float)page * 2.0f;
-                        dst->v = sScratch[i + j].v;
-                        BakeGradedVertexColor(sScratch[i + j].shade, outdoor, &dst->r, &dst->g, &dst->b);
-                        dst->a = 255;
-                    }
-                    vertCount += 3;
-                }
-            }
-
-            if (vertCount > 0 && out->groundSpanCount < MAX_CHUNK_GROUND_SPANS)
-            {
-                VoxelChunkGroundSpan *span = &out->groundSpans[out->groundSpanCount++];
+                VoxelChunkGroundSpan *const span = &out->groundSpans[out->groundSpanCount++];
                 span->atlasSlot = (uint8_t)aSlot;
                 span->page = (uint8_t)page;
                 span->isCutout = (uint8_t)cutPass;
                 span->pad = 0;
-                span->firstVert = firstVert;
-                span->vertCount = vertCount;
+                span->firstVert = (uint16_t)cursor;
+                span->vertCount = (uint16_t)(fitTris * 3u);
             }
+            cursor += fitTris * 3u;
         }
     }
+
+    for (uint32_t t = 0; t < triCount; t++)
+    {
+        const uint32_t bucket = sScratchTriBucket[t];
+        const uint32_t dstBase = bucketOffsets[bucket];
+        if (dstBase + 3u > bucketEnd[bucket])
+            continue;
+        bucketOffsets[bucket] = dstBase + 3u;
+
+        const uint32_t page = bucket >> 1u;
+        const uint32_t srcBase = t * 3u;
+        for (uint32_t j = 0; j < 3u; j++)
+        {
+            VoxelGlVertex *const dst = &out->groundVerts[dstBase + j];
+            dst->x = sScratch[srcBase + j].x;
+            dst->y = sScratch[srcBase + j].y;
+            dst->z = sScratch[srcBase + j].z;
+            dst->u = sScratch[srcBase + j].u - (float)page * 2.0f;
+            dst->v = sScratch[srcBase + j].v;
+            BakeGradedVertexColor(sScratch[srcBase + j].shade, outdoor, &dst->r, &dst->g, &dst->b);
+            dst->a = 255;
+        }
+    }
+    out->groundTotalCount = cursor;
 }
 
 static void NoteJobPage(VoxelChunkJobOutput *out, int32_t page)
@@ -2489,8 +2436,9 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     out->computeMs = VitaPerf_NowMs() - computeStart;
 }
 
-static void CommitChunkJob(VoxelChunkSlot *slot, int32_t chunkX, int32_t chunkY, uint32_t hash,
-                           const VoxelChunkJobOutput *out)
+static void CommitChunkJob(VoxelChunkSlot *const slot, const int32_t chunkX, const int32_t chunkY,
+                           const uint32_t hash, const VoxelChunkJobOutput *const out,
+                           const uint32_t *const atlasGen, const uint32_t *const atlasExt)
 {
     // Building pages first: synchronous while warming up or faded, as before.
     for (uint32_t k = 0; k < out->pageCount; k++)
@@ -2529,8 +2477,8 @@ static void CommitChunkJob(VoxelChunkSlot *slot, int32_t chunkX, int32_t chunkY,
 
     for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
     {
-        slot->atlasGen[s] = sAtlasSlots[s].generation;
-        slot->atlasExt[s] = sAtlasSlots[s].extension;
+        slot->atlasGen[s] = (atlasGen != NULL) ? atlasGen[s] : sAtlasSlots[s].generation;
+        slot->atlasExt[s] = (atlasExt != NULL) ? atlasExt[s] : sAtlasSlots[s].extension;
     }
     slot->treeFirstVert = (uint16_t)slot->groundTotalCount;
     slot->buildingFirstVert = (uint16_t)(slot->groundTotalCount + slot->treeCount);
@@ -2614,7 +2562,7 @@ static void BuildChunk(VoxelChunkSlot *slot, int32_t chunkX, int32_t chunkY, uin
         ReportChunkJobWork(&sJobOut, false);
     }
 
-    CommitChunkJob(slot, chunkX, chunkY, hash, &sJobOut);
+    CommitChunkJob(slot, chunkX, chunkY, hash, &sJobOut, NULL, NULL);
 }
 
 // ---- Chunk worker (Core 2) ----
@@ -2648,6 +2596,7 @@ static int32_t sAsyncCx, sAsyncCy;
 static uint32_t sAsyncHash;
 static uint32_t sAsyncEpoch;
 static uint32_t sAsyncAtlasGen[VOXEL_ATLAS_SLOTS];
+static uint32_t sAsyncAtlasExt[VOXEL_ATLAS_SLOTS];
 
 static int32_t VoxelChunkWorkerMain(void *data)
 {
@@ -2752,7 +2701,10 @@ static void ChunkWorker_Launch(void)
     PrepareChunkJob(&sAsyncIn, sAsyncCx, sAsyncCy);
     sAsyncEpoch = sWorldEpoch;
     for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
+    {
         sAsyncAtlasGen[s] = sAtlasSlots[s].generation;
+        sAsyncAtlasExt[s] = sAtlasSlots[s].extension;
+    }
     VoxelWorld_FreezeMemos(true);
     sChunkJobState = CHUNK_JOB_RUNNING;
     SDL_SemPost(sChunkJobSem);
@@ -2785,11 +2737,11 @@ static void ChunkWorker_Commit(void)
     ReportChunkJobWork(&sAsyncOut, true);
     if (slot == NULL)
         slot = GetAvailableChunkSlot(sAsyncCx, sAsyncCy);
-    // Missing metatiles: the chunk is committed as it is (drawn until the atlas grows) and the
-    // extension makes it urgent, so Core 0 rebuilds it complete.
+    // Missing metatiles: the chunk is committed with the version it was computed in (sAsyncAtlasExt),
+    // so ChunkNeedsRebuild() marks it urgent and Core 0 rebuilds it complete next frame.
     if (sAsyncOut.uncoveredAtlasMask != 0)
         ExtendJobAtlasSlots(&sAsyncIn, &sAsyncOut);
-    CommitChunkJob(slot, sAsyncCx, sAsyncCy, sAsyncHash, &sAsyncOut);
+    CommitChunkJob(slot, sAsyncCx, sAsyncCy, sAsyncHash, &sAsyncOut, sAsyncAtlasGen, sAsyncAtlasExt);
 }
 
 // ---- Chunk build budget and pre-warming direction ----
@@ -3958,6 +3910,59 @@ static void InitTreeSwayShader(void)
     glDeleteShader(fs);
 }
 
+static GLuint CreatePostColorTexture(const GLsizei width, const GLsizei height,
+                                     const GLenum filter, const GLenum type)
+{
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
+    if (tex == 0)
+        return 0;
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, type, NULL);
+    return tex;
+}
+
+static void AttachColorFbo(GLuint *const fboOut, const GLuint tex)
+{
+    glGenFramebuffers(1, fboOut);
+    if (*fboOut == 0)
+        return;
+    glBindFramebuffer(GL_FRAMEBUFFER, *fboOut);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex, 0);
+}
+
+static bool InitPostTargets(PostRenderTargets *const t)
+{
+    t->dioramaColorTex = CreatePostColorTexture(VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H, GL_NEAREST, GL_UNSIGNED_BYTE);
+    t->dioramaColorTexFast = CreatePostColorTexture(VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H, GL_NEAREST, GL_UNSIGNED_SHORT_5_5_5_1);
+    glGenRenderbuffers(1, &t->dioramaDepthRb);
+    glBindRenderbuffer(GL_RENDERBUFFER, t->dioramaDepthRb);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H);
+
+    t->dioramaActiveTex = t->dioramaColorTex;
+    AttachColorFbo(&t->dioramaFbo, t->dioramaActiveTex);
+    if (t->dioramaFbo != 0)
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, t->dioramaDepthRb);
+
+    t->scratchColorTex = CreatePostColorTexture(VOXEL_SCRATCH_FBO_W, VOXEL_SCRATCH_FBO_H, GL_LINEAR, GL_UNSIGNED_BYTE);
+    AttachColorFbo(&t->scratchFbo, t->scratchColorTex);
+
+    t->blurTex = CreatePostColorTexture(VOXEL_SCRATCH_FBO_W, VOXEL_SCRATCH_FBO_H, GL_LINEAR, GL_UNSIGNED_BYTE);
+    AttachColorFbo(&t->blurFbo, t->blurTex);
+
+    t->bloomTexA = CreatePostColorTexture(VOXEL_BLOOM_FBO_W, VOXEL_BLOOM_FBO_H, GL_LINEAR, GL_UNSIGNED_BYTE);
+    AttachColorFbo(&t->bloomFboA, t->bloomTexA);
+
+    t->bloomTexB = CreatePostColorTexture(VOXEL_BLOOM_FBO_W, VOXEL_BLOOM_FBO_H, GL_LINEAR, GL_UNSIGNED_BYTE);
+    AttachColorFbo(&t->bloomFboB, t->bloomTexB);
+
+    return (t->dioramaFbo != 0 && t->scratchFbo != 0 && t->blurFbo != 0);
+}
+
 // Initialize the voxel renderer. Call after OpenGL context is created.
 bool VoxelRenderer_Init(void)
 {
@@ -4027,7 +4032,7 @@ bool VoxelRenderer_Init(void)
     }
     sActiveAtlasSlot = -1;
     AtlasExtend_Cancel();
-    AtlasSpares_Reset(false);
+    memset(sSlotPendingPrimary, 0, sizeof(sSlotPendingPrimary));
 
     for (int32_t p = 0; p < VOXEL_MAX_ATLAS_PAGES; p++)
         sAtlasTex[p] = 0;
@@ -4156,71 +4161,12 @@ bool VoxelRenderer_Init(void)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 16, 16, 0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, mistPixels);
     }
 
-    // Pre-allocate Diorama offscreen FBO (960x544 RGBA8 for HIGH/30fps + RGBA5551 fast target for LOW/60fps)
-    glGenTextures(1, &sDioramaColorTex);
-    glBindTexture(GL_TEXTURE_2D, sDioramaColorTex);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-    glGenTextures(1, &sDioramaColorTexFast);
-    glBindTexture(GL_TEXTURE_2D, sDioramaColorTexFast);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H, 0,
-                 GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, NULL);
-
-    glGenRenderbuffers(1, &sDioramaDepthRb);
-    glBindRenderbuffer(GL_RENDERBUFFER, sDioramaDepthRb);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H);
-
-    sDioramaActiveTex = sDioramaColorTex;
-    glGenFramebuffers(1, &sDioramaFbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, sDioramaFbo);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sDioramaActiveTex, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, sDioramaDepthRb);
-
-    // Downscaled targets of the depth of field (480x272, half resolution, no depth): the scene
-    // downsample (the light blur) and the wider blur. RGBA8: the blur averages taps by
-    // blending, and 5-bit channels would band and darken (512 KB each).
-    GLuint *const blurTex[2] = { &sScratchColorTex, &sBlurTex };
-    GLuint *const blurFbo[2] = { &sScratchFbo, &sBlurFbo };
-    for (int32_t i = 0; i < 2; ++i)
+    // Pre-allocate double-buffered offscreen post-processing targets (960x544, 480x272, 240x136)
+    bool allPostReady = true;
+    for (uint32_t i = 0; i < VOXEL_POST_TARGET_BUFFERS; ++i)
     {
-        glGenTextures(1, blurTex[i]);
-        glBindTexture(GL_TEXTURE_2D, *blurTex[i]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_SCRATCH_FBO_W, VOXEL_SCRATCH_FBO_H, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glGenFramebuffers(1, blurFbo[i]);
-        glBindFramebuffer(GL_FRAMEBUFFER, *blurFbo[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *blurTex[i], 0);
-    }
-
-    // Quarter-res HD-2D bloom targets (240x136 RGBA8 = 130 KB each)
-    GLuint *const bloomTex[2] = { &sBloomTexA, &sBloomTexB };
-    GLuint *const bloomFbo[2] = { &sBloomFboA, &sBloomFboB };
-    for (int32_t i = 0; i < 2; ++i)
-    {
-        glGenTextures(1, bloomTex[i]);
-        glBindTexture(GL_TEXTURE_2D, *bloomTex[i]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_BLOOM_FBO_W, VOXEL_BLOOM_FBO_H, 0,
-                     GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-        glGenFramebuffers(1, bloomFbo[i]);
-        glBindFramebuffer(GL_FRAMEBUFFER, *bloomFbo[i]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *bloomTex[i], 0);
+        if (!InitPostTargets(&sPostTargets[i]))
+            allPostReady = false;
     }
 
     // 64x64 RGBA8 radial vignette texture (16 KB)
@@ -4312,7 +4258,7 @@ bool VoxelRenderer_Init(void)
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    sDioramaFboReady = (sDioramaFbo != 0 && sScratchFbo != 0 && sBlurFbo != 0);
+    sDioramaFboReady = allPostReady;
     VoxelHd2dShader_Init();
 
     MakeFog();
@@ -4834,134 +4780,143 @@ static void Frame_UpdateAtlas(const VoxelFrame *const f)
     VitaPerf_SubEnd(VITA_PERF_T_ATLAS_SLOTS);
 }
 
-// Stage 3: animated tiles (water, flowers, shores) recomposed and presented.
+static bool MaskWordsAny(const uint32_t *const words, const uint32_t count)
+{
+    for (uint32_t w = 0; w < count; w++)
+    {
+        if (words[w] != 0)
+            return true;
+    }
+    return false;
+}
+
+static bool MaskWordsIntersect(const uint32_t *const a, const uint32_t *const b, const uint32_t count)
+{
+    for (uint32_t w = 0; w < count; w++)
+    {
+        if ((a[w] & b[w]) != 0)
+            return true;
+    }
+    return false;
+}
+
+static uint32_t AnimateActiveAtlas(const VoxelMapInstance *const inst0)
+{
+    VoxelAtlasSlot *const slot = &sAtlasSlots[sActiveAtlasSlot];
+    const uint32_t *const dirtyWords = (const uint32_t *)sVoxelTilesetAnimDirty;
+    const uint32_t maxPages = (sAtlasPageCount > VOXEL_ANIM_PAGES) ? VOXEL_ANIM_PAGES : sAtlasPageCount;
+    uint32_t rowsUpdated = 0;
+
+    if (!MaskWordsAny(dirtyWords, 32u))
+        return 0;
+
+    for (uint32_t page = 0; page < maxPages; page++)
+    {
+        const uint32_t *const pageWords = (const uint32_t *)slot->map.tileMask[page];
+        if (!MaskWordsIntersect(dirtyWords, pageWords, 32u) || !slot->tex[page])
+            continue;
+
+        uint32_t changedRows = 0;
+        VitaPerf_SubBegin(VITA_PERF_T_ATLAS_COMPOSE);
+        const uint32_t changed = VoxelAtlas_RefreshAnimatedPageRows(inst0, &slot->map, page,
+                                                                    slot->linear[page], (const uint8_t *)BG_VRAM,
+                                                                    sVoxelTilesetAnimDirty, &changedRows);
+        VitaPerf_SubEnd(VITA_PERF_T_ATLAS_COMPOSE);
+        if (changed > 0 && changedRows != 0)
+        {
+            VitaPerf_SubBegin(VITA_PERF_T_ATLAS_UPLOAD);
+            WriteAtlasRowsDirect(slot->tex[page], slot->linear[page], changedRows);
+            VitaPerf_SubEnd(VITA_PERF_T_ATLAS_UPLOAD);
+            rowsUpdated += (uint32_t)__builtin_popcount(changedRows);
+        }
+    }
+    memset(sSlotPendingPrimary[sActiveAtlasSlot], 0, sizeof(sSlotPendingPrimary[0]));
+    return rowsUpdated;
+}
+
+static void AccumulatePrimaryDirty(const void *const primary)
+{
+    const uint32_t *const dirtyWords = (const uint32_t *)sVoxelTilesetAnimDirty;
+
+    if (primary == NULL || !MaskWordsAny(dirtyWords, 16u))
+        return;
+
+    for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
+    {
+        if (s == sActiveAtlasSlot || !sAtlasSlots[s].valid || sAtlasSlots[s].primaryTileset != primary)
+            continue;
+        for (uint32_t w = 0; w < 16u; w++)
+            sSlotPendingPrimary[s][w] |= dirtyWords[w];
+    }
+}
+
+static uint32_t SyncVisiblePrimarySlots(const void *const primary)
+{
+    uint32_t rowsUpdated = 0;
+    uint8_t primaryMask[128];
+
+    if (primary == NULL)
+        return 0;
+
+    memset(primaryMask + 64, 0, 64);
+    for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
+    {
+        VoxelAtlasSlot *const other = &sAtlasSlots[s];
+        if (s == sActiveAtlasSlot || !other->valid || other->primaryTileset != primary
+            || (uint32_t)(sFrameCounter - other->stamp) > 2u || AtlasExtend_Busy(s))
+            continue;
+        if (!MaskWordsAny(sSlotPendingPrimary[s], 16u))
+            continue;
+
+        memcpy(primaryMask, sSlotPendingPrimary[s], 64);
+        const uint32_t pages = (other->pageCount < VOXEL_ANIM_PAGES) ? other->pageCount : VOXEL_ANIM_PAGES;
+        for (uint32_t page = 0; page < pages; page++)
+        {
+            const uint32_t *const pageWords = (const uint32_t *)other->map.tileMask[page];
+            if (!MaskWordsIntersect(sSlotPendingPrimary[s], pageWords, 16u) || !other->tex[page])
+                continue;
+
+            uint32_t changedRows = 0;
+            VitaPerf_SubBegin(VITA_PERF_T_ATLAS_COMPOSE);
+            VoxelAtlas_RefreshAnimatedPrimaryRows(other->primaryTileset, other->secondaryTileset, &other->map,
+                                                  page, other->linear[page], (const uint8_t *)BG_VRAM,
+                                                  primaryMask, &changedRows);
+            VitaPerf_SubEnd(VITA_PERF_T_ATLAS_COMPOSE);
+            if (changedRows != 0)
+            {
+                VitaPerf_SubBegin(VITA_PERF_T_ATLAS_UPLOAD);
+                WriteAtlasRowsDirect(other->tex[page], other->linear[page], changedRows);
+                VitaPerf_SubEnd(VITA_PERF_T_ATLAS_UPLOAD);
+                rowsUpdated += (uint32_t)__builtin_popcount(changedRows);
+            }
+        }
+        memset(sSlotPendingPrimary[s], 0, sizeof(sSlotPendingPrimary[0]));
+        // Spread secondary-zone atlas refreshes across frames so compose CPU spikes don't stack.
+        if (rowsUpdated > 0u)
+            break;
+    }
+    return rowsUpdated;
+}
+
+// Stage 3: animated tiles (water, flowers, shores) recomposed and presented synchronously across zones.
 static void Frame_AnimateTiles(const VoxelFrame *const f)
 {
     const VoxelMapInstance *const inst0 = f->inst0;
     VitaPerf_MarkAtlasAnimStart();
     uint32_t rowsUpdated = 0;
 
-    // Recomposing on the CPU is cheap (0.15-0.3 ms) and runs whenever the game animated a
-    // tile; the GPU copy follows through the page spares (AtlasSpares_Present below).
-    // (not while the slot is being extended: its linear pages are half composed; the dirty
-    // tiles stay pending until it ends)
     if (sVoxelTilesetAnimPending && sAtlasPageCount > 0 && inst0 != NULL && sActiveAtlasSlot >= 0
         && !AtlasExtend_Busy(sActiveAtlasSlot))
     {
-        // Primary tiles (0..511) in bytes 0..63; Secondary tiles (512..1023) in bytes 64..127.
-        const uint32_t *const dirtyWords = (const uint32_t *)sVoxelTilesetAnimDirty;
-        bool primaryDirty = false;
-        for (uint32_t w = 0; w < 16; w++)
-        {
-            if (dirtyWords[w] != 0)
-            {
-                primaryDirty = true;
-                break;
-            }
-        }
-        bool secondaryDirty = false;
-        for (uint32_t w = 16; w < 32; w++)
-        {
-            if (dirtyWords[w] != 0)
-            {
-                secondaryDirty = true;
-                break;
-            }
-        }
-
-        if (primaryDirty || secondaryDirty)
-        {
-            VoxelAtlasSlot *slot = &sAtlasSlots[sActiveAtlasSlot];
-            const uint32_t maxPages = (sAtlasPageCount > 2) ? 2 : sAtlasPageCount;
-
-            for (uint32_t page = 0; page < maxPages; page++)
-            {
-                // O(1) 32-word bitmask check: skip page immediately if it references NO dirty tiles
-                const uint32_t *const pageWords = (const uint32_t *)slot->map.tileMask[page];
-                bool pageHasDirty = false;
-                for (uint32_t w = 0; w < 32; w++)
-                {
-                    if ((dirtyWords[w] & pageWords[w]) != 0)
-                    {
-                        pageHasDirty = true;
-                        break;
-                    }
-                }
-                if (!pageHasDirty)
-                    continue;
-
-                uint32_t changedRows = 0;
-                VitaPerf_SubBegin(VITA_PERF_T_ATLAS_COMPOSE);
-                uint32_t changed = VoxelAtlas_RefreshAnimatedPageRows(inst0, &slot->map, page,
-                                                                       slot->linear[page], (const uint8_t *)BG_VRAM,
-                                                                       sVoxelTilesetAnimDirty, &changedRows);
-                VitaPerf_SubEnd(VITA_PERF_T_ATLAS_COMPOSE);
-                if (changed > 0 && changedRows != 0)
-                {
-                    VoxelAtlasPageSpare *const spare = AtlasSpares_Claim(sActiveAtlasSlot, page);
-                    spare->drawnStale |= changedRows;
-                    spare->spareStale |= changedRows;
-                }
-            }
-        }
-        // Neighbouring maps drawn from other slots (another secondary tileset, the same primary):
-        // their sea and flowers move with the current map's
-        if (primaryDirty)
-        {
-            uint8_t primaryMask[128];
-            memcpy(primaryMask, sVoxelTilesetAnimDirty, 64);
-            memset(primaryMask + 64, 0, 64);
-            const void *const primary = sAtlasSlots[sActiveAtlasSlot].primaryTileset;
-            for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
-            {
-                VoxelAtlasSlot *const other = &sAtlasSlots[s];
-                // (on screen last frame: Frame_SelectChunks stamps the slots it draws)
-                if (s == sActiveAtlasSlot || !other->valid || other->primaryTileset != primary
-                    || (uint32_t)(sFrameCounter - other->stamp) > 2u || AtlasExtend_Busy(s))
-                    continue;
-                const uint32_t pages = other->pageCount < VOXEL_ANIM_PAGES ? other->pageCount : VOXEL_ANIM_PAGES;
-                for (uint32_t page = 0; page < pages; page++)
-                {
-                    const uint32_t *const pageWords = (const uint32_t *)other->map.tileMask[page];
-                    bool pageHasDirty = false;
-                    for (uint32_t w = 0; w < 16; w++)
-                    {
-                        if ((dirtyWords[w] & pageWords[w]) != 0)
-                        {
-                            pageHasDirty = true;
-                            break;
-                        }
-                    }
-                    if (!pageHasDirty || !other->tex[page])
-                        continue;
-                    uint32_t changedRows = 0;
-                    VitaPerf_SubBegin(VITA_PERF_T_ATLAS_COMPOSE);
-                    VoxelAtlas_RefreshAnimatedPrimaryRows(other->primaryTileset, other->secondaryTileset, &other->map,
-                                                          page, other->linear[page], (const uint8_t *)BG_VRAM,
-                                                          primaryMask, &changedRows);
-                    VitaPerf_SubEnd(VITA_PERF_T_ATLAS_COMPOSE);
-                    if (changedRows == 0)
-                        continue;
-                    WriteAtlasRowsDirect(other->tex[page], other->linear[page], changedRows);
-                    // A spare left from when this slot was active lacks these rows now
-                    if (sAtlasSpares[page].ownerSlot == s)
-                        sAtlasSpares[page].spareStale |= changedRows;
-                }
-            }
-        }
+        rowsUpdated += AnimateActiveAtlas(inst0);
+        AccumulatePrimaryDirty(sAtlasSlots[sActiveAtlasSlot].primaryTileset);
         memset(sVoxelTilesetAnimDirty, 0, sizeof(sVoxelTilesetAnimDirty));
         sVoxelTilesetAnimPending = false;
     }
 
-    // Swap in the animated pages whose spare is idle long enough (may lag a few frames). The
-    // owner may be a slot that was active until now: it is still drawn for neighbouring maps.
-    VitaPerf_SubBegin(VITA_PERF_T_ATLAS_UPLOAD);
-    for (uint32_t page = 0; page < VOXEL_ANIM_PAGES; page++)
-    {
-        if (sAtlasSpares[page].ownerSlot >= 0 && !AtlasExtend_Busy(sAtlasSpares[page].ownerSlot))
-            rowsUpdated += AtlasSpares_Present(sAtlasSpares[page].ownerSlot, page);
-    }
-    VitaPerf_SubEnd(VITA_PERF_T_ATLAS_UPLOAD);
+    if (sActiveAtlasSlot >= 0 && sAtlasSlots[sActiveAtlasSlot].valid)
+        rowsUpdated += SyncVisiblePrimarySlots(sAtlasSlots[sActiveAtlasSlot].primaryTileset);
+
     VitaPerf_MarkAtlasAnimEnd(rowsUpdated);
 }
 
@@ -5613,12 +5568,14 @@ static void Frame_BeginPasses(VoxelFrame *const f)
 
     if (dioramaActive)
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, sDioramaFbo);
-        const GLuint wantTex = (f->hd2dPreset == HD2D_PRESET_HIGH) ? sDioramaColorTex : sDioramaColorTexFast;
-        if (wantTex != 0 && wantTex != sDioramaActiveTex)
+        sPostTargetIndex ^= 1u;
+        PostRenderTargets *const pt = &sPostTargets[sPostTargetIndex];
+        glBindFramebuffer(GL_FRAMEBUFFER, pt->dioramaFbo);
+        const GLuint wantTex = (f->hd2dPreset == HD2D_PRESET_HIGH) ? pt->dioramaColorTex : pt->dioramaColorTexFast;
+        if (wantTex != 0 && wantTex != pt->dioramaActiveTex)
         {
-            sDioramaActiveTex = wantTex;
-            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sDioramaActiveTex, 0);
+            pt->dioramaActiveTex = wantTex;
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pt->dioramaActiveTex, 0);
         }
     }
     else
@@ -6822,8 +6779,9 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
     const float vS = (float)scratchH / (float)VOXEL_SCRATCH_FBO_H;
     const bool hd2dOn = (f->hd2dPreset != HD2D_PRESET_OFF);
     const bool hd2dHigh = (f->hd2dPreset == HD2D_PRESET_HIGH);
+    const PostRenderTargets *const pt = &sPostTargets[sPostTargetIndex];
     const bool useBlurFbo = (!hd2dOn || hd2dHigh || f->inBattle3D);
-    const bool bloomReady = hd2dOn && (sBloomFboA != 0 && sBloomFboB != 0);
+    const bool bloomReady = hd2dOn && (pt->bloomFboA != 0 && pt->bloomFboB != 0);
     static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 
     glDisable(GL_DEPTH_TEST);
@@ -6843,14 +6801,14 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
 
     VitaPerf_SubBegin(VITA_PERF_T_POST_DOF);
     // 1. Downsample: 2x2 box filter in HD-2D to eliminate roof/wall horizontal stripe aliasing
-    glBindFramebuffer(GL_FRAMEBUFFER, sScratchFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, pt->scratchFbo);
     glViewport(0, 0, scratchW, scratchH);
-    glBindTexture(GL_TEXTURE_2D, sDioramaActiveTex);
+    glBindTexture(GL_TEXTURE_2D, pt->dioramaActiveTex);
     if (hd2dOn && VoxelHd2dShader_Ready())
     {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
-        VoxelHd2dShader_CopyBox2x2(sDioramaActiveTex, uMax, vMax,
+        VoxelHd2dShader_CopyBox2x2(pt->dioramaActiveTex, uMax, vMax,
                                    0.5f / (float)VOXEL_DIORAMA_FBO_W,
                                    0.5f / (float)VOXEL_DIORAMA_FBO_H);
         sFrameDrawCalls++;
@@ -6872,13 +6830,13 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
-    // 2. Wider blur -> sBlurTex (480x272). Skipped in HD-2D LOW (60 FPS) or when menu is open.
+    // 2. Wider blur -> pt->blurTex (480x272). Skipped in HD-2D LOW (60 FPS) or when menu is open.
     if (useBlurFbo)
     {
         const float blurStep = hd2dHigh ? 1.55f : 1.0f;
-        glBindFramebuffer(GL_FRAMEBUFFER, sBlurFbo);
+        glBindFramebuffer(GL_FRAMEBUFFER, pt->blurFbo);
         glViewport(0, 0, scratchW, scratchH);
-        BlurTaps(sScratchColorTex, uS, vS, (float)VOXEL_SCRATCH_FBO_W, (float)VOXEL_SCRATCH_FBO_H, blurStep, blurStep);
+        BlurTaps(pt->scratchColorTex, uS, vS, (float)VOXEL_SCRATCH_FBO_W, (float)VOXEL_SCRATCH_FBO_H, blurStep, blurStep);
     }
     VitaPerf_SubEnd(VITA_PERF_T_POST_DOF);
 
@@ -6892,7 +6850,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
         const float uB = (float)bloomW / (float)VOXEL_BLOOM_FBO_W;
         const float vB = (float)bloomH / (float)VOXEL_BLOOM_FBO_H;
 
-        glBindFramebuffer(GL_FRAMEBUFFER, sBloomFboA);
+        glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
         glViewport(0, 0, bloomW, bloomH);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -6906,7 +6864,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
                                : (f->indoor ? 0.66f : (hd2dHigh ? (nightLampBoost ? 0.46f : 0.56f) : 0.66f));
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             glDisableClientState(GL_VERTEX_ARRAY);
-            VoxelHd2dShader_BrightPass(sScratchColorTex, uS, vS, thresh);
+            VoxelHd2dShader_BrightPass(pt->scratchColorTex, uS, vS, thresh);
             sFrameDrawCalls++;
             sFrameVertCount += 4u;
             glEnableClientState(GL_VERTEX_ARRAY);
@@ -6917,7 +6875,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
         {
             const float gain = f->indoor ? 0.35f : (hd2dHigh ? 0.65f : 0.45f);
             const float uvs[8] = { 0.0f, 0.0f, uS, 0.0f, uS, vS, 0.0f, vS };
-            glBindTexture(GL_TEXTURE_2D, sScratchColorTex);
+            glBindTexture(GL_TEXTURE_2D, pt->scratchColorTex);
             glDisable(GL_BLEND);
             glColor4f(gain, gain, gain, 1.0f);
             glVertexPointer(2, GL_FLOAT, 0, quad);
@@ -6963,20 +6921,20 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
         glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         glDisable(GL_BLEND);
 
-        // In HIGH mode, run 2-pass Kawase blur (sBloomFboA -> sBloomFboB -> sBloomFboA) for large soft streetlamp halos
+        // In HIGH mode, run 2-pass Kawase blur (bloomFboA -> bloomFboB -> bloomFboA) for large soft streetlamp halos
         if (hd2dHigh)
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, sBloomFboB);
+            glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboB);
             glViewport(0, 0, bloomW, bloomH);
-            BlurTaps(sBloomTexA, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 1.50f, 1.50f);
-            glBindFramebuffer(GL_FRAMEBUFFER, sBloomFboA);
+            BlurTaps(pt->bloomTexA, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 1.50f, 1.50f);
+            glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
             glViewport(0, 0, bloomW, bloomH);
-            BlurTaps(sBloomTexB, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 2.75f, 2.75f);
-            activeBloomTex = sBloomTexA;
+            BlurTaps(pt->bloomTexB, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 2.75f, 2.75f);
+            activeBloomTex = pt->bloomTexA;
         }
         else
         {
-            activeBloomTex = sBloomTexA;
+            activeBloomTex = pt->bloomTexA;
         }
         VitaPerf_SubEnd(VITA_PERF_T_POST_BLOOM);
     }
@@ -7047,7 +7005,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
 
         const float uB = (float)(renderW / 4) / (float)VOXEL_BLOOM_FBO_W;
         const float vB = (float)(renderH / 4) / (float)VOXEL_BLOOM_FBO_H;
-        const GLuint sceneOrBattleTex = f->inBattle3D ? (useBlurFbo ? sBlurTex : sScratchColorTex) : sDioramaActiveTex;
+        const GLuint sceneOrBattleTex = f->inBattle3D ? (useBlurFbo ? pt->blurTex : pt->scratchColorTex) : pt->dioramaActiveTex;
         const float uMain = f->inBattle3D ? uS : uMax;
         const float vMain = f->inBattle3D ? vS : vMax;
 
@@ -7064,8 +7022,8 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
         }
 
         VoxelHd2dShader_Composite(sceneOrBattleTex,
-                                  useBlurFbo ? sBlurTex : sScratchColorTex,
-                                  (activeBloomTex != 0) ? activeBloomTex : sScratchColorTex,
+                                  useBlurFbo ? pt->blurTex : pt->scratchColorTex,
+                                  (activeBloomTex != 0) ? activeBloomTex : pt->scratchColorTex,
                                   uMain, vMain, uS, vS, uB, vB,
                                   uvTop, uvBot, topAlpha, botAlpha,
                                   bloomAmt, gradeAmt, curveAmt, vignetteAmt,
@@ -7082,7 +7040,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
     if (hd2dOn && f->inBattle3D)
     {
         // F5: Blurred & dark split-toned 3D battle stage (Octopath / Triangle Strategy framing)
-        glBindTexture(GL_TEXTURE_2D, useBlurFbo ? sBlurTex : sScratchColorTex);
+        glBindTexture(GL_TEXTURE_2D, useBlurFbo ? pt->blurTex : pt->scratchColorTex);
         glColor4f(0.58f, 0.62f, 0.74f, 1.0f);
         const float uvs[8] = { 0.0f, vS, uS, vS, uS, 0.0f, 0.0f, 0.0f };
         glVertexPointer(2, GL_FLOAT, 0, quad);
@@ -7092,7 +7050,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
     }
     else
     {
-        glBindTexture(GL_TEXTURE_2D, sDioramaActiveTex);
+        glBindTexture(GL_TEXTURE_2D, pt->dioramaActiveTex);
         {
             const float baseUvs[8] = { 0.0f, vMax, uMax, vMax, uMax, 0.0f, 0.0f, 0.0f };
             glVertexPointer(2, GL_FLOAT, 0, quad);
@@ -7120,12 +7078,12 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glEnableClientState(GL_COLOR_ARRAY);
 
-            glBindTexture(GL_TEXTURE_2D, sScratchColorTex);
+            glBindTexture(GL_TEXTURE_2D, pt->scratchColorTex);
             if (useBlurFbo)
             {
                 DofBand(yTop, 0.0f, uS, vS, topAlpha, 0.0f, 0.55f);
                 DofBand(yBot, 1.0f, uS, vS, botAlpha, 0.0f, 0.55f);
-                glBindTexture(GL_TEXTURE_2D, sBlurTex);
+                glBindTexture(GL_TEXTURE_2D, pt->blurTex);
                 DofBand(yTop, 0.0f, uS, vS, topAlpha, 0.55f, 1.0f);
                 DofBand(yBot, 1.0f, uS, vS, botAlpha, 0.55f, 1.0f);
             }
