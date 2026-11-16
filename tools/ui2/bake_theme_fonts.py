@@ -51,8 +51,14 @@ def main():
     cx = cy = row_h = 0
     fonts = []
     for f in data:
-        rf = ref_fonts[ROLE_REF[f["px"]]]
-        ref_cap = cap_height(rf["glyphs"], lambda g: g[4])
+        if f["face"] == 15:
+            rf = ref_fonts.get((1, f["px"]))
+            if rf is None:
+                rf24 = ref_fonts[(1, 24)]
+                rf = {"ascent": round(rf24["ascent"] * f["px"] / 24), "lineH": f["px"], "glyphs": rf24["glyphs"]}
+        else:
+            rf = ref_fonts[ROLE_REF[f["px"]]]
+        ref_cap = cap_height(rf["glyphs"], lambda g: g[4]) if f["px"] != 20 else round(cap_height(rf["glyphs"], lambda g: g[4]) * 20 / 24)
         cap_rows = next(g["rows"] for g in f["glyphs"] if g["cp"] == 72)
         cap = sum(1 for r in cap_rows if max(bytes.fromhex(r), default=0) >= 128)
         ascent = rf["ascent"] - (ref_cap - cap) // 2

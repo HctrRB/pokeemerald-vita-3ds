@@ -1,15 +1,28 @@
-// Menu themes on the battle HUD (OPTIONS > MENU COLOR: RED, EMERALD, CRYSTAL, TROPICAL, ROYAL).
-// ?theme=red|emerald|crystal|tropical|royal (none: the original EMERALD look of this mock)
+// Menu themes on the battle HUD (OPTIONS > MENU COLOR: GBA, RED, EMERALD, CRYSTAL, TROPICAL, ROYAL).
+// ?theme=gba|red|emerald|crystal|tropical|royal (none: GBA default look)
 // ?battle=wild|trainer|double|safari  ?mode=cmd|fight|target|msg|yesno|lvup|judge
 // Colours, corner shape, edge, shadow, gloss and fonts are the runtime's (src/platform/ui/ui_theme.c).
 // Every box is drawn as an SVG background the size of its element, as BevelBoxR draws it: hard
 // shadow, edge, vertical gradient, inner highlight / shade, glass on the upper half.
 (() => {
 const P = new URLSearchParams(location.search);
-const id = (P.get('theme') || '').toLowerCase();
+const id = (P.get('theme') || 'gba').toLowerCase();
 
 const rgb = (r, g, b) => `rgb(${r},${g},${b})`;
 const TH = {
+  gba: {
+    title: ['400', 'normal', 'Press Start 2P', 1], body: ['400', 'normal', 'VT323', 1, 1],
+    r: 4, chamfer: false, edgeW: 3, sh: [0, 4, 'rgba(0,0,0,.43)'], gloss: false, bevel: true,
+    ink: rgb(48, 48, 48), inkSoft: rgb(112, 120, 112), em: rgb(230, 8, 8), title_c: rgb(255, 230, 57), soft: rgb(168, 224, 208),
+    paper: ['#FFFBE6', '#EAE2BA', '#283030', '#fff', '#C8C098', '#73CDA4'],
+    dlg: ['#FFFFFF', '#F8F6EC', '#283030', '#fff', '#D8DDD0'],
+    dark: ['#233339', '#1B2C32', '#283030', '#73CDA4', '#1B2C32', '#73CDA4'],
+    rowA: '#FFFFFF', rowB: '#F4F4EA', rowEdge: '#283030',
+    sel: ['#FFF6CD', '#FCE892', '#D85020'], selInk: '#201808', gold: '#FFE639', accent: '#73CDA4',
+    chip: ['#3E9070', '#287054', '#283030', '#fff'], gaugeBg: '#283030',
+    cmd: { fight: ['#E84848', '#C02828'], bag: ['#E89828', '#C07010'], mon: ['#30A858', '#208040'], run: ['#4878C8', '#3058A0'] },
+    cmdEdge: '#283030', cmdInk: '#fff',
+  },
   red: {
     title: ['800', 'normal', 'Saira Condensed', 20 / 16], body: ['700', 'normal', 'Saira Condensed', 26 / 32, 32 / 40],
     r: 10, chamfer: true, edgeW: 2, sh: [6, 6, 'rgba(0,0,0,.35)'], gloss: false, bevel: false,

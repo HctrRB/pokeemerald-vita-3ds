@@ -85,7 +85,8 @@ another checkout path; for a clean rebuild delete `build-vita/`.
 7. `vita_create_self(... UNSAFE)` (the app writes `ux0:data/`), then `vita-mksfoex` and
    `vita-pack-vpk` called directly (`vita_create_vpk` breaks on paths with spaces).
 8. Packs `vita/sce_sys/` (LiveArea), `assets/voxel/` → `voxel/`, `assets/ui/` → `ui/`,
-   `assets/ui2/` → `ui2/`, `assets/followers/` → `followers/`.
+   `assets/ui2/` → `ui2/`, and `assets/followers/{mon,text}/*.bin` packed by
+   `tools/pack_followers.py` into `followers/followers.pak` (PKF1 container).
 
 Title ID `PKEM00001`. LiveArea PNGs must be 8-bit indexed; `vita/make_livearea.sh` converts
 full-colour art (needs `mingw-w64-x86_64-imagemagick`).

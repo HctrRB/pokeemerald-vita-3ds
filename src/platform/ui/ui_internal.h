@@ -41,12 +41,13 @@ typedef struct
     bool gloss;          // glass highlight on the upper half of bars, keys and buttons
     bool bevel;          // inner highlight / shade lines
     bool stripes;        // diagonal stripes on the full-screen frame
+    bool gbaFrame;       // GBA Gen 3 stepped 9-slice mint/emerald window frame and scanlines
     uint8_t faceTitle;   // font face of the Press Start 2P role (titles, labels, footer)
     uint8_t faceBody;    // font face of the VT323 role (text, dialogue)
     uint8_t faceSign;    // regular-weight text face of the zone signs (role 32)
 } UiTheme;
 
-enum { UI_THEME_RED, UI_THEME_EMERALD, UI_THEME_CRYSTAL, UI_THEME_TROPICAL, UI_THEME_ROYAL, UI_THEME_COUNT };
+enum { UI_THEME_GBA, UI_THEME_RED, UI_THEME_EMERALD, UI_THEME_CRYSTAL, UI_THEME_TROPICAL, UI_THEME_ROYAL, UI_THEME_COUNT };
 extern const UiTheme *gUiTheme;   // Core 1
 void UiTheme_Refresh(void);       // reads the "ui_theme" extra (UiDraw_Begin)
 
@@ -244,6 +245,65 @@ void UiW_Arrow(int32_t x, int32_t y, uint32_t colour);      // ▶ cursor, 8x12
 void UiW_Stepper(int32_t x, int32_t y, int32_t value, int32_t *minusX, int32_t *plusX);   // [−] xNN [+], 40 px tall
 void UiW_ScrollBar(int32_t x, int32_t y, int32_t h, int32_t first, int32_t visible, int32_t total);
 void UiW_Toast(const char *text);
+
+// GBA Gen 3 screen chrome and components (design/stitch/gba_vita/index.html)
+#ifndef C_WHITE
+#define C_WHITE UI_RGBA(255, 255, 255, 255)
+#endif
+enum UiGbaBgKind
+{
+    UI_GBA_BG_PARTY = 0,
+    UI_GBA_BG_BAG,
+    UI_GBA_BG_SUMMARY,
+    UI_GBA_BG_POKEDEX,
+    UI_GBA_BG_POKENAV,
+    UI_GBA_BG_CARD,
+    UI_GBA_BG_OPTIONS,
+};
+enum UiGbaWinKind
+{
+    UI_GBA_WIN_DEFAULT = 0,
+    UI_GBA_WIN_GOLD,
+    UI_GBA_WIN_LAVENDER,
+    UI_GBA_WIN_DARK,
+};
+enum UiGbaTagColor
+{
+    UI_GBA_TAG_BLUE = 0,
+    UI_GBA_TAG_TEAL,
+    UI_GBA_TAG_GOLD,
+    UI_GBA_TAG_GREEN,
+    UI_GBA_TAG_MAGENTA,
+    UI_GBA_TAG_CRIMSON,
+    UI_GBA_TAG_SLATE,
+};
+
+#define UI_GBA_SHAD_LIGHT UI_RGBA(213, 213, 205, 255)
+#define UI_GBA_SHAD_DARK  UI_RGBA(20, 26, 28, 255)
+
+void UiW_GbaTopBar(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, int32_t dotCount, int32_t dotActive, bool dotAllGreen, const char *pagerText);
+int32_t UiW_GbaPagerHit(const UiInput *in, bool hasSecPill, int32_t dotCount);
+void UiW_GbaHelpBadge(int32_t *rx, const char *key, const char *action, bool gold);
+void UiW_GbaHelpBadgeY(int32_t *rx, int32_t y, const char *key, const char *action, bool gold);
+void UiW_GbaKeyCap(int32_t x, int32_t y, int32_t h, const char *key, bool gold);
+int32_t UiW_GbaKeyCapWidth(const char *key, int32_t h);
+void UiW_GbaWin(int32_t x, int32_t y, int32_t w, int32_t h, uint8_t kind);
+void UiW_GbaMsg(int32_t x, int32_t y, int32_t w, int32_t h, bool battleDark, bool redArrow);
+void UiW_GbaBox(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r, uint32_t border,
+                uint32_t top, uint32_t bot, uint32_t innerTop, int32_t shadowY);
+void UiW_GbaRingBox(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r, uint32_t outerRing,
+                    uint32_t innerRing, uint32_t top, uint32_t bot, uint32_t innerHi, int32_t shadowY);
+int32_t UiW_GbaText(uint8_t face, uint8_t px, int32_t x, int32_t y, const char *utf8, uint32_t rgba, uint32_t shadowRgba);
+int32_t UiW_GbaTextMid(uint8_t face, uint8_t px, int32_t x, int32_t boxY, int32_t boxH, const char *utf8, uint32_t rgba, uint32_t shadowRgba);
+void UiW_GbaTextCentred(uint8_t face, uint8_t px, int32_t boxX, int32_t boxY, int32_t boxW, int32_t boxH, const char *utf8, uint32_t rgba, uint32_t shadowRgba);
+int32_t UiW_GbaTextWrapped(uint8_t face, uint8_t px, int32_t x, int32_t y, int32_t maxW, int32_t lineStep, const char *utf8, uint32_t rgba, uint32_t shadowRgba, int32_t maxLines);
+void UiW_GbaSectionStrip(int32_t x, int32_t y, int32_t w, int32_t h, uint8_t tagKind, const char *label, const char *rightSub);
+void UiW_GbaHpBar(int32_t x, int32_t y, int32_t w, int32_t h, uint16_t hp, uint16_t maxHp);
+void UiW_GbaExpBar(int32_t x, int32_t y, int32_t w, int32_t pct, const char *nextText);
+void UiW_GbaArrowH(int32_t x, int32_t y, bool right, uint32_t colour);
+void UiW_GbaArrowV(int32_t x, int32_t y, bool down, uint32_t colour);
+void UiW_GbaStar(int32_t x, int32_t y, uint32_t colour);
+void UiW_GbaMark(int32_t x, int32_t y, uint8_t shape, uint32_t colour);
 
 // ---------- Screen kit (ui_kit.c) ----------
 void UiKit_Toast(const char *fmt, ...);      // short message over the screen (~2 s)

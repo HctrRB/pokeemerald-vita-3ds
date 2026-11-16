@@ -658,7 +658,7 @@ static bool UpdatePopup(const UiInput *in)
     }
     case POP_BOXLIST:
     {
-        if (in->pressed & VITA_BTN_CIRCLE) { sPop = POP_NONE; PlaySE(SE_SELECT); return true; }
+        if ((in->pressed & VITA_BTN_CIRCLE) || (in->tap && !UiHit(in, 264, 70, 432, 360))) { sPop = POP_NONE; PlaySE(SE_SELECT); return true; }
         const int32_t a = UiList_Update(&sBoxList, in, 280, 120, 400, 40, true);
         if (a < 0) return true;
         sPop = POP_NONE;
@@ -668,7 +668,7 @@ static bool UpdatePopup(const UiInput *in)
     }
     case POP_GIVE:
     {
-        if (in->pressed & VITA_BTN_CIRCLE) { sPop = POP_NONE; PlaySE(SE_SELECT); return true; }
+        if ((in->pressed & VITA_BTN_CIRCLE) || (in->tap && !UiHit(in, 284, 80, 392, 310))) { sPop = POP_NONE; PlaySE(SE_SELECT); return true; }
         const int32_t a = UiList_Update(&sGiveList, in, 300, 130, 360, 40, true);
         if (a < 0) return true;
         sPop = POP_NONE;
@@ -812,12 +812,30 @@ static void DrawMarks(int32_t x, int32_t y, uint8_t marks, uint32_t on, uint32_t
 
 static void DrawDetail(void)
 {
-    UiW_Panel(548, 60, 396, 432);
+    const bool gba = gUiTheme->gbaFrame;
+    const uint32_t ink = gba ? UI_RGBA(49, 49, 49, 255) : UI_COL_INK;
+    const uint32_t soft = gba ? UI_RGBA(110, 120, 114, 255) : UI_COL_INK_SOFT;
+    const uint32_t sh = gba ? UI_GBA_SHAD_LIGHT : 0;
+
+    if (gba)
+        UiW_GbaWin(548, 60, 396, 432, UI_GBA_WIN_DEFAULT);
+    else
+        UiW_Panel(548, 60, 396, 432);
+
     struct BoxPokemon *bm = sHolding ? &sHeld.box : CursorMon();
-    UiW_Inset(564, 76, 140, 140);
+    if (gba)
+        UiW_GbaBox(564, 76, 140, 140, 4, UI_RGBA(150, 172, 156, 255),
+                   UI_RGBA(240, 243, 230, 255), UI_RGBA(228, 234, 218, 255), C_WHITE, 0);
+    else
+        UiW_Inset(564, 76, 140, 140);
+
     if (bm == NULL)
     {
-        UiW_TextWrapped(716, 84, 210, 30, sArea == AREA_PLATE ? "✕: BOX menu (JUMP, WALLPAPER, NAME)." : "Empty.", UI_COL_INK_SOFT, 4);
+        if (gba)
+            UiW_GbaTextWrapped(UI_FACE_VT323, UI_BODY_PX, 716, 84, 210, 30,
+                               sArea == AREA_PLATE ? "✕: BOX menu (JUMP, WALLPAPER, NAME)." : "Empty.", soft, sh, 4);
+        else
+            UiW_TextWrapped(716, 84, 210, 30, sArea == AREA_PLATE ? "✕: BOX menu (JUMP, WALLPAPER, NAME)." : "Empty.", soft, 4);
         return;
     }
     const bool egg = GetBoxMonData(bm, MON_DATA_IS_EGG);
@@ -825,61 +843,123 @@ static void DrawDetail(void)
     UiSpr_MonFront(species, !egg && IsShinyOtIdPersonality(GetBoxMonData(bm, MON_DATA_OT_ID), GetBoxMonData(bm, MON_DATA_PERSONALITY)), 570, 82, 2);
     char name[16], buf[64];
     MonName(bm, name, sizeof(name));
-    const int32_t nw = UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 716, 76, name, UI_COL_INK);
+    const int32_t nw = gba ? UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 716, 76, name, ink, sh)
+                           : UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 716, 76, name, ink);
     if (!egg)
     {
         UiKit_GenderShiny(722 + nw, 82, GetBoxMonGender(bm), false);
         snprintf(buf, sizeof(buf), "Lv%u", (unsigned)GetLevelFromBoxMonExp(bm));
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 716, 108, buf, UI_COL_INK);
+        if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 716, 108, buf, ink, sh);
+        else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 716, 108, buf, ink);
     }
     const uint16_t it = HeldItemOf(bm);
-    UiText_Draw(UI_FACE_PS2P, 16, 716, 156, "ITEM", UI_COL_INK_SOFT);
+    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 716, 156, "ITEM", soft, sh);
+    else     UiText_Draw(UI_FACE_PS2P, 16, 716, 156, "ITEM", soft);
     if (it != ITEM_NONE) { UiSpr_ItemIcon(it, 716, 176, 1); UiGame_ItemName(it, buf, sizeof(buf)); }
     else snprintf(buf, sizeof(buf), "NONE");
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, it ? 746 : 716, 172, buf, it ? UI_COL_INK : UI_COL_INK_SOFT);
+    if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, it ? 746 : 716, 172, buf, it ? ink : soft, sh);
+    else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, it ? 746 : 716, 172, buf, it ? ink : soft);
     if (egg)
         return;
     const u32 pid = GetBoxMonData(bm, MON_DATA_PERSONALITY);
-    UiW_Inset(564, 228, 364, 70);
-    UiText_Draw(UI_FACE_PS2P, 16, 576, 236, "NATURE", UI_COL_INK_SOFT);
+    if (gba)
+        UiW_GbaBox(564, 228, 364, 70, 4, UI_RGBA(150, 172, 156, 255),
+                   UI_RGBA(240, 243, 230, 255), UI_RGBA(228, 234, 218, 255), C_WHITE, 0);
+    else
+        UiW_Inset(564, 228, 364, 70);
+    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 576, 236, "NATURE", soft, sh);
+    else     UiText_Draw(UI_FACE_PS2P, 16, 576, 236, "NATURE", soft);
     UiGame_Text(gNatureNamePointers[GetNatureFromPersonality(pid)], buf, sizeof(buf));
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 576, 256, buf, UI_COL_INK);
-    UiText_Draw(UI_FACE_PS2P, 16, 756, 236, "MARKS", UI_COL_INK_SOFT);
-    DrawMarks(756, 256, (uint8_t)GetBoxMonData(bm, MON_DATA_MARKINGS), UI_COL_SELECT_INK, UI_COL_INK_SOFT);
-    UiW_Inset(564, 306, 364, 70);
-    UiText_Draw(UI_FACE_PS2P, 16, 576, 314, "ABILITY", UI_COL_INK_SOFT);
+    if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 576, 256, buf, ink, sh);
+    else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 576, 256, buf, ink);
+    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 756, 236, "MARKS", soft, sh);
+    else     UiText_Draw(UI_FACE_PS2P, 16, 756, 236, "MARKS", soft);
+    DrawMarks(756, 256, (uint8_t)GetBoxMonData(bm, MON_DATA_MARKINGS), gba ? UI_RGBA(216, 32, 24, 255) : UI_COL_SELECT_INK, soft);
+
+    if (gba)
+        UiW_GbaBox(564, 306, 364, 70, 4, UI_RGBA(150, 172, 156, 255),
+                   UI_RGBA(240, 243, 230, 255), UI_RGBA(228, 234, 218, 255), C_WHITE, 0);
+    else
+        UiW_Inset(564, 306, 364, 70);
+    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 576, 314, "ABILITY", soft, sh);
+    else     UiText_Draw(UI_FACE_PS2P, 16, 576, 314, "ABILITY", soft);
     UiGame_Text(gAbilityNames[GetAbilityBySpecies(species, (u8)GetBoxMonData(bm, MON_DATA_ABILITY_NUM))], buf, sizeof(buf));
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 576, 334, buf, UI_COL_INK);
-    UiText_Draw(UI_FACE_PS2P, 16, 756, 314, "OT", UI_COL_INK_SOFT);
+    if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 576, 334, buf, ink, sh);
+    else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 576, 334, buf, ink);
+    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 756, 314, "OT", soft, sh);
+    else     UiText_Draw(UI_FACE_PS2P, 16, 756, 314, "OT", soft);
     u8 ot[PLAYER_NAME_LENGTH + 1];
     GetBoxMonData(bm, MON_DATA_OT_NAME, ot);
     ot[PLAYER_NAME_LENGTH] = EOS;
     UiGame_Text(ot, buf, sizeof(buf));
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 756, 334, buf, UI_COL_INK);
+    if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 756, 334, buf, ink, sh);
+    else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 756, 334, buf, ink);
+
     const char *hint = sHolding ? "✕: put it down (swaps with the one there)." :
                        sMode == MODE_ITEMS ? (sHeldItem ? "✕ on a POKéMON: give or swap the item." : "✕: item options.") :
                        sQuick ? "Quick grab: ✕ picks it up at once." : "✕: options. SELECT: quick grab.";
-    UiW_TextWrapped(564, 392, 364, 30, hint, UI_COL_INK_SOFT, 3);
+    if (gba)
+    {
+        UiW_GbaBox(564, 386, 364, 92, 4, UI_RGBA(150, 172, 156, 255),
+                   UI_RGBA(240, 243, 230, 255), UI_RGBA(228, 234, 218, 255), C_WHITE, 0);
+        UiW_GbaTextWrapped(UI_FACE_VT323, 26, 576, 394, 340, 26, hint, ink, sh, 3);
+    }
+    else
+        UiW_TextWrapped(564, 392, 364, 30, hint, soft, 3);
 }
 
 static void Build(void)
 {
     static const char *const tabs[4][1] = { { "WITHDRAW" }, { "DEPOSIT" }, { "MOVE POKéMON" }, { "MOVE ITEMS" } };
-    int32_t tx[1], tw[1];
-    UiKit_Header("PC", tabs[sMode], 1, 0, tx, tw, 12);
-    UiW_HeaderValue(sMode == MODE_ITEMS ? "ITEMS" : sQuick ? "CURSOR: QUICK GRAB" : "CURSOR: MENU", UI_COL_ON_FRAME);
+    const bool gba = gUiTheme->gbaFrame;
+    const uint32_t ink = gba ? UI_RGBA(49, 49, 49, 255) : UI_COL_INK;
+    const uint32_t soft = gba ? UI_RGBA(110, 120, 114, 255) : UI_COL_INK_SOFT;
+    const uint32_t sh = gba ? UI_GBA_SHAD_LIGHT : 0;
+
+    if (gba)
+    {
+        UiW_GbaTopBar(UI_GBA_BG_OPTIONS, UI_SPR_BALL, tabs[sMode][0], 0, 0, false, NULL);
+        int32_t rx = UI_SCREEN_W - 14;
+        UiW_GbaHelpBadge(&rx, "O", "EXIT", true);
+        if (sMode != MODE_ITEMS)
+            UiW_GbaHelpBadge(&rx, "SELECT", sQuick ? "MENU" : "QUICK", true);
+        UiW_GbaHelpBadge(&rx, "X", sHolding ? "PLACE" : "OPTIONS", false);
+    }
+    else
+    {
+        int32_t tx[1], tw[1];
+        UiKit_Header("PC", tabs[sMode], 1, 0, tx, tw, 12);
+        UiW_HeaderValue(sMode == MODE_ITEMS ? "ITEMS" : sQuick ? "CURSOR: QUICK GRAB" : "CURSOR: MENU", UI_COL_ON_FRAME);
+    }
 
     // Party
     char buf[64];
-    UiW_Panel(16, 60, 180, 432);
+    if (gba)
+        UiW_GbaWin(16, 60, 180, 432, UI_GBA_WIN_DEFAULT);
+    else
+        UiW_Panel(16, 60, 180, 432);
     snprintf(buf, sizeof(buf), "PARTY %d/6", (int)PartyCount());
-    UiText_Draw(UI_FACE_PS2P, 16, 30, 72, buf, UI_COL_INK);
+    if (gba)
+        UiW_GbaSectionStrip(24, 68, 164, 24, UI_GBA_TAG_SLATE, buf, NULL);
+    else
+        UiText_Draw(UI_FACE_PS2P, 16, 30, 72, buf, UI_COL_INK);
+
     const bool partyOk = sMode != MODE_WITHDRAW;
     for (int32_t i = 0; i < PARTY_SIZE; i++)
     {
         const int32_t y = PARTY_Y + i * SLOT_H;
         const bool on = sArea == AREA_PARTY && sPartyPos == i;
-        UiW_Row(PARTY_X, y, 156, SLOT_H - 4, on, i);
+        if (gba)
+        {
+            if (on)
+                UiW_GbaBox(PARTY_X, y, 156, SLOT_H - 4, 4, UI_RGBA(230, 148, 65, 255),
+                           UI_RGBA(255, 249, 224, 255), UI_RGBA(255, 242, 186, 255), C_WHITE, 1);
+            else
+                UiW_GbaBox(PARTY_X, y, 156, SLOT_H - 4, 4, UI_RGBA(150, 172, 156, 255),
+                           UI_RGBA(248, 248, 236, 255), UI_RGBA(236, 238, 224, 255), C_WHITE, 0);
+        }
+        else
+            UiW_Row(PARTY_X, y, 156, SLOT_H - 4, on, i);
         if (i < PartyCount())
         {
             struct Pokemon *mon = &gPlayerParty[i];
@@ -890,36 +970,66 @@ static void Build(void)
             if (!GetMonData(mon, MON_DATA_IS_EGG))
             {
                 snprintf(buf, sizeof(buf), "Lv%u", (unsigned)GetMonData(mon, MON_DATA_LEVEL));
-                UiText_Draw(UI_FACE_VT323, UI_BODY_PX, PARTY_X + 92, y + 6, buf, on ? UI_COL_SELECT_INK : UI_COL_INK);
+                if (gba) UiW_GbaTextMid(UI_FACE_VT323, UI_BODY_PX, PARTY_X + 92, y, SLOT_H - 4, buf, on ? UI_RGBA(168, 84, 8, 255) : ink, sh);
+                else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, PARTY_X + 92, y + 6, buf, on ? UI_COL_SELECT_INK : ink);
             }
         }
         else
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, PARTY_X + 40, y + 6, "-----", UI_COL_INK_SOFT);
+        {
+            if (gba) UiW_GbaTextMid(UI_FACE_VT323, UI_BODY_PX, PARTY_X + 40, y, SLOT_H - 4, "-----", soft, sh);
+            else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, PARTY_X + 40, y + 6, "-----", soft);
+        }
     }
     if (!partyOk)
         UiDraw_Rect(16, 60, 180, 432, UI_RGBA(0, 0, 0, 70));
 
-    // Box: the GBA wallpaper (or the one previewed), the plate, the grid
+    // Box: drop shadow behind wallpaper, the GBA wallpaper itself, the plate, the grid
+    UiDraw_Rect(WALL_X + 38, WALL_Y + 6, 244, 42, UI_RGBA(0, 0, 0, 110));
+    UiDraw_Rect(WALL_X + 2, WALL_Y + 56, 316, 236, UI_RGBA(0, 0, 0, 110));
     const uint8_t wall = sPop == POP_WALLS ? (uint8_t)sWallPreview : PokeStorage_GetBoxWallpaperForUi(Box());
     UiSpr_Wallpaper(wall, WALL_X, WALL_Y, 2);
+
     UiGame_Text(GetBoxNamePtr(Box()), buf, sizeof(buf));
-    const int32_t bw = UiText_Width(UI_FACE_PS2P, 16, buf);
     if (sArea == AREA_PLATE)
-        UiDraw_Frame(WALL_X + 36, WALL_Y + 2, 248, 44, 3, UI_COL_SELECT);
-    UiText_Draw(UI_FACE_PS2P, 16, WALL_X + 160 - bw / 2 + 2, WALL_Y + 18, buf, UI_RGBA(0, 0, 0, 160));
-    UiText_Draw(UI_FACE_PS2P, 16, WALL_X + 160 - bw / 2, WALL_Y + 16, buf, UI_RGBA(255, 255, 255, 255));
-    UiW_Capsule(WALL_X, WALL_Y + 8, 30, 30);
-    UiText_Draw(UI_FACE_PS2P, 16, WALL_X + 8, WALL_Y + 15, "L", UI_COL_ON_FRAME);
-    UiW_Capsule(WALL_X + 290, WALL_Y + 8, 30, 30);
-    UiText_Draw(UI_FACE_PS2P, 16, WALL_X + 298, WALL_Y + 15, "R", UI_COL_ON_FRAME);
+    {
+        if (gba)
+            UiW_GbaBox(WALL_X + 36, WALL_Y + 2, 248, 44, 5, UI_RGBA(255, 230, 57, 255),
+                       UI_RGBA(255, 255, 255, 36), UI_RGBA(255, 255, 255, 16), 0, 0);
+        else
+            UiDraw_Frame(WALL_X + 36, WALL_Y + 2, 248, 44, 3, UI_COL_SELECT);
+    }
+    UiW_GbaTextCentred(UI_FACE_PS2P, 16, WALL_X + 36, WALL_Y + 2, 248, 44, buf, C_WHITE, UI_RGBA(0, 0, 0, 180));
+
+    if (gba)
+    {
+        UiW_GbaBox(WALL_X, WALL_Y + 8, 30, 30, 4, UI_RGBA(24, 32, 32, 255),
+                   UI_RGBA(56, 108, 138, 255), UI_RGBA(34, 72, 98, 255), UI_RGBA(128, 186, 214, 255), 2);
+        UiW_GbaTextCentred(UI_FACE_PS2P, 14, WALL_X, WALL_Y + 8, 30, 30, "L", C_WHITE, UI_RGBA(16, 24, 28, 200));
+        UiW_GbaBox(WALL_X + 290, WALL_Y + 8, 30, 30, 4, UI_RGBA(24, 32, 32, 255),
+                   UI_RGBA(56, 108, 138, 255), UI_RGBA(34, 72, 98, 255), UI_RGBA(128, 186, 214, 255), 2);
+        UiW_GbaTextCentred(UI_FACE_PS2P, 14, WALL_X + 290, WALL_Y + 8, 30, 30, "R", C_WHITE, UI_RGBA(16, 24, 28, 200));
+    }
+    else
+    {
+        UiW_Capsule(WALL_X, WALL_Y + 8, 30, 30);
+        UiText_DrawCentred(UI_FACE_PS2P, 16, WALL_X, WALL_Y + 8, 30, 30, "L", UI_COL_ON_FRAME);
+        UiW_Capsule(WALL_X + 290, WALL_Y + 8, 30, 30);
+        UiText_DrawCentred(UI_FACE_PS2P, 16, WALL_X + 290, WALL_Y + 8, 30, 30, "R", UI_COL_ON_FRAME);
+    }
+
     for (int32_t i = 0; i < IN_BOX_COUNT; i++)
     {
         const int32_t x = GRID_X + (i % 6) * CELL_W, y = GRID_Y + (i / 6) * CELL_H;
         const bool on = sArea == AREA_BOX && sPos == i;
         if (on)
         {
-            UiDraw_Rect(x + 1, y + 1, CELL_W - 2, CELL_H - 2, UI_RGBA(255, 247, 214, 140));
-            UiDraw_Frame(x, y, CELL_W, CELL_H, 3, sQuick ? UI_RGBA(47, 122, 92, 255) : gUiTheme->selEdge);
+            const uint32_t selCol = sQuick ? UI_RGBA(47, 122, 92, 255) : gUiTheme->selEdge;
+            UiW_GbaBox(x, y, CELL_W, CELL_H, 5, selCol,
+                       UI_RGBA(255, 247, 214, 150), UI_RGBA(255, 240, 184, 150), C_WHITE, 1);
+            // Downward pointer triangle (.cell.on::after)
+            UiDraw_Rect(x + 17, y - 9, 14, 3, selCol);
+            UiDraw_Rect(x + 19, y - 6, 10, 3, selCol);
+            UiDraw_Rect(x + 21, y - 3, 6, 3, selCol);
         }
         struct BoxPokemon *bm = BoxMon(i);
         if (GetBoxMonData(bm, MON_DATA_SPECIES) == SPECIES_NONE)
@@ -930,10 +1040,22 @@ static void Build(void)
             UiSpr_ItemIcon((uint16_t)GetBoxMonData(bm, MON_DATA_HELD_ITEM), x + 26, y + 22, 1);
     }
     snprintf(buf, sizeof(buf), "%d/30", (int)BoxCount(Box()));
-    UiW_Capsule(WALL_X + 40, WALL_Y + 296, 100, 32);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, WALL_X + 54, WALL_Y + 296, buf, UI_COL_ON_FRAME);
-    UiW_Capsule(WALL_X + 148, WALL_Y + 296, 172, 32);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, WALL_X + 160, WALL_Y + 296, sWallNames[wall < 17 ? wall : 0], UI_COL_ON_FRAME);
+    if (gba)
+    {
+        UiW_GbaBox(WALL_X + 40, WALL_Y + 296, 100, 32, 5, UI_RGBA(40, 48, 48, 255),
+                   UI_RGBA(248, 249, 244, 255), UI_RGBA(232, 236, 224, 255), C_WHITE, 2);
+        UiW_GbaTextCentred(UI_FACE_VT323, UI_BODY_PX, WALL_X + 40, WALL_Y + 296, 100, 32, buf, ink, sh);
+        UiW_GbaBox(WALL_X + 148, WALL_Y + 296, 172, 32, 5, UI_RGBA(40, 48, 48, 255),
+                   UI_RGBA(248, 249, 244, 255), UI_RGBA(232, 236, 224, 255), C_WHITE, 2);
+        UiW_GbaTextCentred(UI_FACE_VT323, UI_BODY_PX, WALL_X + 148, WALL_Y + 296, 172, 32, sWallNames[wall < 17 ? wall : 0], ink, sh);
+    }
+    else
+    {
+        UiW_Capsule(WALL_X + 40, WALL_Y + 296, 100, 32);
+        UiText_DrawCentred(UI_FACE_VT323, UI_BODY_PX, WALL_X + 40, WALL_Y + 296, 100, 32, buf, UI_COL_ON_FRAME);
+        UiW_Capsule(WALL_X + 148, WALL_Y + 296, 172, 32);
+        UiText_DrawCentred(UI_FACE_VT323, UI_BODY_PX, WALL_X + 148, WALL_Y + 296, 172, 32, sWallNames[wall < 17 ? wall : 0], UI_COL_ON_FRAME);
+    }
 
     // What the cursor holds
     if (sHolding)
@@ -951,12 +1073,15 @@ static void Build(void)
 
     DrawDetail();
 
-    int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sHolding ? "Put down" : "Options");
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Exit");
-    if (sMode != MODE_ITEMS)
-        UiW_FooterKey(&fx, "SELECT", "Quick grab");
-    UiKit_FooterClock();
+    if (!gba)
+    {
+        int32_t fx = 16;
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sHolding ? "Put down" : "Options");
+        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Exit");
+        if (sMode != MODE_ITEMS)
+            UiW_FooterKey(&fx, "SELECT", "Quick grab");
+        UiKit_FooterClock();
+    }
 
     // Popups
     if (sPop == POP_ACTIONS || sPop == POP_BOXMENU || sPop == POP_SETS || sPop == POP_WALLS || sPop == POP_RELEASE || sPop == POP_EXIT)
@@ -964,32 +1089,55 @@ static void Build(void)
         if (sPop == POP_RELEASE || sPop == POP_EXIT)
         {
             UiDraw_Darken(1, 3);
-            UiW_DialogBox(48, UI_SCREEN_H - 24 - 124 - 40, UI_SCREEN_W - 96, 90);
-            UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 76, UI_SCREEN_H - 24 - 124 - 22, sPop == POP_RELEASE ? "Release this POKéMON?" : "Continue BOX operations?", UI_COL_INK);
+            if (gba)
+            {
+                UiW_GbaMsg(48, UI_SCREEN_H - 24 - 124 - 40, UI_SCREEN_W - 96, 90, false, false);
+                UiW_GbaText(UI_FACE_VT323, UI_DIALOG_PX, 76, UI_SCREEN_H - 24 - 124 - 22,
+                            sPop == POP_RELEASE ? "Release this POKéMON?" : "Continue BOX operations?", ink, sh);
+            }
+            else
+            {
+                UiW_DialogBox(48, UI_SCREEN_H - 24 - 124 - 40, UI_SCREEN_W - 96, 90);
+                UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 76, UI_SCREEN_H - 24 - 124 - 22, sPop == POP_RELEASE ? "Release this POKéMON?" : "Continue BOX operations?", UI_COL_INK);
+            }
         }
         UiMenu_Draw(&sMenu);
     }
     else if (sPop == POP_BOXLIST)
     {
         UiDraw_Darken(1, 3);
-        UiW_Window(264, 70, 432, 360, sBoxListStore ? "DEPOSIT IN WHICH BOX?" : "JUMP TO WHICH BOX?");
+        if (gba)
+        {
+            UiW_GbaWin(264, 70, 432, 360, UI_GBA_WIN_DEFAULT);
+            UiW_GbaSectionStrip(276, 78, 408, 28, UI_GBA_TAG_SLATE, sBoxListStore ? "DEPOSIT IN WHICH BOX?" : "JUMP TO WHICH BOX?", NULL);
+        }
+        else
+            UiW_Window(264, 70, 432, 360, sBoxListStore ? "DEPOSIT IN WHICH BOX?" : "JUMP TO WHICH BOX?");
         for (int32_t r = 0; r < 7 && sBoxList.first + r < BOXES; r++)
         {
             const int32_t b = sBoxList.first + r, y = 120 + r * 40;
             const bool on = b == sBoxList.sel;
             UiW_Row(280, y, 400, 40, on, b);
             UiGame_Text(GetBoxNamePtr((u8)b), buf, sizeof(buf));
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 308, y + 2, buf, on ? UI_COL_SELECT_INK : UI_COL_INK);
+            if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 308, y + 2, buf, on ? UI_RGBA(168, 84, 8, 255) : ink, sh);
+            else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 308, y + 2, buf, on ? UI_COL_SELECT_INK : ink);
             char n[16];
             snprintf(n, sizeof(n), "%d/30", (int)BoxCount((u8)b));
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 600, y + 2, n, on ? UI_COL_SELECT_INK : UI_COL_INK_SOFT);
+            if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 600, y + 2, n, on ? UI_RGBA(168, 84, 8, 255) : soft, sh);
+            else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 600, y + 2, n, on ? UI_COL_SELECT_INK : soft);
         }
         UiW_ScrollBar(684, 120, 280, sBoxList.first, 7, BOXES);
     }
     else if (sPop == POP_GIVE)
     {
         UiDraw_Darken(1, 3);
-        UiW_Window(284, 80, 392, 310, "GIVE WHICH ITEM?");
+        if (gba)
+        {
+            UiW_GbaWin(284, 80, 392, 310, UI_GBA_WIN_DEFAULT);
+            UiW_GbaSectionStrip(296, 88, 368, 28, UI_GBA_TAG_SLATE, "GIVE WHICH ITEM?", NULL);
+        }
+        else
+            UiW_Window(284, 80, 392, 310, "GIVE WHICH ITEM?");
         for (int32_t r = 0; r < 6 && sGiveList.first + r < sGiveCount; r++)
         {
             const int32_t i = sGiveList.first + r, y = 130 + r * 40;
@@ -997,7 +1145,8 @@ static void Build(void)
             UiW_Row(300, y, 360, 40, on, i);
             UiSpr_ItemIcon(sGiveItems[i], 328, y + 8, 1);
             UiGame_ItemName(sGiveItems[i], buf, sizeof(buf));
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 360, y + 2, buf, on ? UI_COL_SELECT_INK : UI_COL_INK);
+            if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 360, y + 2, buf, on ? UI_RGBA(168, 84, 8, 255) : ink, sh);
+            else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 360, y + 2, buf, on ? UI_COL_SELECT_INK : ink);
         }
         UiW_ScrollBar(664, 130, 240, sGiveList.first, 6, sGiveCount);
     }
@@ -1005,13 +1154,20 @@ static void Build(void)
     {
         static const char *const labels[6] = { "o  CIRCLE", "^  TRIANGLE", "#  SQUARE", "<3 HEART", "OK", "CANCEL" };
         UiDraw_Darken(1, 3);
-        UiW_Window(344, 100, 272, 330, "MARK");
+        if (gba)
+        {
+            UiW_GbaWin(344, 100, 272, 330, UI_GBA_WIN_DEFAULT);
+            UiW_GbaSectionStrip(356, 108, 248, 28, UI_GBA_TAG_SLATE, "MARK", NULL);
+        }
+        else
+            UiW_Window(344, 100, 272, 330, "MARK");
         for (int32_t i = 0; i < 6; i++)
         {
             const int32_t y = 150 + i * 44;
             const bool on = i == sMarkSel;
             UiW_Row(360, y, 240, 42, on, i);
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 388, y + 4, labels[i], on ? UI_COL_SELECT_INK : UI_COL_INK);
+            if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 388, y + 4, labels[i], on ? UI_RGBA(168, 84, 8, 255) : ink, sh);
+            else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 388, y + 4, labels[i], on ? UI_COL_SELECT_INK : ink);
             if (i < 4 && ((sMarks >> i) & 1))
                 UiText_Draw(UI_FACE_PS2P, 16, 568, y + 12, "*", on ? UI_COL_SELECT_INK : gUiTheme->selEdge);
         }
@@ -1019,8 +1175,16 @@ static void Build(void)
     else if (sPop == POP_MSG)
     {
         UiDraw_Darken(1, 3);
-        UiW_DialogBox(48, UI_SCREEN_H - 24 - 124, UI_SCREEN_W - 96, 124);
-        UiW_TextWrappedF(UI_FACE_VT323, UI_DIALOG_PX, 76, UI_SCREEN_H - 24 - 112, UI_SCREEN_W - 152, 46, sMsgs[sMsgAt], UI_COL_INK, 2);
+        if (gba)
+        {
+            UiW_GbaMsg(48, UI_SCREEN_H - 24 - 124, UI_SCREEN_W - 96, 124, false, true);
+            UiW_GbaTextWrapped(UI_FACE_VT323, UI_DIALOG_PX, 76, UI_SCREEN_H - 24 - 112, UI_SCREEN_W - 152, 46, sMsgs[sMsgAt], ink, sh, 2);
+        }
+        else
+        {
+            UiW_DialogBox(48, UI_SCREEN_H - 24 - 124, UI_SCREEN_W - 96, 124);
+            UiW_TextWrappedF(UI_FACE_VT323, UI_DIALOG_PX, 76, UI_SCREEN_H - 24 - 112, UI_SCREEN_W - 152, 46, sMsgs[sMsgAt], UI_COL_INK, 2);
+        }
     }
 }
 

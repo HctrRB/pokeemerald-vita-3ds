@@ -27,7 +27,7 @@ git-ignored.
 | `assets/voxel/trees.rgba5551` | `app0:voxel/` | `voxel_renderer.c` | Tree atlas | Emerald 3DS `scripts/gen_voxel_trees.py` |
 | `assets/ui2/ui_atlas.bin` | `app0:ui2/` | `ui_assets.c` | Fixed part of the new UI's texture: baked theme fonts, white block, UI sprites | `tools/ui2/build_atlas.py` (also writes `src/platform/ui/ui_sprite_ids.h`) |
 | `assets/ui/intro_margins.bin` (`EM3DLVS1`) | `app0:ui/` | `vita_stage.c` | Leaves margins of the intro | `tools/ui_gen/gen_intro_margins.py` (reads `graphics/intro/scene_1`; run by `build_vita.sh`, not committed) |
-| `assets/followers/` | `app0:followers/` | `src/follower_mon.c` | HGSS follower sprites (FMN1) and messages | Sources in `assets/followers/sources.txt` |
+| `assets/followers/` | `app0:followers/followers.pak` | `src/follower_mon.c` (`vita_pak.c`) | HGSS follower sprites (FMN1) and messages packed into PKF1 container by `tools/pack_followers.py` | Sources in `assets/followers/sources.txt` |
 
 The voxel data files are made by Emerald 3DS's Python generators (CC BY-NC-SA 4.0). They read
 the decompilation, not a ROM. The generators and the terrain editor used to fix faulty maps are

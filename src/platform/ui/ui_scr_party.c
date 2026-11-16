@@ -96,9 +96,10 @@ static void Label(int32_t x, int32_t y, const char *k)
 enum { TAB_INFO, TAB_SKILLS, TAB_MOVES, TAB_CONTEST, TAB_COUNT };
 static const char *const sTabs[TAB_COUNT] = { "INFO", "SKILLS", "MOVES", "CONTEST" };
 enum { MODE_BROWSE, MODE_SWITCH, MODE_SHARE, MODE_MOVES };
-enum { P_SWITCH = 1000, P_ITEM, P_CANCEL, P_GIVE, P_TAKE, P_SHIFT };   // above every MOVE_* id
+enum { P_SWITCH = 1000, P_ITEM, P_CANCEL, P_GIVE, P_TAKE, P_SHIFT, P_SUMMARY };   // above every MOVE_* id
 
 static int32_t sTab, sMode, sFrom, sMoveSel, sMoveSwap = -1;
+static bool sSummaryOpen;
 static UiList sParty;
 static UiMenu sPop;
 static int32_t sTabX[TAB_COUNT], sTabW[TAB_COUNT];
@@ -110,6 +111,8 @@ static void PartyEnter(void)
     sParty.sel = sParty.first = 0;
     sTab = TAB_INFO;
     sMode = MODE_BROWSE;
+    sSummaryOpen = false;
+    sMoveSwap = -1;
     sPop.open = false;
     UiList_Reset(&sParty, UiGame_PartyCount(), 6);
 }
@@ -136,14 +139,17 @@ static void OpenPopup(void)
     const int32_t slot = sParty.sel;
     UiMon m;
     UiGame_Mon(slot, &m);
-    UiMenu_Open(&sPop, m.name, 348, CARD_Y + (slot - sParty.first) * CARD_H, 260);
+    const int32_t px = gUiTheme->gbaFrame ? 340 : 348;
+    const int32_t py = gUiTheme->gbaFrame ? 68 + slot * 50 : CARD_Y + (slot - sParty.first) * CARD_H;
+    UiMenu_Open(&sPop, m.name, px, py, 260);
     if (UiGame_InBattleMenu())
     {
         UiMenu_Add(&sPop, "SHIFT", P_SHIFT);
-        UiMenu_Add(&sPop, "SUMMARY", P_CANCEL);
+        UiMenu_Add(&sPop, "SUMMARY", P_SUMMARY);
         UiMenu_Add(&sPop, "CANCEL", P_CANCEL);
         return;
     }
+    UiMenu_Add(&sPop, "SUMMARY", P_SUMMARY);
     for (int32_t i = 0; i < 4; i++)
     {
         const uint16_t mv = UiGame_FieldMove(slot, i);
@@ -166,6 +172,14 @@ static void PopupChoice(int32_t id)
     const int32_t slot = sParty.sel;
     UiMon m;
     UiGame_Mon(slot, &m);
+    if (id == P_SUMMARY)
+    {
+        sSummaryOpen = true;
+        sTab = TAB_SKILLS;
+        sMode = MODE_BROWSE;
+        sMoveSwap = -1;
+        return;
+    }
     if (id == P_SHIFT)
     {
         const char *why = UiGame_BattleSwitch(slot);
@@ -176,7 +190,7 @@ static void PopupChoice(int32_t id)
     if (id == P_SWITCH) { sMode = MODE_SWITCH; sFrom = slot; UiKit_Toast("Move %s to where?", m.name); return; }
     if (id == P_ITEM)
     {
-        UiMenu_Open(&sPop, "ITEM", 348, CARD_Y + (slot - sParty.first) * CARD_H, 260);
+        UiMenu_Open(&sPop, "ITEM", gUiTheme->gbaFrame ? 340 : 348, gUiTheme->gbaFrame ? 68 + slot * 50 : CARD_Y + (slot - sParty.first) * CARD_H, 260);
         UiMenu_Add(&sPop, "GIVE", P_GIVE);
         if (m.item != ITEM_NONE)
             UiMenu_Add(&sPop, "TAKE", P_TAKE);
@@ -228,6 +242,218 @@ static void PopupChoice(int32_t id)
     }
 }
 
+static void GbaSlotRect(int32_t i, int32_t *x, int32_t *y, int32_t *w, int32_t *h)
+{
+    *x = 14;
+    *w = 556;
+    if (i == 0)
+    {
+        *y = 60;
+        *h = 82;
+    }
+    else
+    {
+        *y = 148 + (i - 1) * 63;
+        *h = 58;
+    }
+}
+
+static int32_t PartyMoveCount(int32_t slot)
+{
+    int32_t n = 0;
+    for (int32_t i = 0; i < 4; i++)
+    {
+        UiMove mv;
+        UiGame_Move(slot, i, &mv);
+        if (mv.move) n = i + 1;
+    }
+    return n;
+}
+
+static bool PartyGbaUpdate(const UiInput *in)
+{
+    if (sSummaryOpen)
+    {
+        if (in->pressed & VITA_BTN_CIRCLE)
+        {
+            PlaySE(SE_SELECT);
+            if (sMode == MODE_MOVES)
+            {
+                sMode = MODE_BROWSE;
+                sMoveSwap = -1;
+            }
+            else
+                sSummaryOpen = false;
+            return true;
+        }
+        int32_t nextTab = -1;
+        const int32_t ph = UiW_GbaPagerHit(in, true, TAB_COUNT);
+        if ((in->pressed & VITA_BTN_L) || ph < 0) nextTab = (sTab + TAB_COUNT - 1) % TAB_COUNT;
+        if ((in->pressed & VITA_BTN_R) || ph > 0) nextTab = (sTab + 1) % TAB_COUNT;
+        if (sMode != MODE_MOVES)
+        {
+            if (in->repeat & VITA_BTN_LEFT) nextTab = (sTab + TAB_COUNT - 1) % TAB_COUNT;
+            if (in->repeat & VITA_BTN_RIGHT) nextTab = (sTab + 1) % TAB_COUNT;
+        }
+        if (nextTab >= 0 && nextTab != sTab)
+        {
+            sTab = nextTab;
+            sMode = MODE_BROWSE;
+            sMoveSwap = -1;
+            PlaySE(SE_SELECT);
+            return true;
+        }
+        // TappingKnownMoves 2x2 pills on SKILLS opens MOVES directly
+        if (sTab == TAB_SKILLS)
+        {
+            for (int32_t k = 0; k < 4; k++)
+            {
+                const int32_t mx = 362 + (k & 1) * 290;
+                const int32_t my = 430 + (k >> 1) * 44;
+                if (UiHit(in, mx, my, 284, 40) && k < PartyMoveCount(sParty.sel))
+                {
+                    sTab = TAB_MOVES;
+                    sMoveSel = k;
+                    sMode = MODE_MOVES;
+                    sMoveSwap = -1;
+                    PlaySE(SE_SELECT);
+                    return true;
+                }
+            }
+        }
+        if (sTab >= TAB_MOVES)
+        {
+            const int32_t n = PartyMoveCount(sParty.sel);
+            for (int32_t k = 0; k < n; k++)
+                if (UiHit(in, 362, 104 + k * 54, 574, 50))
+                {
+                    sMode = MODE_MOVES;
+                    sMoveSel = k;
+                    PlaySE(SE_SELECT);
+                }
+            if (sMode == MODE_MOVES && n > 0)
+            {
+                const int32_t before = sMoveSel;
+                if (in->repeat & VITA_BTN_UP) sMoveSel = (sMoveSel + n - 1) % n;
+                if (in->repeat & VITA_BTN_DOWN) sMoveSel = (sMoveSel + 1) % n;
+                if (sMoveSel != before) PlaySE(SE_SELECT);
+                if ((in->pressed & (VITA_BTN_SQUARE | VITA_BTN_CROSS)) && !UiGame_InBattleMenu())
+                {
+                    PlaySE(SE_SELECT);
+                    if (sMoveSwap < 0) sMoveSwap = sMoveSel;
+                    else
+                    {
+                        if (sMoveSwap != sMoveSel) UiGame_SwapMoves(sParty.sel, sMoveSwap, sMoveSel);
+                        sMoveSwap = -1;
+                    }
+                }
+                return true;
+            }
+            if ((in->pressed & (VITA_BTN_CROSS | VITA_BTN_SQUARE)) && n > 0)
+            {
+                sMode = MODE_MOVES;
+                sMoveSel = 0;
+                sMoveSwap = -1;
+                PlaySE(SE_SELECT);
+                return true;
+            }
+        }
+        // Up / Down switches POKéMON while staying in Summary View (04_summary)
+        const int32_t pCount = UiGame_PartyCount();
+        if (pCount > 1)
+        {
+            const int32_t before = sParty.sel;
+            if (in->repeat & VITA_BTN_UP) sParty.sel = (sParty.sel + pCount - 1) % pCount;
+            if (in->repeat & VITA_BTN_DOWN) sParty.sel = (sParty.sel + 1) % pCount;
+            if (sParty.sel != before)
+            {
+                sMoveSel = 0;
+                sMoveSwap = -1;
+                PlaySE(SE_SELECT);
+            }
+        }
+        return true;
+    }
+
+    // Party View (02_party)
+    if ((in->pressed & VITA_BTN_CIRCLE) || UiHit(in, 788, 468, 158, 68))
+    {
+        PlaySE(SE_SELECT);
+        if (sMode != MODE_BROWSE) { sMode = MODE_BROWSE; UiKit_ClearToast(); return true; }
+        if (UiGame_InBattleMenu() && !UiGame_BattlePartyCanCancel())
+        {
+            PlaySE(SE_FAILURE);
+            UiKit_Toast("Choose a POKéMON to send out.");
+            return true;
+        }
+        return false;
+    }
+    if ((in->pressed & VITA_BTN_SQUARE) || UiHit(in, 582, 60, 364, 402))
+    {
+        PlaySE(SE_SELECT);
+        sSummaryOpen = true;
+        sTab = TAB_SKILLS;
+        sMode = MODE_BROWSE;
+        sMoveSwap = -1;
+        return true;
+    }
+    if ((in->pressed & VITA_BTN_TRIANGLE) && !UiGame_InBattleMenu() && UiGame_PartyCount() > 1)
+    {
+        UiMon m;
+        UiGame_Mon(sParty.sel, &m);
+        PlaySE(SE_SELECT);
+        sMode = MODE_SWITCH;
+        sFrom = sParty.sel;
+        UiKit_Toast("Move %s to where?", m.name);
+        return true;
+    }
+    const int32_t pCount = UiGame_PartyCount();
+    if (pCount <= 0)
+        return true;
+    const int32_t before = sParty.sel;
+    if (in->repeat & VITA_BTN_UP) sParty.sel = (sParty.sel + pCount - 1) % pCount;
+    if (in->repeat & VITA_BTN_DOWN) sParty.sel = (sParty.sel + 1) % pCount;
+    if (in->repeat & VITA_BTN_LEFT) sParty.sel = 0;
+    if ((in->repeat & VITA_BTN_RIGHT) && pCount > 1 && sParty.sel == 0) sParty.sel = 1;
+    bool activate = (in->pressed & VITA_BTN_CROSS) != 0;
+    int32_t hitIdx = -1;
+    for (int32_t i = 0; i < pCount; i++)
+    {
+        int32_t sx, sy, sw, sh;
+        GbaSlotRect(i, &sx, &sy, &sw, &sh);
+        if (UiHit(in, sx, sy, sw, sh))
+        {
+            hitIdx = i;
+            if (sParty.sel == i || sMode == MODE_SWITCH || sMode == MODE_SHARE)
+                activate = true;
+            sParty.sel = i;
+        }
+    }
+    if (sParty.sel != before)
+        PlaySE(SE_SELECT);
+    if (activate)
+    {
+        const int32_t a = hitIdx >= 0 ? hitIdx : sParty.sel;
+        PlaySE(SE_SELECT);
+        if (sMode == MODE_SWITCH)
+        {
+            if (a != sFrom) UiGame_SwapPartyMons(sFrom, a);
+            sMode = MODE_BROWSE;
+            UiKit_ClearToast();
+        }
+        else if (sMode == MODE_SHARE)
+        {
+            char msg[64];
+            if (!UiGame_ShareHp(sFrom, a, msg, sizeof(msg))) PlaySE(SE_FAILURE);
+            UiKit_Toast("%s", msg);
+            sMode = MODE_BROWSE;
+        }
+        else
+            OpenPopup();
+    }
+    return true;
+}
+
 static bool PartyUpdate(const UiInput *in)
 {
     sFrame++;
@@ -238,6 +464,8 @@ static bool PartyUpdate(const UiInput *in)
             PopupChoice(id);
         return true;
     }
+    if (gUiTheme->gbaFrame)
+        return PartyGbaUpdate(in);
     int32_t tab = UiKit_TabHit(in, sTabX, sTabW, TAB_COUNT);
     if (in->pressed & VITA_BTN_L) tab = (sTab + TAB_COUNT - 1) % TAB_COUNT;
     if (in->pressed & VITA_BTN_R) tab = (sTab + 1) % TAB_COUNT;
@@ -462,8 +690,506 @@ static void BuildMoves(int32_t slot, bool contest)
     }
 }
 
+static void DrawGbaCancelBtn(int32_t x, int32_t y, int32_t w, int32_t h)
+{
+    UiW_Bevel(x, y, w, h, 5, UI_RGBA(24, 32, 32, 255), UI_RGBA(106, 106, 168, 255), UI_RGBA(70, 70, 118, 255),
+              2, UI_RGBA(148, 148, 208, 255), UI_RGBA(44, 44, 78, 255), 3);
+    UiDraw_Sprite(UI_SPR_BALL_POKE, x + 14, y + (h - 24) / 2, 2);
+    UiText_DrawMid(UI_FACE_PS2P, 16, x + 46, y + 1, h, "CANCEL", UI_RGBA(24, 24, 40, 200));
+    UiText_DrawMid(UI_FACE_PS2P, 16, x + 45, y, h, "CANCEL", UI_RGBA(255, 255, 255, 255));
+}
+
+static void DrawGbaPartySlot(int32_t slot, bool sel, bool mark, const char *tag, bool tagOk, bool partnerDim)
+{
+    int32_t x, y, w, h;
+    GbaSlotRect(slot, &x, &y, &w, &h);
+    const bool lead = (slot == 0);
+    const uint32_t edge = mark ? UI_RGBA(245, 209, 98, 255) : UI_RGBA(24, 32, 32, 255);
+    const uint32_t top = sel ? UI_RGBA(72, 184, 160, 255) : lead ? UI_RGBA(72, 158, 168, 255) : UI_RGBA(59, 132, 164, 255);
+    const uint32_t bot = sel ? UI_RGBA(42, 136, 112, 255) : lead ? UI_RGBA(48, 114, 128, 255) : UI_RGBA(40, 98, 128, 255);
+    const uint32_t hi  = sel ? UI_RGBA(158, 240, 222, 255) : UI_RGBA(120, 205, 216, 255);
+    if (sel)
+        UiW_GbaRingBox(x, y, w, h, 5, UI_RGBA(255, 90, 32, 255), UI_RGBA(255, 230, 57, 255), top, bot, hi, 3);
+    else
+        UiW_Bevel(x, y, w, h, 5, edge, top, bot, 2, hi, UI_RGBA(24, 58, 72, 255), 3);
+
+    UiMon m;
+    if (!UiGame_Mon(slot, &m))
+        return;
+    const uint8_t frame = (uint8_t)((sFrame / (sel ? 8 : 16)) & 1);
+    if (sel)
+    {
+        UiW_GbaArrowH(x + 11, y + (h - 12) / 2 + 1, true, UI_GBA_SHAD_DARK);
+        UiW_GbaArrowH(x + 10, y + (h - 12) / 2, true, UI_RGBA(230, 8, 8, 255));
+    }
+    else
+        UiDraw_Sprite(UI_SPR_BALL_POKE, x + 10, y + (h - 12) / 2, 1);
+
+    if (lead)
+        UiSpr_MonIcon(m.species, frame, x + 28, y + 8 - (frame ? 3 : 0), 2);
+    else
+        UiSpr_MonIcon(m.species, frame, x + 32, y + 12 - (frame ? 2 : 0), 1);
+
+    const int32_t textX = lead ? x + 102 : x + 74;
+    const int32_t maxNameW = (x + 324) - textX - (m.egg ? 0 : (m.shiny ? 38 : 22));
+    UiDraw_PushClip(textX, y + (lead ? 8 : 4), maxNameW, 30);
+    const int32_t nameW = UiW_GbaText(UI_FACE_PS2P, 16, textX, y + (lead ? 14 : 9), m.name, C_WHITE, UI_GBA_SHAD_DARK);
+    UiDraw_PopClip();
+    if (!m.egg)
+        UiKit_GenderShiny(textX + (nameW > maxNameW ? maxNameW : nameW) + 6, y + (lead ? 8 : 3), m.gender, m.shiny);
+
+    if (m.egg)
+    {
+        UiW_GbaText(UI_FACE_VT323, 28, textX, y + (lead ? 42 : 28), "EGG", UI_RGBA(216, 248, 240, 255), UI_GBA_SHAD_DARK);
+        if (tag)
+            UiW_Chip(x + w - 20 - UiText_Width(UI_FACE_VT323, 32, tag), y + (h - 26) / 2, tag, tagOk);
+    }
+    else
+    {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "Lv%u", (unsigned)m.level);
+        const int32_t lvY = lead ? y + 46 : y + 32;
+        const int32_t lvW = UiW_GbaText(UI_FACE_VT323, 24, textX, lvY, buf, UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
+        int32_t bx = textX + lvW + 10;
+        const int32_t st = UiGame_MonStatusIcon(slot);
+        if (st >= 0)
+        {
+            UiDraw_Sprite((uint16_t)(UI_SPR_STATUS_FIRST + st), bx, lvY + 4, 2);
+            bx += 68;
+        }
+        if (m.item != ITEM_NONE)
+        {
+            UiDraw_Sprite(ItemIsMail(m.item) ? UI_SPR_HOLD_MAIL : UI_SPR_HOLD_ITEM, bx, lvY + 6, 2);
+            if (lead)
+            {
+                char iname[24];
+                UiGame_ItemName(m.item, iname, sizeof(iname));
+                UiW_GbaText(UI_FACE_VT323, 24, bx + 20, lvY, iname, UI_RGBA(216, 248, 240, 255), UI_GBA_SHAD_DARK);
+            }
+        }
+        if (tag)
+        {
+            UiW_Bar(x + 332, y + 12, 206, 12, m.maxHp ? (int32_t)m.hp * 100 / m.maxHp : 0, UI_RGBA(115, 255, 172, 255), UI_RGBA(90, 213, 131, 255));
+            UiW_Chip(x + w - 16 - UiText_Width(UI_FACE_VT323, 32, tag) - 16, y + (lead ? 42 : 28), tag, tagOk);
+        }
+        else
+        {
+            UiW_GbaHpBar(x + 332, y + (lead ? 14 : 10), 208, 16, m.hp, m.maxHp);
+            snprintf(buf, sizeof(buf), "%u / %u", (unsigned)m.hp, (unsigned)m.maxHp);
+            UiW_GbaText(UI_FACE_VT323, lead ? 32 : 28, x + w - 16 - UiText_Width(UI_FACE_VT323, lead ? 32 : 28, buf),
+                        y + (lead ? 40 : 28), buf, C_WHITE, UI_GBA_SHAD_DARK);
+        }
+    }
+    if (partnerDim)
+        UiDraw_Rect(x, y, w, h, UI_RGBA(0, 0, 0, 72));
+}
+
+static void BuildGbaInspectPanel(int32_t slot)
+{
+    UiW_GbaWin(582, 60, 364, 402, UI_GBA_WIN_DEFAULT);
+    UiMon m;
+    UiSummary s;
+    if (!UiGame_Mon(slot, &m))
+        return;
+    UiGame_Summary(slot, &s);
+
+    char buf[48];
+    snprintf(buf, sizeof(buf), "No.%03u", (unsigned)s.dexNo);
+    UiW_GbaSectionStrip(592, 70, 344, 26, UI_GBA_TAG_BLUE, "PROFILE", m.egg ? "EGG" : buf);
+
+    // Visor (592, 100, 82, 82)
+    UiW_GbaBox(592, 100, 82, 82, 4, UI_RGBA(40, 48, 48, 255), UI_RGBA(230, 236, 244, 255), UI_RGBA(230, 236, 244, 255), UI_GBA_SHAD_LIGHT, 0);
+    for (int32_t g = 10; g < 78; g += 12)
+    {
+        UiDraw_Rect(594 + g, 102, 1, 78, UI_RGBA(180, 196, 212, 90));
+        UiDraw_Rect(594, 102 + g, 78, 1, UI_RGBA(180, 196, 212, 90));
+    }
+    UiSpr_MonFront(m.species, m.shiny, 601, 109, 1);
+
+    const int32_t maxNameW = 204;
+    UiDraw_PushClip(684, 98, maxNameW, 30);
+    const int32_t nw = UiW_GbaText(UI_FACE_PS2P, 16, 684, 102, m.name, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+    UiDraw_PopClip();
+    if (m.egg)
+    {
+        const char *eggHint = s.eggCycles <= 5 ? "Almost ready to hatch!"
+                            : s.eggCycles <= 10 ? "Moves around inside."
+                                                : "Will take time to hatch.";
+        UiW_GbaText(UI_FACE_VT323, 28, 684, 134, eggHint, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+        return;
+    }
+    UiKit_GenderShiny(684 + (nw > maxNameW ? maxNameW : nw) + 6, 98, m.gender, m.shiny);
+    UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + s.types[0]), 684, 126, 2);
+    if (s.types[1] != s.types[0])
+        UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + s.types[1]), 754, 126, 2);
+    snprintf(buf, sizeof(buf), "%s · Lv%u", s.nature, (unsigned)m.level);
+    UiW_GbaText(UI_FACE_VT323, 24, 684, 160, buf, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+
+    // Ability & Item
+    UiW_GbaSectionStrip(592, 190, 344, 26, UI_GBA_TAG_TEAL, "ABILITY & ITEM", s.ability);
+    UiW_GbaBox(592, 220, 344, 66, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+    UiDraw_PushClip(596, 222, 336, 62);
+    if (s.item != ITEM_NONE)
+    {
+        char iname[24];
+        UiGame_ItemName(s.item, iname, sizeof(iname));
+        UiSpr_ItemIcon(s.item, 598, 222, 1);
+        snprintf(buf, sizeof(buf), "Item: %s", iname);
+        UiW_GbaText(UI_FACE_VT323, 24, 624, 223, buf, UI_RGBA(32, 104, 168, 255), UI_GBA_SHAD_LIGHT);
+    }
+    else
+        UiW_GbaText(UI_FACE_VT323, 24, 600, 223, "Item: NONE", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+    UiW_GbaTextWrapped(UI_FACE_VT323, 24, 600, 243, 330, 20, s.abilityDesc, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 2);
+    UiDraw_PopClip();
+
+    // Known Moves 2x2
+    const int32_t mvCount = PartyMoveCount(slot);
+    snprintf(buf, sizeof(buf), "%d / 4", (int)mvCount);
+    UiW_GbaSectionStrip(592, 292, 344, 26, UI_GBA_TAG_MAGENTA, "KNOWN MOVES", buf);
+    for (int32_t k = 0; k < 4; k++)
+    {
+        const int32_t mx = 592 + (k & 1) * 176;
+        const int32_t my = 322 + (k >> 1) * 65;
+        UiW_GbaBox(mx, my, 168, 60, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+        UiMove mv;
+        UiGame_Move(slot, k, &mv);
+        if (!mv.move)
+        {
+            UiW_GbaTextCentred(UI_FACE_VT323, 24, mx, my, 168, 60, "---", UI_RGBA(140, 148, 140, 255), UI_GBA_SHAD_LIGHT);
+            continue;
+        }
+        UiDraw_PushClip(mx + 6, my + 2, 156, 56);
+        UiW_GbaText(UI_FACE_VT323, 24, mx + 8, my + 4, mv.name, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + mv.type), mx + 8, my + 32, 1);
+        snprintf(buf, sizeof(buf), "%u/%u", (unsigned)mv.pp, (unsigned)mv.maxPp);
+        UiW_GbaText(UI_FACE_VT323, 24, mx + 160 - UiText_Width(UI_FACE_VT323, 24, buf), my + 30, buf, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+        UiDraw_PopClip();
+    }
+}
+
+static void BuildGbaSummary(void)
+{
+    static const char *const kPageNames[TAB_COUNT] = { "POKéMON INFO", "POKéMON SKILLS", "BATTLE MOVES", "CONTEST MOVES" };
+    UiW_GbaTopBar(UI_GBA_BG_SUMMARY, UI_SPR_BALL_POKE, "POKéMON SUMMARY", TAB_COUNT, sTab, false, kPageNames[sTab]);
+    int32_t rx = UI_SCREEN_W - 14;
+    UiW_GbaHelpBadge(&rx, "O", "BACK", false);
+    if (sMode == MODE_MOVES)
+    {
+        UiW_GbaHelpBadge(&rx, "X", "SWAP", false);
+        UiW_GbaHelpBadge(&rx, "UD", "MOVE", false);
+    }
+    else
+    {
+        UiW_GbaHelpBadge(&rx, "LR", "PAGE", false);
+        UiW_GbaHelpBadge(&rx, "UD", "MON", false);
+    }
+
+    UiMon m;
+    UiSummary s;
+    if (!UiGame_Mon(sParty.sel, &m))
+        return;
+    UiGame_Summary(sParty.sel, &s);
+
+    char buf[96], lvBuf[16];
+    snprintf(buf, sizeof(buf), "No.%03u %s", (unsigned)s.dexNo, m.name);
+    snprintf(lvBuf, sizeof(lvBuf), m.egg ? "EGG" : "Lv%u", (unsigned)m.level);
+
+    // Left Summary Card (14, 60, 326, 472)
+    UiW_GbaWin(14, 60, 326, 472, UI_GBA_WIN_DEFAULT);
+    UiW_GbaSectionStrip(24, 70, 306, 28, UI_GBA_TAG_SLATE, buf, lvBuf);
+
+    // Visor (24, 104, 306, 152)
+    UiW_GbaBox(24, 104, 306, 152, 4, UI_RGBA(40, 48, 48, 255), UI_RGBA(230, 236, 248, 255), UI_RGBA(216, 224, 240, 255), UI_GBA_SHAD_LIGHT, 0);
+    for (int32_t gx = 26; gx < 328; gx += 16)
+        UiDraw_Rect(gx, 106, 1, 148, UI_RGBA(180, 196, 224, 90));
+    for (int32_t gy = 106; gy < 254; gy += 16)
+        UiDraw_Rect(26, gy, 302, 1, UI_RGBA(180, 196, 224, 90));
+    UiDraw_Sprite(UI_SPR_BALL_POKE, 34, 112, 2);
+    if (!m.egg)
+        UiKit_GenderShiny(62, 110, m.gender, m.shiny);
+    UiSpr_MonFront(m.species, m.shiny, 24 + (306 - 128) / 2, 104 + 12, 2);
+    if (!m.egg)
+    {
+        UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + s.types[0]), 32, 218, 2);
+        if (s.types[1] != s.types[0])
+            UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + s.types[1]), 100, 218, 2);
+        for (uint8_t k = 0; k < 4; k++)
+            UiW_GbaMark(254 + k * 18, 232, k, UI_RGBA(112, 120, 136, 255));
+    }
+
+    if (!m.egg)
+    {
+        UiW_GbaHpBar(24, 266, 198, 16, m.hp, m.maxHp);
+        snprintf(buf, sizeof(buf), "%u / %u", (unsigned)m.hp, (unsigned)m.maxHp);
+        UiW_GbaTextMid(UI_FACE_VT323, 28, 330 - UiText_Width(UI_FACE_VT323, 28, buf), 262, 24, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        snprintf(buf, sizeof(buf), "NEXT %u", (unsigned)s.expToNext);
+        UiW_GbaExpBar(24, 290, 306, s.expPct, buf);
+    }
+
+    UiW_GbaSectionStrip(24, 316, 306, 26, UI_GBA_TAG_BLUE, "TRAINER MEMO", m.egg ? "DAYCARE" : s.ot);
+    UiW_GbaBox(24, 348, 306, 172, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+    UiDraw_PushClip(32, 354, 290, 160);
+    if (m.egg)
+    {
+        const char *t = s.eggCycles <= 5 ? "It's making sounds inside. It's going to hatch soon!"
+                      : s.eggCycles <= 10 ? "It moves around inside sometimes. Must be close to hatching."
+                      : s.eggCycles <= 40 ? "What will hatch from this? Doesn't seem close to hatching."
+                                          : "It looks like this EGG will take a long time to hatch.";
+        UiW_GbaTextWrapped(UI_FACE_VT323, 28, 34, 358, 286, 28, t, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 5);
+    }
+    else
+    {
+        const int32_t nw = UiW_GbaText(UI_FACE_VT323, 28, 34, 356, s.nature, UI_RGBA(208, 40, 40, 255), UI_GBA_SHAD_LIGHT);
+        UiW_GbaText(UI_FACE_VT323, 28, 34 + nw + 6, 356, "nature.", UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        snprintf(buf, sizeof(buf), "Met at %s at Lv.%u.", s.metAt, (unsigned)s.metLevel);
+        UiW_GbaTextWrapped(UI_FACE_VT323, 28, 34, 388, 286, 26, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 3);
+        snprintf(buf, sizeof(buf), "OT: %s   IDNo. %05u", s.ot, (unsigned)s.otId);
+        UiW_GbaText(UI_FACE_VT323, 24, 34, 482, buf, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+    }
+    UiDraw_PopClip();
+
+    // Right Data Sheet (352, 60, 594, 472)
+    UiW_GbaWin(352, 60, 594, 472, UI_GBA_WIN_DEFAULT);
+    if (m.egg)
+    {
+        UiW_GbaSectionStrip(362, 70, 574, 28, UI_GBA_TAG_BLUE, "POKéMON EGG", "UNKNOWN");
+        UiW_GbaBox(362, 104, 574, 416, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+        UiW_GbaTextCentred(UI_FACE_VT323, 32, 362, 260, 574, 40, "Stats and moves are unknown while inside the EGG.", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+        return;
+    }
+
+    if (sTab == TAB_SKILLS)
+    {
+        static const char *const kStatNames[6] = { "HP", "ATTACK", "DEFENSE", "SP. ATK", "SP. DEF", "SPEED" };
+        static const uint32_t kBarCols[6] = {
+            UI_RGBA(90, 213, 131, 255),  UI_RGBA(240, 120, 104, 255), UI_RGBA(255, 164, 98, 255),
+            UI_RGBA(88, 184, 248, 255),  UI_RGBA(255, 230, 57, 255),  UI_RGBA(216, 112, 192, 255),
+        };
+        if (s.natureUp > 0 && s.natureDown > 0)
+            snprintf(buf, sizeof(buf), "+%s / -%s", kStatNames[s.natureUp], kStatNames[s.natureDown]);
+        else
+            snprintf(buf, sizeof(buf), "%s (NEUTRAL)", s.nature);
+        UiW_GbaSectionStrip(362, 70, 574, 28, UI_GBA_TAG_GREEN, "STATS & NATURE", buf);
+
+        UiW_GbaBox(362, 104, 574, 218, 4, UI_RGBA(40, 48, 48, 255), C_WHITE, C_WHITE, 0, 0);
+        for (int32_t i = 0; i < 6; i++)
+        {
+            const int32_t ry = 106 + i * 36;
+            const bool up = (i == s.natureUp), dn = (i == s.natureDown);
+            UiDraw_Rect(364, ry, 136, 36, UI_RGBA(200, 216, 120, 255));
+            UiDraw_Rect(500, ry, 2, 36, UI_RGBA(136, 152, 64, 255));
+            UiDraw_Rect(502, ry, 432, 36, (i & 1) ? UI_RGBA(241, 242, 228, 255) : UI_RGBA(250, 248, 236, 255));
+            if (i < 5)
+                UiDraw_Rect(364, ry + 35, 570, 1, UI_RGBA(150, 172, 156, 220));
+            const uint32_t nameCol = up ? UI_RGBA(208, 40, 40, 255) : dn ? UI_RGBA(32, 104, 168, 255) : UI_RGBA(40, 48, 24, 255);
+            UiW_GbaTextMid(UI_FACE_PS2P, 16, 372, ry, 36, kStatNames[i], nameCol, UI_RGBA(232, 240, 176, 255));
+            if (i == 0) snprintf(buf, sizeof(buf), "%u/%u", (unsigned)s.hp, (unsigned)s.stats[0]);
+            else snprintf(buf, sizeof(buf), "%u%s", (unsigned)s.stats[i], up ? "+" : dn ? "-" : "");
+            UiW_GbaTextMid(UI_FACE_VT323, 28, 566 - UiText_Width(UI_FACE_VT323, 28, buf), ry, 36, buf, nameCol, UI_GBA_SHAD_LIGHT);
+
+            // Stat gauge bar
+            const int32_t barW = s.showIvEv ? 196 : 340;
+            int32_t pct = (int32_t)s.stats[i] * 100 / 350;
+            if (pct > 100) pct = 100;
+            UiW_Bar(578, ry + 12, barW, 12, pct, kBarCols[i], kBarCols[i]);
+            if (s.showIvEv)
+            {
+                UiW_GbaBox(784, ry + 6, 70, 24, 3, UI_RGBA(184, 192, 176, 255), UI_RGBA(232, 236, 224, 255), UI_RGBA(232, 236, 224, 255), 0, 0);
+                snprintf(buf, sizeof(buf), "EV %u", (unsigned)s.evs[i]);
+                UiW_GbaTextCentred(UI_FACE_VT323, 24, 784, ry + 6, 70, 24, buf, UI_RGBA(64, 72, 64, 255), UI_GBA_SHAD_LIGHT);
+
+                const bool perf = (s.ivs[i] == 31);
+                UiW_GbaBox(858, ry + 6, 68, 24, 3, perf ? UI_RGBA(200, 148, 24, 255) : UI_RGBA(184, 192, 176, 255),
+                           perf ? UI_RGBA(255, 246, 216, 255) : UI_RGBA(232, 236, 224, 255),
+                           perf ? UI_RGBA(255, 246, 216, 255) : UI_RGBA(232, 236, 224, 255), 0, 0);
+                snprintf(buf, sizeof(buf), "IV %u", (unsigned)s.ivs[i]);
+                UiW_GbaTextCentred(UI_FACE_VT323, 24, 858, ry + 6, 68, 24, buf, perf ? UI_RGBA(168, 108, 0, 255) : UI_RGBA(64, 72, 64, 255), UI_GBA_SHAD_LIGHT);
+            }
+        }
+
+        // Middle ITEM & ABILITY
+        UiW_GbaSectionStrip(362, 328, 282, 24, UI_GBA_TAG_GOLD, "ITEM", NULL);
+        UiW_GbaBox(362, 354, 282, 42, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+        if (s.item != ITEM_NONE)
+        {
+            UiSpr_ItemIcon(s.item, 370, 362, 1);
+            UiGame_ItemName(s.item, buf, sizeof(buf));
+            UiW_GbaTextMid(UI_FACE_VT323, 28, 400, 354, 42, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        }
+        else
+            UiW_GbaTextMid(UI_FACE_VT323, 28, 374, 354, 42, "NONE", UI_RGBA(120, 128, 120, 255), UI_GBA_SHAD_LIGHT);
+
+        UiW_GbaSectionStrip(654, 328, 282, 24, UI_GBA_TAG_TEAL, "ABILITY", s.ability);
+        UiW_GbaBox(654, 354, 282, 42, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+        UiDraw_PushClip(660, 356, 270, 38);
+        UiW_GbaTextMid(UI_FACE_VT323, 24, 662, 354, 42, s.abilityDesc, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        UiDraw_PopClip();
+
+        // Bottom 2x2 KNOWN MOVES pills
+        UiW_GbaSectionStrip(362, 402, 574, 24, UI_GBA_TAG_MAGENTA, "KNOWN MOVES", "TAP MOVE FOR DETAILS");
+        for (int32_t k = 0; k < 4; k++)
+        {
+            const int32_t mx = 362 + (k & 1) * 290;
+            const int32_t my = 430 + (k >> 1) * 44;
+            UiW_GbaBox(mx, my, 284, 40, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+            UiMove mv;
+            UiGame_Move(sParty.sel, k, &mv);
+            if (!mv.move)
+            {
+                UiW_GbaTextCentred(UI_FACE_VT323, 24, mx, my, 284, 40, "---", UI_RGBA(140, 148, 140, 255), UI_GBA_SHAD_LIGHT);
+                continue;
+            }
+            UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + mv.type), mx + 8, my + 4, 2);
+            UiDraw_PushClip(mx + 76, my + 2, 134, 36);
+            UiW_GbaTextMid(UI_FACE_VT323, 28, mx + 76, my, 40, mv.name, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+            UiDraw_PopClip();
+            snprintf(buf, sizeof(buf), "%u/%u", (unsigned)mv.pp, (unsigned)mv.maxPp);
+            UiW_GbaTextMid(UI_FACE_VT323, 24, mx + 276 - UiText_Width(UI_FACE_VT323, 24, buf), my, 40, buf, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+        }
+    }
+    else if (sTab == TAB_INFO)
+    {
+        snprintf(buf, sizeof(buf), "No.%03u", (unsigned)s.dexNo);
+        UiW_GbaSectionStrip(362, 70, 574, 28, UI_GBA_TAG_BLUE, "POKéMON INFO", buf);
+        static const char *const kInfoKeys[5] = { "DEX NO.", "SPECIES", "OT / ID", "NATURE", "HELD ITEM" };
+        UiW_GbaBox(362, 104, 574, 202, 4, UI_RGBA(40, 48, 48, 255), C_WHITE, C_WHITE, 0, 0);
+        for (int32_t r = 0; r < 5; r++)
+        {
+            const int32_t ry = 106 + r * 40;
+            UiDraw_Rect(364, ry, 156, 40, UI_RGBA(200, 216, 120, 255));
+            UiDraw_Rect(520, ry, 2, 40, UI_RGBA(136, 152, 64, 255));
+            UiDraw_Rect(522, ry, 412, 40, (r & 1) ? UI_RGBA(241, 242, 228, 255) : UI_RGBA(250, 248, 236, 255));
+            if (r < 4)
+                UiDraw_Rect(364, ry + 39, 570, 1, UI_RGBA(150, 172, 156, 220));
+            UiW_GbaTextMid(UI_FACE_PS2P, 16, 374, ry, 40, kInfoKeys[r], UI_RGBA(40, 48, 24, 255), UI_RGBA(232, 240, 176, 255));
+            if (r == 0) snprintf(buf, sizeof(buf), "No.%03u", (unsigned)s.dexNo);
+            else if (r == 1) snprintf(buf, sizeof(buf), "%s", s.species);
+            else if (r == 2) snprintf(buf, sizeof(buf), "%s / %05u", s.ot, (unsigned)s.otId);
+            else if (r == 3) snprintf(buf, sizeof(buf), "%s", s.nature);
+            else if (s.item != ITEM_NONE) UiGame_ItemName(s.item, buf, sizeof(buf));
+            else snprintf(buf, sizeof(buf), "NONE");
+            UiW_GbaTextMid(UI_FACE_VT323, 32, 534, ry, 40, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        }
+
+        UiW_GbaSectionStrip(362, 316, 574, 26, UI_GBA_TAG_GOLD, "EXPERIENCE", NULL);
+        UiW_GbaBox(362, 348, 574, 172, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+        snprintf(buf, sizeof(buf), "EXP. POINTS: %u", (unsigned)s.exp);
+        UiW_GbaText(UI_FACE_VT323, 32, 380, 366, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        snprintf(buf, sizeof(buf), "TO NEXT LV.: %u", (unsigned)s.expToNext);
+        UiW_GbaText(UI_FACE_VT323, 32, 380, 406, buf, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+        UiW_GbaExpBar(380, 456, 536, s.expPct, NULL);
+    }
+    else
+    {
+        const bool contest = (sTab == TAB_CONTEST);
+        const bool focus = (sMode == MODE_MOVES);
+        UiW_GbaSectionStrip(362, 70, 574, 28, UI_GBA_TAG_MAGENTA, contest ? "CONTEST MOVES" : "BATTLE MOVES",
+                            UiGame_InBattleMenu() ? "TAP TO INSPECT" : "X / SQ REORDER");
+        UiMove sel;
+        memset(&sel, 0, sizeof(sel));
+        for (int32_t i = 0; i < 4; i++)
+        {
+            UiMove mv;
+            UiGame_Move(sParty.sel, i, &mv);
+            const int32_t ry = 104 + i * 54;
+            const bool on = focus ? (i == sMoveSel) : (i == sMoveSel && mv.move != 0);
+            if (on)
+            {
+                const uint32_t edge = (focus && i == sMoveSwap) ? UI_RGBA(216, 128, 16, 255) : UI_RGBA(230, 148, 65, 255);
+                UiW_GbaBox(362, ry, 574, 50, 4, edge, UI_RGBA(255, 246, 205, 255), UI_RGBA(255, 246, 205, 255), C_WHITE, 0);
+                UiW_GbaArrowH(373, ry + 20, true, UI_GBA_SHAD_LIGHT);
+                UiW_GbaArrowH(372, ry + 19, true, UI_RGBA(230, 8, 8, 255));
+            }
+            else
+            {
+                const uint32_t rowBg = (i & 1) ? UI_RGBA(241, 242, 228, 255) : UI_RGBA(250, 248, 236, 255);
+                UiW_GbaBox(362, ry, 574, 50, 4, UI_RGBA(150, 172, 156, 255), rowBg, rowBg, UI_GBA_SHAD_LIGHT, 0);
+            }
+            if (!mv.move)
+            {
+                UiW_GbaTextMid(UI_FACE_VT323, 32, 400, ry, 50, "---", UI_RGBA(140, 148, 140, 255), UI_GBA_SHAD_LIGHT);
+                continue;
+            }
+            if (i == sMoveSel)
+                sel = mv;
+            UiDraw_Sprite((uint16_t)(contest ? UI_SPR_CONTEST_FIRST + mv.contestCategory : UI_SPR_TYPE_FIRST + mv.type), 390, ry + 9, 2);
+            UiW_GbaTextMid(UI_FACE_VT323, 32, 468, ry, 50, mv.name, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+            if (contest)
+                Hearts(822, ry + 20, mv.appeal, false);
+            else
+            {
+                snprintf(buf, sizeof(buf), "PP %u/%u", (unsigned)mv.pp, (unsigned)mv.maxPp);
+                UiW_GbaTextMid(UI_FACE_VT323, 28, 922 - UiText_Width(UI_FACE_VT323, 28, buf), ry, 50, buf, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+            }
+        }
+        if (sel.move)
+        {
+            static const char *const cats[3] = { "PHYSICAL", "SPECIAL", "STATUS" };
+            if (contest)
+                snprintf(buf, sizeof(buf), "APPEAL %u · JAM %u", (unsigned)sel.appeal, (unsigned)sel.jam);
+            else
+                snprintf(buf, sizeof(buf), "PWR %u · ACC %u · %s", (unsigned)sel.power, (unsigned)sel.accuracy, cats[sel.category]);
+            UiW_GbaSectionStrip(362, 326, 574, 26, UI_GBA_TAG_TEAL, "MOVE DATA", buf);
+            UiW_GbaBox(362, 356, 574, 164, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+            UiW_GbaTextWrapped(UI_FACE_VT323, 32, 376, 368, 546, 30, contest ? sel.contestDesc : sel.desc, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 4);
+        }
+    }
+}
+
+static void PartyBuildGba(void)
+{
+    if (sSummaryOpen)
+    {
+        BuildGbaSummary();
+        if (sPop.open)
+            UiMenu_Draw(&sPop);
+        return;
+    }
+
+    const int32_t n = UiGame_PartyCount();
+    UiW_GbaTopBar(UI_GBA_BG_PARTY, UI_SPR_BALL_POKE, "POKéMON PARTY", 0, 0, false, NULL);
+    int32_t rx = UI_SCREEN_W - 14;
+    UiW_GbaHelpBadge(&rx, "O", "BACK", false);
+    UiW_GbaHelpBadge(&rx, "SQ", "SUMMARY", false);
+    if (!UiGame_InBattleMenu() && n > 1)
+        UiW_GbaHelpBadge(&rx, "TRI", "SWITCH", false);
+    UiW_GbaHelpBadge(&rx, "X", "OPTIONS", false);
+
+    for (int32_t i = 0; i < 6; i++)
+    {
+        if (i >= n)
+        {
+            int32_t x, y, w, h;
+            GbaSlotRect(i, &x, &y, &w, &h);
+            UiW_Bevel(x, y, w, h, 5, UI_RGBA(16, 24, 28, 255), UI_RGBA(31, 51, 56, 255), UI_RGBA(24, 40, 44, 255), 0, 0, 0, 0);
+            continue;
+        }
+        const bool on = (i == sParty.sel);
+        const bool mark = ((sMode == MODE_SWITCH || sMode == MODE_SHARE) && i == sFrom);
+        const bool inBattle = UiGame_InBattleMenu() && UiGame_MonIsInBattle(i);
+        const bool partner = UiGame_InBattleMenu() && UiGame_IsMultiPartner(i);
+        DrawGbaPartySlot(i, on, mark, inBattle ? "IN BATTLE" : partner ? "PARTNER" : NULL, !partner, partner);
+    }
+
+    BuildGbaInspectPanel(sParty.sel);
+
+    UiW_GbaMsg(14, 468, 762, 68, false, false);
+    const char *msg = sMode == MODE_SWITCH ? "Move POKéMON to which slot?"
+                    : sMode == MODE_SHARE  ? "Share HP with which POKéMON?"
+                                           : "Choose a POKéMON, or tap PROFILE for Summary.";
+    UiW_GbaTextMid(UI_FACE_VT323, 32, 34, 468, 68, msg, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+    DrawGbaCancelBtn(788, 468, 158, 68);
+    if (sPop.open)
+        UiMenu_Draw(&sPop);
+}
+
 static void PartyBuild(void)
 {
+    if (gUiTheme->gbaFrame)
+    {
+        PartyBuildGba();
+        return;
+    }
     UiKit_Header("POKéMON", sTabs, TAB_COUNT, sTab, sTabX, sTabW, 12);
     UiW_Panel(16, 60, 320, 432);
     const int32_t n = UiGame_PartyCount();
@@ -603,13 +1329,47 @@ static bool TargetUpdate(const UiInput *in)
         AfterUse();
         return true;
     }
-    // Circle or the BACK button: back to the bag without using / giving anything
-    if ((in->pressed & VITA_BTN_CIRCLE) || UiHit(in, 364, 436, 200, 40))
+    int32_t a = -1;
+    if (gUiTheme->gbaFrame)
     {
-        PlaySE(SE_SELECT);
-        return false;
+        if ((in->pressed & VITA_BTN_CIRCLE) || UiHit(in, 788, 468, 158, 68))
+        {
+            PlaySE(SE_SELECT);
+            return false;
+        }
+        const int32_t pCount = UiGame_PartyCount();
+        if (pCount <= 0)
+            return true;
+        const int32_t before = sTList.sel;
+        if (in->repeat & VITA_BTN_UP) sTList.sel = (sTList.sel + pCount - 1) % pCount;
+        if (in->repeat & VITA_BTN_DOWN) sTList.sel = (sTList.sel + 1) % pCount;
+        if (in->repeat & VITA_BTN_LEFT) sTList.sel = 0;
+        if ((in->repeat & VITA_BTN_RIGHT) && pCount > 1 && sTList.sel == 0) sTList.sel = 1;
+        if (sTList.sel != before) PlaySE(SE_SELECT);
+        if (in->pressed & VITA_BTN_CROSS)
+            a = sTList.sel;
+        for (int32_t i = 0; i < pCount; i++)
+        {
+            int32_t sx, sy, sw, sh;
+            GbaSlotRect(i, &sx, &sy, &sw, &sh);
+            if (UiHit(in, sx, sy, sw, sh))
+            {
+                sTList.sel = i;
+                a = i;
+                break;
+            }
+        }
     }
-    const int32_t a = UiList_Update(&sTList, in, CARD_X, CARD_Y, CARD_W, CARD_H, true);
+    else
+    {
+        // Circle or the BACK button: back to the bag without using / giving anything
+        if ((in->pressed & VITA_BTN_CIRCLE) || UiHit(in, 364, 436, 200, 40))
+        {
+            PlaySE(SE_SELECT);
+            return false;
+        }
+        a = UiList_Update(&sTList, in, CARD_X, CARD_Y, CARD_W, CARD_H, true);
+    }
     if (a < 0)
         return true;
     UiMon m;
@@ -667,8 +1427,136 @@ static bool TargetUpdate(const UiInput *in)
     return true;
 }
 
+static void DrawTargetDeltaModal(void)
+{
+    static const char *const names[6] = { "HP", "ATTACK", "DEFENSE", "SP. ATK", "SP. DEF", "SPEED" };
+    char buf[96];
+    UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
+    UiMon m;
+    UiGame_Mon(sTList.sel, &m);
+    snprintf(buf, sizeof(buf), "%s Lv%u", m.name, (unsigned)sDelta.levelAfter);
+    UiW_Window(260, 100, 440, 300, buf);
+    for (int32_t i = 0; i < 6; i++)
+    {
+        const int32_t y = 148 + i * 40;
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 284, y, names[i], UI_COL_INK);
+        snprintf(buf, sizeof(buf), "%d -> %d", sDelta.before[i], sDelta.after[i]);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 460, y, buf, UI_COL_INK);
+        if (sDelta.after[i] != sDelta.before[i])
+        {
+            snprintf(buf, sizeof(buf), "+%d", sDelta.after[i] - sDelta.before[i]);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 620, y, buf, UI_COL_HP_HIGH);
+        }
+    }
+}
+
+static void TargetBuildGba(void)
+{
+    char item[24], buf[128];
+    UiGame_ItemName(sItem, item, sizeof(item));
+    const int32_t n = UiGame_PartyCount();
+    UiW_GbaTopBar(UI_GBA_BG_PARTY, UI_SPR_BALL_POKE, "CHOOSE A POKéMON", 0, 0, false, NULL);
+    int32_t rx = UI_SCREEN_W - 14;
+    UiW_GbaHelpBadge(&rx, "O", "BACK", false);
+    UiW_GbaHelpBadge(&rx, "X", sTMode == UI_TARGET_GIVE ? "GIVE" : sTMode == UI_TARGET_TM ? "TEACH" : "USE", false);
+
+    for (int32_t i = 0; i < 6; i++)
+    {
+        if (i >= n)
+        {
+            int32_t x, y, w, h;
+            GbaSlotRect(i, &x, &y, &w, &h);
+            UiW_Bevel(x, y, w, h, 5, UI_RGBA(16, 24, 28, 255), UI_RGBA(31, 51, 56, 255), UI_RGBA(24, 40, 44, 255), 0, 0, 0, 0);
+            continue;
+        }
+        const char *tag = NULL;
+        bool ok = true;
+        if (sTMode == UI_TARGET_TM)
+        {
+            bool known = false;
+            ok = UiGame_CanLearnTm(i, sItem, &known);
+            tag = known ? "LEARNED" : ok ? "ABLE" : "NO";
+        }
+        DrawGbaPartySlot(i, i == sTList.sel, false, tag, ok, false);
+    }
+
+    UiW_GbaWin(582, 60, 364, 402, UI_GBA_WIN_DEFAULT);
+    const char *modeLabel = sTMode == UI_TARGET_GIVE ? "GIVE ITEM"
+                          : sTMode == UI_TARGET_TM   ? "TM / HM"
+                          : sTMode == UI_TARGET_BATTLE ? "BATTLE ITEM"
+                                                     : "USE ITEM";
+    UiW_GbaSectionStrip(592, 70, 344, 26, UI_GBA_TAG_GOLD, modeLabel, item);
+
+    UiW_GbaBox(592, 102, 62, 62, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+    UiSpr_ItemIcon(sItem, 599, 109, 2);
+    UiW_GbaText(UI_FACE_PS2P, 16, 666, 106, item, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+    if (sTMode == UI_TARGET_TM)
+    {
+        char mv[16];
+        UiGame_MoveName(UiGame_ItemMove(sItem), mv, sizeof(mv));
+        UiW_GbaText(UI_FACE_VT323, 28, 666, 134, mv, UI_RGBA(32, 104, 168, 255), UI_GBA_SHAD_LIGHT);
+    }
+    else
+    {
+        snprintf(buf, sizeof(buf), "Select target slot");
+        UiW_GbaText(UI_FACE_VT323, 24, 666, 136, buf, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+    }
+
+    UiW_GbaBox(592, 172, 344, 154, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+    UiGame_ItemDescription(sItem, buf, sizeof(buf));
+    UiW_GbaTextWrapped(UI_FACE_VT323, 32, 604, 182, 320, 28, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 5);
+
+    UiMon tm;
+    if (UiGame_Mon(sTList.sel, &tm))
+    {
+        UiW_GbaSectionStrip(592, 336, 344, 26, UI_GBA_TAG_TEAL, "TARGET POKéMON", tm.name);
+        UiW_GbaBox(592, 366, 344, 84, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+        if (sTMode == UI_TARGET_GIVE)
+        {
+            if (tm.item != ITEM_NONE)
+            {
+                char old[24];
+                UiGame_ItemName(tm.item, old, sizeof(old));
+                snprintf(buf, sizeof(buf), "Currently holding: %s", old);
+            }
+            else
+                snprintf(buf, sizeof(buf), "Not holding any item.");
+            UiW_GbaTextWrapped(UI_FACE_VT323, 28, 604, 378, 320, 28, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 2);
+        }
+        else if (sTMode == UI_TARGET_TM)
+        {
+            bool known = false;
+            const bool able = UiGame_CanLearnTm(sTList.sel, sItem, &known);
+            UiW_GbaTextWrapped(UI_FACE_VT323, 28, 604, 378, 320, 28,
+                               known ? "Already knows this move." : able ? "Compatible! Can learn this move." : "Incompatible with this move.",
+                               able ? UI_RGBA(24, 128, 72, 255) : UI_RGBA(176, 40, 40, 255), UI_GBA_SHAD_LIGHT, 2);
+        }
+        else
+        {
+            snprintf(buf, sizeof(buf), "HP %u / %u  (Lv%u)", (unsigned)tm.hp, (unsigned)tm.maxHp, (unsigned)tm.level);
+            UiW_GbaTextWrapped(UI_FACE_VT323, 28, 604, 378, 320, 28, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 2);
+        }
+    }
+
+    UiW_GbaMsg(14, 468, 762, 68, false, false);
+    const char *hint = sTMode == UI_TARGET_GIVE ? "Give item to which POKéMON?"
+                     : sTMode == UI_TARGET_TM   ? "Teach move to which POKéMON?"
+                                                : "Use item on which POKéMON?";
+    UiW_GbaTextMid(UI_FACE_VT323, 32, 34, 468, 68, hint, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+    DrawGbaCancelBtn(788, 468, 158, 68);
+    if (sMoveMenu.open)
+        UiMenu_Draw(&sMoveMenu);
+    if (sDeltaOpen)
+        DrawTargetDeltaModal();
+}
+
 static void TargetBuild(void)
 {
+    if (gUiTheme->gbaFrame)
+    {
+        TargetBuildGba();
+        return;
+    }
     static const char *const tab[1] = { "CHOOSE A POKéMON" };
     int32_t tx[1], tw[1];
     UiKit_Header("POKéMON", tab, 1, 0, tx, tw, 12);
@@ -718,26 +1606,12 @@ static void TargetBuild(void)
     if (sMoveMenu.open)
         UiMenu_Draw(&sMoveMenu);
     if (sDeltaOpen)
-    {
-        static const char *const names[6] = { "HP", "ATTACK", "DEFENSE", "SP. ATK", "SP. DEF", "SPEED" };
-        UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
-        UiMon m;
-        UiGame_Mon(sTList.sel, &m);
-        snprintf(buf, sizeof(buf), "%s Lv%u", m.name, (unsigned)sDelta.levelAfter);
-        UiW_Window(260, 100, 440, 300, buf);
-        for (int32_t i = 0; i < 6; i++)
-        {
-            const int32_t y = 148 + i * 40;
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 284, y, names[i], UI_COL_INK);
-            snprintf(buf, sizeof(buf), "%d -> %d", sDelta.before[i], sDelta.after[i]);
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 460, y, buf, UI_COL_INK);
-            if (sDelta.after[i] != sDelta.before[i])
-            {
-                snprintf(buf, sizeof(buf), "+%d", sDelta.after[i] - sDelta.before[i]);
-                UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 620, y, buf, UI_COL_HP_HIGH);
-            }
-        }
-    }
+        DrawTargetDeltaModal();
 }
 
-const UiScreen gUiTargetScreen = { TargetEnter, TargetUpdate, TargetBuild, NULL };
+static void TargetResume(void)
+{
+    UiList_Reset(&sTList, UiGame_PartyCount(), PARTY_SIZE);
+}
+
+const UiScreen gUiTargetScreen = { TargetEnter, TargetUpdate, TargetBuild, TargetResume };

@@ -637,7 +637,7 @@ static bool Update(const UiInput *in)
     }
     if (sTab == TAB_DECOR)
         return DecorUpdate(in);
-    const int32_t a = UiList_Update(&sList, in, LIST_X, LIST_Y, LIST_W, ROW_H, false);
+    const int32_t a = UiList_Update(&sList, in, sTab == TAB_MAIL ? 28 : LIST_X, LIST_Y, sTab == TAB_MAIL ? 396 : LIST_W, ROW_H, false);
     if (sCount == 0)
         return true;
     if (sTab == TAB_ITEMS && sMode == MODE_WITHDRAW)

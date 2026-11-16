@@ -281,7 +281,7 @@ static bool Update(const UiInput *in)
         {
             const int32_t i = sWordFirst + k;
             if (i >= sWordCount) break;
-            if (!UiHit(in, GROUP_W + 28 + (k % WORD_COLS) * ww, LOW_Y + 52 + (k / WORD_COLS) * ROW_H, ww, ROW_H)) continue;
+            if (!UiHit(in, GROUP_W + 40 + (k % WORD_COLS) * ww, LOW_Y + 52 + (k / WORD_COLS) * ROW_H, ww, ROW_H)) continue;
             if (sAt == AT_WORDS && sWordSel == i) PutWord(EasyChat_UiWordAt((u16)i));
             else { sAt = AT_WORDS; sWordSel = i; PlaySE(SE_SELECT); }
             return true;
@@ -291,16 +291,16 @@ static bool Update(const UiInput *in)
 
     const int32_t dx = (in->repeat & VITA_BTN_RIGHT) ? 1 : (in->repeat & VITA_BTN_LEFT) ? -1 : 0;
     const int32_t dy = (in->repeat & VITA_BTN_DOWN) ? 1 : (in->repeat & VITA_BTN_UP) ? -1 : 0;
+    if ((in->pressed & VITA_BTN_TRIANGLE) && sBtn < 0)
+    {
+        EasyChat_UiPhrase()[sSlot] = EC_EMPTY_WORD;               // delete the word (the GBA's DEL)
+        PlaySE(SE_SELECT);
+        return true;
+    }
     switch (sAt)
     {
     case AT_MSG:
         if (in->pressed & VITA_BTN_CIRCLE) { TryQuit(); return true; }
-        if (in->pressed & VITA_BTN_TRIANGLE && sBtn < 0)
-        {
-            EasyChat_UiPhrase()[sSlot] = EC_EMPTY_WORD;               // delete the word (the GBA's DEL)
-            PlaySE(SE_SELECT);
-            return true;
-        }
         if (in->pressed & VITA_BTN_CROSS)
         {
             if (sBtn >= 0) PressButton(sBtn);

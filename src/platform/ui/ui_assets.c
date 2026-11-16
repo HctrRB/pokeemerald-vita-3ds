@@ -7,7 +7,7 @@
 #include "ui_internal.h"
 #include "../vita/vita_platform.h"
 
-#define UI_MAX_FONTS 32
+#define UI_MAX_FONTS 40
 #define UI_MAX_SPRITES 256   // must cover UI_SPR_COUNT (ui_sprite_ids.h); a bigger atlas is rejected and the new UI turns off
 
 typedef struct

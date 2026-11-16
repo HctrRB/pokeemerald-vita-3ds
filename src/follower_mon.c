@@ -5,6 +5,7 @@
 #include "pokemon_icon.h"
 #include "platform/vita_extras.h"
 #include "platform/vita_daynight.h"
+#include "platform/vita_pak.h"
 
 #define CtrLog_Write(...) ((void)0)
 
@@ -16,6 +17,10 @@ static void *VitaData_Load(const char *path, u32 *outSize)
     long size;
 
     *outSize = 0;
+    buf = VitaPak_LoadFollower(path, outSize);
+    if (buf != NULL)
+        return buf;
+
     snprintf(fullPath, sizeof(fullPath), "app0:%s", path);
     f = fopen(fullPath, "rb");
     if (!f)
@@ -63,6 +68,9 @@ static bool8 VitaData_Exists(const char *path)
 {
     char fullPath[256];
     FILE *f;
+
+    if (VitaPak_FollowerExists(path))
+        return TRUE;
 
     snprintf(fullPath, sizeof(fullPath), "app0:%s", path);
     f = fopen(fullPath, "rb");

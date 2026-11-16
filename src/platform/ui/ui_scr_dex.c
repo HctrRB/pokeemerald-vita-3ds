@@ -185,9 +185,38 @@ static void Enter(void)
 static void Resume(void) { BuildList(); }
 
 static uint16_t sDetailNat;
+static int32_t sListCryTicks;
+
+static void DrawDexCardBox(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t bg)
+{
+    UiW_Bevel(x, y, w, h, 5, UI_RGBA(40, 56, 64, 255), bg, bg, 3, UI_RGBA(96, 96, 112, 255), UI_RGBA(96, 96, 112, 255), 3);
+}
+
+static void DrawDexDescBox(int32_t x, int32_t y, int32_t w, int32_t h, const char *desc, uint32_t frame)
+{
+    UiW_GbaBox(x, y, w, h, 5, UI_RGBA(40, 56, 64, 255), UI_RGBA(248, 248, 248, 255), UI_RGBA(248, 248, 248, 255), UI_RGBA(216, 216, 216, 255), 3);
+    UiDraw_Rect(x + 6, y + h - 5, w - 12, 3, UI_RGBA(184, 184, 184, 255));
+    // Left & right amber tri-tone rails (GBA Pokedex entry frame)
+    UiDraw_Rect(x + 3, y + 6, 5, h - 12, UI_RGBA(248, 112, 0, 255));
+    UiDraw_Rect(x + 8, y + 6, 5, h - 12, UI_RGBA(248, 184, 0, 255));
+    UiDraw_Rect(x + 13, y + 6, 4, h - 12, UI_RGBA(248, 232, 0, 255));
+    UiDraw_Rect(x + 17, y + 6, 2, h - 12, UI_RGBA(40, 56, 64, 255));
+
+    UiDraw_Rect(x + w - 19, y + 6, 2, h - 12, UI_RGBA(40, 56, 64, 255));
+    UiDraw_Rect(x + w - 17, y + 6, 4, h - 12, UI_RGBA(248, 232, 0, 255));
+    UiDraw_Rect(x + w - 13, y + 6, 5, h - 12, UI_RGBA(248, 184, 0, 255));
+    UiDraw_Rect(x + w - 8, y + 6, 5, h - 12, UI_RGBA(248, 112, 0, 255));
+
+    UiW_GbaTextWrapped(UI_FACE_VT323, 28, x + 28, y + 14, w - 58, 28, desc, UI_RGBA(40, 56, 64, 255), UI_RGBA(216, 216, 216, 255), 5);
+    UiW_GbaArrowV(x + w - 34, y + h - 18 + (int32_t)((frame / 16) & 1) * 2, true, UI_RGBA(230, 8, 8, 255));
+}
+
 static bool Update(const UiInput *in)
 {
     sFrame++;
+    if (sListCryTicks > 0)
+        sListCryTicks--;
+    const bool gba = gUiTheme->gbaFrame;
     if (sMenu.open)
     {
         const int32_t id = UiMenu_Update(&sMenu, in);
@@ -196,19 +225,32 @@ static bool Update(const UiInput *in)
     }
     if (in->pressed & VITA_BTN_CIRCLE) { PlaySE(SE_SELECT); return false; }
     const int32_t modes = IsNationalPokedexEnabled() ? 2 : 1;
-    int32_t t = UiKit_TabHit(in, sTabX, sTabW, modes);
-    if (in->pressed & (VITA_BTN_L | VITA_BTN_R)) t = (sMode + 1) % modes;
+    int32_t t = -1;
+    if (gba && modes > 1)
+    {
+        const int32_t ph = UiW_GbaPagerHit(in, true, modes);
+        if (ph != 0)
+            t = (sMode + modes + ph) % modes;
+    }
+    else if (!gba)
+        t = UiKit_TabHit(in, sTabX, sTabW, modes);
+    if (in->pressed & VITA_BTN_L) t = (sMode + modes - 1) % modes;
+    if (in->pressed & VITA_BTN_R) t = (sMode + 1) % modes;
     if (t >= 0 && t != sMode) { sMode = t; PlaySE(SE_SELECT); BuildList(); return true; }
-    if (in->pressed & VITA_BTN_SELECT)
+    if ((in->pressed & VITA_BTN_SELECT) || (gba && UiHit(in, 26, 222, 478, 34)))
     {
         PlaySE(SE_SELECT);
         UiMenu_Open(&sMenu, "ORDER", 600, 120, 300);
         for (int32_t i = 0; i < ORDER_COUNT; i++) UiMenu_Add(&sMenu, sOrderNames[i], i);
         return true;
     }
-    if (in->pressed & VITA_BTN_TRIANGLE && sCount && Seen(sNat[sList.sel]))
+    const bool playCryHit = gba && UiHit(in, 94, 292, 112, 42);
+    if (((in->pressed & VITA_BTN_TRIANGLE) || playCryHit) && sCount && Seen(sNat[sList.sel]))
+    {
         PlayCry_Normal(NationalPokedexNumToSpecies(sNat[sList.sel]), 0);
-    if (in->repeat & (VITA_BTN_LEFT | VITA_BTN_RIGHT))
+        sListCryTicks = 48;
+    }
+    if (sCount > 0 && (in->repeat & (VITA_BTN_LEFT | VITA_BTN_RIGHT)))
     {
         // Left / right: a page of 9 up or down
         sList.sel += (in->repeat & VITA_BTN_RIGHT) ? ROWS : -ROWS;
@@ -218,7 +260,11 @@ static bool Update(const UiInput *in)
         UiList_Reset(&sList, sCount, ROWS);
         PlaySE(SE_SELECT);
     }
-    const int32_t a = UiList_Update(&sList, in, LIST_X, LIST_Y, LIST_W, ROW_H, false);
+    const int32_t lx = gba ? 544 : LIST_X;
+    const int32_t ly = gba ? 114 : LIST_Y;
+    const int32_t lw = gba ? 374 : LIST_W;
+    const int32_t rh = gba ? 45  : ROW_H;
+    const int32_t a = UiList_Update(&sList, in, lx, ly, lw, rh, false);
     if (a >= 0)
     {
         if (Caught(sNat[a])) { PlaySE(SE_SELECT); sDetailNat = sNat[a]; UiNav_Push(&gUiDexDetailScreen); }
@@ -227,8 +273,170 @@ static bool Update(const UiInput *in)
     return true;
 }
 
+static void BuildGba(void)
+{
+    char buf[220], name[16], seenBuf[36];
+    const uint16_t seenTotal = sMode == 1 ? GetNationalPokedexCount(FLAG_GET_SEEN) : GetHoennPokedexCount(FLAG_GET_SEEN);
+    const uint16_t ownTotal = sMode == 1 ? GetNationalPokedexCount(FLAG_GET_CAUGHT) : GetHoennPokedexCount(FLAG_GET_CAUGHT);
+    snprintf(seenBuf, sizeof(seenBuf), "SEEN %03u · OWN %03u", (unsigned)seenTotal, (unsigned)ownTotal);
+
+    const int32_t modes = IsNationalPokedexEnabled() ? 2 : 1;
+    UiW_GbaTopBar(UI_GBA_BG_POKEDEX, 0, "POKéDEX", modes, sMode, false, sMode == 0 ? "HOENN DEX" : "NATIONAL DEX");
+
+    int32_t rx = UI_SCREEN_W - 14;
+    UiW_GbaHelpBadge(&rx, "O", "BACK", true);
+    UiW_GbaHelpBadge(&rx, "SELECT", "ORDER", true);
+    UiW_GbaHelpBadge(&rx, "TRI", "CRY", false);
+    UiW_GbaHelpBadge(&rx, "X", "DATA", false);
+
+    // Left column (14, 60, 504, 472)
+    DrawDexCardBox(14, 60, 504, 210, UI_RGBA(248, 248, 248, 255));
+    // 140x140 sprite well with grid (.dex-sprite-well)
+    UiW_GbaBox(26, 70, 140, 140, 4, UI_RGBA(96, 96, 112, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(184, 184, 184, 255), 0);
+    for (int32_t g = 16; g < 134; g += 16)
+    {
+        UiDraw_Rect(29 + g, 73, 1, 134, UI_RGBA(40, 56, 64, 36));
+        UiDraw_Rect(29, 73 + g, 134, 1, UI_RGBA(40, 56, 64, 36));
+    }
+
+    const bool has = (sCount > 0);
+    const uint16_t nat = has ? sNat[sList.sel] : 1;
+    const uint16_t species = NationalPokedexNumToSpecies(nat);
+    const bool seen = has && Seen(nat), own = has && Caught(nat);
+    if (has && seen)
+    {
+        if (own) UiSpr_MonFront(species, false, 32, 76, 2);
+        else UiSpr_MonFrontTint(species, 32, 76, 2, UI_RGBA(0, 0, 0, 255));
+    }
+
+    // Data column (.dex-name-banner: 178, 70, 326, 62)
+    UiW_GbaBox(178, 70, 326, 62, 4, UI_RGBA(160, 160, 160, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(216, 216, 216, 255), C_WHITE, 0);
+    if (has)
+    {
+        if (own) UiDraw_Sprite(UI_SPR_BALL_POKE, 188, 79, 1);
+        Name(nat, name, sizeof(name));
+        snprintf(buf, sizeof(buf), "No.%03d  %s", (int)ListNumber(sList.sel), seen ? name : "-----");
+        UiW_GbaText(UI_FACE_VT323, 28, own ? 210 : 188, 74, buf, UI_RGBA(40, 56, 64, 255), C_WHITE);
+        if (seen)
+        {
+            const uint8_t t0 = gSpeciesInfo[species].types[0], t1 = gSpeciesInfo[species].types[1];
+            if (t1 != t0)
+            {
+                UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + t0), 430, 80, 1);
+                UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + t1), 466, 80, 1);
+            }
+            else
+                UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + t0), 466, 80, 1);
+            UiGame_Text(gPokedexEntries[nat].categoryName, buf, sizeof(buf));
+            strncat(buf, " POKéMON", sizeof(buf) - strlen(buf) - 1);
+        }
+        else
+            snprintf(buf, sizeof(buf), "????? POKéMON");
+        UiW_GbaText(UI_FACE_VT323, 24, 188, 102, buf, UI_RGBA(72, 80, 88, 255), C_WHITE);
+    }
+
+    // HT / WT + Footprint circle (.dex-foot-circle)
+    char h[16], w[16];
+    if (own) HeightWeight(nat, h, sizeof(h), w, sizeof(w));
+    else { snprintf(h, sizeof(h), "???"); snprintf(w, sizeof(w), "???"); }
+    UiW_GbaText(UI_FACE_VT323, 28, 178, 142, "HT", UI_RGBA(40, 56, 64, 255), UI_RGBA(216, 216, 216, 255));
+    UiW_GbaText(UI_FACE_VT323, 28, 430 - UiText_Width(UI_FACE_VT323, 28, h), 142, h, UI_RGBA(40, 56, 64, 255), UI_RGBA(216, 216, 216, 255));
+    UiDraw_Rect(178, 171, 252, 3, UI_RGBA(184, 184, 184, 255));
+    UiW_GbaText(UI_FACE_VT323, 28, 178, 178, "WT", UI_RGBA(40, 56, 64, 255), UI_RGBA(216, 216, 216, 255));
+    UiW_GbaText(UI_FACE_VT323, 28, 430 - UiText_Width(UI_FACE_VT323, 28, w), 178, w, UI_RGBA(40, 56, 64, 255), UI_RGBA(216, 216, 216, 255));
+    UiDraw_Rect(178, 207, 252, 3, UI_RGBA(184, 184, 184, 255));
+
+    UiW_GbaBox(444, 146, 60, 60, 30, UI_RGBA(160, 160, 160, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(184, 184, 184, 255), 0);
+    if (own)
+        UiSpr_Footprint(species, 458, 160, 2, UI_RGBA(40, 56, 64, 255));
+
+    // Area / Order pill at bottom of info card (.dex-area-pill)
+    UiW_GbaBox(26, 222, 478, 34, 4, UI_RGBA(96, 96, 112, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(216, 216, 216, 255), C_WHITE, 0);
+    snprintf(buf, sizeof(buf), "STATUS: %s  ·  SORT: %s", own ? "CAUGHT" : seen ? "SEEN" : "UNKNOWN", sOrderNames[sOrder]);
+    UiW_GbaTextMid(UI_FACE_VT323, 24, 38, 222, 34, buf, UI_RGBA(40, 56, 64, 255), C_WHITE);
+
+    // Cry meter card (14, 278, 504, 70)
+    DrawDexCardBox(14, 278, 504, 70, UI_RGBA(216, 216, 216, 255));
+    UiW_GbaText(UI_FACE_VT323, 24, 28, 290, "CRY", UI_RGBA(40, 56, 64, 255), C_WHITE);
+    UiW_GbaText(UI_FACE_VT323, 24, 28, 310, "METER", UI_RGBA(40, 56, 64, 255), C_WHITE);
+
+    UiW_GbaBox(94, 292, 112, 42, 4, UI_RGBA(16, 21, 24, 255), UI_RGBA(40, 56, 64, 255), UI_RGBA(40, 56, 64, 255), UI_RGBA(80, 100, 112, 255), 0);
+    UiW_GbaKeyCap(102, 301, 24, "TRI", false);
+    UiW_GbaArrowH(142, 307, true, UI_RGBA(106, 255, 255, 255));
+    UiW_GbaTextMid(UI_FACE_VT323, 24, 158, 294, 38, "PLAY", UI_RGBA(248, 248, 248, 255), UI_GBA_SHAD_DARK);
+
+    UiW_GbaBox(216, 290, 288, 46, 4, UI_RGBA(96, 96, 112, 255), UI_RGBA(0, 0, 40, 255), UI_RGBA(0, 0, 40, 255), 0, 0);
+    static const uint8_t kWave[16] = { 20, 42, 74, 92, 82, 58, 88, 96, 66, 44, 72, 90, 56, 36, 60, 26 };
+    for (int32_t b = 0; b < 16; b++)
+    {
+        int32_t pct = has && seen ? kWave[b] : 10;
+        if (sListCryTicks > 0)
+        {
+            const int32_t mod = (int32_t)(((b * 37 + sFrame * 13 + nat) % 85) + 15);
+            pct = mod;
+        }
+        else if (!own)
+            pct = 12;
+        const int32_t bh = 32 * pct / 100;
+        UiDraw_RectV(226 + b * 17, 329 - bh, 12, bh, UI_RGBA(248, 232, 0, 255), UI_RGBA(48, 208, 72, 255));
+    }
+
+    // Bottom description box (14, 356, 504, 176)
+    if (own) UiGame_Text(gPokedexEntries[nat].description, buf, sizeof(buf));
+    else snprintf(buf, sizeof(buf), seen ? "Catch it to record full POKéDEX data and area habitat." : "No data recorded yet.");
+    DrawDexDescBox(14, 356, 504, 176, buf, sFrame);
+
+    // Right amber list panel (532, 60, 414, 472)
+    DrawDexCardBox(532, 60, 414, 472, UI_RGBA(248, 248, 248, 255));
+    UiW_GbaBox(544, 70, 390, 36, 4, UI_RGBA(16, 21, 24, 255), UI_RGBA(40, 56, 64, 255), UI_RGBA(40, 56, 64, 255), 0, 0);
+    UiW_GbaTextMid(UI_FACE_VT323, 28, 554, 70, 36, sMode == 0 ? "HOENN POKéDEX" : "NATIONAL DEX", UI_RGBA(248, 232, 0, 255), UI_GBA_SHAD_DARK);
+    UiW_GbaTextMid(UI_FACE_VT323, 24, 926 - UiText_Width(UI_FACE_VT323, 24, seenBuf), 70, 36, seenBuf, UI_RGBA(48, 208, 72, 255), UI_GBA_SHAD_DARK);
+
+    UiDraw_PushClip(544, 114, 374, ROWS * 45);
+    for (int32_t r = 0; r < ROWS && sList.first + r < sCount; r++)
+    {
+        const int32_t i = sList.first + r;
+        const int32_t ry = 114 + r * 45;
+        const uint16_t rowNat = sNat[i];
+        const bool rOn = (i == sList.sel), rSeen = Seen(rowNat), rOwn = Caught(rowNat);
+        if (rOn)
+        {
+            UiW_GbaBox(544, ry + 1, 374, 42, 4, UI_RGBA(40, 56, 64, 255),
+                       UI_RGBA(255, 238, 0, 255), UI_RGBA(248, 184, 0, 255), C_WHITE, 0);
+            UiW_GbaArrowH(553, ry + 17, true, C_WHITE);
+            UiW_GbaArrowH(552, ry + 16, true, UI_RGBA(230, 8, 8, 255));
+        }
+        else if (r < ROWS - 1)
+            UiDraw_Rect(544, ry + 43, 374, 2, UI_RGBA(224, 224, 216, 255));
+
+        snprintf(buf, sizeof(buf), "No.%03d", (int)ListNumber(i));
+        UiW_GbaTextMid(UI_FACE_VT323, 24, 570, ry, 44, buf, rOn ? UI_RGBA(40, 56, 64, 255) : UI_RGBA(72, 80, 88, 255),
+                       rOn ? C_WHITE : UI_RGBA(216, 216, 216, 255));
+        if (rOwn)
+            UiDraw_Sprite(UI_SPR_BALL_POKE, 640, ry + 14, 1);
+        if (rSeen)
+            UiSpr_MonIcon(NationalPokedexNumToSpecies(rowNat), 0, 662, ry + 6, 1);
+        if (rSeen)
+            Name(rowNat, name, sizeof(name));
+        else
+            snprintf(name, sizeof(name), "-----");
+        UiW_GbaTextMid(UI_FACE_VT323, 28, 704, ry, 44, name, rOwn ? UI_RGBA(49, 49, 49, 255) : UI_RGBA(112, 120, 128, 255),
+                       rOn ? C_WHITE : UI_RGBA(216, 216, 216, 255));
+    }
+    UiDraw_PopClip();
+    UiW_ScrollBar(924, 114, ROWS * 45, sList.first, ROWS, sCount);
+
+    if (sMenu.open)
+        UiMenu_Draw(&sMenu);
+}
+
 static void Build(void)
 {
+    if (gUiTheme->gbaFrame)
+    {
+        BuildGba();
+        return;
+    }
     char buf[32];
     UiKit_Header("POKéDEX", sModeTabs, IsNationalPokedexEnabled() ? 2 : 1, sMode, sTabX, sTabW, 12);
     snprintf(buf, sizeof(buf), "SEEN %u · OWN %u", (unsigned)GetHoennPokedexCount(FLAG_GET_SEEN), (unsigned)GetHoennPokedexCount(FLAG_GET_CAUGHT));
@@ -300,7 +508,15 @@ static bool DetUpdate(const UiInput *in)
 {
     if (sCryTicks > 0) sCryTicks--;
     if (in->pressed & VITA_BTN_CIRCLE) { PlaySE(SE_SELECT); return false; }
-    int32_t t = UiKit_TabHit(in, sDetTabX, sDetTabW, 4);
+    int32_t t = -1;
+    if (gUiTheme->gbaFrame)
+    {
+        const int32_t ph = UiW_GbaPagerHit(in, true, 4);
+        if (ph != 0)
+            t = (sDetTab + 4 + ph) % 4;
+    }
+    else
+        t = UiKit_TabHit(in, sDetTabX, sDetTabW, 4);
     if (in->pressed & VITA_BTN_L) t = (sDetTab + 3) % 4;
     if (in->pressed & VITA_BTN_R) t = (sDetTab + 1) % 4;
     if (t >= 0 && t != sDetTab) { sDetTab = t; PlaySE(SE_SELECT); if (t == 2) Cry(); }
@@ -310,8 +526,105 @@ static bool DetUpdate(const UiInput *in)
     return true;
 }
 
+static void DetBuildGba(void)
+{
+    const uint16_t nat = sDetailNat, species = NationalPokedexNumToSpecies(nat);
+    char buf[220], name[16];
+    Name(nat, name, sizeof(name));
+    UiW_GbaTopBar(UI_GBA_BG_POKEDEX, 0, "POKéDEX", 4, sDetTab, false, sDetTabs[sDetTab]);
+
+    int32_t rx = UI_SCREEN_W - 14;
+    UiW_GbaHelpBadge(&rx, "O", "BACK", true);
+    UiW_GbaHelpBadge(&rx, "TRI", "CRY", false);
+    UiW_GbaHelpBadge(&rx, "UD", "STEP", false);
+
+    if (sDetTab == 1)
+    {
+        if (sAreaFor != species) { sAreaCount = UiGame_SpeciesAreas(species, sAreas, 256); sAreaFor = species; }
+        static uint32_t sAreaFrame;
+        UiMap_DrawArea(sAreas, ++sAreaFrame);
+        DrawDexCardBox(704, 60, 242, 472, UI_RGBA(248, 248, 248, 255));
+        UiW_GbaSectionStrip(716, 72, 218, 28, UI_GBA_TAG_GREEN, name, "HABITAT");
+        snprintf(buf, sizeof(buf), "No.%03u", (unsigned)nat);
+        UiW_GbaText(UI_FACE_PS2P, 16, 718, 110, buf, UI_RGBA(72, 80, 88, 255), C_WHITE);
+        UiW_GbaTextWrapped(UI_FACE_VT323, 28, 718, 148, 214, 28, sAreaCount ? "Red zones show where this wild POKéMON appears." : "AREA UNKNOWN",
+                           sAreaCount ? UI_RGBA(40, 56, 64, 255) : UI_RGBA(112, 120, 128, 255), C_WHITE, 5);
+        return;
+    }
+
+    DrawDexCardBox(14, 60, 932, 472, UI_RGBA(248, 248, 248, 255));
+    // Left 232x232 grid well
+    UiW_GbaBox(32, 78, 232, 232, 4, UI_RGBA(96, 96, 112, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(184, 184, 184, 255), 0);
+    for (int32_t g = 16; g < 226; g += 16)
+    {
+        UiDraw_Rect(35 + g, 81, 1, 226, UI_RGBA(40, 56, 64, 36));
+        UiDraw_Rect(35, 81 + g, 226, 1, UI_RGBA(40, 56, 64, 36));
+    }
+    UiSpr_MonFront(species, false, 52, 98, 3);
+
+    if (sDetTab == 0)
+    {
+        UiW_GbaBox(280, 78, 354, 64, 4, UI_RGBA(160, 160, 160, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(216, 216, 216, 255), C_WHITE, 0);
+        snprintf(buf, sizeof(buf), "No.%03u  %s", (unsigned)nat, name);
+        UiW_GbaText(UI_FACE_PS2P, 16, 294, 88, buf, UI_RGBA(40, 56, 64, 255), C_WHITE);
+        UiGame_Text(gPokedexEntries[nat].categoryName, buf, sizeof(buf));
+        strncat(buf, " POKéMON", sizeof(buf) - strlen(buf) - 1);
+        UiW_GbaText(UI_FACE_VT323, 28, 294, 110, buf, UI_RGBA(72, 80, 88, 255), C_WHITE);
+
+        UiW_GbaSectionStrip(280, 150, 354, 26, UI_GBA_TAG_GREEN, "TYPE", NULL);
+        Types(species, 290, 184);
+
+        char h[16], w[16];
+        HeightWeight(nat, h, sizeof(h), w, sizeof(w));
+        UiW_GbaSectionStrip(280, 226, 354, 26, UI_GBA_TAG_TEAL, "SIZE & WEIGHT", NULL);
+        snprintf(buf, sizeof(buf), "HT %s   ·   WT %s", h, w);
+        UiW_GbaText(UI_FACE_VT323, 32, 290, 260, buf, UI_RGBA(40, 56, 64, 255), C_WHITE);
+
+        UiW_GbaBox(654, 78, 272, 232, 4, UI_RGBA(160, 160, 160, 255), UI_RGBA(236, 236, 230, 255), UI_RGBA(236, 236, 230, 255), C_WHITE, 0);
+        UiW_GbaSectionStrip(664, 88, 252, 26, UI_GBA_TAG_SLATE, "FOOTPRINT", NULL);
+        UiW_GbaBox(742, 136, 96, 96, 48, UI_RGBA(160, 160, 160, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(184, 184, 184, 255), 0);
+        UiSpr_Footprint(species, 766, 160, 3, UI_RGBA(40, 56, 64, 255));
+
+        UiGame_Text(gPokedexEntries[nat].description, buf, sizeof(buf));
+        DrawDexDescBox(32, 326, 896, 188, buf, sFrame);
+    }
+    else if (sDetTab == 2)
+    {
+        UiW_GbaSectionStrip(280, 78, 648, 28, UI_GBA_TAG_BLUE, "POKéMON CRY ANALYZER", name);
+        UiW_GbaBox(280, 114, 648, 196, 4, UI_RGBA(96, 96, 112, 255), UI_RGBA(0, 0, 40, 255), UI_RGBA(0, 0, 40, 255), 0, 0);
+        for (int32_t x = 0; x < 42; x++)
+        {
+            const int32_t phase = (int32_t)((x * 37 + nat * 13) % 100);
+            const int32_t amp = sCryTicks > 0 ? 12 + phase * sCryTicks * 3 / 60 : 8;
+            const int32_t bh = amp > 166 ? 166 : amp;
+            UiDraw_RectV(300 + x * 15, 212 - bh / 2, 10, bh, UI_RGBA(248, 232, 0, 255), UI_RGBA(48, 208, 72, 255));
+        }
+        DrawDexDescBox(32, 326, 896, 188, "Press X or TRIANGLE to play this POKéMON's cry again.", sFrame);
+    }
+    else
+    {
+        UiW_GbaSectionStrip(280, 78, 648, 28, UI_GBA_TAG_GOLD, "HEIGHT COMPARISON", NULL);
+        UiW_GbaBox(280, 114, 648, 398, 4, UI_RGBA(160, 160, 160, 255), UI_RGBA(232, 236, 230, 255), UI_RGBA(232, 236, 230, 255), C_WHITE, 0);
+        const int32_t ps = gPokedexEntries[nat].pokemonScale ? gPokedexEntries[nat].pokemonScale : 256;
+        const int32_t ts = gPokedexEntries[nat].trainerScale ? gPokedexEntries[nat].trainerScale : 256;
+        int32_t ms = 192 * 256 / ps, tsz = 192 * 256 / ts;
+        if (ms > 340) ms = 340;
+        if (tsz > 340) tsz = 340;
+        UiSpr_TrainerSized(UiGame_PlayerIsMale() ? TRAINER_PIC_BRENDAN : TRAINER_PIC_MAY, 420 - tsz / 2, 480 - tsz, tsz, tsz);
+        UiSpr_MonFrontSized(species, 760 - ms / 2, 480 - ms, ms, ms);
+        UiGame_PlayerName(name, sizeof(name));
+        snprintf(buf, sizeof(buf), "Scale comparison with %s", name);
+        UiW_GbaText(UI_FACE_VT323, 28, 300, 126, buf, UI_RGBA(72, 80, 88, 255), C_WHITE);
+    }
+}
+
 static void DetBuild(void)
 {
+    if (gUiTheme->gbaFrame)
+    {
+        DetBuildGba();
+        return;
+    }
     const uint16_t nat = sDetailNat, species = NationalPokedexNumToSpecies(nat);
     char buf[200], name[16];
     UiKit_Header("POKéDEX", sDetTabs, 4, sDetTab, sDetTabX, sDetTabW, 12);

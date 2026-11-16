@@ -41,7 +41,7 @@ THEME_PNG = os.path.join(HERE, "fonts", "theme_fonts.png")
 THEME_JSON = os.path.join(HERE, "fonts", "theme_fonts.json")
 OUT = os.path.join(ROOT, "assets", "ui2", "ui_atlas.bin")
 OUT_H = os.path.join(ROOT, "src", "platform", "ui", "ui_sprite_ids.h")
-KEEP = {(0, 16), (0, 24), (1, 32), (1, 40)}                   # (face, px): D2
+KEEP = {(0, 16), (0, 24), (1, 24), (1, 28), (1, 32), (1, 40)}   # (face, px): D2 + compact VT323 sizes
 TEX_W = 1024
 MAX_FIXED_H = 1024                                   # = UI_DYN_Y in ui_internal.h                                    # the dynamic cells start below (ui_sprites.c)
 ASSETS = os.path.join(ROOT, "design", "stitch", "_assets")   # GBA art exported by export_assets.py

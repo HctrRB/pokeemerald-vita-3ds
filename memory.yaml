@@ -35,7 +35,7 @@ gpu_and_threads:
     are avoided.
 
 storage:
-  app_assets: app0:voxel/, app0:ui/, app0:ui2/, app0:followers/
+  app_assets: app0:voxel/, app0:ui/, app0:ui2/, app0:followers/followers.pak (PKF1 container)
   user_data: ux0:data/POKEVITA/ (saves/, pokeemerald.cfg, settings.txt, debug.log, perf_*)
   notes:
     - Logging to the memory card can stall for hundreds of ms: never log per frame.

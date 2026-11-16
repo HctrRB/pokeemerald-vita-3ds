@@ -6,11 +6,13 @@ the game's C code is compiled for the Vita's ARM CPU, and a platform layer suppl
 hardware did. On top of it, the port brings the features of
 [Emerald 3DS](https://github.com/ZallaxDev/emerald-3ds) to the Vita with vitaGL:
 
-- a 3D voxel overworld built live from the game's maps, with sun, shadows, day/night and weather;
+- a 3D voxel overworld built live from the game's maps, with sun, shadows, day/night, weather,
+  and an optional **HD-2D** post-processing mode;
 - 3D battles on a stage taken from the map where the battle starts;
-- a new touch interface over the 3D world that replaces the GBA menus and boxes, with five
-  menu themes;
-- HGSS follower Pokémon, an accelerated clock, time-based encounters and optional QoL extras.
+- a new touch interface over the 3D world that replaces the GBA menus and boxes, with six
+  menu themes (including the new **GBA** skin as default);
+- HGSS follower Pokémon, visible wild Pokémon in the overworld, an accelerated clock, time-based
+  encounters and optional QoL extras.
 
 The full list is under [Features](#features).
 
@@ -25,6 +27,26 @@ The full list is under [Features](#features).
 > ([docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md)). Like every decompilation, the tree still
 > holds the game's code and text in decompiled form. A built VPK contains Nintendo's data:
 > **do not distribute builds**.
+
+## Screenshots
+
+### Visual modes: 3D Normal · 3D HD-2D · Classic 2D
+
+| 3D Normal | 3D HD-2D | Classic 2D |
+|---|---|---|
+| ![3D Normal](docs/screenshots/mode_3d_normal.jpg) | ![3D HD-2D](docs/screenshots/mode_3d_hd2d.jpg) | ![Classic 2D](docs/screenshots/mode_2d_classic.jpg) |
+
+### New native touch UI (GBA theme)
+
+| Pokédex | Party | Hub & START Menu |
+|---|---|---|
+| ![Pokédex](docs/screenshots/ui_gba_pokedex.jpg) | ![Party](docs/screenshots/ui_gba_party.jpg) | ![Hub & START Menu](docs/screenshots/ui_gba_hub.jpg) |
+
+### 25° camera & overworld
+
+| Town & water | Route 119 (rain & waterfall) | Tall grass & wild Pokémon |
+|---|---|---|
+| ![25° camera town](docs/screenshots/camera_25deg_town.jpg) | ![25° camera Route 119](docs/screenshots/camera_25deg_route119.jpg) | ![25° camera tall grass](docs/screenshots/camera_25deg_grass.jpg) |
 
 ## Features
 
@@ -58,9 +80,9 @@ Drawn natively at 960×544 over the 3D world. Every screen works with the button
   double battles, YES / NO, level-up stats and the Safari Zone; bag and party in battle (multi
   battles included); the Battle Pyramid bag.
 - **Field**: dialogue box, YES / NO, choice lists (PC menus, NPC questions), money box, item
-  obtained, PokéNav calls and zone signs with each town's motto, plus dialogue mirrors in 2D
-  evolution, egg-hatch and trade scenes.
-- **Menu themes** (OPTIONS > GENERAL > MENU COLOR): RED (default), EMERALD, CRYSTAL, TROPICAL
+  obtained, PokéNav calls and zone signs, plus dialogue mirrors in 2D evolution, egg-hatch and
+  trade scenes.
+- **Menu themes** (OPTIONS > GENERAL > MENU COLOR): GBA (default), RED, EMERALD, CRYSTAL, TROPICAL
   and ROYAL. Each has its own colours, box shapes, bevels and font, and applies to every screen,
   the battle HUD and the zone signs.
 
