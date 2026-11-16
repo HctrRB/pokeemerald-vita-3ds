@@ -4,7 +4,9 @@ Unofficial native PS Vita port of Pokémon Emerald, built from the
 [pret/pokeemerald](https://github.com/pret/pokeemerald) decompilation. It is not an emulator:
 the game's C code is compiled for the Vita's ARM CPU, and a platform layer supplies what the GBA
 hardware did. On top of it, the port brings the features of
-[Emerald 3DS](https://github.com/ZallaxDev/emerald-3ds) to the Vita with vitaGL:
+[Emerald 3DS](https://github.com/ZallaxDev/emerald-3ds) to the Vita with vitaGL, plus an optional
+**HD-2D** visual mode and 25° camera angle inspired by
+[Bravely Emerald](https://github.com/marcoscodas/bravely-emerald):
 
 - a 3D voxel overworld built live from the game's maps, with sun, shadows, day/night, weather,
   and an optional **HD-2D** post-processing mode;
