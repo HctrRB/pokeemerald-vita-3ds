@@ -26,7 +26,6 @@
 #endif
 
 #include "../vita/vita_perf.h"
-#include "../vita/vita_ambient_audio.h"
 
 static int32_t sFrameDrawCalls = 0;
 static uint32_t sFrameVertCount = 0;
@@ -2289,6 +2288,25 @@ static void NoteJobPage(VoxelChunkJobOutput *out, int32_t page)
         out->pages[out->pageCount++] = (int16_t)page;
 }
 
+// Tag top vertices of tall grass, flowers, and ash grass with sway weight 1.0 (a = 65);
+// bases and trees stay fixed at a = 255.
+static void TagTreeSwayAlpha(VoxelGlVertex *const verts, const uint32_t count)
+{
+    const float grassTopV = 1.0f - 32.0f / (float)VOXEL_TREE_TEXTURE_DIM;
+    const float grassMinU = 79.5f / (float)VOXEL_TREE_TEXTURE_DIM;
+    const float grassMaxU = 96.5f / (float)VOXEL_TREE_TEXTURE_DIM;
+    const float flowerTopV = 1.0f - 112.0f / (float)VOXEL_TREE_TEXTURE_DIM;
+    const float flowerMaxU = 32.5f / (float)VOXEL_TREE_TEXTURE_DIM;
+
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        VoxelGlVertex *const gv = &verts[i];
+        const bool isGrassTop = (fabsf(gv->v - grassTopV) < 0.002f && gv->u >= grassMinU && gv->u <= grassMaxU);
+        const bool isFlowerOrAshTop = (fabsf(gv->v - flowerTopV) < 0.002f && gv->u <= flowerMaxU);
+        gv->a = (isGrassTop || isFlowerOrAshTop) ? 65u : 255u;
+    }
+}
+
 static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *out)
 {
     const double computeStart = VitaPerf_NowMs();
@@ -2384,21 +2402,9 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
 
     if (builder.count > 0)
     {
-        uint32_t count = builder.count > CHUNK_TREE_CAP ? CHUNK_TREE_CAP : builder.count;
+        const uint32_t count = builder.count > CHUNK_TREE_CAP ? CHUNK_TREE_CAP : builder.count;
         PackVoxelVertices(sScratch, out->treeVerts, count, !in->indoor);
-        // Tag top vertices of tall grass (v = 1 - 32/128), flowers (0..16, 112), and ash grass (16..32, 112) with sway weight 1.0 (a = 65).
-        const float grassTopV = 1.0f - 32.0f / (float)VOXEL_TREE_TEXTURE_DIM;
-        const float grassMinU = 79.5f / (float)VOXEL_TREE_TEXTURE_DIM;
-        const float grassMaxU = 96.5f / (float)VOXEL_TREE_TEXTURE_DIM;
-        const float flowerTopV = 1.0f - 112.0f / (float)VOXEL_TREE_TEXTURE_DIM;
-        const float flowerMaxU = 32.5f / (float)VOXEL_TREE_TEXTURE_DIM;
-        for (uint32_t vi = 0; vi < count; ++vi)
-        {
-            VoxelGlVertex *const gv = &out->treeVerts[vi];
-            const bool isGrassTop = (fabsf(gv->v - grassTopV) < 0.002f && gv->u >= grassMinU && gv->u <= grassMaxU);
-            const bool isFlowerTop = (fabsf(gv->v - flowerTopV) < 0.002f && gv->u <= flowerMaxU);
-            gv->a = (isGrassTop || isFlowerTop) ? 65u : 255u;
-        }
+        TagTreeSwayAlpha(out->treeVerts, count);
         out->treeCount = count;
     }
     out->treesMs = VitaPerf_NowMs() - phaseStart;
@@ -3692,6 +3698,266 @@ void VoxelRenderer_HandleMouseMotion(int32_t dx, int32_t dy)
     (void)dx; (void)dy;
 }
 
+// Pre-decode all 3 original GBA flower frames (0, 1, 2) and pack Frame0 into free slot (0, 112) of sTreeTex.
+static void InitFlowerFrames(uint16_t *const treeLinear)
+{
+    extern const u16 gTilesetAnims_General_Flower_Frame0[];
+    extern const u16 gTilesetAnims_General_Flower_Frame1[];
+    extern const u16 gTilesetAnims_General_Flower_Frame2[];
+    static const uint16_t kFlowerPal02[16] = {
+        0x0000u,
+        (22u << 0) | (31u << 5) | (16u << 10),
+        (16u << 0) | (24u << 5) | (12u << 10),
+        (7u  << 0) | (17u << 5) | (6u  << 10),
+        (7u  << 0) | (10u << 5) | (0u  << 10),
+        (27u << 0) | (18u << 5) | (14u << 10),
+        (13u << 0) | (11u << 5) | (11u << 10),
+        (20u << 0) | (12u << 5) | (11u << 10),
+        (8u  << 0) | (7u  << 5) | (6u  << 10),
+        (31u << 0) | (24u << 5) | (18u << 10),
+        (27u << 0) | (13u << 5) | (12u << 10),
+        (25u << 0) | (8u  << 5) | (10u << 10),
+        (20u << 0) | (26u << 5) | (24u << 10),
+        0x0000u, 0x0000u, 0x0000u
+    };
+    const u16 *const frames[3] = {
+        gTilesetAnims_General_Flower_Frame0,
+        gTilesetAnims_General_Flower_Frame1,
+        gTilesetAnims_General_Flower_Frame2,
+    };
+
+    for (int32_t fi = 0; fi < 3; ++fi)
+    {
+        const uint8_t *const tiles4bpp = (const uint8_t *)frames[fi];
+        for (int32_t ty = 0; ty < 2; ++ty)
+        {
+            for (int32_t tx = 0; tx < 2; ++tx)
+            {
+                const uint8_t *const tile = tiles4bpp + (ty * 2 + tx) * 32;
+                for (int32_t py = 0; py < 8; ++py)
+                {
+                    const int32_t localGlY = 15 - (ty * 8 + py);
+                    for (int32_t px = 0; px < 8; ++px)
+                    {
+                        const uint8_t byte = tile[py * 4 + (px >> 1)];
+                        const uint8_t idx = (px & 1) ? (byte >> 4) : (byte & 0x0Fu);
+                        uint16_t col = 0u;
+                        if (idx > 0u && idx < 13u)
+                            col = VoxelGrade_RGBA5551(kFlowerPal02[idx]);
+                        sFlowerFrames[fi][localGlY * 16 + (tx * 8 + px)] = col;
+                    }
+                }
+            }
+        }
+    }
+    sFlowerFramesReady = true;
+    sLastFlowerStep = 0u;
+    for (int32_t localGlY = 0; localGlY < 16; ++localGlY)
+    {
+        const int32_t glY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (112 + (15 - localGlY));
+        memcpy(&treeLinear[glY * VOXEL_TREE_TEXTURE_DIM], &sFlowerFrames[0][localGlY * 16], 16u * sizeof(uint16_t));
+    }
+}
+
+// Pack original GBA ash-covered tall grass sprite (gTileset_Fallarbor MB_ASHGRASS) into free slot (16, 112).
+static void InitAshGrassTexel(uint16_t *const treeLinear)
+{
+    extern const struct Tileset gTileset_Fallarbor;
+    bool packedAsh = false;
+
+    if (gTileset_Fallarbor.tiles != NULL && gTileset_Fallarbor.metatiles != NULL
+        && gTileset_Fallarbor.metatileAttributes != NULL && gTileset_Fallarbor.palettes != NULL)
+    {
+        int32_t ashMt = -1;
+        for (int32_t m = 0; m < (int32_t)(NUM_METATILES_TOTAL - NUM_METATILES_IN_PRIMARY); ++m)
+        {
+            if ((gTileset_Fallarbor.metatileAttributes[m] & METATILE_ATTR_BEHAVIOR_MASK) == MB_ASHGRASS)
+            {
+                ashMt = m;
+                break;
+            }
+        }
+        uint8_t *const secTiles = (ashMt >= 0) ? (uint8_t *)malloc(16384u) : NULL;
+        if (secTiles != NULL)
+        {
+            if (gTileset_Fallarbor.isCompressed)
+                LZDecompressWram(gTileset_Fallarbor.tiles, secTiles);
+            else
+                memcpy(secTiles, gTileset_Fallarbor.tiles, 16384u);
+
+            const u16 *const mt = gTileset_Fallarbor.metatiles + (uint32_t)ashMt * 8u;
+            const u16 *const pals = (const u16 *)gTileset_Fallarbor.palettes;
+            for (int32_t ty = 0; ty < 2; ++ty)
+            {
+                for (int32_t tx = 0; tx < 2; ++tx)
+                {
+                    const u16 entry = mt[4 + ty * 2 + tx];
+                    const uint32_t tileIdx = entry & 0x3FFu;
+                    const bool hFlip = ((entry >> 10) & 1u) != 0u;
+                    const bool vFlip = ((entry >> 11) & 1u) != 0u;
+                    const uint32_t palIdx = (entry >> 12) & 0x0Fu;
+                    const uint8_t *const tile = (tileIdx >= 512u) ? (secTiles + (tileIdx - 512u) * 32u) : NULL;
+                    const u16 *const pal = pals + palIdx * 16u;
+                    for (int32_t py = 0; py < 8; ++py)
+                    {
+                        const int32_t sy = ty * 8 + py;
+                        const int32_t dstGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (112 + sy);
+                        const int32_t srcGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (32 + sy);
+                        const int32_t fy = vFlip ? (7 - py) : py;
+                        for (int32_t px = 0; px < 8; ++px)
+                        {
+                            const int32_t sx = tx * 8 + px;
+                            const uint16_t maskTexel = treeLinear[srcGlY * VOXEL_TREE_TEXTURE_DIM + (80 + sx)];
+                            uint16_t col = 0u;
+                            if ((maskTexel & 1u) != 0u && tile != NULL)
+                            {
+                                const int32_t fx = hFlip ? (7 - px) : px;
+                                const uint8_t byte = tile[fy * 4 + (fx >> 1)];
+                                const uint8_t idx = (fx & 1) ? (byte >> 4) : (byte & 0x0Fu);
+                                if (idx > 0u)
+                                {
+                                    col = VoxelGrade_RGBA5551(pal[idx]);
+                                    packedAsh = true;
+                                }
+                            }
+                            treeLinear[dstGlY * VOXEL_TREE_TEXTURE_DIM + (16 + sx)] = col;
+                        }
+                    }
+                }
+            }
+            free(secTiles);
+        }
+    }
+    if (!packedAsh)
+    {
+        for (int32_t sy = 0; sy < 16; ++sy)
+        {
+            const int32_t dstGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (112 + sy);
+            const int32_t srcGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (32 + sy);
+            for (int32_t sx = 0; sx < 16; ++sx)
+            {
+                const uint16_t t = treeLinear[srcGlY * VOXEL_TREE_TEXTURE_DIM + (80 + sx)];
+                uint16_t outCol = 0u;
+                if ((t & 1u) != 0u)
+                {
+                    const uint32_t r = ((t >> 11) & 31u);
+                    const uint32_t g = ((t >> 6) & 31u);
+                    const uint32_t b = ((t >> 1) & 31u);
+                    const uint32_t lum = (r * 3u + g * 6u + b) / 10u;
+                    const uint32_t ar = (r + lum * 2u + 14u) / 3u;
+                    const uint32_t ag = (g + lum * 2u + 15u) / 3u;
+                    const uint32_t ab = (b + lum * 2u + 16u) / 3u;
+                    outCol = (uint16_t)(((ar > 31u ? 31u : ar) << 11)
+                                      | ((ag > 31u ? 31u : ag) << 6)
+                                      | ((ab > 31u ? 31u : ab) << 1) | 1u);
+                }
+                treeLinear[dstGlY * VOXEL_TREE_TEXTURE_DIM + (16 + sx)] = outCol;
+            }
+        }
+    }
+}
+
+// Compile foliage wind-sway and player-bend shader for Pass_Trees (falls back to fixed-function if unavailable).
+static void InitTreeSwayShader(void)
+{
+    static const char *const kTreeSwayVs =
+        "attribute vec3 aPos;\n"
+        "attribute vec2 aUv;\n"
+        "attribute vec4 aCol;\n"
+        "uniform mat4 uMvp;\n"
+        "uniform vec3 uChunkDelta;\n"
+        "uniform float uTime;\n"
+        "uniform vec2 uWind;\n"
+        "uniform vec2 uPlayerXZ;\n"
+        "varying vec2 vUv;\n"
+        "varying vec3 vCol;\n"
+        "void main() {\n"
+        "    float w = clamp((255.0 - floor(aCol.a * 255.0 + 0.5)) / 190.0, 0.0, 1.0);\n"
+        "    vec3 p = aPos + uChunkDelta;\n"
+        "    if (w > 0.001) {\n"
+        "        float ph = dot(p.xz, vec2(0.37, 0.61));\n"
+        "        float s = (sin(uTime * 1.7 + ph) + 0.5 * sin(uTime * 0.9 + ph * 0.5 + 1.3)) / 1.5;\n"
+        "        float gust = 0.7 + 0.3 * sin(uTime * 0.35 + dot(p.xz, vec2(0.08, 0.05)));\n"
+        "        float d = w * 0.14 * gust * (0.35 + 0.65 * s);\n"
+        "        p.x += uWind.x * d;\n"
+        "        p.z += uWind.y * d;\n"
+        "        float w2 = w * w;\n"
+        "        float s2 = sin(uTime * 2.3 + ph * 1.9 + 0.7) * 0.6 + sin(uTime * 3.7 + ph * 0.8) * 0.4;\n"
+        "        p.x += -uWind.y * (w2 * 0.06 * gust * s2);\n"
+        "        p.z +=  uWind.x * (w2 * 0.06 * gust * s2);\n"
+        "        p.y -= w2 * 0.02 * (0.5 + 0.5 * s);\n"
+        "        vec2 dv = p.xz - uPlayerXZ;\n"
+        "        float dist = length(dv);\n"
+        "        float k = w * clamp(1.0 - dist / 1.20, 0.0, 1.0);\n"
+        "        k *= k;\n"
+        "        vec2 pushDir = (dist > 0.001) ? (dv / dist) : vec2(0.0, 1.0);\n"
+        "        p.xz += pushDir * (0.72 * k);\n"
+        "        p.y -= 0.28 * k;\n"
+        "    }\n"
+        "    gl_Position = uMvp * vec4(p, 1.0);\n"
+        "    vUv = aUv;\n"
+        "    vCol = aCol.rgb;\n"
+        "}\n";
+    static const char *const kTreeSwayFs =
+        "varying vec2 vUv;\n"
+        "varying vec3 vCol;\n"
+        "uniform sampler2D uTex;\n"
+        "void main() {\n"
+        "    vec4 t = texture2D(uTex, vUv);\n"
+        "    if (t.a <= 0.05) discard;\n"
+        "    gl_FragColor = vec4(t.rgb * vCol, t.a);\n"
+        "}\n";
+
+    const GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+    const GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+    const char *vsSrc = kTreeSwayVs;
+    const char *fsSrc = kTreeSwayFs;
+    glShaderSource(vs, 1, &vsSrc, NULL);
+    glCompileShader(vs);
+    glShaderSource(fs, 1, &fsSrc, NULL);
+    glCompileShader(fs);
+
+    GLint vsOk = 0, fsOk = 0;
+    glGetShaderiv(vs, GL_COMPILE_STATUS, &vsOk);
+    glGetShaderiv(fs, GL_COMPILE_STATUS, &fsOk);
+    if (vsOk && fsOk)
+    {
+        const GLuint prog = glCreateProgram();
+        glAttachShader(prog, vs);
+        glAttachShader(prog, fs);
+        glBindAttribLocation(prog, 0, "aPos");
+        glBindAttribLocation(prog, 1, "aUv");
+        glBindAttribLocation(prog, 2, "aCol");
+        glLinkProgram(prog);
+
+        GLint linkOk = 0;
+        glGetProgramiv(prog, GL_LINK_STATUS, &linkOk);
+        if (linkOk)
+        {
+            sTreeShaderProg = prog;
+            sTreeShaderUMvp = glGetUniformLocation(prog, "uMvp");
+            sTreeShaderUChunkDelta = glGetUniformLocation(prog, "uChunkDelta");
+            sTreeShaderUTime = glGetUniformLocation(prog, "uTime");
+            sTreeShaderUWind = glGetUniformLocation(prog, "uWind");
+            sTreeShaderUPlayerXZ = glGetUniformLocation(prog, "uPlayerXZ");
+            sTreeShaderUTex = glGetUniformLocation(prog, "uTex");
+            sTreeShaderReady = true;
+            VITA_LOG("[VOXEL] Compiled foliage sway shader successfully.\n");
+        }
+        else
+        {
+            glDeleteProgram(prog);
+            VITA_LOG("[VOXEL] Foliage sway shader link failed; using fixed-function.\n");
+        }
+    }
+    else
+    {
+        VITA_LOG("[VOXEL] Foliage sway shader compile failed (vs=%d fs=%d); using fixed-function.\n", vsOk, fsOk);
+    }
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+}
+
 // Initialize the voxel renderer. Call after OpenGL context is created.
 bool VoxelRenderer_Init(void)
 {
@@ -3726,159 +3992,8 @@ bool VoxelRenderer_Init(void)
             BrightenCrowns(sTreeMorton);
             Voxel_UnswizzleMortonToLinear(sTreeMorton, sTreeLinear,
                                           VOXEL_TREE_TEXTURE_DIM, VOXEL_TREE_TEXTURE_DIM);
-            // Pre-decode all 3 original GBA flower frames (0, 1, 2) and pack Frame0 into free slot (0, 112) of sTreeTex
-            {
-                extern const u16 gTilesetAnims_General_Flower_Frame0[];
-                extern const u16 gTilesetAnims_General_Flower_Frame1[];
-                extern const u16 gTilesetAnims_General_Flower_Frame2[];
-                static const uint16_t kFlowerPal02[16] = {
-                    0x0000u,
-                    (22u << 0) | (31u << 5) | (16u << 10),
-                    (16u << 0) | (24u << 5) | (12u << 10),
-                    (7u  << 0) | (17u << 5) | (6u  << 10),
-                    (7u  << 0) | (10u << 5) | (0u  << 10),
-                    (27u << 0) | (18u << 5) | (14u << 10),
-                    (13u << 0) | (11u << 5) | (11u << 10),
-                    (20u << 0) | (12u << 5) | (11u << 10),
-                    (8u  << 0) | (7u  << 5) | (6u  << 10),
-                    (31u << 0) | (24u << 5) | (18u << 10),
-                    (27u << 0) | (13u << 5) | (12u << 10),
-                    (25u << 0) | (8u  << 5) | (10u << 10),
-                    (20u << 0) | (26u << 5) | (24u << 10),
-                    0x0000u, 0x0000u, 0x0000u
-                };
-                const u16 *const frames[3] = {
-                    gTilesetAnims_General_Flower_Frame0,
-                    gTilesetAnims_General_Flower_Frame1,
-                    gTilesetAnims_General_Flower_Frame2,
-                };
-                for (int32_t fi = 0; fi < 3; ++fi)
-                {
-                    const uint8_t *const tiles4bpp = (const uint8_t *)frames[fi];
-                    for (int32_t ty = 0; ty < 2; ++ty)
-                    {
-                        for (int32_t tx = 0; tx < 2; ++tx)
-                        {
-                            const uint8_t *const tile = tiles4bpp + (ty * 2 + tx) * 32;
-                            for (int32_t py = 0; py < 8; ++py)
-                            {
-                                const int32_t localGlY = 15 - (ty * 8 + py);
-                                for (int32_t px = 0; px < 8; ++px)
-                                {
-                                    const uint8_t byte = tile[py * 4 + (px >> 1)];
-                                    const uint8_t idx = (px & 1) ? (byte >> 4) : (byte & 0x0Fu);
-                                    uint16_t col = 0u;
-                                    if (idx > 0u && idx < 13u)
-                                        col = VoxelGrade_RGBA5551(kFlowerPal02[idx]);
-                                    sFlowerFrames[fi][localGlY * 16 + (tx * 8 + px)] = col;
-                                }
-                            }
-                        }
-                    }
-                }
-                sFlowerFramesReady = true;
-                sLastFlowerStep = 0u;
-                for (int32_t localGlY = 0; localGlY < 16; ++localGlY)
-                {
-                    const int32_t glY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (112 + (15 - localGlY));
-                    memcpy(&sTreeLinear[glY * VOXEL_TREE_TEXTURE_DIM], &sFlowerFrames[0][localGlY * 16], 16u * sizeof(uint16_t));
-                }
-            }
-            // Pack original GBA ash-covered tall grass sprite (gTileset_Fallarbor MB_ASHGRASS) into free slot (16, 112)
-            {
-                extern const struct Tileset gTileset_Fallarbor;
-                bool packedAsh = false;
-                if (gTileset_Fallarbor.tiles != NULL && gTileset_Fallarbor.metatiles != NULL
-                    && gTileset_Fallarbor.metatileAttributes != NULL && gTileset_Fallarbor.palettes != NULL)
-                {
-                    int32_t ashMt = -1;
-                    for (int32_t m = 0; m < (int32_t)(NUM_METATILES_TOTAL - NUM_METATILES_IN_PRIMARY); ++m)
-                    {
-                        if ((gTileset_Fallarbor.metatileAttributes[m] & METATILE_ATTR_BEHAVIOR_MASK) == MB_ASHGRASS)
-                        {
-                            ashMt = m;
-                            break;
-                        }
-                    }
-                    uint8_t *const secTiles = (ashMt >= 0) ? (uint8_t *)malloc(16384u) : NULL;
-                    if (secTiles != NULL)
-                    {
-                        if (gTileset_Fallarbor.isCompressed)
-                            LZDecompressWram(gTileset_Fallarbor.tiles, secTiles);
-                        else
-                            memcpy(secTiles, gTileset_Fallarbor.tiles, 16384u);
-
-                        const u16 *const mt = gTileset_Fallarbor.metatiles + (uint32_t)ashMt * 8u;
-                        const u16 *const pals = (const u16 *)gTileset_Fallarbor.palettes;
-                        for (int32_t ty = 0; ty < 2; ++ty)
-                        {
-                            for (int32_t tx = 0; tx < 2; ++tx)
-                            {
-                                const u16 entry = mt[4 + ty * 2 + tx];
-                                const uint32_t tileIdx = entry & 0x3FFu;
-                                const bool hFlip = ((entry >> 10) & 1u) != 0u;
-                                const bool vFlip = ((entry >> 11) & 1u) != 0u;
-                                const uint32_t palIdx = (entry >> 12) & 0x0Fu;
-                                const uint8_t *const tile = (tileIdx >= 512u) ? (secTiles + (tileIdx - 512u) * 32u) : NULL;
-                                const u16 *const pal = pals + palIdx * 16u;
-                                for (int32_t py = 0; py < 8; ++py)
-                                {
-                                    const int32_t sy = ty * 8 + py;
-                                    const int32_t dstGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (112 + sy);
-                                    const int32_t srcGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (32 + sy);
-                                    const int32_t fy = vFlip ? (7 - py) : py;
-                                    for (int32_t px = 0; px < 8; ++px)
-                                    {
-                                        const int32_t sx = tx * 8 + px;
-                                        const uint16_t maskTexel = sTreeLinear[srcGlY * VOXEL_TREE_TEXTURE_DIM + (80 + sx)];
-                                        uint16_t col = 0u;
-                                        if ((maskTexel & 1u) != 0u && tile != NULL)
-                                        {
-                                            const int32_t fx = hFlip ? (7 - px) : px;
-                                            const uint8_t byte = tile[fy * 4 + (fx >> 1)];
-                                            const uint8_t idx = (fx & 1) ? (byte >> 4) : (byte & 0x0Fu);
-                                            if (idx > 0u)
-                                            {
-                                                col = VoxelGrade_RGBA5551(pal[idx]);
-                                                packedAsh = true;
-                                            }
-                                        }
-                                        sTreeLinear[dstGlY * VOXEL_TREE_TEXTURE_DIM + (16 + sx)] = col;
-                                    }
-                                }
-                            }
-                        }
-                        free(secTiles);
-                    }
-                }
-                if (!packedAsh)
-                {
-                    for (int32_t sy = 0; sy < 16; ++sy)
-                    {
-                        const int32_t dstGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (112 + sy);
-                        const int32_t srcGlY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (32 + sy);
-                        for (int32_t sx = 0; sx < 16; ++sx)
-                        {
-                            const uint16_t t = sTreeLinear[srcGlY * VOXEL_TREE_TEXTURE_DIM + (80 + sx)];
-                            uint16_t outCol = 0u;
-                            if ((t & 1u) != 0u)
-                            {
-                                const uint32_t r = ((t >> 11) & 31u);
-                                const uint32_t g = ((t >> 6) & 31u);
-                                const uint32_t b = ((t >> 1) & 31u);
-                                const uint32_t lum = (r * 3u + g * 6u + b) / 10u;
-                                const uint32_t ar = (r + lum * 2u + 14u) / 3u;
-                                const uint32_t ag = (g + lum * 2u + 15u) / 3u;
-                                const uint32_t ab = (b + lum * 2u + 16u) / 3u;
-                                outCol = (uint16_t)(((ar > 31u ? 31u : ar) << 11)
-                                                  | ((ag > 31u ? 31u : ag) << 6)
-                                                  | ((ab > 31u ? 31u : ab) << 1) | 1u);
-                            }
-                            sTreeLinear[dstGlY * VOXEL_TREE_TEXTURE_DIM + (16 + sx)] = outCol;
-                        }
-                    }
-                }
-            }
+            InitFlowerFrames(sTreeLinear);
+            InitAshGrassTexel(sTreeLinear);
             glGenTextures(1, &sTreeTex);
             glBindTexture(GL_TEXTURE_2D, sTreeTex);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -3889,105 +4004,7 @@ bool VoxelRenderer_Init(void)
                          0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, sTreeLinear);
             VITA_LOG("[VOXEL] Loaded trees.rgba5551 successfully.\n");
 
-            // Compile foliage sway + player-bend shader for Pass_Trees (falls back to fixed-function if unavailable)
-            {
-                static const char *const kTreeSwayVs =
-                    "attribute vec3 aPos;\n"
-                    "attribute vec2 aUv;\n"
-                    "attribute vec4 aCol;\n"
-                    "uniform mat4 uMvp;\n"
-                    "uniform vec3 uChunkDelta;\n"
-                    "uniform float uTime;\n"
-                    "uniform vec2 uWind;\n"
-                    "uniform vec2 uPlayerXZ;\n"
-                    "varying vec2 vUv;\n"
-                    "varying vec3 vCol;\n"
-                    "void main() {\n"
-                    "    float w = clamp((255.0 - floor(aCol.a * 255.0 + 0.5)) / 190.0, 0.0, 1.0);\n"
-                    "    vec3 p = aPos + uChunkDelta;\n"
-                    "    if (w > 0.001) {\n"
-                    "        float ph = dot(p.xz, vec2(0.37, 0.61));\n"
-                    "        float s = (sin(uTime * 1.7 + ph) + 0.5 * sin(uTime * 0.9 + ph * 0.5 + 1.3)) / 1.5;\n"
-                    "        float gust = 0.7 + 0.3 * sin(uTime * 0.35 + dot(p.xz, vec2(0.08, 0.05)));\n"
-                    "        float d = w * 0.14 * gust * (0.35 + 0.65 * s);\n"
-                    "        p.x += uWind.x * d;\n"
-                    "        p.z += uWind.y * d;\n"
-                    "        float w2 = w * w;\n"
-                    "        float s2 = sin(uTime * 2.3 + ph * 1.9 + 0.7) * 0.6 + sin(uTime * 3.7 + ph * 0.8) * 0.4;\n"
-                    "        p.x += -uWind.y * (w2 * 0.06 * gust * s2);\n"
-                    "        p.z +=  uWind.x * (w2 * 0.06 * gust * s2);\n"
-                    "        p.y -= w2 * 0.02 * (0.5 + 0.5 * s);\n"
-                    "        vec2 dv = p.xz - uPlayerXZ;\n"
-                    "        float dist = length(dv);\n"
-                    "        float k = w * clamp(1.0 - dist / 1.20, 0.0, 1.0);\n"
-                    "        k *= k;\n"
-                    "        vec2 pushDir = (dist > 0.001) ? (dv / dist) : vec2(0.0, 1.0);\n"
-                    "        p.xz += pushDir * (0.72 * k);\n"
-                    "        p.y -= 0.28 * k;\n"
-                    "    }\n"
-                    "    gl_Position = uMvp * vec4(p, 1.0);\n"
-                    "    vUv = aUv;\n"
-                    "    vCol = aCol.rgb;\n"
-                    "}\n";
-                static const char *const kTreeSwayFs =
-                    "varying vec2 vUv;\n"
-                    "varying vec3 vCol;\n"
-                    "uniform sampler2D uTex;\n"
-                    "void main() {\n"
-                    "    vec4 t = texture2D(uTex, vUv);\n"
-                    "    if (t.a <= 0.05) discard;\n"
-                    "    gl_FragColor = vec4(t.rgb * vCol, t.a);\n"
-                    "}\n";
-
-                const GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-                const GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-                const char *vsSrc = kTreeSwayVs;
-                const char *fsSrc = kTreeSwayFs;
-                glShaderSource(vs, 1, &vsSrc, NULL);
-                glCompileShader(vs);
-                glShaderSource(fs, 1, &fsSrc, NULL);
-                glCompileShader(fs);
-
-                GLint vsOk = 0, fsOk = 0;
-                glGetShaderiv(vs, GL_COMPILE_STATUS, &vsOk);
-                glGetShaderiv(fs, GL_COMPILE_STATUS, &fsOk);
-                if (vsOk && fsOk)
-                {
-                    const GLuint prog = glCreateProgram();
-                    glAttachShader(prog, vs);
-                    glAttachShader(prog, fs);
-                    glBindAttribLocation(prog, 0, "aPos");
-                    glBindAttribLocation(prog, 1, "aUv");
-                    glBindAttribLocation(prog, 2, "aCol");
-                    glLinkProgram(prog);
-
-                    GLint linkOk = 0;
-                    glGetProgramiv(prog, GL_LINK_STATUS, &linkOk);
-                    if (linkOk)
-                    {
-                        sTreeShaderProg = prog;
-                        sTreeShaderUMvp = glGetUniformLocation(prog, "uMvp");
-                        sTreeShaderUChunkDelta = glGetUniformLocation(prog, "uChunkDelta");
-                        sTreeShaderUTime = glGetUniformLocation(prog, "uTime");
-                        sTreeShaderUWind = glGetUniformLocation(prog, "uWind");
-                        sTreeShaderUPlayerXZ = glGetUniformLocation(prog, "uPlayerXZ");
-                        sTreeShaderUTex = glGetUniformLocation(prog, "uTex");
-                        sTreeShaderReady = true;
-                        VITA_LOG("[VOXEL] Compiled foliage sway shader successfully.\n");
-                    }
-                    else
-                    {
-                        glDeleteProgram(prog);
-                        VITA_LOG("[VOXEL] Foliage sway shader link failed; using fixed-function.\n");
-                    }
-                }
-                else
-                {
-                    VITA_LOG("[VOXEL] Foliage sway shader compile failed (vs=%d fs=%d); using fixed-function.\n", vsOk, fsOk);
-                }
-                glDeleteShader(vs);
-                glDeleteShader(fs);
-            }
+            InitTreeSwayShader();
         }
     }
     else
@@ -5019,17 +5036,6 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
     f->seconds = (float)((double)(SDL_GetPerformanceCounter() - sVoxelAtmosphereStart) / (double)SDL_GetPerformanceFrequency());
     f->hd2dPreset = GetHd2dPreset();
     f->hd2dMarkedGrade = (f->hd2dPreset != HD2D_PRESET_OFF);
-
-    const VitaDayNightLight *const dn = (!f->indoor) ? VitaDayNight_Get() : NULL;
-    if (f->hd2dPreset != HD2D_PRESET_OFF)
-    {
-        VitaAmbientAudio_SetScene(f->indoor, f->underground, (int32_t)f->weather,
-                                  f->weatherAmount, dn ? dn->glow : 0.0f);
-    }
-    else
-    {
-        VitaAmbientAudio_SetScene(true, false, 0, 0.0f, 0.0f);
-    }
 }
 
 // Whether a visible chunk must be rebuilt. `urgent`: drawn as it is, the chunk would be wrong,

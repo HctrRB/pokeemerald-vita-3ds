@@ -10,7 +10,6 @@
 #include <setjmp.h>
 #include "vita/vita_perf.h"
 #include "vita/vita_platform.h"
-#include "vita/vita_ambient_audio.h"
 #include "platform/vita_controls.h"
 #include "platform/ui.h"
 #include "constants/moves.h"
