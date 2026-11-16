@@ -18,6 +18,19 @@ extern int32_t _newlib_heap_size_user;
 
 #define PERF_SUMMARY_PATH VITA_DATA_DIR "perf_summary.txt"
 #define PERF_CSV_PATH     VITA_DATA_DIR "perf_frames.csv"
+
+// High-resolution timestamp in milliseconds
+double VitaPerf_NowMs(void)
+{
+#ifdef PLATFORM_VITA
+    return (double)sceKernelGetProcessTimeWide() / 1000.0;
+#else
+    return (double)SDL_GetPerformanceCounter() * 1000.0 / (double)SDL_GetPerformanceFrequency();
+#endif
+}
+
+#ifdef VITA_TELEMETRY
+
 // A summary block is written after this many 3D frames, or after PERF_WINDOW_MAX_MS
 // (so 2D-only stretches don't make one block last a minute).
 #define SAMPLE_WINDOW_FRAMES 120
@@ -30,16 +43,6 @@ static FILE *sSummaryFile = NULL;
 static FILE *sCsvFile = NULL;
 static char sSummaryBuf[32768];
 static char sCsvBuf[32768];
-
-// High-resolution timestamp in milliseconds
-double VitaPerf_NowMs(void)
-{
-#ifdef PLATFORM_VITA
-    return (double)sceKernelGetProcessTimeWide() / 1000.0;
-#else
-    return (double)SDL_GetPerformanceCounter() * 1000.0 / (double)SDL_GetPerformanceFrequency();
-#endif
-}
 
 // Per-frame temporary timers for Core 0
 static double sFrameStartMs = 0.0;
@@ -703,3 +706,36 @@ void VitaPerf_EndFrame(const bool didRender3D, const uint32_t targetFps)
         ResetWindowAccums();
     }
 }
+
+#else // !VITA_TELEMETRY
+
+void VitaPerf_Init(void) {}
+void VitaPerf_Shutdown(void) {}
+void VitaPerf_Core1LogicTick(void) {}
+void VitaPerf_Core1LogicDone(const double logicMs) { (void)logicMs; }
+void VitaPerf_Core1VBlankDone(const double vblankMs) { (void)vblankMs; }
+void VitaPerf_Core1WaitDone(const double waitMs) { (void)waitMs; }
+void VitaPerf_BeginFrame(void) {}
+void VitaPerf_MarkAtlasAnimStart(void) {}
+void VitaPerf_MarkAtlasAnimEnd(const uint32_t rowsUpdated) { (void)rowsUpdated; }
+void VitaPerf_MarkCullStart(void) {}
+void VitaPerf_MarkCullEnd(const int32_t candidates, const int32_t visible) { (void)candidates; (void)visible; }
+void VitaPerf_MarkBuildStart(void) {}
+void VitaPerf_MarkBuildEnd(const int32_t chunksBuilt) { (void)chunksBuilt; }
+void VitaPerf_MarkDraw3DStart(void) {}
+void VitaPerf_MarkDraw3DEnd(const int32_t drawCalls, const uint32_t vertexCount) { (void)drawCalls; (void)vertexCount; }
+void VitaPerf_MarkUiScanlinesStart(void) {}
+void VitaPerf_MarkUiScanlinesEnd(void) {}
+void VitaPerf_MarkUiUploadStart(void) {}
+void VitaPerf_MarkUiUploadEnd(void) {}
+void VitaPerf_MarkSwapStart(void) {}
+void VitaPerf_MarkSwapEnd(void) {}
+void VitaPerf_SubBegin(const VitaPerfTimer timer) { (void)timer; }
+void VitaPerf_SubEnd(const VitaPerfTimer timer) { (void)timer; }
+void VitaPerf_AddTime(const VitaPerfTimer timer, const double ms) { (void)timer; (void)ms; }
+void VitaPerf_AddCount(const VitaPerfCounter counter, const uint32_t amount) { (void)counter; (void)amount; }
+void VitaPerf_MarkEvent(const VitaPerfEvent event) { (void)event; }
+void VitaPerf_LogMemory(const char *stage) { (void)stage; }
+void VitaPerf_EndFrame(const bool didRender3D, const uint32_t targetFps) { (void)didRender3D; (void)targetFps; }
+
+#endif // VITA_TELEMETRY

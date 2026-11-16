@@ -11,6 +11,8 @@
 #include "ui_internal.h"
 #include "../vita/vita_perf.h"
 
+#ifdef VITA_TELEMETRY
+
 #define STALL_MS 100.0
 
 static uint32_t sTickMs;     // Core 1: time of the last Ui_Tick with the UI open (ms, written atomically)
@@ -105,3 +107,12 @@ void UiStall_Render(uint32_t drawnSeq)
         sSeqSince = now;
     }
 }
+
+#else // !VITA_TELEMETRY
+
+void UiStall_Tick(const UiScreen *top, float lastTickMs) { (void)top; (void)lastTickMs; }
+void UiStall_Published(uint32_t seq) { (void)seq; }
+void UiStall_Closed(void) {}
+void UiStall_Render(uint32_t drawnSeq) { (void)drawnSeq; }
+
+#endif // VITA_TELEMETRY

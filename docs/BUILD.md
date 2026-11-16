@@ -67,6 +67,7 @@ another checkout path; for a clean rebuild delete `build-vita/`.
 |---|---|---|
 | `VITA_PARALLEL_DRAW` | ON | Draw GBA frames on the worker threads. Also enables the 288-px widescreen lines |
 | `VITA_LOGGING` | OFF | `VITA_LOG` writes `ux0:data/POKEVITA/debug.log` |
+| `VITA_TELEMETRY` | OFF | Write `perf_frames.csv`, `perf_summary.txt` and `ui_stall.log` to `ux0:data/POKEVITA/` |
 | `VITA_DRAW_SELFCHECK` | OFF | Testing: compare parallel and sequential drawing periodically |
 
 ## What CMakeLists.txt does
