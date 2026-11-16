@@ -55,10 +55,15 @@ The full list is under [Features](#features).
 ### 3D world
 
 - Voxel overworld built live from the game's maps: sun and shadows, day/night cycle, weather,
-  depth of field, water reflections, 3D buildings and trees. 30 or 60 FPS (OPTIONS > WORLD).
+  water reflections, 3D buildings and trees. 30 or 60 FPS (OPTIONS > WORLD), plus classic 2D mode.
+- **HD-2D mode** (OPTIONS > WORLD): tilt-shift depth of field, bloom and light emitters, split-tone
+  colour grading and vignette, street lamp / cave lantern point lights, dynamic sun/moon light
+  shafts, night fireflies, swaying foliage, 16×16 Sobel tile relief, soft contact shadows, HD-2D
+  rain and adjustable camera angle (including 25°).
 - 3D battles: the stage is picked from the map around the player, and the camera glides from
   the field into it.
-- Wild encounters in the 3D world fade smoothly into the battle.
+- Visible wild Pokémon in the overworld (configurable density and encounter rate) with extended
+  sprite palettes, fading smoothly into 3D battles.
 - HGSS follower Pokémon, an accelerated clock and time-based encounters.
 
 ### New interface
@@ -168,7 +173,7 @@ src/platform/voxel/                  3D voxel world
 src/platform/ui/                     the new interface (screens, widgets, themes)
 src/platform/vita/                   Vita-specific features (clock, encounters, extras, stage)
 assets/                              port data packed into the VPK (voxel, UI atlas, followers)
-tools/                               pret host tools, UI atlas builder (tools/ui2), generators
+tools/                               pret host tools, UI atlas builder (tools/ui2), follower packer, generators
 design/stitch/                       HTML mocks of the new interface
 docs/                                technical documentation
 ```
@@ -241,6 +246,9 @@ Buttons can be remapped in Options. Settings and saves live in `ux0:data/POKEVIT
 - **Zallax** and the Emerald 3DS contributors: [Emerald 3DS](https://github.com/ZallaxDev/emerald-3ds),
   the source of most of what this port adds: the voxel world, the 3D battles, the followers, the
   extras and the look of the interface.
+- **marcoscodas**: [Bravely Emerald](https://github.com/marcoscodas/bravely-emerald), visual
+  design and shader reference for the HD-2D post-processing mode, point lights, light shafts,
+  foliage sway, tile relief and 25° camera tilt.
 - **gradenGnostic** and contributors:
   [pokeemerald-multiplatform](https://github.com/gradenGnostic/pokeemerald-multiplatform), the SDL2
   platform layer and voxel renderer this port starts from.
