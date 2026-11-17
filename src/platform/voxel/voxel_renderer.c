@@ -3533,10 +3533,10 @@ static void UpdateAndDrawNightLamps(float glow)
 
     if (sLampGroundCount > 0 && sLampPoolTex != 0)
     {
-        const float k = glow * 0.78f;
+        const float k = glow * 0.62f;
         uint8_t r = (uint8_t)Voxel_ClampF(k * 255.0f + 0.5f, 0.0f, 255.0f);
-        uint8_t g = (uint8_t)Voxel_ClampF(k * 160.0f + 0.5f, 0.0f, 255.0f);
-        uint8_t b = (uint8_t)Voxel_ClampF(k * 68.0f + 0.5f, 0.0f, 255.0f);
+        uint8_t g = (uint8_t)Voxel_ClampF(k * 155.0f + 0.5f, 0.0f, 255.0f);
+        uint8_t b = (uint8_t)Voxel_ClampF(k * 64.0f + 0.5f, 0.0f, 255.0f);
         for (uint32_t i = 0; i < sLampGroundCount; ++i)
         {
             sLampGroundVerts[i].x = sLampGroundScratch[i].x;
@@ -3580,11 +3580,11 @@ static void UpdateAndDrawNightLamps(float glow)
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sLampGlassVerts[0].r);
         glDrawArrays(GL_TRIANGLES, 0, sLampGlassCount);
 
-        // Additive 3D core halo around each lamp bulb so the light source itself glows brightly and feeds BrightPass bloom
+        // Soft 3D bulb core halo (bright center, feathered outward by 2-pass Kawase bloom)
         if (sLampPoolTex != 0 && sLampGlassCount >= 6u)
         {
-            const uint8_t ca = (uint8_t)Voxel_ClampF(glow * 245.0f, 0.0f, 255.0f);
-            const float rad = 0.48f;
+            const uint8_t ca = (uint8_t)Voxel_ClampF(glow * 145.0f, 0.0f, 255.0f);
+            const float rad = 0.24f;
             uint32_t vHalo = 0u;
             for (uint32_t i = 0; i + 5u < sLampGlassCount && (vHalo + 6u) <= 4096u; i += 6u)
             {
@@ -3603,7 +3603,7 @@ static void UpdateAndDrawNightLamps(float glow)
                     v->z = cz + qy[k] * (rad * 0.45f);
                     v->u = qu[k];
                     v->v = qv[k];
-                    v->r = 255; v->g = 236; v->b = 180; v->a = ca;
+                    v->r = 255; v->g = 224; v->b = 148; v->a = ca;
                 }
             }
             if (vHalo > 0u)
@@ -7021,57 +7021,8 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
             glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
         }
 
-        // Sun/moon atmospheric bloom halo only (streetlamp bloom comes from bright-pass of 3D lamp glass)
-        if (!f->indoor && !f->inBattle3D && f->light.rays > 0.02f && sWeatherAtlasTex != 0)
-        {
-            static const float qx[6] = {-1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f};
-            static const float qy[6] = {-1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f};
-            const VitaDayNightPath sunP = VitaDayNight_SunPathAt(VitaDayNight_GetTimeMs());
-            const float sx = 0.5f - sunP.dx * 0.30f;
-            const float sy = 0.92f;
-            const float rx = 0.20f, ry = 0.24f;
-            const uint8_t sStr = (uint8_t)(Voxel_ClampF(f->light.rays, 0.0f, 1.0f) * 145.0f);
-            for (int32_t k = 0; k < 6; ++k)
-            {
-                VoxelGlVertex *const v = &sBatchGlVerts[k];
-                v->x = sx + qx[k] * rx;
-                v->y = sy + qy[k] * ry;
-                v->z = 0.0f;
-                v->u = (qx[k] > 0.0f) ? 0.5f : 0.0f;
-                v->v = (qy[k] > 0.0f) ? 1.0f : 0.5f;
-                v->r = sStr; v->g = (uint8_t)(sStr * 0.90f); v->b = (uint8_t)(sStr * 0.65f); v->a = 255;
-            }
-            glBindTexture(GL_TEXTURE_2D, sWeatherAtlasTex);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-            glEnableClientState(GL_COLOR_ARRAY);
-            glVertexPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
-            glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].u);
-            glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-            glDisableClientState(GL_COLOR_ARRAY);
-        }
-
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        glDisable(GL_BLEND);
-
-        // In HIGH mode, run 2-pass Kawase blur (bloomFboA -> bloomFboB -> bloomFboA) for large soft streetlamp halos
-        if (hd2dHigh)
-        {
-            glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboB);
-            glViewport(0, 0, bloomW, bloomH);
-            BlurTaps(pt->bloomTexA, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 1.50f, 1.50f);
-            glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
-            glViewport(0, 0, bloomW, bloomH);
-            BlurTaps(pt->bloomTexB, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 2.75f, 2.75f);
-            activeBloomTex = pt->bloomTexA;
-        }
-        else
-        {
-            activeBloomTex = pt->bloomTexA;
-        }
-
-        // HD-2D procedural light shafts (bravely-emerald kShaftFs) added at 240x136 before Composite
-        if (hd2dOn && !f->indoor && !f->inBattle3D && !f->underground && VoxelHd2dShader_ShaftsReady())
+        // Directional sky bloom + procedural light shafts added BEFORE 2-pass Kawase blur so sky & beams bloom at all hours
+        if (!f->indoor && !f->inBattle3D && !f->underground)
         {
             const uint32_t timeMs = VitaDayNight_GetTimeMs();
             const VitaDayNightLight *const sdn = VitaDayNight_Get();
@@ -7087,34 +7038,83 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                 const VitaDayNightPath p = dayShafts ? VitaDayNight_SunPathAt(timeMs) : moonP;
                 const float amt = dayShafts ? f->light.rays : (moonP.strength * 0.48f);
                 const float goldK = dayShafts ? Voxel_ClampF(glow * 4.0f, 0.0f, 1.0f) : 0.0f;
-                const float gain = dayShafts
-                    ? (amt * (hd2dHigh ? 0.72f : 0.40f))
-                    : (amt * (hd2dHigh ? 0.52f : 0.30f));
                 float col[3];
                 for (int32_t k = 0; k < 3; ++k)
+                    col[k] = dayShafts ? (kShaftDay[k] + (kShaftGold[k] - kShaftDay[k]) * goldK) : kShaftMoon[k];
+
+                if (sWeatherAtlasTex != 0)
                 {
-                    const float base = dayShafts ? (kShaftDay[k] + (kShaftGold[k] - kShaftDay[k]) * goldK) : kShaftMoon[k];
-                    col[k] = base * gain;
+                    static const float qx[6] = {-1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f};
+                    static const float qy[6] = {-1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f};
+                    const float sx = 0.5f - p.dx * 0.30f;
+                    const float sy = 0.94f;
+                    const float rx = 0.38f, ry = 0.30f;
+                    const float skyStr = amt * (dayShafts ? 155.0f : 115.0f);
+                    for (int32_t k = 0; k < 6; ++k)
+                    {
+                        VoxelGlVertex *const v = &sBatchGlVerts[k];
+                        v->x = sx + qx[k] * rx;
+                        v->y = sy + qy[k] * ry;
+                        v->z = 0.0f;
+                        v->u = (qx[k] > 0.0f) ? 0.5f : 0.0f;
+                        v->v = (qy[k] > 0.0f) ? 1.0f : 0.5f;
+                        v->r = (uint8_t)Voxel_ClampF(col[0] * skyStr, 0.0f, 255.0f);
+                        v->g = (uint8_t)Voxel_ClampF(col[1] * skyStr, 0.0f, 255.0f);
+                        v->b = (uint8_t)Voxel_ClampF(col[2] * skyStr, 0.0f, 255.0f);
+                        v->a = 255;
+                    }
+                    glBindTexture(GL_TEXTURE_2D, sWeatherAtlasTex);
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                    glEnableClientState(GL_COLOR_ARRAY);
+                    glVertexPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
+                    glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].u);
+                    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
+                    glDrawArrays(GL_TRIANGLES, 0, 6);
+                    glDisableClientState(GL_COLOR_ARRAY);
                 }
-                const float elev = Voxel_ClampF((p.altitude - 0.15f) / 0.75f, 0.0f, 1.0f);
-                const float lenExp = 0.62f + elev * 0.35f;
-                glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
-                glViewport(0, 0, bloomW, bloomH);
-                glEnable(GL_BLEND);
-                glBlendFunc(GL_ONE, GL_ONE);
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                glDisableClientState(GL_VERTEX_ARRAY);
-                VoxelHd2dShader_Shafts(p.dx, p.dy, lenExp, fmodf(f->seconds, 628.3185f),
-                                       (float)renderW / (float)renderH,
-                                       hd2dHigh ? 4.0f : 3.0f,
-                                       dayShafts ? 1.0f : 0.45f,
-                                       col[0], col[1], col[2]);
-                glEnableClientState(GL_VERTEX_ARRAY);
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                glDisable(GL_BLEND);
-                sFrameDrawCalls++;
-                sFrameVertCount += 4u;
+
+                if (hd2dOn && VoxelHd2dShader_ShaftsReady())
+                {
+                    const float gain = dayShafts
+                        ? (amt * (hd2dHigh ? 0.72f : 0.40f))
+                        : (amt * (hd2dHigh ? 0.52f : 0.30f));
+                    const float elev = Voxel_ClampF((p.altitude - 0.15f) / 0.75f, 0.0f, 1.0f);
+                    const float lenExp = 0.62f + elev * 0.35f;
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_ONE, GL_ONE);
+                    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                    glDisableClientState(GL_VERTEX_ARRAY);
+                    VoxelHd2dShader_Shafts(p.dx, p.dy, lenExp, fmodf(f->seconds, 62.83185f),
+                                           (float)renderW / (float)renderH,
+                                           hd2dHigh ? 2.0f : 1.0f,
+                                           dayShafts ? 1.0f : 0.45f,
+                                           col[0] * gain, col[1] * gain, col[2] * gain);
+                    glEnableClientState(GL_VERTEX_ARRAY);
+                    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                    sFrameDrawCalls++;
+                    sFrameVertCount += 4u;
+                }
             }
+        }
+
+        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        glDisable(GL_BLEND);
+
+        // In HIGH mode, run 2-pass Kawase blur (bloomFboA -> bloomFboB -> bloomFboA) for soft halos on lamps, sky & shafts
+        if (hd2dHigh)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboB);
+            glViewport(0, 0, bloomW, bloomH);
+            BlurTaps(pt->bloomTexA, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 1.50f, 1.50f);
+            glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
+            glViewport(0, 0, bloomW, bloomH);
+            BlurTaps(pt->bloomTexB, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 2.75f, 2.75f);
+            activeBloomTex = pt->bloomTexA;
+        }
+        else
+        {
+            activeBloomTex = pt->bloomTexA;
         }
         VitaPerf_SubEnd(VITA_PERF_T_POST_BLOOM);
     }
