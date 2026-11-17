@@ -33,6 +33,7 @@ void UiDraw_Begin(void)
 {
     UiDrawList *list = &sLists[sBack];
     list->vcount = 0;
+    list->backdropKind = -1;
     UiTheme_Refresh();
     sClipDepth = 0;
     sClip[0] = (UiClip){ 0, 0, UI_SCREEN_W, UI_SCREEN_H };
@@ -138,6 +139,16 @@ void UiDraw_Sprite(uint16_t id, int32_t x, int32_t y, int32_t scale)
     if (scale < 1)
         scale = 1;
     UiDraw_Quad(x, y, sw * scale, sh * scale, sx, sy, sx + sw, sy + sh, 0xFFFFFFFFu);
+}
+
+void UiDraw_SetBackdrop(uint8_t bgKind)
+{
+    sLists[sBack].backdropKind = (bgKind < 7u) ? (int8_t)bgKind : 0;
+}
+
+bool UiDraw_IsClipped(void)
+{
+    return sClipDepth > 0;
 }
 
 uint32_t UiDraw_Count(void)

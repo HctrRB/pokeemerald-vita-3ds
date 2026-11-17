@@ -42,11 +42,51 @@ static void ShapeFill(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r, boo
 {
     if (w <= 0 || h <= 0)
         return;
-    for (int32_t k = 0; k < r; k++)
+    if (r <= 0)
     {
-        const int32_t in = CornerInset(r, k, chamfer);
-        UiDraw_Rect(x + in, y + k, w - 2 * in, 1, top);
-        UiDraw_Rect(x + in, y + h - 1 - k, w - 2 * in, 1, bottom);
+        if (top == bottom)
+            UiDraw_Rect(x, y, w, h, top);
+        else
+            UiDraw_RectV(x, y, w, h, top, bottom);
+        return;
+    }
+    if (UiDraw_IsClipped())
+    {
+        for (int32_t k = 0; k < r; k++)
+        {
+            const int32_t in = CornerInset(r, k, chamfer);
+            UiDraw_Rect(x + in, y + k, w - 2 * in, 1, top);
+            UiDraw_Rect(x + in, y + h - 1 - k, w - 2 * in, 1, bottom);
+        }
+    }
+    else if (chamfer || r <= 4)
+    {
+        // Single trapezoidal cap per edge (3 quads total instead of 2*r + 1)
+        const float tx[4] = { (float)(x + r), (float)(x + w - r), (float)(x + w), (float)x };
+        const float ty[4] = { (float)y, (float)y, (float)(y + r), (float)(y + r) };
+        UiDraw_Poly4(tx, ty, top);
+        const float bx[4] = { (float)x, (float)(x + w), (float)(x + w - r), (float)(x + r) };
+        const float by[4] = { (float)(y + h - r), (float)(y + h - r), (float)(y + h), (float)(y + h) };
+        UiDraw_Poly4(bx, by, bottom);
+    }
+    else
+    {
+        // 2-step rounded cap for larger radii (5 quads total instead of 2*r + 1)
+        const int32_t mid = r / 2;
+        const int32_t inMid = CornerInset(r, mid, false);
+        const float tx0[4] = { (float)(x + r), (float)(x + w - r), (float)(x + w - inMid), (float)(x + inMid) };
+        const float ty0[4] = { (float)y, (float)y, (float)(y + mid), (float)(y + mid) };
+        UiDraw_Poly4(tx0, ty0, top);
+        const float tx1[4] = { (float)(x + inMid), (float)(x + w - inMid), (float)(x + w), (float)x };
+        const float ty1[4] = { (float)(y + mid), (float)(y + mid), (float)(y + r), (float)(y + r) };
+        UiDraw_Poly4(tx1, ty1, top);
+
+        const float bx0[4] = { (float)x, (float)(x + w), (float)(x + w - inMid), (float)(x + inMid) };
+        const float by0[4] = { (float)(y + h - r), (float)(y + h - r), (float)(y + h - mid), (float)(y + h - mid) };
+        UiDraw_Poly4(bx0, by0, bottom);
+        const float bx1[4] = { (float)(x + inMid), (float)(x + w - inMid), (float)(x + w - r), (float)(x + r) };
+        const float by1[4] = { (float)(y + h - mid), (float)(y + h - mid), (float)(y + h), (float)(y + h) };
+        UiDraw_Poly4(bx1, by1, bottom);
     }
     if (top == bottom)
         UiDraw_Rect(x, y + r, w, h - 2 * r, top);
@@ -959,29 +999,55 @@ static GbaBgSpec BgSpecFor(uint8_t bgKind)
     return kSpecs[bgKind < 7 ? bgKind : 0];
 }
 
+static uint32_t BlendOverRgba(uint32_t dst, uint32_t src)
+{
+    const uint32_t sa = (src >> 24) & 0xFFu;
+    if (sa == 0u)
+        return dst;
+    const uint32_t da = (dst >> 24) & 0xFFu;
+    const uint32_t invSa = 255u - sa;
+    const uint32_t outA = sa + (da * invSa + 127u) / 255u;
+    if (outA == 0u)
+        return 0u;
+    uint32_t out = outA << 24;
+    for (uint32_t s = 0u; s < 24u; s += 8u)
+    {
+        const uint32_t sc = (src >> s) & 0xFFu;
+        const uint32_t dc = (dst >> s) & 0xFFu;
+        const uint32_t c = (sc * sa + dc * da * invSa / 255u) / outA;
+        out |= (c > 255u ? 255u : c) << s;
+    }
+    return out;
+}
+
+void UiW_GbaBgPattern(uint8_t bgKind, uint32_t *out16x16)
+{
+    const GbaBgSpec sp = BgSpecFor(bgKind);
+    for (int32_t y = 0; y < 16; y++)
+    {
+        uint32_t rowCol = sp.body;
+        if (sp.stripes)
+        {
+            if (y >= 8)
+                rowCol = BlendOverRgba(rowCol, sp.scan);
+        }
+        else
+        {
+            rowCol = BlendOverRgba(rowCol, (y & 7) < 4 ? UI_RGBA(255, 255, 255, 14) : UI_RGBA(0, 0, 0, 22));
+        }
+        if (y == 0)
+            rowCol = BlendOverRgba(rowCol, sp.grid);
+        for (int32_t x = 0; x < 16; x++)
+            out16x16[y * 16 + x] = (x == 0) ? BlendOverRgba(rowCol, sp.grid) : rowCol;
+    }
+}
+
 void UiW_GbaTopBar(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, int32_t dotCount, int32_t dotActive, bool dotAllGreen, const char *pagerText)
 {
     const GbaBgSpec sp = BgSpecFor(bgKind);
 
-    // Translucent GBA backdrop below the 52 px top bar over the 3D world
-    UiDraw_Rect(0, GBA_TOPBAR_H, UI_SCREEN_W, UI_SCREEN_H - GBA_TOPBAR_H, sp.body);
-    if (sp.stripes)
-    {
-        for (int32_t sy = GBA_TOPBAR_H; sy < UI_SCREEN_H; sy += 16)
-            UiDraw_Rect(0, sy + 8, UI_SCREEN_W, 8, sp.scan);
-    }
-    else
-    {
-        for (int32_t sy = GBA_TOPBAR_H; sy < UI_SCREEN_H; sy += 8)
-        {
-            UiDraw_Rect(0, sy, UI_SCREEN_W, 4, UI_RGBA(255, 255, 255, 14));
-            UiDraw_Rect(0, sy + 4, UI_SCREEN_W, 4, UI_RGBA(0, 0, 0, 22));
-        }
-    }
-    for (int32_t gy = GBA_TOPBAR_H; gy < UI_SCREEN_H; gy += 16)
-        UiDraw_Rect(0, gy, UI_SCREEN_W, 1, sp.grid);
-    for (int32_t gx = 0; gx < UI_SCREEN_W; gx += 16)
-        UiDraw_Rect(gx, GBA_TOPBAR_H, 1, UI_SCREEN_H - GBA_TOPBAR_H, sp.grid);
+    // Translucent GBA backdrop below the 52 px top bar over the 3D world (1 tiled 16x16 quad in Ui_Render)
+    UiDraw_SetBackdrop(bgKind);
 
     // Top header bar (52 px)
     UiDraw_RectV(0, 0, UI_SCREEN_W, GBA_TOPBAR_H - 6, UI_RGBA(46, 59, 64, 255), UI_RGBA(32, 41, 45, 255));

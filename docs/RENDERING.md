@@ -41,7 +41,8 @@ Per frame (`VoxelRenderer_RenderFrame`):
    3D battles.
 2. **Atlas**: metatile atlas pages composed on demand in 5 LRU slots (`voxel_atlas.c`);
    animated tiles (water, flowers, shores) recomposed on the CPU when the game animates them and
-   uploaded through a spare texture per page (see "Textures rewritten at run time" below).
+   written straight into the page texture via `WriteAtlasRowsDirect` (see "Textures rewritten at
+   run time" below), keeping the active map and visible neighbours in sync on the exact same frame.
 3. **Lighting**: sun position from the clock (`voxel_lighting.c`); chunks whose lighting hash
    changed are rebuilt progressively.
 4. **Culling** (`Frame_SelectChunks`): a chunk is a candidate when it overlaps the tile window
@@ -137,13 +138,14 @@ this pass is not being optimised.
 vitaGL's `glTexSubImage2D`, on a texture drawn in the last 4 swaps (`FRAME_PURGE_FREQ`),
 allocates a new texture and copies the old one into it, reading it back from CDRAM: ~3.3 ms for a
 512×256 page whatever the size of the update (measured in `logs/SESION 17`), and a 256 KB
-allocation freed later by the garbage collector. Textures the renderer rewrites therefore keep
-spare copies and only write into a copy that has not been drawn for `VOXEL_TEX_IDLE_FRAMES` (5)
-frames, which vitaGL fills directly:
+allocation freed later by the garbage collector. Textures rewritten at run time therefore either
+avoid `glTexSubImage2D` via direct `vglGetTexDataPointer` writes or use double-buffered textures:
 
-- Animated atlas pages 0–1 of the active slot: one spare each (`sAtlasSpares`), rows tracked
-  as stale per copy; the spare is brought up to date and swapped in when idle long enough, so an
-  animation step can show up to a few frames late.
+- Animated atlas pages 0–1 (active slot and visible neighbouring slots with the same primary
+  tileset): written straight into texture memory (`WriteAtlasRowsDirect`, `vglGetTexDataPointer`)
+  on the same frame so sea/flower animations stay lock-stepped across zone borders without
+  `glTexSubImage2D` GC copies. Neighbouring slots accumulate primary dirty masks in
+  `sSlotPendingPrimary` so they catch up immediately when re-entering view.
 - Sprite atlas of the billboards: **not** a spare. `VoxelEntities_Emit` gives billboards the
   texture coordinates of the frames it decoded that same frame, so a spare swapped in later showed
   late or wrong frames. Only the 64-px bands of the slots re-decoded this frame

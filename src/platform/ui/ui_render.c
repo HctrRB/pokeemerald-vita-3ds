@@ -6,6 +6,7 @@
 // never into a cell drawn in the last frames, so it never hits vitaGL's copy-on-write of textures
 // in flight (docs/RENDERING.md).
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include "ui_internal.h"
@@ -18,7 +19,38 @@
 #include <GL/gl.h>
 #endif
 
+#define UI_BACKDROP_COUNT 7u
+#define UI_BACKDROP_TILE  16
+#define UI_TOPBAR_H       52
+
 static GLuint sTexture;
+static GLuint sBackdropTex[UI_BACKDROP_COUNT];
+static bool sBackdropReady;
+static GLuint sUiVbo[2];
+static uint32_t sUiVboIdx;
+static uint32_t sLastUploadedSeq;
+
+static void EnsureBackdrops(void)
+{
+    if (sBackdropReady)
+        return;
+    uint32_t pixels[UI_BACKDROP_TILE * UI_BACKDROP_TILE];
+    glGenTextures((GLsizei)UI_BACKDROP_COUNT, sBackdropTex);
+    for (uint32_t i = 0; i < UI_BACKDROP_COUNT; i++)
+    {
+        if (sBackdropTex[i] == 0)
+            return;
+        UiW_GbaBgPattern((uint8_t)i, pixels);
+        glBindTexture(GL_TEXTURE_2D, sBackdropTex[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, UI_BACKDROP_TILE, UI_BACKDROP_TILE, 0,
+                     GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    }
+    sBackdropReady = true;
+}
 
 static bool EnsureTexture(void)
 {
@@ -46,13 +78,65 @@ static bool EnsureTexture(void)
     return true;
 }
 
-static void Draw(const UiGlVertex *v, uint32_t count, GLuint texture)
+static void DrawBackdrop(int8_t kind)
 {
+    if (kind < 0 || (uint32_t)kind >= UI_BACKDROP_COUNT)
+        return;
+    EnsureBackdrops();
+    if (!sBackdropReady || sBackdropTex[kind] == 0)
+        return;
+    static const float pos[8] = {
+        0.0f, (float)UI_TOPBAR_H,
+        (float)UI_SCREEN_W, (float)UI_TOPBAR_H,
+        (float)UI_SCREEN_W, (float)UI_SCREEN_H,
+        0.0f, (float)UI_SCREEN_H
+    };
+    const float uMax = (float)UI_SCREEN_W / (float)UI_BACKDROP_TILE;
+    const float vMax = (float)(UI_SCREEN_H - UI_TOPBAR_H) / (float)UI_BACKDROP_TILE;
+    const float uvs[8] = { 0.0f, 0.0f, uMax, 0.0f, uMax, vMax, 0.0f, vMax };
+    glBindTexture(GL_TEXTURE_2D, sBackdropTex[kind]);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glVertexPointer(2, GL_FLOAT, 0, pos);
+    glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glEnableClientState(GL_COLOR_ARRAY);
+}
+
+static void Draw(const UiDrawList *list, GLuint texture)
+{
+    if (list->vcount == 0)
+        return;
+    if (sUiVbo[0] == 0)
+        glGenBuffers(2, sUiVbo);
+    if (sUiVbo[0] != 0 && sUiVbo[1] != 0)
+    {
+        if (list->seq != sLastUploadedSeq)
+        {
+            sUiVboIdx ^= 1u;
+            glBindBuffer(GL_ARRAY_BUFFER, sUiVbo[sUiVboIdx]);
+            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(list->vcount * sizeof(UiGlVertex)),
+                         list->verts, GL_DYNAMIC_DRAW);
+            sLastUploadedSeq = list->seq;
+        }
+        else
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, sUiVbo[sUiVboIdx]);
+        }
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glVertexPointer(2, GL_FLOAT, sizeof(UiGlVertex), (const void *)offsetof(UiGlVertex, x));
+        glTexCoordPointer(2, GL_FLOAT, sizeof(UiGlVertex), (const void *)offsetof(UiGlVertex, u));
+        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(UiGlVertex), (const void *)offsetof(UiGlVertex, rgba));
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)list->vcount);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        return;
+    }
+    const UiGlVertex *v = list->verts;
     glBindTexture(GL_TEXTURE_2D, texture);
     glVertexPointer(2, GL_FLOAT, sizeof(UiGlVertex), &v[0].x);
     glTexCoordPointer(2, GL_FLOAT, sizeof(UiGlVertex), &v[0].u);
     glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(UiGlVertex), &v[0].rgba);
-    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)count);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)list->vcount);
 }
 
 void Ui_Render(int32_t viewWidth, int32_t viewHeight)
@@ -61,7 +145,7 @@ void Ui_Render(int32_t viewWidth, int32_t viewHeight)
         return;
     const UiDrawList *list = UiDraw_Acquire();
     UiStall_Render(list->seq);
-    if (list->vcount == 0)
+    if (list->vcount == 0 && list->backdropKind < 0)
         return;
     const double t0 = VitaPerf_NowMs();
     if (!EnsureTexture())
@@ -87,9 +171,10 @@ void Ui_Render(int32_t viewWidth, int32_t viewHeight)
 
     // Sprites Core 1 decoded for this list go into their cells first (never into a cell drawn in
     // the last frames, so it is written in place without vitaGL's copy of the texture)
+    DrawBackdrop(list->backdropKind);
     glBindTexture(GL_TEXTURE_2D, sTexture);
     UiSpr_FlushUploads();
-    Draw(list->verts, list->vcount, sTexture);
+    Draw(list, sTexture);
 
 
     glDisableClientState(GL_COLOR_ARRAY);

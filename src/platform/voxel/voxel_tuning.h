@@ -37,7 +37,6 @@
 
 /* ---- Atlas and textures rewritten at run time (RENDERING.md) -------------------------- */
 
-#define VOXEL_TEX_IDLE_FRAMES 5u      /* frames a spare texture rests before vitaGL writes it directly */
 #define VOXEL_ATLAS_EXTEND_BUDGET_MS 1.5      /* atlas extension work per frame on crossings */
 #define VOXEL_ATLAS_EXTEND_STEP_METATILES 16u /* metatiles composed per extension step */
 

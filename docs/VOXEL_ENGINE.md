@@ -38,7 +38,9 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
   chunk slots are cached, each with its own GL vertex buffer; the geometry lives only there.
 - A build has three phases: `PrepareChunkJob` (Core 0: the chunk's window and the atlas slot of
   every map it touches), `ComputeChunkJob` (geometry and lighting into `sChunkStaging`, no GL)
-  and `CommitChunkJob` (Core 0: building pages, slot, VBO upload).
+  and `CommitChunkJob` (Core 0: building pages, slot, VBO upload, recording the exact
+  `(sAsyncAtlasGen, sAsyncAtlasExt)` the worker computed against so uncovered chunks rebuild
+  immediately after an atlas extension).
 - Per frame: frustum-cull candidate chunks (widened by how far each chunk's buildings reach)
   and draw the built ones. Visible holes are built on
   Core 0; every other build (chunks about to enter the view, dated chunks, pre-warming ahead of
@@ -59,10 +61,11 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 - When the current map changes during play (a crossing), its slot is extended over several frames
   (`AtlasExtend_*`, 1.5 ms a frame): the slot keeps serving meanwhile, since an extension keeps
   every metatile where it was, and its tile animation waits until the end. Warps extend at once.
-- Animated tiles (water, flowers, shores) are re-read from BG VRAM and only the dirty rows of
-  the active slot are uploaded, through a spare texture per page (RENDERING.md, "Textures
-  rewritten at run time"). Other slots must not be refreshed from VRAM: VRAM
-  holds only the current map's tileset (refreshing them corrupted neighbouring terrain).
+- Animated tiles (water, flowers, shores) are re-read from BG VRAM and the dirty rows of
+  the active slot and visible same-primary neighbours are written directly (`WriteAtlasRowsDirect`)
+  on the same frame so animations stay synchronised across map borders (`sSlotPendingPrimary`
+  catches up neighbours returning into view). Secondary tiles of other slots are not refreshed
+  from VRAM (VRAM holds only the current map's secondary tileset).
 
 ## Map changes
 

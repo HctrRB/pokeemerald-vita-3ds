@@ -89,11 +89,15 @@ typedef struct
     uint32_t vcount;           // vertices (6 per quad)
     uint32_t seq;
     float tickMs;              // Core 1 time spent building this list
+    int8_t backdropKind;       // -1 = none, 0..6 = tiled 16x16 GBA backdrop
     UiGlVertex verts[UI_MAX_QUADS * 6];
 } UiDrawList;
 
 // Core 1 (writer)
 void UiDraw_Begin(void);
+void UiDraw_SetBackdrop(uint8_t bgKind);
+bool UiDraw_IsClipped(void);
+void UiW_GbaBgPattern(uint8_t bgKind, uint32_t *out16x16);
 // Quad with a vertical two-colour gradient (top, bottom); texels in atlas pixels.
 void UiDraw_Quad2(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t u0, uint32_t v0, uint32_t u1, uint32_t v1, uint32_t top, uint32_t bottom);
 void UiDraw_Quad(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t u0, uint32_t v0, uint32_t u1, uint32_t v1, uint32_t rgba);

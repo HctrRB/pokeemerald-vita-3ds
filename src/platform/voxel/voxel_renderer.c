@@ -164,6 +164,13 @@ static PostRenderTargets sPostTargets[VOXEL_POST_TARGET_BUFFERS];
 static uint32_t sPostTargetIndex = 0u;
 static bool sDioramaFboReady = false;
 
+static GLuint sMenuBgFbo = 0;
+static GLuint sMenuBgTex = 0;
+static GLuint sMenuBgDepthRb = 0;
+static bool sMenuBgValid = false;
+static int32_t sMenuBgPreset = 0;
+static bool sMenuBgBlur = false;
+
 typedef enum
 {
     HD2D_PRESET_OFF = 0,
@@ -4259,6 +4266,19 @@ bool VoxelRenderer_Init(void)
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     sDioramaFboReady = allPostReady;
+
+    // Frozen 3D+PostFX backdrop target used while pause/UI menus are open on the overworld
+    sMenuBgTex = CreatePostColorTexture(VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H, GL_NEAREST, GL_UNSIGNED_BYTE);
+    if (sMenuBgTex != 0)
+    {
+        glGenRenderbuffers(1, &sMenuBgDepthRb);
+        glBindRenderbuffer(GL_RENDERBUFFER, sMenuBgDepthRb);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H);
+        AttachColorFbo(&sMenuBgFbo, sMenuBgTex);
+        if (sMenuBgFbo != 0)
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, sMenuBgDepthRb);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
     VoxelHd2dShader_Init();
 
     MakeFog();
@@ -5552,7 +5572,7 @@ static void Frame_EmitEntities(const VoxelFrame *const f)
 }
 
 // Render target (the FBO when the depth of field is on), 3D camera and clear.
-static void Frame_BeginPasses(VoxelFrame *const f)
+static void Frame_BeginPasses(VoxelFrame *const f, const GLuint defaultTargetFbo)
 {
     const VoxelMapInstance *const inst0 = f->inst0;
     const float fadeAmount = f->fadeAmount;
@@ -5580,7 +5600,7 @@ static void Frame_BeginPasses(VoxelFrame *const f)
     }
     else
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, defaultTargetFbo);
     }
 
     // 8. OpenGL Setup & Hardware Render Passes
@@ -6201,7 +6221,7 @@ static void DrawSurfaceFx(const VoxelFrame *const f)
         }
     }
 
-    const bool isPausedHd2d = (f->hd2dPreset == HD2D_PRESET_HIGH && !f->inBattle3D && Ui_IsOpen());
+    const bool isPausedHd2d = (!f->inBattle3D && Ui_IsOpen());
     float dt = (!isPausedHd2d && sSurfaceFxPrevMs > 0.0) ? (float)((f->startMs - sSurfaceFxPrevMs) * 0.001) : 0.0f;
     if (dt < 0.0f) dt = 0.0f;
     if (dt > 0.05f) dt = 0.05f;
@@ -6767,7 +6787,7 @@ static void DofBand(float y0, float y1, float uMax, float vMax, float peak, floa
 //   3. Over the sharp scene, each band gets the light blur fading in from the focus edge and the
 //      wider one fading in near the screen edge (smoothstep ramps, 12 rows per band).
 // Fixed function only: 5 draws of 480x272 pixels, then the two bands twice.
-static void Pass_DepthOfField(const VoxelFrame *const f)
+static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
 {
     const int32_t renderW = f->renderW;
     const int32_t renderH = f->renderH;
@@ -6940,8 +6960,8 @@ static void Pass_DepthOfField(const VoxelFrame *const f)
     }
 
     VitaPerf_SubBegin(VITA_PERF_T_POST_COMPOSITE);
-    // 3. Final composite to FB 0 (960x544)
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // 3. Final composite to targetFbo (0 = screen, sMenuBgFbo = menu freeze capture)
+    glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
     glViewport(0, 0, renderW, renderH);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -7566,6 +7586,40 @@ static void Pass_Overlay2D(const VoxelFrame *const f)
     }
 }
 
+static void DrawMenuFrozenBackdrop(void)
+{
+    const int32_t renderW = VitaPlatform_GetRenderWidth();
+    const int32_t renderH = VitaPlatform_GetRenderHeight();
+    static const float pos[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+    static const float uvs[8] = { 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, renderW, renderH);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0.0, 1.0, 1.0, 0.0, -1.0, 1.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_BLEND);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glBindTexture(GL_TEXTURE_2D, sMenuBgTex);
+    glVertexPointer(2, GL_FLOAT, 0, pos);
+    glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+}
+
 // Render one frame of the 3D voxel world
 bool VoxelRenderer_RenderFrame(void)
 {
@@ -7573,9 +7627,35 @@ bool VoxelRenderer_RenderFrame(void)
     if (!Frame_Begin(&f))
         return false;
 
+    float curFade = 0.0f;
+    float curFadeRgb[3] = { 0.0f, 0.0f, 0.0f };
+    VoxelWorld_ScreenFade(&curFade, curFadeRgb);
+    const Hd2dPreset curPreset = GetHd2dPreset();
+    const bool curBlur = (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
+    const bool menuFreeze = (sMenuBgFbo != 0 && sMenuBgTex != 0
+                             && Ui_IsOpen() && !f.inBattle3D && curFade < 0.99f);
+    if (!menuFreeze)
+    {
+        sMenuBgValid = false;
+    }
+    else if (sMenuBgValid && !f.mapChanged && sMenuBgPreset == (int32_t)curPreset && sMenuBgBlur == curBlur)
+    {
+        f.inBattle3D = false;
+        f.fadeAmount = curFade;
+        f.hd2dPreset = curPreset;
+        DrawMenuFrozenBackdrop();
+        Pass_Overlay2D(&f);
+        Ui_Render(VitaPlatform_GetRenderWidth(), VitaPlatform_GetRenderHeight());
+        glDepthMask(GL_FALSE);
+        glDisable(GL_BLEND);
+        glDisable(GL_ALPHA_TEST);
+        REG_VCOUNT = 161;
+        return true;
+    }
+
     Frame_FollowCamera(&f);
     Frame_UpdateAtlas(&f);
-    const bool freezeMenuHd2d = (f.hd2dPreset == HD2D_PRESET_HIGH && !f.inBattle3D && Ui_IsOpen());
+    const bool freezeMenuHd2d = (!f.inBattle3D && Ui_IsOpen());
     if (!freezeMenuHd2d)
         Frame_AnimateTiles(&f);
     Frame_TrackWorldChanges(&f);
@@ -7603,7 +7683,8 @@ bool VoxelRenderer_RenderFrame(void)
     Frame_SelectChunks(&f);
     BuildFrameGrade(&f.grade, &f.light, f.indoor);
     Frame_EmitEntities(&f);
-    Frame_BeginPasses(&f);
+    const GLuint finalTargetFbo = menuFreeze ? sMenuBgFbo : 0;
+    Frame_BeginPasses(&f, finalTargetFbo);
 
     // Faded out completely (a warp): no 3D geometry. The visible chunks were built above all
     // the same, so the fade-in has nothing left to build.
@@ -7640,7 +7721,15 @@ bool VoxelRenderer_RenderFrame(void)
     }
 
     if (f.dioramaActive)
-        Pass_DepthOfField(&f);
+        Pass_DepthOfField(&f, finalTargetFbo);
+
+    if (menuFreeze)
+    {
+        DrawMenuFrozenBackdrop();
+        sMenuBgValid = true;
+        sMenuBgPreset = (int32_t)curPreset;
+        sMenuBgBlur = curBlur;
+    }
 
     Pass_Overlay2D(&f);
 
@@ -7666,7 +7755,7 @@ void VoxelRenderer_SwapBuffers(void)
     VitaPerf_MarkSwapEnd();
     // Core 0 is done with the voxel world until the next frame: the chunk chosen this frame
     // is computed on Core 2 meanwhile. Not while Core 1 is rebuilding the map layout.
-    if (sMapMutationLock == 0)
+    if (sMapMutationLock == 0 && !sMenuBgValid)
         ChunkWorker_Launch();
 }
 
