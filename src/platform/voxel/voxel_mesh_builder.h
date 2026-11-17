@@ -85,6 +85,8 @@ typedef struct
     /* Where static models are noted instead of emitted (NULL: emitted). */
     VoxelStaticDraw *statics;
     uint32_t staticCapacity, staticCount;
+    bool opaqueMark;
+    uint8_t *triOpaque;
 } VoxelBuilder;
 
 void VoxelBuilder_Init(VoxelBuilder *builder, VoxelVertex *storage, uint32_t capacity);

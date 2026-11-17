@@ -21,6 +21,7 @@
 #include "text.h"
 #include "window.h"
 #include "constants/characters.h"
+#include "constants/opponents.h"
 
 extern const u8 *gUiPrinterStart[WINDOWS_MAX];
 extern u32 gUiPrinterSerial;
@@ -222,7 +223,7 @@ bool UiMirror_Draw(void)
         const int32_t x = 48, y = UI_SCREEN_H - 24 - 124, w = UI_SCREEN_W - 96, h = 124;
         // Caller: the trainer's picture in a box and the POKéNAV · MATCH CALL tag
         UiW_DialogBox(x, y - 112, 100, 100);
-        if (caller != 0xFFFF)
+        if (caller < TRAINERS_COUNT)
             UiSpr_TrainerSized(gTrainers[caller].trainerPic, x + 18, y - 94, 64, 64);
         else
             UiDraw_Sprite(UI_SPR_START_POKENAV, x + 34, y - 78, 1);

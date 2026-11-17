@@ -52,7 +52,7 @@ enum { ASK_NONE, ASK_WITHDRAW, ASK_TOSS, ASK_TOSS_CONFIRM, ASK_DEPOSIT, ASK_MAIL
 enum { AFTER_NONE, AFTER_PLACE, AFTER_PUT_AWAY };
 
 #define LIST_X 344
-#define LIST_Y 112
+#define LIST_Y 154
 #define LIST_W 588
 #define ROW_H 40
 #define ROWS 8
@@ -84,6 +84,8 @@ static bool sDecorInUse[DEC_MAX];
 static int32_t sAfter;                    // what the game does once the screen is closed
 static bool sResumeDecor;                 // reopened after placing / putting away: keep the cursor
 static int32_t sChipX[3], sChipW[3];
+static int32_t sModeX[2], sModeW[2];
+static int32_t sPocketX[POCKETS_COUNT], sPocketW[POCKETS_COUNT];
 static UiList sList;
 static UiBagRow sBag[64];
 static int32_t sCount;
@@ -598,6 +600,7 @@ static bool Update(const UiInput *in)
     {
         if (sMoveFrom >= 0) { sMoveFrom = -1; PlaySE(SE_SELECT); return true; }
         if (sTab == TAB_DECOR && sDecorFocus == 1) { sDecorFocus = 0; PlaySE(SE_SELECT); return true; }
+        if (sTab == TAB_ITEMS && sMoveFrom >= 0) { sMoveFrom = -1; PlaySE(SE_SELECT); return true; }
         PlaySE(SE_SELECT);
         return false;
     }
@@ -617,14 +620,16 @@ static bool Update(const UiInput *in)
     }
     if (sTab == TAB_ITEMS && sMoveFrom < 0)
     {
-        // WITHDRAW / DEPOSIT chips; in DEPOSIT the pocket chips and square for the next pocket
+        // WITHDRAW / DEPOSIT chips in header; in DEPOSIT the pocket chips in sub-bar
         int32_t m = sMode, p = sPocket;
-        if (UiHit(in, 352, 66, 132, 30)) m = MODE_WITHDRAW;
-        if (UiHit(in, 492, 66, 120, 30)) m = MODE_DEPOSIT;
+        if (UiHit(in, sModeX[0], 66, sModeW[0], 30)) m = MODE_WITHDRAW;
+        if (UiHit(in, sModeX[1], 66, sModeW[1], 30)) m = MODE_DEPOSIT;
         if (in->pressed & VITA_BTN_SQUARE) { if (sMode == MODE_WITHDRAW) m = MODE_DEPOSIT; else p = (sPocket + 1) % POCKETS_COUNT; }
         if (sMode == MODE_DEPOSIT && (in->pressed & VITA_BTN_SELECT)) m = MODE_WITHDRAW;
+        if (sMode == MODE_DEPOSIT && (in->repeat & VITA_BTN_LEFT))  p = (sPocket + POCKETS_COUNT - 1) % POCKETS_COUNT;
+        if (sMode == MODE_DEPOSIT && (in->repeat & VITA_BTN_RIGHT)) p = (sPocket + 1) % POCKETS_COUNT;
         for (int32_t i = 0; sMode == MODE_DEPOSIT && i < POCKETS_COUNT; i++)
-            if (UiHit(in, 624 + i * 62, 66, 58, 30)) p = i;
+            if (UiHit(in, sPocketX[i], 108, sPocketW[i], 30)) p = i;
         if (m != sMode || p != sPocket)
         {
             sMode = m;
@@ -814,13 +819,31 @@ static void Build(void)
         UiW_TextWrapped(30, 296, 284, 30, sMenu.open ? sQuestion : sMoveFrom >= 0 ? "Move it where? SELECT or X puts it here."
                         : sMode == MODE_WITHDRAW ? "X takes items out to the BAG. TRIANGLE throws them away. SELECT moves one."
                                                  : "Choose an item from the BAG to store in the PC.", UI_COL_INK, 6);
-        // List
+        // List panel with integrated header (WITHDRAW / DEPOSIT) and sub-bar (Bag pockets)
         UiW_Panel(332, 60, 612, 432);
-        UiW_Chip(352, 68, "WITHDRAW", sMode == MODE_WITHDRAW);
-        UiW_Chip(492, 68, "DEPOSIT", sMode == MODE_DEPOSIT);
+        UiW_PanelHead(332, 60, 612, sMode == MODE_WITHDRAW ? "PC · WITHDRAW" : "BAG · DEPOSIT", NULL);
+        sModeW[0] = UiText_Width(UI_FACE_VT323, UI_BODY_PX, "WITHDRAW") + 28;
+        sModeW[1] = UiText_Width(UI_FACE_VT323, UI_BODY_PX, "DEPOSIT") + 28;
+        sModeX[1] = 932 - sModeW[1];
+        sModeX[0] = sModeX[1] - 8 - sModeW[0];
+        UiW_Chip(sModeX[0], 66, "WITHDRAW", sMode == MODE_WITHDRAW);
+        UiW_Chip(sModeX[1], 66, "DEPOSIT", sMode == MODE_DEPOSIT);
+        UiDraw_Rect(335, 102, 606, 42, gUiTheme->paper1);
+        UiDraw_Rect(335, 144, 606, 2, gUiTheme->paperShade);
         if (sMode == MODE_DEPOSIT)
+        {
+            int32_t px = 344;
             for (int32_t i = 0; i < POCKETS_COUNT; i++)
-                UiW_Chip(624 + i * 62, 68, sPocketNames[i], i == sPocket);
+            {
+                sPocketX[i] = px;
+                sPocketW[i] = UiW_Chip(px, 108, sPocketNames[i], i == sPocket);
+                px += sPocketW[i] + 8;
+            }
+        }
+        else
+        {
+            UiText_DrawMid(UI_FACE_VT323, 26, 344, 102, 42, "PC STORAGE · SELECT TO REORDER", UI_COL_INK_SOFT);
+        }
         UiDraw_PushClip(LIST_X, LIST_Y, LIST_W, ROWS * ROW_H);
         for (int32_t r = 0; r < ROWS && sList.first + r < sCount; r++)
         {

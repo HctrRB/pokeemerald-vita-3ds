@@ -1,6 +1,6 @@
 # Current state and next steps. Earlier logs: docs/history/handoff_2026-11-05.yaml and the
 # performance study docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
-last_updated: "2026-11-16"
+last_updated: "2026-11-17"
 branch: main
 current_milestone: "HD-2D 30 FPS upgrade, native UI completion, voxel terrain fixes & hardware verification"
 
@@ -24,6 +24,7 @@ tags:
   rollback_pre_perf: rollback/pre-perf-streaming
   rollback_pre_phase4: rollback/pre-phase4
   rollback_pre_phase5: rollback/pre-phase5
+  rollback_pre_tree_hsr: rollback-e537861 # before opaque tree core HSR optimization
 
 performance_sesion_27:   # logs/sesion 27, 60 FPS, 3D
   - Frame mean / p95 / p99: 7.5 / 14.3 / 19.7 ms; >16.7 ms 1.65 %, >33.3 ms 0.01 % (was 12.7 % and
@@ -69,8 +70,12 @@ untested_on_hardware:
     3D voxel world behind menus, non-GBA themes (RED/EMERALD/CRYSTAL/TROPICAL/ROYAL), and centered
     biome zone entry plates (ui_sign.c, ui_scr_hub.c).
   - PC boxes (ui_scr_pc.c: GBA Emerald skin + wallpaper drop shadow, centered box plate/L-R/info pills,
-    curved selection + pointer triangle, GBA popups) and player's PC (ui_scr_playerpc.c: items, mailbox / mail reading, room
-    and Secret Base decoration return flow via UiPlayerPc_ReenterFromField).
+    curved selection + pointer triangle, GBA popups; MOVE ITEMS Egg empty-menu fix & sHeldItem exit guard)
+    and player's PC (ui_scr_playerpc.c: integrated WITHDRAW/DEPOSIT header + non-overlapping 5-pocket sub-bar,
+    DPAD_LEFT/RIGHT pocket switching, Circle cancels SELECT move; mailbox, decoration return flow via UiPlayerPc_ReenterFromField).
+  - PokéNav CONDITION tab (ui_scr_nav.c: GBA non-linear sCondLen[256] spider curve, vertex numeric points,
+    theme-aware radar/attrs across all 6 themes, rounded attribute bars, Sheen sparkles, Egg handling,
+    continuous Pokéblock feeding without closing popup, X/Square feed trigger).
   - Decoration shops (ui_scr_mart.c) and four-move forget-move screen (ui_scr_forget.c).
   - Naming keyboard (ui_scr_naming.c), Easy Chat (ui_scr_easychat.c), berry choice (ui_scr_berry.c),
     contest appeal choice (ui_contest.c), Day Care / tutor party choice (ui_scr_choose.c), multi-battle
@@ -82,12 +87,19 @@ untested_on_hardware:
   - Long-session stability with 40 MB RAM / 88 MB CDRAM vitaGL pools (aecb746).
   - Extended sprite palettes (`gPlttExt`) for the follower, its Poké Ball and reflection, and visible wild Pokémon in the overworld (`visible_wild` [default FEW], `encounter_rate` [default NORMAL]).
   - HD-2D 30 FPS final ash-grass polish (`19bb1ab`): `gTileset_Fallarbor` `MB_ASHGRASS` 3D sprite in Route 113 switching to green `MB_TALL_GRASS` on step (core HD-2D 30 FPS pass—DoF, 2-pass Kawase bloom, point lights, foliage wind-sway/player-bend shader, flower frame anim, grass step particles, softer fog—already verified at 30.1 FPS / 60.0 Hz / 0 holes in `logs/sesion 43/perf_summary.txt`).
+  - Smooth zone atmosphere transitions, 1-frame streetlamp blackout fix & 1-frame white flash suppression (`2068d7e`), Match Call random-call OOB trainer lookup crash fix (`e537861`), and opaque tree core HSR split (`bc842d1`, visually verified with no graphical errors; dense-tree FPS telemetry check pending).
 
 next_steps:
-  - Test the current VPK (build_vita.ps1) on PS Vita against untested_on_hardware and inspect
+  - Inspect `ux0:data/POKEVITA/perf_summary.txt` / `perf_frames.csv` in dense-tree zones after `bc842d1` to confirm 30 FPS stability (if GPU fragment load or `Entities emit` spikes remain, apply internal diorama FBO scaling / entity atlas upload budgeting).
+  - Test the current VPK (build_vita.ps1) on PS Vita against untested_on_hardware (including PokéNav CONDITION,
+    Player PC Item Storage WITHDRAW/DEPOSIT, and Lanette's PC MOVE ITEMS) and inspect
     ux0:data/POKEVITA/perf_summary.txt (free CDRAM and PHYCONT).
+  - Implement full Contest UI replacement following docs/plan/PLAN_UI_CONCURSO.md,
+    docs/plan/ANALISIS_CONCURSO_POKEMON.md, and design/contest_mockups.html (Phase 1: Stage HUD +
+    gFastDrawDispcntClear + sprite.c tag filter + 2x2 DPAD; Phase 2: PARTY_MENU_TYPE_CONTEST;
+    Phase 3: Results & Museum Painting).
   - Implement Batch 2 & 3 of remaining secondary GBA screens in src/platform/ui/: post-catch Pokedex
-    entry, PC box summary, Move Relearner / Deleter, Contest / Frontier party choice, Battle Pyramid
+    entry, PC box summary, Move Relearner / Deleter, Frontier party choice, Battle Pyramid
     in-battle / toss bag, and Easy Chat Bard / quiz.
   - Continue map-by-map voxel terrain fixes (docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md,
     docs/plan/ESTUDIO_TERRENO_RUTA119.md) and let VoxelFile_Open try ux0:data/POKEVITA/voxel/ before

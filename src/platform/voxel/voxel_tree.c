@@ -287,17 +287,176 @@ static bool OneLevelSlope(const int16_t *g)
     return hi - lo == 16;
 }
 
+static const uint16_t *sTreeAtlasPixels = NULL;
+
+void VoxelTree_SetAtlasPixels(const uint16_t *rgba5551)
+{
+    sTreeAtlasPixels = rgba5551;
+}
+
+static bool AtlasTexelOpaque(int32_t tx, int32_t ty)
+{
+    if (sTreeAtlasPixels == NULL || tx < 0 || ty < 0
+        || tx >= (int32_t)VOXEL_TREE_TEXTURE_DIM || ty >= (int32_t)VOXEL_TREE_TEXTURE_DIM)
+        return false;
+    int32_t glY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - ty;
+    return (sTreeAtlasPixels[glY * (int32_t)VOXEL_TREE_TEXTURE_DIM + tx] & 1u) != 0u;
+}
+
+static bool RectHasOpaqueTexel(int32_t x0, int32_t y0, int32_t w, int32_t h)
+{
+    if (sTreeAtlasPixels == NULL)
+        return true;
+    for (int32_t y = y0; y < y0 + h; ++y)
+        for (int32_t x = x0; x < x0 + w; ++x)
+            if (AtlasTexelOpaque(x, y))
+                return true;
+    return false;
+}
+
+static bool RectFullyOpaque(int32_t x0, int32_t y0, int32_t w, int32_t h)
+{
+    if (sTreeAtlasPixels == NULL)
+        return false;
+    for (int32_t y = y0; y < y0 + h; ++y)
+        for (int32_t x = x0; x < x0 + w; ++x)
+            if (!AtlasTexelOpaque(x, y))
+                return false;
+    return true;
+}
+
+/* Finds the maximum-area 100% opaque sub-rectangle inside [rx, rx+rw) x [ry, ry+rh). */
+static bool FindLargestOpaqueRect(int32_t rx, int32_t ry, int32_t rw, int32_t rh,
+                                  int32_t *ox, int32_t *oy, int32_t *ow, int32_t *oh)
+{
+    if (sTreeAtlasPixels == NULL || rw <= 0 || rh <= 0 || rw > 32)
+        return false;
+    int32_t heights[32] = { 0 };
+    int32_t bestArea = 0, bx = 0, by = 0, bw = 0, bh = 0;
+
+    for (int32_t y = 0; y < rh; ++y)
+    {
+        for (int32_t x = 0; x < rw; ++x)
+            heights[x] = AtlasTexelOpaque(rx + x, ry + y) ? (heights[x] + 1) : 0;
+
+        for (int32_t x = 0; x < rw; ++x)
+        {
+            if (heights[x] == 0)
+                continue;
+            int32_t minH = heights[x];
+            for (int32_t x2 = x; x2 < rw && heights[x2] > 0; ++x2)
+            {
+                if (heights[x2] < minH)
+                    minH = heights[x2];
+                int32_t w = x2 - x + 1;
+                int32_t area = w * minH;
+                if (area > bestArea)
+                {
+                    bestArea = area;
+                    bx = rx + x;
+                    by = ry + y - minH + 1;
+                    bw = w;
+                    bh = minH;
+                }
+            }
+        }
+    }
+    if (bestArea <= 0)
+        return false;
+    *ox = bx;
+    *oy = by;
+    *ow = bw;
+    *oh = bh;
+    return true;
+}
+
+static void EmitSubQuad(VoxelBuilder *builder,
+                        const VoxelVertex *p0, const VoxelVertex *p1,
+                        const VoxelVertex *p2, const VoxelVertex *p3,
+                        int32_t rx, int32_t ry, int32_t rw, int32_t rh,
+                        int32_t sx, int32_t sy, int32_t sw, int32_t sh,
+                        bool opaque)
+{
+    if (sw <= 0 || sh <= 0)
+        return;
+    if (!opaque && !RectHasOpaqueTexel(sx, sy, sw, sh))
+        return;
+
+    const float s0 = (float)(sx - rx) / (float)rw;
+    const float s1 = (float)(sx + sw - rx) / (float)rw;
+    const float t0 = (float)(sy - ry) / (float)rh;
+    const float t1 = (float)(sy + sh - ry) / (float)rh;
+
+    const float u0 = (float)sx / (float)VOXEL_TREE_TEXTURE_DIM;
+    const float u1 = (float)(sx + sw) / (float)VOXEL_TREE_TEXTURE_DIM;
+    const float v0 = 1.0f - (float)sy / (float)VOXEL_TREE_TEXTURE_DIM;
+    const float v1 = 1.0f - (float)(sy + sh) / (float)VOXEL_TREE_TEXTURE_DIM;
+
+    const float xTop0 = p0->x + (p1->x - p0->x) * s0, xTop1 = p0->x + (p1->x - p0->x) * s1;
+    const float yTop0 = p0->y + (p1->y - p0->y) * s0, yTop1 = p0->y + (p1->y - p0->y) * s1;
+    const float zTop0 = p0->z + (p1->z - p0->z) * s0, zTop1 = p0->z + (p1->z - p0->z) * s1;
+
+    const float xBot0 = p3->x + (p2->x - p3->x) * s0, xBot1 = p3->x + (p2->x - p3->x) * s1;
+    const float yBot0 = p3->y + (p2->y - p3->y) * s0, yBot1 = p3->y + (p2->y - p3->y) * s1;
+    const float zBot0 = p3->z + (p2->z - p3->z) * s0, zBot1 = p3->z + (p2->z - p3->z) * s1;
+
+    VoxelVertex q0 = { xTop0 + (xBot0 - xTop0) * t0, yTop0 + (yBot0 - yTop0) * t0, zTop0 + (zBot0 - zTop0) * t0, u0, v0, 1.0f };
+    VoxelVertex q1 = { xTop1 + (xBot1 - xTop1) * t0, yTop1 + (yBot1 - yTop1) * t0, zTop1 + (zBot1 - zTop1) * t0, u1, v0, 1.0f };
+    VoxelVertex q2 = { xTop1 + (xBot1 - xTop1) * t1, yTop1 + (yBot1 - yTop1) * t1, zTop1 + (zBot1 - zTop1) * t1, u1, v1, 1.0f };
+    VoxelVertex q3 = { xTop0 + (xBot0 - xTop0) * t1, yTop0 + (yBot0 - yTop0) * t1, zTop0 + (zBot0 - zTop0) * t1, u0, v1, 1.0f };
+
+    const bool prevOpaque = builder->opaqueMark;
+    builder->opaqueMark = opaque;
+    VoxelBuilder_Quad(builder, &q0, &q1, &q2, &q3);
+    builder->opaqueMark = prevOpaque;
+}
+
+static void EmitSplitCard(VoxelBuilder *builder,
+                          const VoxelVertex *p0, const VoxelVertex *p1,
+                          const VoxelVertex *p2, const VoxelVertex *p3,
+                          int32_t rx, int32_t ry, int32_t rw, int32_t rh)
+{
+    int32_t ox = 0, oy = 0, ow = 0, oh = 0;
+    if (FindLargestOpaqueRect(rx, ry, rw, rh, &ox, &oy, &ow, &oh)
+        && ow == rw && oh == rh)
+    {
+        const bool prevOpaque = builder->opaqueMark;
+        builder->opaqueMark = true;
+        VoxelBuilder_Quad(builder, p0, p1, p2, p3);
+        builder->opaqueMark = prevOpaque;
+        return;
+    }
+    if (ow * oh * 4 >= rw * rh && ow >= 4 && oh >= 4)
+    {
+        EmitSubQuad(builder, p0, p1, p2, p3, rx, ry, rw, rh, ox, oy, ow, oh, true);
+        EmitSubQuad(builder, p0, p1, p2, p3, rx, ry, rw, rh, rx, ry, rw, oy - ry, false);
+        EmitSubQuad(builder, p0, p1, p2, p3, rx, ry, rw, rh, rx, oy + oh, rw, (ry + rh) - (oy + oh), false);
+        EmitSubQuad(builder, p0, p1, p2, p3, rx, ry, rw, rh, rx, oy, ox - rx, oh, false);
+        EmitSubQuad(builder, p0, p1, p2, p3, rx, ry, rw, rh, ox + ow, oy, (rx + rw) - (ox + ow), oh, false);
+        return;
+    }
+    const bool prevOpaque = builder->opaqueMark;
+    builder->opaqueMark = false;
+    VoxelBuilder_Quad(builder, p0, p1, p2, p3);
+    builder->opaqueMark = prevOpaque;
+}
+
 static void EmitGround(VoxelBuilder *builder, const VoxelMapInstance *inst, int32_t x, int32_t y,
                        float u0, float v0, float u1, float v1)
 {
     float lift = builder->lift, shift = builder->shift;
+    int32_t tx = (int32_t)(u0 * (float)VOXEL_TREE_TEXTURE_DIM + 0.5f);
+    int32_t ty = (int32_t)((1.0f - v0) * (float)VOXEL_TREE_TEXTURE_DIM + 0.5f);
+    const bool prevOpaque = builder->opaqueMark;
 
     /* on a mountain's rock the ground pass lays the rock (EmitTreeStep) */
     if (inst != NULL && VoxelMesh_TreeOnRock(inst, x, y))
         return;
+    builder->opaqueMark = RectFullyOpaque(tx, ty, 16, 16);
     if (inst == NULL || !OneLevelSlope(VoxelRelief_Cell(inst, x, y)))
     {
         VoxelMesh_Top(builder, (float)x, (float)y, 0.0f, 0.0f, u0, v0, u1, v1, 1.0f);
+        builder->opaqueMark = prevOpaque;
         return;
     }
     builder->lift = 0.0f;
@@ -305,6 +464,7 @@ static void EmitGround(VoxelBuilder *builder, const VoxelMapInstance *inst, int3
     VoxelMesh_ReliefGround(builder, inst, x, y, u0, v0, u1, v1);
     builder->lift = lift;
     builder->shift = shift;
+    builder->opaqueMark = prevOpaque;
 }
 
 /* The small crown is 16:32: width 1, length 2 tiles, at the same 50 degrees
@@ -343,11 +503,16 @@ static void EmitSmallCell(VoxelBuilder *builder, const VoxelMapInstance *inst, i
 
     EmitGround(builder, inst, x, y, TEX_U(tx), TEX_V(ty), TEX_U(tx + 16), TEX_V(ty + 16));
     builder->rounded = true;
-    VoxelBuilder_Quad(builder,
-        &(VoxelVertex){wx,        baseHeight + rise, baseZ - run, TEX_U(cx),      TEX_V(cy),      1.0f},
-        &(VoxelVertex){wx + 1.0f, baseHeight + rise, baseZ - run, TEX_U(cx + 16), TEX_V(cy),      1.0f},
-        &(VoxelVertex){wx + 1.0f, baseHeight,        baseZ,       TEX_U(cx + 16), TEX_V(cy + 32), 1.0f},
-        &(VoxelVertex){wx,        baseHeight,        baseZ,       TEX_U(cx),      TEX_V(cy + 32), 1.0f});
+    {
+        const VoxelVertex p0 = {wx,        baseHeight + rise, baseZ - run, TEX_U(cx),      TEX_V(cy),      1.0f};
+        const VoxelVertex p1 = {wx + 1.0f, baseHeight + rise, baseZ - run, TEX_U(cx + 16), TEX_V(cy),      1.0f};
+        const VoxelVertex p2 = {wx + 1.0f, baseHeight,        baseZ,       TEX_U(cx + 16), TEX_V(cy + 32), 1.0f};
+        const VoxelVertex p3 = {wx,        baseHeight,        baseZ,       TEX_U(cx),      TEX_V(cy + 32), 1.0f};
+        if (grass)
+            VoxelBuilder_Quad(builder, &p0, &p1, &p2, &p3);
+        else
+            EmitSplitCard(builder, &p0, &p1, &p2, &p3, cx, cy, 16, 32);
+    }
     builder->rounded = false;
 }
 
@@ -466,11 +631,15 @@ static void EmitCrownCard(VoxelBuilder *builder, const LargeArt *art, int32_t x,
 
     /* A crown card: lit as the rounded crown it stands for. */
     builder->rounded = true;
-    VoxelBuilder_Quad(builder,
-        &(VoxelVertex){wx,        baseHeight + top * rise,    baseZ - top * run,    u0, v0, 1.0f},
-        &(VoxelVertex){wx + 1.0f, baseHeight + top * rise,    baseZ - top * run,    u1, v0, 1.0f},
-        &(VoxelVertex){wx + 1.0f, baseHeight + bottom * rise, baseZ - bottom * run, u1, v1, 1.0f},
-        &(VoxelVertex){wx,        baseHeight + bottom * rise, baseZ - bottom * run, u0, v1, 1.0f});
+    {
+        const int32_t rx = art->crownX + col * 16;
+        const int32_t ry = art->crownY + row * art->rowPx;
+        const VoxelVertex p0 = {wx,        baseHeight + top * rise,    baseZ - top * run,    u0, v0, 1.0f};
+        const VoxelVertex p1 = {wx + 1.0f, baseHeight + top * rise,    baseZ - top * run,    u1, v0, 1.0f};
+        const VoxelVertex p2 = {wx + 1.0f, baseHeight + bottom * rise, baseZ - bottom * run, u1, v1, 1.0f};
+        const VoxelVertex p3 = {wx,        baseHeight + bottom * rise, baseZ - bottom * run, u0, v1, 1.0f};
+        EmitSplitCard(builder, &p0, &p1, &p2, &p3, rx, ry, 16, art->rowPx);
+    }
     builder->rounded = false;
 }
 

@@ -112,6 +112,8 @@ void VoxelBuilder_Init(VoxelBuilder *builder, VoxelVertex *storage, uint32_t cap
     builder->lightingRefine = true;
     builder->lightingConstant = -1.0f;
     builder->rounded = false;
+    builder->opaqueMark = false;
+    builder->triOpaque = NULL;
     builder->vertexFace = false;
     builder->statics = NULL;
     builder->staticCapacity = 0;
@@ -139,6 +141,8 @@ void VoxelBuilder_Tri(VoxelBuilder *builder, const VoxelVertex *a,
         ++builder->dropped;
         return;
     }
+    if (builder->triOpaque != NULL)
+        builder->triOpaque[builder->count / 3] = builder->opaqueMark ? 1u : 0u;
     const VoxelVertex *v[3] = { a, b, c };
 
     for (int32_t i = 0; i < 3; ++i)

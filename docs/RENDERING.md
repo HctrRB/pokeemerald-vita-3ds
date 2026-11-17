@@ -72,7 +72,7 @@ Per frame (`VoxelRenderer_RenderFrame`):
 | Pass | Content | Notes |
 |---|---|---|
 | 1A / 1B | Ground and relief, then cliff cutouts | Opaque first for early-Z on the SGX543; cutouts with `GL_ALPHA_TEST` |
-| 2 | Trees, tall grass, ash grass & flowers | Tree atlas (`sTreeTex`); HD-2D 30 FPS adds GLSL wind-sway & player-bend shader, animated GBA flower frames, and Fallarbor ash-grass sprite |
+| 2 | Trees, tall grass, ash grass & flowers | Tree atlas (`sTreeTex`) partitioned into opaque tree cores/ground (`2A-0`, `GL_ALPHA_TEST` off for SGX543 HSR), alpha-tested border strips (`2A-1`), and GLSL wind-sway & player-bend foliage (`2B`) with animated GBA flower frames and Fallarbor ash-grass sprite |
 | 3 | Buildings and indoor furniture | Building pages in an LRU cache, alpha test only on pages that need it |
 | 4 | Cast and decal shadows | One colour (`0xFF281408`) |
 | 4.5 | Reflections on water | |

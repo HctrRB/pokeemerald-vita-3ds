@@ -29,6 +29,7 @@ int32_t VoxelTree_GroundMetatile(const void *secondaryTileset, int32_t metatileI
 bool VoxelTree_LaysGround(const void *secondaryTileset, int32_t metatileId);
 
 /* Appended after the ordinary terrain; these vertices use the tree texture. */
+void VoxelTree_SetAtlasPixels(const uint16_t *rgba5551);
 void VoxelTree_EmitInstance(VoxelBuilder *builder, const VoxelMapInstance *inst,
                             int32_t x0, int32_t y0, int32_t x1, int32_t y1);
 void VoxelTree_EmitBorder(VoxelBuilder *builder, int32_t x0, int32_t y0, int32_t x1, int32_t y1);

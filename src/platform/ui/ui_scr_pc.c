@@ -409,6 +409,11 @@ static void OpenActions(void)
     struct BoxPokemon *bm = CursorMon();
     if (bm == NULL)
         return;
+    if (sMode == MODE_ITEMS && GetBoxMonData(bm, MON_DATA_IS_EGG))
+    {
+        Fail("EGGs can't hold items.");
+        return;
+    }
     char name[16];
     MonName(bm, name, sizeof(name));
     const int32_t x = sArea == AREA_PARTY ? 196 : 548;
@@ -416,8 +421,6 @@ static void OpenActions(void)
     if (sMode == MODE_ITEMS)
     {
         const uint16_t it = HeldItemOf(bm);
-        if (GetBoxMonData(bm, MON_DATA_IS_EGG))
-            return;
         if (it != ITEM_NONE)
         {
             if (!ItemIsMail(it)) UiMenu_Add(&sMenu, "MOVE", ACT_MOVE);
@@ -718,6 +721,7 @@ static bool Update(const UiInput *in)
     if (in->pressed & VITA_BTN_CIRCLE)
     {
         if (sHolding) { Fail("You're holding a POKéMON!"); return true; }
+        if (sHeldItem != ITEM_NONE) { Fail("You're holding an item!"); return true; }
         if (sHeldItem != ITEM_NONE) { Fail("Put the item down first."); return true; }
         UiMenu_Open(&sMenu, "PC", 330, 200, 300);
         UiMenu_Add(&sMenu, "YES", 1);

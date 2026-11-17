@@ -144,7 +144,7 @@ const BATTLES = {
              foeBalls: ['ok', 'ok', 'empty', 'empty', 'empty', 'empty'], myBalls: ['ok', 'ok', 'ok', 'empty', 'empty', 'empty'] },
   safari:  { foes: [['RALTS', 'ralts', '♀', 9, 20, 20, null, false]], mine: [], safari: 27 },
 };
-let S = { judge: 0, battle: 'wild', mode: 'cmd', cmd: 0, mv: 0, target: 0, yn: 0, active: 0, hpNum: false, swapFrom: -1 };
+let S = { judge: 0, battle: new URLSearchParams(location.search).get('battle') || 'wild', mode: 'cmd', cmd: 0, mv: 0, target: 0, yn: 0, active: 0, hpNum: false, swapFrom: -1 };
 const MODES = { cmd: 'Commands', fight: 'FIGHT', target: 'FIGHT · target (doubles)', msg: 'Message', yesno: 'YES / NO', lvup: 'Level up', judge: 'Battle Arena judge (X: next)' };
 
 const pct = (h, m) => Math.round(100 * h / m), cls = p => p > 50 ? '' : p > 20 ? ' mid' : ' low';

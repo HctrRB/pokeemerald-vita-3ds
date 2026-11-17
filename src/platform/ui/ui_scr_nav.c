@@ -318,10 +318,15 @@ static void Call(void)
 
 static void OpenFeed(void)
 {
+    UiMon m;
+    if (!UiGame_Mon(sMonList.sel, &m)) return;
+    if (m.egg) { PlaySE(SE_FAILURE); UiKit_Toast("An EGG can't eat POKéBLOCKS."); return; }
+    uint8_t c[6];
+    UiGame_Condition(sMonList.sel, c);
+    if (c[5] >= 255) { PlaySE(SE_FAILURE); UiKit_Toast("%s won't eat any more...", m.name); return; }
     sBlockN = UiGame_Pokeblocks(sBlocks, 40);
     if (sBlockN == 0) { PlaySE(SE_FAILURE); UiKit_Toast("There are no POKéBLOCKS in the case."); return; }
     sFeedOpen = true;
-    sFeedList.sel = sFeedList.first = 0;
     UiList_Reset(&sFeedList, sBlockN, FEED_ROWS);
     PlaySE(SE_SELECT);
 }
@@ -338,11 +343,23 @@ static void UpdateFeed(const UiInput *in)
     char name[24];
     snprintf(name, sizeof(name), "%s", sBlocks[a].name);
     const int32_t r = UiGame_FeedPokeblock(sMonList.sel, sBlocks[a].slot);
-    sFeedOpen = false;
-    if (r == -3) { PlaySE(SE_FAILURE); UiKit_Toast("An EGG can't eat POKéBLOCKS."); return; }
-    if (r == -2) { PlaySE(SE_FAILURE); UiKit_Toast("%s won't eat any more...", m.name); return; }
+    if (r == -3) { sFeedOpen = false; PlaySE(SE_FAILURE); UiKit_Toast("An EGG can't eat POKéBLOCKS."); return; }
+    if (r == -2) { sFeedOpen = false; PlaySE(SE_FAILURE); UiKit_Toast("%s won't eat any more...", m.name); return; }
     PlaySE(SE_USE_ITEM);
     UiKit_Toast(r > 0 ? "%s happily ate the %s!" : r < 0 ? "%s disdainfully ate the %s." : "%s ate the %s.", m.name, name);
+    sBlockN = UiGame_Pokeblocks(sBlocks, 40);
+    uint8_t c[6];
+    UiGame_Condition(sMonList.sel, c);
+    if (sBlockN <= 0 || c[5] >= 255)
+    {
+        sFeedOpen = false;
+        return;
+    }
+    sFeedList.count = sBlockN;
+    if (sFeedList.sel >= sBlockN) sFeedList.sel = sBlockN - 1;
+    if (sFeedList.first > sFeedList.sel) sFeedList.first = sFeedList.sel;
+    if (sFeedList.first + FEED_ROWS > sBlockN)
+        sFeedList.first = sBlockN > FEED_ROWS ? sBlockN - FEED_ROWS : 0;
 }
 
 static void DrawFeed(void)
@@ -427,7 +444,7 @@ static bool NavUpdate(const UiInput *in)
         const int32_t before = sMonList.sel;
         UiList_Update(&sMonList, in, 22, gba ? 108 : 66, gba ? 276 : 288, gba ? 58 : 44, true);
         if (sMonList.sel != before) sRibSel = 0;
-        if (sTab == NAV_COND && ((in->pressed & VITA_BTN_SQUARE) || UiHit(in, 676, gba ? 420 : 424, 252, 44)))
+        if (sTab == NAV_COND && ((in->pressed & (VITA_BTN_SQUARE | VITA_BTN_CROSS)) || UiHit(in, 676, gba ? 420 : 424, 252, 44)))
         {
             if (UiGame_HasPokeblockCase()) OpenFeed();
             else { PlaySE(SE_FAILURE); UiKit_Toast("You don't have a POKéBLOCK CASE yet."); }
@@ -485,47 +502,130 @@ static void DrawGbaPartyList(void)
     }
 }
 
-static void DrawCondRadar(float cx, float cy)
+// GBA non-linear condition curve (src/menu_specialized.c: sConditionToLineLength, max 35)
+static const uint8_t sCondLen[256] = {
+     4,  5,  6,  7,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13, 13,
+    13, 14, 14, 14, 14, 15, 15, 15, 15, 16, 16, 16, 16, 16, 16, 17,
+    17, 17, 17, 17, 17, 18, 18, 18, 18, 18, 18, 19, 19, 19, 19, 19,
+    19, 19, 19, 20, 20, 20, 20, 20, 20, 20, 20, 21, 21, 21, 21, 21,
+    21, 21, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 23, 23, 23,
+    23, 23, 23, 23, 23, 23, 23, 24, 24, 24, 24, 24, 24, 24, 24, 24,
+    24, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 26, 26, 26,
+    26, 26, 26, 26, 26, 26, 26, 26, 26, 27, 27, 27, 27, 27, 27, 27,
+    27, 27, 27, 27, 27, 27, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28,
+    28, 28, 28, 28, 28, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29,
+    29, 29, 29, 29, 29, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+    30, 30, 30, 30, 30, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31,
+    31, 31, 31, 31, 31, 31, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32,
+    32, 32, 32, 32, 32, 32, 32, 32, 33, 33, 33, 33, 33, 33, 33, 33,
+    33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 34,
+    34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 35
+};
+
+static void DrawCondRadar(float cx, float cy, float R, bool gba)
 {
     static const char *const names[5] = { "COOL", "BEAUTY", "CUTE", "SMART", "TOUGH" };
     UiMon m;
     if (!UiGame_Mon(sMonList.sel, &m)) return;
     uint8_t c[6];
     UiGame_Condition(sMonList.sel, c);
-    const float R = 104;
     float ax[5], ay[5];
     for (int32_t i = 0; i < 5; i++) { const float a = -1.5707963f + i * 1.2566371f; ax[i] = cosf(a); ay[i] = sinf(a); }
     for (int32_t ring = 1; ring <= 4; ring++)
         for (int32_t i = 0; i < 5; i++)
         {
-            const float f = R * ring / 4, j = (float)((i + 1) % 5);
-            UiDraw_Line(cx + ax[i] * f, cy + ay[i] * f, cx + ax[(int)j] * f, cy + ay[(int)j] * f, 2, UI_RGBA(209, 200, 175, 255));
+            const float f = R * ring / 4.0f;
+            const int32_t j = (i + 1) % 5;
+            UiDraw_Line(cx + ax[i] * f, cy + ay[i] * f, cx + ax[j] * f, cy + ay[j] * f, 2, gUiTheme->paperShade);
         }
     for (int32_t i = 0; i < 5; i++)
-        UiDraw_Line(cx, cy, cx + ax[i] * R, cy + ay[i] * R, 2, UI_RGBA(199, 188, 158, 255));
+        UiDraw_Line(cx, cy, cx + ax[i] * R, cy + ay[i] * R, 2, gUiTheme->paperShade);
     if (!m.egg)
     {
         float px[5], py[5];
         for (int32_t i = 0; i < 5; i++)
         {
-            const float v = (c[i] < 8 ? 8 : c[i]) / 255.0f * R;
+            const float v = (float)sCondLen[c[i]] / 35.0f * R;
             px[i] = cx + ax[i] * v;
             py[i] = cy + ay[i] * v;
         }
+        const uint32_t fill = (gUiTheme->winTop & 0x00FFFFFFu) | 0xB8000000u;
         for (int32_t i = 0; i < 5; i++)
-            UiDraw_Tri(cx, cy, px[i], py[i], px[(i + 1) % 5], py[(i + 1) % 5], UI_RGBA(63, 183, 107, 190));
+            UiDraw_Tri(cx, cy, px[i], py[i], px[(i + 1) % 5], py[(i + 1) % 5], fill);
         for (int32_t i = 0; i < 5; i++)
         {
-            UiDraw_Line(px[i], py[i], px[(i + 1) % 5], py[(i + 1) % 5], 2, UI_RGBA(22, 39, 28, 255));
-            UiDraw_Rect((int32_t)px[i] - 4, (int32_t)py[i] - 4, 8, 8, UI_RGBA(22, 39, 28, 255));
+            UiDraw_Line(px[i], py[i], px[(i + 1) % 5], py[(i + 1) % 5], 2, gUiTheme->ink);
+            UiDraw_Rect((int32_t)px[i] - 4, (int32_t)py[i] - 4, 8, 8, gUiTheme->ink);
         }
+    }
+    else
+    {
+        const int32_t ew = UiText_Width(UI_FACE_PS2P, 16, "EGG");
+        UiText_Draw(UI_FACE_PS2P, 16, (int32_t)cx - ew / 2, (int32_t)cy - 8, "EGG", UI_COL_INK_SOFT);
     }
     for (int32_t i = 0; i < 5; i++)
     {
-        const int32_t lx = (int32_t)(cx + ax[i] * (R + 24)) - UiText_Width(UI_FACE_VT323, UI_BODY_PX, names[i]) / 2;
-        const int32_t ly = (int32_t)(cy + ay[i] * (R + 24)) - 16;
-        UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, lx, ly, names[i], UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        char num[8];
+        if (m.egg) snprintf(num, sizeof(num), "-");
+        else snprintf(num, sizeof(num), "%u", (unsigned)c[i]);
+        const float dist = R + 32.0f;
+        const int32_t tx = (int32_t)(cx + ax[i] * dist);
+        const int32_t ty = (int32_t)(cy + ay[i] * dist) - 22;
+        const int32_t lw = UiText_Width(UI_FACE_VT323, 24, names[i]);
+        const int32_t nw = UiText_Width(UI_FACE_PS2P, 12, num);
+        if (gba)
+        {
+            UiW_GbaText(UI_FACE_VT323, 24, tx - lw / 2, ty, names[i], UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+            UiW_GbaText(UI_FACE_PS2P, 12, tx - nw / 2, ty + 24, num, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        }
+        else
+        {
+            UiText_Draw(UI_FACE_VT323, 24, tx - lw / 2, ty, names[i], UI_COL_INK);
+            UiText_Draw(UI_FACE_PS2P, 12, tx - nw / 2, ty + 24, num, UI_COL_INK_SOFT);
+        }
     }
+}
+
+static void DrawCondAttrs(bool gba)
+{
+    static const uint32_t cols[5][2] = { { 0xFF3A5FE0u, 0xFF2742B8u }, { 0xFFE0A04Au, 0xFFB87A2Fu }, { 0xFFC88CF0u, 0xFFA060D0u }, { 0xFF6BD07Au, 0xFF3FA050u }, { 0xFF39C8E8u, 0xFF1C9CC0u } };
+    UiMon m;
+    if (!UiGame_Mon(sMonList.sel, &m)) return;
+    uint8_t c[6];
+    UiGame_Condition(sMonList.sel, c);
+    const int32_t y0 = gba ? 108 : 106;
+    const int32_t step = gba ? 44 : 42;
+    for (int32_t i = 0; i < 5; i++)
+    {
+        const int32_t y = y0 + i * step;
+        const int32_t pct = m.egg ? 0 : (c[i] == 0 ? 0 : (c[i] * 100 + 254) / 255);
+        UiDraw_Sprite((uint16_t)(UI_SPR_CONTEST_FIRST + i), 674, y + 4, 2);
+        UiW_Bar(750, y + 12, 128, 14, pct, cols[i][0], cols[i][1]);
+        char v[8];
+        if (m.egg) snprintf(v, sizeof(v), "-");
+        else snprintf(v, sizeof(v), "%u", (unsigned)c[i]);
+        if (gba)
+            UiW_GbaTextMid(UI_FACE_VT323, 28, 932 - UiText_Width(UI_FACE_VT323, 28, v), y, 38, v, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        else
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 928 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, v), y, v, UI_COL_INK);
+    }
+    char buf[40];
+    const uint8_t sparkles = m.egg ? 0 : (c[5] == 255 ? 10 : c[5] / 26);
+    if (m.egg) snprintf(buf, sizeof(buf), "SHEEN -");
+    else snprintf(buf, sizeof(buf), "SHEEN %u / 255  *%u/10", (unsigned)c[5], (unsigned)sparkles);
+    const int32_t sy = gba ? 336 : 326;
+    const int32_t sby = gba ? 370 : 362;
+    const int32_t spct = m.egg ? 0 : (c[5] == 0 ? 0 : (c[5] * 100 + 254) / 255);
+    if (gba)
+        UiW_GbaText(UI_FACE_VT323, 28, 676, sy, buf, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+    else
+        UiText_Draw(UI_FACE_VT323, 26, 676, sy, buf, UI_COL_INK);
+    UiW_Bar(676, sby, 252, 12, spct, UI_RGBA(124, 192, 242, 255), UI_COL_EXP);
+    const bool canFeed = UiGame_HasPokeblockCase() && !m.egg && c[5] < 255;
+    if (gba)
+        DrawGbaBtn(676, 420, 252, 42, "FEED POKéBLOCK", canFeed);
+    else
+        UiW_Button(676, 424, 252, "FEED POKéBLOCK", canFeed ? UI_BTN_GREEN : UI_BTN_AMBER, false);
 }
 
 static void BuildMapTabGba(void)
@@ -647,33 +747,17 @@ static void BuildCallTabGba(void)
 
 static void BuildCondTabGba(void)
 {
-    static const uint32_t cols[5][2] = { { 0xFF3A5FE0u, 0xFF2742B8u }, { 0xFFE0A04Au, 0xFFB87A2Fu }, { 0xFFC88CF0u, 0xFFA060D0u }, { 0xFF6BD07Au, 0xFF3FA050u }, { 0xFF39C8E8u, 0xFF1C9CC0u } };
     DrawGbaPartyList();
     UiMon m;
     if (!UiGame_Mon(sMonList.sel, &m)) return;
-    uint8_t c[6];
-    UiGame_Condition(sMonList.sel, c);
 
     UiW_GbaWin(322, 60, 326, 414, UI_GBA_WIN_DEFAULT);
     UiW_GbaSectionStrip(334, 72, 302, 28, UI_GBA_TAG_TEAL, "CONDITION", m.name);
-    DrawCondRadar(485, 276);
+    DrawCondRadar(485, 290, 92.0f, true);
 
     UiW_GbaWin(660, 60, 286, 414, UI_GBA_WIN_DEFAULT);
     UiW_GbaSectionStrip(672, 72, 262, 28, UI_GBA_TAG_GOLD, "ATTRIBUTES", NULL);
-    for (int32_t i = 0; i < 5; i++)
-    {
-        const int32_t y = 108 + i * 44;
-        UiDraw_Sprite((uint16_t)(UI_SPR_CONTEST_FIRST + i), 674, y + 4, 2);
-        UiW_Bar(750, y + 12, 128, 14, c[i] * 100 / 255, cols[i][0], cols[i][1]);
-        char v[8];
-        snprintf(v, sizeof(v), "%u", (unsigned)c[i]);
-        UiW_GbaTextMid(UI_FACE_VT323, 28, 932 - UiText_Width(UI_FACE_VT323, 28, v), y, 38, v, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-    }
-    char buf[32];
-    snprintf(buf, sizeof(buf), "SHEEN %u / 255", (unsigned)c[5]);
-    UiW_GbaText(UI_FACE_VT323, 28, 676, 336, buf, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-    UiW_Bar(676, 370, 252, 14, c[5] * 100 / 255, UI_RGBA(124, 192, 242, 255), UI_COL_EXP);
-    DrawGbaBtn(676, 420, 252, 42, "FEED POKéBLOCK", UiGame_HasPokeblockCase());
+    DrawCondAttrs(true);
 }
 
 static void BuildRibTabGba(void)
@@ -731,7 +815,7 @@ static void NavBuildGba(void)
         BuildCallTabGba();
         break;
     case NAV_COND:
-        UiW_GbaHelpBadge(&rx, "SQ", "FEED", false);
+        UiW_GbaHelpBadge(&rx, "X/SQ", "FEED", false);
         BuildCondTabGba();
         break;
     default:
@@ -832,65 +916,18 @@ static void BuildCallTab(void)
 
 static void BuildCondTab(void)
 {
-    static const char *const names[5] = { "COOL", "BEAUTY", "CUTE", "SMART", "TOUGH" };
-    static const uint32_t cols[5][2] = { { 0xFF3A5FE0u, 0xFF2742B8u }, { 0xFFE0A04Au, 0xFFB87A2Fu }, { 0xFFC88CF0u, 0xFFA060D0u }, { 0xFF6BD07Au, 0xFF3FA050u }, { 0xFF39C8E8u, 0xFF1C9CC0u } };
     PartyList();
     UiMon m;
     if (!UiGame_Mon(sMonList.sel, &m)) return;
-    uint8_t c[6];
-    UiGame_Condition(sMonList.sel, c);
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%s · CONDITION", m.name);
     UiW_Panel(328, 60, 320, 432);
-    const float cx = 488, cy = 286, R = 112;
-    float ax[5], ay[5];
-    for (int32_t i = 0; i < 5; i++) { const float a = -1.5707963f + i * 1.2566371f; ax[i] = cosf(a); ay[i] = sinf(a); }
-    // Rings at 25 / 50 / 75 / 100 %, axes from the centre to each vertex
-    for (int32_t ring = 1; ring <= 4; ring++)
-        for (int32_t i = 0; i < 5; i++)
-        {
-            const float f = R * ring / 4, j = (float)((i + 1) % 5);
-            UiDraw_Line(cx + ax[i] * f, cy + ay[i] * f, cx + ax[(int)j] * f, cy + ay[(int)j] * f, 2, UI_RGBA(209, 200, 175, 255));
-        }
-    for (int32_t i = 0; i < 5; i++)
-        UiDraw_Line(cx, cy, cx + ax[i] * R, cy + ay[i] * R, 2, UI_RGBA(199, 188, 158, 255));
-    if (!m.egg)
-    {
-        float px[5], py[5];
-        for (int32_t i = 0; i < 5; i++)
-        {
-            const float v = (c[i] < 8 ? 8 : c[i]) / 255.0f * R;
-            px[i] = cx + ax[i] * v;
-            py[i] = cy + ay[i] * v;
-        }
-        for (int32_t i = 0; i < 5; i++)
-            UiDraw_Tri(cx, cy, px[i], py[i], px[(i + 1) % 5], py[(i + 1) % 5], UI_RGBA(63, 183, 107, 190));
-        for (int32_t i = 0; i < 5; i++)
-        {
-            UiDraw_Line(px[i], py[i], px[(i + 1) % 5], py[(i + 1) % 5], 2, UI_RGBA(22, 39, 28, 255));
-            UiDraw_Rect((int32_t)px[i] - 4, (int32_t)py[i] - 4, 8, 8, UI_RGBA(22, 39, 28, 255));
-        }
-    }
-    for (int32_t i = 0; i < 5; i++)
-    {
-        const int32_t lx = (int32_t)(cx + ax[i] * (R + 26)) - UiText_Width(UI_FACE_VT323, UI_BODY_PX, names[i]) / 2;
-        const int32_t ly = (int32_t)(cy + ay[i] * (R + 26)) - 16;
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, lx, ly, names[i], UI_COL_INK);
-    }
+    UiW_PanelHead(328, 60, 320, buf, NULL);
+    DrawCondRadar(488, 300, 92.0f, false);
+
     UiW_Panel(660, 60, 284, 432);
-    for (int32_t i = 0; i < 5; i++)
-    {
-        const int32_t y = 80 + i * 48;
-        UiDraw_Sprite((uint16_t)(UI_SPR_CONTEST_FIRST + i), 676, y, 2);
-        UiW_Bar(752, y + 10, 128, 12, c[i] * 100 / 255, cols[i][0], cols[i][1]);
-        char v[8];
-        snprintf(v, sizeof(v), "%u", (unsigned)c[i]);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 928 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, v), y, v, UI_COL_INK);
-    }
-    char buf[32];
-    snprintf(buf, sizeof(buf), "SHEEN %u / 255", (unsigned)c[5]);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 676, 330, buf, UI_COL_INK);
-    UiW_Bar(676, 366, 252, 10, c[5] * 100 / 255, UI_RGBA(124, 192, 242, 255), UI_COL_EXP);
-    // Always shown; without the POKéBLOCK CASE (SLATEPORT contest hall) it only explains why
-    UiW_Button(676, 424, 252, "FEED POKéBLOCK", UiGame_HasPokeblockCase() ? UI_BTN_GREEN : UI_BTN_AMBER, false);
+    UiW_PanelHead(660, 60, 284, "ATTRIBUTES", NULL);
+    DrawCondAttrs(false);
 }
 
 static void BuildRibTab(void)
@@ -949,8 +986,8 @@ static void NavBuild(void)
         break;
     case NAV_COND:
         BuildCondTab();
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Feed");
         UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
-        UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, "Feed");
         break;
     default:
         BuildRibTab();

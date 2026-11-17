@@ -353,7 +353,7 @@ static void BattleCamera(void)
 #define CHUNK_SIZE 8
 #define CHUNK_GROUND_CAP 1536
 #define CHUNK_GROUND_TOTAL_CAP (VOXEL_MAX_ATLAS_PAGES * CHUNK_GROUND_CAP)
-#define CHUNK_TREE_CAP 1280
+#define CHUNK_TREE_CAP 2560
 #define CHUNK_BUILDING_CAP 12288
 #define MAX_CHUNK_GROUND_SPANS 24
 #define MAX_CHUNK_BUILDING_SPANS 4
@@ -398,6 +398,7 @@ typedef struct
     uint32_t treeCount;
     uint32_t buildingCount;
     uint16_t treeFirstVert;
+    uint16_t treeOpaqueCount;
     uint16_t treeStaticCount;
     uint16_t buildingFirstVert;
     uint16_t totalVertCount;
@@ -2084,6 +2085,7 @@ typedef struct
     VoxelGlVertex *buildingVerts;
     uint32_t groundTotalCount;
     uint32_t treeCount;
+    uint32_t treeOpaqueCount;
     uint32_t treeStaticCount;
     uint32_t buildingCount;
     uint8_t groundSpanCount;
@@ -2247,9 +2249,12 @@ static void NoteJobPage(VoxelChunkJobOutput *out, int32_t page)
 static VoxelGlVertex sTreeSwayTmp[CHUNK_TREE_CAP];
 
 // Tag top vertices of tall grass, flowers, and ash grass with sway weight 1.0 (a = 65),
-// then partition triangles so static trees come first [0..staticCount) for fixed-function HSR
-// and swaying foliage follows [staticCount..count) for sTreeShaderProg.
-static uint32_t TagAndPartitionTreeSway(VoxelGlVertex *const verts, const uint32_t count)
+// then partition triangles into 3 contiguous ranges for SGX543 HSR + sway:
+//   [0 .. *outOpaqueCount)            : opaque tree cores/ground (GL_ALPHA_TEST off)
+//   [*outOpaqueCount .. staticCount)  : alpha-tested tree borders/foliage (GL_ALPHA_TEST on)
+//   [staticCount .. count)            : swaying foliage (sTreeShaderProg)
+static uint32_t TagAndPartitionTreeSway(VoxelGlVertex *const verts, const uint32_t count,
+                                        uint8_t *const triOpaque, uint32_t *const outOpaqueCount)
 {
     const float grassTopV = 1.0f - 32.0f / (float)VOXEL_TREE_TEXTURE_DIM;
     const float grassMinU = 79.5f / (float)VOXEL_TREE_TEXTURE_DIM;
@@ -2278,17 +2283,46 @@ static uint32_t TagAndPartitionTreeSway(VoxelGlVertex *const verts, const uint32
         }
         else
         {
+            const uint32_t dstTri = staticCount / 3u;
+            const uint32_t srcTri = t / 3u;
             if (staticCount != t)
             {
                 verts[staticCount]      = verts[t];
                 verts[staticCount + 1u] = verts[t + 1u];
                 verts[staticCount + 2u] = verts[t + 2u];
             }
+            triOpaque[dstTri] = triOpaque[srcTri];
             staticCount += 3u;
         }
     }
     if (swayCount > 0u)
         memcpy(&verts[staticCount], sTreeSwayTmp, swayCount * sizeof(VoxelGlVertex));
+
+    uint32_t opaqueCount = 0u;
+    uint32_t cutoutCount = 0u;
+    for (uint32_t t = 0; t + 2u < staticCount; t += 3u)
+    {
+        if (triOpaque[t / 3u] != 0u)
+        {
+            if (opaqueCount != t)
+            {
+                verts[opaqueCount]      = verts[t];
+                verts[opaqueCount + 1u] = verts[t + 1u];
+                verts[opaqueCount + 2u] = verts[t + 2u];
+            }
+            opaqueCount += 3u;
+        }
+        else
+        {
+            sTreeSwayTmp[cutoutCount++] = verts[t];
+            sTreeSwayTmp[cutoutCount++] = verts[t + 1u];
+            sTreeSwayTmp[cutoutCount++] = verts[t + 2u];
+        }
+    }
+    if (cutoutCount > 0u)
+        memcpy(&verts[opaqueCount], sTreeSwayTmp, cutoutCount * sizeof(VoxelGlVertex));
+
+    *outOpaqueCount = opaqueCount;
     return staticCount;
 }
 
@@ -2361,6 +2395,7 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     VoxelBuilder_SetAtlas(&builder, in->activeMap);
     builder.originX = 0.0f;
     builder.originZ = 0.0f;
+    builder.triOpaque = sScratchTriBucket;
 
     for (uint32_t i = 0; i < instanceCount; i++)
     {
@@ -2389,8 +2424,12 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     {
         const uint32_t count = builder.count > CHUNK_TREE_CAP ? CHUNK_TREE_CAP : builder.count;
         PackVoxelVertices(sScratch, out->treeVerts, count, !in->indoor);
-        out->treeStaticCount = TagAndPartitionTreeSway(out->treeVerts, count);
+        out->treeStaticCount = TagAndPartitionTreeSway(out->treeVerts, count, sScratchTriBucket, &out->treeOpaqueCount);
         out->treeCount = count;
+    }
+    else
+    {
+        out->treeOpaqueCount = 0u;
     }
     out->treesMs = VitaPerf_NowMs() - phaseStart;
 
@@ -2400,6 +2439,7 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     VoxelBuilder_SetAtlas(&builder, in->activeMap);
     builder.originX = 0.0f;
     builder.originZ = 0.0f;
+    builder.triOpaque = sScratchTriBucket;
 
     for (uint32_t i = 0; i < instanceCount; i++)
     {
@@ -2503,6 +2543,7 @@ static void CommitChunkJob(VoxelChunkSlot *const slot, const int32_t chunkX, con
     slot->buildingPage = out->buildingPage;
     slot->groundTotalCount = out->groundTotalCount;
     slot->treeCount = out->treeCount;
+    slot->treeOpaqueCount = (uint16_t)out->treeOpaqueCount;
     slot->treeStaticCount = (uint16_t)out->treeStaticCount;
     slot->buildingCount = out->buildingCount;
     // Built in the current coordinates, so drawn where it is built.
@@ -3520,37 +3561,42 @@ static inline void PushFlatVertex3D(uint32_t *const vOut, const float x, const f
     v->a = a;
 }
 
+static void EnsureNightLampsBuilt(void)
+{
+    if (sLampsBuilt)
+        return;
+
+    // (built with sScratch, which the chunk worker uses)
+    EnsureWorkerIdle();
+    VoxelBuilder glassB, groundB;
+    VoxelBuilder_Init(&glassB, sLampGlassScratch, VOXEL_LAMP_GLASS_CAP);
+    VoxelBuilder_Init(&groundB, sLampGroundScratch, VOXEL_LAMP_GROUND_CAP);
+
+    const uint32_t instCount = VoxelWorld_InstanceCount();
+    for (uint32_t i = 0; i < instCount; ++i)
+    {
+        const VoxelMapInstance *const inst = VoxelWorld_Instance(i);
+        if (!inst || inst->indoor) continue;
+        glassB.base = VoxelRelief_Base(inst);
+        groundB.base = VoxelRelief_Base(inst);
+        VoxelBuilder_SetStretch(&glassB, inst);
+        VoxelBuilder_SetStretch(&groundB, inst);
+        VoxelSign_EmitNight(&glassB, &groundB, inst,
+                            inst->originX, inst->originY,
+                            inst->originX + inst->width, inst->originY + inst->height);
+    }
+
+    sLampGlassCount = glassB.count;
+    sLampGroundCount = groundB.count;
+    sLampsBuilt = true;
+}
+
 static void UpdateAndDrawNightLamps(float glow)
 {
     if (glow <= 0.01f)
         return;
 
-    if (!sLampsBuilt)
-    {
-        // (built with sScratch, which the chunk worker uses)
-        EnsureWorkerIdle();
-        VoxelBuilder glassB, groundB;
-        VoxelBuilder_Init(&glassB, sLampGlassScratch, VOXEL_LAMP_GLASS_CAP);
-        VoxelBuilder_Init(&groundB, sLampGroundScratch, VOXEL_LAMP_GROUND_CAP);
-
-        uint32_t instCount = VoxelWorld_InstanceCount();
-        for (uint32_t i = 0; i < instCount; ++i)
-        {
-            const VoxelMapInstance *inst = VoxelWorld_Instance(i);
-            if (!inst || inst->indoor) continue;
-            glassB.base = VoxelRelief_Base(inst);
-            groundB.base = VoxelRelief_Base(inst);
-            VoxelBuilder_SetStretch(&glassB, inst);
-            VoxelBuilder_SetStretch(&groundB, inst);
-            VoxelSign_EmitNight(&glassB, &groundB, inst,
-                                inst->originX, inst->originY,
-                                inst->originX + inst->width, inst->originY + inst->height);
-        }
-
-        sLampGlassCount = glassB.count;
-        sLampGroundCount = groundB.count;
-        sLampsBuilt = true;
-    }
+    EnsureNightLampsBuilt();
 
     if (sLampGlassCount == 0 && sLampGroundCount == 0)
         return;
@@ -4016,6 +4062,7 @@ bool VoxelRenderer_Init(void)
                                           VOXEL_TREE_TEXTURE_DIM, VOXEL_TREE_TEXTURE_DIM);
             InitFlowerFrames(sTreeLinear);
             InitAshGrassTexel(sTreeLinear);
+            VoxelTree_SetAtlasPixels(sTreeLinear);
             glGenTextures(1, &sTreeTex);
             glBindTexture(GL_TEXTURE_2D, sTreeTex);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -4994,7 +5041,8 @@ static void Frame_TrackWorldChanges(VoxelFrame *const f)
         VoxelBuildings_MapChanged();
         VoxelLighting_Reset();
         VitaPerf_SubEnd(VITA_PERF_T_MAP_SHIFT);
-        sLampsBuilt = false;
+        if (mapChanged || crossed)
+            sLampsBuilt = false;
     }
     
     f->indoor = indoor;
@@ -5009,18 +5057,61 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
     f->fadeRgb[2] = 0.0f;
     VoxelWorld_ScreenFade(&f->fadeAmount, f->fadeRgb);
 
+    const float targetWeatherAmt = VoxelWorld_WeatherAmount();
+    const float targetFogDensity = VoxelWorld_FogDensity();
     f->weather = VoxelWorld_Weather();
-    f->weatherAmount = VoxelWorld_WeatherAmount();
-    f->fogDensity = VoxelWorld_FogDensity();
     f->bolt = VoxelWorld_Lightning();
     f->underground = VoxelWorld_Underground();
-    f->light = LightFor(f->indoor, f->weather, f->weatherAmount, f->bolt);
+    const VoxelLight targetLight = LightFor(f->indoor, f->weather, targetWeatherAmt, f->bolt);
+
     static uint64_t sVoxelAtmosphereStart = 0;
     if (sVoxelAtmosphereStart == 0)
         sVoxelAtmosphereStart = SDL_GetPerformanceCounter();
     f->seconds = (float)((double)(SDL_GetPerformanceCounter() - sVoxelAtmosphereStart) / (double)SDL_GetPerformanceFrequency());
     f->hd2dPreset = GetHd2dPreset();
     f->hd2dMarkedGrade = (f->hd2dPreset != HD2D_PRESET_OFF);
+
+    // Smooth zone-crossing & weather transitions in Core 0 (snaps on warp fades / indoor switches)
+    static bool sAtmosSmoothReady = false;
+    static bool sSmoothedIndoor = false;
+    static VoxelLight sSmoothedLight;
+    static float sSmoothedFog = 0.0f;
+    static float sSmoothedWeather = 0.0f;
+    static float sPrevAtmosSec = 0.0f;
+
+    if (!sAtmosSmoothReady || f->fadeAmount >= 0.99f || f->indoor != sSmoothedIndoor)
+    {
+        sSmoothedLight = targetLight;
+        sSmoothedFog = targetFogDensity;
+        sSmoothedWeather = targetWeatherAmt;
+        sSmoothedIndoor = f->indoor;
+        sAtmosSmoothReady = true;
+    }
+    else
+    {
+        float dt = f->seconds - sPrevAtmosSec;
+        if (dt < 0.0f) dt = 0.0f;
+        if (dt > 0.10f) dt = 0.10f;
+        const float k = 1.0f - expf(-dt / 0.40f);
+        for (int32_t c = 0; c < 3; ++c)
+        {
+            sSmoothedLight.sun[c]     += (targetLight.sun[c]     - sSmoothedLight.sun[c])     * k;
+            sSmoothedLight.shade[c]   += (targetLight.shade[c]   - sSmoothedLight.shade[c])   * k;
+            sSmoothedLight.hazeRgb[c] += (targetLight.hazeRgb[c] - sSmoothedLight.hazeRgb[c]) * k;
+        }
+        sSmoothedLight.haze       += (targetLight.haze       - sSmoothedLight.haze)       * k;
+        sSmoothedLight.dappleLow  += (targetLight.dappleLow  - sSmoothedLight.dappleLow)  * k;
+        sSmoothedLight.dappleHigh += (targetLight.dappleHigh - sSmoothedLight.dappleHigh) * k;
+        sSmoothedLight.rays       += (targetLight.rays       - sSmoothedLight.rays)       * k;
+        sSmoothedLight.bloom      += (targetLight.bloom      - sSmoothedLight.bloom)      * k;
+        sSmoothedLight.motes      += (targetLight.motes      - sSmoothedLight.motes)      * k;
+        sSmoothedFog              += (targetFogDensity       - sSmoothedFog)              * k;
+        sSmoothedWeather          += (targetWeatherAmt       - sSmoothedWeather)          * k;
+    }
+    sPrevAtmosSec = f->seconds;
+    f->light = sSmoothedLight;
+    f->fogDensity = sSmoothedFog;
+    f->weatherAmount = sSmoothedWeather;
 }
 
 // Whether a visible chunk must be rebuilt. `urgent`: drawn as it is, the chunk would be wrong,
@@ -5441,12 +5532,15 @@ static void UpdatePointLights(const VoxelFrame *const f)
                              1.0f, 0.78f, 0.48f, 4.8f, 0.75f, 0xCA7E11u);
     }
 
-    if (!f->indoor && VitaGame_IsOutdoor() && sLampsBuilt && sLampGroundCount >= 6)
+    if (!f->indoor && VitaGame_IsOutdoor())
     {
         const VitaDayNightLight *const dn = VitaDayNight_Get();
         const float glow = (dn != NULL) ? dn->glow : 0.0f;
         if (glow > 0.02f)
         {
+            EnsureNightLampsBuilt();
+            if (sLampGroundCount >= 6u)
+            {
             for (uint32_t i = 0; i + 5 < sLampGroundCount; i += 6)
             {
                 const float lx = (sLampGroundScratch[i].x + sLampGroundScratch[i + 2].x) * 0.5f;
@@ -5459,6 +5553,7 @@ static void UpdatePointLights(const VoxelFrame *const f)
                     VoxelPointLights_Add(lx, ly, lz, 1.0f, 0.68f, 0.34f,
                                          4.4f, glow * 0.92f, i * 2654435761u);
                 }
+            }
             }
         }
     }
@@ -5627,9 +5722,16 @@ static void Frame_BeginPasses(VoxelFrame *const f, const GLuint defaultTargetFbo
                     0.0f, 1.0f, 0.0f);
 
     glDepthMask(GL_TRUE);
-    glClearColor(fadeAmount >= 0.99f ? fadeRgb[0] : 0.0f,
-                 fadeAmount >= 0.99f ? fadeRgb[1] : 0.0f,
-                 fadeAmount >= 0.99f ? fadeRgb[2] : 0.0f, 1.0f);
+    {
+        static bool sPrevClearDark = true;
+        const bool isWhite = (fadeRgb[0] > 0.85f && fadeRgb[1] > 0.85f && fadeRgb[2] > 0.85f);
+        const bool suppressWhite = (fadeAmount >= 0.99f && isWhite && (f->mapChanged || sPrevClearDark));
+        const float cr = (fadeAmount >= 0.99f && !suppressWhite) ? fadeRgb[0] : 0.0f;
+        const float cg = (fadeAmount >= 0.99f && !suppressWhite) ? fadeRgb[1] : 0.0f;
+        const float cb = (fadeAmount >= 0.99f && !suppressWhite) ? fadeRgb[2] : 0.0f;
+        sPrevClearDark = (fadeAmount < 0.50f || (!isWhite && fadeAmount >= 0.90f));
+        glClearColor(cr, cg, cb, 1.0f);
+    }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // When the screen is completely faded out (100% black/white during a warp transition),
@@ -5782,18 +5884,13 @@ static void Pass_Trees(const VoxelFrame *const f)
     const bool useSwayShader = (sTreeShaderReady && f->hd2dPreset != HD2D_PRESET_OFF);
     bool hasSway = false;
 
-    // 2A: Static trees (and all foliage when sway shader is off) via fixed-function GL_ALPHA_TEST for SGX543 HSR
-    glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0.0f);
+    // 2A-0: Opaque tree cores & ground plates with GL_ALPHA_TEST OFF so SGX543 HSR rejects hidden trees
+    glDisable(GL_ALPHA_TEST);
 
     for (int32_t i = 0; i < visibleChunkCount; i++)
     {
         const VoxelChunkSlot *const chunk = visibleChunks[i];
-        if (chunk->treeCount == 0u) continue;
-        const uint32_t drawCount = useSwayShader ? chunk->treeStaticCount : chunk->treeCount;
-        if (useSwayShader && chunk->treeCount > chunk->treeStaticCount)
-            hasSway = true;
-        if (drawCount == 0u) continue;
+        if (chunk->treeOpaqueCount == 0u) continue;
 
         glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
         glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
@@ -5801,7 +5898,30 @@ static void Pass_Trees(const VoxelFrame *const f)
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
 
         ChunkOffsets_Apply(chunk);
-        glDrawArrays(GL_TRIANGLES, (GLint)chunk->treeFirstVert, (GLsizei)drawCount);
+        glDrawArrays(GL_TRIANGLES, (GLint)chunk->treeFirstVert, (GLsizei)chunk->treeOpaqueCount);
+    }
+
+    // 2A-1: Alpha-tested tree edges (and all foliage when sway shader is off)
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.0f);
+
+    for (int32_t i = 0; i < visibleChunkCount; i++)
+    {
+        const VoxelChunkSlot *const chunk = visibleChunks[i];
+        if (chunk->treeCount == 0u) continue;
+        const uint32_t endVert = useSwayShader ? chunk->treeStaticCount : chunk->treeCount;
+        if (useSwayShader && chunk->treeCount > chunk->treeStaticCount)
+            hasSway = true;
+        if (endVert <= chunk->treeOpaqueCount) continue;
+
+        glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
+        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
+        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
+        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
+
+        ChunkOffsets_Apply(chunk);
+        glDrawArrays(GL_TRIANGLES, (GLint)(chunk->treeFirstVert + chunk->treeOpaqueCount),
+                     (GLsizei)(endVert - chunk->treeOpaqueCount));
     }
 
     // 2B: Swaying tall grass, ash grass & flowers only (no static tree crowns in shader)

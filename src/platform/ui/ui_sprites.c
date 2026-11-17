@@ -19,6 +19,7 @@
 #include "item_icon.h"
 #include "pokemon_icon.h"
 #include "constants/species.h"
+#include "constants/trainers.h"
 
 #ifdef PLATFORM_VITA
 #include <vitaGL.h>
@@ -282,6 +283,10 @@ static bool Decode(uint32_t key, uint16_t *dst)
     {
         static uint8_t tiles[64 * 64 / 2];
         static uint16_t pal[16];
+        if (id > TRAINER_PIC_RS_MAY
+            || gTrainerFrontPicTable[id].data == NULL
+            || gTrainerFrontPicPaletteTable[id].data == NULL)
+            return false;
         LZ77UnCompWram(gTrainerFrontPicTable[id].data, tiles);
         LZ77UnCompWram(gTrainerFrontPicPaletteTable[id].data, pal);
         Tiles4bpp(dst, 0, 0, tiles, 8, 8, pal);

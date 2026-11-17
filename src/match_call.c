@@ -2119,6 +2119,8 @@ bool8 MatchCall_GetUiState(u8 *windowId, u8 *step, u16 *trainerIdx)
         return FALSE;
     *windowId = (u8)gTasks[taskId].data[2];
     *step = (u8)gTasks[taskId].data[0];
-    *trainerIdx = sMatchCallState.triggeredFromScript ? 0xFFFF : (u16)GetTrainerIdxByRematchIdx(sMatchCallState.trainerId);
+    *trainerIdx = (sMatchCallState.triggeredFromScript || sMatchCallState.trainerId >= TRAINERS_COUNT)
+                      ? 0xFFFF
+                      : (u16)sMatchCallState.trainerId;
     return TRUE;
 }
