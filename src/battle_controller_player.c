@@ -2703,15 +2703,15 @@ static void PlayerHandleChoosePokemon(void)
         gBattlerInMenuId = gActiveBattler;
         gSelectedMonPartyId = PARTY_SIZE;
         gPartyMenuUseExitCallback = FALSE;
+        *(&gBattleStruct->battlerPreventingSwitchout) = gBattleBufferA[gActiveBattler][1] >> 4;
+        *(&gBattleStruct->prevSelectedPartySlot) = gBattleBufferA[gActiveBattler][2];
+        *(&gBattleStruct->abilityPreventingSwitchout) = (gBattleBufferA[gActiveBattler][3] & 0xFF) | (gBattleBufferA[gActiveBattler][7] << 8);
         if (!Ui_OpenBattleParty())
         {
             // The game's party screen: the data its battle mode reads, then fade out and
             // OpenPartyMenuToChooseMon
             gBattleControllerData[gActiveBattler] = CreateTask(TaskDummy, 0xFF);
             gTasks[gBattleControllerData[gActiveBattler]].data[0] = gBattleBufferA[gActiveBattler][1] & 0xF;
-            *(&gBattleStruct->battlerPreventingSwitchout) = gBattleBufferA[gActiveBattler][1] >> 4;
-            *(&gBattleStruct->prevSelectedPartySlot) = gBattleBufferA[gActiveBattler][2];
-            *(&gBattleStruct->abilityPreventingSwitchout) = (gBattleBufferA[gActiveBattler][3] & 0xFF) | (gBattleBufferA[gActiveBattler][7] << 8);
             BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
             gBattlerControllerFuncs[gActiveBattler] = OpenPartyMenuToChooseMon;
         }

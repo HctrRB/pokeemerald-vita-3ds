@@ -110,10 +110,7 @@ bool UiGame_BattlePartyCanCancel(void)
 {
     if (PartyAction() == PARTY_ACTION_SEND_OUT)
         return false;
-    for (u32 b = 0; b < gBattlersCount; b++)
-        if (GetBattlerSide(b) == B_SIDE_PLAYER)
-            return GetMonData(&gPlayerParty[gBattlerPartyIndexes[b]], MON_DATA_HP) != 0;
-    return true;
+    return GetMonData(&gPlayerParty[gBattlerPartyIndexes[gBattlerInMenuId]], MON_DATA_HP) != 0;
 }
 
 bool UiGame_BattleItemUsable(uint16_t item)
