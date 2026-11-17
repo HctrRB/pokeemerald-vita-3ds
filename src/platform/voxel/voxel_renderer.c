@@ -398,6 +398,7 @@ typedef struct
     uint32_t treeCount;
     uint32_t buildingCount;
     uint16_t treeFirstVert;
+    uint16_t treeStaticCount;
     uint16_t buildingFirstVert;
     uint16_t totalVertCount;
     GLuint vbo;
@@ -2083,6 +2084,7 @@ typedef struct
     VoxelGlVertex *buildingVerts;
     uint32_t groundTotalCount;
     uint32_t treeCount;
+    uint32_t treeStaticCount;
     uint32_t buildingCount;
     uint8_t groundSpanCount;
     uint8_t buildingSpanCount;
@@ -2242,9 +2244,12 @@ static void NoteJobPage(VoxelChunkJobOutput *out, int32_t page)
         out->pages[out->pageCount++] = (int16_t)page;
 }
 
-// Tag top vertices of tall grass, flowers, and ash grass with sway weight 1.0 (a = 65);
-// bases and trees stay fixed at a = 255.
-static void TagTreeSwayAlpha(VoxelGlVertex *const verts, const uint32_t count)
+static VoxelGlVertex sTreeSwayTmp[CHUNK_TREE_CAP];
+
+// Tag top vertices of tall grass, flowers, and ash grass with sway weight 1.0 (a = 65),
+// then partition triangles so static trees come first [0..staticCount) for fixed-function HSR
+// and swaying foliage follows [staticCount..count) for sTreeShaderProg.
+static uint32_t TagAndPartitionTreeSway(VoxelGlVertex *const verts, const uint32_t count)
 {
     const float grassTopV = 1.0f - 32.0f / (float)VOXEL_TREE_TEXTURE_DIM;
     const float grassMinU = 79.5f / (float)VOXEL_TREE_TEXTURE_DIM;
@@ -2259,6 +2264,32 @@ static void TagTreeSwayAlpha(VoxelGlVertex *const verts, const uint32_t count)
         const bool isFlowerOrAshTop = (fabsf(gv->v - flowerTopV) < 0.002f && gv->u <= flowerMaxU);
         gv->a = (isGrassTop || isFlowerOrAshTop) ? 65u : 255u;
     }
+
+    uint32_t staticCount = 0u;
+    uint32_t swayCount = 0u;
+    for (uint32_t t = 0; t + 2u < count; t += 3u)
+    {
+        const bool isSwayTri = (verts[t].a < 255u || verts[t + 1u].a < 255u || verts[t + 2u].a < 255u);
+        if (isSwayTri)
+        {
+            sTreeSwayTmp[swayCount++] = verts[t];
+            sTreeSwayTmp[swayCount++] = verts[t + 1u];
+            sTreeSwayTmp[swayCount++] = verts[t + 2u];
+        }
+        else
+        {
+            if (staticCount != t)
+            {
+                verts[staticCount]      = verts[t];
+                verts[staticCount + 1u] = verts[t + 1u];
+                verts[staticCount + 2u] = verts[t + 2u];
+            }
+            staticCount += 3u;
+        }
+    }
+    if (swayCount > 0u)
+        memcpy(&verts[staticCount], sTreeSwayTmp, swayCount * sizeof(VoxelGlVertex));
+    return staticCount;
 }
 
 static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *out)
@@ -2358,7 +2389,7 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     {
         const uint32_t count = builder.count > CHUNK_TREE_CAP ? CHUNK_TREE_CAP : builder.count;
         PackVoxelVertices(sScratch, out->treeVerts, count, !in->indoor);
-        TagTreeSwayAlpha(out->treeVerts, count);
+        out->treeStaticCount = TagAndPartitionTreeSway(out->treeVerts, count);
         out->treeCount = count;
     }
     out->treesMs = VitaPerf_NowMs() - phaseStart;
@@ -2472,6 +2503,7 @@ static void CommitChunkJob(VoxelChunkSlot *const slot, const int32_t chunkX, con
     slot->buildingPage = out->buildingPage;
     slot->groundTotalCount = out->groundTotalCount;
     slot->treeCount = out->treeCount;
+    slot->treeStaticCount = (uint16_t)out->treeStaticCount;
     slot->buildingCount = out->buildingCount;
     // Built in the current coordinates, so drawn where it is built.
     slot->drawOffsetX = 0.0f;
@@ -5747,7 +5779,33 @@ static void Pass_Trees(const VoxelFrame *const f)
         }
     }
 
-    if (sTreeShaderReady && f->hd2dPreset != HD2D_PRESET_OFF)
+    const bool useSwayShader = (sTreeShaderReady && f->hd2dPreset != HD2D_PRESET_OFF);
+    bool hasSway = false;
+
+    // 2A: Static trees (and all foliage when sway shader is off) via fixed-function GL_ALPHA_TEST for SGX543 HSR
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.0f);
+
+    for (int32_t i = 0; i < visibleChunkCount; i++)
+    {
+        const VoxelChunkSlot *const chunk = visibleChunks[i];
+        if (chunk->treeCount == 0u) continue;
+        const uint32_t drawCount = useSwayShader ? chunk->treeStaticCount : chunk->treeCount;
+        if (useSwayShader && chunk->treeCount > chunk->treeStaticCount)
+            hasSway = true;
+        if (drawCount == 0u) continue;
+
+        glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
+        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
+        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
+        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
+
+        ChunkOffsets_Apply(chunk);
+        glDrawArrays(GL_TRIANGLES, (GLint)chunk->treeFirstVert, (GLsizei)drawCount);
+    }
+
+    // 2B: Swaying tall grass, ash grass & flowers only (no static tree crowns in shader)
+    if (useSwayShader && hasSway)
     {
         if (sAppliedOffsetX != 0.0f || sAppliedOffsetZ != 0.0f)
         {
@@ -5790,15 +5848,15 @@ static void Pass_Trees(const VoxelFrame *const f)
         for (int32_t i = 0; i < visibleChunkCount; i++)
         {
             const VoxelChunkSlot *const chunk = visibleChunks[i];
-            const uint32_t count = chunk->treeCount;
-            if (count == 0) continue;
+            if (chunk->treeCount <= chunk->treeStaticCount) continue;
+            const uint32_t swayCount = chunk->treeCount - chunk->treeStaticCount;
 
             glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
             glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
             glUniform3f(sTreeShaderUChunkDelta, chunk->drawOffsetX, 0.0f, chunk->drawOffsetZ);
-            glDrawArrays(GL_TRIANGLES, (GLint)chunk->treeFirstVert, (GLsizei)count);
+            glDrawArrays(GL_TRIANGLES, (GLint)(chunk->treeFirstVert + chunk->treeStaticCount), (GLsizei)swayCount);
         }
 
         glDisableVertexAttribArray(2);
@@ -5809,25 +5867,6 @@ static void Pass_Trees(const VoxelFrame *const f)
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         glEnableClientState(GL_COLOR_ARRAY);
-        return;
-    }
-
-    glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0.0f);
-
-    for (int32_t i = 0; i < visibleChunkCount; i++)
-    {
-        const VoxelChunkSlot *const chunk = visibleChunks[i];
-        const uint32_t count = chunk->treeCount;
-        if (count == 0) continue;
-
-        glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
-        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
-        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
-
-        ChunkOffsets_Apply(chunk);
-        glDrawArrays(GL_TRIANGLES, (GLint)chunk->treeFirstVert, (GLsizei)count);
     }
 }
 
