@@ -12,6 +12,11 @@ static GLint sCopyScene = -1, sCopyUvScale = -1, sCopyTexel = -1;
 static GLuint sBrightProg = 0;
 static GLint sBUScene = -1, sBUThresh = -1, sBUUvScale = -1;
 
+static GLuint sShaftProg = 0;
+static GLint sSUDir = -1, sSULen = -1, sSUTime = -1, sSUAsp = -1;
+static GLint sSUCount = -1, sSUMotion = -1, sSUCol = -1;
+static bool sShaftReady = false;
+
 static GLuint sCompProg = 0;
 static GLint sCUScene = -1, sCUBlur = -1, sCUBloom = -1;
 static GLint sCUSceneUv = -1, sCUBlurUv = -1, sCUBloomUv = -1;
@@ -52,7 +57,46 @@ static const char kBrightFs[] =
     "    vec3 c = texture2D(uScene, vUv * uUvScale).rgb;\n"
     "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n"
     "    float k = clamp((l - uThreshold) / max(1.0 - uThreshold, 0.05), 0.0, 1.0);\n"
-    "    gl_FragColor = vec4(c * (k * k), 1.0);\n"
+    "    gl_FragColor = vec4(c * (k * (0.75 + 0.25 * k)), 1.0);\n"
+    "}\n";
+
+// Procedural HD-2D light shafts at quarter-res (adapted from bravely-emerald kShaftFs).
+// Uses highp + small offsets + safe hash multiplier to avoid fp16 quantization stutter on SGX543.
+static const char kShaftFs[] =
+    "precision highp float;\n"
+    "uniform vec2 uDir;\n"
+    "uniform float uLen;\n"
+    "uniform float uTime;\n"
+    "uniform float uAsp;\n"
+    "uniform float uCount;\n"
+    "uniform float uMotion;\n"
+    "uniform vec3 uCol;\n"
+    "varying vec2 vUv;\n"
+    "float hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 437.5453); }\n"
+    "void main() {\n"
+    "    vec2 d = normalize(uDir);\n"
+    "    float a = dot(vec2(vUv.x * uAsp, vUv.y), vec2(d.y, -d.x));\n"
+    "    float t = uTime * uMotion;\n"
+    "    float acc = 0.0;\n"
+    "    for (int i = 0; i < 5; i++) {\n"
+    "        float fi = float(i);\n"
+    "        if (fi >= uCount) break;\n"
+    "        float sgn = mod(fi, 2.0) < 0.5 ? 1.0 : -1.0;\n"
+    "        float pos = a * (1.1 + fi * 0.55) + fi * 1.73 + t * sgn * (0.035 + 0.016 * fi);\n"
+    "        float cell = floor(pos);\n"
+    "        float fr = pos - cell;\n"
+    "        float h1 = hh(vec2(cell, fi));\n"
+    "        float h2 = hh(vec2(cell + 7.0, fi * 3.0));\n"
+    "        float width = 0.06 + 0.14 * h2;\n"
+    "        float prof = step(0.40, h1) * (1.0 - smoothstep(0.0, width, abs(fr - (0.25 + 0.5 * h1))));\n"
+    "        float breath = 0.55 + 0.45 * sin(t * (0.40 + 0.21 * fi) + h1 * 6.2831);\n"
+    "        acc += prof * breath * (1.0 - 0.07 * fi);\n"
+    "    }\n"
+    "    float fall = pow(clamp(vUv.y, 0.0, 1.0), uLen);\n"
+    "    float beam = clamp(acc * 0.78, 0.0, 1.0) * fall;\n"
+    "    float mote = 0.5 + 0.5 * sin(t * 2.8 + hh(floor(vUv * vec2(120.0, 68.0))) * 6.2831);\n"
+    "    float dust = step(0.96, hh(floor(vUv * vec2(120.0, 68.0)))) * mote * beam * 1.1;\n"
+    "    gl_FragColor = vec4(uCol * (beam + dust), 1.0);\n"
     "}\n";
 
 // 30 FPS HD-2D composite: DoF tilt-shift + Battle dim + Bloom + Split-Tone + S-Curve + Vignette in 1 pass
@@ -184,6 +228,19 @@ bool VoxelHd2dShader_Init(void)
         sShaderReady = true;
         VITA_LOG("[HD2D SHADER] Bright-Pass + Uber-Composite compiled successfully.\n");
     }
+    sShaftProg = LinkProgram(kFullVs, kShaftFs);
+    if (sShaftProg)
+    {
+        sSUDir    = glGetUniformLocation(sShaftProg, "uDir");
+        sSULen    = glGetUniformLocation(sShaftProg, "uLen");
+        sSUTime   = glGetUniformLocation(sShaftProg, "uTime");
+        sSUAsp    = glGetUniformLocation(sShaftProg, "uAsp");
+        sSUCount  = glGetUniformLocation(sShaftProg, "uCount");
+        sSUMotion = glGetUniformLocation(sShaftProg, "uMotion");
+        sSUCol    = glGetUniformLocation(sShaftProg, "uCol");
+        sShaftReady = true;
+        VITA_LOG("[HD2D SHADER] Procedural light shafts compiled successfully.\n");
+    }
 #endif
     return sShaderReady;
 }
@@ -191,6 +248,11 @@ bool VoxelHd2dShader_Init(void)
 bool VoxelHd2dShader_Ready(void)
 {
     return sShaderReady;
+}
+
+bool VoxelHd2dShader_ShaftsReady(void)
+{
+    return sShaftReady;
 }
 
 void VoxelHd2dShader_CopyBox2x2(const GLuint sceneTex, const float uMax, const float vMax,
@@ -289,5 +351,31 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0);
+    glUseProgram(0);
+}
+
+void VoxelHd2dShader_Shafts(const float dirX, const float dirY, const float lenExp, const float timeSec,
+                            const float aspect, const float layers, const float motion,
+                            const float colR, const float colG, const float colB)
+{
+    if (!sShaftReady) return;
+    static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+
+    glUseProgram(sShaftProg);
+    glUniform2f(sSUDir, dirX, dirY);
+    glUniform1f(sSULen, lenExp);
+    glUniform1f(sSUTime, timeSec);
+    glUniform1f(sSUAsp, aspect);
+    glUniform1f(sSUCount, layers);
+    glUniform1f(sSUMotion, motion);
+    glUniform3f(sSUCol, colR, colG, colB);
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, quad);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, quad);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(0);
     glUseProgram(0);
 }
