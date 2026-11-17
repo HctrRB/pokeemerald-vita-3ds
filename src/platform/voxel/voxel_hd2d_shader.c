@@ -52,7 +52,7 @@ static const char kBrightFs[] =
     "    vec3 c = texture2D(uScene, vUv * uUvScale).rgb;\n"
     "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n"
     "    float k = clamp((l - uThreshold) / max(1.0 - uThreshold, 0.05), 0.0, 1.0);\n"
-    "    gl_FragColor = vec4(c * (k * (0.5 + 0.5 * k)), 1.0);\n"
+    "    gl_FragColor = vec4(c * (k * k), 1.0);\n"
     "}\n";
 
 // 30 FPS HD-2D composite: DoF tilt-shift + Battle dim + Bloom + Split-Tone + S-Curve + Vignette in 1 pass

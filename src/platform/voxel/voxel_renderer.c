@@ -6879,9 +6879,14 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         if (VoxelHd2dShader_Ready())
         {
             const VitaDayNightLight *const bdn = (!f->indoor) ? VitaDayNight_Get() : NULL;
-            const bool nightLampBoost = (bdn != NULL && bdn->glow > 0.20f);
+            const float glow = (bdn != NULL) ? Voxel_ClampF(bdn->glow, 0.0f, 1.0f) : 0.0f;
+            // Keep night lamp bloom (~0.46) intact while raising day/indoor thresholds so bright floors do not glow.
+            const float dayThresh = 0.76f;
+            const float outThresh = hd2dHigh
+                ? (dayThresh + (0.46f - dayThresh) * glow)
+                : (dayThresh + (0.56f - dayThresh) * glow);
             const float thresh = (f->weather == VOXEL_WEATHER_SAND) ? 0.86f
-                               : (f->indoor ? 0.66f : (hd2dHigh ? (nightLampBoost ? 0.46f : 0.56f) : 0.66f));
+                               : (f->indoor ? dayThresh : outThresh);
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             glDisableClientState(GL_VERTEX_ARRAY);
             VoxelHd2dShader_BrightPass(pt->scratchColorTex, uS, vS, thresh);
