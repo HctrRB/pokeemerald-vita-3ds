@@ -385,6 +385,7 @@ extern const UiScreen gUiPlayerPcScreen;
 extern const UiScreen gUiMailReadScreen;
 struct Mail;
 void UiMailRead_Set(const struct Mail *mail);                                             // ui_scr_playerpc.c
+void UiMailRead_Open(const struct Mail *mail, const char *header);                         // ui_scr_playerpc.c
 void UiMail_Draw(const struct Mail *mail, int32_t x, int32_t y, int32_t scale);
 extern const UiScreen gUiDexScreen;
 extern const UiScreen gUiDexDetailScreen;

@@ -74,7 +74,9 @@ UiItemResult UiGame_ItemOnMon(int32_t slot, uint16_t item, UiStatDelta *delta, c
 bool UiGame_ItemOnMove(int32_t slot, uint16_t item, int32_t moveIdx);
 bool UiGame_ReplaceMove(int32_t slot, uint16_t item, int32_t moveIdx);    // false: HM moves stay
 bool UiGame_CanLearnTm(int32_t slot, uint16_t item, bool *known);
-void UiGame_GiveItem(int32_t slot, uint16_t item, uint16_t *previous);    // previous goes back to the bag
+bool UiGame_GiveItem(int32_t slot, uint16_t item, uint16_t *previous);    // previous goes back to the bag; false if full or mail
+bool UiGame_GiveMailBegin(int32_t slot, uint16_t mailItem, void (**afterClose)(void));
+int32_t UiGame_TakeMail(int32_t slot, bool sendToPc);                      // 1 ok, -1 full, 0 no mail
 bool UiGame_TakeItem(int32_t slot, uint16_t *taken);
 void UiGame_MoveInfo(int32_t slot, int32_t moveIdx, uint16_t *move, uint8_t *pp, uint8_t *maxPp);
 void UiGame_MoveName(uint16_t move, char *out, size_t cap);

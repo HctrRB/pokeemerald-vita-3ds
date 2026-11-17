@@ -927,10 +927,19 @@ const UiScreen gUiPlayerPcScreen = { Enter, Update, Build, Resume };
 // ---------------------------------------------------------------- reading a mail
 
 static const struct Mail *sReading;
+static const char *sReadHeader;
 
 void UiMailRead_Set(const struct Mail *mail)
 {
     sReading = mail;
+    sReadHeader = NULL;
+}
+
+void UiMailRead_Open(const struct Mail *mail, const char *header)
+{
+    sReading = mail;
+    sReadHeader = header;
+    UiNav_Push(&gUiMailReadScreen);
 }
 
 // A mail as ReadMail shows it, the 240 x 160 picture at (x, y), times scale (2: the text face
@@ -974,7 +983,10 @@ static bool ReadUpdate(const UiInput *in)
 
 static void ReadBuild(void)
 {
-    UiKit_Header("PC", sTabs, sTabCount, TabSlot(TAB_MAIL), NULL, NULL, 12);
+    if (sReadHeader != NULL)
+        UiKit_Header(sReadHeader, NULL, 0, 0, NULL, NULL, 12);
+    else
+        UiKit_Header("PC", sTabs, sTabCount, TabSlot(TAB_MAIL), NULL, NULL, 12);
     char name[24];
     if (sReading != NULL)
     {

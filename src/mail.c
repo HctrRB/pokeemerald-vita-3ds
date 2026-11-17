@@ -765,7 +765,7 @@ void Mail_LayoutForUi(const struct Mail *mail, struct MailUiLayout *out)
     u16 buffer[2];
     u16 species;
     u8 mailType = IS_ITEM_MAIL(mail->itemId) ? ITEM_TO_MAIL(mail->itemId) : ITEM_TO_MAIL(FIRST_MAIL_INDEX);
-    bool8 hasText = IS_ITEM_MAIL(mail->itemId);
+    bool8 hasText = IS_ITEM_MAIL(mail->itemId) && mail->playerName[0] != EOS;
     const struct MailLayout *layout = &sMailLayouts_Tall[mailType];
     u16 i, numWords = 0;
     u8 y = 0;
@@ -793,14 +793,17 @@ void Mail_LayoutForUi(const struct Mail *mail, struct MailUiLayout *out)
         out->numLines++;
         y += layout->lines[i].height;
     }
-    ptr = StringCopy(out->signature, gText_FromSpace);
-    StringCopy(ptr, mail->playerName);
-    ConvertInternationalPlayerName(ptr);
-    out->signatureWidth = layout->signatureWidth;
-    out->signatureY = layout->signatureYPos + 88;
+    if (hasText)
+    {
+        ptr = StringCopy(out->signature, gText_FromSpace);
+        StringCopy(ptr, mail->playerName);
+        ConvertInternationalPlayerName(ptr);
+        out->signatureWidth = layout->signatureWidth;
+        out->signatureY = layout->signatureYPos + 88;
+    }
 
     out->iconSpecies = SPECIES_NONE;
-    species = MailSpeciesToSpecies(mail->species, buffer);
+    species = hasText ? MailSpeciesToSpecies(mail->species, buffer) : SPECIES_NONE;
     if (species > SPECIES_NONE && species < NUM_SPECIES)
     {
         if (mailType == ITEM_TO_MAIL(ITEM_BEAD_MAIL))

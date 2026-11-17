@@ -10,20 +10,27 @@
 
 #include "global.h"
 #include "battle_pyramid.h"
+#include "berry.h"
 #include "bike.h"
 #include "coins.h"
 #include "data.h"
+#include "easy_chat.h"
 #include "event_data.h"
+#include "event_scripts.h"
 #include "evolution_scene.h"
 #include "field_player_avatar.h"
 #include "item.h"
 #include "item_menu.h"
 #include "item_use.h"
+#include "mail.h"
+#include "main.h"
 #include "overworld.h"
 #include "party_menu.h"
 #include "pokemon.h"
+#include "script.h"
 #include "task.h"
 #include "constants/battle_frontier.h"
+#include "constants/easy_chat.h"
 #include "constants/item.h"
 #include "constants/item_effects.h"
 #include "constants/items.h"
@@ -179,6 +186,14 @@ static void AfterClose_Bike(void)
     GetOnOffBike(PLAYER_AVATAR_FLAG_MACH_BIKE | PLAYER_AVATAR_FLAG_ACRO_BIKE);
 }
 
+static void AfterClose_PlantBerry(void)
+{
+    gSpecialVar_ItemId = sAfterItem;
+    RemoveBagItem(sAfterItem, 1);
+    LockPlayerFieldControls();
+    ScriptContext_SetupScript(BerryTree_EventScript_ItemUsePlantBerry);
+}
+
 static void AfterClose_FieldFunc(void)
 {
     gSpecialVar_ItemId = sAfterItem;
@@ -186,10 +201,36 @@ static void AfterClose_FieldFunc(void)
     gTasks[tid].data[3] = 1;   // used from the field shortcut, as the current Vita UI does
 }
 
+static UiUseResult UseSacredAsh(uint16_t itemId, char *msg, size_t cap)
+{
+    bool any = false;
+    for (int32_t i = 0; i < UiGame_PartyCount(); i++)
+    {
+        struct Pokemon *mon = &gPlayerParty[i];
+        if (GetMonData(mon, MON_DATA_IS_EGG) == 0 && GetMonData(mon, MON_DATA_HP) == 0)
+        {
+            const uint16_t maxHp = (uint16_t)GetMonData(mon, MON_DATA_MAX_HP);
+            const uint32_t zero = 0;
+            SetMonData(mon, MON_DATA_HP, &maxHp);
+            SetMonData(mon, MON_DATA_STATUS, &zero);
+            any = true;
+        }
+    }
+    if (!any) { snprintf(msg, cap, "It won't have any effect."); return UI_USE_FAIL; }
+    BagRemove(itemId, 1);
+    snprintf(msg, cap, "All fainted POKéMON were revived!");
+    return UI_USE_DONE;
+}
+
 UiUseResult UiGame_UseFromBag(uint16_t itemId, char *msg, size_t cap, void (**afterClose)(void))
 {
     *afterClose = NULL;
     msg[0] = 0;
+    if (ItemIsMail(itemId))
+    {
+        snprintf(msg, cap, "It can't be used right now.");
+        return UI_USE_FAIL;
+    }
     if (itemId == ITEM_REPEL || itemId == ITEM_SUPER_REPEL || itemId == ITEM_MAX_REPEL)
     {
         if (VarGet(VAR_REPEL_STEP_COUNT) > 0) { snprintf(msg, cap, "The REPEL is still in effect."); return UI_USE_FAIL; }
@@ -213,26 +254,27 @@ UiUseResult UiGame_UseFromBag(uint16_t itemId, char *msg, size_t cap, void (**af
         return UI_USE_CLOSE;
     }
     if (itemId == ITEM_SACRED_ASH)
-    {
-        bool any = false;
-        for (int32_t i = 0; i < UiGame_PartyCount(); i++)
-        {
-            struct Pokemon *mon = &gPlayerParty[i];
-            if (GetMonData(mon, MON_DATA_IS_EGG) == 0 && GetMonData(mon, MON_DATA_HP) == 0)
-            {
-                const uint16_t maxHp = (uint16_t)GetMonData(mon, MON_DATA_MAX_HP);
-                const uint32_t zero = 0;
-                SetMonData(mon, MON_DATA_HP, &maxHp);
-                SetMonData(mon, MON_DATA_STATUS, &zero);
-                any = true;
-            }
-        }
-        if (!any) { snprintf(msg, cap, "It won't have any effect."); return UI_USE_FAIL; }
-        BagRemove(itemId, 1);
-        snprintf(msg, cap, "All fainted POKéMON were revived!");
-        return UI_USE_DONE;
-    }
+        return UseSacredAsh(itemId, msg, cap);
+
     const ItemUseFunc fn = GetItemFieldFunc(itemId);
+    if (fn == ItemUseOutOfBattle_Berry && IsPlayerFacingEmptyBerryTreePatch() == TRUE)
+    {
+        sAfterItem = itemId;
+        *afterClose = AfterClose_PlantBerry;
+        return UI_USE_CLOSE;
+    }
+    if (fn == ItemUseOutOfBattle_EnigmaBerry)
+    {
+        const u8 eff = GetItemEffectType(itemId);
+        if (eff == ITEM_EFFECT_SACRED_ASH)
+            return UseSacredAsh(itemId, msg, cap);
+        if (eff == ITEM_EFFECT_NONE)
+        {
+            snprintf(msg, cap, "It can't be used right now.");
+            return UI_USE_FAIL;
+        }
+        return UI_USE_TARGET;
+    }
     if (GetPocketByItemId(itemId) == POCKET_TM_HM || fn == ItemUseOutOfBattle_Medicine || fn == ItemUseOutOfBattle_RareCandy
         || fn == ItemUseOutOfBattle_PPUp || fn == ItemUseOutOfBattle_PPRecovery || fn == ItemUseOutOfBattle_ReduceEV
         || fn == ItemUseOutOfBattle_EvolutionStone || fn == ItemUseOutOfBattle_Berry)
@@ -242,7 +284,7 @@ UiUseResult UiGame_UseFromBag(uint16_t itemId, char *msg, size_t cap, void (**af
         snprintf(msg, cap, "Your COINS: %u", (unsigned)GetCoins());
         return UI_USE_DONE;
     }
-    if (fn != NULL && fn != ItemUseOutOfBattle_CannotUse)
+    if (fn != NULL && fn != ItemUseOutOfBattle_CannotUse && fn != ItemUseOutOfBattle_Mail)
     {
         sAfterItem = itemId;
         *afterClose = AfterClose_FieldFunc;
@@ -353,21 +395,76 @@ bool UiGame_CanLearnTm(int32_t slot, uint16_t item, bool *known)
     return GetMonData(mon, MON_DATA_IS_EGG) == 0 && !*known && CanMonLearnTMHM(mon, (u8)(item - ITEM_TM01));
 }
 
-void UiGame_GiveItem(int32_t slot, uint16_t item, uint16_t *previous)
+bool UiGame_GiveItem(int32_t slot, uint16_t item, uint16_t *previous)
 {
     struct Pokemon *mon = &gPlayerParty[slot];
     *previous = (uint16_t)GetMonData(mon, MON_DATA_HELD_ITEM);
-    if (*previous != ITEM_NONE)
-        BagAdd(*previous, 1);
+    if (ItemIsMail(item) || (*previous != ITEM_NONE && ItemIsMail(*previous)))
+        return false;
     BagRemove(item, 1);
+    if (*previous != ITEM_NONE && !BagAdd(*previous, 1))
+    {
+        BagAdd(item, 1);
+        return false;
+    }
     SetMonData(mon, MON_DATA_HELD_ITEM, &item);
+    return true;
+}
+
+static uint8_t sMailGiveSlot;
+
+static void CB2_AfterWriteMailFromUi(void)
+{
+    struct Pokemon *mon = &gPlayerParty[sMailGiveSlot];
+    if (gSpecialVar_Result == FALSE)
+    {
+        const u16 mailItem = (u16)GetMonData(mon, MON_DATA_HELD_ITEM);
+        TakeMailFromMon(mon);
+        if (mailItem != ITEM_NONE)
+            BagAdd(mailItem, 1);
+    }
+    SetMainCallback2(CB2_ReturnToField);
+}
+
+static void AfterClose_WriteMail(void)
+{
+    const u8 mailId = (u8)GetMonData(&gPlayerParty[sMailGiveSlot], MON_DATA_MAIL);
+    CleanupOverworldWindowsAndTilemaps();
+    DoEasyChatScreen(EASY_CHAT_TYPE_MAIL, gSaveBlock1Ptr->mail[mailId].words, CB2_AfterWriteMailFromUi, EASY_CHAT_PERSON_DISPLAY_NONE);
+}
+
+bool UiGame_GiveMailBegin(int32_t slot, uint16_t mailItem, void (**afterClose)(void))
+{
+    struct Pokemon *mon = &gPlayerParty[slot];
+    if (!ItemIsMail(mailItem) || GetMonData(mon, MON_DATA_IS_EGG) != 0 || GetMonData(mon, MON_DATA_HELD_ITEM) != ITEM_NONE)
+        return false;
+    if (GiveMailToMonByItemId(mon, mailItem) == MAIL_NONE)
+        return false;
+    BagRemove(mailItem, 1);
+    sMailGiveSlot = (uint8_t)slot;
+    *afterClose = AfterClose_WriteMail;
+    return true;
+}
+
+int32_t UiGame_TakeMail(int32_t slot, bool sendToPc)
+{
+    struct Pokemon *mon = &gPlayerParty[slot];
+    const u16 item = (u16)GetMonData(mon, MON_DATA_HELD_ITEM);
+    if (!ItemIsMail(item) || GetMonData(mon, MON_DATA_MAIL) == MAIL_NONE)
+        return 0;
+    if (sendToPc)
+        return TakeMailFromMonAndSave(mon) != MAIL_NONE ? 1 : -1;
+    if (!BagAdd(item, 1))
+        return -1;
+    TakeMailFromMon(mon);
+    return 1;
 }
 
 bool UiGame_TakeItem(int32_t slot, uint16_t *taken)
 {
     struct Pokemon *mon = &gPlayerParty[slot];
     *taken = (uint16_t)GetMonData(mon, MON_DATA_HELD_ITEM);
-    if (*taken == ITEM_NONE || !BagAdd(*taken, 1))
+    if (*taken == ITEM_NONE || ItemIsMail(*taken) || !BagAdd(*taken, 1))
         return false;
     const uint16_t none = ITEM_NONE;
     SetMonData(mon, MON_DATA_HELD_ITEM, &none);

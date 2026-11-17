@@ -96,7 +96,7 @@ static void Label(int32_t x, int32_t y, const char *k)
 enum { TAB_INFO, TAB_SKILLS, TAB_MOVES, TAB_CONTEST, TAB_COUNT };
 static const char *const sTabs[TAB_COUNT] = { "INFO", "SKILLS", "MOVES", "CONTEST" };
 enum { MODE_BROWSE, MODE_SWITCH, MODE_SHARE, MODE_MOVES };
-enum { P_SWITCH = 1000, P_ITEM, P_CANCEL, P_GIVE, P_TAKE, P_SHIFT, P_SUMMARY };   // above every MOVE_* id
+enum { P_SWITCH = 1000, P_ITEM, P_MAIL, P_MAIL_READ, P_MAIL_TAKE, P_MAIL_TO_PC, P_MAIL_TO_BAG, P_CANCEL, P_GIVE, P_TAKE, P_SHIFT, P_SUMMARY };   // above every MOVE_* id
 
 static int32_t sTab, sMode, sFrom, sMoveSel, sMoveSwap = -1;
 static bool sSummaryOpen;
@@ -163,7 +163,7 @@ static void OpenPopup(void)
     if (UiGame_PartyCount() > 1)
         UiMenu_Add(&sPop, "SWITCH", P_SWITCH);
     if (!m.egg)
-        UiMenu_Add(&sPop, "ITEM", P_ITEM);
+        UiMenu_Add(&sPop, ItemIsMail(m.item) ? "MAIL" : "ITEM", ItemIsMail(m.item) ? P_MAIL : P_ITEM);
     UiMenu_Add(&sPop, "CANCEL", P_CANCEL);
 }
 
@@ -195,6 +195,45 @@ static void PopupChoice(int32_t id)
         if (m.item != ITEM_NONE)
             UiMenu_Add(&sPop, "TAKE", P_TAKE);
         UiMenu_Add(&sPop, "CANCEL", P_CANCEL);
+        return;
+    }
+    if (id == P_MAIL)
+    {
+        UiMenu_Open(&sPop, "MAIL", gUiTheme->gbaFrame ? 340 : 348, gUiTheme->gbaFrame ? 68 + slot * 50 : CARD_Y + (slot - sParty.first) * CARD_H, 260);
+        UiMenu_Add(&sPop, "READ", P_MAIL_READ);
+        UiMenu_Add(&sPop, "TAKE", P_MAIL_TAKE);
+        UiMenu_Add(&sPop, "CANCEL", P_CANCEL);
+        return;
+    }
+    if (id == P_MAIL_READ)
+    {
+        const u8 mailId = (u8)GetMonData(&gPlayerParty[slot], MON_DATA_MAIL);
+        if (mailId < MAIL_COUNT)
+            UiMailRead_Open(&gSaveBlock1Ptr->mail[mailId], "PARTY");
+        return;
+    }
+    if (id == P_MAIL_TAKE)
+    {
+        UiMenu_Open(&sPop, "SEND TO PC?", gUiTheme->gbaFrame ? 320 : 330, gUiTheme->gbaFrame ? 68 + slot * 50 : CARD_Y + (slot - sParty.first) * CARD_H, 300);
+        UiMenu_Add(&sPop, "SEND TO PC", P_MAIL_TO_PC);
+        UiMenu_Add(&sPop, "TO BAG (ERASE)", P_MAIL_TO_BAG);
+        UiMenu_Add(&sPop, "CANCEL", P_CANCEL);
+        return;
+    }
+    if (id == P_MAIL_TO_PC || id == P_MAIL_TO_BAG)
+    {
+        const bool toPc = (id == P_MAIL_TO_PC);
+        const int32_t res = UiGame_TakeMail(slot, toPc);
+        if (res > 0)
+        {
+            PlaySE(SE_SELECT);
+            UiKit_Toast(toPc ? "The MAIL was transferred to the MAILBOX." : "The MAIL was returned to the BAG.");
+        }
+        else
+        {
+            PlaySE(SE_FAILURE);
+            UiKit_Toast(toPc ? "The PC's MAILBOX is full." : "The BAG is full.");
+        }
         return;
     }
     if (id == P_GIVE) { UiBag_SetGiveTo(slot); UiNav_Push(&gUiBagScreen); return; }
@@ -1300,7 +1339,21 @@ static bool TargetUpdate(const UiInput *in)
             return true;
         if (sMenuKind == 2)
         {
-            if (id == 1) { char it[24]; uint16_t prev; UiGame_ItemName(sItem, it, sizeof(it)); UiGame_GiveItem(slot, sItem, &prev); PlaySE(SE_SELECT); UiKit_Toast("Swapped. The old item went back to the BAG."); UiNav_Pop(); }
+            if (id == 1)
+            {
+                uint16_t prev = ITEM_NONE;
+                if (UiGame_GiveItem(slot, sItem, &prev))
+                {
+                    PlaySE(SE_SELECT);
+                    UiKit_Toast("Swapped. The old item went back to the BAG.");
+                    UiNav_Pop();
+                }
+                else
+                {
+                    PlaySE(SE_FAILURE);
+                    UiKit_Toast(ItemIsMail(prev) ? "Please remove the MAIL." : "The BAG is full. The POKéMON's item couldn't be taken.");
+                }
+            }
             return true;
         }
         if (sTMode == UI_TARGET_BATTLE)
@@ -1379,8 +1432,35 @@ static bool TargetUpdate(const UiInput *in)
     if (sTMode == UI_TARGET_GIVE)
     {
         if (m.egg) { PlaySE(SE_FAILURE); UiKit_Toast("An EGG can't hold items."); return true; }
+        if (ItemIsMail(sItem))
+        {
+            if (m.item != ITEM_NONE)
+            {
+                PlaySE(SE_FAILURE);
+                UiKit_Toast("Can't transfer MAIL to a POKéMON holding an item.");
+                return true;
+            }
+            void (*after)(void) = NULL;
+            if (UiGame_GiveMailBegin(a, sItem, &after))
+            {
+                PlaySE(SE_SELECT);
+                UiNav_Close(after);
+            }
+            else
+            {
+                PlaySE(SE_FAILURE);
+                UiKit_Toast("No room for MAIL.");
+            }
+            return true;
+        }
         if (m.item != ITEM_NONE)
         {
+            if (ItemIsMail(m.item))
+            {
+                PlaySE(SE_FAILURE);
+                UiKit_Toast("Please remove the MAIL.");
+                return true;
+            }
             // Already holding one: confirm the swap, as the game does
             char old[24], title[40];
             UiGame_ItemName(m.item, old, sizeof(old));
@@ -1392,17 +1472,15 @@ static bool TargetUpdate(const UiInput *in)
             PlaySE(SE_SELECT);
             return true;
         }
-        uint16_t prev;
-        UiGame_GiveItem(a, sItem, &prev);
-        PlaySE(SE_SELECT);
-        if (prev != ITEM_NONE)
+        uint16_t prev = ITEM_NONE;
+        if (!UiGame_GiveItem(a, sItem, &prev))
         {
-            char old[24];
-            UiGame_ItemName(prev, old, sizeof(old));
-            UiKit_Toast("%s now holds the %s. The %s went back to the BAG.", m.name, item, old);
+            PlaySE(SE_FAILURE);
+            UiKit_Toast("The BAG is full. The POKéMON's item couldn't be taken.");
+            return true;
         }
-        else
-            UiKit_Toast("%s was given the %s to hold.", m.name, item);
+        PlaySE(SE_SELECT);
+        UiKit_Toast("%s was given the %s to hold.", m.name, item);
         return false;                                      // back to the bag
     }
     if (sTMode == UI_TARGET_BATTLE)

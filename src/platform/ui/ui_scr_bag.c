@@ -9,6 +9,7 @@
 #include "../vita/vita_platform.h"
 
 #include "global.h"
+#include "mail.h"
 #include "sound.h"
 #include "constants/item.h"
 #include "constants/items.h"
@@ -26,8 +27,8 @@
 #define GBA_ROWS 8
 #define MAX_ROWS 64
 
-enum { ACT_USE, ACT_GIVE, ACT_TOSS, ACT_REGISTER, ACT_CANCEL, ACT_COUNT };
-static const char *const sActNames[ACT_COUNT] = { "USE", "GIVE", "TOSS", "REGISTER", "CANCEL" };
+enum { ACT_USE, ACT_CHECK, ACT_GIVE, ACT_TOSS, ACT_REGISTER, ACT_CANCEL, ACT_COUNT };
+static const char *const sActNames[ACT_COUNT] = { "USE", "CHECK", "GIVE", "TOSS", "REGISTER", "CANCEL" };
 static const char *const sPocketTabs[POCKETS_COUNT] = { "ITEMS", "POKé BALLS", "TMs & HMs", "BERRIES", "KEY ITEMS" };
 static const char *const sPocketShort[POCKETS_COUNT] = { "ITEMS", "BALLS", "TMs", "BERRIES", "KEY" };
 static const char *const sPocketCat[POCKETS_COUNT] = { "ITEM", "BALL", "TM / HM", "BERRY", "KEY ITEM" };
@@ -82,7 +83,7 @@ static void BuildActs(uint16_t item)
         if (UiGame_CanGive(item)) sActs[sActCount++] = ACT_GIVE;
         return;
     }
-    if (sPocket != BALLS_POCKET) sActs[sActCount++] = ACT_USE;
+    if (sPocket != BALLS_POCKET) sActs[sActCount++] = ItemIsMail(item) ? ACT_CHECK : ACT_USE;
     if (UiGame_CanGive(item)) sActs[sActCount++] = ACT_GIVE;
     if (UiGame_CanToss(item) && sPocket != TMHM_POCKET) sActs[sActCount++] = ACT_TOSS;
     if (UiGame_CanRegister(item)) sActs[sActCount++] = ACT_REGISTER;
@@ -144,12 +145,48 @@ static void DoAction(int32_t act)
         }
         break;
     }
+    case ACT_CHECK:
+    {
+        static struct Mail sBlankMail;
+        memset(&sBlankMail, 0, sizeof(sBlankMail));
+        sBlankMail.itemId = item;
+        PlaySE(SE_SELECT);
+        UiMailRead_Open(&sBlankMail, "BAG");
+        break;
+    }
     case ACT_GIVE:
         if (sGiveTo >= 0)
         {
-            uint16_t prev;
-            UiGame_GiveItem(sGiveTo, item, &prev);
             UiMon m;
+            UiGame_Mon(sGiveTo, &m);
+            if (ItemIsMail(item))
+            {
+                if (m.item != ITEM_NONE)
+                {
+                    PlaySE(SE_FAILURE);
+                    UiKit_Toast("Can't transfer MAIL to a POKéMON holding an item.");
+                    break;
+                }
+                void (*after)(void) = NULL;
+                if (UiGame_GiveMailBegin(sGiveTo, item, &after))
+                {
+                    PlaySE(SE_SELECT);
+                    UiNav_Close(after);
+                }
+                else
+                {
+                    PlaySE(SE_FAILURE);
+                    UiKit_Toast("No room for MAIL.");
+                }
+                break;
+            }
+            uint16_t prev = ITEM_NONE;
+            if (!UiGame_GiveItem(sGiveTo, item, &prev))
+            {
+                PlaySE(SE_FAILURE);
+                UiKit_Toast(ItemIsMail(prev) ? "Please remove the MAIL." : "The BAG is full. The POKéMON's item couldn't be taken.");
+                break;
+            }
             UiGame_Mon(sGiveTo, &m);
             UiKit_Toast("%s was given the %s to hold.", m.name, name);
             sGiveTo = -1;
