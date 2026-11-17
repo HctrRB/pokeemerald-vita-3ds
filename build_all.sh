@@ -27,6 +27,33 @@ JOBS=$(nproc 2>/dev/null || echo 4)
 step() { echo; echo "=== $* ==="; }
 die() { echo "ERROR: $*" >&2; exit 1; }
 
+rotate_msys_mirrors() {
+    for ml in /etc/pacman.d/mirrorlist.*; do
+        [ -f "$ml" ] || continue
+        awk '
+            !moved && /^Server[[:space:]]*=/ { first = $0; moved = 1; next }
+            { print }
+            END { if (moved) print first }
+        ' "$ml" > "$ml.tmp" && mv "$ml.tmp" "$ml"
+    done
+}
+
+pacman_with_retry() {
+    local attempt=1 max_attempts=4
+    while [ "$attempt" -le "$max_attempts" ]; do
+        if pacman "$@"; then
+            return 0
+        fi
+        if [ "$attempt" -eq "$max_attempts" ]; then
+            return 1
+        fi
+        echo "pacman failed (attempt $attempt/$max_attempts); rotating MSYS2 mirror and retrying..."
+        rotate_msys_mirrors
+        pacman -Sy --noconfirm || true
+        attempt=$((attempt + 1))
+    done
+}
+
 export VITASDK=/usr/local/vitasdk
 export VITASDK_CHANNEL=2026.08
 export TAR_OPTIONS=--force-local
@@ -47,8 +74,8 @@ if [ -n "$missing" ]; then
     step "Installing MSYS2 packages:$missing"
     # Refresh the package lists first: on a new or old MSYS2 they are out of date and the
     # downloads fail (404). -Syu also brings the installed packages up to the new lists.
-    pacman -Syu --noconfirm || pacman -Syu --noconfirm
-    pacman -S --needed --noconfirm $missing
+    pacman_with_retry -Syu --noconfirm
+    pacman_with_retry -S --needed --noconfirm $missing
 fi
 
 # ---------------------------------------------------------------- 2. VitaSDK and its libraries
