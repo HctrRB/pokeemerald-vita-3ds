@@ -3373,7 +3373,7 @@ static void DrawMotes(float strength, float seconds, bool fireflies, Hd2dPreset 
     const uint8_t cg = fireflies ? 255u : 238u;
     const uint8_t cb = fireflies ? 130u : 185u;
 
-    const uint32_t moteTotal = (hd2d != HD2D_PRESET_OFF) ? (VOXEL_MOTE_COUNT * 2u) : VOXEL_MOTE_COUNT;
+    const uint32_t moteTotal = (hd2d != HD2D_PRESET_OFF) ? ((VOXEL_MOTE_COUNT * 3u) / 2u) : VOXEL_MOTE_COUNT;
     for (uint32_t i = 0; i < moteTotal; ++i)
     {
         const MoteSpec *m = &sMoteSpecs[i % VOXEL_MOTE_COUNT];
@@ -5422,7 +5422,7 @@ static void UpdatePointLights(const VoxelFrame *const f)
                 const float lz = (sLampGroundScratch[i].z + sLampGroundScratch[i + 2].z) * 0.5f;
                 const float dx = lx - f->playerX;
                 const float dz = lz - f->playerZ;
-                if (dx * dx + dz * dz <= 16.0f * 16.0f)
+                if (dz <= 8.5f && (dx * dx + dz * dz) <= 13.5f * 13.5f)
                 {
                     VoxelPointLights_Add(lx, ly, lz, 1.0f, 0.68f, 0.34f,
                                          4.4f, glow * 0.92f, i * 2654435761u);
@@ -6963,7 +6963,23 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         const float blurStep = hd2dHigh ? 1.55f : 1.0f;
         glBindFramebuffer(GL_FRAMEBUFFER, pt->blurFbo);
         glViewport(0, 0, scratchW, scratchH);
-        BlurTaps(pt->scratchColorTex, uS, vS, (float)VOXEL_SCRATCH_FBO_W, (float)VOXEL_SCRATCH_FBO_H, blurStep, blurStep);
+        if (VoxelHd2dShader_Ready())
+        {
+            glDisable(GL_BLEND);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            VoxelHd2dShader_CopyBox2x2(pt->scratchColorTex, uS, vS,
+                                       blurStep / (float)VOXEL_SCRATCH_FBO_W,
+                                       blurStep / (float)VOXEL_SCRATCH_FBO_H);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            sFrameDrawCalls++;
+            sFrameVertCount += 4u;
+        }
+        else
+        {
+            BlurTaps(pt->scratchColorTex, uS, vS, (float)VOXEL_SCRATCH_FBO_W, (float)VOXEL_SCRATCH_FBO_H, blurStep, blurStep);
+        }
     }
     VitaPerf_SubEnd(VITA_PERF_T_POST_DOF);
 
@@ -7104,12 +7120,35 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         // In HIGH mode, run 2-pass Kawase blur (bloomFboA -> bloomFboB -> bloomFboA) for soft halos on lamps, sky & shafts
         if (hd2dHigh)
         {
-            glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboB);
-            glViewport(0, 0, bloomW, bloomH);
-            BlurTaps(pt->bloomTexA, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 1.50f, 1.50f);
-            glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
-            glViewport(0, 0, bloomW, bloomH);
-            BlurTaps(pt->bloomTexB, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 2.75f, 2.75f);
+            if (VoxelHd2dShader_Ready())
+            {
+                glDisable(GL_BLEND);
+                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+                glDisableClientState(GL_VERTEX_ARRAY);
+                glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboB);
+                glViewport(0, 0, bloomW, bloomH);
+                VoxelHd2dShader_CopyBox2x2(pt->bloomTexA, uB, vB,
+                                           1.50f / (float)VOXEL_BLOOM_FBO_W,
+                                           1.50f / (float)VOXEL_BLOOM_FBO_H);
+                glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
+                glViewport(0, 0, bloomW, bloomH);
+                VoxelHd2dShader_CopyBox2x2(pt->bloomTexB, uB, vB,
+                                           2.75f / (float)VOXEL_BLOOM_FBO_W,
+                                           2.75f / (float)VOXEL_BLOOM_FBO_H);
+                glEnableClientState(GL_VERTEX_ARRAY);
+                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+                sFrameDrawCalls += 2u;
+                sFrameVertCount += 8u;
+            }
+            else
+            {
+                glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboB);
+                glViewport(0, 0, bloomW, bloomH);
+                BlurTaps(pt->bloomTexA, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 1.50f, 1.50f);
+                glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
+                glViewport(0, 0, bloomW, bloomH);
+                BlurTaps(pt->bloomTexB, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 2.75f, 2.75f);
+            }
             activeBloomTex = pt->bloomTexA;
         }
         else
