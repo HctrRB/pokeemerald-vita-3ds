@@ -64,6 +64,9 @@ typedef enum
     FAST_EXTRA_VOXEL_RES,
     FAST_EXTRA_VOXEL_FPS,
     FAST_EXTRA_VOXEL_BLUR,
+    FAST_EXTRA_VOXEL_BLOOM,    // 0 = OFF, 1..10 = bright-pass world bloom strength (default 10)
+    FAST_EXTRA_VOXEL_SKY_BLOOM,// 0 = OFF, 5 = default (1.0x), 10 = 2.0x directional sky bloom
+    FAST_EXTRA_VOXEL_SHAFTS,   // 0 = OFF, 5 = default (1.0x), 10 = 2.0x procedural light shafts
     FAST_EXTRA_UI_THEME,       // colour theme of the new UI menus (UI_THEME_*)
     FAST_EXTRA_VISIBLE_WILD,
     FAST_EXTRA_ENCOUNTER_RATE,

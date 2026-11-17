@@ -99,6 +99,9 @@ static inline int32_t LookupFastId(const char *key)
         if (strcmp(key, "voxel_res") == 0) return FAST_EXTRA_VOXEL_RES;
         if (strcmp(key, "voxel_fps") == 0) return FAST_EXTRA_VOXEL_FPS;
         if (strcmp(key, "voxel_blur") == 0) return FAST_EXTRA_VOXEL_BLUR;
+        if (strcmp(key, "voxel_bloom") == 0) return FAST_EXTRA_VOXEL_BLOOM;
+        if (strcmp(key, "voxel_sky_bloom") == 0) return FAST_EXTRA_VOXEL_SKY_BLOOM;
+        if (strcmp(key, "voxel_shafts") == 0) return FAST_EXTRA_VOXEL_SHAFTS;
         if (strcmp(key, "voxel_fov") == 0) return FAST_EXTRA_VOXEL_FOV;
         if (strcmp(key, "voxel_grade") == 0) return FAST_EXTRA_VOXEL_GRADE;
         if (strcmp(key, "visible_wild") == 0) return FAST_EXTRA_VISIBLE_WILD;
@@ -139,6 +142,7 @@ static const char *const sFilterValues[] = { "NEAREST", "BILINEAR", "SHARP", NUL
 static const char *const sUiThemeValues[] = { "GBA", "RED", "EMERALD", "CRYSTAL", "TROPICAL", "ROYAL", NULL };
 static const char *const sVoxelFpsValues[] = { "30 (HD-2D)", "60 (CLASSIC)", NULL };
 static const char *const sVoxelFovValues[] = { "35 DEG", "25 DEG", NULL };
+static const char *const sLevel0To10Values[] = { "0 (OFF)", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", NULL };
 static const char *const sSaveSlotValues[] = { "SLOT 1", "SLOT 2", "SLOT 3", NULL };
 static const char *const sDayNightValues[] = { "OFF", "AUTO", NULL };
 static const char *const sClockSpeedValues[] = { "1X", "6X", "12X", "24X", "60X", "120X", "1000X", NULL };
@@ -282,6 +286,9 @@ const VitaExtra gVitaExtras[] = {
     // ---- [WORLD] ----
     { VITA_TAB_WORLD,   "RENDERER",   "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "DIORAMA BLUR (DOF)","voxel_blur",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "WORLD BLOOM",       "voxel_bloom",     11, 10, sLevel0To10Values,  NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "SKY BLOOM",         "voxel_sky_bloom", 11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "LIGHT SHAFTS",      "voxel_shafts",    11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "MODE / FRAMERATE",  "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "CAMERA ANGLE",      "voxel_fov",        2, 0, sVoxelFovValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "DAY / NIGHT CYCLE", "day_night",        2, 1, sDayNightValues,    NULL, NULL, NULL },

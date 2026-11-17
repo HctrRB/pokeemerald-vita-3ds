@@ -20,7 +20,7 @@ bool VoxelHd2dShader_ShaftsReady(void);
 void VoxelHd2dShader_CopyBox2x2(GLuint sceneTex, float uMax, float vMax, float texelX, float texelY);
 
 // Runs the 240x136 luminance bright-pass into the currently bound bloom FBO.
-void VoxelHd2dShader_BrightPass(GLuint sceneTex, float uMax, float vMax, float threshold);
+void VoxelHd2dShader_BrightPass(GLuint sceneTex, float uMax, float vMax, float threshold, float gain);
 
 // Renders bravely-emerald style procedural light shafts into the currently bound 240x136 FBO.
 void VoxelHd2dShader_Shafts(float dirX, float dirY, float lenExp, float timeSec,

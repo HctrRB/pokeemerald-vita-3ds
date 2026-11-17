@@ -10,7 +10,7 @@ static GLuint sCopyProg = 0;
 static GLint sCopyScene = -1, sCopyUvScale = -1, sCopyTexel = -1;
 
 static GLuint sBrightProg = 0;
-static GLint sBUScene = -1, sBUThresh = -1, sBUUvScale = -1;
+static GLint sBUScene = -1, sBUThresh = -1, sBUUvScale = -1, sBUGain = -1;
 
 static GLuint sShaftProg = 0;
 static GLint sSUDir = -1, sSULen = -1, sSUTime = -1, sSUAsp = -1;
@@ -52,12 +52,13 @@ static const char kBrightFs[] =
     "uniform sampler2D uScene;\n"
     "uniform float uThreshold;\n"
     "uniform vec2 uUvScale;\n"
+    "uniform float uGain;\n"
     "varying vec2 vUv;\n"
     "void main() {\n"
     "    vec3 c = texture2D(uScene, vUv * uUvScale).rgb;\n"
     "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n"
     "    float k = clamp((l - uThreshold) / max(1.0 - uThreshold, 0.05), 0.0, 1.0);\n"
-    "    gl_FragColor = vec4(c * (k * (0.75 + 0.25 * k)), 1.0);\n"
+    "    gl_FragColor = vec4(c * (k * (0.75 + 0.25 * k) * uGain), 1.0);\n"
     "}\n";
 
 // Procedural HD-2D light shafts at quarter-res (adapted from bravely-emerald kShaftFs).
@@ -212,6 +213,7 @@ bool VoxelHd2dShader_Init(void)
         sBUScene   = glGetUniformLocation(sBrightProg, "uScene");
         sBUThresh  = glGetUniformLocation(sBrightProg, "uThreshold");
         sBUUvScale = glGetUniformLocation(sBrightProg, "uUvScale");
+        sBUGain    = glGetUniformLocation(sBrightProg, "uGain");
 
         sCUScene      = glGetUniformLocation(sCompProg, "uScene");
         sCUBlur       = glGetUniformLocation(sCompProg, "uBlur");
@@ -278,7 +280,7 @@ void VoxelHd2dShader_CopyBox2x2(const GLuint sceneTex, const float uMax, const f
     glUseProgram(0);
 }
 
-void VoxelHd2dShader_BrightPass(const GLuint sceneTex, const float uMax, const float vMax, const float threshold)
+void VoxelHd2dShader_BrightPass(const GLuint sceneTex, const float uMax, const float vMax, const float threshold, const float gain)
 {
     if (!sShaderReady) return;
     static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
@@ -289,6 +291,7 @@ void VoxelHd2dShader_BrightPass(const GLuint sceneTex, const float uMax, const f
     glUniform1i(sBUScene, 0);
     glUniform1f(sBUThresh, threshold);
     glUniform2f(sBUUvScale, uMax, vMax);
+    glUniform1f(sBUGain, gain);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
