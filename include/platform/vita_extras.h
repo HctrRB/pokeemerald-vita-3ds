@@ -69,7 +69,8 @@ typedef enum
     FAST_EXTRA_VISIBLE_WILD,
     FAST_EXTRA_ENCOUNTER_RATE,
     FAST_EXTRA_VOXEL_HD2D,     // 0=AUTO(30:HIGH/60:LOW), 1=OFF, 2=LOW, 3=HIGH
-    FAST_EXTRA_CAMERA_STICK,   // Hold L + left analog for 3D camera orbit
+    FAST_EXTRA_CAMERA_STICK,
+    FAST_EXTRA_CAMERA_TREES,   // billboard tree cards when camera is rotated   // Hold L + left analog for 3D camera orbit
     FAST_EXTRA_FIRST_PERSON,   // Eye-level voxel camera
     FAST_EXTRA_VOXEL_FOV,
     FAST_EXTRA_VOXEL_GRADE,

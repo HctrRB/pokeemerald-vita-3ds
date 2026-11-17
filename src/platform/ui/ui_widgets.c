@@ -533,6 +533,39 @@ int32_t UiW_TextWrappedF(uint8_t face, uint8_t px, int32_t x, int32_t y, int32_t
     return lines;
 }
 
+// Scrolling marquee for all fixed-width translated labels. Pause at either
+// edge so the beginning/end remains readable. Clip only during the transition.
+void UiW_TextMarquee(uint8_t face, uint8_t px, int32_t x, int32_t y,
+                     int32_t w, int32_t h, const char *label, uint32_t color,
+                     uint32_t tick)
+{
+    const char *text = UiLocale_Translate(label);
+    if (text == NULL || w <= 8)
+        return;
+    const int32_t pad = 6;
+    const int32_t available = w - 2 * pad;
+    const int32_t width = UiText_Width(face, px, text);
+    int32_t drawX = x + pad;
+    if (width <= available)
+        drawX = x + (w - width) / 2;
+    else
+    {
+        const int32_t overflow = width - available;
+        // 40 frames of rest at each end; about one pixel per 2 frames.
+        const int32_t travel = overflow * 2;
+        const int32_t cycle = 80 + 2 * travel;
+        const int32_t t = (int32_t)(tick % (uint32_t)cycle);
+        const int32_t offset = t < 40 ? 0 :
+                               t < 40 + travel ? (t - 40) / 2 :
+                               t < 80 + travel ? overflow :
+                               overflow - (t - 80 - travel) / 2;
+        drawX -= offset;
+    }
+    UiDraw_PushClip(x + pad, y, available, h);
+    UiText_DrawMid(face, px, drawX, y, h, text, color);
+    UiDraw_PopClip();
+}
+
 static void DrawGbaFooterItem(int32_t *x, int32_t y, const char *key, const char *label, bool gold)
 {
     const int32_t capW = UiW_GbaKeyCapWidth(key, 24);

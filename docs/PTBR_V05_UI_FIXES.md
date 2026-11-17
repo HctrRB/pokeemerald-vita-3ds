@@ -15,11 +15,20 @@ The English baseline and the optional PT-BR catalogs remain separate.
 
 ## Experimental overworld camera
 Under Options > World > Renderer, immediately below 3D VOXEL DIORAMA:
-- L STICK CAMERA: defaults OFF. Hold the **L shoulder** button and move the
-  **left analog stick** to orbit/pitch the voxel camera. The D-pad and usual
-  movement inputs are unaffected when the modifier is released.
+- RIGHT STICK CAMERA: defaults OFF. Move the **right analog stick** directly
+  to orbit/pitch the voxel camera, without a shoulder-button modifier.
+  Turning it OFF resets yaw and pitch to the original angle immediately.
 - FIRST PERSON: defaults OFF. Switches the overworld view to an eye-level
-  voxel camera. Optionally combine with L STICK CAMERA to look around.
+  voxel camera. Optionally combine with RIGHT STICK CAMERA to look around.
+- FACE CAMERA SPRITES: shown only when RIGHT STICK CAMERA is ON. Opt-in
+  camera-facing foliage: tree/grass sprite cards rotate in the existing
+  chunk VBO as yaw changes, based on a saved copy of the original vertices.
+  Disabling it restores the original unrotated geometry. Requires Vita GPU
+  performance and seam testing, especially on large multi-card trees.
+- The native status labels and city slogans now use scrolling marquee
+  animations for text wider than their allotted areas, instead of cutting
+  off the ending. City slogans use PT-BR translations when selected, and
+  have no additional background capsule or drop shadow.
 - Camera changes do not modify the default battle camera or 2D field view.
   Broader 3D culling for free-look is experimental and requires performance
   testing on physical PS Vita hardware.
@@ -28,9 +37,12 @@ Under Options > World > Renderer, immediately below 3D VOXEL DIORAMA:
 
 ## Local PS Vita packaging
 - Custom LiveArea art can be copied into vita/sce_sys_custom using:
-  icon0.png, pic0.png, livearea/contents/bg.png and startup.png.
+  icon0.png, pic0.png, livearea/contents/bg.png,
+  livearea/contents/startup.png and livearea/contents/template.xml.
   The VPK CMake rules prefer this local, uncommitted override directory.
 - The startup graphic is converted to an indexed PNG for Vita compatibility.
+- The user-supplied LiveArea XML is staged from Post PTBR/Updatev0.5/template.xml
+  into sce_sys/livearea/contents/template.xml in both VPK variants.
 - Optional manual: sce_sys/manual/001.png through 080.png inside the VPK.
 - To remove the vitaGL splash, a separate local vitaGL library was rebuilt
   with NO_SPLASHSCREEN=1 (SKIP_SPLASHSCREEN), without modifying the installed

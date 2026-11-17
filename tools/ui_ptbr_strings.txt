@@ -764,7 +764,9 @@ Check and organize your party.|Confira e organize sua equipe.
 Type|Digitar
 Delete|Apagar
 Locked|Bloqueado
-L STICK CAMERA|CÂMERA NO ANALÓGICO
+RIGHT STICK CAMERA|CÂMERA NO ANALÓGICO
 FIRST PERSON|PRIMEIRA PESSOA
-Hold L + left stick to rotate or tilt the 3D camera (D-pad still walks).|Segure L e mova o analógico esquerdo para girar ou inclinar a câmera. O direcional continua movendo.
-Eye-level voxel view. Hold L + left stick to look around if enabled.|Visão em primeira pessoa. Se a câmera analógica estiver ativa, segure L e mova o analógico para olhar.
+Move the right stick to rotate the camera.|Use o analógico direito para girar a câmera.
+View the world through your character's eyes.|Veja o mundo pelos olhos do personagem.
+FACE CAMERA SPRITES|SPRITES VIRADOS
+Keep 2D trees facing the camera.|Árvores 2D acompanham a câmera.

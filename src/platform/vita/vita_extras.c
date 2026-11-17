@@ -49,6 +49,7 @@ static inline int32_t LookupFastId(const char *key)
         break;
     case 'c':
         if (strcmp(key, "camera_stick") == 0) return FAST_EXTRA_CAMERA_STICK;
+        if (strcmp(key, "camera_trees") == 0) return FAST_EXTRA_CAMERA_TREES;
         if (strcmp(key, "clock_speed") == 0) return FAST_EXTRA_CLOCK_SPEED;
         break;
     case 'd':
@@ -286,7 +287,8 @@ const VitaExtra gVitaExtras[] = {
 
     // ---- [WORLD] ----
     { VITA_TAB_WORLD,   "RENDERER",   "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "RENDERER",   "L STICK CAMERA",    "camera_stick",     2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "RIGHT STICK CAMERA", "camera_stick",     2, 0, gVitaExtrasOffOn, NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "FACE CAMERA SPRITES","camera_trees",    2, 0, gVitaExtrasOffOn, NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "FIRST PERSON",      "first_person",     2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "DIORAMA BLUR (DOF)","voxel_blur",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "MODE / FRAMERATE",  "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },

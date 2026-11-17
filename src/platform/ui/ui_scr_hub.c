@@ -274,23 +274,17 @@ static void EntryLabel(uint8_t e, char *out, size_t cap)
         snprintf(out, cap, "%s", labels[e]);
 }
 
-// Keep translated labels within the 162px status capsules of every theme.
+// Independent label ticker: lets long PT-BR text pass across the whole capsule.
+static uint32_t sStatusMarqueeFrame;
 static void DrawCapsuleLabel(int32_t x, int32_t y, int32_t w, const char *label, uint32_t ink)
 {
-    const char *text = UiLocale_Translate(label);
-    const uint8_t face = UI_FACE_VT323;
-    uint8_t px = 24;
-    if (UiText_Width(face, px, text) > w - 14)
-        px = 20;
-    if (UiText_Width(face, px, text) > w - 14)
-        px = 18;
-    UiDraw_PushClip(x + 6, y, w - 12, 34);
-    UiText_DrawMid(face, px, x + (w - UiText_Width(face, px, text)) / 2, y, 34, text, ink);
-    UiDraw_PopClip();
+    UiW_TextMarquee(UI_FACE_VT323, 24, x, y, w, 34, label, ink,
+                    sStatusMarqueeFrame);
 }
 
 static void BuildStatus(void)
 {
+    ++sStatusMarqueeFrame;
     char buf[48], zone[32];
     UiGame_ZoneName(zone, sizeof(zone));
     UiW_PanelDark(16, 16, 332, 48);

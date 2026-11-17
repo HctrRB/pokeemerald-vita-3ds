@@ -71,8 +71,9 @@ static const struct { const char *key, *help; } sExtraHelp[] = {
     { "ui_theme", "Colour and style of the menus." },
     { "ui_lang", "Display language of Vita menus. Game text stays in PT-BR." },
     { "voxel_3d", "Draw the overworld as a 3D voxel diorama." },
-    { "camera_stick", "Hold L + left stick to rotate or tilt the 3D camera (D-pad still walks)." },
-    { "first_person", "Eye-level voxel view. Hold L + left stick to look around if enabled." },
+    { "camera_stick", "Move the right stick to rotate the camera." },
+    { "camera_trees", "Keep 2D trees facing the camera." },
+    { "first_person", "View the world through your character's eyes." },
     { "voxel_blur", "Blur the far background of the diorama." },
     { "voxel_fps", "Frame rate of the 3D world. 60 uses more battery." },
     { "day_night", "Light changes with the clock." },
@@ -134,7 +135,13 @@ static void BuildRows(void)
     {
         const VitaExtra *ex = VitaExtras_GetTabExtra((uint8_t)sTab, i);
         if (ex != NULL)
+        {
+            // Only show billboard alignment while free-look is available.
+            if (strcmp(ex->key, "camera_trees") == 0 &&
+                !VitaExtras_GetFast(FAST_EXTRA_CAMERA_STICK))
+                continue;
             sRows[sCount++] = (OptRow){ ROW_EXTRA, (uint16_t)i, ex->group, ex->name, ex };
+        }
     }
     if (sTab == VITA_TAB_MODES)
         sRows[sCount++] = (OptRow){ ROW_QUIT, 0, "SYSTEM", "QUIT TO LIVEAREA", NULL };
@@ -340,6 +347,11 @@ static bool Update(const UiInput *in)
     if (in->repeat & VITA_BTN_LEFT) Step(&sRows[l->sel], -1);
     else if (in->repeat & VITA_BTN_RIGHT) Step(&sRows[l->sel], 1);
     else if (a >= 0) Step(&sRows[a], 1);
+    // A newly enabled camera reveals the dependent tree-billboard setting.
+    if (sTab == VITA_TAB_WORLD &&
+        sCount != (int32_t)VitaExtras_GetTabExtraCount(VITA_TAB_WORLD) -
+                  (VitaExtras_GetFast(FAST_EXTRA_CAMERA_STICK) ? 0 : 1))
+        BuildRows();
     return true;
 }
 

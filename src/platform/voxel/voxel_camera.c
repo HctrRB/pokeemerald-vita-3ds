@@ -22,17 +22,21 @@
 #define VOXEL_CAMERA_PITCH_DEFAULT 35.0f
 #define VOXEL_CAMERA_PITCH_LOW 25.0f
 
-// L + left stick changes camera direction without moving the player.
+// Right analog stick controls the camera directly. Disabled = original pose.
 static void CameraStick(VoxelCamera *cam)
 {
     if (!VitaExtras_GetFast(FAST_EXTRA_CAMERA_STICK))
+    {
+        cam->yaw = 0.0f;
+        cam->lookPitch = 0.0f;
         return;
+    }
 #ifdef PLATFORM_VITA
     SceCtrlData pad = {0};
-    if (sceCtrlPeekBufferPositive(0, &pad, 1) < 1 || !(pad.buttons & SCE_CTRL_LTRIGGER))
+    if (sceCtrlPeekBufferPositive(0, &pad, 1) < 1)
         return;
-    float dx = ((float)pad.lx - 128.0f) / 127.0f;
-    float dy = ((float)pad.ly - 128.0f) / 127.0f;
+    float dx = ((float)pad.rx - 128.0f) / 127.0f;
+    float dy = ((float)pad.ry - 128.0f) / 127.0f;
     if (fabsf(dx) < 0.16f) dx = 0.0f;
     if (fabsf(dy) < 0.16f) dy = 0.0f;
     cam->yaw += dx * 1.4f;

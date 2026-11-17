@@ -78,12 +78,11 @@ bool UiSign_Draw(void)
     }
     if (motto != NULL)
     {
-        const int32_t mw = 600, mx = x + 8, my = y + 80;
-        UiW_Capsule(mx, my, mw, 62);
-        UiDraw_PushClip(mx + 14, my + 4, mw - 28, 54);
-        UiW_TextWrappedF(UI_FACE_VT323, 24, mx + 14, my + 5, mw - 28, 26,
-                         motto, UI_COL_ON_FRAME, 2);
-        UiDraw_PopClip();
+        // The motto is localized only for PT-BR and scrolls when too long.
+        // No capsule/drop shadow underneath the city name.
+        UiW_TextMarquee(UI_FACE_VT323, 24, x + 10, y + 81,
+                        570, 34, motto, UI_RGBA(255, 255, 255, 255),
+                        (uint32_t)(age > SLIDE ? age - SLIDE : 0));
     }
     return true;
 }

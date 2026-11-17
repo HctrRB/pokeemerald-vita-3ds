@@ -1052,13 +1052,7 @@ u16 Platform_GetKeyInput(void)
 
     // Read straight from sceCtrl on the game thread. START in the field opens the new UI's menu
     // (Ui_Tick); the game's own START menu is used where its entries are special (Ui_OwnsFieldStart).
-    const uint32_t pad = VitaPlatform_ReadButtons();
-    uint16_t keys = VitaControls_MapButtons(pad) | Ui_TakeInjectedKeys();
-    // When enabled, L + analog look takes precedence over walking and GBA L.
-    // The camera samples the analog stick independently (voxel_camera.c).
-    if (Platform_GetSetting(PLATFORM_SETTING_VOXEL_3D) &&
-        VitaExtras_GetFast(FAST_EXTRA_CAMERA_STICK) && (pad & VITA_BTN_L))
-        keys &= ~(DPAD_UP | DPAD_DOWN | DPAD_LEFT | DPAD_RIGHT | L_BUTTON);
+    uint16_t keys = VitaControls_MapButtons(VitaPlatform_ReadButtons()) | Ui_TakeInjectedKeys();
     extern void CB2_Overworld(void);
     if (gMain.callback2 == CB2_Overworld && Ui_OwnsFieldStart())
         keys &= ~START_BUTTON;
