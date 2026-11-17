@@ -79,7 +79,14 @@ if [ -n "$need_pkgs" ]; then
     step "Installing the Vita libraries:$need_pkgs"
     mkdir -p /c/vdpm-tmp
     export TMPDIR="$(cygpath -m /c/vdpm-tmp)"
-    VDPM_NONINTERACTIVE=1 vdpm install $need_pkgs
+    if ! VDPM_NONINTERACTIVE=1 vdpm install $need_pkgs; then
+        # Upstream 2026.08 channel snapshots occasionally ship incomplete package sets (missing vitaGL/sdl2).
+        FALLBACK_VITA_PKG_URL="https://github.com/vitasdk/vitasdk-autobuild/releases/download/packages-2026.08-snapshot-20261115.68.1"
+        echo "vdpm install failed; falling back to $FALLBACK_VITA_PKG_URL"
+        [ -f "$VITASDK/etc/pacman.conf" ] || die "missing $VITASDK/etc/pacman.conf; see docs/BUILD.md"
+        sed -i "s|^Server = https://github.com/vitasdk/vitasdk-autobuild/releases/download/.*|Server = $FALLBACK_VITA_PKG_URL|" "$VITASDK/etc/pacman.conf"
+        vdpm pacman -- -Sy --noconfirm $need_pkgs
+    fi
     for f in "$VITA_INC/vitaGL.h" "$VITA_LIB/libvitaGL.a" "$VITA_LIB/libSDL2.a"; do
         [ -f "$f" ] || die "$(basename "$f") is still missing after vdpm install $need_pkgs; see docs/BUILD.md"
     done
