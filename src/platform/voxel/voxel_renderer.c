@@ -2975,7 +2975,7 @@ static VoxelLight FogLight(const VoxelLight *clear, bool cave)
 static VoxelLight BaseLightFor(bool indoor, VoxelWeatherClass weather, float weatherAmount, float bolt)
 {
     VoxelLight light = {{1.00f, 0.99f, 0.95f}, {0.93f, 0.97f, 1.05f}, VOXEL_HAZE_MAX,
-                        0.96f, 1.04f, 0.0f, 0.07f, 0.0f,
+                        0.96f, 1.04f, 0.20f, 0.07f, 0.0f,
                         {(VOXEL_HAZE_COLOUR & 255) / 255.0f,
                          ((VOXEL_HAZE_COLOUR >> 8) & 255) / 255.0f,
                          ((VOXEL_HAZE_COLOUR >> 16) & 255) / 255.0f},
@@ -2989,7 +2989,7 @@ static VoxelLight BaseLightFor(bool indoor, VoxelWeatherClass weather, float wea
             light.sun[0] = 1.04f; light.sun[1] = 1.01f; light.sun[2] = 0.93f;
             light.haze = 0.12f;
             light.dappleLow = 0.94f; light.dappleHigh = 1.07f;
-            light.rays = 0.14f;
+            light.rays = 0.30f;
             light.bloom = 0.10f;
             light.motes = 1.00f;
             break;
@@ -6844,10 +6844,10 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
         if (!underground && (f->hd2dPreset == HD2D_PRESET_OFF || !VoxelHd2dShader_ShaftsReady()))
         {
             const uint32_t timeMs = VitaDayNight_GetTimeMs();
-            if (f->light.rays > 0.005f)
+            const VitaDayNightPath sunP = VitaDayNight_SunPathAt(timeMs);
+            if (f->light.rays * sunP.strength > 0.005f)
             {
-                const VitaDayNightPath sunP = VitaDayNight_SunPathAt(timeMs);
-                DrawWorldRays(f->light.rays, seconds, false, &sunP);
+                DrawWorldRays(f->light.rays * sunP.strength, seconds, false, &sunP);
             }
             else
             {
@@ -7201,21 +7201,29 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         {
             const uint32_t timeMs = VitaDayNight_GetTimeMs();
             const VitaDayNightLight *const sdn = VitaDayNight_Get();
+            const float daylight = (sdn != NULL) ? Voxel_ClampF(sdn->daylight, 0.0f, 1.0f) : 1.0f;
             const float glow = (sdn != NULL) ? Voxel_ClampF(sdn->glow, 0.0f, 1.0f) : 0.0f;
-            const bool dayShafts = (f->light.rays > 0.005f);
-            const VitaDayNightPath moonP = dayShafts ? (VitaDayNightPath){0} : VitaDayNight_MoonPathAt(timeMs);
-            const bool moonShafts = (!dayShafts && moonP.strength > 0.10f && f->weatherAmount < 0.25f);
-            if (dayShafts || moonShafts)
+            const VitaDayNightPath sunP = VitaDayNight_SunPathAt(timeMs);
+            const VitaDayNightPath moonP = VitaDayNight_MoonPathAt(timeMs);
+            const float moonFade = Voxel_ClampF(1.0f - daylight * 2.5f, 0.0f, 1.0f);
+            const float dayAmt = f->light.rays * sunP.strength;
+            const float moonAmt = (f->weatherAmount < 0.25f) ? (moonP.strength * 0.48f * moonFade) : 0.0f;
+
+            for (int32_t pass = 0; pass < 2; ++pass)
             {
+                const bool isDay = (pass == 0);
+                const float amt = isDay ? dayAmt : moonAmt;
+                if (amt <= 0.005f)
+                    continue;
+
                 static const float kShaftDay[3]  = { 1.00f, 0.92f, 0.74f };
                 static const float kShaftGold[3] = { 1.00f, 0.72f, 0.38f };
                 static const float kShaftMoon[3] = { 0.52f, 0.66f, 1.00f };
-                const VitaDayNightPath p = dayShafts ? VitaDayNight_SunPathAt(timeMs) : moonP;
-                const float amt = dayShafts ? f->light.rays : (moonP.strength * 0.48f);
-                const float goldK = dayShafts ? Voxel_ClampF(glow * 4.0f, 0.0f, 1.0f) : 0.0f;
+                const VitaDayNightPath p = isDay ? sunP : moonP;
+                const float goldK = isDay ? Voxel_ClampF(glow * 4.0f, 0.0f, 1.0f) : 0.0f;
                 float col[3];
                 for (int32_t k = 0; k < 3; ++k)
-                    col[k] = dayShafts ? (kShaftDay[k] + (kShaftGold[k] - kShaftDay[k]) * goldK) : kShaftMoon[k];
+                    col[k] = isDay ? (kShaftDay[k] + (kShaftGold[k] - kShaftDay[k]) * goldK) : kShaftMoon[k];
 
                 if (sWeatherAtlasTex != 0)
                 {
@@ -7224,7 +7232,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                     const float sx = 0.5f - p.dx * 0.30f;
                     const float sy = 0.94f;
                     const float rx = 0.38f, ry = 0.30f;
-                    const float skyStr = amt * (dayShafts ? 155.0f : 115.0f);
+                    const float skyStr = amt * (isDay ? 155.0f : 115.0f);
                     for (int32_t k = 0; k < 6; ++k)
                     {
                         VoxelGlVertex *const v = &sBatchGlVerts[k];
@@ -7251,8 +7259,8 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
 
                 if (hd2dOn && VoxelHd2dShader_ShaftsReady())
                 {
-                    const float gain = dayShafts
-                        ? (amt * (hd2dHigh ? 0.72f : 0.40f))
+                    const float gain = isDay
+                        ? (amt * (hd2dHigh ? 1.55f : 1.15f))
                         : (amt * (hd2dHigh ? 0.52f : 0.30f));
                     const float elev = Voxel_ClampF((p.altitude - 0.15f) / 0.75f, 0.0f, 1.0f);
                     const float lenExp = 0.62f + elev * 0.35f;
@@ -7263,7 +7271,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                     VoxelHd2dShader_Shafts(p.dx, p.dy, lenExp, fmodf(f->seconds, 62.83185f),
                                            (float)renderW / (float)renderH,
                                            hd2dHigh ? 2.0f : 1.0f,
-                                           dayShafts ? 1.0f : 0.45f,
+                                           isDay ? 1.0f : 0.45f,
                                            col[0] * gain, col[1] * gain, col[2] * gain);
                     glEnableClientState(GL_VERTEX_ARRAY);
                     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
