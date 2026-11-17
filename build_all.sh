@@ -49,7 +49,7 @@ pacman_with_retry() {
         fi
         echo "pacman failed (attempt $attempt/$max_attempts); rotating MSYS2 mirror and retrying..."
         rotate_msys_mirrors
-        pacman -Sy --noconfirm || true
+        pacman -Syy --noconfirm || true
         attempt=$((attempt + 1))
     done
 }
@@ -112,7 +112,8 @@ if [ -n "$need_pkgs" ]; then
         echo "vdpm install failed; falling back to $FALLBACK_VITA_PKG_URL"
         [ -f "$VITASDK/etc/pacman.conf" ] || die "missing $VITASDK/etc/pacman.conf; see docs/BUILD.md"
         sed -i "s|^Server = https://github.com/vitasdk/vitasdk-autobuild/releases/download/.*|Server = $FALLBACK_VITA_PKG_URL|" "$VITASDK/etc/pacman.conf"
-        vdpm pacman -- -Sy --noconfirm $need_pkgs
+        rm -f "$VITASDK/var/lib/pacman/sync/vita.db"
+        vdpm pacman -- -Syy --noconfirm $need_pkgs
     fi
     for f in "$VITA_INC/vitaGL.h" "$VITA_LIB/libvitaGL.a" "$VITA_LIB/libSDL2.a"; do
         [ -f "$f" ] || die "$(basename "$f") is still missing after vdpm install $need_pkgs; see docs/BUILD.md"
