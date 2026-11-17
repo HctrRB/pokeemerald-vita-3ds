@@ -1,0 +1,56 @@
+[MtPyre_2F_Text_MemoriesOfSkitty] 08bdc7fa26
+Lembranças do meu querido SKITTY…\nOs meus olhos se enchem de lágrimas.$
+
+[MtPyre_2F_Text_TumbledFromFloorAbove] 63991b196e
+Ai, ui… Tem buracos no chão aqui\ne ali.\pNão percebi e caí do andar de cima.$
+
+[MtPyre_2F_Text_MarkIntro] a659c1021b
+Ei! Está procurando POKéMON?\nVocê veio atrás de mim! Que falta\lde educação!$
+
+[MtPyre_2F_Text_MarkDefeat] 0b4712ceb3
+Aiiiii!\nDesculpa, me perdoa, por favor!$
+
+[MtPyre_2F_Text_MarkPostBattle] 127cac0734
+Quase ninguém vem aqui, então\nachei que teria POKéMON raros.$
+
+[MtPyre_2F_Text_LukeIntro] 06d65ddc20
+LUKE: Viemos aqui por um desafio.\pHehe, se eu mostrar pra ela como sou\nlegal, ela se apaixona. Tenho certeza!\pJá sei! Vou acabar com você e mostrar\npra ela como sou legal!$
+
+[MtPyre_2F_Text_LukeDefeat] f3743b86c8
+LUKE: Opa!$
+
+[MtPyre_2F_Text_LukePostBattle] fec4a7a5e8
+LUKE: Bom, perdemos, mas tudo bem!\nEstou aqui do seu lado.\lVamos cumprir esse desafio!$
+
+[MtPyre_2F_Text_LukeNotEnoughMons] e5325d70af
+LUKE: Se quiser me enfrentar, traga\nmais POKéMON.\pSenão, não consigo mostrar pra minha\nnamorada como sou legal!$
+
+[MtPyre_2F_Text_DezIntro] b1c4d69ac8
+DEZ: Vim aqui num desafio com o meu\nnamorado.\pDá muito medo, mas estou com o meu\nnamorado. Tudo bem.\pJá sei! Vou fazer o meu namorado\nficar legal vencendo você!$
+
+[MtPyre_2F_Text_DezDefeat] ef7484d595
+DEZ: Buáááá! Que medo!$
+
+[MtPyre_2F_Text_DezPostBattle] f272b338d8
+DEZ: A gente é grudadinho, então\nnão liga de perder!$
+
+[MtPyre_2F_Text_DezNotEnoughMons] 8890c93444
+DEZ: Se quiser desafiar a gente, traga\npelo menos dois POKéMON.\pO meu namorado é forte.\nUm POKéMON só não dá nem pro cheiro.$
+
+[MtPyre_2F_Text_LeahIntro] e51f71db53
+Não conheço você…\nVá embora antes que algo te aconteça!$
+
+[MtPyre_2F_Text_LeahDefeat] 1bb2d20408
+Hmm…\nVocê é resistente.$
+
+[MtPyre_2F_Text_LeahPostBattle] e26fbbc02c
+A minha família treina aqui desde o\ntempo da minha bisavó…\pÉ meu dever proteger esta\nmontanha…$
+
+[MtPyre_2F_Text_ZanderIntro] 56c700ace6
+Kiaaaaah!\nQue pavor!$
+
+[MtPyre_2F_Text_ZanderDefeat] e7e279342a
+Nãããão!\nPerdi a cabeça!$
+
+[MtPyre_2F_Text_ZanderPostBattle] 2513445097
+Eu me apavoro toda vez que vejo\nalguma coisa se mexer…\pNão devia ter vindo treinar aqui…$

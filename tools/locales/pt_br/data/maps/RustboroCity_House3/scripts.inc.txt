@@ -1,0 +1,8 @@
+[RustboroCity_House3_Text_IGivePerfectlySuitedNicknames] 854a30d220
+Eu dou apelidos perfeitos pros\nmeus POKéMON!\pÉ a minha forma de mostrar, hã…\noriginalidade, isso mesmo!$
+
+[RustboroCity_House3_Text_NamingPikachuPekachu] 7a96f9a36e
+Mas dar o nome de PEKACHU a um\nPIKACHU? Parece meio sem sentido.\pAcho bom usar um nome fácil de\nentender, mas…$
+
+[RustboroCity_House3_Text_Pekachu] 3f63947e1a
+PEKACHU: Peka!$

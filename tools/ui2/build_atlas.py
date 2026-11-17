@@ -29,6 +29,8 @@ Format v3 (little endian), read by src/platform/ui/ui_assets.c:
 import json
 import os
 import struct
+import unicodedata
+from PIL import ImageDraw
 
 from PIL import Image
 
@@ -41,9 +43,9 @@ THEME_PNG = os.path.join(HERE, "fonts", "theme_fonts.png")
 THEME_JSON = os.path.join(HERE, "fonts", "theme_fonts.json")
 OUT = os.path.join(ROOT, "assets", "ui2", "ui_atlas.bin")
 OUT_H = os.path.join(ROOT, "src", "platform", "ui", "ui_sprite_ids.h")
-KEEP = {(0, 16), (0, 24), (1, 24), (1, 28), (1, 32), (1, 40)}   # (face, px): D2 + compact VT323 sizes
+KEEP = {(0, 16), (0, 24), (1, 18), (1, 20), (1, 24), (1, 28), (1, 32), (1, 40)}   # (face, px): D2 + compact VT323 sizes
 TEX_W = 1024
-MAX_FIXED_H = 1024                                   # = UI_DYN_Y in ui_internal.h                                    # the dynamic cells start below (ui_sprites.c)
+MAX_FIXED_H = 1280                                   # = UI_DYN_Y in ui_internal.h                                    # the dynamic cells start below (ui_sprites.c)
 ASSETS = os.path.join(ROOT, "design", "stitch", "_assets")   # GBA art exported by export_assets.py
 GFX = os.path.join(ROOT, "graphics")
 
@@ -190,6 +192,73 @@ def pack_texel(r, g, b, a):
     return ((r >> 3) << 11) | ((g >> 3) << 6) | ((b >> 3) << 1) | 1
 
 
+
+# Generate missing Portuguese glyphs directly from the original theme font masks.
+# This does not change any of the style's source images or modify GBA graphics.
+# Added glyphs are alphabetic variants of each face's Latin letters.
+PORTUGUESE_CHARS = "ÀÁÂÃÇÊÍÓÕÚàáâãçêíóôõú"
+
+
+def portuguese_accents(font, source):
+    lookup = {g[0]: g for g in font["glyphs"]}
+    for char in PORTUGUESE_CHARS:
+        codepoint = ord(char)
+        if codepoint in lookup:
+            continue
+        decomp = unicodedata.normalize("NFD", char)
+        if len(decomp) != 2 or ord(decomp[0]) not in lookup:
+            continue
+        mark = decomp[1]
+        if mark not in ("\u0301", "\u0300", "\u0302", "\u0303", "\u0327"):
+            continue
+        base = lookup[ord(decomp[0])]
+        cp, sx, sy, w, h, xoff, yoff, advance = base
+        pad_x = max(3, font["px"] // 7)
+        pad_up = max(5, font["px"] // 5)
+        pad_down = max(4, font["px"] // 7)
+        canvas = Image.new("RGBA", (w + pad_x * 2, h + pad_up + pad_down), (0, 0, 0, 0))
+        src_img = source.crop((sx, sy, sx + w, sy + h))
+        canvas.paste(src_img, (pad_x, pad_up))
+        draw = ImageDraw.Draw(canvas)
+        mx = pad_x + (w + 1) // 2
+        thick = max(1, font["px"] // 19)
+        span = max(3, font["px"] // 7)
+        yy = pad_up - 2
+        white = (255, 255, 255, 255)
+        if mark == "\u0301":  # acute
+            draw.line([(mx - span // 2, yy), (mx + span // 2, yy - span)], fill=white, width=thick)
+        elif mark == "\u0300":  # grave
+            draw.line([(mx + span // 2, yy), (mx - span // 2, yy - span)], fill=white, width=thick)
+        elif mark == "\u0302":  # circumflex
+            draw.line([(mx - span, yy), (mx, yy - span)], fill=white, width=thick)
+            draw.line([(mx, yy - span), (mx + span, yy)], fill=white, width=thick)
+        elif mark == "\u0303":  # tilde
+            draw.line([(mx - span, yy - 1), (mx - span // 2, yy - 2),
+                       (mx, yy - 1), (mx + span // 2, yy - 2),
+                       (mx + span, yy - 1)], fill=white, width=thick)
+        elif mark == "\u0327":  # cedilla
+            bottom = pad_up + h
+            draw.line([(mx, bottom - 2), (mx + thick, bottom),
+                       (mx + thick, bottom + max(2, span - 1)),
+                       (mx - thick, bottom + span)], fill=white, width=thick)
+        box = canvas.getbbox()
+        if box:
+            glyph = canvas.crop(box)
+            yield codepoint, glyph, xoff - pad_x + box[0], yoff - pad_up + box[1], advance
+
+    # Latin-1 masculine ordinal (Nº) used by Portuguese Pokedex labels.
+    # A small raised letter o matches the source pixel font.
+    if 0xBA not in lookup and ord("o") in lookup:
+        cp, sx, sy, w, h, xoff, yoff, advance = lookup[ord("o")]
+        glyph = source.crop((sx, sy, sx + w, sy + h))
+        small_w, small_h = max(3, round(w * 0.68)), max(3, round(h * 0.68))
+        glyph = glyph.resize((small_w, small_h), Image.Resampling.NEAREST)
+        box = glyph.getbbox()
+        if box:
+            glyph = glyph.crop(box)
+            yield 0xBA, glyph, xoff, min(-3, yoff - max(2, h // 2)), max(4, glyph.width + 1)
+
+
 def main():
     meta = json.load(open(SRC_JSON, encoding="utf-8"))
     src = Image.open(SRC_PNG).convert("RGBA")
@@ -219,6 +288,13 @@ def main():
         for cp, gx, gy, w, h, xoff, yoff, adv in f["glyphs"]:
             glyph_sources.append((f_src, gx, gy, w, h))
             glyphs.append([cp, 0, 0, w, h, max(-128, min(127, xoff)), max(-128, min(127, yoff)), adv])
+        # Keep the PT-BR accents in their matching font face while using
+        # v0.5's size-sorted atlas packer for both base and composed glyphs.
+        for cp, mask, xoff, yoff, adv in portuguese_accents(f, f_src):
+            w, h = mask.size
+            glyph_sources.append((mask, 0, 0, w, h))
+            glyphs.append([cp, 0, 0, w, h, max(-128, min(127, xoff)), max(-128, min(127, yoff)), adv])
+
         fonts.append((f["face"], f["px"], f["ascent"], f["lineH"], first, len(glyphs) - first))
 
     glyph_order = sorted((i for i, (_, _, _, w, h) in enumerate(glyph_sources) if w > 0 and h > 0),

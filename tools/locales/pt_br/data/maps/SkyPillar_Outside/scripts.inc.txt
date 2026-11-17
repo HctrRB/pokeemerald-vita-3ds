@@ -1,0 +1,14 @@
+[SkyPillar_Outside_Text_DoorIsClosed] 26b27eaf88
+A porta está fechada.$
+
+[SkyPillar_Outside_Text_OpenedDoorToSkyPillar] 6768d22b2f
+WALLACE: Ah, me desculpe!\pNa pressa, nem percebi que tinha\nte deixado pra trás!\pAbri a porta trancada do\nPILAR CELESTE.\p{PLAYER}{KUN}, vamos lá!$
+
+[SkyPillar_Outside_Text_EarthquakeNotMomentToWaste] e926cf6465
+WALLACE: É um terremoto!\pNão há tempo a perder!\nTemos que correr!$
+
+[SkyPillar_Outside_Text_SituationGettingWorse] 96cd6365b8
+WALLACE: Hum…\nA situação está piorando…$
+
+[SkyPillar_Outside_Text_GotToGoBackForSootopolis] 08d2c1d680
+WALLACE: Isso não é nada bom…\pA distorção do clima está chegando\naté aqui…\p{PLAYER}{KUN}.\pO RAYQUAZA deve estar mais acima.\pEstou preocupado com SOOTOPOLIS.\nTenho que voltar.\pAgora tudo está nas suas mãos.\nNão nos decepcione!$

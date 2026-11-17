@@ -306,6 +306,9 @@ $(TITLESCREENGFXDIR)/pokemon_logo.gbapal: %.gbapal: %.pal
 $(TITLESCREENGFXDIR)/emerald_version.8bpp: %.8bpp: %.png
 	$(GFX) $< $@ -mwidth 8 -mheight 4
 
+$(TITLESCREENGFXDIR)/emerald_version_pt.8bpp: %.8bpp: %.png
+	$(GFX) $< $@ -mwidth 8 -mheight 4
+
 graphics/pokemon_jump/bg.4bpp: %.4bpp: %.png
 	$(GFX) $< $@ -num_tiles 63 -Wnum_tiles
 

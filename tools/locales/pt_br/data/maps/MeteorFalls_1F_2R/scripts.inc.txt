@@ -1,0 +1,71 @@
+[MeteorFalls_1F_2R_Text_NicolasIntro] d5cae43d1f
+É aqui que nós, usuários de DRAGÃO,\ntreinamos.\pAté o CAMPEÃO vem aqui.\nViu como este lugar é especial?$
+
+[MeteorFalls_1F_2R_Text_NicolasDefeat] 2c51e23749
+Argh!\nNão esperava tanta força!$
+
+[MeteorFalls_1F_2R_Text_NicolasPostBattle] dac9e64080
+O caminho ainda é longo e duro.\pQuando é que eu e os meus POKéMON\nvamos ser os melhores?$
+
+[MeteorFalls_1F_2R_Text_NicolasRegister] b1784810e9
+Quero conhecer melhor a sua força.\nVou te registrar no meu POKéNAV.$
+
+[MeteorFalls_1F_2R_Text_NicolasRematchIntro] dd08ffb7b2
+Desde que nos vimos, treinamos\nduro de olho no primeiro lugar.\pAjude a gente a ver o quanto\nficamos mais fortes!$
+
+[MeteorFalls_1F_2R_Text_NicolasRematchDefeat] 2c51e23749
+Argh!\nNão esperava tanta força!$
+
+[MeteorFalls_1F_2R_Text_NicolasPostRematch] d65cbdb319
+Dá pra ver que você continua\ntreinando os seus POKéMON.\pEnquanto você for forte, eu também\nposso ficar mais forte!$
+
+[MeteorFalls_1F_2R_Text_JohnIntro] c490fee6a6
+JOHN: Sempre batalhamos em dupla.\nConfiamos em nós mesmos.$
+
+[MeteorFalls_1F_2R_Text_JohnDefeat] 14e7b89d2a
+JOHN: Puxa vida.\nPerdemos, querida.$
+
+[MeteorFalls_1F_2R_Text_JohnPostBattle] d9c7a6ada9
+JOHN: Estamos casados há cinquenta\nanos.\pPensando bem, eu ainda não venci\na minha querida numa batalha.$
+
+[MeteorFalls_1F_2R_Text_JohnNotEnoughMons] fc6d073c94
+JOHN: Ora, ora, que TREINADOR jovem!\pQuer batalhar com a gente? Então\nvolte com mais POKéMON.$
+
+[MeteorFalls_1F_2R_Text_JohnRegister] 1abab08884
+JOHN: Jovem TREINADOR, se tiver a\nchance, batalha com a gente de novo?$
+
+[MeteorFalls_1F_2R_Text_JayIntro] cebf211908
+JAY: Estamos casados há cinquenta\nanos.\pO laço que temos como casal\nnunca vai se romper.$
+
+[MeteorFalls_1F_2R_Text_JayDefeat] 326a19111f
+JAY: Ai, ai.\nPerdemos, meu querido.$
+
+[MeteorFalls_1F_2R_Text_JayPostBattle] 2bd4cd78fa
+JAY: Cinquenta anos de casamento…\pSe a gente brigava, sempre resolvia\ncom uma batalha POKéMON…$
+
+[MeteorFalls_1F_2R_Text_JayNotEnoughMons] bb97d87ed0
+JAY: Ora, ora, que TREINADOR jovem!\pSe quiser batalhar com a gente,\nvolte com mais POKéMON.$
+
+[MeteorFalls_1F_2R_Text_JohnRematchIntro] c490fee6a6
+JOHN: Sempre batalhamos em dupla.\nConfiamos em nós mesmos.$
+
+[MeteorFalls_1F_2R_Text_JohnRematchDefeat] 14e7b89d2a
+JOHN: Puxa vida.\nPerdemos, querida.$
+
+[MeteorFalls_1F_2R_Text_JohnPostRematch] be7a1fd5cb
+JOHN: Casados há cinquenta anos…\pPensando bem, eu e a minha querida\nbatalhamos todo santo dia…$
+
+[MeteorFalls_1F_2R_Text_JohnRematchNotEnoughMons] fc6d073c94
+JOHN: Ora, ora, que TREINADOR jovem!\pQuer batalhar com a gente? Então\nvolte com mais POKéMON.$
+
+[MeteorFalls_1F_2R_Text_JayRematchIntro] ba0b4b83c0
+JAY: Estamos casados há cinquenta\nanos.\pSempre apoiamos um ao outro.\nFoi assim que ficamos fortes.$
+
+[MeteorFalls_1F_2R_Text_JayRematchDefeat] 326a19111f
+JAY: Ai, ai.\nPerdemos, meu querido.$
+
+[MeteorFalls_1F_2R_Text_JayPostRematch] 7fbbc287fe
+JAY: Cinquenta anos de casamento…\nMuita coisa aconteceu.\pEspero que a gente continue criando\nlembranças felizes juntos.$
+
+[MeteorFalls_1F_2R_Text_JayRematchNotEnoughMons] bb97d87ed0
+JAY: Ora, ora, que TREINADOR jovem!\pSe quiser batalhar com a gente,\nvolte com mais POKéMON.$

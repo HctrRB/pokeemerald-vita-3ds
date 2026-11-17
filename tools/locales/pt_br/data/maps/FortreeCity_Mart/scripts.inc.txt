@@ -1,0 +1,8 @@
+[FortreeCity_Mart_Text_SuperRepelBetter] 24b045e187
+O SUPER REPELENTE dura bastante e\nresolve o problema.\pÉ bem melhor que um REPELENTE\ncomum.$
+
+[FortreeCity_Mart_Text_StockUpOnItems] 43382c7aa2
+Eu sempre compro mais itens do que\nsei que vou precisar.\pNunca se sabe o que pode acontecer.\nMelhor prevenir que remediar!$
+
+[FortreeCity_Mart_Text_RareCandyMakesMonGrow] 1470f42b12
+Um DOCE RARO faz um POKéMON subir\num nível na hora.$

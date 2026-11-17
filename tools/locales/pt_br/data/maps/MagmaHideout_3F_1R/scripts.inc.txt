@@ -1,0 +1,17 @@
+[MagmaHideout_3F_1R_Text_Grunt9Intro] e8ad00bb61
+O que eu fiz pra merecer essa guarda?\pA minha orelha esquerda está\npegando fogo!$
+
+[MagmaHideout_3F_1R_Text_Grunt9Defeat] bb0ddf120d
+Estou com insolação…$
+
+[MagmaHideout_3F_1R_Text_Grunt9PostBattle] 4bacc1011e
+Não é estranho usar capuz num\nvulcão cheio de magma?$
+
+[MagmaHideout_3F_1R_Text_Grunt16Intro] 16dc12b417
+Entramos pra ajudar o nosso líder a\nrealizar o sonho fantástico dele.\pNão importa se você é da EQUIPE AQUA\nou só uma criança de passagem.\pNinguém atrapalha a gente e sai\nimpune!$
+
+[MagmaHideout_3F_1R_Text_Grunt16Defeat] 793bf38cce
+Ah, não!\nNão dá pra confiar em você!$
+
+[MagmaHideout_3F_1R_Text_Grunt16PostBattle] de47e03e66
+Escute aqui.\nA EQUIPE MAGMA está certa!\pNão escute a EQUIPE AQUA.\nNão acredite nas mentiras deles!$

@@ -1,0 +1,89 @@
+[SootopolisCity_Gym_B1F_Text_AndreaIntro] 576f1e2387
+Vou te mostrar as técnicas sublimes\nque aprendi com o nosso LÍDER JUAN!$
+
+[SootopolisCity_Gym_B1F_Text_AndreaDefeat] bd8a30a6e7
+Por favor, me perdoe, JUAN…$
+
+[SootopolisCity_Gym_B1F_Text_AndreaPostBattle] d3a706232e
+Veja o que acontece se quebrar\ntodos os ladrilhos do chão.$
+
+[SootopolisCity_Gym_B1F_Text_CrissyIntro] 425009fed8
+Você veio até aqui, mas não vai\nver o JUAN.\pNão se perder pra mim, não vai!$
+
+[SootopolisCity_Gym_B1F_Text_CrissyDefeat] 17ba0a216f
+Que força!\nEssa carinha fofa me enganou!$
+
+[SootopolisCity_Gym_B1F_Text_CrissyPostBattle] 1724934269
+Talvez você aguente mais que um\ngolpe só do JUAN.$
+
+[SootopolisCity_Gym_B1F_Text_DaphneIntro] 1c6a919ece
+Ver o JUAN conduzindo uma batalha…\pFoi essa beleza que me fez virar\nTREINADORA.$
+
+[SootopolisCity_Gym_B1F_Text_DaphneDefeat] 701bfc2c87
+Você batalhou com mais beleza do\nque eu consegui…$
+
+[SootopolisCity_Gym_B1F_Text_DaphnePostBattle] 854f10b253
+A graça que você leva à batalha é\nfabulosa.\pAh… Que sorte a minha ter\nconhecido os POKéMON.$
+
+[SootopolisCity_Gym_B1F_Text_ConnieIntro] c7a00f5c40
+Vou te ensinar como as batalhas\npodem ser duras.$
+
+[SootopolisCity_Gym_B1F_Text_ConnieDefeat] 2439217e29
+Ah.\nVocê é forte.$
+
+[SootopolisCity_Gym_B1F_Text_ConniePostBattle] 68b3c54a92
+Vou te contar uma coisa boa.\pPra chegar ao JUAN, você tem que\npisar em cada ladrilho uma vez.$
+
+[SootopolisCity_Gym_B1F_Text_BridgetIntro] c55203e32c
+O GINÁSIO POKéMON de nível mais alto\nda região de HOENN…\pÉ o GINÁSIO de SOOTOPOLIS.$
+
+[SootopolisCity_Gym_B1F_Text_BridgetDefeat] 6884b59409
+Que nível alto o seu!$
+
+[SootopolisCity_Gym_B1F_Text_BridgetPostBattle] 01934b4ccf
+Em vez de se contentar com um\nGINÁSIO forte, acho que treinar em\loutros lugares te deixa mais forte.\lE, acima de tudo, parece mais legal.$
+
+[SootopolisCity_Gym_B1F_Text_OliviaIntro] ada5eae26e
+Treino os meus POKéMON junto com\no JUAN.\pNão pense que sou fácil.$
+
+[SootopolisCity_Gym_B1F_Text_OliviaDefeat] fc28388728
+Fui derrotada…$
+
+[SootopolisCity_Gym_B1F_Text_OliviaPostBattle] 3f2f04280f
+Acho que você tem potencial.\nPor que não fica e treina com a gente?$
+
+[SootopolisCity_Gym_B1F_Text_TiffanyIntro] deb1f9e156
+Deslizar com graça pelo gelo sem\ncruzar nenhuma linha…\pUm TREINADOR fazendo isso seria\nde uma beleza elegante!$
+
+[SootopolisCity_Gym_B1F_Text_TiffanyDefeat] 7748e9159b
+Ora, como é que é?!$
+
+[SootopolisCity_Gym_B1F_Text_TiffanyPostBattle] fdecd753c1
+É óbvio, mas a força de um TREINADOR\nnão tem nada a ver com ser novo ou\lvelho.$
+
+[SootopolisCity_Gym_B1F_Text_BethanyIntro] 56a7ca9dcf
+Quando estou com os meus POKéMON, o\ntempo voa antes de dar pra dizer “Opa!”$
+
+[SootopolisCity_Gym_B1F_Text_BethanyDefeat] 17f8a1266b
+Opa!$
+
+[SootopolisCity_Gym_B1F_Text_BethanyPostBattle] d1f6307fb3
+Queria esquecer as causas perdidas\nantes de conseguir dizer “Opa!”$
+
+[SootopolisCity_Gym_B1F_Text_AnnikaIntro] 6b3ef01c88
+Posso batalhar com POKéMON bem raros,\nse quiser.$
+
+[SootopolisCity_Gym_B1F_Text_AnnikaDefeat] 6b826e2f3b
+Pronto! Deu uma boa olhada nos\nmeus POKéMON?$
+
+[SootopolisCity_Gym_B1F_Text_AnnikaPostBattle] 3f63931c1f
+Vim a este GINÁSIO porque o JUAN\nelogiou o meu POKéMON querido.\pAh, se eu tivesse conhecido o JUAN\nanos atrás, quando era mais nova…$
+
+[SootopolisCity_Gym_B1F_Text_BriannaIntro] 1e9a4afd75
+Hihi…\nEssa sua cara séria é um charme.$
+
+[SootopolisCity_Gym_B1F_Text_BriannaDefeat] 9048efa181
+Ai, ai.\nPeguei leve demais com você.$
+
+[SootopolisCity_Gym_B1F_Text_BriannaPostBattle] 73ebfd6929
+Você nem encostaria no JUAN,\ntenho certeza. Hihi…$

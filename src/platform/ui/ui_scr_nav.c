@@ -206,9 +206,9 @@ static void NavEnter(void)
 
 static void Filter(char *buf, size_t cap)
 {
-    if (sMethod == UI_WILD_GRASS && UiGame_TimedEncounters()) snprintf(buf, cap, "GRASS · %s", sTimes[sPhase]);
-    else if (sMethod == UI_WILD_FISH) snprintf(buf, cap, "FISH · %s", sRod ? sRods[sRod] : "ALL RODS");
-    else snprintf(buf, cap, "%s", sMethods[sMethod]);
+    if (sMethod == UI_WILD_GRASS && UiGame_TimedEncounters()) snprintf(buf, cap, UiLocale_Translate("GRASS · %s"), UiLocale_Translate(sTimes[sPhase]));
+    else if (sMethod == UI_WILD_FISH) snprintf(buf, cap, UiLocale_Translate("FISH · %s"), UiLocale_Translate(sRod ? sRods[sRod] : "ALL RODS"));
+    else snprintf(buf, cap, "%s", UiLocale_Translate(sMethods[sMethod]));
 }
 
 // ENCOUNTERS popup (design/stitch/pokenav_mapa #encuentros): method sub-tabs, time of day (grass)
@@ -275,11 +275,15 @@ static void DrawEncPopup(void)
     UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
     UiGame_MapSecName(MapSec(), name, sizeof(name));
     UiW_Window(POP_X, POP_Y, POP_W, POP_H, name);
-    snprintf(buf, sizeof(buf), "%d POKéMON", (int)sWildN);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("%d POKéMON"), (int)sWildN);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + POP_W - 20 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), POP_Y + 4, buf, UI_COL_ON_FRAME);
-    SubTabs(0, POP_X + 16, POP_Y + 54, sMethods, UI_WILD_COUNT, sMethod);
-    if (sMethod == UI_WILD_GRASS && UiGame_TimedEncounters()) SubTabs(1, POP_X + 16, POP_Y + 92, sTimes, 3, sPhase);
-    if (sMethod == UI_WILD_FISH) SubTabs(1, POP_X + 16, POP_Y + 92, sRods, 4, sRod);
+    const char *translatedTimes[3], *translatedRods[4], *translatedMethods[UI_WILD_COUNT];
+    for (int i = 0; i < 3; ++i) translatedTimes[i] = UiLocale_Translate(sTimes[i]);
+    for (int i = 0; i < 4; ++i) translatedRods[i] = UiLocale_Translate(sRods[i]);
+    for (int i = 0; i < UI_WILD_COUNT; ++i) translatedMethods[i] = UiLocale_Translate(sMethods[i]);
+    SubTabs(0, POP_X + 16, POP_Y + 54, translatedMethods, UI_WILD_COUNT, sMethod);
+    if (sMethod == UI_WILD_GRASS && UiGame_TimedEncounters()) SubTabs(1, POP_X + 16, POP_Y + 92, translatedTimes, 3, sPhase);
+    if (sMethod == UI_WILD_FISH) SubTabs(1, POP_X + 16, POP_Y + 92, translatedRods, 4, sRod);
     for (int32_t r = 0; r < POP_ROWS && sEncList.first + r < sWildN; r++)
     {
         const int32_t i = sEncList.first + r, y = POP_Y + 134 + r * 44;
@@ -289,7 +293,7 @@ static void DrawEncPopup(void)
         UiSpr_MonIcon(sWild[i].species, 0, POP_X + 44, y + 4, 1);
         UiGame_SpeciesName(sWild[i].species, name, sizeof(name));
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 84, y + 6, name, ink);
-        if (sWild[i].rod) UiW_Chip(POP_X + 420, y + 10, sRods[sWild[i].rod], false);
+        if (sWild[i].rod) UiW_Chip(POP_X + 420, y + 10, UiLocale_Translate(sRods[sWild[i].rod]), false);
         snprintf(buf, sizeof(buf), "Lv%u-%u", (unsigned)sWild[i].minLv, (unsigned)sWild[i].maxLv);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + POP_W - 36 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), y + 6, buf, ink);
     }
@@ -358,7 +362,7 @@ static void DrawFeed(void)
         UiW_Row(FEED_X + 8, y, FEED_W - 28, 40, on, i);
         const uint32_t ink = on ? UI_COL_SELECT_INK : UI_COL_INK;
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, FEED_X + 24, y + 4, sBlocks[i].name, ink);
-        snprintf(buf, sizeof(buf), "Lv%u F%u", (unsigned)sBlocks[i].level, (unsigned)sBlocks[i].feel);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("Lv%u F%u"), (unsigned)sBlocks[i].level, (unsigned)sBlocks[i].feel);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, FEED_X + FEED_W - 40 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), y + 4, buf, on ? ink : UI_COL_INK_SOFT);
     }
     UiDraw_PopClip();
@@ -542,7 +546,7 @@ static void BuildMapTabGba(void)
     UiW_Bevel(29, 383, 560, 78, 4, UI_RGBA(16, 24, 28, 255), UI_RGBA(27, 44, 50, 255), UI_RGBA(27, 44, 50, 255),
               2, UI_RGBA(72, 120, 136, 255), UI_RGBA(16, 24, 28, 255), 0);
 
-    snprintf(buf, sizeof(buf), "GRID %02d-%02d · %s", (int)sCurX, (int)sCurY, secName);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("GRID %02d-%02d · %s"), (int)sCurX, (int)sCurY, secName);
     UiW_GbaText(UI_FACE_PS2P, 16, 41, 396, buf, UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
     snprintf(buf, sizeof(buf), sZoom ? "ZOOM: x2 DETAIL" : "ZOOM: FULL HOENN");
     UiW_GbaText(UI_FACE_VT323, 24, 41, 426, buf, UI_RGBA(115, 255, 172, 255), UI_GBA_SHAD_DARK);
@@ -550,13 +554,13 @@ static void BuildMapTabGba(void)
     for (int32_t i = 0; i < sCallerN; i++)
         if (sCallers[i].rematch && sCallers[i].mapSec == sec)
             readyCount++;
-    snprintf(buf, sizeof(buf), "%d MATCH READY", (int)readyCount);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("%d MATCH READY"), (int)readyCount);
     UiW_GbaText(UI_FACE_VT323, 24, 576 - UiText_Width(UI_FACE_VT323, 24, buf), 426, buf, UI_RGBA(184, 212, 224, 255), UI_GBA_SHAD_DARK);
 
     // Right column (616, 60, 330, 414)
     UiW_GbaWin(616, 60, 330, 108, UI_GBA_WIN_DEFAULT);
     UiW_GbaSectionStrip(628, 72, 306, 26, UI_GBA_TAG_BLUE, secName, (sec < MAPSEC_NONE && UiGame_CanFlyTo(sec)) ? "FLY OK" : "AREA");
-    snprintf(buf, sizeof(buf), "Call Ready: %d Trainers", (int)readyCount);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("Call Ready: %d Trainers"), (int)readyCount);
     UiW_GbaText(UI_FACE_VT323, 24, 628, 104, buf, UI_RGBA(23, 94, 71, 255), UI_GBA_SHAD_LIGHT);
     UiW_GbaText(UI_FACE_VT323, 24, 628, 130, "Tap map or D-pad to scan", UI_RGBA(96, 104, 96, 255), UI_GBA_SHAD_LIGHT);
 
@@ -670,7 +674,7 @@ static void BuildCondTabGba(void)
         UiW_GbaTextMid(UI_FACE_VT323, 28, 932 - UiText_Width(UI_FACE_VT323, 28, v), y, 38, v, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
     }
     char buf[32];
-    snprintf(buf, sizeof(buf), "SHEEN %u / 255", (unsigned)c[5]);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("SHEEN %u / 255"), (unsigned)c[5]);
     UiW_GbaText(UI_FACE_VT323, 28, 676, 336, buf, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
     UiW_Bar(676, 370, 252, 14, c[5] * 100 / 255, UI_RGBA(124, 192, 242, 255), UI_COL_EXP);
     DrawGbaBtn(676, 420, 252, 42, "FEED POKéBLOCK", UiGame_HasPokeblockCase());
@@ -700,7 +704,7 @@ static void BuildRibTabGba(void)
     UiDraw_PushClip(352, 278, 564, 174);
     if (n == 0)
     {
-        snprintf(buf, sizeof(buf), "%s has no ribbons yet. Win contests to earn them.", m.name);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("%s has no ribbons yet. Win contests to earn them."), m.name);
         UiW_GbaTextWrapped(UI_FACE_VT323, 28, 356, 288, 556, 28, buf, UI_RGBA(112, 120, 112, 255), UI_GBA_SHAD_LIGHT, 4);
     }
     else
@@ -886,7 +890,7 @@ static void BuildCondTab(void)
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 928 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, v), y, v, UI_COL_INK);
     }
     char buf[32];
-    snprintf(buf, sizeof(buf), "SHEEN %u / 255", (unsigned)c[5]);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("SHEEN %u / 255"), (unsigned)c[5]);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 676, 330, buf, UI_COL_INK);
     UiW_Bar(676, 366, 252, 10, c[5] * 100 / 255, UI_RGBA(124, 192, 242, 255), UI_COL_EXP);
     // Always shown; without the POKéBLOCK CASE (SLATEPORT contest hall) it only explains why
@@ -900,7 +904,7 @@ static void BuildRibTab(void)
     UiMon m;
     if (!UiGame_Mon(sMonList.sel, &m)) return;
     char buf[64], desc[80];
-    snprintf(buf, sizeof(buf), "%s · RIBBONS", m.name);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("%s · RIBBONS"), m.name);
     UiW_PanelHead(328, 60, 616, buf, NULL);
     uint8_t ids[32];
     const int32_t n = UiGame_Ribbons(sMonList.sel, ids, 32);
@@ -914,7 +918,7 @@ static void BuildRibTab(void)
     UiDraw_Rect(348, 268, 576, 2, UI_COL_PAPER2);
     if (n == 0)
     {
-        snprintf(buf, sizeof(buf), "%s has no ribbons yet. Win contests to earn them.", m.name);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("%s has no ribbons yet. Win contests to earn them."), m.name);
         UiW_TextWrapped(348, 284, 576, 30, buf, UI_COL_INK_SOFT, 3);
         return;
     }
@@ -1020,7 +1024,7 @@ static void FlyBuild(void)
 
     if (gUiTheme->gbaFrame)
     {
-        snprintf(buf, sizeof(buf), "%d DESTINATIONS", (int)n);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("%d DESTINATIONS"), (int)n);
         UiW_GbaTopBar(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, "FLY", 1, 0, true, buf);
         int32_t rx = UI_SCREEN_W - 14;
         UiW_GbaHelpBadge(&rx, "O", "CANCEL", true);
@@ -1041,7 +1045,7 @@ static void FlyBuild(void)
         UiDraw_Frame(628, 112, 306, 108, 2, UI_RGBA(184, 190, 176, 255));
         UiDraw_Rect(630, 114, 302, 104, UI_RGBA(244, 245, 236, 255));
         UiSpr_MonIcon(m.species, (uint8_t)((sFrame / 8) & 1), 640, 134, 1);
-        snprintf(buf, sizeof(buf), "%s will use FLY", m.name);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("%s will use FLY"), m.name);
         UiW_TextWrapped(684, 128, 236, 28, buf, UI_RGBA(49, 49, 49, 255), 3);
         UiW_GbaSectionStrip(628, 236, 306, 26, UI_GBA_TAG_GREEN, "MAP GUIDE", NULL);
         UiW_TextWrapped(636, 276, 290, 28, "Tap anywhere on the Hoenn map or use D-Pad. Green squares are cities and towns unlocked for FLY.", UI_RGBA(72, 80, 72, 255), 5);
@@ -1051,7 +1055,8 @@ static void FlyBuild(void)
     static const char *const tab[1] = { "HOENN" };
     int32_t tx[1], tw[1];
     UiKit_Header("FLY", tab, 1, 0, tx, tw, 12);
-    snprintf(buf, sizeof(buf), "Destinations: %d", (int)n);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("Destinations: %d"), (int)n);
+
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     MapDraw(true, sFrame);
     UiW_Panel(704, 60, 240, 120);
@@ -1061,7 +1066,7 @@ static void FlyBuild(void)
     UiMon m;
     UiGame_Mon(sFlySlot, &m);
     UiSpr_MonIcon(m.species, (uint8_t)((sFrame / 8) & 1), 720, 210, 1);
-    snprintf(buf, sizeof(buf), "%s will FLY", m.name);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("%s will FLY"), m.name);
     UiW_TextWrapped(760, 210, 176, 30, buf, UI_COL_INK, 2);
     UiW_TextWrapped(720, 280, 216, 30, "Green frames: towns you can fly to.", UI_COL_INK_SOFT, 3);
     int32_t fx = 16;

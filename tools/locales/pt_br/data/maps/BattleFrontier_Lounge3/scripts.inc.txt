@@ -1,0 +1,122 @@
+[BattleFrontier_Lounge3_Text_CantYouSeeWereBusyHere] b3e5ffbf0b
+…O que você quer?\pNão vê que a gente está meio\nocupado? Não dá pra esperar?$
+
+[BattleFrontier_Lounge3_Text_YouLookToughExplainGambling] 415049a429
+…Hã?\nVocê tem cara de TREINADOR forte.\pHehe…\nEscuta, tenho uma proposta.\pTemos um grupinho aqui e fazemos\num joguinho com o que acontece\lna FRONTEIRA DE BATALHA.\pAs regras são bem simples.\pPrimeiro, escolhemos uma das\ninstalações da FRONTEIRA.\pDepois, cada um escolhe um TREINADOR\nque vai encarar o desafio de lá e\laposta Pontos de Batalha.\pQuem apostou no TREINADOR com o\nmelhor resultado leva todos os\lPontos de Batalha da aposta.\pSimples, né?\nEntão, enfim…$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattleTowerSingle] e324a7dd2f
+Procuro um TREINADOR que vá desafiar\nas SALAS DE BATALHA SIMPLES da\lTORRE DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattleTowerDouble] 05fd70013a
+Procuro um TREINADOR que vá desafiar\nas SALAS DE BATALHA DUPLA da\lTORRE DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattleTowerMulti] afa8733349
+Procuro um TREINADOR que vá desafiar\nas SALAS DE BATALHA MÚLTIPLA da\lTORRE DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattleDomeSingle] 18181591b3
+Procuro um TREINADOR que vá entrar\nno Torneio de BATALHA SIMPLES da\lCÚPULA DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattleDomeDouble] 8989f99f24
+Procuro um TREINADOR que vá entrar\nno Torneio de BATALHA DUPLA da\lCÚPULA DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattleFactorySingle] 81fbf761ec
+Procuro um TREINADOR que vá entrar\nna Troca de Batalha Simples da\lFÁBRICA DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattleFactoryDouble] f138c61414
+Procuro um TREINADOR que vá entrar\nna Troca de Batalha Dupla da\lFÁBRICA DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattlePalaceSingle] b8ad144260
+Procuro um TREINADOR que vá desafiar\nos SALÕES DE BATALHA SIMPLES do\lPALÁCIO DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattlePalaceDouble] 904201a136
+Procuro um TREINADOR que vá desafiar\nos SALÕES DE BATALHA DUPLA do\lPALÁCIO DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattleArena] 6a7d42f960
+Procuro um TREINADOR que vá entrar\nno Torneio de Nocaute da\lARENA DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattlePike] bdb57d3b24
+Procuro um TREINADOR que vá entrar\nna Escolha de Batalha do\lPICO DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_ChallengeBattlePyramid] 140b4e08cf
+Procuro um TREINADOR que vá entrar\nna Missão de Batalha da\lPIRÂMIDE DE BATALHA.\pMas até agora não vi nenhum\nTREINADOR com cara de vencedor.$
+
+[BattleFrontier_Lounge3_Text_HowAboutEnteringEventForMe] db554b6094
+Você também vai sair ganhando.\nEntão, que tal?\lQue tal entrar nesse evento por mim?$
+
+[BattleFrontier_Lounge3_Text_SpotMeSomeBattlePoints] d5161c35f8
+Perfeito.\nEntão, hã… Que tal me adiantar uns\lPontos de Batalha seus?\pConfia, depois eu te recompenso.$
+
+[BattleFrontier_Lounge3_Text_HowMuchCanYouSpot] a97131f002
+Ótimo, ótimo!\nQuanto você pode me adiantar?$
+
+[BattleFrontier_Lounge3_Text_YouDontHaveEnoughPoints] cfe0b7a691
+Ah, não, não, não!\nVocê não tem Pontos de Batalha\lsuficientes!\pNão fique de brincadeira, fazendo\ntodo mundo perder tempo!$
+
+[BattleFrontier_Lounge3_Text_ThanksOffYouGo] a493b31e2b
+Hehe! Valeu mesmo!\nEntão, pode ir!$
+
+[BattleFrontier_Lounge3_Text_GetToBattleTowerSingle] 8c75ae90c0
+Corre pras SALAS DE BATALHA\nSIMPLES da TORRE DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattleTowerDouble] 63c03d3bf2
+Corre pras SALAS DE BATALHA\nDUPLA da TORRE DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattleTowerMulti] fd90855e58
+Corre pras SALAS DE BATALHA\nMÚLTIPLA da TORRE DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattleDomeSingle] 8f52336e0a
+Corre pro Torneio de BATALHA\nSIMPLES da CÚPULA DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattleDomeDouble] 5e3fe1369b
+Corre pro Torneio de BATALHA\nDUPLA da CÚPULA DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattleFactorySingle] d0225bcd81
+Corre pra Troca de Batalha\nSimples da FÁBRICA DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattleFactoryDouble] 4e8c090230
+Corre pra Troca de Batalha\nDupla da FÁBRICA DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattlePalaceSingle] e43c3b9dc0
+Corre pros SALÕES DE BATALHA\nSIMPLES do PALÁCIO DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattlePalaceDouble] 6a656e7f4b
+Corre pros SALÕES DE BATALHA\nDUPLA do PALÁCIO DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattleArena] 7128a01040
+Corre pro Torneio de Nocaute\nda ARENA DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattlePike] 10869b19b6
+Corre pra Escolha de Batalha\ndo PICO DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_GetToBattlePyramid] 963ee58b41
+Corre pra Missão de Batalha\nda PIRÂMIDE DE BATALHA!\pTem que ganhar!\nNão desperdice a chance!\lO futuro de nós dois depende de você!$
+
+[BattleFrontier_Lounge3_Text_NiceTryCantReturnPoints] 9b66df5f36
+Ah, é você…\nBoa tentativa…\pDetesto dizer, mas não posso\ndevolver os seus Pontos de Batalha…\pQue isso nos motive a tentar mais\nda próxima vez!$
+
+[BattleFrontier_Lounge3_Text_HelloChampHeresYourPoints] c984882b16
+Ah, sim!\nOlá, fera!\pEu sabia que você conseguia!\nEu sabia!\lGanhamos os dois!\pVou devolver os seus Pontos de\nBatalha e, claro, um extra meu!$
+
+[BattleFrontier_Lounge3_Text_ObtainedBattlePoints] c2bbcdc909
+{PLAYER} recebeu\n{STR_VAR_1} Pontos de Batalha.$
+
+[BattleFrontier_Lounge3_Text_ThinkOfMeForAnotherChallenge] 6846489d3b
+Se topar outro desafio, por favor,\nlembre de mim!$
+
+[BattleFrontier_Lounge3_Text_NotInterested] fd04e5518f
+Não quer?! Não tenha tanto medo de\narriscar!$
+
+[BattleFrontier_Lounge3_Text_Oh] 7d6e6f3637
+Ah…$
+
+[BattleFrontier_Lounge3_Text_BackedWrongTrainer] 6126613dc0
+Apostei no TREINADOR errado de novo!\pTalvez eu devesse só batalhar\nnormalmente como todo mundo…$
+
+[BattleFrontier_Lounge3_Text_TrainerGoodButRattled] 70323c3821
+Aquele TREINADOR…\pÉ bom, mas fica nervoso fácil demais\npra aguentar a CÚPULA DE BATALHA…$
+
+[BattleFrontier_Lounge3_Text_KnowWinnerWhenISeeOne] d14a2ccf08
+Hihi!\nEu reconheço um vencedor de longe!$
+
+[BattleFrontier_Lounge3_Text_ShouldBeTakingChallenges] 3baf911c14
+Aqueles TREINADORES…\nO que estão fazendo?\lDeviam estar encarando desafios.$

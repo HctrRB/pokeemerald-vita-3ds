@@ -1,0 +1,23 @@
+[Route128_Text_ArchieWhatHappened] 00b15ecb26
+ARCHIE: O que aconteceu…\nQue cena terrível é esta…\pEu… cometi um erro horrível?$
+
+[Route128_Text_ArchieIOnlyWanted] ef6e633124
+Eu…\nEu só queria…$
+
+[Route128_Text_MaxieDoYouUnderstandNow] 248dd42966
+MAXIE: Entende agora, ARCHIE?\pVê finalmente como o seu sonho\nterminou em desastre?\pTemos que correr! Temos que fazer\nalguma coisa antes que a situação\lsaia totalmente do controle!$
+
+[Route128_Text_MaxieResposibilityFallsToArchieAndMe] c573fdea67
+MAXIE: {PLAYER}, não diga nada.\pSei que não tenho o direito de\ncriticar o ARCHIE…\pMas, do jeito que as coisas estão,\nduvido que nós, humanos, consigamos\lfazer alguma coisa.\pMas também não podemos ficar só\nolhando, sem fazer nada.\pA responsabilidade de pôr fim a isso\né minha e do ARCHIE…$
+
+[Route128_Text_MaxieThisDefiesBelief] d0b02e61b6
+MAXIE: Isso é inacreditável…\pAqueles POKéMON superantigos…\pO poder deles é inacreditável.\nDesequilibraram a natureza…$
+
+[Route128_Text_StevenWhatIsHappening] 1b007ab7c3
+STEVEN: {PLAYER}{KUN}!\nO que está acontecendo?$
+
+[Route128_Text_StevenWholeWorldWillDrown] 5621076194
+Que terrível…\pDepois que a onda de calor acabou,\ncomeçou este dilúvio.\pSe não parar, toda HOENN…\nNão, o mundo inteiro vai se afogar.\pEsta nuvem de chuva enorme se\nespalha a partir de SOOTOPOLIS…\pO que será que está acontecendo lá?\pNão adianta discutir aqui…\nSOOTOPOLIS pode ter as respostas…$
+
+[Route128_Text_StevenImGoingToSootopolis] 6401e022f6
+{PLAYER}{KUN}…\nNão sei o que você pretende fazer,\lmas não faça nenhuma loucura.\pCerto.\nVou pra SOOTOPOLIS.$

@@ -1,0 +1,5 @@
+[GraniteCave_1F_Text_GetsDarkAheadHereYouGo] d963773136
+Ei, você.\nMais pra frente fica muito escuro.\lVai ser difícil explorar.\pAquele cara que passou aqui antes…\nSTEVEN, acho que era isso.\pEle sabia usar CLARÃO, então deve\nestar bem, mas…\pBom, pra nós, ALPINISTAS, ajudar quem\na gente encontra é o nosso lema.\pTome, vou passar isto pra você.$
+
+[GraniteCave_1F_Text_ExplainFlash] 5078d82ff5
+Ensine o golpe oculto CLARÃO a um\nPOKéMON e use.\pIlumina até a escuridão total\ndas cavernas.\pMas, pra usar, você precisa da INSÍGNIA\ndo GINÁSIO POKéMON de DEWFORD.$

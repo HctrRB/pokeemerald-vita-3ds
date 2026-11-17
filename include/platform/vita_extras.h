@@ -65,11 +65,15 @@ typedef enum
     FAST_EXTRA_VOXEL_FPS,
     FAST_EXTRA_VOXEL_BLUR,
     FAST_EXTRA_UI_THEME,       // colour theme of the new UI menus (UI_THEME_*)
+    FAST_EXTRA_UI_LANGUAGE,    // 0 = EN, 1 = PT-BR (native UI only)
     FAST_EXTRA_VISIBLE_WILD,
     FAST_EXTRA_ENCOUNTER_RATE,
     FAST_EXTRA_VOXEL_HD2D,     // 0=AUTO(30:HIGH/60:LOW), 1=OFF, 2=LOW, 3=HIGH
-    FAST_EXTRA_VOXEL_FOV,      // 0=35 deg, 1=30 deg (telephoto diorama)
-    FAST_EXTRA_VOXEL_GRADE,    // 0=GBA faithful, 1=HD-2D cinematic
+    FAST_EXTRA_CAMERA_STICK,
+    FAST_EXTRA_CAMERA_TREES,   // billboard tree cards when camera is rotated   // Hold L + left analog for 3D camera orbit
+    FAST_EXTRA_FIRST_PERSON,   // Eye-level voxel camera
+    FAST_EXTRA_VOXEL_FOV,
+    FAST_EXTRA_VOXEL_GRADE,
     FAST_EXTRA_COUNT
 } FastExtraId;
 

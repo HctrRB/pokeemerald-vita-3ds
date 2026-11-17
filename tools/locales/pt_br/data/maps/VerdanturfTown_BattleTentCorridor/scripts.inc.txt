@@ -1,0 +1,11 @@
+[VerdanturfTown_ContestHall_Text_WhichContestYouEntering] f5858b1ec5
+Em qual CONCURSO você vai entrar?\nQuer um conselho?\pEm qualquer CONCURSO, por exemplo um\nCONCURSO DE FOFURA, acho que não\ljulgam só a fofura na primeira etapa.\pVocê precisa achar jeitos de criar\nos POKéMON cada vez melhor.$
+
+[VerdanturfTown_ContestHall_Text_RaisedMonToBeCute] 2323bf4f5b
+Criei o meu POKéMON pra ser fofo.\pDescobri que dá pra pôr POKéMON\nnum CONCURSO de fofura!\pQue bom que criei o meu POKéMON\ncom tanto carinho…$
+
+[VerdanturfTown_ContestHall_Text_MyMonRules] 2c279e392e
+O meu POKéMON é o máximo!\pÉ estiloso, forte e ainda bonito,\nfofo e esperto. É completo!\pBem que eu podia ganhar em todos\nos CONCURSOS.$
+
+[VerdanturfTown_ContestHall_Text_NormalRankStage] 8da97c476f
+CONCURSOS POKéMON\nPALCO DO NÍVEL NORMAL!$

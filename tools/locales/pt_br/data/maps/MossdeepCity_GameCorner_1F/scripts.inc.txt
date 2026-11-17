@@ -1,0 +1,29 @@
+[RS_MysteryEventsHouse_Text_OldManGreeting] d7b7c21f2e
+Quando eu era jovem, viajei o mundo\ncomo TREINADOR POKéMON.\pAgora que virei um velho caduco, a\nminha única diversão é ver jovens\lTREINADORES batalhando.$
+
+[RS_MysteryEventsHouse_Text_DoorIsLocked] bbdfbcb3fb
+A porta parece trancada.$
+
+[RS_MysteryEventsHouse_Text_ChallengeVisitingTrainer] 73edcb7851
+Um TREINADOR chamado {STR_VAR_1}\nestá visitando a minha casa.\pQuer desafiar {STR_VAR_1}?$
+
+[RS_MysteryEventsHouse_Text_YouWontBattle] 53519fd794
+Não vai batalhar? Que pena não\npoder ver você batalhar…$
+
+[RS_MysteryEventsHouse_Text_KeepItToA3On3] 31dfcab749
+Ah, que bom, que bom!\pMas a minha casa não é tão firme.\pPosso pedir que seja só uma\nbatalha de 3 contra 3?$
+
+[RS_MysteryEventsHouse_Text_SaveYourProgress] 6fba1ce09a
+Antes de vocês batalharem, é melhor\nsalvar o jogo.$
+
+[RS_MysteryEventsHouse_Text_HopeToSeeAGoodMatch] 36c11f2106
+Espero ver uma boa batalha!$
+
+[RS_MysteryEventsHouse_Text_BattleTie] 33c8bcde7e
+Então deu empate.\pFoi uma batalha brilhante em que\nninguém cedeu um passo!$
+
+[RS_MysteryEventsHouse_Text_BattleWon] 8bfc117f3d
+Foi magnífico!\pAté parecia eu mesmo na minha\njuventude!$
+
+[RS_MysteryEventsHouse_Text_BattleLost] 8e29057573
+Ah, que pena!\pMas foi uma boa batalha.\nEspero que ganhe da próxima vez.$

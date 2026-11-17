@@ -1,0 +1,5 @@
+[ShoalCave_LowTideLowerRoom_Text_CanOvercomeColdWithFocus] ef9c231989
+O frio cortante daqui atrapalha\no treino.\pMas, com foco, dá pra superar!\pCom esta FAIXA FOCAL, se concentre e\naguente o frio!$
+
+[ShoalCave_LowTideLowerRoom_Text_EverythingStartsWithFocus] 6e64ec0176
+Tudo começa com o foco!$

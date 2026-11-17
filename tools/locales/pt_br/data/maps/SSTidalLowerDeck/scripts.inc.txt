@@ -1,0 +1,17 @@
+[SSTidalLowerDeck_Text_PhillipIntro] b2f9427b36
+Aaargh! Cansei de limpar este\nlugarzão!\pVamos a uma batalha rápida!$
+
+[SSTidalLowerDeck_Text_PhillipDefeat] 5a835ec76a
+Maninho, perdi!$
+
+[SSTidalLowerDeck_Text_PhillipPostBattle] 4486ada6b6
+Somos os IRMÃOS DA FAXINA!\pO velho joga o detergente,\ne o novo esfrega!$
+
+[SSTidalLowerDeck_Text_LeonardIntro] f5b951c951
+Este é o fundo do casco do navio.\nTem espaço de sobra.\lDá pra uma batalha POKéMON.$
+
+[SSTidalLowerDeck_Text_LeonardDefeat] 5af8e97b1c
+Manão, perdi!$
+
+[SSTidalLowerDeck_Text_LeonardPostBattle] 4486ada6b6
+Somos os IRMÃOS DA FAXINA!\pO velho joga o detergente,\ne o novo esfrega!$

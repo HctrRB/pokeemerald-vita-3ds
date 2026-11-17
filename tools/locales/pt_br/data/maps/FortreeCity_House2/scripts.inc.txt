@@ -1,0 +1,20 @@
+[FortreeCity_House2_Text_HiddenPowersArousedByNature] 00bf5a7acc
+Pessoas… POKéMON…\pOs poderes ocultos despertam\nvivendo em meio à natureza…$
+
+[FortreeCity_House2_Text_CoinInWhichHand] 0d57d45c3e
+Deixe esta velha ver se o seu poder\noculto despertou…\pTenho uma moeda na mão.\pAgora diga: escondi a moeda na mão\ndireita? Ou na esquerda?$
+
+[FortreeCity_House2_Text_CorrectTryAgainWhichHand] b7cfd4077a
+Oh! Isso, acertou!\pVamos de novo.\pEm que mão escondi a moeda?\nDireita ou esquerda?$
+
+[FortreeCity_House2_Text_CorrectTryAgainWhichHand2] b7cfd4077a
+Oh! Isso, acertou!\pVamos de novo.\pEm que mão escondi a moeda?\nDireita ou esquerda?$
+
+[FortreeCity_House2_Text_YourHiddenPowerHasAwoken] 51b49e3083
+Oh! Esplêndido!\nO seu poder oculto despertou!\pTome, use isto para despertar o\npoder oculto dos seus POKéMON.$
+
+[FortreeCity_House2_Text_ExplainHiddenPower] 9d6c7abed6
+PODER OCULTO é um golpe que muda\nconforme o POKéMON.$
+
+[FortreeCity_House2_Text_YouGuessedWrong] da8abc76da
+Não, que pena.\nVocê errou.$

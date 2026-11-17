@@ -1,0 +1,5 @@
+[PetalburgCity_House2_Text_NormanBecameGymLeader] d7baa64817
+O NORMAN virou o novo LÍDER DE\nGINÁSIO da nossa cidade.\pAcho que ele trouxe a família de\nalgum lugar bem longe.$
+
+[PetalburgCity_House2_Text_BattledNormanOnce] 9dac3aedcd
+Batalhei com o NORMAN uma vez, mas,\nnossa, ele era forte demais.\pComo eu posso dizer?\pDeu a impressão de que ele\nvive pelos POKéMON.$

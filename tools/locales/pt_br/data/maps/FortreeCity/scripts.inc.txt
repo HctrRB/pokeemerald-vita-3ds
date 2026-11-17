@@ -1,0 +1,35 @@
+[FortreeCity_Text_SawGiganticPokemonInSky] 4e7487bf6a
+Ninguém acredita, mas eu vi um\nPOKéMON gigante no céu.\pEle parecia se contorcer enquanto\nvoava pra ROTA 131.\pAliás… Snif, snif…\nHã… Você está com cheiro de queimado.\pEsteve num vulcão, por acaso?$
+
+[FortreeCity_Text_SomethingBlockingGym] b934042f26
+Quero ir ao GINÁSIO POKéMON, mas\ntem alguma coisa no caminho.\pDepois de todo aquele treino na\nROTA 120…$
+
+[FortreeCity_Text_ThisTimeIllBeatWinona] ca59583541
+Estou com os meus POKéMON de\nestimação. Desta vez, venço a WINONA.$
+
+[FortreeCity_Text_TreesGrowByDrinkingRainwater] 4034115904
+A terra absorve a água da chuva, e\nas árvores crescem bebendo essa água…\pA nossa CIDADE DE FORTREE existe\nporque tem água e terra.$
+
+[FortreeCity_Text_EveryoneHealthyAndLively] ccdd004d92
+A CIDADE é feita de casas em cima\ndas árvores.\pTalvez por esse jeito de viver,\ntodo mundo é saudável e animado.\pAté eu me sinto trinta anos mais\njovem.$
+
+[FortreeCity_Text_BugPokemonComeThroughWindow] f5be5622fb
+Morar em cima das árvores é bom.\pMas às vezes entram POKéMON INSETO\npela janela.\lÉ um susto e tanto.$
+
+[FortreeCity_Text_PokemonThatEvolveWhenTraded] d859118217
+Tem POKéMON que evoluem quando você\nos troca! Foi o que eu ouvi.$
+
+[FortreeCity_Text_SomethingUnseeable] 7d8966153b
+Tem alguma coisa invisível no caminho.$
+
+[FortreeCity_Text_UnseeableUseDevonScope] ceb2773fa9
+Tem alguma coisa invisível no caminho.\pQuer usar o ESCOPO DEVON?$
+
+[FortreeCity_Text_UsedDevonScopePokemonFled] 1395ff5155
+{PLAYER} usou o ESCOPO DEVON.\pUm POKéMON invisível ficou\ncompletamente visível!\pO POKéMON se assustou e fugiu!$
+
+[FortreeCity_Text_CitySign] 4ad949026d
+CIDADE DE FORTREE\n“A cidade na copa das árvores que\lbrinca com a natureza.”$
+
+[FortreeCity_Text_GymSign] e3bd4b0b3a
+GINÁSIO POKéMON DE FORTREE\nLÍDER: WINONA\p“A domadora de pássaros que alça\nvoo pelo mundo.”$

@@ -1,0 +1,11 @@
+[OldaleTown_PokemonCenter_1F_Text_TrainersCanUsePC] d04da78f1a
+Aquele PC ali no canto é para\nqualquer TREINADOR POKéMON usar.\pEntão, claro, você também pode\nusar à vontade.$
+
+[OldaleTown_PokemonCenter_1F_Text_PokemonCentersAreGreat] 8adf5ae2de
+Os CENTROS POKéMON são ótimos!\pDá para usar os serviços quanto\nquiser, e é tudo de graça.\lNão precisa se preocupar com nada!$
+
+[OldaleTown_PokemonCenter_1F_Text_WirelessClubNotAvailable] 3ad801e36e
+O CLUBE SEM FIO POKéMON do\nsegundo andar foi construído agora.\pMas dizem que ainda estão fazendo\najustes.$
+
+[OldaleTown_PokemonCenter_1F_Text_TradedInWirelessClub] 2ce521374d
+O CLUBE SEM FIO POKéMON do\nsegundo andar foi construído agora.\pEu já troquei POKéMON lá.$

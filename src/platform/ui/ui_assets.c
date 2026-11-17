@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ui_internal.h"
+#include "ui_locale.h"
 #include "../vita/vita_platform.h"
 
 #define UI_MAX_FONTS 40
@@ -210,6 +211,7 @@ int32_t UiText_CapMid(uint8_t face, uint8_t px)
 // Left and right ends of the ink of `s` drawn at x = 0 (the advance widths leave a side bearing)
 static void InkSpan(const UiFont *font, const char *s, int32_t *left, int32_t *right)
 {
+    s = UiLocale_Translate(s);
     int32_t x = 0, lo = 0, hi = 0;
     bool any = false;
     while (*s)
@@ -260,6 +262,7 @@ int32_t UiText_DrawMid(uint8_t face, uint8_t px, int32_t x, int32_t boxY, int32_
 
 int32_t UiText_Width(uint8_t face, uint8_t px, const char *s)
 {
+    s = UiLocale_Translate(s);
     const UiFont *font = FindFont(face, px);
     if (font == NULL || s == NULL)
         return 0;
@@ -275,6 +278,7 @@ int32_t UiText_Width(uint8_t face, uint8_t px, const char *s)
 
 int32_t UiText_Draw(uint8_t face, uint8_t px, int32_t x, int32_t y, const char *s, uint32_t rgba)
 {
+    s = UiLocale_Translate(s);
     const UiFont *font = FindFont(face, px);
     if (font == NULL || s == NULL)
         return 0;

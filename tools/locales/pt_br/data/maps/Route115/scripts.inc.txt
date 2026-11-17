@@ -1,0 +1,8 @@
+[Route115_Text_NeverKnowWhenCavePokemonWillAppear] 3705f4cf4a
+Explorar uma caverna não é como andar\nnuma estrada.\pNunca se sabe quando um POKéMON\nselvagem vai aparecer. Que suspense.$
+
+[Route115_Text_RouteSignRustboro] 4125a6ab7f
+ROTA 115\n{DOWN_ARROW} CIDADE DE RUSTBORO$
+
+[Route115_Text_MeteorFallsSign] fd8344201a
+CATARATA DOS METEOROS\nPOR AQUI PARA A CIDADE DE FALLARBOR$

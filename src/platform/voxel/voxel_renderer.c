@@ -380,6 +380,10 @@ typedef struct
     uint32_t groundTotalCount;
     uint32_t treeCount;
     uint32_t buildingCount;
+    // Opt-in camera-facing foliage: original vertices retained for GPU reorientation.
+    VoxelGlVertex *treeOriginal;
+    uint32_t treeOriginalCap;
+    float treeBillboardYaw;
     uint16_t treeFirstVert;
     uint16_t buildingFirstVert;
     uint16_t totalVertCount;
@@ -2090,6 +2094,20 @@ static void UploadChunkVbo(VoxelChunkSlot *slot)
     }
     if (slot->treeCount > 0)
     {
+        // Keep the unrotated tree geometry: rotating only the GPU data would
+        // otherwise accumulate error and would not return to the default pose.
+        if (slot->treeCount > slot->treeOriginalCap)
+        {
+            VoxelGlVertex *copy = realloc(slot->treeOriginal, slot->treeCount * sizeof(VoxelGlVertex));
+            if (copy != NULL)
+            {
+                slot->treeOriginal = copy;
+                slot->treeOriginalCap = slot->treeCount;
+            }
+        }
+        if (slot->treeOriginalCap >= slot->treeCount && slot->treeOriginal != NULL)
+            memcpy(slot->treeOriginal, slot->treeVerts, slot->treeCount * sizeof(VoxelGlVertex));
+        slot->treeBillboardYaw = 9999.0f; // invalidate last orientation after chunk upload
         glBufferSubData(GL_ARRAY_BUFFER,
                         (GLintptr)(slot->treeFirstVert * sizeof(VoxelGlVertex)),
                         (GLsizeiptr)(slot->treeCount * sizeof(VoxelGlVertex)),
@@ -3516,6 +3534,10 @@ static inline void PushFlatVertex2D(uint32_t *const vOut, const float x, const f
 
 static void DrawRays(float strength, float seconds, bool isMoon, float rayDirX, Hd2dPreset hd2d)
 {
+    // In 60 FPS classic these screen-space shafts appear as stationary
+    // bright stripes. Only draw the cinematic overlay with HD-2D enabled.
+    if (hd2d == HD2D_PRESET_OFF)
+        return;
     if (strength <= 0.005f)
         return;
 
@@ -5635,9 +5657,20 @@ static void Frame_BeginPasses(VoxelFrame *const f)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    Voxel_gluLookAt(sCamera.x, sCamera.y, sCamera.z,
-                    sCamera.targetX, sCamera.targetY, sCamera.targetZ,
-                    0.0f, 1.0f, 0.0f);
+    if (sCamera.firstPerson && !f->inBattle3D)
+    {
+        const float rad = sCamera.yaw * (3.14159265f / 180.0f);
+        const float pitch = sCamera.pitch * (3.14159265f / 180.0f);
+        Voxel_gluLookAt(sCamera.x, sCamera.y, sCamera.z,
+                        sCamera.x - sinf(rad) * 5.0f,
+                        sCamera.y - tanf(pitch) * 5.0f,
+                        sCamera.z - cosf(rad) * 5.0f,
+                        0.0f, 1.0f, 0.0f);
+    }
+    else
+        Voxel_gluLookAt(sCamera.x, sCamera.y, sCamera.z,
+                        sCamera.targetX, sCamera.targetY, sCamera.targetZ,
+                        0.0f, 1.0f, 0.0f);
 
     glDepthMask(GL_TRUE);
     glClearColor(fadeAmount >= 0.99f ? fadeRgb[0] : 0.0f,
@@ -5770,6 +5803,57 @@ static void Pass_Ground(const VoxelFrame *const f)
     }
 }
 
+// Rotate camera-facing sprite cards inside the existing tree pass. Only the
+// opt-in card geometry is changed; trunks, terrain and modeled buildings stay
+// untouched. GPU VBO updates occur only when yaw changes; original vertices
+// are cached per chunk so switching the option off restores the exact mesh.
+static void FaceTreeCards(VoxelChunkSlot *chunk, float yaw)
+{
+    static VoxelGlVertex rotated[CHUNK_TREE_CAP];
+    if (chunk->treeCount == 0 || chunk->treeCount > CHUNK_TREE_CAP ||
+        chunk->treeOriginal == NULL || chunk->treeOriginalCap < chunk->treeCount)
+        return;
+    if (fabsf(yaw - chunk->treeBillboardYaw) < 0.1f)
+        return;
+    const uint32_t count = chunk->treeCount;
+    memcpy(rotated, chunk->treeOriginal, count * sizeof(VoxelGlVertex));
+    if (fabsf(yaw) > 0.01f)
+    {
+        const float rad = yaw * (3.14159265358979323846f / 180.0f);
+        const float c = cosf(rad), sn = sinf(rad);
+        // Each tree/grass card is emitted as 2 triangles (6 vertices);
+        // preserve each card's centroid to avoid orbiting entire tree chunks.
+        for (uint32_t i = 0; i + 5 < count; i += 6)
+        {
+            float cx = 0.0f, cz = 0.0f;
+            float lo = rotated[i].y, hi = lo;
+            for (uint32_t k = 0; k < 6; ++k)
+            {
+                const VoxelGlVertex *v = &rotated[i + k];
+                cx += v->x; cz += v->z;
+                if (v->y < lo) lo = v->y;
+                if (v->y > hi) hi = v->y;
+            }
+            // Ignore essentially horizontal ground and flat decoration quads.
+            if (hi - lo < 0.40f)
+                continue;
+            cx /= 6.0f; cz /= 6.0f;
+            for (uint32_t k = 0; k < 6; ++k)
+            {
+                VoxelGlVertex *v = &rotated[i + k];
+                const float x = v->x - cx, z = v->z - cz;
+                v->x = cx + c * x + sn * z;
+                v->z = cz - sn * x + c * z;
+            }
+        }
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    (GLintptr)(chunk->treeFirstVert * sizeof(VoxelGlVertex)),
+                    (GLsizeiptr)(count * sizeof(VoxelGlVertex)), rotated);
+    chunk->treeBillboardYaw = yaw;
+}
+
 // Pass 2: trees, tall grass and flowers (tree atlas), from the chunk VBOs.
 static void Pass_Trees(const VoxelFrame *const f)
 {
@@ -5779,6 +5863,12 @@ static void Pass_Trees(const VoxelFrame *const f)
         return;
 
     glBindTexture(GL_TEXTURE_2D, sTreeTex);
+    const float wantedYaw = (VitaExtras_GetFast(FAST_EXTRA_CAMERA_STICK) &&
+                             VitaExtras_GetFast(FAST_EXTRA_CAMERA_TREES))
+                           ? sCamera.yaw : 0.0f;
+    for (int32_t i = 0; i < visibleChunkCount; ++i)
+        FaceTreeCards(visibleChunks[i], wantedYaw);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     if (sFlowerFramesReady && f->hd2dPreset != HD2D_PRESET_OFF)
     {

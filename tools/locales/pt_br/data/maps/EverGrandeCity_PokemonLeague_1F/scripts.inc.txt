@@ -1,0 +1,8 @@
+[EverGrandeCity_PokemonLeague_1F_Text_MustHaveAllGymBadges] 349c59e135
+Daqui em diante, só podem entrar\nTREINADORES que juntaram todas as\lINSÍGNIAS de GINÁSIO.\pTREINADOR, vamos conferir se você\ntem todas as INSÍGNIAS.$
+
+[EverGrandeCity_PokemonLeague_1F_Text_HaventObtainedAllBadges] 807e749846
+Você não tem todas as INSÍGNIAS.\pSe vai pra LIGA POKéMON, volte com\ntodas elas.$
+
+[EverGrandeCity_PokemonLeague_1F_Text_GoForth] fd911838eb
+TREINADOR! Acredite em si mesmo e nos\nseus POKéMON, e siga em frente!$

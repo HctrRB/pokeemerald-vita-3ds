@@ -1,0 +1,71 @@
+[LilycoveCity_LilycoveMuseum_1F_Text_WelcomeToLilycoveMuseum] 64d9739e11
+Boas-vindas ao MUSEU DE LILYCOVE.\pAproveite com calma a nossa coleção\nde obras fantásticas com POKéMON.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_ImCuratorHaveYouViewedOurPaintings] d67f952e9d
+Sou o CURADOR deste MUSEU de\nbelas-artes.\pÉ animador ver alguém tão jovem\nno nosso MUSEU.\pJá viu a nossa coleção de quadros?$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_NotDisturbYouTakeYourTime] 6288e13fe9
+Ah, então não vou incomodar.\nFique à vontade, sem pressa.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_HaveYouAnInterestInPaintings] 1dedcd0e11
+Oh? Acredito que você seja TREINADOR\nde POKéMON.\pTambém se interessa por quadros?$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_HonoredYoudVisitInSpiteOfThat] 3cfe62fc5b
+Entendo…\pÉ uma honra receber a sua visita\nmesmo assim.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_ExcellentCanYouComeWithMe] e69bfbb42b
+Ah, excelente!\nVocê gosta de quadros!\pEntão, posso pedir que me\nacompanhe?$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_VeryOldPainting] 174ada48c4
+É um quadro muito antigo.\nA tinta está descascando aqui e ali.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_OddLandscapeFantasticScenery] 93c4e0c854
+É uma paisagem estranha, com um\ncenário bizarro e fantástico.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_PaintingOfBeautifulWoman] 0913c7eb4b
+É o quadro de uma linda mulher\nsorrindo com um POKéMON no colo.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_PaintingOfLegendaryPokemon] c1eee7605a
+É o quadro de um POKéMON lendário\nde muito tempo atrás.\pO artista pintou isto da\nimaginação.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_PaintingOfGrassPokemon] 5092b338f8
+É o quadro de POKéMON de PLANTA\nbalançando na brisa.\pParecem curtir o carinho suave\ndo vento.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_PaintingOfBerries] ffcf16e9ee
+É um quadro de FRUTAS com cara\nde deliciosas.\pEste quadro dá até fome!$
+
+[LilycoveCity_LilycoveMuseum_Text_BirdPokemonSculptureReplica] 5cfdcfc3a0
+É a réplica de uma escultura famosa.\pRetrata um antigo POKéMON PÁSSARO.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_BigPokeBallCarvedFromStone] 473a3aa049
+É uma POKé BOLA grande esculpida\nnuma pedra preta.\pParece que era usada em festivais\nantigamente.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_StoneTabletWithAncientText] 0f11b8fd52
+É uma enorme tábua de pedra com\nPOKéMON e um texto denso em letras\lmiúdas de uma língua antiga e\lilegível.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_WorksOfMagnificence] f8851e9c9b
+Hmmm…\nQue obras magníficas…$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_MustntForgetLoveForFineArts] 554f07300a
+Batalhar com POKéMON é divertido,\nisso eu admito.\pMas não se pode esquecer o amor\npelas belas-artes.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_ThisMuseumIsInspiration] 6a7eeb696b
+Este MUSEU DE ARTE… Dá pra ver\nmuitos quadros fantásticos.\pE o CURADOR é uma pessoa maravilhosa.\pPra artistas como eu, este MUSEU\né uma inspiração.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_ThisLadyIsPretty] 3798c59529
+Esta moça é bonita!\nParece a mamãe!$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_ThisPokemonIsAdorable] d716c522ca
+Este POKéMON é uma graça!\nIgualzinho ao nosso filhinho!$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_HeardMuseumGotNewPaintings] 3283995292
+Ouvi dizer que este MUSEU DE ARTE\nrecebeu quadros novos.\pClaro que vim correndo.\pOs quadros novos estão no\nandar de cima?$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_CuratorHasBeenCheerful] 20cefc90db
+Ultimamente, o CURADOR anda\nalegre como nunca.\pAposto que aconteceu algo bom\npra ele. Com certeza.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_AimToSeeGreatPaintings] 540f8de030
+Quero ver muitos quadros incríveis\naqui e aprender com eles.\pSonho em um dia ter uma obra minha\nexposta aqui.$
+
+[LilycoveCity_LilycoveMuseum_1F_Text_MuseumTouristDestination] 13d1fa6e0c
+O MUSEU DE ARTE virou um ponto\nturístico favorito.\pÉ ótimo pra LILYCOVE…\nNão, ótimo pra região de HOENN!\pFoi o que ouvi: um TREINADOR sozinho\nconseguiu todos os quadros lá de cima.$

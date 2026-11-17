@@ -1,0 +1,29 @@
+[VerdanturfTown_Text_ManTryingToDigTunnel] 2d2213fe3c
+O meu pai me contou.\pEle diz que este túnel é cheio de\nPOKéMON medrosos.\pEles se assustam com barulho alto e\nfazem um tumulto enorme.\pPor isso tiveram que parar a obra\ndo túnel.\pMas tem um homem que está tentando\ncavar o túnel sozinho!$
+
+[VerdanturfTown_Text_ManDugTunnelForLove] e762ba5c23
+Teve um homem que cavou um túnel por\numa moça que ele amava.\pEu não entendo muito bem, mas, enfim!$
+
+[VerdanturfTown_Text_AirCleanHere] 4b09488556
+Pelo jeito que o vento sopra, a cinza\ndo vulcão nunca vem pra cá.\pO ar aqui é limpo e gostoso.\nMorar aqui faz bem até pra gente\lfrágil e doente.$
+
+[VerdanturfTown_Text_MakeBattleTentDebut] cf15c9d17b
+Eu e os meus POKéMON estamos numa\nsequência de vitórias quente.\pEntão resolvi estrear na TENDA\nDE BATALHA nesta cidade.$
+
+[VerdanturfTown_Text_GuyTryingToBustThroughCave] e3d5a207d6
+Viu a caverna do lado do\nPOKé MART?\pTem um cara lá dentro tentando\nquebrar as pedras pra conseguir\latravessar pro outro lado.\pSeria ótimo se desse pra passar…\nIa ficar fácil visitar RUSTBORO.$
+
+[VerdanturfTown_Text_EasyToGetToRustboroNow] 7641238aac
+A caverna do lado do POKé MART\nagora é um túnel pro outro lado.\pÉ ótimo: agora é fácil ir a RUSTBORO\ncomprar os produtos novos da DEVON.$
+
+[VerdanturfTown_Text_TownSign] 8eb760fe45
+CIDADE DE VERDANTURF\p“Planalto ventoso com o\ncheiro doce da grama.”$
+
+[VerdanturfTown_Text_WandasHouse] 8fa355439a
+CASA DA WANDA$
+
+[VerdanturfTown_Text_BattleTentSign] 6dc7fd188d
+TENDA DE BATALHA DE VERDANTURF\n“Encha os olhos de batalhas!”$
+
+[VerdanturfTown_Text_RusturfTunnelSign] 16a397d8cb
+TÚNEL RUSTURF\n“Ligando RUSTBORO e VERDANTURF\p“A obra do túnel foi\ncancelada.”$

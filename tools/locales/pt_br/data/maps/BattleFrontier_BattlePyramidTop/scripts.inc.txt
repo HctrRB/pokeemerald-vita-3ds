@@ -1,0 +1,47 @@
+[BattleFrontier_BattlePyramidTop_Text_ReachedSummitUpYouGo] 5bd66c4a63
+Que alegria ver você aqui!\nVocê chegou ao topo da PIRÂMIDE\lDE BATALHA!\pAcima daqui fica o mirante da\nPIRÂMIDE.\pÉ um lugar só pra quem conquistou\na PIRÂMIDE.\pAgora, por favor!\nPode subir!$
+
+[BattleFrontier_BattlePyramidTop_Text_PlayerConqueredPyramid] 5abf464e9c
+Temos uma nova conquista da PIRÂMIDE!\nQue o nome {PLAYER} seja conhecido!$
+
+[BattleFrontier_BattlePyramidTop_Text_ChiefBeatYouHere] 13f38fe178
+Que alegria ver você aqui!\pInfelizmente, você chegou em segundo\npor uma fração de tempo!\pO nosso chefe já conquistou a\nPIRÂMIDE antes de você.\pMas, jovem…\nVocê é TREINADOR!\pMostre a sua força e tome do nosso\nchefe a glória do topo!\pAgora, por favor! Quando quiser,\ndê mais um passo de coragem!$
+
+[BattleFrontier_BattlePyramidTop_Text_ExplorationsAreGrandestAdventure] 47904494ff
+Jovem…\pNão concorda que explorar é a maior\ndas aventuras?\pA sua própria esperteza!\pA sua própria força!\pOs seus próprios POKéMON!\pE, acima de tudo, só a sua coragem\npra guiar você por mundos\ldesconhecidos…$
+
+[BattleFrontier_BattlePyramidTop_Text_ImPyramidKingBrandon] a48d0cf693
+Aah, sim, esta vida é grandiosa!\nGrandiosa mesmo! Hein?\pEu sou o BRANDON!\pSou o REI DA PIRÂMIDE, o que quer\ndizer que eu mando aqui.\pA maioria me chama de chefe!\pSe você veio até aqui, é porque\ntem muita confiança, certo?\pHahahah!\nIsso vai ser emocionante!$
+
+[BattleFrontier_BattlePyramidTop_Text_BringCourageToOurBattle] f1c40e60de
+Muito bem!\nTraga a sua coragem pra batalha!$
+
+[BattleFrontier_BattlePyramidTop_Text_BrandonFrontierPassPlease] ae8a5625dc
+BRANDON: Hahahah! Foi grandioso!\nGrandioso, sim, de verdade!\pMuito bem! Você merece o\nreconhecimento! O seu PASSE DA\lFRONTEIRA, por favor!$
+
+[BattleFrontier_BattlePyramidTop_Text_ReceivedBraveSymbol] 8c51159c6a
+O Símbolo da Coragem foi gravado no\nPASSE DA FRONTEIRA!$
+
+[BattleFrontier_BattlePyramidTop_Text_LookForwardToNextMeeting] cacb3fe38f
+Jovem!\nAguardo o nosso próximo encontro!$
+
+[BattleFrontier_BattlePyramidTop_Text_BrandonYouveReturned] 6bd3ca3ad9
+BRANDON: …Você finalmente voltou,\njovem…\pO seu amor pela aventura parece vir\ndo fundo do coração…\pSim… Você é como eu era na\nminha juventude…\p… … …Ah…\pA paixão!\pO perigo!\pO desespero!\pAqueles dias de aventuras de vida\nou morte estão de volta…$
+
+[BattleFrontier_BattlePyramidTop_Text_MyCourageIsOffMeter] 3e2ee3cb4d
+Muito bem!\pSinto que a minha coragem está\nnas alturas!$
+
+[BattleFrontier_BattlePyramidTop_Text_EverythingYouHave] 656be83246
+Tudo o que você tem!\nEstou pronto pra tudo!$
+
+[BattleFrontier_BattlePyramidTop_Text_BrandonRemarkableHaveThis] 528f3ca81a
+BRANDON: Hahahah!\nNotável!\lSim, é grandioso mesmo!\pJovem!\pVocê me superou de ponta a ponta!\nAqui! Quero que fique com isto!$
+
+[BattleFrontier_BattlePyramidTop_Text_BraveSymbolTookGoldenShine] fda70bf9f3
+O Símbolo da Coragem ganhou um\nbrilho dourado!$
+
+[BattleFrontier_BattlePyramidTop_Text_FarewellForNow] 684ce97dee
+Ah, sim! Isso só mostra que ainda\ntenho muito a aprender!\pQue os nossos caminhos se cruzem\nde novo! Até logo, jovem!$
+
+[BattleFrontier_BattlePyramidTop_Text_StepForwardWhenReady] 0e9c1b5ac4
+Agora, quando quiser, tenha\ncoragem e dê um passo à frente.$

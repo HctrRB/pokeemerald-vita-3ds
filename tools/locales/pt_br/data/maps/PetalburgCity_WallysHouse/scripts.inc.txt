@@ -1,0 +1,23 @@
+[PetalburgCity_WallysHouse_Text_ThanksForPlayingWithWally] e2abb87c41
+Você é…\nAh, você deve ser {PLAYER}{KUN}, né?\pObrigado por brincar com o WALLY\nagora há pouco.\pEle é frágil e doente desde\nque era bebê.\pMandamos ele ficar uns tempos com\nparentes na CIDADE DE VERDANTURF.\pO ar lá é muito mais limpo\ndo que aqui.\pComo? Cadê o WALLY?\nEle já foi, o nosso WALLY.\pOnde será que ele já\nchegou a essa altura?$
+
+[PetalburgCity_WallysHouse_Text_WonderHowWallyIsDoing] 5b37094533
+Como será que está o nosso WALLY?$
+
+[PetalburgCity_WallysHouse_Text_PleaseExcuseUs] 7e8c5957ee
+{PLAYER}{KUN}! Desculpe a gente por\ntrazer você aqui desse jeito.\pMas o nosso WALLY ficou bem saudável\ndesde que foi pra VERDANTURF.\pE devemos tudo isso a você!\pQuando o WALLY saiu da cidade, você\najudou ele a pegar um POKéMON, né?\pAcho que isso deixou o WALLY muito\nfeliz.\pNa verdade, não só o WALLY.\nMe deixou feliz também, como pai.\pFeliz por ele ter ganhado uma amizade\ntão boa quanto a sua.\pNão é suborno nem nada, mas eu queria\nmuito que você ficasse com isto.$
+
+[PetalburgCity_WallysHouse_Text_SurfGoAllSortsOfPlaces] d5e45ef0dc
+Se o seu POKéMON souber SURFAR, você\nvai poder ir a tudo quanto é lugar.$
+
+[PetalburgCity_WallysHouse_Text_WallyIsComingHomeSoon] 236e9929c9
+O WALLY volta pra casa logo, logo.\nEstou ansioso por isso.$
+
+[PetalburgCity_WallysHouse_Text_YouMetWallyInEverGrandeCity] 046358c377
+Hã? Você encontrou o WALLY na\nCIDADE DE EVER GRANDE?\pAh, {PLAYER}{KUN}, deixa de bobagem.\pEle pode ter ficado saudável, mas não\nconsegue ir pra um lugar tão longe\lassim sozinho.$
+
+[PetalburgCity_WallysHouse_Text_WallyWasReallyHappy] 1f3a721d99
+O WALLY ficou muito feliz quando contou\npra gente que pegou um POKéMON.\pFazia tempo que eu não via ele\nsorrir daquele jeito.$
+
+[PetalburgCity_WallysHouse_Text_WallyLeftWithoutTelling] 0dd1a13d07
+Quero que isso fique em segredo\ndo meu marido…\pMas o nosso WALLY saiu da CIDADE DE\nVERDANTURF sem avisar ninguém.\pSabe, o WALLY é frágil, mas ele\né surpreendentemente teimoso.\pTenho certeza de que um dia ele\nvolta são e salvo!$

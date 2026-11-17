@@ -1,0 +1,772 @@
+# Each line: English|Brazilian Portuguese, deliberately short for 960x544 Vita UI
+GENERAL|GERAL
+WORLD|MUNDO
+BATTLE|BATALHA
+MODES|MODOS
+CHEATS|TRAPAÇAS
+OPTIONS|OPÇÕES
+OPTION|OPÇÕES
+SETTINGS|AJUSTES
+PACING|RITMO
+DISPLAY|TELA
+RENDERER|VISUAL
+TIME & SKY|HORA E CÉU
+GAMEPLAY|JOGABILIDADE
+AUDIO|ÁUDIO
+INTERFACE|INTERFACE
+CONTROLS|CONTROLES
+SYSTEM|SISTEMA
+SAVE|SALVAR
+SAVING|SALVANDO
+EXIT|SAIR
+QUIT|SAIR
+QUIT TO LIVEAREA|SAIR PARA LIVEAREA
+OPEN|ABRIR
+CLOSE|FECHAR
+BACK|VOLTAR
+CANCEL|CANCELAR
+CHANGE|ALTERAR
+Change|Alterar
+Save|Salvar
+Quit|Sair
+Remap|Remapear
+EXECUTE|EXECUTAR
+Done.|Pronto.
+ON|LIG.
+OFF|DESL.
+SLOW|LENTO
+MID|MÉDIO
+FAST|RÁPIDO
+NORMAL|NORMAL
+SHIFT|TROCAR
+SET|FIXO
+STEREO|ESTÉREO
+MONO|MONO
+NONE|NENHUM
+YES|SIM
+NO|NÃO
+OK|OK
+SELECT|SELECT
+START|START
+UP|CIMA
+DOWN|BAIXO
+LEFT|ESQUERDA
+RIGHT|DIREITA
+CROSS|X
+CIRCLE|BOLA
+SQUARE|QUADRADO
+TRIANGLE|TRIÂNGULO
+R-STICK UP|ANAL. CIMA
+R-STICK DOWN|ANAL. BAIXO
+R-STICK LEFT|ANAL. ESQ.
+R-STICK RIGHT|ANAL. DIR.
+A BUTTON|BOTÃO A
+B BUTTON|BOTÃO B
+L SHOULDER|BOTÃO L
+R SHOULDER|BOTÃO R
+BUTTON MODE|MODO BOTÕES
+BUTTON REMAPPING|REMAPEAR BOTÕES
+PRESS A BUTTON|PRESSIONE UM BOTÃO
+PRESS...|PRESSIONE...
+RESET TO DEFAULTS|RESTAURAR PADRÕES
+FAST FORWARD|ACELERAR
+QUICK OPTIONS|OPÇÕES RÁPIDAS
+TEXT SPEED|VELOCIDADE TEXTO
+BATTLE SCENE|ANIM. DE BATALHA
+BATTLE STYLE|ESTILO DE BATALHA
+SOUND OUTPUT|SAÍDA DE ÁUDIO
+MASTER VOLUME|VOLUME GERAL
+FAST FWD SPEED|VELOCIDADE RÁPIDA
+FF BUTTON MODE|BOTÃO DE ACELERAR
+2D SCALER|ESCALA 2D
+MENU COLOR|TEMA DOS MENUS
+LANGUAGE|IDIOMA
+UI LANGUAGE|IDIOMA DA INTERFACE
+PORTUGUESE|PORTUGUÊS
+ENGLISH|ENGLISH
+3D VOXEL DIORAMA|CENÁRIO VOXEL 3D
+DIORAMA BLUR (DOF)|DESFOQUE 3D (DOF)
+TARGET FRAMERATE|FPS DESEJADO
+DAY / NIGHT CYCLE|CICLO DIA/NOITE
+FAST EGGS|OVOS RÁPIDOS
+EXP. SHARE|EXP. COMPARTILHADA
+EXP SHARE|EXP. COMPARTILHADA
+EXP ON CATCH|EXP. AO CAPTURAR
+NATIONAL POKEDEX|POKÉDEX NACIONAL
+FAST EGGS|OVOS RÁPIDOS
+AUTO RUN|CORRIDA AUTOMÁTICA
+AUTO RUN: ON|CORRIDA AUTO: LIG.
+AUTO RUN: OFF|CORRIDA AUTO: DESL.
+POKEMON FOLLOWER|POKÉMON SEGUIDOR
+3D BATTLES|BATALHAS 3D
+BATTLE SPEED|VELOCIDADE BATALHA
+PHYSICAL / SPECIAL SPLIT|DIVISÃO FÍS./ESP.
+REPEL PROMPT|AVISO DE REPELENTE
+SHINY ODDS|CHANCE DE SHINY
+ALWAYS CATCH|CAPTURA GARANTIDA
+LEVEL CAP|LIMITE DE NÍVEL
+NUZLOCKE|NUZLOCKE
+SAVE SLOT|ARQUIVO DE SAVE
+SLOT 1|SAVE 1
+SLOT 2|SAVE 2
+SLOT 3|SAVE 3
+HOLD|SEGURAR
+TOGGLE|ALTERNAR
+NEAREST|VIZINHO
+BILINEAR|BILINEAR
+SHARP|NÍTIDO
+RED|VERMELHO
+EMERALD|ESMERALDA
+CRYSTAL|CRISTAL
+TROPICAL|TROPICAL
+ROYAL|REAL
+2D|2D
+3D|3D
+FIGHT|LUTAR
+BAG|MOCHILA
+BATTLE BAG|MOCHILA DE BATALHA
+RUN|FUGIR
+BALL|BOLA
+GO NEAR|APROXIMAR
+POKéMON|POKéMON
+What will|O que
+ do?| fazer?
+TARGET|ALVO
+SELF|PRÓPRIO
+ALLY|ALIADO
+FOE|INIMIGO
+MOVE WHERE?|MOVER PARA ONDE?
+YES|SIM
+NO|NÃO
+NEW STATS|NOVOS DADOS
+LEVEL UP!|SUBIU DE NÍVEL!
+ATK|ATQ
+DEF|DEF
+SPE|VEL
+SP.A|ATQ.E
+SP.D|DEF.E
+SP. ATK|ATQ. ESP.
+SP. DEF|DEF. ESP.
+ATTACK|ATAQUE
+DEFENSE|DEFESA
+SPEED|VELOCIDADE
+HP|HP
+ABILITY|HABILIDADE
+NATURE|NATUREZA
+STATUS|ESTADO
+MOVES|GOLPES
+MOVE|MOVER
+NEW MOVE|NOVO GOLPE
+LEARN|APRENDER
+LEARNED|APRENDEU
+DON'T LEARN|NÃO APRENDER
+Don't learn|Não aprender
+FORGET|ESQUECER
+FORGET WHICH MOVE?|ESQUECER QUAL GOLPE?
+WHICH MOVE?|QUAL GOLPE?
+TEACH|ENSINAR
+REPEAT|REPETIR
+COMBO|COMBO
+JAM|INTERF.
+APPEAL|APRESENTAÇÃO
+COOL|CARISMA
+BEAUTY|BELEZA
+CUTE|FOFURA
+SMART|INTEL.
+TOUGH|DUREZA
+CHOOSE|ESCOLHER
+CHOOSE A POKéMON|ESCOLHA UM POKéMON
+Choose a POKéMON|Escolha um POKéMON
+CHOOSE A BERRY|ESCOLHA UMA FRUTA
+NICKNAME|APELIDO
+YOUR NAME|SEU NOME
+BOX NAME|NOME DA BOX
+NAME|NOME
+SPECIES|ESPÉCIE
+ORDER|ORDEM
+NUMBER|NÚMERO
+NUMERICAL|POR NÚMERO
+A TO Z|A A Z
+A-Z|A-Z
+AREA|ÁREA
+AREAS|ÁREAS
+AREA UNKNOWN|ÁREA DESCONHECIDA
+AREA UNKNOWN|ÁREA DESCONHECIDA
+HEIGHT|ALTURA
+WEIGHT|PESO
+HEIGHT · WEIGHT|ALTURA · PESO
+FOOTPRINT|PEGADA
+CAUGHT|CAPTURADO
+SEEN|VISTO
+HOENN LIST|LISTA HOENN
+NATIONAL LIST|LISTA NACIONAL
+NATIONAL|NACIONAL
+HOENN|HOENN
+CRY|GRITO
+DEX|DEX
+DEX DETAIL|DETALHES DEX
+INFO|INFO
+IN BATTLE|EM BATALHA
+ABLE|APTO
+NOT ABLE|INAPTO
+PARTY|EQUIPE
+PARTNER|PARCEIRO
+EGG|OVO
+EXP NEXT|EXP. SEGUINTE
+PHYSICAL|FÍSICO
+SPECIAL|ESPECIAL
+POWER|PODER
+OT / ID|OT / ID
+IV|IV
+EV|EV
+BERRIES|FRUTAS
+BERRY|FRUTA
+ITEMS|ITENS
+ITEM|ITEM
+KEY ITEM|ITEM-CHAVE
+KEY ITEMS|ITENS-CHAVE
+POKé BALLS|POKé BOLAS
+BALLS|BOLAS
+USE|USAR
+GIVE|DAR
+GIVE TO|DAR A
+DEPOSIT|GUARDAR
+WITHDRAW|RETIRAR
+TOSS|JOGAR FORA
+TOSS?|DESCARTAR?
+SORT|ORDENAR
+LEAST|MENOR
+MOST|MAIOR
+BUY|COMPRAR
+BUY IT?|COMPRAR?
+SELL|VENDER
+FOR SALE|À VENDA
+MART|MERCADO
+POKé MART|POKé MART
+HOW MANY?|QUANTOS?
+CLOSE BAG|FECHAR MOCHILA
+PUT IN|COLOCAR
+PUT AWAY|GUARDAR
+POCKET SORTED: %s|BOLSO ORGANIZADO: %s
+INVENTORY|INVENTÁRIO
+PC|PC
+BOX|BOX
+WALLPAPER|PAPEL DE PAREDE
+RELEASE|LIBERAR
+MOVE POKéMON|MOVER POKéMON
+MOVE ITEMS|MOVER ITENS
+JUMP TO WHICH BOX?|IR PARA QUAL BOX?
+DEPOSIT IN WHICH BOX?|GUARDAR EM QUAL BOX?
+WITHDRAW HOW MANY?|RETIRAR QUANTOS?
+DEPOSIT HOW MANY?|GUARDAR QUANTOS?
+GIVE WHICH ITEM?|DAR QUAL ITEM?
+MARK|MARCAR
+MARKS|MARCAS
+OT|OT
+CURSOR: MENU|CURSOR: MENU
+CURSOR: QUICK GRAB|CURSOR: PEGAR RÁPIDO
+Quick grab|Pegar rápido
+Put down|Soltar
+Jump|Pular
+JUMP|PULAR
+FRIENDS|AMIGOS
+DAY CARE|CRECHE
+EASY CHAT|BATE-PAPO
+WORDS|PALAVRAS
+GROUPS|GRUPOS
+OTHERS|OUTROS
+DEL|APAGAR
+DEL ALL|APAGAR TUDO
+Delete word|Apagar palavra
+TRADES|TROCAS
+CONTACTS|CONTATOS
+CONTACT|CONTATO
+MATCH CALL|CHAMADA
+CALL|LIGAR
+HOENN MAP|MAPA HOENN
+CONDITION|CONDIÇÃO
+GOOD|BOM
+GRASS|GRAMADO
+FISH|PESCA
+FLY|VOAR
+Fly here|Voar aqui
+MORNING|MANHÃ
+DAY|DIA
+NIGHT|NOITE
+OLD|ANTIGO
+ALL|TUDO
+ALL RODS|TODAS AS VARAS
+NO WILD DATA|SEM DADOS SELVAGENS
+NO WILD DATA FOR THIS FILTER|SEM DADOS NESTE FILTRO
+MAP|MAPA
+SEEN %u · OWN %u|VISTOS %u · CAPT. %u
+POKéMON seen and caught.|POKéMON vistos e capturados.
+POKENAV|POKéNAV
+POKéNAV · MATCH CALL|POKéNAV · CHAMADA
+POKéBLOCK CASE|CAIXA DE POKéBLOCOS
+FEED POKéBLOCK|DAR POKéBLOCO
+POKéBLOCKS W/ FRIENDS|POKéBLOCOS COM AMIGOS
+TRAINER|TREINADOR
+TRAINER CARD|CARTÃO DE TREINADOR
+TRAINER RECORDS|DADOS TREINADOR
+BADGES|INSÍGNIAS
+BATTLE POINTS|PONTOS DE BATALHA
+BATTLE FRONTIER BP|PONTOS FRONTIER
+FRONTIER SYMBOLS|SÍMBOLOS FRONTIER
+CONTESTS WON|CONCURSOS VENCIDOS
+HALL OF FAME|SALÃO DA FAMA
+MONEY|DINHEIRO
+PASSPORT|PASSAPORTE
+CAUGHT AREAS|ÁREAS DE CAPTURA
+MISSED AREAS|ÁREAS PERDIDAS
+ALIVE|VIVOS
+FALLEN|CAÍDOS
+FALLEN ALLIES|ALIADOS CAÍDOS
+SQUAD|EQUIPE
+RULES|REGRAS
+CHALLENGE|DESAFIO
+AVAILABLE|DISPONÍVEL
+MISSED|PERDIDO
+AREA|ÁREA
+One encounter per area|Um encontro por área
+Fainted = released|Desmaiou = liberado
+Level cap|Limite de nível
+Nicknames|Apelidos
+Change state|Alterar estado
+Tracker reset.|Registro reiniciado.
+ROUTE|ROTA
+CAVE|CAVERNA
+CITY|CIDADE
+DESERT|DESERTO
+FOREST|FLORESTA
+BEACH|PRAIA
+PLAIN|PLANÍCIE
+CRAG|ROCHEDO
+MACHINE|MÁQUINA
+TROPICAL|TROPICAL
+RIBBON|FITA
+RIBBONS|FITAS
+MONEY|DINHEIRO
+GAME SAVED SAFELY!|JOGO SALVO COM SUCESSO!
+SAVE FAILED!|ERRO AO SALVAR!
+Continue BOX operations?|Continuar organizando a BOX?
+CLOSE|FECHAR
+The BOX is full.|A BOX está cheia.
+The BAG is full.|A mochila está cheia.
+It won't have any effect.|Não terá efeito.
+It can't be used here.|Não pode ser usado aqui.
+It can't be used now.|Não pode ser usado agora.
+It can't be used right now.|Não pode ser usado agora.
+It can't be used on an EGG.|Não pode usar em um OVO.
+It can't learn that move.|Não pode aprender esse golpe.
+That's your last POKéMON!|Esse é seu último POKéMON!
+You don't have enough money.|Você não tem dinheiro suficiente.
+Please remove the MAIL.|Retire a CARTA primeiro.
+The REPEL is still in effect.|O REPELENTE ainda está ativo.
+The REPEL was sprayed!|REPELENTE usado!
+Your party's full!|Sua equipe está cheia!
+Not ready yet.|Ainda não disponível.
+Not seen yet.|Ainda não visto.
+Not obtained yet.|Ainda não obtido.
+No contacts yet.|Ainda sem contatos.
+No items in this pocket.|Este bolso está vazio.
+Nothing to sell here.|Nada para vender aqui.
+This pocket is empty.|Este bolso está vazio.
+There are no items.|Não há itens.
+There are no items to give.|Não há itens para dar.
+There are no decorations here.|Não há decorações.
+There's no more room...|Não há mais espaço...
+This overwrites the other game!|Isso substituirá o outro save!
+Try again.|Tente novamente.
+Game settings.|Configurações do jogo.
+Check and organize your party.|Veja e organize sua equipe.
+Items you bought or found.|Itens comprados ou encontrados.
+Map, calls, condition, ribbons.|Mapa, ligações, condição e fitas.
+Your name?|Seu nome?
+Choose a POKéMON.|Escolha um POKéMON.
+Choose a POKéMON to send out.|Escolha quem entrará na batalha.
+Choose a move to forget, or the new one to stop learning it.|Escolha um golpe para esquecer.
+It did not learn the move.|Não aprendeu o golpe.
+It learned the move!|Aprendeu o golpe!
+It was used.|Item usado.
+What will hatch from this? It doesn't seem close to hatching.|O que sairá do ovo? Ainda vai demorar.
+You can fly here.|Você pode voar até aqui.
+You can't fly from here.|Não dá para voar daqui.
+You can't fly there.|Não dá para voar até lá.
+Move it where? SELECT or X puts it here.|Mover para onde? SELECT ou X confirma.
+It has already been selected.|Já foi selecionado.
+It has no energy left to battle!|Está sem energia para batalhar!
+It can't be switched out!|Não pode ser trocado!
+It's already in battle!|Já está na batalha!
+It can't be used on that POKéMON.|Não pode ser usado nesse POKéMON.
+An EGG can't battle!|Um OVO não pode batalhar!
+You need the right BADGE to use it.|Você precisa da INSÍGNIA correta.
+You don't have a POKéBLOCK CASE yet.|Você ainda não tem a CAIXA DE POKéBLOCOS.
+Your money and game data.|Seu dinheiro e dados do jogo.
+Current save slot|Save atual
+New UI (Test)|Nova interface (teste)
+NEW UI (TEST)|NOVA INTERFACE (TESTE)
+
+TIMED ENCOUNTERS|ENCONTROS POR HORÁRIO
+CLOCK SPEED|VELOCIDADE DO RELÓGIO
+COMPANION|COMPANHIA
+HGSS FOLLOWER|POKÉMON SEGUIDOR
+EXPLORATION|EXPLORAÇÃO
+RUN INDOORS|CORRER EM INTERIORES
+AUTO RUN (NO B)|CORRIDA AUTOMÁTICA
+BAG HM SHORTCUTS|ATALHOS HM NA MOCHILA
+ARENA|ARENA
+3D VOXEL BATTLE|BATALHA VOXEL 3D
+MECHANICS|MECÂNICAS
+PHYS/SPEC SPLIT|DIVISÃO FÍS./ESP.
+PARTY EXP SHARE|EXP. DA EQUIPE
+INSPECTION|INFORMAÇÕES
+IVS & EVS STATS|ATRIBUTOS IV/EV
+NUZLOCKE MODE|MODO NUZLOCKE
+PROFILES|PERFIS
+ACTIVE SAVE SLOT|SAVE ATIVO
+CONVENIENCE|FACILIDADES
+INFINITE TMS|TMs INFINITAS
+TRADE EVO LV40|EVOLUÇÃO POR TROCA LV40
+FAST HATCH EGGS|CHOQUE RÁPIDO DE OVOS
+ENCOUNTERS|ENCONTROS
+REWARDS|RECOMPENSAS
+MAX MONEY ($999K)|DINHEIRO MÁX. ($999K)
+ITEM SPAWN|GERAR ITENS
+GIVE POCKET|BOLSO DO ITEM
+GIVE ITEM|ESCOLHER ITEM
+GIVE COUNT|QUANTIDADE
+DELIVER ITEM|RECEBER ITEM
+POKEDEX|POKÉDEX
+COMPLETE HOENN DEX|COMPLETAR DEX HOENN
+UNLOCK NATIONAL|DESBLOQUEAR NACIONAL
+CONTESTS|CONCURSOS
+MAX CONTEST STATS|ATRIBUTOS DE CONCURSO
+HOLD|SEGURAR
+TOGGLE|ALTERNAR
+Always|Sempre
+NO|NÃO
+YES|SIM
+OPEN|ABRIR
+Change|Alterar
+Save|Salvar
+Remap|Remapear
+Quit|Sair
+Choose the Vita button of each action.|Escolha o botão do Vita para cada ação.
+Save the settings and quit to the LiveArea.|Salve os ajustes e saia para a LiveArea.
+How fast the dialogue text is printed.|Velocidade dos textos nos diálogos.
+Show the move animations in battle.|Mostrar animações durante as batalhas.
+SHIFT offers a switch when the foe sends out a POKEMON.|TROCAR permite mudar o POKéMON antes do rival.
+Mono or stereo sound.|Áudio mono ou estéreo.
+Volume of music and sound effects.|Volume de música e efeitos sonoros.
+L and R as page keys, or L working as the A button.|L/R trocam páginas; ou L funciona como botão A.
+Game speed while fast forward is active.|Velocidade durante o avanço rápido.
+Hold the button, or press it once to toggle.|Segure o botão ou pressione para alternar.
+How the 2D screens are scaled to the Vita display.|Escala da imagem 2D na tela do Vita.
+Colour and style of the menus.|Tema e cores dos menus.
+Display language of Vita menus. Game text stays in PT-BR.|Idioma dos menus do Vita. O jogo segue em PT-BR.
+Draw the overworld as a 3D voxel diorama.|Exibe o cenário como diorama voxel 3D.
+Blur the far background of the diorama.|Desfoca o fundo distante do cenário.
+Frame rate of the 3D world. 60 uses more battery.|FPS do mundo 3D. 60 consome mais bateria.
+Light changes with the clock.|Iluminação acompanha o horário.
+Some POKEMON appear only by day or by night.|Alguns POKéMON surgem só de dia ou à noite.
+How fast the in-game clock runs.|Velocidade do relógio dentro do jogo.
+The first POKEMON of the party walks behind you.|O primeiro POKéMON da equipe segue você.
+Allow running inside buildings.|Permite correr dentro de construções.
+Run without holding B; hold B to walk.|Corre sem segurar B; segure B para andar.
+Use field moves from the bag without the POKEMON menu.|Use HMs pela mochila, sem menu POKéMON.
+Ask to use another REPEL when one wears off.|Sugere outro REPELENTE ao terminar.
+Fight on a 3D voxel arena.|Batalhas em arena voxel 3D.
+Speed of battle animations and text.|Velocidade das batalhas e dos textos.
+Physical or special by move, as in later games.|Golpes físicos ou especiais como nos jogos novos.
+Every POKEMON in the party gains EXP.|Toda a equipe recebe EXP.
+Catching a POKEMON gives EXP.|Capturar POKéMON concede EXP.
+Show IVs and EVs in the POKEMON summary.|Mostra IVs e EVs nos atributos.
+One catch per area; fainted POKEMON are lost.|Uma captura por área; desmaiados são perdidos.
+Limit levels to the next GYM LEADER's ace.|Limite de nível do próximo líder de ginásio.
+Which save file is used.|Escolha o arquivo de salvamento.
+TMs are not used up.|TMs não são consumidas.
+Trade evolutions happen at level 40.|Evoluções por troca ocorrem no nível 40.
+EGGS hatch much sooner.|Os OVOS chocam mais rápido.
+Chance that a wild POKEMON is shiny.|Chance de encontrar um POKéMON brilhante.
+Every POKE BALL catches.|Toda POKé BOLA garante captura.
+Set your money to $999,999.|Define o dinheiro em $999.999.
+Pocket of the item to give.|Escolha o bolso do item.
+Item to give.|Item para receber.
+How many to give.|Quantidade de itens para receber.
+Mark every HOENN POKEMON as caught.|Marca toda a DEX HOENN como capturada.
+Unlock and complete the NATIONAL POKEDEX.|Libera e completa a POKéDEX nacional.
+Max the contest stats of the party.|Maximiza atributos dos concursos.
+Press X to run it.|Pressione X para executar.
+Left / right or X to change the value.|Use esquerda/direita ou X para alterar.
+X: change  TRIANGLE: no button|X: mudar  TRIÂNGULO: remover
+X: quit   O: cancel|X: sair   O: cancelar
+Quit to the LiveArea?|Sair para a LiveArea?
+%s has no button now.|%s agora está sem botão.
+Buttons reset to the defaults.|Botões restaurados para o padrão.
+PRESS...|PRESSIONE...
+RESET TO DEFAULTS|RESTAURAR PADRÕES
+DONE|CONCLUÍDO
+NEW STATS|NOVOS ATRIBUTOS
+NEW UI (TEST)|NOVA UI (TESTE)
+BAG|MOCHILA
+INFO|DADOS
+WHAT?|O QUÊ?
+HUB|MENU
+SAVE|SALVAR
+RETIRE|DESISTIR
+EXIT|SAIR
+SQUAD|EQUIPE
+RULES|REGRAS
+LEVEL CAP|LIMITE DE NÍVEL
+AREAS|ÁREAS
+SETTINGS|AJUSTES
+Only the first wild POKéMON of each area can be caught.|Capture apenas o primeiro POKéMON de cada área.
+A POKéMON that faints counts as fallen and can't be used.|Um POKéMON desmaiado não pode ser usado.
+The next GYM LEADER's highest level (option LEVEL CAP).|Maior nível do próximo líder de ginásio.
+Give every POKéMON a nickname to bond with it.|Dê apelidos aos POKéMON da equipe.
+An area you have visited.|Uma área já visitada.
+Clears the areas and fallen allies of this save slot.|Limpa as áreas e as perdas deste save.
+Press X again to reset the tracker.|Pressione X novamente para reiniciar.
+Left / right or X to change. Saved at once.|Esquerda/direita ou X. Salva na hora.
+Fainted: it can no longer be used.|Desmaiado: não pode mais ser usado.
+Alive. Level cap: %u|Vivo. Limite: %u
+You are in this area now.|Você está nesta área.
+It looks like this EGG will take a long time to hatch.|Este OVO ainda vai demorar a chocar.
+It's making sounds inside. It's going to hatch soon!|O OVO está fazendo barulhos. Logo vai chocar!
+It moves around inside sometimes. It must be close to hatching.|O OVO se mexe. Deve chocar em breve.
+There are no POKéBLOCKS in the case.|Não há POKéBLOCOS na caixa.
+You can fly here.|Você pode voar até aqui.
+X or triangle: play the cry again.|X ou triângulo: ouvir o grito novamente.
+You can't release an EGG.|Não é possível liberar um OVO.
+There's no MAIL here.|Não há CARTAS aqui.
+The BOX's name?|Qual o nome da BOX?
+There are no decorations here.|Não há decorações.
+It already knows that move.|Já conhece esse golpe.
+It's already in battle!|Já está batalhando!
+It can't be switched out!|Não pode ser substituído!
+You need the right BADGE to use it.|Você precisa da INSÍGNIA correta.
+HEART|CORAÇÃO
+
+TYPE|TIPO
+HM moves can't be forgotten now.|Golpes HM não podem ser esquecidos agora.
+CARD|CARTÃO
+In bag: x%u|Na mochila: x%u
+MAIL can't be stored!|Não é possível guardar a CARTA!
+No.%03u %s|Nº%03u %s
+You get|Você recebe
+<3 HEART|<3 CORAÇÃO
+ABC|ABC
+AP|AP
+APPEAL %u|APRESENTAÇÃO %u
+All fainted POKéMON were revived!|Todos os POKéMON desmaiados reviveram!
+An EGG can't be chosen.|Não é possível escolher um OVO.
+An EGG can't eat POKéBLOCKS.|Um OVO não pode comer POKéBLOCOS.
+An EGG can't hold items.|Um OVO não pode carregar itens.
+An ability prevents switching!|Uma habilidade impede a troca!
+Areas, fallen allies, level cap.|Áreas, perdas e limite de nível.
+BALANCE|EQUILÍBRIO
+Back to the bag|Voltar à mochila
+Buy 10 POKé BALLS, get a PREMIER BALL.|Compre 10 POKé BOLAS e ganhe uma PREMIER.
+Bye-bye, %s!|Até mais, %s!
+CATEGORY|CATEGORIA
+CONTEST|CONCURSO
+Catch it to see its POKéDEX entry.|Capture para liberar a entrada na POKéDEX.
+Catch it to see its entry.|Capture para ver os detalhes.
+Choose a BERRY to put in.|Escolha uma FRUTA para colocar.
+Choose an item from the BAG to store in the PC.|Escolha um item da MOCHILA para guardar no PC.
+Choose the POKéMON to leave at the DAY CARE.|Escolha o POKéMON para deixar na CRECHE.
+Choose the POKéMON to use it on.|Escolha o POKéMON que receberá o item.
+Choose who will learn the move.|Escolha quem aprenderá o golpe.
+Close the BAG.|Fechar a MOCHILA.
+Close this menu.|Fechar este menu.
+DECORATE|DECORAR
+DECORATION|DECORAÇÃO
+DYNAMO|DÍNAMO
+Destinations: %d|Destinos: %d
+ETCETERA|OUTROS
+Empty: no change.|Vazio: nenhuma alteração.
+Empty: the name stays as it was.|Deixar vazio usará o padrão
+FEATHER|PENA
+FISH · %s|PESCA · %s
+Flip card|Virar cartão
+GIVE TO %s|DAR PARA %s
+GOLD|OURO
+GRASS · %s|GRAMA · %s
+Give the MAIL to which POKéMON?|Dar a CARTA para qual POKéMON?
+Go to OK|Ir até OK
+Green frames: towns you can fly to.|Em verde: cidades às quais pode voar.
+HEAT|CALOR
+HEAVIEST|MAIS PESADO
+HM|HM
+HP was restored by %u point(s).|Recuperou %u pontos de HP.
+Here you go! Thank you very much.|Aqui está! Muito obrigado!
+IDNo. %05u|ID Nº %05u
+In PC|No PC
+In PC: x%u|No PC: x%u
+In bag|Na mochila
+In use|Em uso
+Is it okay to throw away...?|Deseja descartar...?
+It keeps the four moves it knows.|Manterá os quatro golpes atuais.
+Items sell for half their price.|Os itens são vendidos por metade do preço.
+KEY|CHAVE
+KNUCKLE|PUNHO
+L=A|L=A
+LEARN A MOVE|APRENDER GOLPE
+LEDGER: 05 / 12 ITEMS|LISTA: 05 / 12 ITENS
+LIGHTEST|MAIS LEVE
+LR|LR
+Leave the SAFARI GAME.|Sair da ZONA SAFÁRI.
+Lv%u F%u|Nv%u F%u
+MAIL %u / %u|CARTAS %u / %u
+MAILBOX|CAIXA DE CARTAS
+MIND|MENTE
+MONEY $%u|DINHEIRO $%u
+Move %s to where?|Mover %s para onde?
+NATURE %s|NATUREZA %s
+Not enough HP left.|HP insuficiente.
+Oh, no, I can't buy that.|Ah, não posso comprar isso.
+One at a time. It is sent to the PC at home.|Um de cada vez. Será enviado ao PC.
+Order: %s|Ordem: %s
+PARTY %d/6|EQUIPE %d/6
+PC x%u · BAG x%u|PC x%u · MOCHILA x%u
+POKéMON CAUGHT|POKéMON CAPTURADOS
+POLKA-DOT|BOLINHAS
+PP %u/%u|PP %u/%u
+PYRAMID BAG|MOCHILA PIRÂMIDE
+Placed item in the BAG.|Item guardado na MOCHILA.
+Previous / next|Anterior / seguinte
+Put away|Guardar
+Put away in the %s POCKET|Guardar no bolso %s
+Put in|Colocar
+Put the chosen items in the BAG.|Colocar itens escolhidos na MOCHILA.
+Put the item down first.|Solte o item primeiro.
+REPEL %u|REPELENTE %u
+RESET TRACKER|ZERAR REGISTROS
+RESET TRACKER? (X)|ZERAR REGISTROS? (X)
+RIVER|RIO
+ROCK|PEDRA
+RULE|REGRA
+Ready! Meet this trainer in the area to battle again.|Pronto! Encontre esse treinador para outra batalha.
+Received the %s from %s.|Recebeu %s de %s.
+Red areas: where it lives in the wild.|Áreas vermelhas: habitat selvagem.
+Red: raised  Blue: lowered|Vermelho: sobe  Azul: desce
+Release this POKéMON?|Liberar este POKéMON?
+SAFARI BALLS  %u|BOLAS SAFÁRI  %u
+SAFARI BALLS %u|BOLAS SAFÁRI %u
+SAVANNA|SAVANA
+SCENERY 1|CENÁRIO 1
+SCENERY 2|CENÁRIO 2
+SCENERY 3|CENÁRIO 3
+SEAFLOOR|FUNDO DO MAR
+SEL|SELEC.
+SEL: %s|SELEC.: %s
+SELL HOW MANY?|VENDER QUANTOS?
+SHEEN %u / 255|BRILHO %u / 255
+SHOP|LOJA
+SHOW ON MAP|VER NO MAPA
+SILVER|PRATA
+SIZE|TAMANHO
+SKILLS|HABILIDADES
+SKY|CÉU
+SMALLEST|MENOR
+SNOW|NEVE
+SPACE|ESPAÇO
+STAT|ATRIBUTO
+STONE|PEDRA
+STORE|GUARDAR
+STORED %u / %u|GUARDADOS %u / %u
+STORED MAIL|CARTAS GUARDADAS
+SUMMARY|RESUMO
+SUPER|SUPER
+SURF|SURF
+SWAP %s?|TROCAR %s?
+SWITCH|TROCAR
+Save your progress.|Salve seu progresso.
+Saved to ux0:data/POKEVITA/|Salvo em ux0:data/POKEVITA/
+Show on map|Ver no mapa
+Size compared with %s|Tamanho comparado a %s
+Sort: %s|Ordem: %s
+Swap here|Trocar aqui
+Swapped. The old item went back to the BAG.|Trocado. O item antigo voltou à MOCHILA.
+TAKE|PEGAR
+TALLEST|MAIS ALTO
+TEACH · %s|ENSINAR · %s
+TIME|TEMPO
+TM / HM|TM / HM
+TMs & HMs|TMs e HMs
+TO THE BAG?|PARA A MOCHILA?
+TOSS HOW MANY?|DESCARTAR QUANTOS?
+Tell him the words.|Diga as palavras a ele.
+The BOX is full! You can't throw it.|A BOX está cheia! Não dá para jogar.
+The move's PP went up.|O PP do golpe aumentou.
+This isn't the time to use that!|Não é hora de usar isso!
+Threw away %d %s.|Descartou %d %s.
+To the BAG|Para a MOCHILA
+Turned over the %s and received $%u.|Entregou %s e recebeu $%u.
+UNKNOWN|DESCONHECIDO
+UNREG.|NÃO REG.
+UP/DOWN|CIMA/BAIXO
+Use on which POKéMON?|Usar em qual POKéMON?
+VALUE|VALOR
+VOLCANO|VULCÃO
+Was it worried about you?|Será que estava preocupado com você?
+Which move should be forgotten?|Qual golpe deve ser esquecido?
+Would you like to retire?|Deseja desistir?
+Would you like to save the game?|Deseja salvar o jogo?
+You can't ride a BIKE here.|Não pode andar de BIKE aqui.
+You can't switch {partner}'s POKéMON with one of yours!|Não pode trocar um POKéMON do parceiro!
+You have no more room for items.|Não há mais espaço para itens.
+You wanted ...|Você queria...
+You're holding a POKéMON!|Você está segurando um POKéMON!
+Your COINS: %u|Suas FICHAS: %u
+^  TRIANGLE|^  TRIÂNGULO
+
+"A town that can't be shaded any hue."|Uma cidade que não pode ser sombreada por nenhum tom
+"Where things start off scarce."|Onde tudo começa de forma simples
+"A tiny island in the blue sea."|Uma pequena ilha no mar azul
+"POKéMON CENTER HOT SPRINGS An excellent place for relaxing!"|Águas termais do Centro Pokémon: um ótimo lugar para relaxar!
+"A farm community with small gardens."|Uma comunidade rural de pequenas hortas
+"The windswept highlands with the sweet fragrance of grass."|Planaltos varridos pelo vento e pelo perfume da grama
+"Where the morning sun smiles upon the waters."|Onde o sol da manhã sorri sobre as águas
+"Where people mingle with nature."|Onde as pessoas vivem em harmonia com a natureza
+"The port where people and POKéMON cross paths."|O porto onde pessoas e Pokémon se encontram
+"The bright and shiny city of fun!"|A cidade iluminada da diversão!
+"The city probing the integration of nature and science."|A cidade que une natureza e ciência
+"The treetop city that frolics with nature."|A cidade nas árvores que brinca com a natureza
+"Where the land ends and the sea begins."|Onde a terra termina e o mar começa
+"Our slogan: Cherish POKéMON!"|Nosso lema: cuidar dos Pokémon!
+"The mystical city where history slumbers."|A cidade mística onde a história repousa
+"The paradise of flowers, the sea, and POKéMON."|O paraíso das flores, do mar e dos Pokémon
+OPEN|ABRIR
+Open|Abrir
+CLOSE|FECHAR
+Close|Fechar
+BACK|VOLTAR
+Back|Voltar
+OPTIONS|OPÇÕES
+Options|Opções
+SORT|ORDENAR
+Sort|Ordenar
+A TO Z|A - Z
+MOST|MAIS
+LEAST|MENOS
+NUMBER|NÚMERO
+NUMBER|NÚMERO
+kinds|tipos
+KINDS|TIPOS
+Kinds|Tipos
+%d kinds|%d tipos
+%d / %d kinds|%d / %d tipos
+Your money and game data.|Seu dinheiro e os dados do jogo.
+Items you bought or found.|Itens que você comprou ou encontrou.
+Check and organize your party.|Confira e organize sua equipe.
+Type|Digitar
+Delete|Apagar
+Locked|Bloqueado
+RIGHT STICK CAMERA|CÂMERA NO ANALÓGICO
+FIRST PERSON|PRIMEIRA PESSOA
+Move the right stick to rotate the camera.|Use o analógico direito para girar a câmera.
+View the world through your character's eyes.|Veja o mundo pelos olhos do personagem.
+FACE CAMERA SPRITES|SPRITES VIRADOS
+Keep 2D trees facing the camera.|Árvores 2D acompanham a câmera.

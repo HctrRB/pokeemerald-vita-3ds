@@ -1,0 +1,5 @@
+[LilycoveCity_House4_Text_MysteriesAtBottomOfSea] a253649475
+Os maiores mistérios do planeta\nestão no fundo do mar.\pAlguém disse isso, mas sei lá…$
+
+[LilycoveCity_House4_Text_UnderwaterTrenchMossdeepSootopolis] 9db6ba8516
+Tem uma fossa submarina funda entre\nMOSSDEEP e SOOTOPOLIS.\pPelo menos, foi o que me disseram.$

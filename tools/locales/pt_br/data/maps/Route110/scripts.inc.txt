@@ -1,0 +1,128 @@
+[Route110_Text_WeCantTalkAboutAquaActivities] d3d1095a37
+As atividades da EQUIPE AQUA…\nAinda não podemos falar delas.$
+
+[Route110_Text_KickUpARuckus] 55288b34ec
+Quero ir logo pra SLATEPORT e\nfazer uma bagunça!$
+
+[Route110_Text_MyFirstJobInAqua] 51cecf7916
+É o meu primeiro trabalho desde que\nentrei na EQUIPE AQUA. Dá um medinho.$
+
+[Route110_Text_AquaActionsBringSmiles] 487727b727
+As ações da EQUIPE AQUA devem trazer\nsorrisos ao rosto das pessoas!$
+
+[Route110_Text_MayLetsBattle] 3346ef32e4
+MAY: Oi, {PLAYER}{KUN}, quanto tempo!\pEnquanto eu procurava outros POKéMON,\nos meus ficaram mais fortes.\pEntão…\nQue tal uma batalhinha?$
+
+[Route110_Text_MayDefeated] 658b9a1c59
+Eita!\nVocê é melhor do que eu esperava!$
+
+[Route110_Text_MayTakeThis] be9829b43f
+MAY: {PLAYER}{KUN}, você também andou\ntreinando bastante, né?\pAcho que você merece um prêmio!\nIsto é meu, pra você!$
+
+[Route110_Text_MayExplainItemfinder] 274d3c4c84
+MAY: Isso é um ACHADOR DE ITENS.\pExperimenta. Se tiver um item que não\ndá pra ver, ele faz um som.\pBom, {PLAYER}{KUN}, a gente se vê!\pSei que é meio bobo eu dizer isso, mas\nacho que você devia treinar bem mais\lpra próxima vez.$
+
+[Route110_Text_BrendanLetsBattle] 042afcfecb
+BRENDAN: E aí, {PLAYER}.\nEntão você estava aqui.\lComo vão as coisas?\pVocê anda treinando os seus POKéMON?\nVou conferir pra você.$
+
+[Route110_Text_BrendanDefeated] 25c927ce95
+Hmm…\nVocê é bem boa.$
+
+[Route110_Text_BrendanTakeThis] 405d721478
+BRENDAN: {PLAYER}, você treinou sem\neu perceber…\pTá bom!\nTome, pega isto.$
+
+[Route110_Text_BrendanExplainItemfinder] 165f0c1d86
+BRENDAN: Isso é um ACHADOR DE ITENS.\pUse pra procurar itens que não\ndá pra ver.\pSe ele sentir alguma coisa, faz\num som.\pEnfim, vou atrás de POKéMON\nnovos.$
+
+[Route110_Text_RideBikeAtFullSpeed] e46f3f1661
+Não seria demais andar de BICICLETA\na toda na ESTRADA DE BICICLETA?$
+
+[Route110_Text_HairStreamsBehindMe] 59aaf8b450
+O que acha do meu cabelo preto como\nas penas do corvo voando atrás de mim?\pDeixei o cabelo crescer só pra isso.$
+
+[Route110_Text_YouGotBikeFromRydel] 8a0729212f
+Ah, olha, você pegou essa BICICLETA\ncom o RYDEL!\pAh, está na cara.\nTá escrito na sua bicicleta…\pRYDEL, RYDEL, RYDEL, RYDEL, RYDEL,\nRYDEL, RYDEL, RYDEL, RYDEL, RYDEL,\pRYDEL, RYDEL, RYDEL, RYDEL, RYDEL,\nRYDEL, RYDEL, RYDEL, RYDEL, RYDEL,\pRYDEL, RYDEL, RYDEL, RYDEL, RYDEL,\nRYDEL, RYDEL, RYDEL, RYDEL, RYDEL,\pRYDEL, RYDEL, RYDEL, RYDEL, RYDEL,\nRYDEL, RYDEL, RYDEL, RYDEL, RYDEL,\pRYDEL, RYDEL, RYDEL, RYDEL, RYDEL…\nEsse nome está em todo lugar.\pVocê devia sair andando com ela por\naí. É uma ótima propaganda!$
+
+[Route110_Text_TwoRoads] 363addd574
+Dois caminhos, um em cima, um embaixo…\pUm caminho pras pessoas e outro pros\nPOKéMON. Talvez seja o justo.$
+
+[Route110_Text_WalkOnTheLowRoad] f6b355971c
+Não tenho BICICLETA, então vou\npassear pelo caminho de baixo.$
+
+[Route110_Text_BikeTechniques] 01a65409c2
+Aprender manobras deixa andar de\nBICICLETA ainda mais divertido.\pTem lugares que você só alcança\nusando uma manobra de BICICLETA.$
+
+[Route110_Text_WhichShouldIChoose] b30d03a1a0
+O que eu escolho?\pIr direto pra MAUVILLE pela ESTRADA\nDE BICICLETA, ou ir pelo caminho\lde baixo procurando POKéMON?$
+
+[Route110_Text_CyclingChallengeResultSummary] 43bf2f39f8
+Número de batidas:\n… … {STR_VAR_1}!\pTempo total:\n… … {STR_VAR_2}!$
+
+[Route110_Text_ChallengeReactionBest] 7c6904be06
+Bravo! Que desempenho esplêndido!\pO seu amor pelo ciclismo vem do fundo\ndo coração.\lVocê me emocionou até a alma!$
+
+[Route110_Text_ChallengeReactionGood] 5819f6e23c
+A sua técnica é notável.\pSugiro acelerar um pouco, mas\nsem bater em nada.$
+
+[Route110_Text_ChallengeReactionOk] fbbc3e0d06
+Eu diria que você está em\nevolução.\pAinda assim, espero que não esqueça\no puro prazer de pedalar.$
+
+[Route110_Text_ChallengeReactionBad] 58c889e704
+Minha nossa… A sua pedalada chega\na dar medo.\pCom certeza, você precisa praticar\nmuito mais.$
+
+[Route110_Text_ChallengeReactionWorst] d0c338c350
+…Estou pasmo…\pTalvez você não tenha jeito pra\nessa coisa de ciclismo.\pDevia pensar seriamente em\ndevolver essa BICICLETA ao RYDEL.$
+
+[Route110_Text_RatedForNumberOfCollisions] 6b1f9680fb
+Esta é a ESTRADA DE BICICLETA.\pSe você for de MAUVILLE a SLATEPORT\nnuma BICICLETA MACH, ganha nota\lpelo número de batidas\le pelo tempo total.$
+
+[Route110_Text_AlwaysAimHigher] a52a7bf0b4
+Seja qual for o resultado, espero\nver mais desafios seus.\lMire sempre mais alto!$
+
+[Route110_Text_AcroBikesDoNotQualify] d8d84c2175
+Nesta ESTRADA, quem anda de BICICLETA\nMACH ganha nota pelo número de\lbatidas e pelo tempo total.\pA BICICLETA ACRO não vale. Ela faz\ncurva fácil, então não seria justo.$
+
+[Route110_Text_SlateportCitySign] 7a9bffd9b9
+ROTA 110\n{DOWN_ARROW} CIDADE DE SLATEPORT$
+
+[Route110_Text_CyclingRoadSign] 977b11ebc3
+ESTRADA DE BICICLETA DA COSTA$
+
+[Route110_Text_AquaWasHere] 87f7364172
+“A EQUIPE AQUA passou aqui!”\pAlguém pintou isso nesta placa,\nmas outra pessoa pintou por cima.\p“A EQUIPE MAGMA manda!” é o que\ndiz agora.$
+
+[Route110_Text_Route103Sign] 610e2e0ffe
+ROTA 110\n{LEFT_ARROW} ROTA 103$
+
+[Route110_Text_SeasideParkingSign] e6b80830cd
+ESTACIONAMENTO DA COSTA$
+
+[Route110_Text_MauvilleCitySign] 8c7dcfe956
+ROTA 110\n{UP_ARROW} CIDADE DE MAUVILLE$
+
+[Route110_Text_TrainerTipsPrlzSleep] 12d5381066
+DICAS DE TREINADOR\pDá pra deixar o inimigo indefeso\nparalisando ou pondo ele pra dormir.\pÉ uma técnica importante nas\nbatalhas POKéMON.$
+
+[Route110_Text_TrainerTipsRegisterItems] 700b06a3cd
+DICAS DE TREINADOR\pOs itens da BOLSA podem ser\nreorganizados apertando SELECT.$
+
+[Route110_Text_TrickHouseSign] a26bda7b49
+“Três passos {RIGHT_ARROW} e dois passos {UP_ARROW}\ne chegue à incrível CASA DOS TRUQUES.”$
+
+[Route110_Text_BestRecord] 6b755116b3
+O MELHOR RECORDE ATÉ HOJE…\pNº de batidas: {STR_VAR_1}\pTempo: {STR_VAR_2}$
+
+[Route110_Text_ThereIsNoRecord] a6826cce14
+O MELHOR RECORDE ATÉ HOJE…\pParece que ninguém encarou o\ndesafio. Não há recorde…$
+
+[Route110_Text_ImagineSeeingYouHere] aeba21c90b
+PROF. BIRCH: Ah, {PLAYER}{KUN}!\nQue surpresa te ver aqui!\pE onde será que está {RIVAL}?$
+
+[Route110_Text_HeardYouInstallMatchCall] 53111d016b
+Ah, entendi!\nVocês dois estão viajando separados.\lBom, tudo bem.\pAh, é, ouvi dizer que puseram o\nsistema de CHAMADAS no seu POKéNAV.\pEntão, vou te registrar no meu\nPOKéNAV também.\pAssim, mesmo longe, posso avaliar\na sua POKéDEX quando quiser.\p… … … … … …$
+
+[Route110_Text_RegisteredBirchInPokenav] 2510c06e13
+O PROF. BIRCH foi registrado\nno POKéNAV.$
+
+[Route110_Text_KeepAnEyeOutForRival] 46893d3c08
+PROF. BIRCH: {PLAYER}{KUN}…\pPor favor, fique de olho em {RIVAL}.\n… … … … … …\pBom, melhor eu ir indo.\nAté mais, {PLAYER}{KUN}!$

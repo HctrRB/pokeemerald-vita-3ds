@@ -1,0 +1,74 @@
+[RustboroCity_Gym_Text_GymGuideAdvice] 5675436bf9
+E aí, tudo certo?\pEscuta aqui, meu amigo!\nQuer ganhar o título de CAMPEÃO?\pEu não treino POKéMON, nada disso, mas\ndou conselhos que fazem vencer.\pEntão está combinado! Vamos juntos\nrumo ao título de CAMPEÃO POKéMON!\pO seu trabalho é juntar INSÍGNIAS\ndos GINÁSIOS, né?\pMas os LÍDERES DE GINÁSIO não são\nmoleza!\pE é aí que eu entro!\nEstou aqui pra dar conselhos de expert!\pA LÍDER DE GINÁSIO, ROXANNE, usa\nPOKéMON do tipo PEDRA.\pO tipo PEDRA é muito resistente, mas\nnão aguenta golpes dos tipos ÁGUA\le PLANTA.\pVolte pra falar comigo depois, se\nvencer a LÍDER.\pBom, vai fundo!$
+
+[RustboroCity_Gym_Text_GymGuidePostVictory] b24584b432
+Uau! Que vitória de tirar o fôlego!\nMinha torcida deve ter ajudado!\pÓtimo!\nOlha o seu CARTÃO DE TREINADOR.\pA INSÍGNIA DA PEDRA que você ganhou\njá deve estar registrada nele.\pOu seja…\pVocê subiu o primeiro degrau da\nescada rumo ao título!\pIsso deve ser demais!$
+
+[RustboroCity_Gym_Text_JoshIntro] cffecc2a3f
+Não subestime a gente do GINÁSIO!\nVou mostrar por que somos melhores!$
+
+[RustboroCity_Gym_Text_JoshDefeat] f2ea23ab51
+Você é demais pra mim…$
+
+[RustboroCity_Gym_Text_JoshPostBattle] 5bc5bdbd84
+Você ainda não viu nada do poder\nterrível do tipo PEDRA!$
+
+[RustboroCity_Gym_Text_TommyIntro] 7cc13a6644
+Se não conseguir me vencer, não vai\nter chance contra a ROXANNE!$
+
+[RustboroCity_Gym_Text_TommyDefeat] 10dbe1ed69
+Uau! Você tem potencial!$
+
+[RustboroCity_Gym_Text_TommyPostBattle] 254adb93e9
+A ROXANNE é várias vezes mais forte\nque eu.\pÉ melhor ficar de olho aberto!$
+
+[RustboroCity_Gym_Text_MarcIntro] 84d72cd976
+A gente pode estar no meio da cidade,\nmas e daí?\pMeus POKéMON PEDRA precisam de\nespaço pra fazer estrago!$
+
+[RustboroCity_Gym_Text_MarcDefeat] afbacb8497
+Puxa vida!\nQuem desafiou é osso duro de roer!$
+
+[RustboroCity_Gym_Text_MarcPostBattle] 569f18b026
+Tiro o chapéu pra nossa LÍDER.\pFoi preciso inteligência e bom senso\npra ela escolher o tipo PEDRA tão nova.$
+
+[RustboroCity_Gym_Text_RoxanneIntro] 07b2e3de0c
+Olá, eu sou ROXANNE, a LÍDER DO\nGINÁSIO POKéMON de RUSTBORO.\pVirei LÍDER DE GINÁSIO para pôr em\nprática nas batalhas o que aprendi na\lESCOLA DE TREINADORES POKéMON.\pPoderia me mostrar como você batalha,\ne com quais POKéMON?$
+
+[RustboroCity_Gym_Text_RoxanneDefeat] 316b317a1c
+Então…\nEu perdi…\pParece que ainda tenho muito\na aprender…\pEntendi.\pAs regras da LIGA POKéMON dizem que\nos TREINADORES recebem isto quando\lvencem um LÍDER DE GINÁSIO.\pPor favor, aceite a INSÍGNIA DA PEDRA\noficial da LIGA POKéMON.$
+
+[RustboroCity_Gym_Text_ReceivedStoneBadge] b6b7d5b3d2
+{PLAYER} recebeu a INSÍGNIA DA PEDRA\nda ROXANNE.$
+
+[RustboroCity_Gym_Text_StoneBadgeInfoTakeThis] 897c936007
+A INSÍGNIA DA PEDRA aumenta o ATAQUE\ndos seus POKéMON.\pTambém permite usar a MO CORTAR\nfora das batalhas.\pPor favor, leve isto também.$
+
+[RustboroCity_Gym_Text_ExplainRockTomb] b31ce03553
+Essa MÁQUINA TÉCNICA, a MT39,\ntem TUMBA ROCHAS.\pAlém de causar dano jogando pedras,\nela baixa a VELOCIDADE.\pAo usar uma MT, o POKéMON aprende\no golpe na hora.\pLembre: uma MT só pode ser usada\numa vez, então pense antes de usar.$
+
+[RustboroCity_Gym_Text_RoxannePostBattle] fdfac25ce0
+Já que você é tão forte, devia\ndesafiar outros LÍDERES DE GINÁSIO.\pBatalhando com muitos TREINADORES,\nvocê vai aprender muita coisa.$
+
+[RustboroCity_Gym_Text_GymStatue] b774bebf06
+GINÁSIO POKéMON DE RUSTBORO$
+
+[RustboroCity_Gym_Text_GymStatueCertified] d8b85813b2
+GINÁSIO POKéMON DE RUSTBORO\pTREINADORES APROVADOS POR ROXANNE:\n{PLAYER}$
+
+[RustboroCity_Gym_Text_RoxanneRegisterCall] ac30ab0657
+… … … … … …\n… … … … … Bipe!\pROXANNE: Ah, alô, {PLAYER}?\nAqui é a ROXANNE, de RUSTBORO.\pO BRAWLY me contou que você está\nsubindo no ranking dos TREINADORES\lnuma velocidade incrível.\pBom, prefiro não pensar que\nnão consigo te vencer.\pPrometo deixar meu GINÁSIO em forma\npra você nos desafiar de novo.\pEspero que esse dia chegue logo,\npra você e pra mim!\p… … … … … …\n… … … … … Clique!$
+
+[RustboroCity_Gym_Text_RegisteredRoxanne] 906d329684
+A LÍDER DE GINÁSIO ROXANNE foi\nregistrada no POKéNAV.$
+
+[RustboroCity_Gym_Text_RoxannePreRematch] 26e1646569
+ROXANNE: Que bom te ver de novo.\nEu sou ROXANNE, a LÍDER daqui.\pTenho certeza de que tivemos muitas\nbatalhas desde a última vez.\pQuero ver o quanto melhoramos.\nVamos batalhar!$
+
+[RustboroCity_Gym_Text_RoxanneRematchDefeat] c0a950d074
+Grr…\nPerdi de novo…$
+
+[RustboroCity_Gym_Text_RoxannePostRematch] 7326be2576
+ROXANNE: Ainda tenho muito a aprender\nsobre batalhas POKéMON.\pE saber disso me faz amar as\nbatalhas ainda mais!$
+
+[RustboroCity_Gym_Text_RoxanneRematchNeedTwoMons] 4727ec0921
+ROXANNE: Que bom te ver de novo.\nEu sou ROXANNE, a LÍDER daqui.\pTenho certeza de que tivemos muitas\nbatalhas desde a última vez.\pQuero ver o quanto melhoramos…\pAh, não…\nVocê só tem um POKéMON com você?\pVolte com pelo menos mais um\nPOKéMON, por favor.$

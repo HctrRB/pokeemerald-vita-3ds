@@ -1,0 +1,23 @@
+[FallarborTown_Text_ShadyCharactersCozmosHome] b3fd223d8d
+Tem alguma coisa acontecendo,\ne eu não estou gostando!\pVi uns tipos suspeitos entrando e\nsaindo da casa do PROF. COZMO…$
+
+[FallarborTown_Text_RegionKnownForMeteors] c38ba80e4e
+Esta região é famosa pelos meteoros\ndesde os tempos antigos.\pDizem que a CATARATA DOS METEOROS foi\ncavada pela queda de um meteorito.$
+
+[FallarborTown_Text_MyPreciousAzurill] ffdad0277e
+Olha! Olha só!\nEste é o meu precioso AZURILL!\pÉ lisinho, macio e fofinho!$
+
+[FallarborTown_Text_Azurill] ee131ee425
+AZURILL: Ruriluuu.$
+
+[FallarborTown_Text_HaveYouChallengedFlannery] a5ddf1b790
+Já desafiou a FLANNERY, a LÍDER do\nGINÁSIO de LAVARIDGE?\pO avô dela era famoso.\nJá foi da ELITE DOS QUATRO da\lLIGA POKéMON.\pNão me surpreenderia ver a FLANNERY\nvirar uma grande TREINADORA\ltambém.$
+
+[FallarborTown_Text_BattleTentSign] eb54375aba
+TENDA DE BATALHA DE FALLARBOR\n“Que venham as melhores equipes!”$
+
+[FallarborTown_Text_TownSign] 07b9685f13
+CIDADE DE FALLARBOR\n“Comunidade rural de hortas.”$
+
+[FallarborTown_Text_MoveTutorSign] bcba361d4a
+CASA DO TUTOR DE GOLPES\n“Golpes novos para POKéMON.”$

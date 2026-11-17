@@ -79,7 +79,7 @@ static void Build(void)
     int32_t tx[1], tw[1];
     char buf[64];
     UiKit_Header("BERRIES", tab, 1, 0, tx, tw, 12);
-    snprintf(buf, sizeof(buf), "%d kinds", (int)sCount);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("%d kinds"), (int)sCount);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
 
     UiW_Panel(16, 60, 380, 432);
@@ -105,7 +105,7 @@ static void Build(void)
     UiSpr_ItemIcon(item, 448, 100, 3);
     UiGame_ItemName(item, buf, sizeof(buf));
     UiText_Draw(UI_FACE_PS2P, 16, 560, 96, buf, UI_COL_INK);
-    snprintf(buf, sizeof(buf), "In bag: x%u", (unsigned)sRows[sList.sel].qty);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("In bag: x%u"), (unsigned)sRows[sList.sel].qty);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 560, 124, buf, UI_COL_INK_SOFT);
     char desc[160];
     UiGame_ItemDescription(item, desc, sizeof(desc));

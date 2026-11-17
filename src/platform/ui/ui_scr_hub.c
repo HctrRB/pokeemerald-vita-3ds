@@ -274,8 +274,17 @@ static void EntryLabel(uint8_t e, char *out, size_t cap)
         snprintf(out, cap, "%s", labels[e]);
 }
 
+// Independent label ticker: lets long PT-BR text pass across the whole capsule.
+static uint32_t sStatusMarqueeFrame;
+static void DrawCapsuleLabel(int32_t x, int32_t y, int32_t w, const char *label, uint32_t ink)
+{
+    UiW_TextMarquee(UI_FACE_VT323, 24, x, y, w, 34, label, ink,
+                    sStatusMarqueeFrame);
+}
+
 static void BuildStatus(void)
 {
+    ++sStatusMarqueeFrame;
     char buf[48], zone[32];
     UiGame_ZoneName(zone, sizeof(zone));
     UiW_PanelDark(16, 16, 332, 48);
@@ -297,10 +306,11 @@ static void BuildStatus(void)
         UiDraw_PopClip();
     }
     else
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 70, 34, "SEL: NONE", UI_COL_ON_SOFT);
+        DrawCapsuleLabel(16, 70, 162, "SEL: NONE", UI_COL_ON_SOFT);
 
     // Top-right: auto-run toggle (touch when Running Shoes are unlocked)
     UiW_Capsule(186, 70, 162, 34);
+
     if (UiGame_HasFlag(FLAG_SYS_B_DASH))
     {
         const bool on = VitaExtras_GetFast(FAST_EXTRA_AUTO_RUN) != 0;
@@ -308,29 +318,29 @@ static void BuildStatus(void)
         sRunY = 70;
         sRunW = 162;
         sRunH = 34;
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, on ? "RUN: AUTO" : "RUN: B BTN",
-                       on ? UI_RGBA(115, 205, 164, 255) : UI_COL_ON_SOFT);
+        DrawCapsuleLabel(186, 70, 162, on ? "RUN: AUTO" : "RUN: B BTN",
+                         on ? UI_RGBA(115, 205, 164, 255) : UI_COL_ON_SOFT);
     }
     else
     {
         sRunW = 0;
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, "RUN: WALK", UI_COL_ON_SOFT);
+        DrawCapsuleLabel(186, 70, 162, "RUN: WALK", UI_COL_ON_SOFT);
     }
 
     // Bottom-left: Safari balls or Repel steps
     UiW_Capsule(16, 110, 162, 34);
     if (UiGame_InSafari())
     {
-        snprintf(buf, sizeof(buf), "SAFARI: %u", (unsigned)UiGame_SafariBalls());
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, buf, UI_COL_ON_FRAME);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("SAFARI: %u"), (unsigned)UiGame_SafariBalls());
+        DrawCapsuleLabel(16, 110, 162, buf, UI_COL_ON_FRAME);
     }
     else if (UiGame_RepelSteps() > 0)
     {
-        snprintf(buf, sizeof(buf), "REPEL: %u", (unsigned)UiGame_RepelSteps());
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, buf, UI_COL_GOLD);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("REPEL: %u"), (unsigned)UiGame_RepelSteps());
+        DrawCapsuleLabel(16, 110, 162, buf, UI_COL_GOLD);
     }
     else
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, "REPEL: OFF", UI_COL_ON_SOFT);
+        DrawCapsuleLabel(16, 110, 162, "REPEL: OFF", UI_COL_ON_SOFT);
 
     // Bottom-right: money and clock
     UiW_Capsule(186, 110, 162, 34);
@@ -406,9 +416,9 @@ static void BuildPopup(void)
         UiGame_PlayerName(name, sizeof(name));
         UiGame_ZoneName(zone, sizeof(zone));
         UiGame_PlayTime(time, sizeof(time));
-        snprintf(buf, sizeof(buf), "SLOT %u · %s · %s", (unsigned)UiGame_SaveSlot(), name, zone);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("SLOT %u · %s · %s"), (unsigned)UiGame_SaveSlot(), name, zone);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 50, buf, UI_COL_INK);
-        snprintf(buf, sizeof(buf), "BADGES %u · POKéDEX %u · TIME %s", (unsigned)UiGame_BadgeCount(), (unsigned)UiGame_DexOwned(), time);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("BADGES %u · POKéDEX %u · TIME %s"), (unsigned)UiGame_BadgeCount(), (unsigned)UiGame_DexOwned(), time);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 82, buf, UI_COL_INK_SOFT);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 118,
                     UiGame_SaveOverwritesOtherGame() ? "This overwrites the other game!" : "Would you like to save the game?",
@@ -449,7 +459,7 @@ static void BuildGbaHub(void)
     UiDraw_PopClip();
     UiW_GbaBox(18, 50, 430, 34, 3, UI_RGBA(24, 32, 32, 255), UI_RGBA(232, 207, 166, 255), UI_RGBA(212, 180, 132, 255),
                UI_RGBA(255, 244, 218, 255), 0);
-    snprintf(buf, sizeof(buf), "HOENN REGION · $%u", (unsigned)UiGame_Money());
+    snprintf(buf, sizeof(buf), UiLocale_Translate("HOENN REGION · $%u"), (unsigned)UiGame_Money());
     UiDraw_PushClip(22, 50, 422, 34);
     UiW_GbaTextCentred(UI_FACE_VT323, 24, 18, 50, 430, 34, buf, UI_RGBA(62, 28, 0, 255), UI_RGBA(255, 244, 218, 255));
     UiDraw_PopClip();
@@ -466,7 +476,7 @@ static void BuildGbaHub(void)
     {
         UiDraw_Sprite(UI_SPR_BALL_SAFARI, 244, 118, 1);
         UiW_GbaTextMid(UI_FACE_VT323, 24, 266, 106, 40, "SAFARI", UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
-        snprintf(buf, sizeof(buf), "%u BALLS", (unsigned)UiGame_SafariBalls());
+        snprintf(buf, sizeof(buf), UiLocale_Translate("%u BALLS"), (unsigned)UiGame_SafariBalls());
         UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, buf), 106, 40, buf, UI_RGBA(115, 255, 172, 255), UI_GBA_SHAD_DARK);
     }
     else
@@ -613,11 +623,11 @@ static void BuildGbaSavePopup(void)
     const uint16_t dexOwned = IsNationalPokedexEnabled() ? GetNationalPokedexCount(FLAG_GET_CAUGHT) : GetHoennPokedexCount(FLAG_GET_CAUGHT);
     const uint16_t dexSeen = IsNationalPokedexEnabled() ? GetNationalPokedexCount(FLAG_GET_SEEN) : GetHoennPokedexCount(FLAG_GET_SEEN);
     char rowVals[5][48];
-    snprintf(rowVals[0], sizeof(rowVals[0]), "%s · IDNo. %05u", name, (unsigned)tid);
-    snprintf(rowVals[1], sizeof(rowVals[1]), "%u HOENN BADGES", (unsigned)UiGame_BadgeCount());
-    snprintf(rowVals[2], sizeof(rowVals[2]), "%03u CAUGHT / %03u SEEN", (unsigned)dexOwned, (unsigned)dexSeen);
+    snprintf(rowVals[0], sizeof(rowVals[0]), UiLocale_Translate("%s · IDNo. %05u"), name, (unsigned)tid);
+    snprintf(rowVals[1], sizeof(rowVals[1]), UiLocale_Translate("%u HOENN BADGES"), (unsigned)UiGame_BadgeCount());
+    snprintf(rowVals[2], sizeof(rowVals[2]), UiLocale_Translate("%03u CAUGHT / %03u SEEN"), (unsigned)dexOwned, (unsigned)dexSeen);
     snprintf(rowVals[3], sizeof(rowVals[3]), "%s", time);
-    snprintf(rowVals[4], sizeof(rowVals[4]), "SLOT %u · ux0:data/POKEVITA/", (unsigned)UiGame_SaveSlot());
+    snprintf(rowVals[4], sizeof(rowVals[4]), UiLocale_Translate("SLOT %u · ux0:data/POKEVITA/"), (unsigned)UiGame_SaveSlot());
     static const char *const kRowKeys[5] = { "PLAYER", "BADGES", "POKéDEX", "PLAY TIME", "SAVE TARGET" };
     const uint32_t kValCols[5] = {
         UI_RGBA(32, 104, 168, 255),
@@ -643,7 +653,7 @@ static void BuildGbaSavePopup(void)
               2, UI_RGBA(72, 120, 136, 255), UI_RGBA(16, 24, 28, 255), 0);
     const int32_t pCount = UiGame_PartyCount();
     UiW_GbaText(UI_FACE_VT323, 24, 46, 314, "CURRENT PARTY", UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
-    snprintf(buf, sizeof(buf), "%d / 6 ACTIVE", (int)pCount);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("%d / 6 ACTIVE"), (int)pCount);
     UiW_GbaText(UI_FACE_VT323, 24, 498 - UiText_Width(UI_FACE_VT323, 24, buf), 314, buf, UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
     for (int32_t i = 0; i < 6; i++)
     {

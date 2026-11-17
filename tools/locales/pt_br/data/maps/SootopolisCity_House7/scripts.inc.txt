@@ -1,0 +1,5 @@
+[SootopolisCity_House7_Text_CityFromEruptedVolcano] bde1949b41
+Um vulcão submarino entrou em\nerupção e subiu das profundezas.\pA cratera saiu do mar e se encheu\nde água da chuva.\pFoi assim que nasceu a CIDADE DE\nSOOTOPOLIS.$
+
+[SootopolisCity_House7_Text_CaveMadeToKeepSomething] ffd70ba2f0
+A caverna que liga SOOTOPOLIS ao\nmundo lá fora…\pParece que foi feita pra impedir\nque alguma coisa saia.\pOu é só imaginação minha?$

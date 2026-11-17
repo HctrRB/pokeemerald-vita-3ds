@@ -148,7 +148,7 @@ static void GroupLabel(int32_t index, char *out, size_t cap)
     if (sAlpha)
     {
         const int32_t g = sGroupIds[index];
-        if (g == 0) snprintf(out, cap, "OTHERS");
+        if (g == 0) snprintf(out, cap, "%s", UiLocale_Translate("OTHERS"));
         else snprintf(out, cap, "%c", 'A' + g - 1);
     }
     else
@@ -408,7 +408,7 @@ static void Build(void)
     UiW_Panel(wx, LOW_Y, MSG_W - GROUP_W - 12, 240);
     GroupLabel(sGroup, buf, sizeof(buf));
     char right[24];
-    snprintf(right, sizeof(right), "%d words", (int)sWordCount);
+    snprintf(right, sizeof(right), UiLocale_Translate("%d words"), (int)sWordCount);
     UiW_PanelHead(wx, LOW_Y, MSG_W - GROUP_W - 12, buf, right);
     for (int32_t k = 0; k < WORD_COLS * WORD_ROWS; k++)
     {

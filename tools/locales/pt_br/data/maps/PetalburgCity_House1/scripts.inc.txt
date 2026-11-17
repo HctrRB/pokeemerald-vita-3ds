@@ -1,0 +1,5 @@
+[PetalburgCity_House1_Text_TravelingIsWonderful] 6e68423236
+Viajar é maravilhoso!\pQuando eu era jovem, rodei os mares\ne as montanhas!$
+
+[PetalburgCity_House1_Text_GoOnAdventure] e53be08069
+Ai, ai…\pQueria tanto sair numa aventura\ncom uns POKéMON…\pRastejar pelo mato úmido…\nEscalar montanhas de pedra…\pAtravessar mares agitados…\nAndar por cavernas escuras…\pE, às vezes, até sentir um pouco\nde saudade de casa…\pViajar deve ser incrível!$

@@ -1,0 +1,20 @@
+[gText_ConfirmSave] 93a55ddcb0
+Quer salvar o jogo?$
+
+[gText_AlreadySavedFile] d51d90d1e1
+Já existe um jogo salvo.\nTudo bem gravar por cima dele?$
+
+[gText_SavingDontTurnOff] 66d1e58f35
+SALVANDO…\nNÃO DESLIGUE O APARELHO.$
+
+[gText_PlayerSavedGame] 1d30fbfda4
+{PLAYER} salvou o jogo.$
+
+[gText_DifferentSaveFile] cfa51c5b32
+ATENÇÃO!\pJá existe um jogo diferente\nsalvo.\pSe você salvar agora, a aventura do\noutro jogo, com os itens e os\lPOKéMON, será perdida por completo.\pTem certeza de que quer salvar agora\ne gravar por cima do outro jogo?$
+
+[gText_SaveError] 671495ebc3
+Erro ao salvar.\pTroque a memória\nde backup.$
+
+[gText_SavingDontTurnOffPower] 66d1e58f35
+SALVANDO…\nNÃO DESLIGUE O APARELHO.$

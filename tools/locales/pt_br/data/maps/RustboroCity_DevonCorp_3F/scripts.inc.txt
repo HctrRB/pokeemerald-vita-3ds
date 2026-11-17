@@ -1,0 +1,44 @@
+[RustboroCity_DevonCorp_3F_Text_MrStoneIHaveFavor] 62995cc1dc
+Eu sou o SR. STONE, PRESIDENTE da\nCORPORAÇÃO DEVON.\pAcabei de saber de você!\pVocê salvou o nosso funcionário não\numa, mas duas vezes!\pTenho um favor a pedir a uma pessoa\nincrível como você.\pSoube que você vai entregar um pacote\nno ESTALEIRO de SLATEPORT.\pBom, no caminho, poderia passar\npela CIDADE DE DEWFORD?\pEu queria que você entregasse uma\nCARTA ao STEVEN, em DEWFORD.$
+
+[RustboroCity_DevonCorp_3F_Text_MrStoneWantYouToHaveThis] 5e7db99fe2
+SR. STONE: Agora, saiba que eu sou\num grande PRESIDENTE.\pEu jamais seria pão-duro a ponto de\npedir um favor sem dar nada em troca.\pPor isso, quero que fique com isto!$
+
+[RustboroCity_DevonCorp_3F_Text_ReceivedPokenav] 489777a70a
+{PLAYER} recebeu um POKéNAV.$
+
+[RustboroCity_DevonCorp_3F_Text_MrStoneExplainPokenavRestUp] f3a8017845
+SR. STONE: Esse aparelho…\pÉ um NAVEGADOR POKéMON, ou POKéNAV,\npra encurtar.\pÉ uma ferramenta indispensável pra\nqualquer aventura com POKéMON.\pEle tem um mapa da região de HOENN.\pDá pra ver fácil onde ficam\nDEWFORD e SLATEPORT!\pAliás, ouvi dizer que uns criminosos\nsinistros, MAGMA e AQUA, eu acho,\lestão causando problemas por aí.\pAcho melhor você descansar\nantes de seguir viagem.$
+
+[RustboroCity_DevonCorp_3F_Text_MrStoneGoWithCautionAndCare] f3e5cdd8f6
+SR. STONE: Bom, então, {PLAYER}{KUN},\nvá com cuidado e atenção!$
+
+[RustboroCity_DevonCorp_3F_Text_CountingOnYou] 54cff0fc14
+SR. STONE: Conto com você!$
+
+[RustboroCity_DevonCorp_3F_Text_ThankYouForDeliveringLetter] cf3c8f3078
+SR. STONE: Você entregou a minha CARTA?\nMuito obrigado!\pÉ o meu jeito de agradecer.\nDeve ajudar você nos treinos.$
+
+[RustboroCity_DevonCorp_3F_Text_ExplainExpShare] 5c63f502d9
+SR. STONE: Um POKéMON segurando esse\nCOMPARTILHADOR DE EXP. recebe parte\lda EXP das batalhas.\pEle ganha EXP mesmo sem ter\nbatalhado de verdade.\pEu diria que o COMPARTILHADOR DE EXP.\né bem útil pra treinar POKéMON fracos.$
+
+[RustboroCity_DevonCorp_3F_Text_NotFamiliarWithTrends] d9d3955736
+SR. STONE: Desde jovem, mergulhei\nno trabalho.\pPor isso, não entendo muito de\nmodas e dessas coisas.\pMas os jovens todos querem treinar\nPOKéMON e ir pra LIGA POKéMON?$
+
+[RustboroCity_DevonCorp_3F_Text_ThisIs3rdFloorWaitHere] 119824ef3e
+Este é o terceiro andar da\nCORPORAÇÃO DEVON.\pO ESCRITÓRIO do nosso PRESIDENTE\nfica neste andar.\pEnfim, nem sei dizer o quanto sou\ngrato pelo que você fez.\pHum… Aliás, aquele pacote que\nvocê recuperou pra gente…\pVocê poderia entregá-lo no\nESTALEIRO de SLATEPORT?\pSeria horrível se aqueles ladrões\ntentassem pegar de novo.\pHã… Hehehe, então, hã, posso contar\ncom você pra isso?\pAh, é mesmo.\nPode esperar aqui um segundo?$
+
+[RustboroCity_DevonCorp_3F_Text_WordWithPresidentComeWithMe] 98133e20a8
+O nosso PRESIDENTE quer dar\numa palavrinha com você.\pVenha comigo, por favor.$
+
+[RustboroCity_DevonCorp_3F_Text_PleaseGoAhead] 33b5f73ed7
+Por favor, pode entrar.$
+
+[RustboroCity_DevonCorp_3F_Text_VisitCaptSternShipyard] 06d65b9734
+Se for ao ESTALEIRO de SLATEPORT,\nprocure o CAP. STERN.$
+
+[RustboroCity_DevonCorp_3F_Text_RepeatAndTimerHugelyPopular] 8b1f47c38f
+Os novos produtos da DEVON, a BOLA\nREPETIÇÃO e a BOLA TEMPO, fizeram\lmuito sucesso entre os TREINADORES.$
+
+[RustboroCity_DevonCorp_3F_Text_RareRocksDisplay] 7fdf37bbaa
+É uma coleção de pedras e rochas\nraras reunidas pelo PRESIDENTE.$

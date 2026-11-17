@@ -566,7 +566,7 @@ static void BuildInfo(int32_t slot)
     }
     UiGame_Summary(slot, &s);
     UiKit_GenderShiny(520 + UiText_Width(UI_FACE_PS2P, 16, m.name) + 10, 80, m.gender, m.shiny);
-    snprintf(buf, sizeof(buf), "No.%03u %s", (unsigned)s.dexNo, s.species);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("No.%03u %s"), (unsigned)s.dexNo, s.species);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 520, 104, buf, UI_COL_INK);
     UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + s.types[0]), 520, 144, 2);
     if (s.types[1] != s.types[0])
@@ -583,7 +583,7 @@ static void BuildInfo(int32_t slot)
         if (r == 1) snprintf(buf, sizeof(buf), "%s", s.nature);
         if (r == 2) snprintf(buf, sizeof(buf), "%s", s.ability);
         if (r == 4) snprintf(buf, sizeof(buf), "%s Lv%u", s.metAt, (unsigned)s.metLevel);
-        if (r == 5) { if (s.item) UiGame_ItemName(s.item, buf, sizeof(buf)); else snprintf(buf, sizeof(buf), "NONE"); }
+        if (r == 5) { if (s.item) UiGame_ItemName(s.item, buf, sizeof(buf)); else snprintf(buf, sizeof(buf), "%s", UiLocale_Translate("NONE")); }
         if (r == 3)
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 520, y - 4, s.abilityDesc, UI_COL_INK_SOFT);
         else
@@ -623,7 +623,7 @@ static void BuildSkills(int32_t slot)
         }
     }
     UiW_Inset(360, 394, 572, 82);
-    snprintf(buf, sizeof(buf), "NATURE %s", s.nature);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("NATURE %s"), s.nature);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 376, 400, buf, UI_COL_INK);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 376, 434, "Red: raised  Blue: lowered", UI_COL_INK_SOFT);
 }
@@ -658,7 +658,7 @@ static void BuildMoves(int32_t slot, bool contest)
             Hearts(820, y + 20, mv.appeal, false);
         else
         {
-            snprintf(buf, sizeof(buf), "PP %u/%u", (unsigned)mv.pp, (unsigned)mv.maxPp);
+            snprintf(buf, sizeof(buf), UiLocale_Translate("PP %u/%u"), (unsigned)mv.pp, (unsigned)mv.maxPp);
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 916 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), y + 8, buf, ink);
         }
     }
@@ -834,7 +834,7 @@ static void BuildGbaInspectPanel(int32_t slot)
         char iname[24];
         UiGame_ItemName(s.item, iname, sizeof(iname));
         UiSpr_ItemIcon(s.item, 598, 222, 1);
-        snprintf(buf, sizeof(buf), "Item: %s", iname);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("Item: %s"), iname);
         UiW_GbaText(UI_FACE_VT323, 24, 624, 223, buf, UI_RGBA(32, 104, 168, 255), UI_GBA_SHAD_LIGHT);
     }
     else
@@ -891,7 +891,7 @@ static void BuildGbaSummary(void)
     UiGame_Summary(sParty.sel, &s);
 
     char buf[96], lvBuf[16];
-    snprintf(buf, sizeof(buf), "No.%03u %s", (unsigned)s.dexNo, m.name);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("No.%03u %s"), (unsigned)s.dexNo, m.name);
     snprintf(lvBuf, sizeof(lvBuf), m.egg ? "EGG" : "Lv%u", (unsigned)m.level);
 
     // Left Summary Card (14, 60, 326, 472)
@@ -922,7 +922,7 @@ static void BuildGbaSummary(void)
         UiW_GbaHpBar(24, 266, 198, 16, m.hp, m.maxHp);
         snprintf(buf, sizeof(buf), "%u / %u", (unsigned)m.hp, (unsigned)m.maxHp);
         UiW_GbaTextMid(UI_FACE_VT323, 28, 330 - UiText_Width(UI_FACE_VT323, 28, buf), 262, 24, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-        snprintf(buf, sizeof(buf), "NEXT %u", (unsigned)s.expToNext);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("NEXT %u"), (unsigned)s.expToNext);
         UiW_GbaExpBar(24, 290, 306, s.expPct, buf);
     }
 
@@ -941,9 +941,9 @@ static void BuildGbaSummary(void)
     {
         const int32_t nw = UiW_GbaText(UI_FACE_VT323, 28, 34, 356, s.nature, UI_RGBA(208, 40, 40, 255), UI_GBA_SHAD_LIGHT);
         UiW_GbaText(UI_FACE_VT323, 28, 34 + nw + 6, 356, "nature.", UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-        snprintf(buf, sizeof(buf), "Met at %s at Lv.%u.", s.metAt, (unsigned)s.metLevel);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("Met at %s at Lv.%u."), s.metAt, (unsigned)s.metLevel);
         UiW_GbaTextWrapped(UI_FACE_VT323, 28, 34, 388, 286, 26, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 3);
-        snprintf(buf, sizeof(buf), "OT: %s   IDNo. %05u", s.ot, (unsigned)s.otId);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("OT: %s   IDNo. %05u"), s.ot, (unsigned)s.otId);
         UiW_GbaText(UI_FACE_VT323, 24, 34, 482, buf, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
     }
     UiDraw_PopClip();
@@ -968,7 +968,7 @@ static void BuildGbaSummary(void)
         if (s.natureUp > 0 && s.natureDown > 0)
             snprintf(buf, sizeof(buf), "+%s / -%s", kStatNames[s.natureUp], kStatNames[s.natureDown]);
         else
-            snprintf(buf, sizeof(buf), "%s (NEUTRAL)", s.nature);
+            snprintf(buf, sizeof(buf), UiLocale_Translate("%s (NEUTRAL)"), s.nature);
         UiW_GbaSectionStrip(362, 70, 574, 28, UI_GBA_TAG_GREEN, "STATS & NATURE", buf);
 
         UiW_GbaBox(362, 104, 574, 218, 4, UI_RGBA(40, 48, 48, 255), C_WHITE, C_WHITE, 0, 0);
@@ -1073,9 +1073,9 @@ static void BuildGbaSummary(void)
 
         UiW_GbaSectionStrip(362, 316, 574, 26, UI_GBA_TAG_GOLD, "EXPERIENCE", NULL);
         UiW_GbaBox(362, 348, 574, 172, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
-        snprintf(buf, sizeof(buf), "EXP. POINTS: %u", (unsigned)s.exp);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("EXP. POINTS: %u"), (unsigned)s.exp);
         UiW_GbaText(UI_FACE_VT323, 32, 380, 366, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-        snprintf(buf, sizeof(buf), "TO NEXT LV.: %u", (unsigned)s.expToNext);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("TO NEXT LV.: %u"), (unsigned)s.expToNext);
         UiW_GbaText(UI_FACE_VT323, 32, 380, 406, buf, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
         UiW_GbaExpBar(380, 456, 536, s.expPct, NULL);
     }
@@ -1118,7 +1118,7 @@ static void BuildGbaSummary(void)
                 Hearts(822, ry + 20, mv.appeal, false);
             else
             {
-                snprintf(buf, sizeof(buf), "PP %u/%u", (unsigned)mv.pp, (unsigned)mv.maxPp);
+                snprintf(buf, sizeof(buf), UiLocale_Translate("PP %u/%u"), (unsigned)mv.pp, (unsigned)mv.maxPp);
                 UiW_GbaTextMid(UI_FACE_VT323, 28, 922 - UiText_Width(UI_FACE_VT323, 28, buf), ry, 50, buf, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
             }
         }
@@ -1126,9 +1126,9 @@ static void BuildGbaSummary(void)
         {
             static const char *const cats[3] = { "PHYSICAL", "SPECIAL", "STATUS" };
             if (contest)
-                snprintf(buf, sizeof(buf), "APPEAL %u · JAM %u", (unsigned)sel.appeal, (unsigned)sel.jam);
+                snprintf(buf, sizeof(buf), UiLocale_Translate("APPEAL %u · JAM %u"), (unsigned)sel.appeal, (unsigned)sel.jam);
             else
-                snprintf(buf, sizeof(buf), "PWR %u · ACC %u · %s", (unsigned)sel.power, (unsigned)sel.accuracy, cats[sel.category]);
+                snprintf(buf, sizeof(buf), UiLocale_Translate("PWR %u · ACC %u · %s"), (unsigned)sel.power, (unsigned)sel.accuracy, cats[sel.category]);
             UiW_GbaSectionStrip(362, 326, 574, 26, UI_GBA_TAG_TEAL, "MOVE DATA", buf);
             UiW_GbaBox(362, 356, 574, 164, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
             UiW_GbaTextWrapped(UI_FACE_VT323, 32, 376, 368, 546, 30, contest ? sel.contestDesc : sel.desc, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 4);
@@ -1382,9 +1382,9 @@ static bool TargetUpdate(const UiInput *in)
         if (m.item != ITEM_NONE)
         {
             // Already holding one: confirm the swap, as the game does
-            char old[24], title[40];
+            char old[40], title[96];
             UiGame_ItemName(m.item, old, sizeof(old));
-            snprintf(title, sizeof(title), "SWAP %s?", old);
+            snprintf(title, sizeof(title), UiLocale_Translate("SWAP %s?"), old);
             UiMenu_Open(&sMoveMenu, title, 348, 200, 420);
             UiMenu_Add(&sMoveMenu, "YES", 1);
             UiMenu_Add(&sMoveMenu, "NO", 9);
@@ -1517,7 +1517,7 @@ static void TargetBuildGba(void)
             {
                 char old[24];
                 UiGame_ItemName(tm.item, old, sizeof(old));
-                snprintf(buf, sizeof(buf), "Currently holding: %s", old);
+                snprintf(buf, sizeof(buf), UiLocale_Translate("Currently holding: %s"), old);
             }
             else
                 snprintf(buf, sizeof(buf), "Not holding any item.");

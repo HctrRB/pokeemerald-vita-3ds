@@ -1,0 +1,86 @@
+[PetalburgWoods_Text_NotAOneToBeFound] 5ab5114ce3
+Hummm…\nNão tem nenhum…$
+
+[PetalburgWoods_Text_HaveYouSeenShroomish] 4e38e448c8
+Olá, você viu algum POKéMON\nchamado SHROOMISH por aqui?\pEu adoro esse POKéMON.$
+
+[PetalburgWoods_Text_IWasGoingToAmbushYou] 56c4d49330
+Eu ia te emboscar, mas você tinha\nque ficar enrolando no BOSQUE DE\lPETALBURG pra sempre, né?\pCansei de esperar, então aqui estou!$
+
+[PetalburgWoods_Text_HandOverThosePapers] 9ce37749e5
+Você! PESQUISADOR DA DEVON!\pPassa esses documentos pra cá!$
+
+[PetalburgWoods_Text_YouHaveToHelpMe] 5b306b95f3
+Aaaaai!\pVocê treina POKéMON, não treina?\nVocê tem que me ajudar, por favor!$
+
+[PetalburgWoods_Text_NoOneCrossesTeamAqua] e3eddd00e5
+Hã? O que pensa que está fazendo?\nVai proteger ele, é?\pQuem se mete com a EQUIPE AQUA\nnão tem perdão, nem criança!\pVem, batalha comigo!$
+
+[PetalburgWoods_Text_YoureKiddingMe] 149de01808
+Tá de brincadeira! Você é fera!$
+
+[PetalburgWoods_Text_YouveGotSomeNerve] eafb24dd4d
+Grrr… Que coragem a sua, se\nmetendo com a EQUIPE AQUA!\lVem, batalha comigo de novo!\pBem que eu queria, mas acabaram\nmeus POKéMON…\pE, olha, a EQUIPE AQUA também está\natrás de uma coisa em RUSTBORO.\pHoje eu te deixo ir!$
+
+[PetalburgWoods_Text_ThatWasAwfullyClose] b04621e0a8
+Ufa…\nEssa foi por pouco!\pGraças a você, ele não roubou\nesses documentos importantes.\pJá sei, vou te dar uma GRANDE BOLA\ncomo agradecimento!$
+
+[PetalburgWoods_Text_TeamAquaAfterSomethingInRustboro] 1e1ca60ab8
+Aquele bandido da EQUIPE AQUA não\ndisse que eles também estão atrás\lde alguma coisa em RUSTBORO?$
+
+[PetalburgWoods_Text_ICantBeWastingTime] 11dcacc12b
+Ai, ai! É uma crise!\nNão posso perder tempo!$
+
+[PetalburgWoods_Text_YoureLoadedWithItems] 5e06127f5f
+A sua BOLSA está cheia de itens.\nNão dá pra te dar esta GRANDE BOLA.$
+
+[PetalburgWoods_Text_GoBugPokemonTeam] 79a1725625
+Peguei um montão de POKéMON!\pVai, vai, vai!\nMinha equipe de POKéMON INSETO!$
+
+[PetalburgWoods_Text_ICouldntWin] 18632eba73
+Eu tenho todos esses POKéMON,\nmas não consegui ganhar…$
+
+[PetalburgWoods_Text_ImOutOfPokeBalls] 349b5bed16
+Peguei um monte de POKéMON.\nAgora acabaram minhas POKé BOLAS.$
+
+[PetalburgWoods_Text_InstantlyPopularWithBugPokemon] 0dba4b8e00
+Se você leva POKéMON INSETO pra escola,\nfica popular na hora!$
+
+[PetalburgWoods_Text_CantBePopularIfILose] 6a5eb8f7b4
+Não dá pra ser popular se eu perder.$
+
+[PetalburgWoods_Text_PeopleRespectYou] d7b5846de4
+Se você tem um POKéMON INSETO grande,\no pessoal te respeita.$
+
+[PetalburgWoods_Text_IWantRematch1] 6bc4b2054e
+Quero revanche quando meus POKéMON\nINSETO crescerem!\pVou te registrar no meu POKéNAV!$
+
+[PetalburgWoods_Text_IWantRematch2] e270006431
+Quero revanche quando meus POKéMON\nINSETO crescerem!\pVou te registrar no meu POKéNAV!$
+
+[PetalburgWoods_Text_MyPokemonHaveGrown] 7ac6acf3a3
+Meus POKéMON INSETO cresceram.\nVou ficar popular de novo.$
+
+[PetalburgWoods_Text_CantBePopularIfLose] 6a5eb8f7b4
+Não dá pra ser popular se eu perder.$
+
+[PetalburgWoods_Text_IveBeenTrainingHard] 3bc57af4f9
+Quem tem POKéMON forte fica popular,\nné? Então eu treinei bastante.$
+
+[PetalburgWoods_Text_StayOutOfTallGrass] 8781f95d6e
+E aí!\nSeus POKéMON estão bem?\pSe eles estão fracos e você quer\nevitar batalhas, fique longe do\lmato alto.$
+
+[PetalburgWoods_Text_HiddenItemsExplanation] fd0fc18964
+Às vezes tem coisas no chão, mesmo\nque você não consiga ver.\pPor isso eu sempre olho onde\nestou pisando.$
+
+[PetalburgWoods_Text_TryUsingThisItem] ec992fc145
+Que legal!\nÉ a INSÍGNIA do GINÁSIO de RUSTBORO!\pVocê deve treinar POKéMON.\nExperimenta usar este item.$
+
+[PetalburgWoods_Text_MiracleSeedExplanation] 7ee6b83282
+É uma SEMENTE MILAGROSA.\nSe um POKéMON segura esse item, os\lgolpes PLANTA ficam mais fortes.\pAcho que tem outros itens úteis\npara os POKéMON segurarem, além da\lSEMENTE MILAGROSA.$
+
+[PetalburgWoods_Text_TrainerTipsExperience] a7e7b9f5e2
+DICAS DE TREINADOR\pTodo POKéMON que entra numa batalha,\nnem que seja uma vez, ganha EXP.\pPara treinar um POKéMON fraco,\ncoloque-o primeiro na lista da equipe.\pAssim que a batalha começar, troque-o.\nEle ganha EXP sem correr\lnenhum perigo.$
+
+[PetalburgWoods_Text_TrainerTipsPP] 733e722dc4
+DICAS DE TREINADOR\pAlém dos Pontos de Saúde (PS), os\nPOKéMON têm Pontos de Poder (PP),\lgastos para usar golpes na batalha.\pSe um POKéMON ficar sem PP, ele precisa\nir a um CENTRO POKéMON.$

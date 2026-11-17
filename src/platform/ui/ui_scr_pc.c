@@ -234,7 +234,7 @@ static void Withdraw(void)
     CalculatePlayerPartyCount();
     PlaySE(SE_SELECT);
     char buf[64];
-    snprintf(buf, sizeof(buf), "%s was taken out of the BOX.", name);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("%s was taken out of the BOX."), name);
     Msg(NULL, buf, NULL, NULL, NULL);
 }
 
@@ -256,7 +256,7 @@ static void Store(uint8_t box)
     if (sPartyPos >= PartyCount())
         sPartyPos = PartyCount() - 1;
     PlaySE(SE_SELECT);
-    snprintf(buf, sizeof(buf), "%s was deposited.", name);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("%s was deposited."), name);
     Msg(NULL, buf, NULL, NULL, NULL);
 }
 
@@ -330,11 +330,11 @@ static void Release(void)
     struct BoxPokemon *bm = CursorMon();
     char name[16], a[64], b[64];
     MonName(bm, name, sizeof(name));
-    snprintf(a, sizeof(a), "%s was released.", name);
+    snprintf(a, sizeof(a), UiLocale_Translate("%s was released."), name);
     if (!CanRelease(bm))
     {
         // It comes back: the GBA's "… … … … !" sequence
-        snprintf(b, sizeof(b), "%s came back!", name);
+        snprintf(b, sizeof(b), UiLocale_Translate("%s came back!"), name);
         Msg(NULL, a, "… … … … !", b, "Was it worried about you?");
         return;
     }
@@ -349,7 +349,7 @@ static void Release(void)
     else
         ZeroBoxMonAt(Box(), (u8)sPos);
     PlaySE(SE_SELECT);
-    snprintf(b, sizeof(b), "Bye-bye, %s!", name);
+    snprintf(b, sizeof(b), UiLocale_Translate("Bye-bye, %s!"), name);
     Msg(NULL, a, b, NULL, NULL);
 }
 
@@ -856,7 +856,7 @@ static void DrawDetail(void)
     if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 716, 156, "ITEM", soft, sh);
     else     UiText_Draw(UI_FACE_PS2P, 16, 716, 156, "ITEM", soft);
     if (it != ITEM_NONE) { UiSpr_ItemIcon(it, 716, 176, 1); UiGame_ItemName(it, buf, sizeof(buf)); }
-    else snprintf(buf, sizeof(buf), "NONE");
+    else snprintf(buf, sizeof(buf), "%s", UiLocale_Translate("NONE"));
     if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, it ? 746 : 716, 172, buf, it ? ink : soft, sh);
     else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, it ? 746 : 716, 172, buf, it ? ink : soft);
     if (egg)
@@ -938,12 +938,11 @@ static void Build(void)
         UiW_GbaWin(16, 60, 180, 432, UI_GBA_WIN_DEFAULT);
     else
         UiW_Panel(16, 60, 180, 432);
-    snprintf(buf, sizeof(buf), "PARTY %d/6", (int)PartyCount());
+    snprintf(buf, sizeof(buf), UiLocale_Translate("PARTY %d/6"), (int)PartyCount());
     if (gba)
         UiW_GbaSectionStrip(24, 68, 164, 24, UI_GBA_TAG_SLATE, buf, NULL);
     else
         UiText_Draw(UI_FACE_PS2P, 16, 30, 72, buf, UI_COL_INK);
-
     const bool partyOk = sMode != MODE_WITHDRAW;
     for (int32_t i = 0; i < PARTY_SIZE; i++)
     {

@@ -1,0 +1,8 @@
+[PetalburgCity_Mart_Text_WeakWillGrowStronger] db8ae541bc
+Mesmo que um POKéMON seja fraco agora,\nele vai ficar mais forte.\pO mais importante é o amor!\nAmor pelos seus POKéMON!$
+
+[PetalburgCity_Mart_Text_RepelIsUseful] 13f58834cf
+Você usa REPELENTE?\nEle afasta os POKéMON, então é\lútil quando você está com pressa.$
+
+[PetalburgCity_Mart_Text_TakeSomeAntidotesWithYou] 441e3c4000
+Você tem ANTÍDOTO aí\ncom você?\pSe andar com um POKéMON envenenado,\nele vai perdendo PS até desmaiar.\lLeve uns ANTÍDOTOS com você.$

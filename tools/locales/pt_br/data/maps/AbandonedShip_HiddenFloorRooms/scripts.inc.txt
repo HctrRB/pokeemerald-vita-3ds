@@ -1,0 +1,2 @@
+[AbandonedShip_HiddenFloorRooms_Text_BrightShinyTrash] 972c15292b
+Brilha que só!\nMas é só lixo…$

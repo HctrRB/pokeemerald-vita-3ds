@@ -1,0 +1,83 @@
+[MossdeepCity_SpaceCenter_1F_Text_RocketLaunchImminent] 30809eee3c
+O lançamento do foguete é iminente!$
+
+[MossdeepCity_SpaceCenter_1F_Text_SuccessfulLaunchNumber] e6b2a9a7a0
+O foguete foi lançado com sucesso!\nÉ o {STR_VAR_1}º lançamento de sucesso!$
+
+[MossdeepCity_SpaceCenter_1F_Text_HaywireButRocketLaunchImminent] 780aaf41d8
+Sei que as coisas estão meio\nbagunçadas agora, mas…\pO lançamento do foguete é iminente!$
+
+[MossdeepCity_SpaceCenter_1F_Text_HaywireButSuccessfulLaunchNumber] 717202f773
+Sei que as coisas estão meio\nbagunçadas agora, mas…\pO foguete foi lançado com sucesso!\nÉ o {STR_VAR_1}º lançamento de sucesso!$
+
+[MossdeepCity_SpaceCenter_1F_Text_RocketLaunchDemandsPerfection] 6dd20db90e
+Lançar um foguete exige perfeição.\nNem 1% de margem de erro é aceito.\pMesmo 99% certo, tudo vai por água\nabaixo se 1% der errado.\pMesmo assim, nunca paramos.\nPor quê? É um sonho que não acaba.$
+
+[MossdeepCity_SpaceCenter_1F_Text_MagmaHaveSightsOnSpaceCenter] f3135e6df1
+Aqueles bandidos da MAGMA estão de\nolho no nosso CENTRO ESPACIAL.\pMas não podemos deixar uma coisinha\ndessas atrapalhar o lançamento!$
+
+[MossdeepCity_SpaceCenter_1F_Text_FoundThisYouCanHaveIt] 9a4691262f
+Eu passeava pela praia quando\nachei isto.\pNão preciso, então pode ficar.$
+
+[MossdeepCity_SpaceCenter_1F_Text_HoennFamousForMeteorShowers] cf8602f77d
+A região de HOENN é famosa pelas\nchuvas de meteoros há muito tempo.$
+
+[MossdeepCity_SpaceCenter_1F_Text_MagmaCantStealFuelTakeThis] a04a4814da
+Não podemos deixar a EQUIPE MAGMA\nroubar o combustível do foguete.\pAh, aliás, pode ficar com esta pedra\nque achei na praia.$
+
+[MossdeepCity_SpaceCenter_1F_Text_CantStrollOnBeachWithMagma] a6dd40a294
+Com a EQUIPE MAGMA por aí, acho que\npassear na praia não é seguro.$
+
+[MossdeepCity_SpaceCenter_1F_Text_DidPokemonComeFromSpace] 13efc81a7f
+Tem gente que diz que os POKéMON\nvieram do espaço. Será verdade?$
+
+[MossdeepCity_SpaceCenter_1F_Text_AquaShouldBeatMagma] 9228e07d1c
+A EQUIPE AQUA devia dar um jeito\nna EQUIPE MAGMA!\pMas, se fizesse isso, a EQUIPE AQUA\nia ficar toda abusada, não ia?$
+
+[MossdeepCity_SpaceCenter_1F_Text_RocketsBoggleMyMind] 6389766129
+Um pedaço gigante de metal rasga\no céu e voa pro espaço…\pIsso me deixa de queixo caído!$
+
+[MossdeepCity_SpaceCenter_1F_Text_MagmaWantsToSpoilMyDream] 9e57677ca4
+Um pedaço gigante de metal rasga\no céu e voa pro espaço…\pMas a EQUIPE MAGMA quer estragar\nesse meu sonho!\pIsso eu não aceito!$
+
+[MossdeepCity_SpaceCenter_1F_Text_StevenMagmaCantBeAllowedToTakeFuel] b68e83b725
+STEVEN: {PLAYER}{KUN}, já leu aquele\ncomunicado?\pA EQUIPE MAGMA vem atrás do\ncombustível de foguete desta ilha.\pNão sei pra que precisam, mas não\npodemos deixar que levem.\pVou ficar de olho mais um pouco.\pEnquanto isso, que tal dar uma\nvolta pela cidade?$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt3Intro] 77087093d6
+Como prometido, viemos buscar o\ncombustível do foguete!$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt3Defeat] 9e68f11a40
+Fiquei sem combustível…$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt3PostBattle] 6d332038e0
+Não pense que está com tudo só\nporque me venceu!$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt1Intro] 66e7a74331
+Avisamos direitinho!\nNão tem nada de traiçoeiro na gente!$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt1Defeat] 6f56bf5ca2
+Grrr…\nDevíamos ter usado uma traição…$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt1PostBattle] 2656dcad10
+Tá, já entendi! Da próxima vez,\na gente vem sem avisar.$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt4Intro] 60140637b4
+O combustível que o CENTRO ESPACIAL\nguarda: é isso que a gente quer.\pVamos levar até a última gota!$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt4Defeat] 4efa841a1b
+Por favor, sobra um pouco de\ncombustível? Nem que seja um copinho!$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt4PostBattle] fd2621dacb
+O que vamos fazer com o\ncombustível do foguete?\pComo eu vou saber?\nPergunte pro nosso líder lá em cima!$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt2Intro] 27f8817bc7
+O nosso líder disse que ninguém,\nmas ninguém mesmo, passa por mim!$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt2Defeat] c5634abbbf
+Ack! Ack! Aaack!$
+
+[MossdeepCity_SpaceCenter_1F_Text_Grunt2PostBattle] affeb74b93
+Por favor, diga ao nosso líder que\nnunca abandonei o posto.\lQue fiquei até o amargo fim…$
+
+[MossdeepCity_SpaceCenter_1F_Text_MagmaIntentToStealNotice] 2ed7712246
+Isto é…\nUm aviso de roubo?\p“À equipe do CENTRO ESPACIAL:\nComo vão? Nós vamos bem.\p“Em breve, vamos visitar vocês para\nlevar o combustível de foguete.\p“Por favor, não tentem nos impedir.\nVamos levar de todo jeito.\p“Que haja mais terra!\n                                          EQUIPE MAGMA”$

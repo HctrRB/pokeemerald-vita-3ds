@@ -1,0 +1,41 @@
+[SootopolisCity_MysteryEventsHouse_1F_Text_OnlyAmusementWatchingBattles] d7b7c21f2e
+Quando eu era jovem, viajei o mundo\ncomo TREINADOR POKéMON.\pAgora que virei um velho caduco, a\nminha única diversão é ver jovens\lTREINADORES batalhando.$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_DoorAppearsToBeLocked] bbdfbcb3fb
+A porta parece trancada.$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_ChallengeVisitingTrainer] 8c2656916a
+Um TREINADOR chamado {STR_VAR_1}\nestá visitando a minha casa.\pQuer desafiar {STR_VAR_1}?$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_YouWontBattle] 53519fd794
+Não vai batalhar? Que pena não\npoder ver você batalhar…$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_KeepItTo3On3] 31dfcab749
+Ah, que bom, que bom!\pMas a minha casa não é tão firme.\pPosso pedir que seja só uma\nbatalha de 3 contra 3?$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_SaveProgressBeforeBattle] 6fba1ce09a
+Antes de vocês batalharem, é melhor\nsalvar o jogo.$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_HopeToSeeGoodMatch] 36c11f2106
+Espero ver uma boa batalha!$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_StrVar1Tie] ed70c47616
+{STR_VAR_1}$
+
+[SootopolisCity_MysteryEventsHouse_B1F_Text_MatchEndedUpDraw] 01310dac92
+A batalha terminou empatada.$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_BrilliantStandoff] 33c8bcde7e
+Então deu empate.\pFoi uma batalha brilhante em que\nninguém cedeu um passo!$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_StrVar1Won] ed70c47616
+{STR_VAR_1}$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_ThatWasSuperlative] 8bfc117f3d
+Foi magnífico!\pAté parecia eu mesmo na minha\njuventude!$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_StrVar1Lost] ed70c47616
+{STR_VAR_1}$
+
+[SootopolisCity_MysteryEventsHouse_1F_Text_TooBadForYou] 8e29057573
+Ah, que pena!\pMas foi uma boa batalha.\nEspero que ganhe da próxima vez.$

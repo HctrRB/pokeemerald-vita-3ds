@@ -1,0 +1,44 @@
+[SeafloorCavern_Room9_Text_ArchieHoldItRightThere] 0c4d3278dc
+ARCHIE: Pare aí mesmo.$
+
+[SeafloorCavern_Room9_Text_ArchieSoItWasYou] 130f5c4eb6
+ARCHIE: Fufufu…\nEntão era você, afinal.$
+
+[SeafloorCavern_Room9_Text_ArchieBeholdKyogre] c58a5aad77
+ARCHIE: Contemple!\pVeja como é linda a forma adormecida\ndo antigo POKéMON KYOGRE!\pEsperei tanto tempo por este dia…$
+
+[SeafloorCavern_Room9_Text_ArchieYouMustDisappear] 69fb50ac73
+ARCHIE: Me surpreende você ter\nconseguido me seguir até aqui.\pMas acabou.\pPra realizar o meu sonho, você tem\nque sumir agora!$
+
+[SeafloorCavern_Room9_Text_ArchieDefeat] 5b020ee5ba
+O quê?!\nPerdi pra uma simples criança?!$
+
+[SeafloorCavern_Room9_Text_ArchieWithThisRedOrb] 758e494568
+ARCHIE: Fufufu…\pEu te parabenizo. Tenho que admitir\nque você tem mesmo talento.\pMas!\nEu tenho isto em mãos!\pCom este ORBE VERMELHO, posso fazer\no KYOGRE…$
+
+[SeafloorCavern_Room9_Text_RedOrbShinesByItself] 41ee47429a
+O ORBE VERMELHO de repente começou\na brilhar sozinho!$
+
+[SeafloorCavern_Room9_Text_ArchieWhereDidKyogreGo] d3135b4c6b
+ARCHIE: O quê?!\pEu não fiz nada.\nPor que o ORBE VERMELHO…\pAonde o KYOGRE foi?$
+
+[SeafloorCavern_Room9_Text_ArchieAMessageFromOutside] ecb5a7204a
+ARCHIE: Hum? É uma mensagem dos\nnossos membros lá fora…$
+
+[SeafloorCavern_Room9_Text_ArchieWhatRainingTooHard] 3ae223c874
+ARCHIE: Sim, o que foi?\pHum…\nEstá chovendo forte?\pÓtimo… Era pra acontecer.\nFoi por isso que despertamos o\lKYOGRE: pra realizar o sonho da\lEQUIPE AQUA de expandir o mar.\pO quê?!\pEstá chovendo muito mais do que\nimaginamos? Vocês estão em perigo?\pNão pode ser…\nIsso é impossível…\pFiquem onde estão e acompanhem\na situação!$
+
+[SeafloorCavern_Room9_Text_ArchieWhyDidKyogreDisappear] 5cd20ea55e
+ARCHIE: Tem algo errado…\pO ORBE VERMELHO devia despertar e\ncontrolar o KYOGRE…\pMas… Por quê?\nPor que o KYOGRE sumiu?\pPor quê?!$
+
+[SeafloorCavern_Room9_Text_MaxieWhatHaveYouWrought] a9a264b7aa
+MAXIE: O que você foi fazer?\pARCHIE… Você finalmente despertou\no KYOGRE, não foi?\pO que vai ser do mundo se este\ntoró continuar pra sempre?\pA terra firme do mundo vai se\nafogar no mar cada vez mais fundo…$
+
+[SeafloorCavern_Room9_Text_ArchieDontGetAllHighAndMighty] a60357221b
+ARCHIE: O-o quê?!\nNão venha bancar o superior comigo!\pNão foi você, a EQUIPE MAGMA, que\nenfureceu o GROUDON?\pEnquanto eu tiver este ORBE\nVERMELHO, devo controlar o KYOGRE…\pDevo conseguir controlar…$
+
+[SeafloorCavern_Room9_Text_MaxieWeDontHaveTimeToArgue] 016914b403
+MAXIE: Não temos tempo pra discutir\nisso aqui!\pVá lá fora e veja com os seus olhos!\pVeja se o que você fez é o mundo\nque queríamos!$
+
+[SeafloorCavern_Room9_Text_MaxieComeOnPlayer] eaa3501243
+MAXIE: {PLAYER}, vamos, você também\ntem que sair daqui!$

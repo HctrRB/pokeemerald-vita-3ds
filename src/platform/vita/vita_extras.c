@@ -48,6 +48,8 @@ static inline int32_t LookupFastId(const char *key)
         if (strcmp(key, "battle_speed") == 0) return FAST_EXTRA_BATTLE_SPEED;
         break;
     case 'c':
+        if (strcmp(key, "camera_stick") == 0) return FAST_EXTRA_CAMERA_STICK;
+        if (strcmp(key, "camera_trees") == 0) return FAST_EXTRA_CAMERA_TREES;
         if (strcmp(key, "clock_speed") == 0) return FAST_EXTRA_CLOCK_SPEED;
         break;
     case 'd':
@@ -59,6 +61,7 @@ static inline int32_t LookupFastId(const char *key)
         if (strcmp(key, "encounter_rate") == 0) return FAST_EXTRA_ENCOUNTER_RATE;
         break;
     case 'f':
+        if (strcmp(key, "first_person") == 0) return FAST_EXTRA_FIRST_PERSON;
         if (strcmp(key, "follower") == 0) return FAST_EXTRA_FOLLOWER;
         if (strcmp(key, "field_hms") == 0) return FAST_EXTRA_FIELD_HMS;
         if (strcmp(key, "fast_eggs") == 0) return FAST_EXTRA_FAST_EGGS;
@@ -92,6 +95,7 @@ static inline int32_t LookupFastId(const char *key)
         break;
     case 'u':
         if (strcmp(key, "ui_theme") == 0) return FAST_EXTRA_UI_THEME;
+        if (strcmp(key, "ui_lang") == 0) return FAST_EXTRA_UI_LANGUAGE;
         break;
     case 'v':
         if (strcmp(key, "voxel_3d") == 0) return FAST_EXTRA_VOXEL_3D;
@@ -137,6 +141,7 @@ static const char *const sFFButtonValues[] = { "HOLD", "TOGGLE", NULL };
 static const char *const sFilterValues[] = { "NEAREST", "BILINEAR", "SHARP", NULL };
 // Order = UI_THEME_* (src/platform/ui/ui_internal.h); GBA is the default
 static const char *const sUiThemeValues[] = { "GBA", "RED", "EMERALD", "CRYSTAL", "TROPICAL", "ROYAL", NULL };
+static const char *const sUiLanguageValues[] = { "ENGLISH", "PORTUGUÊS", NULL };
 static const char *const sVoxelFpsValues[] = { "30 (HD-2D)", "60 (CLASSIC)", NULL };
 static const char *const sVoxelFovValues[] = { "35 DEG", "25 DEG", NULL };
 static const char *const sSaveSlotValues[] = { "SLOT 1", "SLOT 2", "SLOT 3", NULL };
@@ -278,9 +283,13 @@ const VitaExtra gVitaExtras[] = {
     { VITA_TAB_GENERAL, "PACING",     "FF BUTTON MODE",    "ff_button",        2, 0, sFFButtonValues,    NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "DISPLAY",    "2D SCALER",         "filter",           3, 0, sFilterValues,      NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "DISPLAY",    "MENU COLOR",        "ui_theme",         6, 0, sUiThemeValues,     NULL, NULL, NULL },
+    { VITA_TAB_GENERAL, "DISPLAY",    "UI LANGUAGE",      "ui_lang",          2, 0, sUiLanguageValues,  NULL, NULL, NULL },
 
     // ---- [WORLD] ----
     { VITA_TAB_WORLD,   "RENDERER",   "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "RIGHT STICK CAMERA", "camera_stick",     2, 0, gVitaExtrasOffOn, NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "FACE CAMERA SPRITES","camera_trees",    2, 0, gVitaExtrasOffOn, NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   "RENDERER",   "FIRST PERSON",      "first_person",     2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "DIORAMA BLUR (DOF)","voxel_blur",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "MODE / FRAMERATE",  "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "RENDERER",   "CAMERA ANGLE",      "voxel_fov",        2, 0, sVoxelFovValues,    NULL, NULL, NULL },

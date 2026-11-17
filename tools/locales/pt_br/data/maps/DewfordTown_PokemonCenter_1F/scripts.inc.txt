@@ -1,0 +1,5 @@
+[DewfordTown_PokemonCenter_1F_Text_StoneCavern] c9533d8f27
+Tem uma caverna de pedra na ponta\nda cidade.\pOuvi dizer que dá pra achar pedras\nraras lá.$
+
+[DewfordTown_PokemonCenter_1F_Text_FaintedMonCanUseHM] f8d6ba1c47
+Mesmo desmaiado e sem poder batalhar,\num POKéMON ainda usa um golpe\lde MÁQUINA OCULTA (MO).$

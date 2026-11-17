@@ -1,0 +1,5 @@
+[SeafloorCavern_Entrance_Text_HearMagmaNearMossdeep] c97dd61bb6
+Ei!\nLembro da sua cara!\pSe está aqui, é porque vai se meter\ncom a gente de novo!\pUma criança como você acha mesmo\nque pode com a EQUIPE AQUA?\pVocê está uns trilhões de anos\natrasado!\pVocê combina é com a EQUIPE MAGMA!\pFalando na EQUIPE MAGMA, dizem que\nforam vistos perto de MOSSDEEP.\pAquele bando de capangas não fica\nnada bem perto do mar!$
+
+[SeafloorCavern_Entrance_Text_HearMagmaNearMossdeepShort] d9f9a9aec8
+Uma criança como você acha mesmo\nque pode com a EQUIPE AQUA?\pVocê está uns trilhões de anos\natrasado!\pVocê combina é com a EQUIPE MAGMA!\pFalando na EQUIPE MAGMA, dizem que\nforam vistos perto de MOSSDEEP.\pAquele bando de capangas não fica\nnada bem perto do mar!$

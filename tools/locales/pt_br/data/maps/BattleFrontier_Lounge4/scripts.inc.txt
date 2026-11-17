@@ -1,0 +1,8 @@
+[BattleFrontier_Lounge4_Text_WonderIfInterviewsAiring] 7636d8f366
+Será que hoje vão passar entrevistas\ncom TREINADORES fortes?$
+
+[BattleFrontier_Lounge4_Text_IfIOpenedRestaurantHere] ebbdd1e681
+Se eu abrisse um restaurante aqui,\nia ganhar dinheiro, com certeza.$
+
+[BattleFrontier_Lounge4_Text_NeedBreatherAfterBattles] 0de0668eef
+Ufa…\pPreciso de um respiro depois de\numas batalhas intensas…\pMas, mesmo agora, não paro de\nplanejar estratégias e combos.$

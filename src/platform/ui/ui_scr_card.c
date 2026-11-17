@@ -118,7 +118,7 @@ static void BuildGba(void)
         for (int32_t s = 0; s < 4; s++)
             UiW_GbaStar(346 + s * 18, 91, s < stars ? UI_RGBA(255, 230, 57, 255) : UI_RGBA(16, 68, 50, 255));
 
-        snprintf(buf, sizeof(buf), "IDNo. %05u", (unsigned)tid);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("IDNo. %05u"), (unsigned)tid);
         UiW_GbaBox(436, 82, 124, 30, 3, UI_RGBA(16, 24, 24, 255), UI_RGBA(24, 32, 32, 255), UI_RGBA(24, 32, 32, 255), 0, 0);
         UiW_GbaTextCentred(UI_FACE_VT323, 24, 436, 82, 124, 30, buf, C_WHITE, UI_GBA_SHAD_DARK);
 
@@ -149,7 +149,7 @@ static void BuildGba(void)
         // Bottom foot bar (.tcard-foot)
         UiW_GbaBox(30, 474, 540, 38, 3, UI_RGBA(184, 164, 88, 255), UI_RGBA(232, 220, 158, 255), UI_RGBA(232, 220, 158, 255), C_WHITE, 0);
         UiW_GbaTextMid(UI_FACE_VT323, 24, 42, 474, 38, "HOENN LEAGUE · EMERALD", UI_RGBA(92, 70, 18, 255), C_WHITE);
-        snprintf(buf, sizeof(buf), "BADGES: %u / 8", (unsigned)UiGame_BadgeCount());
+        snprintf(buf, sizeof(buf), UiLocale_Translate("BADGES: %u / 8"), (unsigned)UiGame_BadgeCount());
         UiW_GbaTextMid(UI_FACE_VT323, 24, 558 - UiText_Width(UI_FACE_VT323, 24, buf), 474, 38, buf, UI_RGBA(92, 70, 18, 255), C_WHITE);
 
         // Right Badge Case panel (598, 60, 348, 472) matching renderCard in index.html
@@ -177,10 +177,10 @@ static void BuildGba(void)
         // Bottom .sum-memo badge description box (614, 392, 316, 124)
         const bool selGot = FlagGet(FLAG_BADGE01_GET + sBadge);
         UiW_GbaBox(614, 392, 316, 124, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
-        snprintf(buf, sizeof(buf), "%s BADGE · %s GYM", sBadgeNames[sBadge], sGymTowns[sBadge]);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("%s BADGE · %s GYM"), sBadgeNames[sBadge], sGymTowns[sBadge]);
         UiDraw_PushClip(622, 396, 300, 116);
         UiW_GbaText(UI_FACE_VT323, 24, 624, 400, buf, UI_RGBA(23, 94, 71, 255), UI_GBA_SHAD_LIGHT);
-        snprintf(buf, sizeof(buf), "Leader %s (%s)", sLeaderNames[sBadge], selGot ? "OBTAINED" : "LOCKED");
+        snprintf(buf, sizeof(buf), UiLocale_Translate("Leader %s (%s)"), sLeaderNames[sBadge], selGot ? "OBTAINED" : "LOCKED");
         UiW_GbaText(UI_FACE_VT323, 20, 624, 424, buf, selGot ? UI_RGBA(176, 120, 8, 255) : UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
         UiW_GbaTextWrapped(UI_FACE_VT323, 24, 624, 448, 296, 24, sBadgeDescs[sBadge], UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 2);
         UiDraw_PopClip();
@@ -192,7 +192,7 @@ static void BuildGba(void)
     UiW_GbaBox(30, 76, 540, 42, 4, UI_RGBA(41, 49, 49, 255), UI_RGBA(45, 138, 107, 255), UI_RGBA(23, 94, 71, 255),
                UI_RGBA(115, 205, 164, 140), 0);
     UiW_GbaTextMid(UI_FACE_PS2P, 16, 42, 76, 42, "TRAINER RECORDS · BACK", C_WHITE, UI_GBA_SHAD_DARK);
-    snprintf(buf, sizeof(buf), "IDNo. %05u", (unsigned)tid);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("IDNo. %05u"), (unsigned)tid);
     UiW_GbaBox(436, 82, 124, 30, 3, UI_RGBA(16, 24, 24, 255), UI_RGBA(24, 32, 32, 255), UI_RGBA(24, 32, 32, 255), 0, 0);
     UiW_GbaTextCentred(UI_FACE_VT323, 24, 436, 82, 124, 30, buf, C_WHITE, UI_GBA_SHAD_DARK);
 
@@ -254,7 +254,7 @@ static void Build(void)
     }
     char buf[48], name[16];
     UiKit_Header("TRAINER CARD", sTabs, 2, sTab, sTabX, sTabW, 12);
-    snprintf(buf, sizeof(buf), "IDNo. %05u", (unsigned)(gSaveBlock2Ptr->playerTrainerId[0] | (gSaveBlock2Ptr->playerTrainerId[1] << 8)));
+    snprintf(buf, sizeof(buf), UiLocale_Translate("IDNo. %05u"), (unsigned)(gSaveBlock2Ptr->playerTrainerId[0] | (gSaveBlock2Ptr->playerTrainerId[1] << 8)));
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     UiGame_PlayerName(name, sizeof(name));
     if (sTab == 0)
@@ -286,12 +286,12 @@ static void Build(void)
                 UiDraw_Frame(x, y, 104, 86, 3, UI_COL_SELECT);
             // Unearned badges: a faded silhouette
             UiDraw_SpriteTint((uint16_t)(UI_SPR_BADGE_FIRST + i), x + 36, y + 8, 2, got ? 0xFFFFFFFFu : UI_RGBA(200, 192, 170, 120));
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 52 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, got ? sBadgeNames[i] : "-") / 2, y + 46, got ? sBadgeNames[i] : "-", UI_COL_INK);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 52 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, got ? UiLocale_Translate(sBadgeNames[i]) : "-") / 2, y + 46, got ? UiLocale_Translate(sBadgeNames[i]) : "-", UI_COL_INK);
         }
         if (FlagGet(FLAG_BADGE01_GET + sBadge))
-            snprintf(buf, sizeof(buf), "%s BADGE", sBadgeNames[sBadge]);
+            snprintf(buf, sizeof(buf), UiLocale_Translate("%s BADGE"), UiLocale_Translate(sBadgeNames[sBadge]));
         else
-            snprintf(buf, sizeof(buf), "Not obtained yet.");
+            snprintf(buf, sizeof(buf), "%s", UiLocale_Translate("Not obtained yet."));
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 492, 316, buf, UI_COL_INK);
     }
     else

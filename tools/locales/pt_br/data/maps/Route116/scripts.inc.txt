@@ -1,0 +1,53 @@
+[Route116_Text_ScoundrelMadeOffWithPeeko] f033ae8223
+Ai, ai, o que eu faço agora?\pA gente estava passeando, eu e a PEEKO,\nquando um bandido nos atacou…\pO malandro levou embora a minha\nquerida PEEKO!\pUuuuuaaaaaaah! PEEKO!$
+
+[Route116_Text_WantToDigTunnel] 06998eb329
+Nnn… Uaaargh!\pEu quero cavar aquele túnel!$
+
+[Route116_Text_DiggingTunnelWhenGoonOrderedMeOut] 3ca2d88857
+Nnn… Uaaargh!\nO que está acontecendo?\pEu estava cavando o túnel sem\nferramentas e um capanga me expulsou!\pEsse túnel está cheio de POKéMON\nque não gostam de barulho alto.\lEles podem fazer um tumulto.\pFoi por isso que paramos de usar\nmáquinas pesadas pra cavar…\pTenho medo de que o capanga faça\nalguma besteira e assuste os\lPOKéMON, causando um tumulto.$
+
+[Route116_Text_GoonHightailedItOutOfTunnel] 1661f2e3a0
+Nnn… Uaaargh!\pAquele capanga pateta saiu correndo\ndo túnel! Posso voltar a cavar!$
+
+[Route116_Text_ThankYouTokenOfAppreciation] f013841e87
+Ah! É você!\pVocê não só me ajudou no BOSQUE DE\nPETALBURG, como também recuperou o\lpacote roubado e ainda fez a gentileza\lde entregá-lo em SLATEPORT!\pO CAP. STERN avisou que o pacote\nchegou, também!\pMuito, muito obrigado!\pOra, se eu fosse uma nuvem de chuva,\nfaria chover gratidão em você e te\lsaudaria como herói!\pPra você, que treina POKéMON como\nninguém, trago uma boa notícia!\pA nossa empresa acabou de criar\num novo tipo de POKé BOLA.\pComo agradecimento, este é o nosso\npresente pra você!$
+
+[Route116_Text_NewBallAvailableAtMart] 54c6cdb731
+A nossa nova POKé BOLA vai estar à\nvenda no POKé MART de RUSTBORO.\pExperimente, por favor!\nObrigado e tchauzinho!$
+
+[Route116_Text_BagIsJamPacked] d8f9e4b7b6
+A sua BOLSA está lotada.\nNão dá pra te dar esta BOLA REPETIÇÃO.$
+
+[Route116_Text_TokenOfAppreciation] 49a76d3091
+Como agradecimento pela entrega do\nnosso pacote, tenho um presente:\lum novo tipo de POKé BOLA pra você,\lque treina POKéMON como ninguém!$
+
+[Route116_Text_CanYouHelpMeFindGlasses] 5022d73beb
+Deixei meus óculos caírem…\nVocê me ajuda a achar?$
+
+[Route116_Text_MayISeeThoseGlasses] 6ec2551f1a
+Esses óculos!\nPosso ver um segundinho?$
+
+[Route116_Text_NotWhatImLookingForMaybeTheyArentHere] 6935054e20
+Hmm…\nEsses são ÓCULOS PRETOS.\lNão são os que eu procuro…\pTalvez os meus óculos não estejam\npor aqui…$
+
+[Route116_Text_CantFindGlassesNotHere] 9f98448a30
+Hmm…\nNão acho meus óculos em lugar nenhum…\lTalvez não estejam por aqui…$
+
+[Route116_Text_NotWhatImLookingFor] 61ab352719
+Hmm…\nEsses são ÓCULOS PRETOS.\lNão são os que eu procuro…$
+
+[Route116_Text_RouteSignRustboro] 0f97479892
+ROTA 116\n{LEFT_ARROW} CIDADE DE RUSTBORO$
+
+[Route116_Text_RusturfTunnelSign] 16a397d8cb
+TÚNEL RUSTURF\n“Ligando RUSTBORO e VERDANTURF\p“A obra do túnel foi\ncancelada.”$
+
+[Route116_Text_TunnelersRestHouse] 0f4f5ea06c
+CASA DE DESCANSO DOS ESCAVADORES$
+
+[Route116_Text_TrainerTipsBToStopEvolution] c646332757
+DICAS DE TREINADOR\pSe quiser impedir que um POKéMON\nevolua, aperte o Botão B enquanto\lele estiver evoluindo.\lO POKéMON leva um susto e para.\pIsso se chama cancelar a evolução.$
+
+[Route116_Text_TrainerTipsBagHasPockets] d8e8d906ce
+DICAS DE TREINADOR\pA sua BOLSA tem vários BOLSOS.\pOs itens que você pega vão sozinhos\npara os BOLSOS certos.\pNinguém que treina POKéMON pode\nficar sem a própria BOLSA.$

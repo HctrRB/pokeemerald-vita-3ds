@@ -1,0 +1,8 @@
+[RustboroCity_Flat2_2F_Text_DevonWasTinyInOldDays] 93d42fef83
+Antigamente, a DEVON era só uma\nempresinha bem pequenininha.$
+
+[RustboroCity_Flat2_2F_Text_MyDaddyMadeThisYouCanHaveIt] 412a0a7355
+O meu papai trabalha na CORPORAÇÃO.\pFoi o meu papai que fez isto!\nMas eu não sei usar, então é seu.$
+
+[RustboroCity_Flat2_2F_Text_GoingToWorkAtDevonToo] e02c45799f
+O meu papai trabalha na CORPORAÇÃO.\pQuando eu crescer, também vou\ntrabalhar na DEVON.$

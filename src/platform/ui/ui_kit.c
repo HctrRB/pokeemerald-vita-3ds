@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include "ui_internal.h"
+#include "ui_locale.h"
 #include "ui_game.h"
 #include "../vita/vita_platform.h"
 #include "global.h"
@@ -20,7 +21,7 @@ void UiKit_Toast(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(sToast, sizeof(sToast), fmt, ap);
+    vsnprintf(sToast, sizeof(sToast), UiLocale_Translate(fmt), ap);
     va_end(ap);
     sToastTicks = 120;
 }

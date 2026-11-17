@@ -1,0 +1,5 @@
+[LavaridgeTown_Mart_Text_XSpeedFirstStrike] 0f39da9f0a
+Use VELOCIDADE X pra aumentar a\nVELOC. de um POKéMON na batalha.\pAssim ele ataca primeiro, uma baita\nvantagem!$
+
+[LavaridgeTown_Mart_Text_LocalSpecialtyOnMtChimney] 00df11eb77
+No topo do MONTE CHIMNEY, tem uma\nespecialidade que só se compra lá.\pDê pra um POKéMON: ele vai adorar.$

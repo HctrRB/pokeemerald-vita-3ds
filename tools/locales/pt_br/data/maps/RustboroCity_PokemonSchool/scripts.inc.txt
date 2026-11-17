@@ -1,0 +1,56 @@
+[RustboroCity_PokemonSchool_Text_BlackboardListsStatusChanges] 39e8827b0a
+A lousa lista as condições de status\nque afetam os POKéMON na batalha.$
+
+[RustboroCity_PokemonSchool_Text_ReadWhichTopic] ade1e7ad79
+Qual assunto você quer ler?$
+
+[RustboroCity_PokemonSchool_Text_ExplainPoison] 35bc4f4044
+Se um POKéMON é envenenado, ele vai\nperdendo PS aos poucos.\pO veneno continua depois\nda batalha.\pOs PS de um POKéMON envenenado caem\nenquanto ele viaja.\pCure o veneno com um ANTÍDOTO.$
+
+[RustboroCity_PokemonSchool_Text_ExplainParalysis] 76b3a2d13a
+Se um POKéMON fica paralisado,\na VELOCIDADE dele cai.\pE ele pode não conseguir se mexer\nna batalha.\pA paralisia continua depois da batalha.\nCure com um CURA PARALISIA.$
+
+[RustboroCity_PokemonSchool_Text_ExplainSleep] 4f38a3afda
+Se um POKéMON pega no sono, ele não\nconsegue atacar.\pEle pode acordar sozinho, mas, se a\nbatalha acabar enquanto ele dorme,\lele continua dormindo.\pAcorde-o com um DESPERTAR.$
+
+[RustboroCity_PokemonSchool_Text_ExplainBurn] 2f861d1171
+A queimadura diminui o ATAQUE e vai\ntirando PS da vítima aos poucos.\pA queimadura continua após a batalha.\nCure com um ANTIQUEIMADURA.$
+
+[RustboroCity_PokemonSchool_Text_ExplainFreeze] 6f8ba28ec9
+Se um POKéMON é congelado, ele fica\ncompletamente indefeso.\pContinua congelado depois da batalha.\nDescongele com um DESCONGELANTE.$
+
+[RustboroCity_PokemonSchool_Text_StudentsWhoDontStudyGetQuickClaw] 6c7e0db119
+Aluno que não estuda ganha um\ngostinho da minha GARRA RÁPIDA.\pSe você é bom aluno ou não, vai\nficar claro pelo jeito que você usa\leste item.$
+
+[RustboroCity_PokemonSchool_Text_ExplainQuickClaw] 1b2c7ec3be
+Um POKéMON com a GARRA RÁPIDA às\nvezes acelera e age antes do\loponente.\pTem muitos outros itens feitos para\nos POKéMON segurarem.\pSó eles já dão muito assunto\npra estudar!$
+
+[RustboroCity_PokemonSchool_Text_TradingRightNow] 9ab8a2371c
+Estou trocando POKéMON com o meu\namigo agora mesmo.$
+
+[RustboroCity_PokemonSchool_Text_AlwaysWantedSeedot] 6567461c88
+Eu sempre quis um SEEDOT, e\nfinalmente vou ter um!$
+
+[RustboroCity_PokemonSchool_Text_PokemontCantUseManMadeItems] 54ba46ca7a
+Os POKéMON seguram itens, mas não\nsabem usar coisas feitas por gente,\lcomo POÇÃO e ANTÍDOTO.$
+
+[RustboroCity_PokemonSchool_Text_ConfusedPokemonAttacksItself] 9747716cee
+Sabe aqueles golpes que deixam o\nPOKéMON confuso?\pUm POKéMON confuso às vezes ataca\na si mesmo sem querer.\pMas, quando sai da batalha, ele\nvolta ao normal.$
+
+[RustboroCity_PokemonSchool_Text_PokemonHealItselfWithBerry] 9702118041
+Um POKéMON segurando uma FRUTA se\ncura sozinho…\pTem muitos tipos de itens que os\nPOKéMON podem segurar…\pPuxa, como é difícil tomar nota\nde tudo…$
+
+[RustboroCity_PokemonSchool_Text_StudentsNotes] d7fe52ff0f
+É o caderno deste aluno…\pOs POKéMON são capturados com\nPOKé BOLAS.\pAté seis POKéMON podem acompanhar\nquem treina.\pTREINADOR é quem pega POKéMON,\ncria e batalha com eles.\pA missão de um TREINADOR é derrotar\nos TREINADORES fortes que esperam\ldesafiantes nos GINÁSIOS POKéMON.$
+
+[RustboroCity_PokemonSchool_Text_ScottMetAlreadyCut] 0692f61ef4
+Olá? A gente já não se conhece?\nAcho que foi em PETALBURG.\pDeixa eu me apresentar.\nMeu nome é SCOTT.\pEstou viajando por toda parte em\nbusca de gente talentosa que treina.\pMais exatamente, procuro especialistas\nem batalhas POKéMON.\pE você, o que faz nesta ESCOLA?\nTambém treina POKéMON?\pA primeira coisa a fazer é ensinar\no golpe CORTAR a um POKéMON.\pSe não me engano, alguém nesta\ncidade tem CORTAR.$
+
+[RustboroCity_PokemonSchool_Text_StudentTalentLevelUnknown] 97c7192058
+SCOTT: Hmm…\pNão dá pra saber o talento dos alunos\ndaqui. Mas o potencial existe.$
+
+[RustboroCity_PokemonSchool_Text_ScottStoneBadge] fb76ddf485
+SCOTT: Ah, o que é isso?\pÉ uma INSÍGNIA DA PEDRA, né?\nIsso é bem impressionante, eu diria.\pMas, sabe, eu queria muito ter visto\nvocê batalhar.\pSó pela INSÍGNIA não dá pra saber\ncomo você é treinando POKéMON.$
+
+[RustboroCity_PokemonSchool_Text_ScottMetAlreadyStoneBadge] 451435b4d0
+Olá? A gente já não se conhece?\nAcho que foi em PETALBURG.\pDeixa eu me apresentar.\nMeu nome é SCOTT.\pEstou viajando por toda parte em\nbusca de gente talentosa que treina.\pMais exatamente, procuro especialistas\nem batalhas POKéMON.\pAh, o que é isso?\nÉ uma INSÍGNIA DA PEDRA, né?\pBem impressionante, eu diria, pra\nquem está começando.\pMas, sabe, eu queria muito ter visto\nvocê batalhar.\pSó pela INSÍGNIA não dá pra saber\ncomo você é treinando POKéMON.$

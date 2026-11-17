@@ -246,7 +246,7 @@ static void PlateGba(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool t
 
     if (safari)
     {
-        snprintf(buf, sizeof(buf), "SAFARI BALLS  %u", (unsigned)gNumSafariBalls);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("SAFARI BALLS  %u"), (unsigned)gNumSafariBalls);
         UiW_GbaText(UI_FACE_VT323, 28, x + 12, y + 42, buf, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
         return;
     }
@@ -317,7 +317,7 @@ static void Plate(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool turn
 
     if (mine && (gBattleTypeFlags & BATTLE_TYPE_SAFARI))
     {
-        snprintf(buf, sizeof(buf), "SAFARI BALLS  %u", (unsigned)gNumSafariBalls);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("SAFARI BALLS  %u"), (unsigned)gNumSafariBalls);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y + 40, buf, UI_COL_INK);
         return;
     }
@@ -481,9 +481,9 @@ static void PromptTextGba(u8 b, int32_t by, int32_t bh, bool safari)
     if (safari) UiGame_PlayerName(name, sizeof(name));
     else UiGame_Text(gBattleMons[b].nickname, name, sizeof(name));
     const int32_t ty = by + (bh - 36) / 2;
-    const int32_t w1 = UiW_GbaText(UI_FACE_VT323, 36, 36, ty, "What will ", C_WHITE, UI_GBA_SHAD_DARK);
+    const int32_t w1 = UiW_GbaText(UI_FACE_VT323, 36, 36, ty, UiLocale_IsPortuguese() ? "O que " : "What will ", C_WHITE, UI_GBA_SHAD_DARK);
     const int32_t w2 = UiW_GbaText(UI_FACE_VT323, 36, 36 + w1, ty, name, UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
-    UiW_GbaText(UI_FACE_VT323, 36, 36 + w1 + w2, ty, " do?", C_WHITE, UI_GBA_SHAD_DARK);
+    UiW_GbaText(UI_FACE_VT323, 36, 36 + w1 + w2, ty, UiLocale_IsPortuguese() ? " fará?" : " do?", C_WHITE, UI_GBA_SHAD_DARK);
 }
 
 static void TacPill(int32_t *px, int32_t y, const char *txt, bool stab)
@@ -567,9 +567,9 @@ static void MovesGba(u8 b, int32_t by, int32_t bh, int st, bool tap, int32_t tx,
     int32_t px = 622;
     const int32_t py = by + 50;
     const u8 pwr = gBattleMoves[move].power, acc = gBattleMoves[move].accuracy;
-    if (pwr > 1) snprintf(buf, sizeof(buf), "PWR %u", (unsigned)pwr); else snprintf(buf, sizeof(buf), "PWR -");
+    if (pwr > 1) snprintf(buf, sizeof(buf), UiLocale_Translate("PWR %u"), (unsigned)pwr); else snprintf(buf, sizeof(buf), "PWR -");
     TacPill(&px, py, buf, false);
-    if (acc) snprintf(buf, sizeof(buf), "ACC %u", (unsigned)acc); else snprintf(buf, sizeof(buf), "ACC -");
+    if (acc) snprintf(buf, sizeof(buf), UiLocale_Translate("ACC %u"), (unsigned)acc); else snprintf(buf, sizeof(buf), "ACC -");
     TacPill(&px, py, buf, false);
     const char *cat = pwr == 0 ? "STAT" : IS_MOVE_PHYSICAL(move, mType) ? "PHYS" : "SPEC";
     TacPill(&px, py, cat, false);
@@ -635,9 +635,21 @@ static void PromptText(u8 b, bool safari)
     char name[24];
     if (safari) UiGame_PlayerName(name, sizeof(name));
     else UiGame_Text(gBattleMons[b].nickname, name, sizeof(name));
-    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 22, "What will", UI_COL_INK);
-    const int32_t w = UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 72, name, TH->em);
-    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28 + w, BOX_Y + 72, " do?", UI_COL_INK);
+    if (UiLocale_IsPortuguese())
+    {
+        // First line: O que MUDKIP; second line: irá fazer agora?
+        const int32_t lead = UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 22,
+                                          "O que ", UI_COL_INK);
+        UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28 + lead, BOX_Y + 22, name, TH->em);
+        UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 72,
+                    "irá fazer agora?", UI_COL_INK);
+    }
+    else
+    {
+        UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 22, "What will", UI_COL_INK);
+        const int32_t w = UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 72, name, TH->em);
+        UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28 + w, BOX_Y + 72, " do?", UI_COL_INK);
+    }
 }
 
 static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)

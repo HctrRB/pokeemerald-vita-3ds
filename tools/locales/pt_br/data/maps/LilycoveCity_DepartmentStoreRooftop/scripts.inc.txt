@@ -1,0 +1,23 @@
+[LilycoveCity_DepartmentStoreRooftop_Text_SetDatesForClearOutSales] f20870c367
+Eles não têm data certa pras\nliquidações?\pEu vejo TV, mas nunca passa\npropaganda.$
+
+[LilycoveCity_DepartmentStoreRooftop_Text_BeenWaitingForClearOutSale] 63717cedba
+Isso! Esperei muito por esta\nliquidação.\pTem itens que só se acham aqui.\nVou encher a sacola, ah, se vou!$
+
+[LilycoveCity_DepartmentStoreRooftop_Text_BoneDryThirsty] 0e036bdaa9
+Ai… Estou morrendo de sede!$
+
+[LilycoveCity_DepartmentStoreRooftop_Text_WhichDrinkWouldYouLike] 78f5201950
+É uma MÁQUINA DE BEBIDAS.\nQual bebida você quer?$
+
+[LilycoveCity_DepartmentStoreRooftop_Text_CanOfDrinkDroppedDown] c32321b9c2
+Clang!\pCaiu uma lata de {STR_VAR_1}.$
+
+[LilycoveCity_DepartmentStoreRooftop_Text_ExtraCanOfDrinkDroppedDown] 51fce6147a
+Clang!\pSorte! Caiu mais uma lata de\n{STR_VAR_1}!$
+
+[LilycoveCity_DepartmentStoreRooftop_Text_NotEnoughMoney] 86c13a1516
+Dinheiro insuficiente…$
+
+[LilycoveCity_DepartmentStoreRooftop_Text_DecidedAgainstBuyingDrink] 3621bf048b
+Desistiu de comprar uma bebida.$

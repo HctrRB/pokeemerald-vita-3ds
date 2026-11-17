@@ -37,9 +37,44 @@ uint16_t UiGame_MapSecAt(int32_t gx, int32_t gy)
 void UiGame_MapSecName(uint16_t sec, char *out, size_t cap)
 {
     if (sec >= MAPSEC_NONE) { snprintf(out, cap, "-"); return; }
+    if (UiLocale_IsPortuguese())
+    {
+        const char *ptName = NULL;
+        switch (sec)
+        {
+        case MAPSEC_LITTLEROOT_TOWN: ptName = "Cidade de Littleroot"; break;
+        case MAPSEC_OLDALE_TOWN: ptName = "Cidade de Oldale"; break;
+        case MAPSEC_DEWFORD_TOWN: ptName = "Cidade de Dewford"; break;
+        case MAPSEC_LAVARIDGE_TOWN: ptName = "Cidade de Lavaridge"; break;
+        case MAPSEC_FALLARBOR_TOWN: ptName = "Cidade de Fallarbor"; break;
+        case MAPSEC_VERDANTURF_TOWN: ptName = "Cidade de Verdanturf"; break;
+        case MAPSEC_PACIFIDLOG_TOWN: ptName = "Cidade de Pacifidlog"; break;
+        case MAPSEC_PETALBURG_CITY: ptName = "Cidade de Petalburg"; break;
+        case MAPSEC_SLATEPORT_CITY: ptName = "Cidade de Slateport"; break;
+        case MAPSEC_MAUVILLE_CITY: ptName = "Cidade de Mauville"; break;
+        case MAPSEC_RUSTBORO_CITY: ptName = "Cidade de Rustboro"; break;
+        case MAPSEC_FORTREE_CITY: ptName = "Cidade de Fortree"; break;
+        case MAPSEC_LILYCOVE_CITY: ptName = "Cidade de Lilycove"; break;
+        case MAPSEC_MOSSDEEP_CITY: ptName = "Cidade de Mossdeep"; break;
+        case MAPSEC_SOOTOPOLIS_CITY: ptName = "Cidade de Sootopolis"; break;
+        case MAPSEC_EVER_GRANDE_CITY: ptName = "Cidade de Ever Grande"; break;
+        default: break;
+        }
+        if (ptName != NULL)
+        {
+            snprintf(out, cap, "%s", ptName);
+            return;
+        }
+    }
     u8 buf[32];
     GetMapNameGeneric(buf, sec);
-    UiGame_Text(buf, out, cap);
+    char original[64];
+    UiGame_Text(buf, original, sizeof(original));
+    // Translate all route signs, not just those explicitly listed in the UI dictionary.
+    if (UiLocale_IsPortuguese() && strncmp(original, "ROUTE ", 6) == 0)
+        snprintf(out, cap, "ROTA %s", original + 6);
+    else
+        snprintf(out, cap, "%s", original);
 }
 
 bool UiGame_PlayerMapPos(int32_t *gx, int32_t *gy)
@@ -163,7 +198,7 @@ int32_t UiGame_Callers(const UiCaller **out)
         c->trainerPic = rem < REMATCH_TABLE_ENTRIES ? gTrainers[GetTrainerIdxByRematchIdx(rem)].trainerPic : 0xFFFF;
         const u8 *desc = NULL, *name = NULL;
         MatchCall_GetNameAndDesc(i, &desc, &name);
-        if (name) UiGame_Text(name, c->name, sizeof(c->name)); else snprintf(c->name, sizeof(c->name), "CONTACT");
+        if (name) UiGame_Text(name, c->name, sizeof(c->name)); else snprintf(c->name, sizeof(c->name), "%s", UiLocale_Translate("CONTACT"));
         if (desc) UiGame_Text(desc, c->desc, sizeof(c->desc));
     }
     for (uint16_t r = 0; r < REMATCH_SPECIAL_TRAINER_START && sCallerCount < 96; r++)
@@ -179,7 +214,7 @@ int32_t UiGame_Callers(const UiCaller **out)
         const uint16_t tr = (uint16_t)GetTrainerIdxByRematchIdx(r);
         c->trainerPic = gTrainers[tr].trainerPic;
         UiGame_Text(gTrainers[tr].trainerName, c->name, sizeof(c->name));
-        snprintf(c->desc, sizeof(c->desc), "TRAINER");
+        snprintf(c->desc, sizeof(c->desc), "%s", UiLocale_Translate("TRAINER"));
     }
     *out = sCallers;
     return sCallerCount;

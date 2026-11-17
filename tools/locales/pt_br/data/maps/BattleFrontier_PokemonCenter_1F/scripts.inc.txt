@@ -1,0 +1,11 @@
+[BattleFrontier_PokemonCenter_1F_Text_NeverSeenPokemon] b7d6e9bd9a
+Tinha alguém aqui usando um POKéMON\nque eu nunca tinha visto.\pPelo menos na ESCOLA DE TREINADORES\nnunca aprendi sobre ele.\pOnde será que se pega POKéMON\nassim?$
+
+[BattleFrontier_PokemonCenter_1F_Text_NextStopBattleArena] dec2b93a2c
+Certo! Próxima parada, ARENA DE\nBATALHA! Melhor pegar os POKéMON\lcertos no sistema do PC.$
+
+[BattleFrontier_PokemonCenter_1F_Text_GoingThroughEveryChallenge] 2826e5e6b0
+Hihi… Vou passar por todos os\ndesafios só com este fofinho!$
+
+[BattleFrontier_PokemonCenter_1F_Text_Skitty] 2adb0c758a
+SKITTY: Miá miaaah!$

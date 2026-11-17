@@ -1,0 +1,8 @@
+[FallarborTown_PokemonCenter_1F_Text_LanetteGreeting] 08bd31a4a8
+Ah, olá.\nE você é…?\pCerto, o seu nome é {PLAYER}{KUN}.\nDá pra ver que é TREINADOR.\pEntão você usa o Sistema de\nArmazenamento POKéMON que eu criei.\pCheguei a essa conclusão com uma\nsimples dedução.\pVocê falou comigo porque queria\nmexer em alguma coisa neste PC.\pAh, desculpa. Eu sou a LANETTE.\pSério, que bom te conhecer: que legal\nque você usa o meu Sistema.\pSe puder, me visite em casa.\nA minha casa fica na ROTA 114.$
+
+[FallarborTown_PokemonCenter_1F_Text_FossilManiacEdgeOfTown] 578fb96631
+Como será que eram os POKéMON\nhá muito, muito tempo?\pTalvez o MANÍACO POR FÓSSEIS, no\nfim da cidade, saiba.$
+
+[FallarborTown_PokemonCenter_1F_Text_PlantHardyTrees] cb896cd883
+Nos campos de FALLARBOR, plantamos\nmudas de árvores resistentes que\lcrescem até na cinza vulcânica.$

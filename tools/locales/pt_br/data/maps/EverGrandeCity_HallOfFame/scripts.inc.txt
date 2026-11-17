@@ -1,0 +1,5 @@
+[EverGrandeCity_HallOfFame_Text_HereWeHonorLeagueChampions] 6490f7051d
+WALLACE: Esta sala…\pÉ aqui que guardamos o registro dos\nPOKéMON que venceram batalhas\lduríssimas.\pÉ aqui que os CAMPEÕES da LIGA\nsão homenageados.$
+
+[EverGrandeCity_HallOfFame_Text_LetsRecordYouAndYourPartnersNames] 64a6ff088b
+WALLACE: Venha, vamos registrar o seu\nnome como TREINADOR que triunfou na\lLIGA POKéMON, e o nome dos parceiros\lque batalharam com você.$

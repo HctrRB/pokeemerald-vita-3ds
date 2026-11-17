@@ -1,0 +1,23 @@
+[RivalsHouse_1F_Text_OhYoureTheNewNeighbor] 87d028d510
+Oh, olá. E você é…?\p… … … … … … … … …\n… … … … … … … … …\pAh, você é {PLAYER}{KUN}, que se mudou\naqui para o lado! Oi!\pSabe, {STR_VAR_1} tem mais ou\nmenos a sua idade.\pHoje cedo, {STR_VAR_1} estava\ncontando as horas para te conhecer.\pAcho que {STR_VAR_1} está lá em cima.$
+
+[RivalsHouse_1F_Text_LikeChildLikeFather] 53ce3ec5e5
+Tal pai, tal filho… ou ao contrário!\pAqui em casa, todo mundo é louco por\nPOKéMON, a começar pelo meu marido.\pSe não está no LABORATÓRIO, deve estar\nfuçando em algum matagal por aí.$
+
+[RivalsHouse_1F_Text_TooBusyToNoticeVisit] c762629eda
+Ah, {RIVAL}!\pParece que, com tantos POKéMON, nem\ndeu para perceber que você veio\lfazer uma visita, {PLAYER}{KUN}.$
+
+[RivalsHouse_1F_Text_WentOutToRoute103] 28454e81ab
+Oh, {RIVAL} saiu para a ROTA 103\nhá pouquinho tempo.\pTal pai, tal filho.\n{RIVAL} não consegue ficar em casa.$
+
+[RivalsHouse_1F_Text_ShouldGoHomeEverySoOften] 67e3e66d47
+Acho maravilhoso as pessoas\nviajarem com POKéMON.\pMas volte para casa de vez em quando\npara a sua mãe saber que está tudo bem.\pEla pode não dizer, mas tenho certeza\nde que se preocupa com você, {PLAYER}{KUN}.$
+
+[RivalsHouse_1F_Text_MayWhoAreYou] 27ee5986dc
+Hã?\nQuem… Quem é você?\p… … … … … … … …\n… … … … … … … …\pAh, você é {PLAYER}{KUN}.\nEntão a sua mudança foi hoje.\pHum… Eu sou a MAY.\nPrazer em te conhecer!\pEu…\nEu sonho em fazer amizade com\lPOKéMON do mundo inteiro.\pEu… Eu ouvi falar de você, {PLAYER}{KUN},\npelo meu pai, o PROF. BIRCH.\pEu esperava que você fosse legal,\n{PLAYER}{KUN}, e que fôssemos amigos.\pAi, que bobagem, não é?\nEu… Eu acabei de te conhecer, {PLAYER}{KUN}.\pHehehe…\pAh, não! Eu esqueci!\pEu ia ajudar o papai a capturar\nalguns POKéMON selvagens!\p{PLAYER}{KUN}, a gente se vê!$
+
+[RivalsHouse_1F_Text_BrendanWhoAreYou] 5a77bb58ee
+Ei!\nVocê…\pQuem é você?\pAh, você é {PLAYER}, não é?\nSe mudou aqui para o lado, certo?\pEu não sabia que você era menina.\pO papai, o PROF. BIRCH, disse que o\nnovo vizinho era filho de um LÍDER DE\lGINÁSIO, então achei que fosse menino.\pMeu nome é BRENDAN.\nEntão, oi, vizinha!\pHã? Ei, {PLAYER}, você não tem\num POKéMON?\pQuer que eu vá capturar um para você?\pAh, droga, eu esqueci…\pEu tenho que ajudar o meu pai a\ncapturar alguns POKéMON selvagens.\pFica para outra vez, tá?$
+
+[RivalsHouse_1F_Text_DoYouHavePokemon] d4bdb805fd
+Oi, oi!\pVocê já tem o seu\npróprio POKéMON?$

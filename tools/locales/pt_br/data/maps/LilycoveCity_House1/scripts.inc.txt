@@ -1,0 +1,5 @@
+[LilycoveCity_House1_Text_PokemonPartnersNotTools] 2818db53ee
+Os POKéMON são parceiros das pessoas.\nNão são ferramentas.\pInfelizmente, tem gente que não\nentende isso…$
+
+[LilycoveCity_House1_Text_Kecleon] 49c151c696
+KECLEON: Ruroro?$

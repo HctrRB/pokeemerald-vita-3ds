@@ -108,6 +108,16 @@ static int32_t ListNumber(int32_t i)
 // ---------- Entry card ----------
 static void HeightWeight(uint16_t nat, char *h, size_t hc, char *w, size_t wc)
 {
+    // The game stores height in decimetres and weight in hectograms.
+    // Preserve imperial units in English, show metric units in PT-BR.
+    if (UiLocale_IsPortuguese())
+    {
+        const uint32_t decimetres = gPokedexEntries[nat].height;
+        const uint32_t hectograms = gPokedexEntries[nat].weight;
+        snprintf(h, hc, "%u,%u m", (unsigned)(decimetres / 10), (unsigned)(decimetres % 10));
+        snprintf(w, wc, "%u,%u kg", (unsigned)(hectograms / 10), (unsigned)(hectograms % 10));
+        return;
+    }
     // Imperial units as the English game: decimetres -> feet / inches, hectograms -> lbs
     const uint32_t inches = (uint32_t)gPokedexEntries[nat].height * 10000 / 254;
     const uint32_t in = (inches + 5) / 10;
@@ -278,7 +288,7 @@ static void BuildGba(void)
     char buf[220], name[16], seenBuf[36];
     const uint16_t seenTotal = sMode == 1 ? GetNationalPokedexCount(FLAG_GET_SEEN) : GetHoennPokedexCount(FLAG_GET_SEEN);
     const uint16_t ownTotal = sMode == 1 ? GetNationalPokedexCount(FLAG_GET_CAUGHT) : GetHoennPokedexCount(FLAG_GET_CAUGHT);
-    snprintf(seenBuf, sizeof(seenBuf), "SEEN %03u · OWN %03u", (unsigned)seenTotal, (unsigned)ownTotal);
+    snprintf(seenBuf, sizeof(seenBuf), UiLocale_Translate("SEEN %03u · OWN %03u"), (unsigned)seenTotal, (unsigned)ownTotal);
 
     const int32_t modes = IsNationalPokedexEnabled() ? 2 : 1;
     UiW_GbaTopBar(UI_GBA_BG_POKEDEX, 0, "POKéDEX", modes, sMode, false, sMode == 0 ? "HOENN DEX" : "NATIONAL DEX");
@@ -352,7 +362,7 @@ static void BuildGba(void)
 
     // Area / Order pill at bottom of info card (.dex-area-pill)
     UiW_GbaBox(26, 222, 478, 34, 4, UI_RGBA(96, 96, 112, 255), UI_RGBA(216, 216, 216, 255), UI_RGBA(216, 216, 216, 255), C_WHITE, 0);
-    snprintf(buf, sizeof(buf), "STATUS: %s  ·  SORT: %s", own ? "CAUGHT" : seen ? "SEEN" : "UNKNOWN", sOrderNames[sOrder]);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("STATUS: %s  ·  SORT: %s"), own ? "CAUGHT" : seen ? "SEEN" : "UNKNOWN", sOrderNames[sOrder]);
     UiW_GbaTextMid(UI_FACE_VT323, 24, 38, 222, 34, buf, UI_RGBA(40, 56, 64, 255), C_WHITE);
 
     // Cry meter card (14, 278, 504, 70)
@@ -437,11 +447,11 @@ static void Build(void)
         BuildGba();
         return;
     }
-    char buf[32];
+    char buf[96];
     UiKit_Header("POKéDEX", sModeTabs, IsNationalPokedexEnabled() ? 2 : 1, sMode, sTabX, sTabW, 12);
-    snprintf(buf, sizeof(buf), "SEEN %u · OWN %u", (unsigned)GetHoennPokedexCount(FLAG_GET_SEEN), (unsigned)GetHoennPokedexCount(FLAG_GET_CAUGHT));
+    snprintf(buf, sizeof(buf), UiLocale_Translate("SEEN %u · OWN %u"), (unsigned)GetHoennPokedexCount(FLAG_GET_SEEN), (unsigned)GetHoennPokedexCount(FLAG_GET_CAUGHT));
     if (sMode == 1)
-        snprintf(buf, sizeof(buf), "SEEN %u · OWN %u", (unsigned)GetNationalPokedexCount(FLAG_GET_SEEN), (unsigned)GetNationalPokedexCount(FLAG_GET_CAUGHT));
+        snprintf(buf, sizeof(buf), UiLocale_Translate("SEEN %u · OWN %u"), (unsigned)GetNationalPokedexCount(FLAG_GET_SEEN), (unsigned)GetNationalPokedexCount(FLAG_GET_CAUGHT));
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     BuildCard();
     UiW_Panel(416 - 0 + 0, 60, 528, 432);
@@ -613,7 +623,7 @@ static void DetBuildGba(void)
         UiSpr_TrainerSized(UiGame_PlayerIsMale() ? TRAINER_PIC_BRENDAN : TRAINER_PIC_MAY, 420 - tsz / 2, 480 - tsz, tsz, tsz);
         UiSpr_MonFrontSized(species, 760 - ms / 2, 480 - ms, ms, ms);
         UiGame_PlayerName(name, sizeof(name));
-        snprintf(buf, sizeof(buf), "Scale comparison with %s", name);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("Scale comparison with %s"), name);
         UiW_GbaText(UI_FACE_VT323, 28, 300, 126, buf, UI_RGBA(72, 80, 88, 255), C_WHITE);
     }
 }
@@ -629,7 +639,7 @@ static void DetBuild(void)
     char buf[200], name[16];
     UiKit_Header("POKéDEX", sDetTabs, 4, sDetTab, sDetTabX, sDetTabW, 12);
     Name(nat, name, sizeof(name));
-    snprintf(buf, sizeof(buf), "No.%03u %s", (unsigned)nat, name);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("No.%03u %s"), (unsigned)nat, name);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     if (sDetTab == 1)
     {
@@ -695,7 +705,7 @@ static void DetBuild(void)
         UiSpr_TrainerSized(UiGame_PlayerIsMale() ? TRAINER_PIC_BRENDAN : TRAINER_PIC_MAY, 400 - tsz / 2, 460 - tsz, tsz, tsz);
         UiSpr_MonFrontSized(species, 760 - ms / 2, 460 - ms, ms, ms);
         UiGame_PlayerName(name, sizeof(name));
-        snprintf(buf, sizeof(buf), "Size compared with %s", name);
+        snprintf(buf, sizeof(buf), UiLocale_Translate("Size compared with %s"), name);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 296, 84, buf, UI_COL_INK_SOFT);
     }
     int32_t fx = 16;

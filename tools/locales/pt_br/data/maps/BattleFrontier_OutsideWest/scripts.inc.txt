@@ -1,0 +1,110 @@
+[BattleFrontier_OutsideWest_Text_BattleDomeSign] 5e43198536
+Esta é a CÚPULA DE BATALHA!\nO seu caminho pro estrelato!$
+
+[BattleFrontier_OutsideWest_Text_BattleFactorySign] feea8b6938
+Esta é a FÁBRICA DE BATALHA!\nEm busca dos POKéMON mais fortes!$
+
+[BattleFrontier_OutsideWest_Text_BattlePikeSign] 3b03472754
+Este é o PICO DE BATALHA!\nEscolha um de três caminhos!$
+
+[BattleFrontier_OutsideWest_Text_ThisIsBattleTower] d0190cd18e
+Esta é a TORRE DE BATALHA.\pTREINADORES trazem os seus melhores\nPOKéMON pra batalhas eliminatórias.$
+
+[BattleFrontier_OutsideWest_Text_MayISeeYourTicket] c88f6aefb6
+Olá, veio pegar a balsa?\nPosso ver o seu BILHETE?$
+
+[BattleFrontier_OutsideWest_Text_MustHaveTicketToBoard] 90de1176e6
+{PLAYER} não tem o BILHETE…\pSinto muito.\pÉ preciso ter um BILHETE pra\nembarcar na balsa.$
+
+[BattleFrontier_OutsideWest_Text_WhereWouldYouLikeToGo] 463fa0f54d
+{PLAYER} mostrou o BILHETE.\pPerfeito! É só isso!\pE pra onde você quer ir?$
+
+[BattleFrontier_OutsideWest_Text_SlateportItIs] ea33741c4f
+Pra CIDADE DE SLATEPORT, então!$
+
+[BattleFrontier_OutsideWest_Text_LilycoveItIs] 3470f80517
+Pra CIDADE DE LILYCOVE, então!$
+
+[BattleFrontier_OutsideWest_Text_SailWithUsAnotherTime] a605570b92
+Viaje com a gente outra hora!$
+
+[BattleFrontier_OutsideWest_Text_PleaseBoardFerry] 5b33ea42e0
+Embarque na balsa e aguarde a\npartida, por favor.$
+
+[BattleFrontier_OutsideWest_Text_ThenWhereWouldYouLikeToGo] 4198824131
+Então, pra onde você quer ir?$
+
+[BattleFrontier_OutsideWest_Text_BestOutOfAllMyFriends] 44afad6765
+Sou o melhor de todos os meus amigos.\nMas aqui…\lNão sirvo pra nada!$
+
+[BattleFrontier_OutsideWest_Text_CantFindBattleTower] 7126e82d85
+Quero ir à TORRE DE BATALHA, mas não\nacho, mesmo com o mapa da FRONTEIRA.\pEste lugar é grande demais!$
+
+[BattleFrontier_OutsideWest_Text_GotSeasickOnWayHere] 33c20099b4
+Eu queria encarar um desafio assim\nque chegasse.\pMas no caminho fiquei enjoado…\nUrrrgh…$
+
+[BattleFrontier_OutsideWest_Text_OnlyToughTrainersBroughtHere] 96804c4446
+Não é qualquer um que vem aqui,\nsabia?\pSó trazem TREINADORES reconhecidos\ncomo fortes.\pPor isso muitos TREINADORES nem\nconhecem a FRONTEIRA DE BATALHA.$
+
+[BattleFrontier_OutsideWest_Text_SureWeCanChallengeWithNoMons] 7968ac7222
+Ei, mano…\pTem certeza que dá pra encarar os\ndesafios mesmo sem ter POKéMON?$
+
+[BattleFrontier_OutsideWest_Text_BigGuySaidIllLendYouMons] 983d9bd1a0
+Hã…\nTenho certeza que vai dar certo.\pAcho…\pMas lembra daquele grandão\nassustador? Ele disse: “Eu empresto\lPOKéMON pra vocês!”$
+
+[BattleFrontier_OutsideWest_Text_WhosRaisingThoseRentalMons] 9a88929251
+Ali é a FÁBRICA DE BATALHA.\nDá pra alugar POKéMON fortes lá.\pMas fico pensando.\nQuem treina esses POKéMON de aluguel?$
+
+[BattleFrontier_OutsideWest_Text_ScaredOfPikeBecauseSeviper] 09c3cdab61
+Tenho medo de entrar no PICO DE\nBATALHA por causa do SEVIPER…\pM-mas vim até aqui, então vou tentar\nconquistar tudo!\l…Brrr…$
+
+[BattleFrontier_OutsideWest_Text_LetsPlayRockPaperScissors] 8e00139050
+Vamos jogar pedra, papel e tesoura!\nJo-ken-pô!\p… … … … … …$
+
+[BattleFrontier_OutsideWest_Text_WonIllTakePikeChallenge] 18b97bc305
+Oba! Ganhei!\nVou encarar o desafio do PICO!$
+
+[BattleFrontier_OutsideWest_Text_LostIllPutOffPikeChallenge] 3b7994ca49
+Ah, não…\nPerdi.\pAcho que não estou com sorte hoje.\nVou deixar o desafio do PICO DE\lBATALHA pra amanhã.$
+
+[BattleFrontier_OutsideWest_Text_ChooseFishingOverBattling] b01004c282
+Acho que sou a única pessoa aqui que,\nsei lá por quê, prefere pescar a\lbatalhar.\pHã? Não dá pra pescar nada aqui?\nQue decepção…$
+
+[BattleFrontier_OutsideWest_Text_KeepBattlingUntilIGetSymbol] 80017ccad0
+Hoje vou batalhar sem parar, custe o\nque custar, até ganhar um Símbolo.$
+
+[BattleFrontier_OutsideWest_Text_YoureOffToChallengeDome] d6d2e797c1
+Ah? Vai desafiar a CÚPULA DE\nBATALHA?\pDesejo toda a sorte.\nQue nós dois subamos vencendo e nos\lencontremos nos desafios.$
+
+[BattleFrontier_OutsideWest_Text_DomeIsHereGrandpa] acf766b9ff
+Vovô, aqui!\nA CÚPULA DE BATALHA é aqui!\lVai lá, vovô!$
+
+[BattleFrontier_OutsideWest_Text_WontLetGentlemenBeatMe] 887ead0447
+Ah, então esta é a CÚPULA DE\nBATALHA? Não vou perder pros\lCAVALHEIROS!\pMas onde é a entrada?$
+
+[BattleFrontier_OutsideWest_Text_NothingHereNotLongAgo] 620ba433ec
+Até pouco tempo atrás, não tinha\nnada aqui.\pMas olha este lugar agora! Incrível!\nVou trazer a minha mãe pra ver.$
+
+[BattleFrontier_OutsideWest_Text_FinallyArrivedAtFrontier] 920f68f168
+Finalmente cheguei à FRONTEIRA DE\nBATALHA!\pCom a minha beleza e o meu talento,\nvou chamar atenção, com certeza!$
+
+[BattleFrontier_OutsideWest_Text_SquareFilledWithToughPeople] e2def3e6c9
+Nhac, nhac…\pParece que esta praça está cheia\nde gente forte.\pNhac, nhac…$
+
+[BattleFrontier_OutsideWest_Text_MetOlderGirlAtPike] 607f14ac38
+Crec, nhac…\pUm tempo atrás, conheci uma moça\nmais velha no PICO DE BATALHA.\pEla tinha uns olhos assustadores,\nbem mal-humorados.\pCrec, nhac…\pEla ficou furiosa: “Quer parar de\ncomer?!” E aí me deu uma surra.\pFoi de arrepiar, pode acreditar.\pCrec, nhac…$
+
+[BattleFrontier_OutsideWest_Text_LastTimeOurEyesMet] c09167ccb4
+Hã? Você se ouve falando?\nIsso não é nada!\pDa última vez que torci por ele, os\nnossos olhares se cruzaram e\lsaiu faísca!$
+
+[BattleFrontier_OutsideWest_Text_DomeAceLookedBecauseOfMyCheering] e4d2210b97
+Quêêê?!\nAh, tá!\pIsso só aconteceu porque eu estava\nsentada do seu lado!\pO ÁS DA CÚPULA só olhou pra cá\nporque eu torci alto demais!$
+
+[BattleFrontier_OutsideWest_Text_DomeAceIsMine] 051e75c384
+Ah, silêncio!\nMenos barulho!\pVocês, fãs de ocasião, deviam torcer\npra algum LÍDER de GINÁSIO!\pO ÁS DA CÚPULA é meu!\nO meu único ídolo!$
+
+[BattleFrontier_OutsideWest_Text_FansOverThereUsedToBeTrainers] 2c52d2cb53
+Aquelas pessoas discutindo ali…\pÉ difícil acreditar, mas já foram\nTREINADORAS, e das boas.\pEram fortíssimas e famosas também.\pMas foram arrasadas por um certo\nTREINADOR num torneio.\pApanharam tanto que se apaixonaram\npelo TREINADOR.\pAgora são só fãs dele. Vão torcer\npelo ídolo na CÚPULA DE BATALHA\ltodo dia.$
+
+[BattleFrontier_OutsideWest_Text_MonWithLongTailInFrontier] d2a355f79f
+Ouvi um boato de que alguém viu um\nPOKéMON de rabo muito comprido em\lalgum lugar da FRONTEIRA.\pDeve ser uma graça. Tenho certeza…\pAh, os desafios podem esperar. Tenho\nque achar essa criaturinha!$

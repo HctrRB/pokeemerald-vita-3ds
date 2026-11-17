@@ -1,0 +1,29 @@
+[RustboroCity_DevonCorp_1F_Text_WelcomeToDevonCorp] fdd3a12f56
+Olá, boas-vindas à CORPORAÇÃO\nDEVON.\pTemos orgulho de fabricar itens e\nremédios que melhoram a sua vida.$
+
+[RustboroCity_DevonCorp_1F_Text_StaffGotRobbed] e69779504b
+Um dos nossos pesquisadores bobeou\ne teve um pacote importante roubado.$
+
+[RustboroCity_DevonCorp_1F_Text_ThoseShoesAreOurProduct] ec5f96b758
+Ei, esse TÊNIS DE CORRER!\nÉ um dos nossos produtos!\pFico feliz quando vejo alguém\nusando algo que a gente fez.$
+
+[RustboroCity_DevonCorp_1F_Text_RobberWasntVeryBright] 85a0850b15
+Aquele pacote roubado…\pBom, é importante, claro, mas não é\nnada que qualquer um consiga usar.\pNa minha opinião, aquele ladrão\nnão devia ser muito esperto.$
+
+[RustboroCity_DevonCorp_1F_Text_SoundsLikeStolenGoodsRecovered] 6d68b6bbb6
+Parece que recuperaram as PEÇAS\nDEVON que tinham sido roubadas.$
+
+[RustboroCity_DevonCorp_1F_Text_OnlyAuthorizedPeopleEnter] 394555cf14
+Desculpe, só pessoas autorizadas\npodem entrar aqui.$
+
+[RustboroCity_DevonCorp_1F_Text_HowCouldWeGetRobbed] 17cb16b976
+Que vacilo absurdo.\nComo deixamos nos roubarem?$
+
+[RustboroCity_DevonCorp_1F_Text_YoureAlwaysWelcomeHere] 7099cb2b0c
+Oi!\nAqui a porta está sempre aberta!$
+
+[RustboroCity_DevonCorp_1F_Text_RocksMetalDisplay] 33dd58059a
+Amostras de pedras e metais estão\nexpostas na vitrine.\pTem um painel com um texto…\p“A CORPORAÇÃO DEVON começou\nproduzindo pedras de pedreiras.\p“A empresa também produzia ferro\na partir da limalha da areia.\p“Desse começo humilde, produzindo\nmatéria-prima, a DEVON cresceu.\p“Hoje, a DEVON fabrica uma grande\nvariedade de produtos industriais.”$
+
+[RustboroCity_DevonCorp_1F_Text_ProductDisplay] dcd1b60f33
+Protótipos e produtos em teste\nenchem a vitrine.\pTem um painel com uma descrição…\p“Além de produtos industriais, a DEVON\nhoje vende artigos diversos e\lremédios para uma vida melhor.\p“Há pouco, a DEVON começou a vender\nferramentas para TREINADORES, como\lPOKé BOLAS e o POKéNAV.”$

@@ -1,0 +1,47 @@
+[SootopolisCity_LotadAndSeedotHouse_Text_PleaseShowMeBigSeedot] ebe0b8e71b
+Conhece o POKéMON SEEDOT?\nQuase não se vê em SOOTOPOLIS.\pEnfim, eu amo SEEDOT grande.\nQuanto maior, melhor.\pMas o meu irmão mais novo diz que\no LOTAD é maior.\pQue bobagem.\nO SEEDOT tem que ser maior!\pHã? Você tem um SEEDOT aí?\nP-p-por favor, me mostra!$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_GoshMightBeBiggerThanLotad] e2746b9a75
+{STR_VAR_2} polegadas!\nMinha nossa, que grandão!\pPode até ganhar do LOTAD grande\nque o meu irmão mais novo viu!\pObrigado por me mostrar.\nIsto é o meu agradecimento!$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_ReceivedPotion1] a62031aff8
+{PLAYER} recebeu uma POÇÃO.$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_BagCrammedFull1] dff7b8e014
+Hã?\nA sua BOLSA está lotada.$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_SeenBiggerSeedot] 6896e05ff7
+{STR_VAR_2} polegadas, é?\pHum… Já vi um SEEDOT maior que\neste.$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_ThatsNotSeedot] f7bb1e3ee9
+Ah, isto é uma coisa e tanto…\nMas não é um SEEDOT!$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_DontHaveBigSeedot] e4cc332357
+Não tem um SEEDOT grande?\nQue pena…\pSe arranjar um SEEDOT grande, por\nfavor, venha me mostrar.$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_BiggestSeedotInHistory] 56724b1b02
+O maior SEEDOT da história!\nO gigante de {STR_VAR_3} polegadas de\l{STR_VAR_2}!\pUm SEEDOT maior que um LOTAD, como\nsempre sonhei!$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_PleaseShowMeBigLotad] 3a21c8ff70
+Conhece o POKéMON LOTAD?\nÉ raro de ver em SOOTOPOLIS.\pEu amo, amo mesmo, LOTAD grande!\pO meu irmão mais velho diz que o\nSEEDOT é maior.\pMas está errado! Todo mundo sabe\nque o LOTAD é bem maior.\pHã? Você tem um LOTAD?\nP-p-por favor, me mostra!$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_WowMightBeBiggerThanSeedot] 9cd7aec33c
+{STR_VAR_2} polegadas!\nUau, que grande!\pPode ser até maior que o SEEDOT\nenorme que o meu irmão mais velho viu.\pObrigado por me mostrar!\nIsto é o meu agradecimento!$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_ReceivedPotion2] a62031aff8
+{PLAYER} recebeu uma POÇÃO.$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_BagCrammedFull2] dff7b8e014
+Hã?\nA sua BOLSA está lotada.$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_SeenBiggerLotad] eb2c35dd76
+{STR_VAR_2} polegadas?\pHum… Já vi um LOTAD maior que\neste aqui.$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_ThatsNotLotad] 17dab85d4b
+Nossa, que coisa!\nMas não é um LOTAD!$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_DontHaveBigLotad] 3b73f6683e
+Não tem um LOTAD grande?\nQue decepção…\pSe arranjar um LOTAD grande, por\nfavor, venha me mostrar!$
+
+[SootopolisCity_LotadAndSeedotHouse_Text_BiggestLotadInHistory] e5fc21315e
+O maior LOTAD da história!\nO colosso de {STR_VAR_3} polegadas de\l{STR_VAR_2}!\pUm LOTAD maior que um SEEDOT, como\nsempre sonhei!$

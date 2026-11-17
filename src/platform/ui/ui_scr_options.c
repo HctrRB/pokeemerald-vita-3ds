@@ -69,7 +69,11 @@ static const struct { const char *key, *help; } sExtraHelp[] = {
     { "ff_button", "Hold the button, or press it once to toggle." },
     { "filter", "How the 2D screens are scaled to the Vita display." },
     { "ui_theme", "Colour and style of the menus." },
+    { "ui_lang", "Display language of Vita menus. Game text stays in PT-BR." },
     { "voxel_3d", "Draw the overworld as a 3D voxel diorama." },
+    { "camera_stick", "Move the right stick to rotate the camera." },
+    { "camera_trees", "Keep 2D trees facing the camera." },
+    { "first_person", "View the world through your character's eyes." },
     { "voxel_blur", "Blur the far background of the diorama." },
     { "voxel_fps", "Frame rate of the 3D world. 60 uses more battery." },
     { "day_night", "Light changes with the clock." },
@@ -131,7 +135,13 @@ static void BuildRows(void)
     {
         const VitaExtra *ex = VitaExtras_GetTabExtra((uint8_t)sTab, i);
         if (ex != NULL)
+        {
+            // Only show billboard alignment while free-look is available.
+            if (strcmp(ex->key, "camera_trees") == 0 &&
+                !VitaExtras_GetFast(FAST_EXTRA_CAMERA_STICK))
+                continue;
             sRows[sCount++] = (OptRow){ ROW_EXTRA, (uint16_t)i, ex->group, ex->name, ex };
+        }
     }
     if (sTab == VITA_TAB_MODES)
         sRows[sCount++] = (OptRow){ ROW_QUIT, 0, "SYSTEM", "QUIT TO LIVEAREA", NULL };
@@ -175,7 +185,7 @@ static void ExtraValue(const VitaExtra *ex, char *out, size_t cap)
     if (ex->text != NULL)
         UiGame_Text(ex->text(), out, cap);
     else if (ex->count == 0)
-        snprintf(out, cap, "EXECUTE");
+        snprintf(out, cap, "%s", UiLocale_Translate("EXECUTE"));
     else
     {
         const int v = VitaExtras_Get(ex->key);
@@ -337,6 +347,11 @@ static bool Update(const UiInput *in)
     if (in->repeat & VITA_BTN_LEFT) Step(&sRows[l->sel], -1);
     else if (in->repeat & VITA_BTN_RIGHT) Step(&sRows[l->sel], 1);
     else if (a >= 0) Step(&sRows[a], 1);
+    // A newly enabled camera reveals the dependent tree-billboard setting.
+    if (sTab == VITA_TAB_WORLD &&
+        sCount != (int32_t)VitaExtras_GetTabExtraCount(VITA_TAB_WORLD) -
+                  (VitaExtras_GetFast(FAST_EXTRA_CAMERA_STICK) ? 0 : 1))
+        BuildRows();
     return true;
 }
 
@@ -382,7 +397,7 @@ static void BuildGba(void)
 
     // Main options sheet (.gba-win.opt-sheet)
     UiW_GbaWin(14, 60, 932, 384, UI_GBA_WIN_DEFAULT);
-    snprintf(buf, sizeof(buf), "TAB %d / %d · %s", (int)sTab + 1, VITA_TAB_COUNT, sTabs[sTab]);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("TAB %d / %d · %s"), (int)sTab + 1, VITA_TAB_COUNT, sTabs[sTab]);
     UiW_GbaSectionStrip(26, 70, 908, 28, UI_GBA_TAG_SLATE, "SYSTEM & GAMEPLAY OPTIONS", buf);
 
     UiW_GbaBox(GBA_LIST_X, GBA_LIST_Y, GBA_LIST_W, GBA_ROWS * GBA_ROW_H, 6, UI_RGBA(150, 172, 156, 255),

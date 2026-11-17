@@ -1,0 +1,35 @@
+[Route120_Text_StevenGreeting] aa7573ce96
+STEVEN: Hum? {PLAYER}{KUN}, oi.\nQuanto tempo.\pTem alguma coisa aqui que você\nnão consegue ver, não é?\pBom, se eu usasse este aparelho no\nobstáculo invisível…\pNão, não. Em vez de explicar, é\nmelhor mostrar.\lÉ mais divertido.\p{PLAYER}{KUN}, os seus POKéMON estão\nprontos pra batalha?$
+
+[Route120_Text_StevenIllWaitHere] 4d1fce5d53
+STEVEN: Não?\pEu espero aqui enquanto você se\nprepara.$
+
+[Route120_Text_StevenReadyForBattle] 74928cec80
+STEVEN: {PLAYER}{KUN}, os seus POKéMON\nestão prontos pra batalha?$
+
+[Route120_Text_StevenShowMeYourPower] 5b7128adf4
+STEVEN: {PLAYER}{KUN}, me mostre o seu\nverdadeiro poder de TREINADOR!$
+
+[Route120_Text_StevenUsedDevonScope] 4c19b6f53d
+STEVEN usou o ESCOPO DEVON.\pUm POKéMON invisível ficou\ncompletamente visível!\pO POKéMON se assustou e atacou!$
+
+[Route120_Text_StevenGiveDevonScope] 00f523281a
+STEVEN: Entendo…\nO seu estilo de batalha é intrigante.\pOs seus POKéMON cresceram muito\ndesde que nos vimos em DEWFORD.\pQuero que você fique com este\nESCOPO DEVON.\pQuem sabe, pode haver outros\nPOKéMON escondidos.$
+
+[Route120_Text_StevenGoodbye] ab48518abe
+STEVEN: {PLAYER}{KUN}.\pGosto de ver POKéMON e TREINADORES\nque se esforçam juntos.\pAcho que você está indo muito bem.\pBom, vamos nos encontrar de novo\nem algum lugar.$
+
+[Kecleon_Text_SomethingUnseeable] 7d8966153b
+Tem alguma coisa invisível no caminho.$
+
+[Kecleon_Text_WantToUseDevonScope] ceb2773fa9
+Tem alguma coisa invisível no caminho.\pQuer usar o ESCOPO DEVON?$
+
+[Kecleon_Text_UseDevonScopeMonAttacked] debcc3f5a1
+{PLAYER} usou o ESCOPO DEVON.\pUm POKéMON invisível ficou\ncompletamente visível!\pO POKéMON se assustou e atacou!$
+
+[Route120_Text_RouteSignFortree] d5f2db3fc1
+ROTA 120\n{LEFT_ARROW} CIDADE DE FORTREE$
+
+[Route120_Text_RouteSign121] ea54e4dd6b
+{RIGHT_ARROW} ROTA 121\n{LEFT_ARROW} ROTA 120$

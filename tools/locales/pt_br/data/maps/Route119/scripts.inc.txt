@@ -1,0 +1,53 @@
+[Route119_Text_MayIntro] 66560c2118
+MAY: {PLAYER}{KUN}!\nCadê você? Eu estava te procurando!\pQuanto você ficou mais forte?\nDeixa eu conferir!\pPOKéMON prontos?\nClaro que sim! Vai!$
+
+[Route119_Text_MayDefeat] de94e59b91
+Aiai!\n{PLAYER}{KUN}, você é forte!\pFiquei preocupada que você estivesse\npenando no treino.$
+
+[Route119_Text_MayPresentForYou] c825295d60
+MAY: Mas eu não tinha nada com que\nme preocupar! Continue assim!\pE tome! Tenho um presente pra você.$
+
+[Route119_Text_MayExplainFly] f2ded53e24
+MAY: Com VOAR, o seu POKéMON te leva\nna hora pra qualquer cidade que\lvocê já visitou.\pMas, pra usar VOAR, você precisa da\nINSÍGNIA da CIDADE DE FORTREE.\lÉ importante, não esqueça.\pVocê devia VOAR pra casa e visitar\nLITTLEROOT, pra variar.\pAposto que a sua mãe está\npreocupada, {PLAYER}{KUN}.\pBom, a gente se vê por aí!$
+
+[Route119_Text_BrendanIntro] 34dc0012a8
+BRENDAN: {PLAYER}! Então é aqui que\nvocê procura POKéMON?\pDeixa eu ver o quanto você melhorou.\nVou te testar!\pAgora!\nÉ batalha, então batalhe!$
+
+[Route119_Text_BrendanDefeat] 13debbda65
+Hmm…\nVocê ficou bem boa, hein.$
+
+[Route119_Text_BrendanIllGiveYouThis] d547ee7d3e
+BRENDAN: Acho que você já pode\nprocurar POKéMON em qualquer lugar.\pTome, vou te dar isto.\nExperimenta.$
+
+[Route119_Text_BrendanExplainFly] 108959ba09
+BRENDAN: Com VOAR, o seu POKéMON te\nleva na hora pra qualquer cidade\lque você já visitou.\pMas precisa da INSÍGNIA de FORTREE\npra isso.\pEnfim, tenho que ir.$
+
+[Route119_Text_ScottWayToGoBeSeeingYou] 77e5c728a5
+SCOTT: Hahahah!\nMandou bem, {PLAYER}{KUN}!\pAcabei de cruzar com alguém numa\nBICICLETA.\pVocê acabou de vencer essa pessoa,\nnão foi? Ficou bem na cara.\pEstava toda chateada, com o rosto\nvermelho de raiva.\pA gente se esbarra bastante, né?\nVai pro GINÁSIO de FORTREE agora?\pAposto que vai se dar bem lá.\nBom, até mais!$
+
+[Route119_Text_ScottYouWonAtFortreeGym] 06f07511b9
+… … … … … …\n… … … … … Bipe!\pSCOTT: Oi, {PLAYER}{KUN}, sou eu!\pComo eu pensei, você venceu no\nGINÁSIO de FORTREE.\pA sua força…\nTalvez você seja mesmo o TREINADOR\lque eu procuro.\pLembre: você tem um fã aqui.\nVou torcer de longe.\lContinue assim!\p… … … … … …\n… … … … … Clique!$
+
+[Route119_Text_StayAwayFromWeatherInstitute] e56b59cbb2
+Estamos de vigia aqui.\pEi, você! Fique longe do INSTITUTO\nDO CLIMA. Não é seguro.$
+
+[Route119_Text_DontGoNearWeatherInstitute] ff851c88c9
+Ficar de vigia é chato demais.\pEi, você! Por favor, não chegue perto\ndo INSTITUTO DO CLIMA.$
+
+[Route119_Text_ThoughtFlyByCatchingBirdMons] d10fb73950
+Eu achava que pra VOAR era preciso\npegar um bando de POKéMON PÁSSAROS\le se pendurar neles de algum jeito.\pMas existe um golpe de MO chamado\nVOAR!\pQueria ter sabido disso há\nmuito tempo…$
+
+[Route119_Text_TallGrassSnaresBikeTires] a7d8c8cf31
+Tsc…\nNão dá…\pO mato alto prende os pneus da\nBICICLETA. Não dá pra pedalar aqui.$
+
+[Route119_Text_CanYourMonMakeSecretBase] f15110addd
+O seu POKéMON consegue usar PODER\nSECRETO num monte de mato e fazer\luma BASE SECRETA?$
+
+[Route119_Text_RouteSignFortree] b4c95d2200
+ROTA 119\n{RIGHT_ARROW} CIDADE DE FORTREE$
+
+[Route119_Text_WeatherInstitute] f69ce00ceb
+INSTITUTO DO CLIMA$
+
+[Route119_Text_TrainerTipsDecoration] 6351deecaa
+DICAS DE TREINADOR\pDá pra colocar até dezesseis\ndecorações e móveis numa\lBASE SECRETA.\pEscolha os seus itens favoritos e\nmonte a sua própria BASE SECRETA\ldo jeitinho que você quiser.$

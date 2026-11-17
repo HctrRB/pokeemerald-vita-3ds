@@ -1,0 +1,8 @@
+[FortreeCity_PokemonCenter_1F_Text_GoToSafariZone] 6fdbba88af
+Escuta, criança, você está\ncompletando uma POKéDEX?\pHmm… Vá à ZONA DE SAFÁRI.\nÉ a minha sugestão.$
+
+[FortreeCity_PokemonCenter_1F_Text_RecordCornerIsNeat] 026e3afe82
+Já usou o CANTO DOS RECORDES?\pÉ bem legal. Mistura e combina os\nrecordes dos TREINADORES.\pNão sei bem como funciona, mas é\nlegal. É até emocionante!$
+
+[FortreeCity_PokemonCenter_1F_Text_DoYouKnowAboutPokenav] 08d6b77933
+Uau, você tem um POKéNAV!\nIgualzinho ao meu!\pConhece o sistema de CHAMADAS\ndo POKéNAV?\pCom ele, dá pra conversar com\nTREINADORES registrados à vontade.\pTambém mostra que TREINADORES\nquerem revanche com você.\pÉ muito prático! O pessoal da DEVON\nsabe mesmo o que faz!$

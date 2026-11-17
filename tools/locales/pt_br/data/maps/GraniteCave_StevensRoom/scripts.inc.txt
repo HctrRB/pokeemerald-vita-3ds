@@ -1,0 +1,17 @@
+[GraniteCave_StevensRoom_Text_ImStevenLetterForMe] 76261ba60e
+Meu nome é STEVEN.\pEu me interesso por pedras raras,\nentão viajo por aí.\pHã?\nUma CARTA pra mim?$
+
+[GraniteCave_StevensRoom_Text_ThankYouTakeThis] bcb9369d87
+STEVEN: Certo, obrigado.\pVocê teve todo esse trabalho pra\nentregar. Preciso agradecer.\pDeixa eu ver…\nVou te dar esta MT.\pEla tem o meu golpe favorito,\nASA DE AÇO.$
+
+[GraniteCave_StevensRoom_Text_CouldBecomeChampionLetsRegister] 5440b19cd6
+STEVEN: Os seus POKéMON parecem bem\ncapazes.\pSe continuar treinando, você pode até\nganhar o título de CAMPEÃO da LIGA\lPOKéMON um dia. É o que eu acho.\pJá sei, como a gente se conheceu,\nvamos registrar um ao outro\lno POKéNAV.\p… … … … … …$
+
+[GraniteCave_StevensRoom_Text_RegisteredSteven] be7939502a
+O STEVEN foi registrado\nno POKéNAV.$
+
+[GraniteCave_StevensRoom_Text_IveGotToHurryAlong] 9bedb8f5a0
+Bom, agora preciso me apressar.$
+
+[GraniteCave_StevensRoom_Text_OhBagIsFull] b435e4d919
+Ah, a sua BOLSA está cheia…\nQue pena, então.$

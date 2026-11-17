@@ -1,0 +1,41 @@
+[RustboroCity_Flat1_2F_Text_ComingUpWithMealsIsHard] 10b64619f1
+Ai, todo dia é tão difícil…\pO que é difícil?\nPrecisa perguntar?\pÉ descobrir o que fazer pra comer\ntodo santo dia.\pNão é nada fácil pensar no\ncardápio todo dia.$
+
+[RustboroCity_Flat1_2F_Text_HelloDoYouKnowFunnyPhrase] ffe9146d64
+Ah, olá!\nEsta é a casa da família PEPPER.\pTenho uma pergunta pra você.\nVocê já cuidou de bebê?\pÉ que eu sou pai de primeira viagem,\nentão criar uma criança é novidade.\pE tenho um problema. A minha filha,\na WALDA, não ri muito.\pAcho que ela riria se eu dissesse\nalguma coisa engraçada.\pVocê conhece alguma palavra ou\nfrase engraçada pra me ensinar?$
+
+[RustboroCity_Flat1_2F_Text_BeenSayingXDoYouKnowBetterPhrase] 0bac973296
+Ultimamente eu digo “{STR_VAR_1}”\npra fazer ela rir.\pVocê conhece alguma palavra ou\nfrase melhor que funcione?$
+
+[RustboroCity_Flat1_2F_Text_WonderfulLetsHearSuggestion] a1534eaffb
+Ah, que maravilha.\nEntão, vamos ouvir a sua sugestão.$
+
+[RustboroCity_Flat1_2F_Text_OhIsThatRight] 63c858b10e
+Ah, é mesmo?\pBom, se pensar numa boa sugestão,\nsou todo ouvidos.$
+
+[RustboroCity_Flat1_2F_Text_LetsGiveItATry2] c91cb6ed75
+Ah, entendi.\nBom, vamos experimentar, então?$
+
+[RustboroCity_Flat1_2F_Text_OhShesLaughing] 46049a4389
+{STR_VAR_1}.\n{STR_VAR_1}.\pAh, isso! Ela está rindo!\nEstou tão feliz quanto ela!$
+
+[RustboroCity_Flat1_2F_Text_LetsGiveItATry] c91cb6ed75
+Ah, entendi.\nBom, vamos experimentar, então?$
+
+[RustboroCity_Flat1_2F_Text_ShesNotSmilingAtAll] 5e67462a65
+{STR_VAR_1}.\n{STR_VAR_1}.\pHmmm… Ela nem sorriu.\nVai ver a WALDA é uma criança séria…$
+
+[RustboroCity_Flat1_2F_Text_ThinkOfMyOwnPhrase] 2793d1301b
+Ah, você não sabe nenhuma palavra boa.\nMelhor eu pensar sozinho, então.\pHmm…\nQue tal “{STR_VAR_1}”?\lVamos ver se funciona.$
+
+[RustboroCity_Flat1_2F_Text_ShesNotSmilingAtAll2] 5e67462a65
+{STR_VAR_1}.\n{STR_VAR_1}.\pHmmm… Ela nem sorriu.\nVai ver a WALDA é uma criança séria…$
+
+[RustboroCity_Flat1_2F_Text_OhYouDontKnowAny] 0b53dc193e
+Ah, você não sabe nenhuma palavra boa.\nVou tentar fazer ela rir com\la frase que eu usava antes.\pEnfim, se tiver uma boa sugestão,\nnão deixe de me contar, tá?$
+
+[RustboroCity_Flat1_2F_Text_ThankYouIllGiveYouWallpaper] bdc1d8f08b
+Obrigado!\pGraças a você, a minha querida WALDA\nriu pra mim!\pNa verdade, posso não parecer grande\ncoisa, mas sou um dos melhores\lpesquisadores da CORPORAÇÃO DEVON.\pEntão, que tal eu retribuir?\pJá sei, vou pôr papéis de parede novos\nnas CAIXAS do Sistema de\lArmazenamento de POKéMON do PC.\pNo menu de papel de parede,\nescolha “AMIGOS”.\pAssim você vai ter acesso aos\npapéis de parede novos.$
+
+[RustboroCity_Flat1_2F_Text_ItsAPokemonPlushDoll] 7852f995f9
+É um BONECO de pelúcia de POKéMON!$

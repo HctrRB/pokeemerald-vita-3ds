@@ -1,0 +1,8 @@
+[RustboroCity_PokemonCenter_1F_Text_PokemonHavePersonalities] a709c3c32f
+Meu POKéMON tem natureza INGÊNUA, e o\ndo meu amigo tem natureza ALEGRE.\pÉ fascinante como os POKéMON têm\npersonalidade!$
+
+[RustboroCity_PokemonCenter_1F_Text_MaleAndFemalePokemon] 5f1addca59
+Assim como as pessoas, existem\nPOKéMON machos e fêmeas.\pMas ninguém parece saber direito\nqual é a diferença.$
+
+[RustboroCity_PokemonCenter_1F_Text_HMCutNextDoor] f45b4a5196
+O homem da casa ao lado me deu uma MO!\pUsei pra ensinar meu POKéMON a\nCORTAR árvores finas.$

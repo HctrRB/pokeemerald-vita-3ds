@@ -1,0 +1,8 @@
+[AbandonedShip_CaptainsOffice_Text_NoSuccessFindingScanner] 104b1b91c4
+Estou investigando este navio a pedido\ndo CAP. STERN.\pEle também me pediu pra achar um\nSCANNER, mas não tive sorte…$
+
+[AbandonedShip_CaptainsOffice_Text_OhCanYouDeliverScanner] ed1ad5838d
+Oh! É um SCANNER!\pEscuta, pode entregar isso pro\nCAP. STERN?\pQuero investigar este navio mais\num pouco.$
+
+[AbandonedShip_CaptainsOffice_Text_ThisIsSSCactus] d652e29086
+Este navio se chama S.S. CACTUS.\nParece ser de outra época.$

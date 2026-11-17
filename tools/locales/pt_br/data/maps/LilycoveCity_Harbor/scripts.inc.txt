@@ -1,0 +1,32 @@
+[LilycoveCity_Harbor_Text_FerryUnavailable] b59851f23b
+Como?\nEstá procurando um navio?\pDesculpe, a balsa não está\nfuncionando no momento…$
+
+[LilycoveCity_Harbor_Text_MayISeeYourTicket] c88f6aefb6
+Olá, veio pegar a balsa?\nPosso ver o seu BILHETE?$
+
+[LilycoveCity_Harbor_Text_NoTicket] 90de1176e6
+{PLAYER} não tem o BILHETE…\pSinto muito.\pÉ preciso ter um BILHETE pra\nembarcar na balsa.$
+
+[LilycoveCity_Harbor_Text_FlashTicketWhereTo] 463fa0f54d
+{PLAYER} mostrou o BILHETE.\pPerfeito! É só isso!\pE pra onde você quer ir?$
+
+[LilycoveCity_Harbor_Text_SailAnotherTime] a605570b92
+Viaje com a gente outra hora!$
+
+[LilycoveCity_Harbor_Text_SlateportItIs] ea33741c4f
+Pra CIDADE DE SLATEPORT, então!$
+
+[LilycoveCity_Harbor_Text_BattleFrontierItIs] 137da3457a
+Pra FRONTEIRA DE BATALHA, então!$
+
+[LilycoveCity_Harbor_Text_PleaseBoard] 5b33ea42e0
+Embarque na balsa e aguarde a\npartida, por favor.$
+
+[LilycoveCity_Harbor_Text_WhereWouldYouLikeToGo] 4198824131
+Então, pra onde você quer ir?$
+
+[LilycoveCity_Harbor_Text_SailorFerryUnavailable] 7b5f67bce1
+Até terminarem a balsa, nós,\nmarinheiros, não temos o que fazer…\pQueria que o pessoal do ESTALEIRO\nde SLATEPORT se apressasse.$
+
+[LilycoveCity_Harbor_Text_SailorFerryAvailable] 7df6385dea
+A balsa S.S. TIDAL finalmente está\nfuncionando.\pO pessoal do ESTALEIRO de SLATEPORT\ndeve ter dado duro.\pBom, agora é a minha vez de\ntrabalhar!$

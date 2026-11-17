@@ -1,0 +1,8 @@
+[LilycoveCity_DepartmentStore_2F_Text_LearnToUseItemsProperly] a6dd067e05
+Aprenda a usar bem os itens.\nIsso é o básico, sério.$
+
+[LilycoveCity_DepartmentStore_2F_Text_GoodGiftForHusband] fe2c692375
+O meu marido está me esperando em\ncasa. O que seria um bom presente?$
+
+[LilycoveCity_DepartmentStore_2F_Text_StockUpOnItems] ee52d7522a
+Vou sair numa longa viagem em breve.\nPreciso estocar itens.$

@@ -1,0 +1,11 @@
+[PacifidlogTown_Text_FastRunningCurrent] 7c3a65c54e
+O mar entre PACIFIDLOG e SLATEPORT\ntem uma correnteza forte.\pSe for SURFAR, a correnteza pode\nte levar pra outro lugar.$
+
+[PacifidlogTown_Text_NeatHousesOnWater] 4b4c5548d1
+Olha, não é legal?\nAs casas ficam em cima da água!\pEu nasci aqui!$
+
+[PacifidlogTown_Text_SkyPillarTooScary] a3fd26731e
+O PILAR CELESTE?\p…Ah, deve ser aquela torre altíssima\num pouco mais adiante.\pSe fosse eu, não subiria. Dá medo\ndemais ficar tão alto.\pA vida ao nível do mar em PACIFIDLOG\nme serve muito bem.$
+
+[PacifidlogTown_Text_TownSign] f79135880e
+CIDADE DE PACIFIDLOG\p“Onde o sol da manhã sorri\nsobre as águas.”$

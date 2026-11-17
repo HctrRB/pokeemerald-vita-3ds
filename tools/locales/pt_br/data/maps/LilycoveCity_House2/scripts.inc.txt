@@ -1,0 +1,5 @@
+[LilycoveCity_House2_Text_NotAwakeYetHaveThis] e9508a1536
+Hã? Quê? O que foi?\pAinda não acordei direito…\nPode ficar com isto…$
+
+[LilycoveCity_House2_Text_SleepIsEssential] 8febf137fd
+Uaaah…\pDormir é essencial pra saúde…\nDurma e recupere a saúde…$

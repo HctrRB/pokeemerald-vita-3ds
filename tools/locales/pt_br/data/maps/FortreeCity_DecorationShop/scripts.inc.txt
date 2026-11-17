@@ -1,0 +1,5 @@
+[FortreeCity_DecorationShop_Text_MerchandiseSentToPC] f1d827f461
+O que você compra aqui vai direto\npro seu PC.\pIncrível! Queria que me entregassem\nem casa desse jeito também.$
+
+[FortreeCity_DecorationShop_Text_BuyingDeskForDolls] 5ed9d89b94
+Vou comprar uma mesa bonita e botar\nas minhas BONECAS fofas em cima.\pSenão, quando eu decorar a minha\nBASE SECRETA, as BONECAS vão se\lsujar ou pegar farpas.$

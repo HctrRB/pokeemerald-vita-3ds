@@ -1,0 +1,11 @@
+[SootopolisCity_House3_Text_JuanHasManyFansDoYou] 65c28ad8d7
+Você é TREINADOR POKéMON, não é?\pO JUAN de SOOTOPOLIS tem muitos fãs.\nMais até que o aluno dele, o WALLACE!\pVocê tem algum?$
+
+[SootopolisCity_House3_Text_YouMustBePrettyStrong] b0358578d4
+Ah, então você deve ser bem forte.$
+
+[SootopolisCity_House3_Text_LonesomeTryWorkingHarder] 3ccb35a9d9
+Ai, ai…\nQue solidão.\pSe esforce mais um pouco pra ganhar\nuns fãs.$
+
+[SootopolisCity_House3_Text_TrainerFanClubWasWild] 4c89e9c32d
+Tem fãs fiéis que vêm até de fora\nde HOENN.\pFoi uma loucura quando fui ao\nFÃ-CLUBE DOS TREINADORES em LILYCOVE.$

@@ -1,0 +1,8 @@
+[DewfordTown_House1_Text_LotToBeSaidForLivingOnIsland] 0a96bb1ebe
+Viver numa ilhinha como esta, em\nharmonia com os POKéMON e a família,\ltem muitas vantagens.$
+
+[DewfordTown_House1_Text_LifeGoesSlowlyOnIsland] 3e96fba506
+Saí do grande porto de SLATEPORT\nquando me casei com meu marido aqui.\pA vida passa devagar nesta ilhinha.\nMas viver cercada por este mar\llindo também é felicidade.$
+
+[DewfordTown_House1_Text_Zigzagoon] d95e0c9edf
+ZIGZAGOON: Guguuh!$

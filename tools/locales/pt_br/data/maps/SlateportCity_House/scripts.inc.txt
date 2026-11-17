@@ -1,0 +1,5 @@
+[SlateportCity_House_Text_NatureToDoWithStatGains] 48aa5be49d
+O meu POKéMON tem natureza APRESSADA.\pEle tem mais VELOCIDADE que os\nmeus outros POKéMON.\pTalvez a natureza tenha a ver com o\ncrescimento dos atributos dos POKéMON.$
+
+[SlateportCity_House_Text_MustBeGoingToBattleTent] aa7250d6e1
+Você treina POKéMON, não treina?\pSe veio à CIDADE DE SLATEPORT,\ndeve estar indo à TENDA DE BATALHA.$

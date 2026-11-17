@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "ui_locale.h"
 
 #define UI_SCREEN_W 960
 #define UI_SCREEN_H 544
@@ -126,7 +127,7 @@ enum { UI_FACE_PS2P = 0, UI_FACE_VT323 = 1 };
 // and, below, 64x64 cells for sprites decoded at run time from the game's tables (ui_sprites.c).
 #define UI_TEX_W 1024
 #define UI_TEX_H 2048
-#define UI_DYN_Y 1024
+#define UI_DYN_Y 1280
 #define UI_CELL 64
 #define UI_CELL_COLS (UI_TEX_W / UI_CELL)
 #define UI_CELL_COUNT (UI_CELL_COLS * ((UI_TEX_H - UI_DYN_Y) / UI_CELL))
@@ -164,7 +165,11 @@ int32_t UiText_LineHeight(uint8_t face, uint8_t px);
 int32_t UiText_CapMid(uint8_t face, uint8_t px);
 int32_t UiText_InkWidth(uint8_t face, uint8_t px, const char *s);                                // width of the glyphs' ink
 int32_t UiText_DrawCentred(uint8_t face, uint8_t px, int32_t boxX, int32_t boxY, int32_t boxW, int32_t boxH, const char *s, uint32_t rgba);                                                  // top of line -> middle of the capitals
-int32_t UiText_DrawMid(uint8_t face, uint8_t px, int32_t x, int32_t boxY, int32_t boxH, const char *s, uint32_t rgba);   // centred in the box
+int32_t UiText_DrawMid(uint8_t face, uint8_t px, int32_t x, int32_t boxY, int32_t boxH, const char *s, uint32_t rgba);
+// If text exceeds its bounds, scroll back and forth with pauses (no clipping of words).
+void UiW_TextMarquee(uint8_t face, uint8_t px, int32_t x, int32_t y,
+                     int32_t w, int32_t h, const char *label, uint32_t color,
+                     uint32_t tick);   // centred in the box
 
 // ---------- Run-time sprites (ui_sprites.c) ----------
 // Core 1: draws a sprite decoded from the game's tables and cached in the texture's cells. The

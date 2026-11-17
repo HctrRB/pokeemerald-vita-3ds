@@ -1,0 +1,14 @@
+[FallarborTown_BattleTentLobby_Text_MakeThinkImJustKid] 077679cbb5
+Fufufufufu.\pVou fazer todo mundo pensar que sou\nsó uma criança e se descuidar.\pAí eu dou o susto e levo o título!$
+
+[FallarborTown_BattleTentLobby_Text_FallarborTentMyFavorite] d8d3109892
+Sabe que cada TENDA DE BATALHA tem\neventos diferentes em cada cidade?\pA minha favorita é com certeza a TENDA\nDE BATALHA da CIDADE DE FALLARBOR.\pAcho incrível como os TREINADORES\ntentam vencer com toda a fé nos\lseus POKéMON.$
+
+[FallarborTown_BattleTentLobby_Text_CameToCampOut] fb25f49c5b
+Ouvi falar de uma tenda e vim\nacampar.\pNão sabia que as tendas de hoje em\ndia eram tão luxuosas!\pJá que estou aqui, vou tentar\nbatalhar também!$
+
+[FallarborTown_BattleTentLobby_Text_ScottLookingForSomeone] f524b1bb38
+SCOTT: Oi, {PLAYER}{KUN}!\nVocê veio à TENDA DE BATALHA!\pO pessoal daqui costuma ser\ntranquilo e sossegado.\pMas, sabe, o que eu procuro é\ngente com…\pComo posso dizer?\pAlguém explodindo de vontade e\ngarra pra vencer.\pSe houvesse um TREINADOR assim,\neu na hora…\pOpa! Esquece!\nContinue se esforçando!$
+
+[FallarborTown_BattleTentLobby_Text_ScottMakeChallenge] b086e367f2
+SCOTT: Em vez de perder tempo com\nalguém como eu, por que não faz\lum desafio?$

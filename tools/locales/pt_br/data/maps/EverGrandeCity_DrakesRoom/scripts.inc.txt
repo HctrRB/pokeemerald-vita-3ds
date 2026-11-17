@@ -1,0 +1,8 @@
+[EverGrandeCity_DrakesRoom_Text_IntroSpeech] 035fbb22a6
+Sou o último da ELITE DOS QUATRO da\nLIGA POKéMON, DRAKE, o mestre DRAGÃO!\pNo estado natural, os POKéMON são\nseres selvagens. São livres.\pÀs vezes, nos atrapalham.\nÀs vezes, nos ajudam.\pPra batalhar com POKéMON como\nparceiros, sabe o que é preciso?\pSabe do que se precisa?\pSe não souber, nunca vai me\nsuperar!$
+
+[EverGrandeCity_DrakesRoom_Text_Defeat] 9cf819cc1b
+Magnífico, é preciso dizer.$
+
+[EverGrandeCity_DrakesRoom_Text_PostBattleSpeech] c73ff80372
+Você merece todo o crédito por chegar\ntão longe como TREINADOR de POKéMON.\pParece que sabe o que é preciso.\pSim, o que um TREINADOR precisa é\nde um coração virtuoso.\pOs POKéMON tocam o bom coração dos\nTREINADORES e aprendem o certo e\lo errado.\pTocam o bom coração dos TREINADORES\ne ficam fortes.\pVá! Siga em frente!\nO CAMPEÃO está esperando!$

@@ -1,0 +1,5 @@
+[MossdeepCity_PokemonCenter_1F_Text_GymLeaderDuoFormidable] 4fc62bdb44
+Os LÍDERES de GINÁSIO desta cidade\nsão uma dupla formidável.\pOs ataques combinados deles são,\ntipo, demais, uau!$
+
+[MossdeepCity_PokemonCenter_1F_Text_AbilitiesMightChangeMoves] 001b90d2fd
+Dependendo da habilidade especial\ndo POKéMON, alguns golpes mudam ou\lnem funcionam.$

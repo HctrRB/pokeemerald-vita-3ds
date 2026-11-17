@@ -1,0 +1,161 @@
+[LilycoveCity_Text_MayShoppingLetsBattle] ca78438dee
+MAY: Ué, oi?\n{PLAYER}{KUN}, também veio às compras?\pComprei um monte de BONECOS e\nPÔSTERES.\pClaro que também peguei muitos\nPOKéMON, e estou treinando eles\ldireitinho.\pNa verdade, estou mais preocupada se\nvocê treina direito, {PLAYER}{KUN}.\pVamos batalhar, pra você me mostrar\nos seus POKéMON, {PLAYER}{KUN}.$
+
+[LilycoveCity_Text_MayNotRaisingPokemon] 74d899ca04
+MAY: Ué, por quê? {PLAYER}{KUN}, você não\nanda treinando os seus POKéMON?\pIsso não fica bem pra um\nTREINADOR…$
+
+[LilycoveCity_Text_MayBattleMe] fe98144411
+MAY: Vamos, batalhe comigo, pra eu\nver os seus POKéMON!$
+
+[LilycoveCity_Text_MayWontBeBeaten] 61ce746791
+MAY: Os POKéMON que eu treinei não vão\nperder pros seus, {PLAYER}{KUN}!$
+
+[LilycoveCity_Text_MayDefeat] ab479eae46
+… … … … … … … …\pLembro da batalha que tive com você,\n{PLAYER}{KUN}, na ROTA 103.\pAquela batalha te ajudou a ficar\ntão forte, {PLAYER}{KUN}, não foi?$
+
+[LilycoveCity_Text_MayGoingBackToLittleroot] 90b90c423b
+MAY: Estou pensando em voltar logo\npra LITTLEROOT.\pPeguei um bom grupo de POKéMON, e a\nminha POKéDEX está andando, então\lvou pra casa mostrar pro meu pai.$
+
+[LilycoveCity_Text_MayYouGoingToCollectBadges] f05498fff7
+{PLAYER}{KUN}, o que você vai fazer?\pJuntar todas as INSÍGNIAS e desafiar\na LIGA POKéMON?\pBom, enquanto você junta INSÍGNIAS,\n{PLAYER}{KUN}, eu cuido da minha\lPOKéDEX. Vou completar antes de você!\pAté mais!$
+
+[LilycoveCity_Text_MayYouGoingToPokemonLeague] 300b3288e1
+{PLAYER}{KUN}, o que você vai fazer?\pVai desafiar a LIGA POKéMON?\pOu vai completar a sua POKéDEX?\pPosso ter perdido na batalha, mas\nvou terminar a POKéDEX antes de você!\pAté mais!$
+
+[LilycoveCity_Text_MayYouGoingToBattleFrontier] a5d0807431
+{PLAYER}{KUN}, o que você vai fazer?\pVai encarar a FRONTEIRA DE BATALHA?\pOu vai completar a sua POKéDEX?\pPosso ter perdido na batalha, mas\nvou terminar a POKéDEX antes de você!\pAté mais!$
+
+[LilycoveCity_Text_BrendanShoppingLetsBattle] 4142080439
+BRENDAN: Opa, é a {PLAYER}.\pEstou fazendo um serviço pro meu pai.\nNão, não estou comprando BONECOS.\pEnfim, quanto tempo.\pQuer batalhar pra ver quem anda\ntreinando melhor os POKéMON?$
+
+[LilycoveCity_Text_BrendanNoConfidence] 22bdc825e8
+BRENDAN: Ué, o que foi?\nFalta confiança?$
+
+[LilycoveCity_Text_BrendanBattleMe] 157519e19d
+BRENDAN: Quer batalhar pra ver quem\nanda treinando melhor os POKéMON?$
+
+[LilycoveCity_Text_BrendanWontBeBeaten] 171d6114ca
+BRENDAN: Ah, mas você sabe que eu não\nvou perder pra {PLAYER} nenhuma.$
+
+[LilycoveCity_Text_BrendanDefeat] ca711e555c
+Hunf…\nVocê treinou bastante.\pIsso dói um pouco… Eu comecei como\nTREINADOR antes de você…$
+
+[LilycoveCity_Text_BrendanGoingBackToLittleroot] 53f577d93f
+BRENDAN: Eu…\nVou voltar pra casa, em LITTLEROOT.\pVocê sabe que ajudo o meu pai na\nPOKéDEX dele. Está ficando bem\ldecente, então vou mostrar pra ele.$
+
+[LilycoveCity_Text_BrendanYouGoingToCollectBadges] ee0cde6e6d
+{PLAYER}, o que você vai fazer?\pJuntar todas as INSÍGNIAS e desafiar\na LIGA POKéMON?\pTalvez eu faça isso também…\pBom, de qualquer jeito, força aí!$
+
+[LilycoveCity_Text_BrendanYouGoingToPokemonLeague] 6318b276f8
+{PLAYER}, o que você vai fazer?\pForte desse jeito, vai desafiar a\nLIGA POKéMON?\pHeh, até eu… se treinasse mais um\npouco os meus POKéMON, ficaria mais\lforte que você, {PLAYER}.\pBom, de qualquer jeito, força aí!$
+
+[LilycoveCity_Text_BrendanYouGoingToBattleFrontier] 19da01491d
+{PLAYER}, o que você vai fazer?\pVai encarar a FRONTEIRA DE BATALHA?\pOu vai completar a sua POKéDEX?\pForte desse jeito, devia pensar na\nFRONTEIRA DE BATALHA.\pHeh, se eu treinar mais um pouco os\nmeus POKéMON, fico mais forte que\lvocê, {PLAYER}.\pTalvez eu devesse ir pra FRONTEIRA\nDE BATALHA.\pBom, de qualquer jeito, força aí!$
+
+[LilycoveCity_Text_MovedLootIntoHideoutToday] b413a902dd
+Fufufu…\pHoje levamos mais muamba pro nosso\nESCONDERIJO secreto…\pQ-quem é você?!\nEu só estava falando sozinho!$
+
+[LilycoveCity_Text_ChanceToDoBigThings] d1a0c5b6ac
+Sou só um CAPANGA, não sei o que o\nCHEFE está pensando…\pMas, na EQUIPE AQUA, sei que vou ter\nchance de fazer grandes coisas!\pQ-quem é você?!\nEu só estava falando sozinho!$
+
+[LilycoveCity_Text_DontGoNearCaveInCove] b31d0b0c99
+Ei, você!\pNão chegue perto da caverna da\nenseada!\pPor quê? Não precisa de motivo!\nEu sou adulto, então me obedeça!$
+
+[LilycoveCity_Text_IfWorldBecomesOurs] 6c6dce654e
+Se este mundo todo for nosso, da\nEQUIPE AQUA, vai ser um lugar mais\lfeliz pros POKéMON também.$
+
+[LilycoveCity_Text_WailmerLeapOutOfWater] 371a5d4051
+Vai! WAILMER!\nPule pra fora da água agora!$
+
+[LilycoveCity_Text_GetLostMessingUpTraining] a8c281ff41
+Hã? O que você quer?\pVocê está atrapalhando o nosso treino,\nentão, tipo, dá o fora?$
+
+[LilycoveCity_Text_ContestHallInTown] 23deea1b02
+Tem um SALÃO DE CONCURSOS POKéMON\nbem aqui nesta cidade.\pQuer dizer que POKéMON bem cuidados\nvêm do país inteiro.\pO meu coração até dispara!$
+
+[LilycoveCity_Text_StrangeCaveInCove] 5a79f17cf7
+Já viu aquela caverna estranha na\nenseada, no fim da cidade?$
+
+[LilycoveCity_Text_GoingToMoveDeleterForHMs] e6726cf457
+Vou ensinar golpes novos aos meus\nPOKéMON pra entrar num CONCURSO.\pEntão vou ao APAGADOR DE GOLPES\npra eles esquecerem os golpes de MO.$
+
+[LilycoveCity_Text_ImFromKanto] 5392c7a62a
+Eu vim de KANTO.\pA região de HOENN é linda, com\ntanta água e natureza verdinha.\pHã? Pera aí…\pSerá que tem POKéMON raros que\nsó vivem por aqui?$
+
+[LilycoveCity_Text_TeamAquaBeenTrainingWailmer] aa122c1a00
+A EQUIPE AQUA anda treinando os\nWAILMER na enseada.\pNós, MARINHEIROS, não conseguimos\nlevar os barcos pro mar com eles ali!$
+
+[LilycoveCity_Text_SomeonePuntedTeamAquaOut] cd4d987de0
+Ahoy, sabia?\pAlguém botou a EQUIPE AQUA pra\ncorrer pra gente!\pOs WAILMER saíram da enseada, e\njá dá pra levar os barcos de novo.$
+
+[LilycoveCity_Text_SomeoneStoleMyPokemon] d4987da1f9
+Eu tirava um cochilo gostoso na\npousada da praia, ouvindo as ondas…\pQuando alguém roubou o meu POKéMON!\pQuem foi o ladrão?\nA EQUIPE AQUA? Foi a EQUIPE AQUA?$
+
+[LilycoveCity_Text_MissingPokemonCameBack] bc11f22a06
+O meu POKéMON sumido…\nVoltou sem eu nem perceber!$
+
+[LilycoveCity_Text_ImArtDealer] aa93d62f01
+Sou NEGOCIANTE DE ARTE.\pCompro e vendo belas-artes,\nprincipalmente quadros.\pOuvi dizer que o MUSEU daqui tem\nobras magníficas em exposição…$
+
+[LilycoveCity_Text_SeaRemainsForeverYoung] 261898b426
+Mesmo que a gente envelheça e fique\ncheio de rugas, o mar continua jovem,\lcom o brilho vivo da vida…\pFuhoho fuhohohoho…$
+
+[LilycoveCity_Text_SixtyYearsAgoHusbandProposed] 3935773436
+Foi aqui que o meu marido me pediu\nem casamento, há sessenta anos.\lO mar continua lindo como sempre.\pMufufufu mufufufufufu…$
+
+[LilycoveCity_Text_TeamAquaRenovatedCavern] 19395df18d
+Hum, conhece a caverna esquisita\ndesta enseada?\pEra uma formação natural, mas aí\naquela turma da EQUIPE AQUA veio\le fez a reforma deles.\pEles se chamam de “EQUIPE AQUA,\namante da natureza”!\pMas o que fazem e o que dizem\nnão combinam nem um pouco!$
+
+[LilycoveCity_Text_TeamAquaLotGoneForGood] 604942010b
+Aquela caverna da enseada…\pNão percebi de cara, mas agora\nestá completamente vazia.\pAquela turma da EQUIPE AQUA deve\nter ido embora de vez.$
+
+[LilycoveCity_Text_CitySign] 0542cca470
+CIDADE DE LILYCOVE\p“Onde a terra acaba e o mar\ncomeça.”$
+
+[LilycoveCity_Text_ContestHallSign] c596cd52ca
+SALÃO DE CONCURSOS POKéMON\n“O encontro dos TREINADORES!”$
+
+[LilycoveCity_Text_MotelSign] 63c9a9f38c
+MOTEL COVE LILY\p“Lembre-se de nós: COVE LILY,\nde LILYCOVE.”$
+
+[LilycoveCity_Text_MuseumSign] 0a30bcde22
+MUSEU DE LILYCOVE\p“Exposição de obras-primas\ncom POKéMON!”$
+
+[LilycoveCity_Text_MuseumSignPlayersExhibit] f0105d0850
+MUSEU DE LILYCOVE\p“Exposição da coleção POKéMON\nde {PLAYER}!”$
+
+[LilycoveCity_Text_HarborSignUnderConstruction] 2e9e0bf990
+PORTO DA CIDADE DE LILYCOVE\p“A balsa S.S. TIDAL está sendo\nconstruída em SLATEPORT.\p“O serviço começa em breve.”$
+
+[LilycoveCity_Text_HarborSign] 80a5d7e265
+PORTO DA CIDADE DE LILYCOVE\p“Faça um cruzeiro delicioso na\nbalsa S.S. TIDAL.”$
+
+[LilycoveCity_Text_TrainerFanClubSign] c229d02ab0
+FÃ-CLUBE DOS TREINADORES POKéMON\pA placa está toda rabiscada com\nnomes de TREINADORES…$
+
+[LilycoveCity_Text_DepartmentStoreSign] bb18f9bc63
+LOJA DE DEPARTAMENTOS DE LILYCOVE\p“Transbordando de ótimas mercadorias\ne emoção!\p“O lugar certo pra achar aquilo\nde que você precisa!”$
+
+[LilycoveCity_Text_MoveDeletersHouseSign] e632bf625f
+CASA DO APAGADOR DE GOLPES\p“Golpes indesejados apagados.”$
+
+[LilycoveCity_Text_DoYouKnowAboutBerryBlender] 675971c0ec
+Conhece a máquina chamada\nLIQUIDIFICADOR DE FRUTAS?$
+
+[LilycoveCity_Text_FasterSpinBetterPokeblocks] 0d55fe6175
+As pessoas têm que trabalhar juntas\npra ela girar mais rápido.\pQuanto mais rápido girar, melhores\nos {POKEBLOCK}S, pelo que ouvi.$
+
+[LilycoveCity_Text_ExplainBerryBlender] 563278c042
+Ela é usada pra fazer um docinho\nchamado {POKEBLOCK}.\pSe der um {POKEBLOCK} bom pra um POKéMON,\na condição dele melhora bastante.$
+
+[LilycoveCity_Text_HeardTowerCalledSkyPillar] d3385615c4
+Ouvi dizer que tem uma torre em algum\nlugar das rotas marítimas.\pDizem que se chama PILAR CELESTE.$
+
+[LilycoveCity_Text_SawTallTowerOnRoute131] 19049baaf1
+Vi uma torre alta em algum lugar\nperto da ROTA 131.\pSerá que aquilo era…?$
+
+[LilycoveCity_Text_JustArrivedAndSawRarePokemon] 1141b796d8
+Acabamos de chegar aqui, em lua\nde mel.\pPor acaso, vimos um POKéMON do tipo\nDRAGÃO voando lá no alto do céu.\pPOKéMON legais assim vivem na\nregião de HOENN?$
+
+[LilycoveCity_Text_HoneymoonVowToSeeRarePokemon] 8a7f2cc124
+Na lua de mel, juramos ver o máximo\nde POKéMON raros que der.\pEntão adoramos ver um POKéMON raro\nassim que chegamos.\pQuer dizer, estamos felizes demais!$

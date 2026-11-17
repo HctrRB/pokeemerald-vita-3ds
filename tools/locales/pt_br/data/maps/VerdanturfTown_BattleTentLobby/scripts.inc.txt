@@ -1,0 +1,20 @@
+[VerdanturfTown_BattleTentLobby_Text_MonsReluctantToUseDislikedMoves] 5c101d6b95
+Se não gosta de um golpe, o POKéMON\nfica com preguiça de usar.\pNão importa o quanto ele seja\nforte.\pPor exemplo, um POKéMON de natureza\nGENTIL provavelmente não gosta\lde machucar os oponentes.\pSe ele não rende tudo o que pode,\ndeve estar usando contra a vontade\lum golpe de que não gosta.$
+
+[VerdanturfTown_BattleTentLobby_Text_GentleMonsScaryIfAngry] 92299aa3d0
+A minha irmã mais velha costuma ser\ngentil. Mas, quando fica brava,\lela dá muito, muito medo!\pAposto que um POKéMON gentil também\ndá medo quando fica bravo!$
+
+[VerdanturfTown_BattleTentLobby_Text_AttractionRunsDeep] ba11ffbfea
+O que sinto pelos meus POKéMON…\nÉ uma atração profunda…\pAh, oi, você não viu isso, viu?\nBom, tanto faz.\pQue tal esta MT pro seu\nPOKéMON?$
+
+[VerdanturfTown_BattleTentLobby_Text_AttractionMutual] 3d2172ac5d
+O que sinto pelos meus POKéMON…\nTenho certeza de que é recíproco!\pEles batalham exatamente do jeito\nque eu quero!$
+
+[VerdanturfTown_BattleTentLobby_Text_TaughtWhatKindsOfMoves] 4efc7c09a7
+Que tipo de golpe você ensinou\npros seus POKéMON?\pAcho que você leva vantagem se eles\nsouberem se curar ou se proteger.$
+
+[VerdanturfTown_BattleTentLobby_Text_ScottCanMeetToughTrainers] 29261617c7
+SCOTT: E aí, {PLAYER}{KUN}!\nAchei que ia te ver aqui.\pA TENDA DE BATALHA é um lugar onde\nvocê encontra TREINADORES fortes.\pNão importa quais são as regras,\nnem como são as batalhas.\p{PLAYER}{KUN}, espero que você dê\no seu melhor!$
+
+[VerdanturfTown_BattleTentLobby_Text_ScottVisitRegularly] f4411ad4b7
+SCOTT: Venho aqui sempre, na esperança\nde ver TREINADORES fortes em ação,\lseja qual for a situação.$

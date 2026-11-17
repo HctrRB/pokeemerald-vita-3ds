@@ -1,0 +1,77 @@
+[SlateportCity_OceanicMuseum_2F_Text_ThankYouForTheParts] 6ec8b551d6
+Sim? Se está procurando o STERN,\nsou eu mesmo.\pAh! Devem ser as peças que encomendei\ndo SR. STONE, da DEVON.\pObrigado! Que ótimo!\nAgora podemos preparar a expedição.$
+
+[SlateportCity_OceanicMuseum_2F_Text_WellTakeThoseParts] d4eccd2026
+Hehehe, alto lá!\nEssas peças são nossas!$
+
+[SlateportCity_OceanicMuseum_2F_Text_SternWhoAreYou] 211bdd8ca1
+CAP. STERN: O-o quê?\nQuem são vocês?$
+
+[SlateportCity_OceanicMuseum_2F_Text_WereTeamAqua] 7fe26240ce
+Somos a EQUIPE AQUA!\pO nosso CHEFE quer essas peças!\nFica quieto e passa pra cá!$
+
+[SlateportCity_OceanicMuseum_2F_Text_Grunt1Defeat] 68b9db38b5
+Aaaaaah!\nUma criança me venceu!$
+
+[SlateportCity_OceanicMuseum_2F_Text_BossGoingToBeFurious] 1188aa4262
+Ai, que desastre…\nO CHEFE vai ficar furioso…$
+
+[SlateportCity_OceanicMuseum_2F_Text_LetMeTakeCareOfThis] d757a2d53f
+Hunf, seu bunda-mole chorão!\nDeixa que eu cuido disso!$
+
+[SlateportCity_OceanicMuseum_2F_Text_Grunt2Defeat] 06a736fbed
+O quê?!\nEu também perdi!$
+
+[SlateportCity_OceanicMuseum_2F_Text_MeddlingKid] 1abf2681b3
+E agora? Se a gente não pegar as peças,\nvai sobrar pra gente!\pArgh, não contava com uma criança\nenxerida se metendo!$
+
+[SlateportCity_OceanicMuseum_2F_Text_CameToSeeWhatsTakingSoLong] 46087518b6
+Vim ver por que estava demorando tanto\npra pegar umas peças, e vocês,\lmolengas, travados por uma criança?$
+
+[SlateportCity_OceanicMuseum_2F_Text_ArchieWarning] 03e015637d
+Nós somos a EQUIPE AQUA,\ne amamos o mar!\pE eu sou o líder da EQUIPE AQUA,\nARCHIE!\pPor que você se mete com a gente?\p…Não! Não pode ser!\nVocê é da EQUIPE MAGMA?\pEspera, isso não faz sentido.\nEssa roupa não é de lá.\p… … … … … …\n… … … … … …\pPOKéMON, pessoas… Toda a vida\ndepende do mar.\pPor isso, a EQUIPE AQUA se dedica\na expandir o mar.\pNão concorda? O que fazemos é\numa obra magnífica.\pAh, tudo bem…\nVocê ainda é jovem demais pra entender\lo nosso nobre objetivo.\pMas eu aviso: nem pense em\natrapalhar os nossos planos de novo.\pAs consequências vão sair\ncaro pra você!\pE não se esqueça disso!$
+
+[SlateportCity_OceanicMuseum_2F_Text_SternThankYouForSavingUs] 7813d999cd
+CAP. STERN: Você é…\nAh, claro, você é {PLAYER}{KUN}…\pEnfim, que situação tensa!\nObrigado por nos salvar!\pAh, é, quase esqueci que você\nainda trouxe as peças da DEVON!$
+
+[SlateportCity_OceanicMuseum_2F_Text_SternIveGotToGo] 5471c13519
+CAP. STERN: Opa!\nNão há tempo a perder!\pTemos que partir pra nossa expedição\nao fundo do mar logo, logo.\pObrigado de novo, mas agora\npreciso ir!\pMas fique à vontade pra passear e\nconhecer as nossas instalações.$
+
+[SlateportCity_OceanicMuseum_2F_Text_RemindsMeOfAbandonedShip] 8935d9fce1
+Vi uma maquete de navio aqui.\pMe lembrou do NAVIO ABANDONADO\nperto da CIDADE DE DEWFORD…$
+
+[SlateportCity_OceanicMuseum_2F_Text_DontRunInMuseum] 908e2d7343
+Nem pense em sair correndo dentro\ndo MUSEU!$
+
+[SlateportCity_OceanicMuseum_2F_Text_WantToRideSubmarine] ad663f9429
+Uau, o submarino é demais!\nQuero dar uma volta nele!$
+
+[SlateportCity_OceanicMuseum_2F_Text_WaterQualitySample1] 074c2bae67
+“AMOSTRA DE ÁGUA 1”, diz a\netiqueta.\pO mar é todo ligado, mas a água\nparece mudar de região pra região.$
+
+[SlateportCity_OceanicMuseum_2F_Text_WaterQualitySample2] d70e5c124d
+“AMOSTRA DE ÁGUA 2”, diz a\netiqueta.\pSerá que o sal do mar também muda\nde região pra região?$
+
+[SlateportCity_OceanicMuseum_2F_Text_PressureExperiment] 47515ac721
+Uma bola de borracha estica e\nencolhe.\p“No mar, o próprio peso da água\nfaz pressão.\p“Em águas rasas, a pressão não\né muito forte.\p“Mas, em águas muito profundas, a\npressão chega a dezenas de milhares\lde toneladas numa área pequena.”$
+
+[SlateportCity_OceanicMuseum_2F_Text_HoennModel] bea49b0843
+“MAQUETE DA REGIÃO DE HOENN”\pÉ uma miniatura da região\nde HOENN.\pOnde fica a CIDADE DE LITTLEROOT aqui?$
+
+[SlateportCity_OceanicMuseum_2F_Text_DeepSeawaterDisplay] 794a2f619d
+É uma exposição sobre o fluxo da água\ndo mar.\p“Perto do fundo do mar, a água corre\npor causa de diferenças de\ltemperatura e salinidade.”$
+
+[SlateportCity_OceanicMuseum_2F_Text_SurfaceSeawaterDisplay] 84d714c49c
+É uma exposição sobre o fluxo da água\ndo mar.\p“Perto da superfície, a água do mar\ncorre em correntes levadas pelo vento.”$
+
+[SlateportCity_OceanicMuseum_2F_Text_SSTidalReplica] db4a6f1184
+“A BALSA S.S. TIDAL\p“Réplica em escala do navio em\nconstrução no ESTALEIRO DO STERN.”$
+
+[SlateportCity_OceanicMuseum_2F_Text_SubmarineReplica] bab17d01a9
+“SUBMARINO EXPLORADOR 1\p“Réplica do submarino potente\npara explorar o fundo do mar.”$
+
+[SlateportCity_OceanicMuseum_2F_Text_SumbersibleReplica] 7344af7222
+“CÁPSULA SUBMERSÍVEL\p“Réplica de uma cápsula compacta e não\ntripulada para explorar o fundo do mar.”$
+
+[SlateportCity_OceanicMuseum_2F_Text_SSAnneReplica] d3b81eb9fd
+“S.S. ANNE\p“Réplica do navio de luxo que dá\na volta ao mundo.”$

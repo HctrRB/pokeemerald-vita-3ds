@@ -1,0 +1,8 @@
+[RustboroCity_CuttersHouse_Text_YouCanPutThisHMToGoodUse] ec8af25e0d
+Essa cara de determinação…\nEsse jeito ágil de se mexer…\lE os seus POKéMON bem treinados…\pDá pra ver que você treina POKéMON\ncom talento!\pNão, espera, não diga nada.\nSó de olhar eu já sei.\pTenho certeza de que você vai saber\nusar bem esta MÁQUINA OCULTA.\pNada de modéstia ou vergonha.\nVai, pode pegar!$
+
+[RustboroCity_CuttersHouse_Text_ExplainCut] e7ba0d8cee
+Essa MÁQUINA OCULTA, ou MO, tem\no golpe CORTAR.\pUm golpe de MO pode ser usado pelos\nPOKéMON fora das batalhas.\pQualquer POKéMON que aprendeu CORTAR\nderruba árvores finas, se você já\ltiver a INSÍGNIA DA PEDRA.\pE, diferente de uma MT, uma MO pode\nser usada mais de uma vez.$
+
+[RustboroCity_CuttersHouse_Text_DadHelpedClearLandOfTrees] 87450fdb03
+Quando estavam aumentando a cidade de\nRUSTBORO, meu pai ajudou.\pEle fez os POKéMON dele usarem CORTAR\npra limpar as árvores do terreno.$

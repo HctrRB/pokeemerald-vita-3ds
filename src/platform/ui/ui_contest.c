@@ -85,7 +85,7 @@ bool UiContest_Draw(void)
     // The move under the cursor: appeal and jam hearts, effect
     const u16 move = Contest_UiMove(cur);
     UiW_Panel(644, PANEL_Y, 300, 188);
-    snprintf(buf, sizeof(buf), "APPEAL %u", (unsigned)Contest_UiAppealNumber() + 1);
+    snprintf(buf, sizeof(buf), UiLocale_Translate("APPEAL %u"), (unsigned)Contest_UiAppealNumber() + 1);
     UiText_Draw(UI_FACE_PS2P, 16, 660, PANEL_Y + 14, buf, UI_COL_INK);
     UiText_Draw(UI_FACE_PS2P, 16, 660, PANEL_Y + 42, "AP", UI_COL_INK_SOFT);
     DrawHearts(704, PANEL_Y + 44, Hearts(gContestEffects[gContestMoves[move].effect].appeal), 8, UI_COL_HP_LOW);

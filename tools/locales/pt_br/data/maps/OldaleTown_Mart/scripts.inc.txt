@@ -1,0 +1,8 @@
+[OldaleTown_Mart_Text_PokeBallsAreSoldOut] 4164750046
+O atendente disse que esgotaram.\nNão consigo comprar POKé BOLAS.$
+
+[OldaleTown_Mart_Text_ImGoingToBuyPokeBalls] a8f2f57aad
+Vou comprar um monte de POKé BOLAS\ne capturar um monte de POKéMON!$
+
+[OldaleTown_Mart_Text_RestoreHPWithPotion] 4e209fa127
+Se um POKéMON se machuca, perde PS\ne desmaia, ele não pode batalhar.\pPara o seu POKéMON não desmaiar,\nrecupere os PS dele com uma POÇÃO.$
