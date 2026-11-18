@@ -304,6 +304,7 @@ void Ui_Tick(void)
         // Overlays while no screen is open: zone sign and the mirrors of the game's windows
         static bool sOverlayShown;
         UiDraw_Begin();
+        UiSpr_BeginTick();
         bool any = UiSign_Draw();
         // Contest appeal choice first: it owns this tick's tap (ui_contest.c)
         const bool contest = UiContest_Draw();

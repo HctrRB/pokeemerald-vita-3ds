@@ -2787,8 +2787,11 @@ bool8 Decoration_PictureForUi(u8 decor, u8 *tiles, u16 *palette, u8 *w, u8 *h)
 
     if (decor == DECOR_NONE || decor > NUM_DECORATIONS)
         return FALSE;
-    if (gDecorIconTable[decor][0] != NULL)
+    if (gDecorIconTable[decor][0] != NULL && gDecorIconTable[decor][1] != NULL)
     {
+        if (GetDecompressedDataSize(gDecorIconTable[decor][0]) > 0x800
+            || GetDecompressedDataSize(gDecorIconTable[decor][1]) > 16 * sizeof(u16))
+            return FALSE;
         LZ77UnCompWram(gDecorIconTable[decor][0], tiles);
         LZ77UnCompWram(gDecorIconTable[decor][1], palette);
         *w = 24;
@@ -2815,7 +2818,8 @@ bool8 Decoration_PictureForUi(u8 decor, u8 *tiles, u16 *palette, u8 *w, u8 *h)
         extern const u16 *ObjectEvent_PaletteDataForUi(u16 tag);
         const struct ObjectEventGraphicsInfo *info = GetObjectEventGraphicsInfo(gDecorations[decor].tiles[0]);
         const u16 *pal;
-        if (info == NULL || info->images == NULL || info->width > 64 || info->height > 64)
+        if (info == NULL || info->images == NULL || info->images[0].data == NULL
+            || info->width > 64 || info->height > 64 || info->images[0].size > 0x800)
             return FALSE;
         pal = ObjectEvent_PaletteDataForUi(info->paletteTag);
         if (pal == NULL)

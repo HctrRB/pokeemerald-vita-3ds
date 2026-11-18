@@ -34,6 +34,25 @@ extern bool8 Decoration_PictureForUi(u8 decor, u8 *tiles, u16 *palette, u8 *w, u
 extern void MapNamePopUp_GfxForUi(u8 theme, bool8 underwater, const u8 **inner, const u8 **outline, const u16 **palette);
 static inline uint16_t To5551(uint16_t bgr);
 
+#define LZ77_MAGIC 0x10u
+#define UI_WALL_ICON_OFFSET 0x800u
+#define UI_MON_PIC_MAX_FRAMES 4 // Castform and 6 other front sheets in gMonStillFrontPicTable store 4 64x64 frames (8192 B)
+
+// Decompresses an LZ77 block only when its header is valid and its uncompressed size fits in dstCap.
+static bool UnpackLz(const u32 *src, void *dst, uint32_t dstCap)
+{
+    if (src == NULL || dst == NULL)
+        return false;
+    const uint32_t header = src[0];
+    if ((header & 0xFFu) != LZ77_MAGIC)
+        return false;
+    const uint32_t size = header >> 8;
+    if (size == 0u || size > dstCap)
+        return false;
+    LZ77UnCompWram(src, dst);
+    return true;
+}
+
 // PC box wallpaper (160 x 144), composed once as DrawWallpaper puts it on BG2 and cut into 3 x 3
 // cells. Tilemap entries use palette 1 (frame) and 2 (background); colour 0 is transparent.
 #define WALL_W 160
@@ -50,10 +69,10 @@ static void ComposeWallpaper(int32_t id)
     memset(tiles, 0, sizeof(tiles));
     memset(tmap, 0, sizeof(tmap));
     PokeStorage_WallpaperForUi((u8)id, &tilesLz, &mapLz, pal32, &iconLz);
-    LZ77UnCompWram(tilesLz, tiles);
-    if (iconLz != NULL)
-        LZ77UnCompWram(iconLz, tiles + 0x800);
-    LZ77UnCompWram(mapLz, tmap);
+    if (!UnpackLz(tilesLz, tiles, sizeof(tiles)) || !UnpackLz(mapLz, tmap, sizeof(tmap)))
+        return;
+    if (iconLz != NULL && !UnpackLz(iconLz, tiles + UI_WALL_ICON_OFFSET, sizeof(tiles) - UI_WALL_ICON_OFFSET))
+        return;
     uint16_t pal[2][16];
     for (int32_t p = 0; p < 2; p++)
         for (int32_t i = 0; i < 16; i++)
@@ -108,15 +127,12 @@ static void ComposeMail(int32_t mailType)
 {
     static uint8_t tiles[0x2000];
     static uint16_t tmap[32 * 32];
-    const u32 *tilesLz, *mapLz;
+    const u32 *tilesLz = NULL, *mapLz = NULL;
     uint16_t bgr[16], pal[16];
     Mail_StationeryForUi((u8)mailType, &tilesLz, &mapLz, bgr);
-    // the decompressed size is in the LZ77 header (bytes 1-3)
-    const uint32_t tilesSize = ((const uint32_t *)tilesLz)[0] >> 8;
-    if (tilesSize > sizeof(tiles))
+    if (!UnpackLz(tilesLz, tiles, sizeof(tiles)) || !UnpackLz(mapLz, tmap, sizeof(tmap)))
         return;
-    LZ77UnCompWram(tilesLz, tiles);
-    LZ77UnCompWram(mapLz, tmap);
+    const uint32_t tilesSize = tilesLz[0] >> 8;
     for (int32_t i = 0; i < 16; i++)
         pal[i] = To5551(bgr[i]);
     const uint16_t backdrop = pal[0];
@@ -193,6 +209,7 @@ enum { KIND_MON_ICON = 1, KIND_MON_FRONT, KIND_MON_FRONT_SHINY, KIND_ITEM, KIND_
 // ---------- Core 1: cache ----------
 static uint32_t sCellKey[UI_CELL_COUNT];       // 0 = free
 static uint32_t sCellUsed[UI_CELL_COUNT];      // tick of the last list that drew it
+static uint32_t sCellUpload[UI_CELL_COUNT];    // ring head index (sHead + 1) of the cell's latest upload
 static uint32_t sTick;
 static uint32_t sDecodes, sDecodesLast;
 
@@ -217,6 +234,8 @@ static inline uint16_t To5551(uint16_t bgr)
 static void Tiles4bpp(uint16_t *dst, int32_t x0, int32_t y0, const uint8_t *tiles, int32_t tilesW, int32_t tilesH,
                       const uint16_t *bgrPal)
 {
+    if (x0 < 0 || y0 < 0 || tilesW <= 0 || tilesH <= 0 || x0 + tilesW * 8 > UI_CELL || y0 + tilesH * 8 > UI_CELL)
+        return;
     uint16_t pal[16];
     pal[0] = 0;
     for (int32_t i = 1; i < 16; i++)
@@ -246,6 +265,8 @@ static bool Decode(uint32_t key, uint16_t *dst)
     {
     case KIND_MON_ICON:
     {
+        if (id == SPECIES_NONE || id > SPECIES_EGG)
+            return false;
         // 32x64: frame 0 at the top, frame 1 below (the two-frame party bounce)
         const uint8_t *tiles = gMonIconTable[id];
         const uint16_t *pal = GetValidMonIconPalettePtr(id);
@@ -258,12 +279,14 @@ static bool Decode(uint32_t key, uint16_t *dst)
     case KIND_MON_FRONT:
     case KIND_MON_FRONT_SHINY:
     {
-        static uint8_t tiles[64 * 64 / 2 * 2];
-        static uint16_t pal[16 * 16];
-        if (gMonStillFrontPicTable[id].data == NULL)
+        if (id == SPECIES_NONE || id > SPECIES_EGG)
             return false;
-        LZ77UnCompWram(gMonStillFrontPicTable[id].data, tiles);
-        LZ77UnCompWram((kind == KIND_MON_FRONT_SHINY ? gMonShinyPaletteTable : gMonPaletteTable)[id].data, pal);
+        static uint8_t tiles[(UI_CELL * UI_CELL / 2) * UI_MON_PIC_MAX_FRAMES];
+        static uint16_t pal[16 * 16];
+        const u32 *picLz = gMonStillFrontPicTable[id].data;
+        const u32 *palLz = (kind == KIND_MON_FRONT_SHINY ? gMonShinyPaletteTable : gMonPaletteTable)[id].data;
+        if (!UnpackLz(picLz, tiles, sizeof(tiles)) || !UnpackLz(palLz, pal, sizeof(pal)))
+            return false;
         Tiles4bpp(dst, 0, 0, tiles, 8, 8, pal);
         return true;
     }
@@ -271,11 +294,10 @@ static bool Decode(uint32_t key, uint16_t *dst)
     {
         static uint8_t tiles[512];
         static uint16_t pal[16];
-        const void *pic = GetItemIconPicOrPalette(id, 0), *palGfx = GetItemIconPicOrPalette(id, 1);
-        if (pic == NULL || palGfx == NULL)
+        const u32 *pic = (const u32 *)GetItemIconPicOrPalette(id, 0);
+        const u32 *palGfx = (const u32 *)GetItemIconPicOrPalette(id, 1);
+        if (!UnpackLz(pic, tiles, sizeof(tiles)) || !UnpackLz(palGfx, pal, sizeof(pal)))
             return false;
-        LZ77UnCompWram(pic, tiles);                 // 3x3 tiles (24x24)
-        LZ77UnCompWram(palGfx, pal);
         Tiles4bpp(dst, 0, 0, tiles, 3, 3, pal);
         return true;
     }
@@ -284,16 +306,16 @@ static bool Decode(uint32_t key, uint16_t *dst)
         static uint8_t tiles[64 * 64 / 2];
         static uint16_t pal[16];
         if (id > TRAINER_PIC_RS_MAY
-            || gTrainerFrontPicTable[id].data == NULL
-            || gTrainerFrontPicPaletteTable[id].data == NULL)
+            || !UnpackLz(gTrainerFrontPicTable[id].data, tiles, sizeof(tiles))
+            || !UnpackLz(gTrainerFrontPicPaletteTable[id].data, pal, sizeof(pal)))
             return false;
-        LZ77UnCompWram(gTrainerFrontPicTable[id].data, tiles);
-        LZ77UnCompWram(gTrainerFrontPicPaletteTable[id].data, pal);
         Tiles4bpp(dst, 0, 0, tiles, 8, 8, pal);
         return true;
     }
     case KIND_FOOTPRINT:
     {
+        if (id == SPECIES_NONE || id >= NUM_SPECIES)
+            return false;
         // 16x16, 1bpp in 2x2 tiles of 8 bytes (bit 0 = leftmost pixel); white, tinted when drawn
         const uint8_t *fp = gMonFootprintTable[id];
         if (fp == NULL)
@@ -311,6 +333,8 @@ static bool Decode(uint32_t key, uint16_t *dst)
         const int32_t wid = id >> 4, part = id & 15;
         if (wid != sWallId)
             ComposeWallpaper(wid);
+        if (wid != sWallId)
+            return false;
         const int32_t x0 = (part % 3) * UI_CELL, y0 = (part / 3) * UI_CELL;
         for (int32_t y = 0; y < UI_CELL && y0 + y < WALL_H; y++)
             for (int32_t x = 0; x < UI_CELL && x0 + x < WALL_W; x++)
@@ -364,6 +388,7 @@ static bool Decode(uint32_t key, uint16_t *dst)
 // Cell holding `key`, decoding it on a miss; -1 when it cannot be shown this tick.
 static int32_t Lookup(uint32_t key)
 {
+    const uint32_t tail = __atomic_load_n(&sTail, __ATOMIC_ACQUIRE);
     int32_t freeCell = -1, oldest = -1;
     for (int32_t c = 0; c < UI_CELL_COUNT; c++)
     {
@@ -377,15 +402,15 @@ static int32_t Lookup(uint32_t key)
             if (freeCell < 0)
                 freeCell = c;
         }
-        else if (oldest < 0 || sCellUsed[c] < sCellUsed[oldest])
+        else if ((int32_t)(tail - sCellUpload[c]) >= 0
+                 && (oldest < 0 || sCellUsed[c] < sCellUsed[oldest]))
             oldest = c;
     }
-    // A free cell, else the least recently drawn one if no recent list can still be using it
+    // A free cell, else the least recently drawn one once Core 0 has flushed it and no recent list uses it
     const int32_t victim = freeCell >= 0 ? freeCell
                          : (oldest >= 0 && sTick - sCellUsed[oldest] >= UI_SPR_IDLE_TICKS) ? oldest : -1;
     if (victim < 0 || sDecodes >= UI_SPR_DECODES_PER_TICK)
         return -1;
-    const uint32_t tail = __atomic_load_n(&sTail, __ATOMIC_ACQUIRE);
     if (sHead - tail >= UI_SPR_RING)
         return -1;                                   // Core 0 has not drawn for a while: wait
     UiSprUpload *up = &sRing[sHead % UI_SPR_RING];
@@ -393,9 +418,11 @@ static int32_t Lookup(uint32_t key)
     if (!Decode(key, up->pixels))
         return -1;
     up->cell = (uint16_t)victim;
-    __atomic_store_n(&sHead, sHead + 1, __ATOMIC_RELEASE);
+    const uint32_t nextHead = sHead + 1;
+    __atomic_store_n(&sHead, nextHead, __ATOMIC_RELEASE);
     sCellKey[victim] = key;
     sCellUsed[victim] = sTick;
+    sCellUpload[victim] = nextHead;
     return victim;
 }
 
@@ -569,6 +596,8 @@ void UiSpr_FlushUploads(void)
     for (; tail != head; tail++)
     {
         const UiSprUpload *up = &sRing[tail % UI_SPR_RING];
+        if (up->cell >= UI_CELL_COUNT)
+            continue;
         const uint32_t cx = (uint32_t)(up->cell % UI_CELL_COLS) * UI_CELL;
         const uint32_t cy = UI_DYN_Y + (uint32_t)(up->cell / UI_CELL_COLS) * UI_CELL;
         if (texels != NULL)
