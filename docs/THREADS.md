@@ -42,6 +42,7 @@ touching anything that crosses threads.
 | New UI draw list `UiDrawList` (`src/platform/ui/ui_draw.c`) | Core 1, `Ui_Tick` | Core 0, `Ui_Render` | Triple buffer, index exchanged with `__atomic_exchange_n` |
 | New UI run-time sprites (`ui_sprites.c`): cell cache and staging ring | Core 1 decodes into the ring (head) | Core 0 writes the cells into the UI texture (tail) | Single-producer / single-consumer ring with release / acquire counters; the head is published before the list that uses it. A cell is reused only after 16 ticks without being drawn |
 | Voxel world state a chunk build reads or writes: map instances, lighting caches, building caches, mesh builder window, `sScratch`, `sChunkStaging`, atlas maps | Core 0, and `VoxelChunkWorker` while a job runs | Core 0, Core 1 (entity snapshot reads instances, relief, decks) | A window, not a lock: see "The chunk worker" |
+| Game boot snapshot (`gamedata`, `gamebss` in `vita_reset.c`) | Core 1 (`SoftReset` in `sdl2.c`) | Core 0, Core 1, Core 2 | Two-way atomic barrier (`sResetInProgress` / `sCore0PausedForReset`): Core 0 calls `VoxelRenderer_OnReset()` (`ChunkWorker_Join()`) and parks before Core 1 overwrites `gamedata`/`gamebss` |
 
 ## Rules
 

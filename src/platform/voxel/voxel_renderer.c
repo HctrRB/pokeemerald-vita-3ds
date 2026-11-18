@@ -8235,5 +8235,24 @@ void VoxelRenderer_SwapBuffers(void)
         ChunkWorker_Launch();
 }
 
+void VoxelRenderer_OnReset(void)
+{
+    ChunkWorker_Join();
+    sWorkerBusyThisFrame = false;
+    AtlasExtend_Cancel();
+    sMeshMapGroup = -1;
+    sMeshMapNum = -1;
+    sPreviousOriginCount = 0;
+    sNeedCameraSnap = true;
+    sBattleState.begun = false;
+    sBattleState.chosen = false;
+    sBattleFx.active = false;
+    sBattleFx.flashTimer = 0.0f;
+    sBattleFx.shakeTimer = 0.0f;
+    sMenuBgValid = false;
+    InvalidateChunkCache();
+    VoxelEntities_Reset();
+}
+
 #endif // VOXEL_SUPPORTED || PLATFORM_VITA || NATIVE_LINUX
 #endif // PLATFORM_SDL2

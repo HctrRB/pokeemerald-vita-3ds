@@ -32,6 +32,11 @@ void Ui_HideZoneSign(void)
         sTicks = SLIDE;
 }
 
+void UiSign_Reset(void)
+{
+    sTicks = 0;
+}
+
 // Core 1, from Ui_Tick while no screen is open: draws into the list being built
 bool UiSign_Draw(void)
 {

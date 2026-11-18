@@ -20,6 +20,9 @@ bool Ui_IsEnabled(void);
 // Core 1, once per game frame from VBlankIntrWait: input, screens, actions, publishes the list.
 void Ui_Tick(void);
 
+// Core 1, during SoftReset(): clears open screens, zone signs and draw lists before reboot.
+void Ui_OnReset(void);
+
 // Core 1: START in the field opens the hub (else the game's START menu: link and Union rooms,
 // the Battle Pike and Pyramid, or no UI atlas).
 bool Ui_OwnsFieldStart(void);

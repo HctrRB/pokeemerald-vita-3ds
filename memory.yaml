@@ -87,3 +87,14 @@ ext_palettes:
     (`PALSLOT_NPC_1`, OBJ slot 2) in fades (`palette.c`) and weather (`field_weather.c`).
   - `DrawFrame` latches `gPlttExt` and `gOamExt` once per frame (they only change in VBlank),
     with zero overhead when `gPlttExtInUse == 0`.
+
+soft_reset:
+  - `vita-elf-create` drops relocations whose target address equals a segment's `p_vaddr + p_memsz`
+    (`addr < p_vaddr + p_memsz`). Because `gamebss` is the last section in the RW segment,
+    `vita_reset.c` keeps a 4-byte sentinel in `.noinit` (placed after `gamebss`) so `__stop_gamebss`
+    is strictly inside the segment and always relocated in `.sce.rel`.
+  - `SoftReset()` (`sdl2.c`) parks Core 0 via `sResetInProgress` / `sCore0PausedForReset` (Core 0 runs
+    `VoxelRenderer_OnReset()` -> `ChunkWorker_Join()` to idle Core 2 and invalidate chunk/entity caches)
+    before Core 1 calls `Ui_OnReset()` and `VitaReset_RestoreBootSnapshot()`.
+  - `rfu_REQ_stopMode()` / `rfu_waitREQComplete()` in `AgbMain` and `link.c` are guarded by
+    `#ifndef PORTABLE` because `InitRFU()` is skipped on portable builds (`gSTWIStatus == NULL`).

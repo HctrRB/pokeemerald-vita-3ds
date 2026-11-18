@@ -80,8 +80,10 @@ another checkout path; for a clean rebuild delete `build-vita/`.
    The decomp relies on type punning and signed overflow, hence the last two flags.
 4. Assembles `data/*.s` and the songs into one `game_data.o` (`.rodata` renamed to `.data`
    because it holds pointers).
-5. Links the game side into `game_combined.o` with its `.data`/`.bss` renamed, so all game
-   state sits between known symbols and `vita_reset.c` can restore a power-on copy for resets.
+5. Links the game side into `game_combined.o` with its `.data`/`.bss` renamed (`gamedata`/`gamebss`), so all game
+   state sits between known symbols and `vita_reset.c` can restore a power-on copy for resets. `vita_reset.c` places
+   a 4-byte sentinel in `.noinit` (after `gamebss`) so `__stop_gamebss` stays strictly below the RW segment's
+   `p_vaddr + p_memsz` and its relocations are preserved in `.sce.rel` by `vita-elf-create`.
 6. Links through `vita/vita_link.sh` (pads the code segment for `vita-elf-create`).
 7. `vita_create_self(... UNSAFE)` (the app writes `ux0:data/`), then `vita-mksfoex` and
    `vita-pack-vpk` called directly (`vita_create_vpk` breaks on paths with spaces).

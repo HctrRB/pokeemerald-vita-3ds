@@ -365,6 +365,7 @@ void UiNav_Pop(void);
 void UiNav_Close(void (*afterClose)(void));   // closes the UI, then runs afterClose (may be NULL) in the field
 void UiCore_OpenScreen(const UiScreen *screen);
 bool UiSign_Draw(void);                         // ui_sign.c: zone sign overlay while no screen is open
+void UiSign_Reset(void);
 bool UiMirror_Draw(void);                       // ui_mirror.c: field windows (dialogue, YES / NO)
 void UiCore_OpenHosted(const UiScreen *screen, void (*afterClose)(void));   // the UI replaces a whole GBA scene (see ui_core.c)
 bool UiCore_IsHostCallback(void);

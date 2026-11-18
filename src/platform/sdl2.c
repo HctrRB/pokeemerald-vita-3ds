@@ -181,6 +181,11 @@ static void RenderGameTexture(void);
 static uint16_t sFrameImage[FRAME_LINE_WIDTH * DISPLAY_HEIGHT];
 // Set by the port menu; the game thread resets itself when it next wakes up.
 static SDL_atomic_t sResetRequested;
+// Handshake between Core 1 (SoftReset) and Core 0 (main render loop) so Core 0 and Core 2
+// are idle while Core 1 overwrites gamedata/gamebss with the boot snapshot.
+static SDL_atomic_t sResetInProgress;
+static SDL_atomic_t sCore0PausedForReset;
+static bool sMaskSoftResetChord;
 // SoftReset() jumps back to the start of the game thread.
 static jmp_buf sGameResetJump;
 static bool sGameResetJumpValid;
@@ -531,6 +536,24 @@ int main(int argc, char **argv)
 
     while (isRunning)
     {
+        if (SDL_AtomicGet(&sResetInProgress))
+        {
+#ifdef VOXEL_SUPPORTED
+            VoxelRenderer_OnReset();
+#endif
+            __atomic_store_n(&gUiVoxelFrame, false, __ATOMIC_RELAXED);
+            SDL_AtomicSet(&sCore0PausedForReset, 1);
+            while (isRunning && SDL_AtomicGet(&sResetInProgress))
+                VitaPlatform_DelayMicroseconds(200);
+            while (sFrameReadySem != NULL && SDL_SemTryWait(sFrameReadySem) == 0)
+            {
+            }
+            accumulator = 0.0;
+            lastGameTime = SDL_GetPerformanceCounter();
+            SDL_AtomicSet(&sCore0PausedForReset, 0);
+            continue;
+        }
+
         ProcessEvents();
 
         {
@@ -571,11 +594,15 @@ int main(int argc, char **argv)
                 const int32_t ticksNeeded = is30FpsLocked ? 2 : 1;
                 for (int32_t got = 0; got < ticksNeeded;)
                 {
+                    if (SDL_AtomicGet(&sResetInProgress))
+                        break;
                     // A game that stops posting (a long load) still gets a frame every 50 ms.
                     if (SDL_SemWaitTimeout(sFrameReadySem, 50) != 0)
                         break;
                     got++;
                 }
+                if (SDL_AtomicGet(&sResetInProgress))
+                    continue;
                 // Frames posted while the last one rendered are behind us: draw the latest.
                 while (SDL_SemTryWait(sFrameReadySem) == 0)
                 {
@@ -608,14 +635,18 @@ int main(int argc, char **argv)
 
             while (accumulator >= dt)
             {
+                if (SDL_AtomicGet(&sResetInProgress))
+                    break;
                 VitaPerf_BeginFrame();
                 if (!voxelActive && !SDL_AtomicGet(&isFrameAvailable))
                 {
                     if (sFrameReadySem != NULL)
                         SDL_SemWaitTimeout(sFrameReadySem, 35);
-                    if (!SDL_AtomicGet(&isFrameAvailable))
+                    if (SDL_AtomicGet(&sResetInProgress) || !SDL_AtomicGet(&isFrameAvailable))
                         break;
                 }
+                if (SDL_AtomicGet(&sResetInProgress))
+                    break;
                 while (sFrameReadySem != NULL && SDL_SemTryWait(sFrameReadySem) == 0)
                 {
                 }
@@ -1020,7 +1051,7 @@ void ProcessEvents(void)
             case SDLK_r:
                 if (event.key.keysym.mod & (KMOD_LCTRL | KMOD_RCTRL))
                 {
-                    DoSoftReset();
+                    VitaPlatform_RequestReset();
                 }
                 break;
             case SDLK_p:
@@ -1046,13 +1077,26 @@ void ProcessEvents(void)
 
 u16 Platform_GetKeyInput(void)
 {
+    // Read straight from sceCtrl on the game thread. START in the field opens the new UI's menu
+    // (Ui_Tick); the game's own START menu is used where its entries are special (Ui_OwnsFieldStart).
+    uint16_t keys = VitaControls_MapButtons(VitaPlatform_ReadButtons()) | Ui_TakeInjectedKeys();
+    const uint16_t resetChord = A_BUTTON | B_BUTTON | START_BUTTON | SELECT_BUTTON;
+    if (sMaskSoftResetChord)
+    {
+        if ((keys & resetChord) == resetChord)
+            keys &= ~(START_BUTTON | SELECT_BUTTON);
+        else
+            sMaskSoftResetChord = false;
+    }
+    else if ((keys & resetChord) == resetChord)
+    {
+        return keys;
+    }
+
     // While a screen of the new UI is open the game gets no keys
     if (Ui_ConsumesInput())
         return 0;
 
-    // Read straight from sceCtrl on the game thread. START in the field opens the new UI's menu
-    // (Ui_Tick); the game's own START menu is used where its entries are special (Ui_OwnsFieldStart).
-    uint16_t keys = VitaControls_MapButtons(VitaPlatform_ReadButtons()) | Ui_TakeInjectedKeys();
     extern void CB2_Overworld(void);
     if (gMain.callback2 == CB2_Overworld && Ui_OwnsFieldStart())
         keys &= ~START_BUTTON;
@@ -1347,16 +1391,35 @@ void Platform_SetAlarm(u8 *alarmData)
 
 void SoftReset(u32 resetFlags)
 {
-    // Power cycle: all game memory back to its boot state, the save file (which the port menu
-    // may have switched) read again, and the game thread restarted. Runs on the game thread;
-    // the main thread doesn't touch game memory until the game waits for VBlank again.
-    if (sGameResetJumpValid && VitaReset_RestoreBootSnapshot())
+    // Power cycle: park Core 0 (which also joins Core 2's chunk worker), restore all game memory
+    // back to its boot state, re-read the save file (which the options screen may have switched),
+    // and restart the game thread.
+    if (sGameResetJumpValid)
     {
-        CloseSaveFile();
-        VitaControls_GetSavePath(sSavePath, sizeof(sSavePath));
-        ReadSaveFile(sSavePath);
-        SDL_ClearQueuedAudio(sdlAudioDevice);
-        longjmp(sGameResetJump, 1);
+        SDL_AtomicSet(&sResetInProgress, 1);
+        if (sFrameReadySem != NULL)
+            SDL_SemPost(sFrameReadySem);
+        while (isRunning && !SDL_AtomicGet(&sCore0PausedForReset))
+            VitaPlatform_DelayMicroseconds(200);
+
+        Ui_OnReset();
+        const bool restored = VitaReset_RestoreBootSnapshot();
+        if (restored)
+        {
+            CloseSaveFile();
+            VitaControls_GetSavePath(sSavePath, sizeof(sSavePath));
+            ReadSaveFile(sSavePath);
+            SDL_ClearQueuedAudio(sdlAudioDevice);
+            sMaskSoftResetChord = true;
+        }
+
+        SDL_AtomicSet(&isFrameAvailable, 0);
+        SDL_AtomicSet(&sResetInProgress, 0);
+        while (isRunning && SDL_AtomicGet(&sCore0PausedForReset))
+            VitaPlatform_DelayMicroseconds(100);
+
+        if (restored)
+            longjmp(sGameResetJump, 1);
     }
     VITA_LOG("Soft Reset called. Exiting.\n");
     VitaPlatform_Exit();

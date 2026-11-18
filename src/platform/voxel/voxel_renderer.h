@@ -18,6 +18,9 @@ bool VoxelRenderer_RenderFrame(void);
 // Present the rendered 3D frame to the display without common-dialog overhead.
 void VoxelRenderer_SwapBuffers(void);
 
+// Join the chunk worker and invalidate cached world state on Core 0 before a game soft reset.
+void VoxelRenderer_OnReset(void);
+
 // Notify of animated tiles written to BG VRAM (water, waves, flowers)
 void VoxelRenderer_NotifyTilesetAnimWrite(const void *dest, uint32_t bytes);
 

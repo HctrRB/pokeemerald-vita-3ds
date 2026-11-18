@@ -14,7 +14,10 @@ has no screen, or cannot open one, the game's own GBA screen is used:
 - If the UI atlas cannot be loaded, every menu is the game's.
 
 Button mapping, fast forward, always-run and the save path are in
-`src/platform/vita/vita_controls.c`.
+`src/platform/vita/vita_controls.c`. Holding the 4-button soft-reset chord (`A + B + Start + Select`, mapped to
+`X + O + Start + Select` by default) bypasses `Ui_OwnsFieldStart()` and the Hub opening on `START` so soft reset
+works in the overworld as well as on the title screen and in battle (`sMaskSoftResetChord` in `sdl2.c` masks the
+chord after a reset until at least one button is released).
 
 ## New UI (`src/platform/ui/`)
 

@@ -1718,8 +1718,10 @@ static void CB2_PrintErrorMessage(void)
         {
             if (JOY_NEW(A_BUTTON))
             {
+#ifndef PORTABLE
                 rfu_REQ_stopMode();
                 rfu_waitREQComplete();
+#endif
                 DoSoftReset();
             }
         }

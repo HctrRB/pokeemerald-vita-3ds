@@ -294,6 +294,23 @@ static void Close(void)
     UiDraw_Publish(0.0f);
 }
 
+void Ui_OnReset(void)
+{
+    __atomic_store_n(&sOpen, false, __ATOMIC_RELAXED);
+    sDepth = 0;
+    sCloseRequested = false;
+    sFromScript = false;
+    sHosted = false;
+    sAfterClose = NULL;
+    sPrevHeld = ~0u;
+    (void)Ui_TakeInjectedKeys();
+    UiKit_ClearToast();
+    UiSign_Reset();
+    UiStall_Closed();
+    UiDraw_Begin();
+    UiDraw_Publish(0.0f);
+}
+
 void Ui_Tick(void)
 {
     UiBattle_Tick();
@@ -315,7 +332,9 @@ void Ui_Tick(void)
             UiDraw_Publish(0.0f);
         sOverlayShown = any;
         const uint32_t held = VitaPlatform_ReadButtons();
-        const bool startNew = (held & VITA_BTN_START) && !(sPrevHeld & VITA_BTN_START) && sPrevHeld != ~0u;
+        const uint16_t mappedHeld = VitaControls_MapButtons(held);
+        const bool resetPrimer = (mappedHeld & (A_BUTTON | B_BUTTON | SELECT_BUTTON)) == (A_BUTTON | B_BUTTON | SELECT_BUTTON);
+        const bool startNew = !resetPrimer && (held & VITA_BTN_START) && !(sPrevHeld & VITA_BTN_START) && sPrevHeld != ~0u;
         // The options button (OPTIONS > remap, square by default) goes straight to OPTIONS
         const uint32_t menuButton = VitaControls_ActionButton(VITA_ACTION_MENU);
         const bool menuNew = menuButton && (held & menuButton) && !(sPrevHeld & menuButton) && sPrevHeld != ~0u;

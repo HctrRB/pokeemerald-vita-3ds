@@ -7,10 +7,15 @@
 extern char __start_gamedata[], __stop_gamedata[];
 extern char __start_gamebss[], __stop_gamebss[];
 
+// Keep at least 4 bytes in .noinit (placed after gamebss in the linker script) so
+// __stop_gamebss stays strictly below the RW segment's p_vaddr + p_memsz; otherwise
+// vita-elf-create drops the relocation for __stop_gamebss from .sce.rel.
+__attribute__((section(".noinit"), used)) static uint32_t sSegmentEndPad;
+
 static char *sBootSnapshot;
 
-static uint32_t DataSize(void) { return (uint32_t)(__stop_gamedata - __start_gamedata); }
-static uint32_t BssSize(void)  { return (uint32_t)(__stop_gamebss - __start_gamebss); }
+static uint32_t DataSize(void) { return (uint32_t)((&__stop_gamedata[-1] + 1) - __start_gamedata); }
+static uint32_t BssSize(void)  { return (uint32_t)((&__stop_gamebss[-1] + 1) - __start_gamebss); }
 
 void VitaReset_TakeBootSnapshot(void)
 {
