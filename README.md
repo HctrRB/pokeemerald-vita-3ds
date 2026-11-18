@@ -151,6 +151,7 @@ Visual glitches:
 - Terrain generation bugs in some maps (they come from Emerald 3DS). Fixed so far: Route 119
   (its long bridge), Lilycove City and Mirage Island; the rest are being fixed map by map.
 - Black spots on the terrain in some places: holes in the relief mesh that show the background.
+- Fog in caves can look slightly odd across cave elevation changes.
 - Occasional frame drops in dense areas of the 3D overworld.
 
 Stability:

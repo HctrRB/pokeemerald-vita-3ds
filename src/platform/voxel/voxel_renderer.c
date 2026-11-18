@@ -505,7 +505,13 @@ static const FogBank sSandBanks[2] = {
     { 0.95f, -3.2f, 0.9f, 0.66f, 0.43f, 0.29f },
 };
 
-static VoxelGlVertex sFogSheets[2][VOXEL_FOG_BANK_VERTICES];
+static float sFogNodeX[VOXEL_FOG_GRID + 1];
+static float sFogNodeZ[VOXEL_FOG_GRID + 1];
+static float sFogNodeY[VOXEL_FOG_GRID + 1][VOXEL_FOG_GRID + 1];
+static uint8_t sFogNodeEdgeA[VOXEL_FOG_GRID + 1][VOXEL_FOG_GRID + 1];
+static int32_t sFogSnapCellX = 0x7FFFFFFF;
+static int32_t sFogSnapCellZ = 0x7FFFFFFF;
+static bool sFogCacheValid = false;
 
 
 typedef struct
@@ -2265,12 +2271,24 @@ static uint32_t TagAndPartitionTreeSway(VoxelGlVertex *const verts, const uint32
     const float flowerTopV = 1.0f - 112.0f / (float)VOXEL_TREE_TEXTURE_DIM;
     const float flowerMaxU = 32.5f / (float)VOXEL_TREE_TEXTURE_DIM;
 
-    for (uint32_t i = 0; i < count; ++i)
+    for (uint32_t t = 0; t + 2u < count; t += 3u)
     {
-        VoxelGlVertex *const gv = &verts[i];
-        const bool isGrassTop = (fabsf(gv->v - grassTopV) < 0.002f && gv->u >= grassMinU && gv->u <= grassMaxU);
-        const bool isFlowerOrAshTop = (fabsf(gv->v - flowerTopV) < 0.002f && gv->u <= flowerMaxU);
-        gv->a = (isGrassTop || isFlowerOrAshTop) ? 65u : 255u;
+        float minY = verts[t].y, maxY = verts[t].y;
+        for (uint32_t k = 1; k < 3u; ++k)
+        {
+            if (verts[t + k].y < minY) minY = verts[t + k].y;
+            if (verts[t + k].y > maxY) maxY = verts[t + k].y;
+        }
+        // Skip flat ground triangles (which can share UV edges at any map elevation).
+        const bool isStanding = (maxY - minY) >= 0.20f;
+        for (uint32_t k = 0; k < 3u; ++k)
+        {
+            VoxelGlVertex *const gv = &verts[t + k];
+            const bool isTopVert = isStanding && (gv->y - minY) > 0.15f;
+            const bool isGrassTop = isTopVert && (fabsf(gv->v - grassTopV) < 0.002f && gv->u >= grassMinU && gv->u <= grassMaxU);
+            const bool isFlowerOrAshTop = isTopVert && (fabsf(gv->v - flowerTopV) < 0.002f && gv->u <= flowerMaxU);
+            gv->a = (isGrassTop || isFlowerOrAshTop) ? 65u : 255u;
+        }
     }
 
     uint32_t staticCount = 0u;
@@ -3162,42 +3180,7 @@ static void MakeFog(void)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_FOG_DIM, VOXEL_FOG_DIM, 0,
                  GL_RGBA, GL_UNSIGNED_BYTE, fogPixels);
 
-    for (uint32_t b = 0; b < 2; ++b)
-    {
-        uint32_t idx = 0;
-        for (int32_t gz = 0; gz < VOXEL_FOG_GRID; ++gz)
-        {
-            for (int32_t gx = 0; gx < VOXEL_FOG_GRID; ++gx)
-            {
-                static const int32_t cx[6] = {0, 1, 1, 0, 1, 0};
-                static const int32_t cz[6] = {0, 0, 1, 0, 1, 1};
-                for (int32_t k = 0; k < 6; ++k)
-                {
-                    int32_t vx = gx + cx[k];
-                    int32_t vz = gz + cz[k];
-                    float fx = (float)vx / (float)VOXEL_FOG_GRID;
-                    float fz = (float)vz / (float)VOXEL_FOG_GRID;
-                    float edgeX = fx < 0.5f ? fx * 4.0f : (1.0f - fx) * 4.0f;
-                    float edgeZ = fz < 0.5f ? fz * 4.0f : (1.0f - fz) * 4.0f;
-                    if (edgeX > 1.0f) edgeX = 1.0f;
-                    if (edgeZ > 1.0f) edgeZ = 1.0f;
-                    float edge = edgeX * edgeZ;
-                    edge = edge * edge * (3.0f - 2.0f * edge);
-
-                    VoxelGlVertex *v = &sFogSheets[b][idx++];
-                    v->x = (fx - 0.5f) * 2.0f * VOXEL_FOG_SPAN_X;
-                    v->y = sFogBanks[b].height;
-                    v->z = VOXEL_FOG_SOUTH - fz * (VOXEL_FOG_SOUTH + VOXEL_FOG_NORTH);
-                    v->u = v->x / VOXEL_FOG_PERIOD_X;
-                    v->v = v->z / VOXEL_FOG_PERIOD_Z;
-                    v->r = 255;
-                    v->g = 255;
-                    v->b = 255;
-                    v->a = (uint8_t)(edge * 255.0f + 0.5f);
-                }
-            }
-        }
-    }
+    sFogCacheValid = false;
 }
 
 static void MakeWeather(void)
@@ -3215,10 +3198,76 @@ static void MakeWeather(void)
     }
 }
 
+static float SurfaceWorldY(const float wx, const float wz)
+{
+    const VoxelMapInstance *const inst = VoxelWorld_GetInstanceAt((int32_t)floorf(wx), (int32_t)floorf(wz));
+    const float base = (inst != NULL) ? VoxelRelief_Base(inst) : 0.0f;
+    return base + VoxelRelief_SurfaceAt(wx, wz);
+}
+
+static float SmoothedFogWorldY(const float wx, const float wz)
+{
+    const float c  = SurfaceWorldY(wx, wz);
+    const float nx = SurfaceWorldY(wx - 1.5f, wz);
+    const float px = SurfaceWorldY(wx + 1.5f, wz);
+    const float nz = SurfaceWorldY(wx, wz - 1.5f);
+    const float pz = SurfaceWorldY(wx, wz + 1.5f);
+    return c * 0.40f + (nx + px + nz + pz) * 0.15f;
+}
+
 static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_t g, uint8_t b, float seconds)
 {
     if (!sFogTex || amount <= 0.005f)
         return;
+
+    const float stepX = (2.0f * VOXEL_FOG_SPAN_X) / (float)VOXEL_FOG_GRID;
+    const float stepZ = (VOXEL_FOG_SOUTH + VOXEL_FOG_NORTH) / (float)VOXEL_FOG_GRID;
+    const int32_t snapCellX = (int32_t)floorf(sCamera.targetX / stepX);
+    const int32_t snapCellZ = (int32_t)floorf(sCamera.targetZ / stepZ);
+
+    if (!sFogCacheValid || snapCellX != sFogSnapCellX || snapCellZ != sFogSnapCellZ)
+    {
+        sFogSnapCellX = snapCellX;
+        sFogSnapCellZ = snapCellZ;
+        sFogCacheValid = true;
+        const float snapX = (float)snapCellX * stepX;
+        const float snapZ = (float)snapCellZ * stepZ;
+        for (int32_t vx = 0; vx <= VOXEL_FOG_GRID; ++vx)
+            sFogNodeX[vx] = snapX + ((float)vx - 0.5f * (float)VOXEL_FOG_GRID) * stepX;
+        for (int32_t vz = 0; vz <= VOXEL_FOG_GRID; ++vz)
+        {
+            sFogNodeZ[vz] = snapZ + VOXEL_FOG_SOUTH - (float)vz * stepZ;
+            for (int32_t vx = 0; vx <= VOXEL_FOG_GRID; ++vx)
+                sFogNodeY[vz][vx] = SmoothedFogWorldY(sFogNodeX[vx], sFogNodeZ[vz]);
+        }
+    }
+
+    const float maxRx = VOXEL_FOG_SPAN_X - stepX;
+    const float maxSouth = VOXEL_FOG_SOUTH - stepZ;
+    const float maxNorth = VOXEL_FOG_NORTH - stepZ;
+    const float invFadeX = 1.0f / (maxRx * 0.30f);
+    const float invFadeSouth = 1.0f / (maxSouth * 0.40f);
+    const float invFadeNorth = 1.0f / (maxNorth * 0.30f);
+
+    for (int32_t vz = 0; vz <= VOXEL_FOG_GRID; ++vz)
+    {
+        const float dzCam = sFogNodeZ[vz] - sCamera.targetZ;
+        float edgeZ = (dzCam > 0.0f) ? ((maxSouth - dzCam) * invFadeSouth)
+                                     : ((maxNorth + dzCam) * invFadeNorth);
+        if (edgeZ < 0.0f) edgeZ = 0.0f;
+        if (edgeZ > 1.0f) edgeZ = 1.0f;
+
+        for (int32_t vx = 0; vx <= VOXEL_FOG_GRID; ++vx)
+        {
+            const float dxCam = fabsf(sFogNodeX[vx] - sCamera.targetX);
+            float edgeX = (maxRx - dxCam) * invFadeX;
+            if (edgeX < 0.0f) edgeX = 0.0f;
+            if (edgeX > 1.0f) edgeX = 1.0f;
+            float edge = edgeX * edgeZ;
+            edge = edge * edge * (3.0f - 2.0f * edge);
+            sFogNodeEdgeA[vz][vx] = (uint8_t)(edge * 255.0f + 0.5f);
+        }
+    }
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, sFogTex);
@@ -3235,29 +3284,47 @@ static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_
     glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
 
     const uint32_t bankCount = (banks == sSandBanks) ? 1 : 2;
+    const float invPeriodX = 1.0f / VOXEL_FOG_PERIOD_X;
+    const float invPeriodZ = 1.0f / VOXEL_FOG_PERIOD_Z;
+    static const int32_t cx[6] = {0, 1, 1, 0, 1, 0};
+    static const int32_t cz[6] = {0, 0, 1, 0, 1, 1};
+
     for (uint32_t bk = 0; bk < bankCount; ++bk)
     {
-        float uOff = fmodf(seconds * banks[bk].driftX / VOXEL_FOG_PERIOD_X + banks[bk].offsetU, 1.0f);
-        float vOff = fmodf(seconds * banks[bk].driftZ / VOXEL_FOG_PERIOD_Z + banks[bk].offsetV, 1.0f);
-        float tx = sCamera.targetX - uOff * VOXEL_FOG_PERIOD_X;
-        float tz = sCamera.targetZ - vOff * VOXEL_FOG_PERIOD_Z;
-        float ty = sCamera.ground;
-        float alphaScale = (banks == sSandBanks ? 0.24f : banks[bk].alpha) * amount;
+        const float uOff = fmodf(seconds * banks[bk].driftX * invPeriodX + banks[bk].offsetU, 1.0f);
+        const float vOff = fmodf(seconds * banks[bk].driftZ * invPeriodZ + banks[bk].offsetV, 1.0f);
+        const float alphaScale = (banks == sSandBanks ? 0.24f : banks[bk].alpha) * amount;
+        const float hOff = banks[bk].height;
+        uint32_t vOut = 0;
 
-        for (uint32_t i = 0; i < VOXEL_FOG_BANK_VERTICES; ++i)
+        for (int32_t gz = 0; gz < VOXEL_FOG_GRID; ++gz)
         {
-            sBatchGlVerts[i] = sFogSheets[bk][i];
-            sBatchGlVerts[i].x += tx;
-            sBatchGlVerts[i].y = ty + banks[bk].height;
-            sBatchGlVerts[i].z += tz;
-            sBatchGlVerts[i].u = sBatchGlVerts[i].x / VOXEL_FOG_PERIOD_X;
-            sBatchGlVerts[i].v = sBatchGlVerts[i].z / VOXEL_FOG_PERIOD_Z;
-            sBatchGlVerts[i].r = r;
-            sBatchGlVerts[i].g = g;
-            sBatchGlVerts[i].b = b;
-            sBatchGlVerts[i].a = (uint8_t)((float)sFogSheets[bk][i].a * alphaScale + 0.5f);
+            for (int32_t gx = 0; gx < VOXEL_FOG_GRID; ++gx)
+            {
+                if ((sFogNodeEdgeA[gz][gx] | sFogNodeEdgeA[gz][gx + 1] |
+                     sFogNodeEdgeA[gz + 1][gx] | sFogNodeEdgeA[gz + 1][gx + 1]) == 0u)
+                    continue;
+                for (int32_t k = 0; k < 6; ++k)
+                {
+                    const int32_t vx = gx + cx[k];
+                    const int32_t vz = gz + cz[k];
+                    const float wx = sFogNodeX[vx];
+                    const float wz = sFogNodeZ[vz];
+                    VoxelGlVertex *const v = &sBatchGlVerts[vOut++];
+                    v->x = wx;
+                    v->y = sFogNodeY[vz][vx] + hOff;
+                    v->z = wz;
+                    v->u = wx * invPeriodX - uOff;
+                    v->v = wz * invPeriodZ - vOff;
+                    v->r = r;
+                    v->g = g;
+                    v->b = b;
+                    v->a = (uint8_t)((float)sFogNodeEdgeA[vz][vx] * alphaScale + 0.5f);
+                }
+            }
         }
-        glDrawArrays(GL_TRIANGLES, 0, VOXEL_FOG_BANK_VERTICES);
+        if (vOut > 0)
+            glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vOut);
     }
 
     glDisableClientState(GL_COLOR_ARRAY);
@@ -3328,6 +3395,23 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
     const float u0 = 0.0f, u1 = 0.5f;
     const float v0 = (kind == &sRainKind || kind == &sSandKind) ? 0.0f : 0.5f;
     const float v1 = (kind == &sRainKind || kind == &sSandKind) ? 0.5f : 1.0f;
+    const float scaleFadeX = VOXEL_WEATHER_SPAN_X / VOXEL_WEATHER_FADE_XZ;
+    const float scaleFadeZ = VOXEL_WEATHER_SPAN_Z / VOXEL_WEATHER_FADE_XZ;
+    const float scaleFadeY = VOXEL_WEATHER_SPAN_Y / VOXEL_WEATHER_FADE_Y;
+    const float nearStartSq = kind->nearStart * kind->nearStart;
+    const float nearEnd = kind->nearStart + kind->nearRamp;
+    const float nearEndSq = nearEnd * nearEnd;
+    const float invNearSpanSq = (nearEndSq > nearStartSq) ? (1.0f / (nearEndSq - nearStartSq)) : 1.0f;
+
+    float offVx[6], offVy[6], offVz[6], tabU[6], tabV[6];
+    for (int32_t k = 0; k < 6; ++k)
+    {
+        offVx[k] = acrossX * cxTab[k] + alongX * cyTab[k];
+        offVy[k] = alongY * cyTab[k];
+        offVz[k] = alongZ * cyTab[k];
+        tabU[k] = (cxTab[k] > 0.0f) ? u1 : u0;
+        tabV[k] = (cyTab[k] > 0.0f) ? v1 : v0;
+    }
 
     uint32_t vOut = 0;
     for (uint32_t i = 0; i < count; ++i)
@@ -3341,9 +3425,9 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
         float dx = 0.5f - fabsf(px - 0.5f);
         float dy = 0.5f - fabsf(py - 0.5f);
         float dz = 0.5f - fabsf(pz - 0.5f);
-        float fadeX = dx * (VOXEL_WEATHER_SPAN_X / VOXEL_WEATHER_FADE_XZ);
-        float fadeZ = dz * (VOXEL_WEATHER_SPAN_Z / VOXEL_WEATHER_FADE_XZ);
-        float fadeY = dy * (VOXEL_WEATHER_SPAN_Y / VOXEL_WEATHER_FADE_Y);
+        float fadeX = dx * scaleFadeX;
+        float fadeZ = dz * scaleFadeZ;
+        float fadeY = dy * scaleFadeY;
         float fade = fadeX < fadeZ ? fadeX : fadeZ;
         if (fadeY < fade) fade = fadeY;
         if (fade > 1.0f) fade = 1.0f;
@@ -3357,15 +3441,11 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
         float camDy = wy - sCamera.y;
         float camDz = wz - sCamera.z;
         float distSq = camDx * camDx + camDy * camDy + camDz * camDz;
-        float nearStartSq = kind->nearStart * kind->nearStart;
         if (distSq <= nearStartSq) continue;
-        float nearEnd = kind->nearStart + kind->nearRamp;
-        float nearEndSq = nearEnd * nearEnd;
         float lens = 1.0f;
         if (distSq < nearEndSq)
         {
-            float dist = sqrtf(distSq);
-            lens = (dist - kind->nearStart) / kind->nearRamp;
+            lens = (distSq - nearStartSq) * invNearSpanSq;
             if (lens <= 0.01f) continue;
         }
 
@@ -3375,11 +3455,11 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
         for (int32_t k = 0; k < 6; ++k)
         {
             VoxelGlVertex *v = &sBatchGlVerts[vOut++];
-            v->x = wx + acrossX * cxTab[k] + alongX * cyTab[k];
-            v->y = wy + alongY * cyTab[k];
-            v->z = wz + alongZ * cyTab[k];
-            v->u = (cxTab[k] > 0.0f) ? u1 : u0;
-            v->v = (cyTab[k] > 0.0f) ? v1 : v0;
+            v->x = wx + offVx[k];
+            v->y = wy + offVy[k];
+            v->z = wz + offVz[k];
+            v->u = tabU[k];
+            v->v = tabV[k];
             v->r = baseR;
             v->g = baseG;
             v->b = baseB;
@@ -3443,7 +3523,6 @@ static void DrawMotes(float strength, float seconds, bool fireflies, Hd2dPreset 
     const float *cyTab = useHd2dAtlas ? qCy : dCy;
 
     float ox = sCamera.targetX - 0.5f * VOXEL_MOTE_SPAN_X;
-    float oy = sCamera.ground;
     float oz = sCamera.targetZ - VOXEL_MOTE_SPAN_Z + 4.0f;
 
     uint32_t vOut = 0;
@@ -3468,16 +3547,17 @@ static void DrawMotes(float strength, float seconds, bool fireflies, Hd2dPreset 
         const float edgeZ = fminf(lz, VOXEL_MOTE_SPAN_Z - lz) * 0.4f;
         const float edgeFade = fminf(1.0f, fminf(edgeX, edgeZ));
         if (edgeFade <= 0.02f) continue;
-        float wx = ox + lx;
-        float wz = oz + lz;
-        float wy = oy + m->y + m->bobAmp * sinf(seconds * m->bobSpeed + m->bobPhase);
         const float baseA = (fireflies ? 0.72f : (isLeaf ? 0.78f : VOXEL_MOTE_ALPHA)) * edgeFade;
         uint8_t a = (uint8_t)(baseA * strength * (0.25f + 0.75f * glint) * 255.0f + 0.5f);
         if (a == 0) continue;
 
+        float wx = ox + lx;
+        float wz = oz + lz;
+        float wy = SurfaceWorldY(wx, wz) + m->y + m->bobAmp * sinf(seconds * m->bobSpeed + m->bobPhase);
+
         const float lr = isLeaf ? (radius * 1.45f) : radius;
-        const float lUpY = isLeaf ? cosf(pitchRad) * lr : upY;
-        const float lUpZ = isLeaf ? sinf(pitchRad) * lr : upZ;
+        const float lUpY = isLeaf ? (upY * 1.45f) : upY;
+        const float lUpZ = isLeaf ? (upZ * 1.45f) : upZ;
         const float u0 = isLeaf ? 0.5f : 0.0f;
         const float u1 = isLeaf ? 1.0f : 0.5f;
         const uint8_t pr = isLeaf ? 140u : cr;
@@ -3906,13 +3986,15 @@ static void InitTreeSwayShader(void)
         "        p.x += -uWind.y * (w2 * 0.06 * gust * s2);\n"
         "        p.z +=  uWind.x * (w2 * 0.06 * gust * s2);\n"
         "        p.y -= w2 * 0.02 * (0.5 + 0.5 * s);\n"
-        "        vec2 dv = p.xz - uPlayerXZ;\n"
-        "        float dist = length(dv);\n"
-        "        float k = w * clamp(1.0 - dist / 1.20, 0.0, 1.0);\n"
-        "        k *= k;\n"
-        "        vec2 pushDir = (dist > 0.001) ? (dv / dist) : vec2(0.0, 1.0);\n"
-        "        p.xz += pushDir * (0.72 * k);\n"
-        "        p.y -= 0.28 * k;\n"
+        "        if (w > 0.5) {\n"
+        "            vec2 dv = p.xz - uPlayerXZ;\n"
+        "            float dist = length(dv);\n"
+        "            float k = w * clamp(1.0 - dist / 1.20, 0.0, 1.0);\n"
+        "            k *= k;\n"
+        "            vec2 pushDir = (dist > 0.001) ? (dv / dist) : vec2(0.0, 1.0);\n"
+        "            p.xz += pushDir * (0.72 * k);\n"
+        "            p.y -= 0.28 * k;\n"
+        "        }\n"
         "    }\n"
         "    gl_Position = uMvp * vec4(p, 1.0);\n"
         "    vUv = aUv;\n"
@@ -4805,9 +4887,14 @@ static void Frame_UpdateAtlas(const VoxelFrame *const f)
             if (sLastReliefMode != -1)
             {
                 EnsureWorkerIdle();
+                AtlasExtend_Cancel();
                 for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; ++s)
                     sAtlasSlots[s].valid = false;
+                sActiveAtlasSlot = -1;
+                sExtendSlot = -1;
+                sNeedAtlasExtension = false;
                 sNeedsFullWarmup = true;
+                sWorldEpoch++;
             }
             sLastReliefMode = wantRelief;
         }
@@ -4824,6 +4911,8 @@ static void Frame_UpdateAtlas(const VoxelFrame *const f)
         memset(sVoxelTilesetAnimDirty, 0, sizeof(sVoxelTilesetAnimDirty));
         sVoxelTilesetAnimPending = false;
         int32_t slotIdx = EnsureAtlasSlotForInstance(inst0);
+        // Mark primary animated tiles dirty when reactivating a cached slot so water/lakes sync immediately.
+        memset(sSlotPendingPrimary[slotIdx], 0xFF, 64);
         if (sNeedsFullWarmup)
         {
             // Warp: the screen is dark and every chunk is built now, so extend at once and
@@ -6300,13 +6389,6 @@ static inline float SurfaceFx_Rand01(void)
     return (float)((sSurfaceFxRng >> 8) & 0xFFFFu) * (1.0f / 65536.0f);
 }
 
-static float SurfaceWorldY(const float wx, const float wz)
-{
-    const VoxelMapInstance *const inst = VoxelWorld_GetInstanceAt((int32_t)floorf(wx), (int32_t)floorf(wz));
-    const float base = (inst != NULL) ? VoxelRelief_Base(inst) : 0.0f;
-    return base + VoxelRelief_SurfaceAt(wx, wz);
-}
-
 static void DrawSurfaceFx(const VoxelFrame *const f)
 {
     if (f->indoor || f->inBattle3D || f->hd2dPreset == HD2D_PRESET_OFF)
@@ -6350,8 +6432,8 @@ static void DrawSurfaceFx(const VoxelFrame *const f)
                         const float spd = 1.1f + SurfaceFx_Rand01() * 1.4f;
                         sSurfaceFx[i].kind = isAshGrass ? SFX_GRASS_ASH : SFX_GRASS_LEAF;
                         sSurfaceFx[i].wx = sCamera.targetX + (SurfaceFx_Rand01() - 0.5f) * 0.35f;
-                        sSurfaceFx[i].wy = sCamera.ground + 0.30f;
                         sSurfaceFx[i].wz = sCamera.targetZ + (SurfaceFx_Rand01() - 0.5f) * 0.25f;
+                        sSurfaceFx[i].wy = SurfaceWorldY(sSurfaceFx[i].wx, sSurfaceFx[i].wz) + 0.30f;
                         sSurfaceFx[i].driftX = cosf(ang) * spd;
                         sSurfaceFx[i].driftZ = sinf(ang) * spd;
                         sSurfaceFx[i].age = 0.0f;
@@ -6816,6 +6898,8 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
     const float weatherAmount = f->weatherAmount;
     const float bolt = f->bolt;
     const float seconds = f->seconds;
+    if (f->crossed || f->mapChanged)
+        sFogCacheValid = false;
     if (!indoor)
     {
         if (fogDensity > 0.005f)

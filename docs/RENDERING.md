@@ -72,14 +72,14 @@ Per frame (`VoxelRenderer_RenderFrame`):
 | Pass | Content | Notes |
 |---|---|---|
 | 1A / 1B | Ground and relief, then cliff cutouts | Opaque first for early-Z on the SGX543; cutouts with `GL_ALPHA_TEST` |
-| 2 | Trees, tall grass, ash grass & flowers | Tree atlas (`sTreeTex`) partitioned into opaque tree cores/ground (`2A-0`, `GL_ALPHA_TEST` off for SGX543 HSR), alpha-tested border strips (`2A-1`), and GLSL wind-sway & player-bend foliage (`2B`) with animated GBA flower frames and Fallarbor ash-grass sprite |
+| 2 | Trees, tall grass, ash grass & flowers | Tree atlas (`sTreeTex`) partitioned into static opaque tree cores/ground (`2A-0`, `GL_ALPHA_TEST` off for SGX543 HSR), static alpha-tested border strips (`2A-1`), and GLSL wind-sway & player-bend foliage (`2B`, standing tall grass, ash grass and animated GBA flower frames; all trees stay static) |
 | 3 | Buildings and indoor furniture | Building pages in an LRU cache, alpha test only on pages that need it |
 | 4 | Cast and decal shadows | One colour (`0xFF281408`) |
 | 4.5 | Reflections on water | |
 | 5 | Entity billboards, player silhouette behind roofs | `glDepthFunc(GL_GREATER)` for the silhouette |
 | 5.1 | Day/night modulation | Skipped when it would be a no-op |
 | 5.2 | Street lamps, light pools & point-light emitters | `voxel_pointlights.c` |
-| 5.4–5.8 | Fog / sand banks, dust motes / fireflies, surface FX & weather particles | Water ripples/glints/mist, grass/ash step puffs (`DrawSurfaceFx`) |
+| 5.4–5.8 | Fog / sand banks, dust motes / fireflies, surface FX & weather particles | Fog/sand banks conform to a cached world-snapped terrain grid (`SmoothedFogWorldY`), motes/fireflies and surface FX (`DrawSurfaceFx`) anchor to `SurfaceWorldY(wx, wz)` |
 | 5.9 | 2D atmosphere: sun rays, moonlight, fades, lightning, cave gloom | |
 | DoF / Bloom | HD-2D post-processing (DoF, Kawase Bloom, Composite) | Scene rendered to a 960×544 RGBA8 FBO, downscaled to 1/4 (240×136) for `smoothstep` tilt-shift DoF + 2-pass Kawase bloom (`voxel_hd2d_shader.c`), split-tone & vignette. Off in `60 (CLASSIC)`, indoors (bloom), or during fades |
 | 6 | GBA overlay | See below |

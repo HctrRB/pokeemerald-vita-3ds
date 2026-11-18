@@ -58,10 +58,10 @@
 #define VOXEL_FOG_DIM 64
 #define VOXEL_FOG_SPAN_X 24.0f
 #define VOXEL_FOG_SOUTH 12.0f
-#define VOXEL_FOG_NORTH 36.0f
+#define VOXEL_FOG_NORTH 44.0f
 #define VOXEL_FOG_PERIOD_X 18.0f
 #define VOXEL_FOG_PERIOD_Z 12.0f
-#define VOXEL_FOG_GRID 8
+#define VOXEL_FOG_GRID 12
 #define VOXEL_FOG_BANK_VERTICES (VOXEL_FOG_GRID * VOXEL_FOG_GRID * 6)
 
 /* ---- Weather particles ---------------------------------------------------------------- */
