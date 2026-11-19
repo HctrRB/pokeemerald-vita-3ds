@@ -33,6 +33,8 @@
 #include "constants/species.h"
 #include "constants/vars.h"
 #include "constants/moves.h"
+#include "constants/abilities.h"
+#include "constants/pokemon.h"
 #include "constants/battle.h"
 #include "battle.h"
 #include "battle_main.h"
@@ -179,6 +181,21 @@ uint16_t UiGame_RegisteredItem(void)
     return (item != ITEM_NONE && CheckBagHasItem(item, 1)) ? item : ITEM_NONE;
 }
 
+uint16_t UiGame_SafeMove(uint32_t move)
+{
+    return move < MOVES_COUNT ? (uint16_t)move : MOVE_NONE;
+}
+
+uint16_t UiGame_SafeSpecies(uint32_t species)
+{
+    return species < NUM_SPECIES || species == SPECIES_EGG ? (uint16_t)species : SPECIES_NONE;
+}
+
+uint8_t UiGame_SafeAbility(uint32_t ability)
+{
+    return ability < ABILITIES_COUNT ? (uint8_t)ability : ABILITY_NONE;
+}
+
 void UiGame_ItemName(uint16_t itemId, char *out, size_t cap)
 {
     u8 name[ITEM_NAME_LENGTH + 4];
@@ -304,7 +321,7 @@ void UiGame_Summary(int32_t slot, UiSummary *s)
 {
     struct Pokemon *mon = &gPlayerParty[slot];
     memset(s, 0, sizeof(*s));
-    const uint16_t sp = (uint16_t)GetMonData(mon, MON_DATA_SPECIES);
+    const uint16_t sp = UiGame_SafeSpecies(GetMonData(mon, MON_DATA_SPECIES));
     u8 buf[64];
     s->dexNo = SpeciesToNationalPokedexNum(sp);
     GetSpeciesName(buf, sp);
@@ -324,7 +341,7 @@ void UiGame_Summary(int32_t slot, UiSummary *s)
         s->natureUp = toDisplay[nature / 5];
         s->natureDown = toDisplay[nature % 5];
     }
-    const uint8_t ability = GetAbilityBySpecies(sp, (u8)GetMonData(mon, MON_DATA_ABILITY_NUM));
+    const uint8_t ability = UiGame_SafeAbility(GetAbilityBySpecies(sp, (u8)GetMonData(mon, MON_DATA_ABILITY_NUM)));
     UiGame_Text(gAbilityNames[ability], s->ability, sizeof(s->ability));
     UiGame_Text(gAbilityDescriptionPointers[ability], s->abilityDesc, sizeof(s->abilityDesc));
     GetMapNameGeneric(buf, (u16)GetMonData(mon, MON_DATA_MET_LOCATION));
@@ -334,7 +351,7 @@ void UiGame_Summary(int32_t slot, UiSummary *s)
     s->level = (uint8_t)GetMonData(mon, MON_DATA_LEVEL);
     const uint8_t rate = gSpeciesInfo[sp].growthRate;
     const uint32_t exp = GetMonData(mon, MON_DATA_EXP);
-    if (s->level < MAX_LEVEL)
+    if (s->level < MAX_LEVEL && rate <= GROWTH_SLOW)
     {
         const uint32_t lo = gExperienceTables[rate][s->level], hi = gExperienceTables[rate][s->level + 1];
         s->expToNext = hi > exp ? hi - exp : 0;
@@ -359,7 +376,10 @@ void UiGame_Move(int32_t slot, int32_t idx, UiMove *m)
 {
     struct Pokemon *mon = &gPlayerParty[slot];
     memset(m, 0, sizeof(*m));
-    m->move = (uint16_t)GetMonData(mon, MON_DATA_MOVE1 + idx);
+    // A Bad Egg's moves are what is left of its scrambled data: it knows none
+    if (GetMonData(mon, MON_DATA_SANITY_IS_BAD_EGG))
+        return;
+    m->move = UiGame_SafeMove(GetMonData(mon, MON_DATA_MOVE1 + idx));
     if (m->move == MOVE_NONE)
         return;
     const struct BattleMove *bm = &gBattleMoves[m->move];

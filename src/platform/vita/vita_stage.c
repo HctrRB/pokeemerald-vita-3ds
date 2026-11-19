@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <vitaGL.h>
+#include "platform/game_frame.h"
 
 #include "vita_stage.h"
 #include "vita_platform.h"
@@ -32,14 +33,15 @@ void VitaStage_SetVBlankCallback(void (*callback)(void))
     SetVBlankCallback(callback);
 }
 
-bool VitaStage_IsStageActive(void)
+/* Core 1: from the game's own state, for the game frame (VitaStage_CaptureFrame). */
+static bool StageActiveLive(void)
 {
     return (sStageCallback != NULL && gMain.vblankCallback == sStageCallback);
 }
 
-static bool IsLeavesScene(void)
+static bool LeavesSceneLive(void)
 {
-    if (!VitaStage_IsStageActive())
+    if (!StageActiveLive())
         return false;
 
     // Emerald 3DS: In scene_1 (leaves falling), BG0..3 CNT registers are precisely configured
@@ -50,6 +52,26 @@ static bool IsLeavesScene(void)
             return false;
     }
     return true;
+}
+
+void VitaStage_CaptureFrame(bool8 *stageActive, bool8 *leavesScene)
+{
+    // The game replaced the stage's VBlank callback: the stage is over
+    if (gMain.vblankCallback != sStageCallback)
+        sStageCallback = NULL;
+    *stageActive = StageActiveLive();
+    *leavesScene = *stageActive && LeavesSceneLive();
+}
+
+/* Core 0: as the pinned game frame has it. */
+bool VitaStage_IsStageActive(void)
+{
+    return GameFrame_Get()->overlay.stageActive;
+}
+
+static bool IsLeavesScene(void)
+{
+    return GameFrame_Get()->overlay.leavesScene;
 }
 
 int32_t VitaStage_GetActiveKind(void)
@@ -63,13 +85,6 @@ int32_t VitaStage_GetActiveKind(void)
     }
 
     return VITA_STAGE_NONE;
-}
-
-void VitaStage_UpdateSceneState(void)
-{
-    // Check if stage callback was cleared
-    if (gMain.vblankCallback != sStageCallback)
-        sStageCallback = NULL;
 }
 
 bool VitaStage_LeavesLoad(void)
@@ -96,7 +111,7 @@ static uint32_t HashPalette(void)
 {
     uint32_t hash = 5381;
     for (int32_t i = 0; i < 256; i++)
-        hash = ((hash << 5) + hash) + gPlttBufferFaded[i];
+        hash = ((hash << 5) + hash) + GameFrame_Get()->overlay.bgPaletteFaded[i];
     return hash;
 }
 
@@ -117,7 +132,7 @@ static uint16_t LeafTexel(const uint8_t byte)
 {
     if (byte == LEAVES_TRANSPARENT || (byte & 0x0F) == 0)
         return 0;
-    const uint16_t bgr555 = gPlttBufferFaded[byte];
+    const uint16_t bgr555 = GameFrame_Get()->overlay.bgPaletteFaded[byte];
     const uint16_t r = bgr555 & 0x1F;
     const uint16_t g = (bgr555 >> 5) & 0x1F;
     const uint16_t b = (bgr555 >> 10) & 0x1F;
@@ -183,7 +198,7 @@ static void DrawLeavesQuad(const float x0, const float x1, const float y0, const
 
 static void DrawLeavesSky(const uint8_t sky, const float x0, const float x1, const float y0, const float y1)
 {
-    const uint16_t bgr555 = gPlttBufferFaded[sky];
+    const uint16_t bgr555 = GameFrame_Get()->overlay.bgPaletteFaded[sky];
     const float verts[8] = {x0, y0, x1, y0, x1, y1, x0, y1};
 
     glDisable(GL_TEXTURE_2D);

@@ -27,6 +27,12 @@ gpu_and_threads:
     renders once per game frame (twice per frame at 30 FPS, the default) by waiting on
     sFrameReadySem; its own 60 Hz timer drifted and repeated/skipped game frames. Core 0 never
     writes game state.
+  - The game runs on Core 1 alone (decided 2026-11-19, after the Pacifidlog Bad Eggs: Core 0
+    called IsMirageIslandPresent -> GetMonData, which decrypts Pokemon in place). Core 0 / Core 2
+    read the game only through the GameFrame (include/platform/game_frame.h) and the two channels
+    in tools/core_boundary/allow.txt; the build fails otherwise (check_core_boundary.py on the
+    linked ELF). Code ported from Emerald 3DS (single-threaded) must be split into a Core 1
+    capture and a Core 0 reader, never called from the renderer as it is.
   - vitaGL's glTexSubImage2D copies a whole texture drawn in the last 4 swaps: textures rewritten
     at run time use spares or are written in place (docs/RENDERING.md).
   - Animated atlas tiles may only be refreshed from BG VRAM for the active atlas slot (VRAM holds

@@ -25,7 +25,7 @@ typedef struct
 /* Core 1: called from LoadMapFromWarp() whenever a warp loads a map (including same-map warps). */
 void VoxelFlyGame_OnWarpLoaded(void);
 
-/* Core 1: called once per 60 Hz game tick (right before VoxelEntities_PublishSnapshot). */
+/* Core 1: called once per 60 Hz game tick (right before GameFrame_CaptureAndPublish). */
 void VoxelFlyGame_Tick(void);
 
 /* Core 1 (during SoftReset barrier): resets Fly state and publishes a clean inactive snapshot. */

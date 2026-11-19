@@ -29,7 +29,7 @@ static volatile uint32_t sDrawnWarpVersion = 0u;
 static bool VoxelFieldReady(void)
 {
     return Platform_GetSetting(PLATFORM_SETTING_VOXEL_3D) != 0
-        && VoxelWorld_IsMapAvailable();
+        && VoxelWorld_FieldShownLive();   // Core 1: the game's own state
 }
 
 static void FlyDirection(float *dirX, float *dirZ)
@@ -104,7 +104,7 @@ void VoxelFlyGame_Tick(void)
     if (VoxelFly_Active(&sFly))
     {
         const bool voxelEnabled = (Platform_GetSetting(PLATFORM_SETTING_VOXEL_3D) != 0);
-        const bool voxelAvail = voxelEnabled && VoxelWorld_IsMapAvailable();
+        const bool voxelAvail = voxelEnabled && VoxelWorld_FieldShownLive();   // Core 1: the game's own state
 
         if (!voxelEnabled || (VoxelFly_Hovers(&sFly) && !voxelAvail))
         {

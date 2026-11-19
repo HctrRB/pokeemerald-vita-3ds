@@ -1,4 +1,5 @@
 #include "global.h"
+#include "platform/game_thread.h"
 #include "platform/vita_extras.h"
 #include "malloc.h"
 #include "apprentice.h"
@@ -3613,6 +3614,8 @@ void SetMultiuseSpriteTemplateToTrainerFront(u16 trainerPicId, u8 battlerPositio
 static void EncryptBoxMon(struct BoxPokemon *boxMon)
 {
     u32 i;
+    // The cipher works in place: a Pokemon read from another thread is corrupted (a Bad Egg).
+    GAME_THREAD_ONLY();
     for (i = 0; i < ARRAY_COUNT(boxMon->secure.raw); i++)
     {
         boxMon->secure.raw[i] ^= boxMon->personality;
@@ -3623,6 +3626,7 @@ static void EncryptBoxMon(struct BoxPokemon *boxMon)
 static void DecryptBoxMon(struct BoxPokemon *boxMon)
 {
     u32 i;
+    GAME_THREAD_ONLY();
     for (i = 0; i < ARRAY_COUNT(boxMon->secure.raw); i++)
     {
         boxMon->secure.raw[i] ^= boxMon->otId;

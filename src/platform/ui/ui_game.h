@@ -100,6 +100,12 @@ typedef struct
 int32_t UiGame_MonStatusIcon(int32_t slot);   // row of UI_SPR_STATUS_FIRST, or -1
 void UiGame_Summary(int32_t slot, UiSummary *s);
 void UiGame_Move(int32_t slot, int32_t idx, UiMove *m);
+// Ids read from a Pokemon's data index the game's tables only through these: a Pokemon whose
+// data failed its checksum (a Bad Egg) holds any value, and the move 0x6029 of a corrupted one
+// read a description pointer far out of its table (logs/sesion 50). Out of range gives NONE.
+uint16_t UiGame_SafeMove(uint32_t move);
+uint16_t UiGame_SafeSpecies(uint32_t species);
+uint8_t UiGame_SafeAbility(uint32_t ability);
 void UiGame_SwapMoves(int32_t slot, int32_t a, int32_t b);
 void UiGame_SwapPartyMons(int32_t a, int32_t b);
 uint16_t UiGame_FieldMove(int32_t slot, int32_t idx);      // MOVE_NONE if not a field move

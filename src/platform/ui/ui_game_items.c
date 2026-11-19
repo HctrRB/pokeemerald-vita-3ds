@@ -474,12 +474,13 @@ bool UiGame_TakeItem(int32_t slot, uint16_t *taken)
 void UiGame_MoveInfo(int32_t slot, int32_t moveIdx, uint16_t *move, uint8_t *pp, uint8_t *maxPp)
 {
     struct Pokemon *mon = &gPlayerParty[slot];
-    *move = (uint16_t)GetMonData(mon, MON_DATA_MOVE1 + moveIdx);
+    *move = GetMonData(mon, MON_DATA_SANITY_IS_BAD_EGG) ? MOVE_NONE
+          : UiGame_SafeMove(GetMonData(mon, MON_DATA_MOVE1 + moveIdx));
     *pp = (uint8_t)GetMonData(mon, MON_DATA_PP1 + moveIdx);
     *maxPp = *move ? (uint8_t)CalculatePPWithBonus(*move, (u8)GetMonData(mon, MON_DATA_PP_BONUSES), (u8)moveIdx) : 0;
 }
 
 void UiGame_MoveName(uint16_t move, char *out, size_t cap)
 {
-    UiGame_Text(gMoveNames[move], out, cap);
+    UiGame_Text(gMoveNames[UiGame_SafeMove(move)], out, cap);
 }

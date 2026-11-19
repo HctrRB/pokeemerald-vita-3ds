@@ -31,9 +31,9 @@ touching anything that crosses threads.
 
 | Data | Writer | Reader | Protection |
 |---|---|---|---|
-| Game state: `gMain`, tasks, `gObjectEvents`, `gSprites`, save blocks | Core 1 | Core 0 (renderer) | Renderer reads entities only through the snapshot below. The new UI reads game state on Core 1 (`Ui_Tick`) and hands Core 0 only a draw list |
-| Entity snapshot `VoxelEntitySnapshot sSnapshots[4]` (`voxel_entities.c`, `include/platform/voxel_snapshot.h`) | Core 1, `VoxelEntities_PublishSnapshot()` in VBlank | Core 0, `VoxelEntities_BeginFrameSnapshot()` / `EndFrameSnapshot()` | 4-slot lock-free ring with Core 0 per-frame pinning (`sPinnedSnapIdx`); Core 1 skips the pinned slot |
-| Map layout during a map change | Core 1 (`CB2_LoadMap`, `DoMapLoadLoop`, connection transitions) | Core 0 (`voxel_world.c`) | `volatile uint32_t sMapMutationLock` (`overworld.c:102`): set by the loader, cleared when the next snapshot is published. Core 0 keeps drawing the previous instances meanwhile |
+| Game state: `gMain`, tasks, the party, flags, `gObjectEvents`, `gSprites`, battle structs, save blocks | Core 1 only | nobody else | Core 0 and Core 2 never call game code nor read its writable state: they read the game frame below. The new UI reads game state on Core 1 (`Ui_Tick`) and hands Core 0 only a draw list |
+| The game frame `GameFrame` (`include/platform/game_frame.h`, `vita_game_frame.c`): field, weather, fade, overlay, battle, entities | Core 1, `GameFrame_CaptureAndPublish()` in VBlank | Core 0, `GameFrame_Get()` (inline) | 4-slot ring; Core 0 pins one per rendered frame (`GameFrame_Pin` in `MainThread_Run`) and Core 1 never writes the pinned nor the latest slot. See "The game frame" |
+| The current map's grid: `gMapHeader`, `gBackupMapLayout` | Core 1 (`CB2_LoadMap`, `DoMapLoadLoop`, connection transitions) | Core 0 (`voxel_world.c`), the chunk worker | The loader calls `GameFrame_BeginMapMutation()` (sets `sMapMutationLock`, bumps the map epoch); the lock is cleared when the next frame is published. Core 0 builds from the grid, and launches the chunk worker, only while `GameFrame_MapSettled()`: no change under way and the pinned frame is of that map |
 | Emulated VRAM, OAM, palettes, registers | Core 1 | Draw workers (2D), Core 0 (overlay pass) | 2D: Core 1 is blocked while the frame is captured line by line. Overlay pass: read only; layers it hides are masked in each line's captured copy (`gFastDrawDispcntClear`, `gFastDrawBldcntClear`), never in the live registers |
 | Extended sprite palettes `gPlttExt[256]`, `gOamExt[128]` | Core 1 (VBlank: `TransferPlttBuffer`, `LoadOam`) | Draw workers (2D, latched once per `DrawFrame`), Core 1 (`RefreshSlot` reads `gPlttBufferUnfaded` in VBlank) | Same as `PLTT`/`OAM`; zero-cost skip when `gPlttExtInUse == 0` |
 | 2D overlay backdrop colour | Core 0 | Draw code | `gFastDrawBackdropOverride` instead of `PLTT[0]`, so Core 1 palette writes cannot leak into the chroma key |
@@ -47,13 +47,50 @@ touching anything that crosses threads.
 ## Rules
 
 1. Core 0 never writes game state. Input reaches the game through the emulated key register.
-2. Anything the renderer needs from `gObjectEvents` / `gSprites` goes into the snapshot,
-   computed on Core 1 (the player's world position is already there).
-3. Code that changes the map layout sets `sMapMutationLock` first.
+2. Core 0 and Core 2 see the game only through the game frame and the two read-only channels
+   listed in `tools/core_boundary/allow.txt` (the emulated GBA display; the map grid under
+   `sMapMutationLock`). Anything new the renderer needs from the game is captured on Core 1 by
+   the module that needs it (its `*_Capture` function) and read from `GameFrame_Get()`.
+3. Code that changes the map layout calls `GameFrame_BeginMapMutation()` first.
 4. Don't pin or re-prioritise SDK threads (GXM, audio).
 5. A new worker thread gets its own file handles and buffers; no shared `FILE *`.
 6. New Core 0 code that touches the voxel world outside the safe points of
    `VoxelRenderer_RenderFrame` calls `EnsureWorkerIdle()` (or `ChunkWorker_Join()`) first.
+7. Functions both cores need come in two forms: the one Core 0 calls reads the game frame
+   (`VoxelWorld_IsMapAvailable`), the one Core 1 calls asks the game (`VoxelWorld_FieldShownLive`).
+   The game thread never reads the game frame.
+
+## The game frame
+
+The game ran into Core 0 for years through small reads that looked harmless: Mirage Island's
+layout check, ported from the single-threaded Emerald 3DS, called `IsMirageIslandPresent()` from
+Core 0 every 3D frame near Pacifidlog. `GetMonData` decrypts a Pokemon in place, so when Core 1
+read the same Pokemon at that moment its checksum failed and it became a Bad Egg (logs/sesion 50).
+The fix is a boundary, not a patch:
+
+- **One contract.** At each VBlank, Core 1 captures what the other cores may know into a
+  `GameFrame` (`GameFrame_CaptureAndPublish`): each module fills its own part -
+  `VoxelWorld_CaptureField` (map, player tile, layout swaps, weather, fade),
+  `VoxelBattle_Capture` (flags, HP, the move's type, shadows), `VoxelEntities_Capture` (objects,
+  every sprite by id with its palette, tile tag, wild / weather / cloud bits, doors),
+  `CaptureOverlay` and `VitaStage_CaptureFrame` (what the 2D layer shows, palettes). With the 3D
+  field off only the 2D frame's part is captured.
+- **One pin per rendered frame.** `MainThread_Run` pins the latest frame at the top of each
+  iteration and again before each rendered frame; every pass of that frame reads the same game
+  frame. `GameFrame_Get()` is a pointer load (Core 0 asks it per sprite).
+- **Proved on every build.** `tools/core_boundary/check_core_boundary.py` walks the linked ELF
+  from each thread's entry (`MainThread_Run`, `DrawWorkerMain`, `VoxelChunkWorkerMain`,
+  `VoxelBuildingIoWorkerMain`): direct branches decoded from the instructions, taken addresses,
+  function pointers in the port's tables, constant pointers to game state (`gWeatherPtr`). Any
+  call into `game_combined.o`'s code or access to its `gamedata`/`gamebss` not in `allow.txt`
+  fails the build (the eboot depends on it). From `DoMain` it checks the other side: no path of
+  the game thread reaches Core 0's pin. Platform code is built with `-fno-section-anchors` so
+  every static table is addressed by its own symbol. `main` is split: `MainThread_Boot` (before
+  the game thread exists, may set up game state) is not checked, `MainThread_Run` is.
+- **Run-time tripwire.** The game's in-place mutators (the Pokemon data cipher, `FlagSet`,
+  `FlagClear`, `VarSet`) call `GAME_THREAD_ONLY()` (`include/platform/game_thread.h`): a stack
+  range test, no system call, that logs the caller of a violation once to
+  `ux0:data/POKEVITA/thread_violations.log`.
 
 ## The chunk worker
 

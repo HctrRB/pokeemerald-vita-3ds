@@ -887,7 +887,7 @@ static void DrawDetail(void)
         UiW_Inset(564, 306, 364, 70);
     if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 576, 314, "ABILITY", soft, sh);
     else     UiText_Draw(UI_FACE_PS2P, 16, 576, 314, "ABILITY", soft);
-    UiGame_Text(gAbilityNames[GetAbilityBySpecies(species, (u8)GetBoxMonData(bm, MON_DATA_ABILITY_NUM))], buf, sizeof(buf));
+    UiGame_Text(gAbilityNames[UiGame_SafeAbility(GetAbilityBySpecies(species, (u8)GetBoxMonData(bm, MON_DATA_ABILITY_NUM)))], buf, sizeof(buf));
     if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 576, 334, buf, ink, sh);
     else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 576, 334, buf, ink);
     if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 756, 314, "OT", soft, sh);

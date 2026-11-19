@@ -28,6 +28,8 @@
 #include "platform/dma.h"
 #include "platform/framedraw.h"
 #include "platform/voxel_snapshot.h"
+#include "platform/game_frame.h"
+#include "platform/game_thread.h"
 
 
 #ifdef PLATFORM_VITA
@@ -261,7 +263,6 @@ static void RenderGameTexture(void)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    VitaStage_UpdateSceneState();
     const int32_t stageKind = VitaStage_GetActiveKind();
 
     float vx0, vx1, vy0 = 0.0f, vy1 = 544.0f;
@@ -292,8 +293,7 @@ static void RenderGameTexture(void)
 #endif
     }
 
-    const bool inFieldMove = FieldEffectActiveListContains(FLDEFF_FIELD_MOVE_SHOW_MON)
-                          || FieldEffectActiveListContains(FLDEFF_FIELD_MOVE_SHOW_MON_INIT);
+    const bool inFieldMove = GameFrame_Get()->overlay.fieldMoveShowMon;
     if (inFieldMove)
     {
         vx0 = 0.0f;
@@ -428,21 +428,22 @@ static void RenderGameTexture(void)
 
 
 
-int main(int argc, char **argv)
+/*
+ * The main thread has two lives (docs/THREADS.md):
+ *  - MainThread_Boot: before the game thread exists. It is the only time Core 0 may set up
+ *    game state (the save, the sound engine, the power-on snapshot).
+ *  - MainThread_Run: Core 0's steady state, alongside the game on Core 1. It sees the game
+ *    only through what Core 1 publishes; tools/core_boundary checks every path from it.
+ */
+static bool MainThread_Boot(void)
 {
-#ifdef PLATFORM_VITA
-    VitaPlatform_PinCurrentThread("MainThread", 0);
-#endif
-    // Open an output console on Windows
-
-
     VitaPlatform_Init();
     VitaPerf_Init();
     ModManager_Init();
     if (SDL_Init(SDL_INIT_AUDIO) < 0)
     {
         DBGPRINTF("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
-        return 1;
+        return false;
     }
 
     // The config says which save file (1-3) to open.
@@ -526,35 +527,51 @@ int main(int argc, char **argv)
     VITA_LOG("audio: device %s at %d Hz\n", sdlAudioDevice ? "open" : "FAILED", want.freq);
     // The game's memory at power on, for resets and switching save files.
     VitaReset_TakeBootSnapshot();
-    // SDL's default Vita thread stack is small; the game logic runs on this thread.
-    mainLoopThread = SDL_CreateThreadWithStackSize(DoMain, "AgbMain", 4 * 1024 * 1024, NULL);
 
-    double accumulator = 0.0;
-
+    // The clock the game reads (Core 1), set before the game runs.
     memset(&internalClock, 0, sizeof(internalClock));
     internalClock.status = SIIRTCINFO_24HOUR;
     UpdateInternalClock();
+    return true;
+}
+
+/*
+ * A soft reset: Core 1 waits for sCore0PausedForReset before it overwrites the game's memory,
+ * so this is the one place of the steady state where Core 0 may still touch voxel state that
+ * reads game memory (VoxelRenderer_OnReset). Returns once Core 1 has finished.
+ */
+static void __attribute__((noinline)) MainThread_ParkForReset(void)
+{
+    GameFrame_Unpin();
+#ifdef VOXEL_SUPPORTED
+    VoxelRenderer_OnReset();
+#endif
+    __atomic_store_n(&gUiVoxelFrame, false, __ATOMIC_RELAXED);
+    SDL_AtomicSet(&sCore0PausedForReset, 1);
+    while (isRunning && SDL_AtomicGet(&sResetInProgress))
+        VitaPlatform_DelayMicroseconds(200);
+    while (sFrameReadySem != NULL && SDL_SemTryWait(sFrameReadySem) == 0)
+    {
+    }
+}
+
+static void __attribute__((noinline)) MainThread_Run(void)
+{
+    double accumulator = 0.0;
 
     while (isRunning)
     {
         if (SDL_AtomicGet(&sResetInProgress))
         {
-#ifdef VOXEL_SUPPORTED
-            VoxelRenderer_OnReset();
-#endif
-            __atomic_store_n(&gUiVoxelFrame, false, __ATOMIC_RELAXED);
-            SDL_AtomicSet(&sCore0PausedForReset, 1);
-            while (isRunning && SDL_AtomicGet(&sResetInProgress))
-                VitaPlatform_DelayMicroseconds(200);
-            while (sFrameReadySem != NULL && SDL_SemTryWait(sFrameReadySem) == 0)
-            {
-            }
+            MainThread_ParkForReset();
             accumulator = 0.0;
             lastGameTime = SDL_GetPerformanceCounter();
             SDL_AtomicSet(&sCore0PausedForReset, 0);
             continue;
         }
 
+        // What the game showed at its last frame: every decision of this iteration reads it.
+        GameFrame_Pin();
         ProcessEvents();
 
         {
@@ -566,7 +583,8 @@ int main(int argc, char **argv)
 
         bool voxelActive = false;
 #ifdef VOXEL_SUPPORTED
-        voxelActive = Platform_GetSetting(PLATFORM_SETTING_VOXEL_3D)
+        // (frame->voxel: the game frame was captured with the 3D field's part)
+        voxelActive = Platform_GetSetting(PLATFORM_SETTING_VOXEL_3D) && GameFrame_Get()->voxel
             && (VoxelWorld_IsMapAvailable()
                 || (VoxelWorld_IsBattleMapAvailable()
                     && VitaExtras_GetFast(FAST_EXTRA_VOXEL_BATTLE) != 0
@@ -651,6 +669,8 @@ int main(int argc, char **argv)
                 while (sFrameReadySem != NULL && SDL_SemTryWait(sFrameReadySem) == 0)
                 {
                 }
+                // The frame drawn now is the latest the game finished.
+                GameFrame_Pin();
 
                 bool didPresent3D = false;
                 bool didPresent2D = false;
@@ -709,6 +729,18 @@ int main(int argc, char **argv)
             }
         }
     }
+}
+
+int main(int argc, char **argv)
+{
+#ifdef PLATFORM_VITA
+    VitaPlatform_PinCurrentThread("MainThread", 0);
+#endif
+    if (!MainThread_Boot())
+        return 1;
+    // SDL's default Vita thread stack is small; the game logic runs on this thread.
+    mainLoopThread = SDL_CreateThreadWithStackSize(DoMain, "AgbMain", GAME_THREAD_STACK_SIZE, NULL);
+    MainThread_Run();
 
     //StoreSaveFile();
     CloseSaveFile();
@@ -964,7 +996,8 @@ void Platform_SetSetting(enum PlatformSetting setting, u8 value)
 bool8 Platform_IsVoxelOverworldActive(void)
 {
 #ifdef VOXEL_SUPPORTED
-    return Platform_GetSetting(PLATFORM_SETTING_VOXEL_3D) && VoxelWorld_IsMapAvailable();
+    // Asked by the game (Core 1): from the game's own state, not from the published frame.
+    return Platform_GetSetting(PLATFORM_SETTING_VOXEL_3D) && VoxelWorld_FieldShownLive();
 #else
     return FALSE;
 #endif
@@ -1165,6 +1198,8 @@ int32_t DoMain(void *data)
 #ifdef PLATFORM_VITA
     VitaPlatform_PinCurrentThread("AgbMain", 1);
 #endif
+    // From here on the game's state belongs to this thread (include/platform/game_thread.h).
+    GameThread_Register();
     // SoftReset() comes back here from wherever the game called it, and the game starts over.
     setjmp(sGameResetJump);
     sGameResetJumpValid = true;
@@ -1207,7 +1242,7 @@ void VBlankIntrWait(void)
 #ifdef VOXEL_SUPPORTED
     VoxelFlyGame_Tick();
 #endif
-    VoxelEntities_PublishSnapshot();
+    GameFrame_CaptureAndPublish();
 
     // 4. Signal Core 0 that a new frame state is ready for GPU rendering. The profiler counts
     // the game frame here, where Core 0 can see it, not at the start of the VBlank work.

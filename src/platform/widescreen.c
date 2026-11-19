@@ -10,6 +10,7 @@
 #include "platform/framedraw.h"
 #include "scanline_effect.h"
 #include "vita/vita_stage.h"
+#include "platform/game_frame.h"
 
 #ifdef WIDESCREEN_SUPPORTED
 struct FastDrawWide gFastDrawWide;
@@ -371,8 +372,10 @@ void Widescreen_PrepareDraw(void)
     int32_t bg;
 
     sStageFade = FALSE;
-    sFieldFrame = sFieldCallback != NULL && gMain.callback2 == sFieldCallback;
-    sBattleFrame = sBattleCallback != NULL && gMain.callback2 == sBattleCallback;
+    // (Core 0: the game's callback as the pinned game frame has it)
+    const void *const callback2 = GameFrame_Get()->field.callback2;
+    sFieldFrame = sFieldCallback != NULL && callback2 == (const void *)sFieldCallback;
+    sBattleFrame = sBattleCallback != NULL && callback2 == (const void *)sBattleCallback;
     gFastDrawWide.output = Widescreen_IsOn();
     gFastDrawWide.extendObj = FALSE;
     for (bg = 0; bg < 4; bg++)

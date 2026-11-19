@@ -202,7 +202,10 @@ set(PLATFORM_COMPILE_OPTIONS
     -Wno-unused-parameter
     -Wno-sign-compare
     -Wno-missing-field-initializers
-    -fno-math-errno)
+    -fno-math-errno
+    # Every static object is addressed by its own symbol (not as an offset from a section
+    # anchor), so tools/core_boundary can tell which table a function reads.
+    -fno-section-anchors)
 
 add_library(game_side OBJECT ${GAME_SIDE_C})
 target_include_directories(game_side PRIVATE "${ROOT}" "${ROOT}/sound")
@@ -257,6 +260,28 @@ set_property(TARGET pokeemerald PROPERTY RULE_LAUNCH_LINK "bash '${ROOT}/vita/vi
 
 # UNSAFE: the game reads and writes ux0:data/POKEVITA/.
 vita_create_self(eboot.bin pokeemerald UNSAFE)
+
+# The thread boundary (docs/THREADS.md): no path from Core 0 or Core 2 reaches the game's code or
+# writable state except through the game frame and tools/core_boundary/allow.txt, and the game
+# thread never reads the game frame. No eboot.bin is made from an ELF that breaks it; the stamp
+# is only written when the check passes, so a failed check runs again on the next build.
+set(CORE_BOUNDARY_STAMP "${CMAKE_BINARY_DIR}/core_boundary.ok")
+add_custom_command(
+    OUTPUT "${CORE_BOUNDARY_STAMP}"
+    COMMAND "${Python3_EXECUTABLE}" "${ROOT}/tools/core_boundary/check_core_boundary.py" --strict
+            --elf "$<TARGET_FILE:pokeemerald>"
+            --game "${GAME_COMBINED_OBJECT}"
+            --game-data "${GAME_DATA_OBJECT}"
+            --allow "${ROOT}/tools/core_boundary/allow.txt"
+            --report "${CMAKE_BINARY_DIR}/core_boundary_report.txt"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${CORE_BOUNDARY_STAMP}"
+    DEPENDS pokeemerald "$<TARGET_FILE:pokeemerald>"
+            "${ROOT}/tools/core_boundary/check_core_boundary.py"
+            "${ROOT}/tools/core_boundary/allow.txt"
+    COMMENT "Checking the thread boundary (tools/core_boundary)"
+    VERBATIM)
+add_custom_target(core_boundary ALL DEPENDS "${CORE_BOUNDARY_STAMP}")
+add_dependencies(eboot.bin-self core_boundary)
 # Equivalent of vita_create_vpk, which joins its -a arguments into one string and splits it
 # on spaces, so it breaks when the checkout path has one (e.g. "Pokemon Esmeralda").
 # LiveArea images are 8-bit indexed PNGs made by vita/make_livearea.sh.

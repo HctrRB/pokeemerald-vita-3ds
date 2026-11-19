@@ -2,7 +2,7 @@
 # performance study docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
 last_updated: "2026-11-19"
 branch: main
-current_milestone: "3D Fly cinematic, procedural culling, Vita-native chunk/atlas streaming & clean-code refactor"
+current_milestone: "Multicore boundary: GameFrame contract, build-time core boundary check, Bad Egg race fix (docs/plan/PLAN_FRONTERA_MULTICORE.md)"
 
 phases:
   phase_0_safety_net: done
@@ -107,6 +107,12 @@ untested_on_hardware:
   - Smooth zone atmosphere transitions, 1-frame streetlamp blackout fix & 1-frame white flash suppression (`2068d7e`), Match Call random-call OOB trainer lookup crash fix (`e537861`), and opaque tree core HSR split (`bc842d1`; dense-tree FPS telemetry check pending). Standing-foliage-only wind sway (`TagAndPartitionTreeSway` restricted to standing grass/flowers/ash grass, all trees static), atlas mode-switch slot invalidation (`Frame_UpdateAtlas`), terrain-conformed fog (`DrawFogBanks` cached world grid), world-anchored motes (`DrawMotes`), UI dynamic sprite decompression & ring hardening (GitHub issue #7 fix in `ui_sprites.c`, `ui_core.c`, `decoration.c`: 8192-byte 4-frame `KIND_MON_FRONT` buffer for `Marshtomp`/`Poochyena`/`Blaziken`/`Walrein`/`Swablu`/`Castform`/`Rayquaza`, `UnpackLz` bounds validation, `sCellUpload` flush barrier, `UiSpr_BeginTick` in overlay pass, and `up->cell < UI_CELL_COUNT` guard), and soft-reset fix (GitHub issue #6 in `main.c`, `link.c`, `vita_reset.c`, `sdl2.c`, `ui_core.c`, `ui_sign.c`, `voxel_renderer.c`: `#ifndef PORTABLE` around `rfu_REQ_stopMode`/`rfu_waitREQComplete`, `.noinit` sentinel so `vita-elf-create` relocates `__stop_gamebss` in `.sce.rel`, Core 1 ↔ Core 0/Core 2 reset barrier + `VoxelRenderer_OnReset`/`Ui_OnReset`, and 4-button chord enabled in overworld) all hardware-verified on PS Vita (cave fog anomaly tracked in `open_issues`).
 
 next_steps:
+  - Multicore boundary build tested on PS Vita by the user (2026-11-19): weather, 3D battles,
+    Routes 130 / 131, Pacifidlog Town, shops; no Bad Eggs, no crash, no
+    ux0:data/POKEVITA/thread_violations.log. Keep that file in mind after future ports from
+    Emerald 3DS: any line in it is a new Core 0 -> game path (resolve lr with addr2line).
+  - Saves corrupted before this fix keep their Bad Eggs (the UI no longer crashes on them).
+    Optional: a repair of Pokemon whose secure block was left in plain text (plan, section 5).
   - Inspect `ux0:data/POKEVITA/perf_summary.txt` / `perf_frames.csv` in dense-tree zones after `bc842d1` to confirm 30 FPS stability (if GPU fragment load or `Entities emit` spikes remain, apply internal diorama FBO scaling / entity atlas upload budgeting).
   - Test the current VPK (build_vita.ps1) on PS Vita against untested_on_hardware (including PokéNav CONDITION,
     Player PC Item Storage WITHDRAW/DEPOSIT, and Lanette's PC MOVE ITEMS) and inspect

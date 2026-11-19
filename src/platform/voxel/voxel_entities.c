@@ -33,8 +33,13 @@
 #include "voxel_world.h"
 #include "voxel_lighting.h"
 #include "platform/voxel_snapshot.h"
+#include "platform/game_frame.h"
 
-bool8 Shop_IsBuyMenuActive(void);
+/*
+ * Threads: VoxelEntities_Capture runs on Core 1 and is the only code here that reads the game
+ * (gObjectEvents, gSprites, the doors...). Everything else runs on Core 0 and reads the entity
+ * snapshot of the pinned game frame (VoxelEntities_GetVisibleSnapshot).
+ */
 
 /* 16 pixels of sprite is one world tile, as in the reference renderer. */
 #define VOXEL_PIXELS_PER_TILE 16.0f
@@ -223,98 +228,112 @@ static float ObjectDeck(const struct ObjectEvent *obj, float worldX, float world
     return VoxelBuildings_DeckAt(inst, cx, cz, obj->currentElevation, &lift) ? lift : 0.0f;
 }
 
-/* 4-slot lock-free ring with Core 0 pinning: Core 1 publishes at 60 Hz while Core 0 renders at
- * 30/60 FPS, so pinning one slot at Frame_Begin guarantees every Core 0 reader (camera, Z-shift,
- * ground height, entity billboards) sees the exact same immutable snapshot and Core 1 can never
- * overwrite the slot Core 0 is reading mid-frame (eliminating torn mapGroup/coords teleports). */
-#define VOXEL_SNAP_SLOTS 4
+bool8 PortDoor_Get(s16 *x, s16 *y, u8 *width, const u8 **tiles, const u8 **palettes);
+bool8 PortDoor_GetTwin(s16 *x, s16 *y);      /* field_door.c */
+bool8 VisibleWild_IsSprite(u8 spriteId);     /* wild_encounter.c (weak default below) */
 
-static VoxelEntitySnapshot sSnapshots[VOXEL_SNAP_SLOTS];
-static volatile int32_t sLatestSnapIdx = 0;
-static volatile int32_t sPinnedSnapIdx = -1;
-static int32_t sCore0FrameSnapIdx = -1;
-
-void VoxelEntities_PublishSnapshot(void)
+/* Core 1: the entities of the game frame being captured (GameFrame_CaptureAndPublish). */
+void VoxelEntities_Capture(VoxelEntitySnapshot *snap, const VoxelEntitySnapshot *previous, bool8 keepPrevious)
 {
-    if (Shop_IsBuyMenuActive())
+    if (keepPrevious)
     {
-        // Retain the active overworld entity state while the shop buy menu is open
-        __atomic_store_n(&sMapMutationLock, 0u, __ATOMIC_RELEASE);
+        // The shop's buy menu covers the field: the field behind it stays as it was.
+        if (snap != previous)
+            memcpy(snap, previous, sizeof(*snap));
         return;
     }
 
-    const int32_t latest = __atomic_load_n(&sLatestSnapIdx, __ATOMIC_RELAXED);
-    const int32_t pinned = __atomic_load_n(&sPinnedSnapIdx, __ATOMIC_ACQUIRE);
-    int32_t writeIdx = (latest + 1) & (VOXEL_SNAP_SLOTS - 1);
-    if (writeIdx == pinned)
-        writeIdx = (writeIdx + 1) & (VOXEL_SNAP_SLOTS - 1);
-
-    VoxelEntitySnapshot *snap = &sSnapshots[writeIdx];
-    memcpy(snap->objectEvents, gObjectEvents, sizeof(gObjectEvents));
+    memcpy(snap->objectEvents, gObjectEvents, sizeof(snap->objectEvents));
+    memcpy(snap->sprites, gSprites, sizeof(snap->sprites));
     memcpy(snap->oamMatrices, gOamMatrices, sizeof(snap->oamMatrices));
+    snap->visibleWild = 0;
+    snap->weatherSprites = 0;
+    snap->cloudSprites = 0;
+    for (uint32_t id = 0; id < MAX_SPRITES; ++id)
+    {
+        const struct Sprite *sprite = &gSprites[id];
+
+        snap->extPalettes[id] = sprite->inUse ? GetSpriteExtPalette(sprite) : 0xFF;
+        snap->tileTags[id] = sprite->inUse && (sprite->oam.affineMode & ST_OAM_AFFINE_ON_MASK)
+                           ? GetSpriteTileTagByTileStart(sprite->sheetTileStart) : 0xFFFF;
+        if (sprite->inUse && VisibleWild_IsSprite((u8)id))
+            snap->visibleWild |= (u64)1 << id;
+        // The weather keeps its own sprites' addresses: told apart here, where they are gSprites'
+        if (sprite->inUse && CtrSprite_IsVoxelWeather(sprite))
+            snap->weatherSprites |= (u64)1 << id;
+        if (sprite->inUse && CtrSprite_IsVoxelCloud(sprite))
+            snap->cloudSprites |= (u64)1 << id;
+    }
     for (uint32_t i = 0; i < OBJECT_EVENTS_COUNT; ++i)
     {
-        const struct ObjectEvent *obj = &gObjectEvents[i];
-        if (obj->active && obj->spriteId < MAX_SPRITES)
+        if (gObjectEvents[i].active)
+            snap->graphicsInfo[i] = *GetObjectEventGraphicsInfo(gObjectEvents[i].graphicsId);
+    }
+    snap->playerObjectEventId = gPlayerAvatar.objectEventId < OBJECT_EVENTS_COUNT
+                              ? gPlayerAvatar.objectEventId : 0;
+
+    // The door being opened or closed, and the multi corridor's twin
+    {
+        s16 x, y;
+        u8 width;
+        const u8 *tiles, *palettes;
+
+        snap->doorCount = 0;
+        if (gSaveBlock1Ptr != NULL && PortDoor_Get(&x, &y, &width, &tiles, &palettes))
         {
-            snap->sprites[i] = gSprites[obj->spriteId];
-            snap->extPalettes[i] = GetSpriteExtPalette(&gSprites[obj->spriteId]);
-        }
-        else
-        {
-            snap->extPalettes[i] = 0xFF;
+            snap->doorCount = 1;
+            snap->doorWidth = width;
+            snap->doorTiles = tiles;
+            snap->doorPalettes = palettes;
+            snap->doorX[0] = x;
+            snap->doorY[0] = y;
+            if (PortDoor_GetTwin(&x, &y))
+            {
+                snap->doorCount = 2;
+                snap->doorX[1] = x;
+                snap->doorY[1] = y;
+            }
         }
     }
 
-    // Compute raw player world position atomically on Core 1 (relief & bridge deck Z shift
-    // are applied on Core 0 via VoxelEntities_PlayerZShift using Core 0's consistent sInstances[]).
-    const struct ObjectEvent *pObj = &gObjectEvents[gPlayerAvatar.objectEventId];
+    // Compute raw player world position on Core 1 (relief & bridge deck Z shift are applied on
+    // Core 0 via VoxelEntities_PlayerZShift using Core 0's consistent sInstances[]).
+    const struct ObjectEvent *pObj = &gObjectEvents[snap->playerObjectEventId];
     float px = 0.0f, pz = 0.0f;
     if (pObj->active && pObj->spriteId < MAX_SPRITES)
-    {
         GetObjectWorldPos(pObj, &gSprites[pObj->spriteId], &px, &pz);
-    }
     else
-    {
-        VoxelWorld_GetPlayerWorldCoords(&px, &pz);
-    }
+        VoxelWorld_GetPlayerWorldCoordsLive(&px, &pz);
     snap->playerWorldX = px;
     snap->playerWorldZ = pz;
     snap->mapGroup = (gSaveBlock1Ptr != NULL) ? (int16_t)gSaveBlock1Ptr->location.mapGroup : (int16_t)-1;
     snap->mapNum   = (gSaveBlock1Ptr != NULL) ? (int16_t)gSaveBlock1Ptr->location.mapNum   : (int16_t)-1;
-    snap->frameNum++;
-    __atomic_store_n(&sLatestSnapIdx, writeIdx, __ATOMIC_RELEASE);
-
-    // Release map mutation lock once the snapshot for the new map state is fully published
-    __atomic_store_n(&sMapMutationLock, 0u, __ATOMIC_RELEASE);
+    snap->frameNum = previous->frameNum + 1;
 }
 
-void VoxelEntities_BeginFrameSnapshot(void)
-{
-    int32_t idx = __atomic_load_n(&sLatestSnapIdx, __ATOMIC_ACQUIRE);
-    for (int32_t attempt = 0; attempt < 2; ++attempt)
-    {
-        __atomic_store_n(&sPinnedSnapIdx, idx, __ATOMIC_SEQ_CST);
-        const int32_t check = __atomic_load_n(&sLatestSnapIdx, __ATOMIC_ACQUIRE);
-        if (check == idx)
-            break;
-        idx = check;
-    }
-    sCore0FrameSnapIdx = idx;
-}
-
-void VoxelEntities_EndFrameSnapshot(void)
-{
-    sCore0FrameSnapIdx = -1;
-    __atomic_store_n(&sPinnedSnapIdx, -1, __ATOMIC_RELEASE);
-}
-
+/* Core 0: the entities of the pinned game frame. */
 const VoxelEntitySnapshot *VoxelEntities_GetVisibleSnapshot(void)
 {
-    if (sCore0FrameSnapIdx >= 0 && sCore0FrameSnapIdx < VOXEL_SNAP_SLOTS)
-        return &sSnapshots[sCore0FrameSnapIdx];
-    const int32_t idx = __atomic_load_n(&sLatestSnapIdx, __ATOMIC_ACQUIRE);
-    return &sSnapshots[idx];
+    return &GameFrame_Get()->entities;
+}
+
+/* The sprite of an object of the snapshot, NULL without one. */
+static const struct Sprite *SnapSprite(const VoxelEntitySnapshot *snap, const struct ObjectEvent *obj)
+{
+    return obj->spriteId < MAX_SPRITES ? &snap->sprites[obj->spriteId] : NULL;
+}
+
+/* The graphics info of an object of the snapshot (obj points into snap->objectEvents). */
+static const struct ObjectEventGraphicsInfo *SnapGraphicsInfo(const VoxelEntitySnapshot *snap,
+                                                            const struct ObjectEvent *obj)
+{
+    return &snap->graphicsInfo[obj - snap->objectEvents];
+}
+
+/* The sprite id of a sprite of the snapshot. */
+static uint32_t SnapSpriteId(const VoxelEntitySnapshot *snap, const struct Sprite *sprite)
+{
+    return (uint32_t)(sprite - snap->sprites);
 }
 
 /* Transform map-local coordinates from a snapshot into Core 0's current inst0 world space. */
@@ -334,12 +353,12 @@ static inline void ApplySnapshotMapOffset(const VoxelEntitySnapshot *const snap,
 float VoxelEntities_PlayerDeck(void)
 {
     const VoxelEntitySnapshot *const snap = VoxelEntities_GetVisibleSnapshot();
-    const struct ObjectEvent *const obj = &snap->objectEvents[gPlayerAvatar.objectEventId];
+    const struct ObjectEvent *const obj = &snap->objectEvents[snap->playerObjectEventId];
     float x = 0.0f, z = 0.0f;
 
     if (!obj->active || obj->spriteId >= MAX_SPRITES)
         return 0.0f;
-    GetObjectWorldPos(obj, &snap->sprites[gPlayerAvatar.objectEventId], &x, &z);
+    GetObjectWorldPos(obj, SnapSprite(snap, obj), &x, &z);
     ApplySnapshotMapOffset(snap, &x, &z);
     return ObjectDeck(obj, x, z);
 }
@@ -347,7 +366,7 @@ float VoxelEntities_PlayerDeck(void)
 float VoxelEntities_PlayerZShift(void)
 {
     const VoxelEntitySnapshot *const snap = VoxelEntities_GetVisibleSnapshot();
-    const struct ObjectEvent *const obj = &snap->objectEvents[gPlayerAvatar.objectEventId];
+    const struct ObjectEvent *const obj = &snap->objectEvents[snap->playerObjectEventId];
     if (!obj->active || obj->spriteId >= MAX_SPRITES)
         return 0.0f;
 
@@ -360,7 +379,7 @@ float VoxelEntities_PlayerZShift(void)
 float VoxelEntities_PlayerGround(void)
 {
     const VoxelEntitySnapshot *const snap = VoxelEntities_GetVisibleSnapshot();
-    const struct ObjectEvent *const obj = &snap->objectEvents[gPlayerAvatar.objectEventId];
+    const struct ObjectEvent *const obj = &snap->objectEvents[snap->playerObjectEventId];
     float x = 0.0f, z = 0.0f;
 
     if (!obj->active || obj->spriteId >= MAX_SPRITES)
@@ -369,7 +388,7 @@ float VoxelEntities_PlayerGround(void)
     }
     else
     {
-        GetObjectWorldPos(obj, &snap->sprites[gPlayerAvatar.objectEventId], &x, &z);
+        GetObjectWorldPos(obj, SnapSprite(snap, obj), &x, &z);
         ApplySnapshotMapOffset(snap, &x, &z);
     }
     /* Where the player's card stands (EmitBillboard): on the cell it is in,
@@ -600,7 +619,7 @@ static void PictureSize(const struct Sprite *sprite, const struct ObjectEvent *o
     GetSpriteDimensions(sprite->oam.shape, sprite->oam.size, w, h);
     if (obj == NULL || sprite->subspriteTables == NULL)
         return;
-    info = GetObjectEventGraphicsInfo(obj->graphicsId);
+    info = SnapGraphicsInfo(VoxelEntities_GetVisibleSnapshot(), obj);
     if ((info->width > *w || info->height > *h)
      && VoxelSlots_Fits((uint32_t)info->width, (uint32_t)info->height, sprite->oam.bpp != 0,
                         VOXEL_SPRITE_SLOT_DIM, VOXEL_SPRITE_MAX_BYTES))
@@ -645,10 +664,12 @@ static bool RefreshSlot(uint32_t index, const struct Sprite *sprite, const struc
     /* OBJ palettes are the second half of PLTT; 8bpp uses it as one bank.
      * One given an ext palette shows that, as the 2D compositor does.
      * Read from gPlttBufferUnfaded to preserve true colors during screen fades. */
-    if (extPalette != 0xFF)
-        memcpy(palette, CtrVideo_ExtPalette(extPalette), paletteBytes);
+    if (extPalette != 0xFF && extPalette < PLTT_EXT_COUNT)
+        memcpy(palette, &GameFrame_Get()->overlay.objPaletteExtUnfaded[extPalette * 16], paletteBytes);
+    else if (extPalette != 0xFF)
+        return false;
     else
-        memcpy(palette, &gPlttBufferUnfaded[256 + (color256 ? 0 : sprite->oam.paletteNum * 16)], paletteBytes);
+        memcpy(palette, &GameFrame_Get()->overlay.objPaletteUnfaded[color256 ? 0 : sprite->oam.paletteNum * 16], paletteBytes);
 
     changed = !slot->valid
            || slot->width != w || slot->height != h
@@ -804,7 +825,7 @@ static float SpriteScale(const struct Sprite *sprite)
 
     if (!(sprite->oam.affineMode & ST_OAM_AFFINE_ON_MASK))
         return 1.0f;
-    a = (s16)gOamMatrices[sprite->oam.matrixNum & (OAM_MATRIX_COUNT - 1)].a;
+    a = (s16)VoxelEntities_GetVisibleSnapshot()->oamMatrices[sprite->oam.matrixNum & (OAM_MATRIX_COUNT - 1)].a;
     return a > 0 ? 256.0f / a : 1.0f;
 }
 
@@ -901,7 +922,8 @@ static bool IsRotatingGate(const struct Sprite *const sprite)
 {
     if (!(sprite->oam.affineMode & ST_OAM_AFFINE_ON_MASK))
         return false;
-    const uint32_t tag = GetSpriteTileTagByTileStart(sprite->sheetTileStart);
+    const VoxelEntitySnapshot *const snap = VoxelEntities_GetVisibleSnapshot();
+    const uint32_t tag = snap->tileTags[SnapSpriteId(snap, sprite)];
     return tag >= VOXEL_GATE_TAG_FIRST && tag <= VOXEL_GATE_TAG_LAST;
 }
 
@@ -957,9 +979,6 @@ static void EmitTurnedDecal(VoxelBuilder *const builder, const VoxelSpriteSlot *
  * not modelled and its drawing lies flat. Whoever steps through it is gone
  * into the dark, as on the GBA they are behind the wall.
  */
-bool8 PortDoor_Get(s16 *x, s16 *y, u8 *width, const u8 **tiles, const u8 **palettes);
-bool8 PortDoor_GetTwin(s16 *x, s16 *y);      /* field_door.c */
-
 #define VOXEL_DOOR_DEPTH 0.03f    /* the frame, in front of its wall */
 #define VOXEL_DOOR_DUSK 0.5f      /* tiles before it over which a walker darkens */
 #define VOXEL_DOOR_DARK 0.35f
@@ -1018,8 +1037,12 @@ static bool FindDoors(VoxelDoor doors[VOXEL_DOORS], uint16_t *atlas)
 
     for (uint32_t d = 0; d < VOXEL_DOORS; ++d)
         doors[d].on = false;
-    if (VoxelWorld_InstanceCount() == 0 || !PortDoor_Get(&x, &y, &width, &tiles, &palettes))
+    const VoxelEntitySnapshot *const snap = VoxelEntities_GetVisibleSnapshot();
+    if (VoxelWorld_InstanceCount() == 0 || snap->doorCount == 0)
         return false;
+    width = snap->doorWidth;
+    tiles = snap->doorTiles;
+    palettes = snap->doorPalettes;
     inst = VoxelWorld_Instance(0);
     primary = Voxel_ResolvePalettes(inst->primaryTileset);
     secondary = Voxel_ResolvePalettes(inst->secondaryTileset);
@@ -1027,8 +1050,10 @@ static bool FindDoors(VoxelDoor doors[VOXEL_DOORS], uint16_t *atlas)
         return false;
     for (uint32_t d = 0; d < VOXEL_DOORS; ++d)
     {
-        if (d > 0 && !PortDoor_GetTwin(&x, &y))
+        if (d >= snap->doorCount || d >= VOXEL_SNAPSHOT_DOORS)
             break;
+        x = snap->doorX[d];
+        y = snap->doorY[d];
         doors[d].on = true;
         doors[d].x = x - MAP_OFFSET + inst->originX;
         doors[d].y = y - MAP_OFFSET + inst->originY;
@@ -1528,8 +1553,6 @@ static bool IsDecal(const struct SpriteTemplate *template)
 
 /* wild_encounter.c, from the optional visible wild Pokemon (patch 0056);
  * without it no sprite is one. */
-bool8 VisibleWild_IsSprite(u8 spriteId);
-
 bool8 __attribute__((weak)) VisibleWild_IsSprite(u8 spriteId)
 {
     (void)spriteId;
@@ -1547,9 +1570,15 @@ bool8 __attribute__((weak)) VisibleWild_IsSprite(u8 spriteId)
  */
 #define VOXEL_EFFECT_RANGE (24.0f + 2.0f)
 
+/* Core 0: sprite `id` of the pinned frame is a visible wild Pokemon. */
+static bool SnapIsVisibleWild(uint32_t id)
+{
+    return id < MAX_SPRITES && (VoxelEntities_GetVisibleSnapshot()->visibleWild >> id) & 1;
+}
+
 static u8 EffectPriority(const struct Sprite *sprite, uint32_t id)
 {
-    if (VisibleWild_IsSprite((u8)id))
+    if (SnapIsVisibleWild(id))
         return VOXEL_SLOT_PRIORITY_WILD;
     if (IsTileEffect(sprite->template))
         return VOXEL_SLOT_PRIORITY_DECOR;
@@ -1666,6 +1695,7 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
     /* The lighting caches are the chunks' own, valid until the world
      * changes (ctr_voxel.c resets them then), so they are not reset here. */
     const VoxelEntitySnapshot *snap = VoxelEntities_GetVisibleSnapshot();
+    const bool buyMenu = GameFrame_Get()->overlay.buyMenu;
     int32_t snapOffX = 0, snapOffY = 0;
     if (snap != NULL && snap->mapGroup >= 0 && snap->mapNum >= 0)
     {
@@ -1694,7 +1724,7 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
         }
         if (obj->spriteId >= MAX_SPRITES)
             continue;
-        sprite = &snap->sprites[i];
+        sprite = SnapSprite(snap, obj);
         objectSprite[obj->spriteId] = true;
         objectTiles[objectTileCount++] = sprite->oam.tileNum;
         /*
@@ -1724,9 +1754,9 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
          || (camera->targetZ - worldZ) > 42.0f
          || (worldZ - camera->targetZ) > 16.0f)
             continue;
-        if (!Shop_IsBuyMenuActive())
+        if (!buyMenu)
         {
-            if (RefreshSlot(i, sprite, obj, snap->extPalettes[i], atlas))
+            if (RefreshSlot(i, sprite, obj, snap->extPalettes[obj->spriteId], atlas))
             {
                 ++updates;
                 sDirtySlots |= 1u << i;
@@ -1735,7 +1765,7 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
         if (!sSlots[i].valid)
             continue;
         {
-            const struct ObjectEventGraphicsInfo *info = GetObjectEventGraphicsInfo(obj->graphicsId);
+            const struct ObjectEventGraphicsInfo *info = SnapGraphicsInfo(snap, obj);
 
             bool changed = sSlots[i].footPadImages != info->images;
 
@@ -1802,11 +1832,11 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
         card->outdoor = outdoor;
     }
 
-    if (!Shop_IsBuyMenuActive())
+    if (!buyMenu)
     {
         for (uint32_t id = 0; id < MAX_SPRITES; ++id)
         {
-            const struct Sprite *sprite = &gSprites[id];
+            const struct Sprite *sprite = &snap->sprites[id];
             VoxelEffectCard *effect = &candidates[candidateCount];
             VoxelSlotRequest *request = &requests[candidateCount];
             const VoxelObjectCard *reference;
@@ -1818,9 +1848,9 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
              * blinking one's off frames) is hidden here too. */
             if (!sprite->inUse || sprite->invisible || !sprite->coordOffsetEnabled || objectSprite[id])
                 continue;
-            cloud = CtrSprite_IsVoxelCloud(sprite);
+            cloud = (snap->cloudSprites >> id) & 1;
             if (IsTemplate(sprite->template, FLDEFFOBJ_SHADOW_S, FLDEFFOBJ_SHADOW_XL)
-             || (CtrSprite_IsVoxelWeather(sprite) && !cloud))
+             || (((snap->weatherSprites >> id) & 1) && !cloud))
                 continue;
             /* A reflection is a copy of its object's picture. */
             for (t = 0; t < objectTileCount && objectTiles[t] != sprite->oam.tileNum; ++t)
@@ -1839,14 +1869,14 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
             effect->tile = IsTileEffect(sprite->template);
             /* A visible wild Pokemon stands on its own tile, never on an object:
              * a tile south of the player, owned by it, it sank under the ground. */
-            effect->owner = effect->decal || effect->tile || VisibleWild_IsSprite((u8)id)
+            effect->owner = effect->decal || effect->tile || SnapIsVisibleWild(id)
                           ? -1 : EffectOwner(sprite, objects);
             effect->front = effect->owner < 0 || DrawnOver(sprite, objects[effect->owner].sprite);
 
             /* Where it will be drawn, near enough to tell whether the camera
              * can see it (the placement below). */
-            reference = gPlayerAvatar.objectEventId < OBJECT_EVENTS_COUNT
-                      ? &objects[gPlayerAvatar.objectEventId] : NULL;
+            reference = snap->playerObjectEventId < OBJECT_EVENTS_COUNT
+                      ? &objects[snap->playerObjectEventId] : NULL;
             if (effect->tile)
             {
                 float cx = (float)(sprite->data[1] - MAP_OFFSET) + 0.5f;
@@ -1899,9 +1929,9 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
             /* Not drawn this frame: logged, at most every ten seconds. */
             static uint32_t sLastFull;
 
-            if (sLastFull == 0 || gMain.vblankCounter1 - sLastFull >= 600)
+            if (sLastFull == 0 || snap->frameNum - sLastFull >= 600)
             {
-                sLastFull = gMain.vblankCounter1 ? gMain.vblankCounter1 : 1;
+                sLastFull = snap->frameNum ? snap->frameNum : 1;
                 CtrLog_Write(CTR_LOG_VIDEO, "VOXEL sprite slots full: %u in sight left out, lowest priority first",
                              dropped);
             }
@@ -1982,7 +2012,7 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
         uint32_t first = builder->count;
         EmitBillboard(builder, &sSlots[i], i, card->worldX + 0.5f, card->worldZ + 0.5f,
                       0.0f, 0.0f, rise, card->deck, rightX, rightZ, stretch, card->shade * dusk, 1.0f, dusk < 1.0f);
-        if (i == gPlayerAvatar.objectEventId && builder->count == first + 6)
+        if (i == snap->playerObjectEventId && builder->count == first + 6)
             sPlayerVertexFirst = (int32_t)first;
     }
 
@@ -1993,7 +2023,7 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
         const VoxelObjectCard *reference;
         int32_t h, x, base;
 
-        if (RefreshSlot(effect->slot, sprite, NULL, GetSpriteExtPalette(sprite), atlas))
+        if (RefreshSlot(effect->slot, sprite, NULL, snap->extPalettes[SnapSpriteId(snap, sprite)], atlas))
         {
             ++updates;
             sDirtySlots |= 1u << effect->slot;
@@ -2007,8 +2037,8 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
         {
             /* Placed from the player as a decal is: its picture's bottom
              * edge 8 px under the middle of the player's tile. */
-            reference = gPlayerAvatar.objectEventId < OBJECT_EVENTS_COUNT
-                      ? &objects[gPlayerAvatar.objectEventId] : NULL;
+            reference = snap->playerObjectEventId < OBJECT_EVENTS_COUNT
+                      ? &objects[snap->playerObjectEventId] : NULL;
             // Ocean routes and underwater maps contain zero reflective puddles/ponds.
             // Early-skipping EmitClouds on open sea avoids hundreds of fruitless GetRawBlock() checks per frame!
             const bool isOceanMap = (gMapHeader.mapType == MAP_TYPE_OCEAN_ROUTE || gMapHeader.mapType == MAP_TYPE_UNDERWATER);
@@ -2030,9 +2060,9 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
             float cz = (float)(sprite->data[2] - MAP_OFFSET) + 0.5f;
             float shade = 1.0f;
 
-            if (gPlayerAvatar.objectEventId < OBJECT_EVENTS_COUNT
-             && objects[gPlayerAvatar.objectEventId].drawn)
-                shade = objects[gPlayerAvatar.objectEventId].shade;
+            if (snap->playerObjectEventId < OBJECT_EVENTS_COUNT
+             && objects[snap->playerObjectEventId].drawn)
+                shade = objects[snap->playerObjectEventId].shade;
 
             if (VoxelWorld_InstanceCount() > 0)
             {
@@ -2060,8 +2090,8 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
         }
         /* On its own: placed from the player, whose feet are on the centre of
          * its tile and whose picture ends at the tile's bottom edge. */
-        reference = gPlayerAvatar.objectEventId < OBJECT_EVENTS_COUNT
-                  ? &objects[gPlayerAvatar.objectEventId] : NULL;
+        reference = snap->playerObjectEventId < OBJECT_EVENTS_COUNT
+                  ? &objects[snap->playerObjectEventId] : NULL;
         if (reference == NULL || !reference->drawn)
             continue;
         {

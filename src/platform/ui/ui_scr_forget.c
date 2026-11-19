@@ -57,6 +57,7 @@ static uint32_t sFrame;
 static void Fill(ForgetMove *m, uint16_t move, int32_t slot)
 {
     memset(m, 0, sizeof(*m));
+    move = UiGame_SafeMove(move);
     m->move = move;
     if (move == MOVE_NONE)
         return;
@@ -226,7 +227,7 @@ static void Build(void)
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
 
     // The POKéMON
-    const uint16_t species = (uint16_t)GetMonData(sMon, MON_DATA_SPECIES);
+    const uint16_t species = UiGame_SafeSpecies(GetMonData(sMon, MON_DATA_SPECIES));
     UiW_Panel(16, 60, 300, 272);
     UiW_Inset(30, 74, 272, 176);
     UiSpr_MonFront(species, IsMonShiny(sMon), 30 + (272 - 128) / 2, 74 + (176 - 128) / 2, 2);

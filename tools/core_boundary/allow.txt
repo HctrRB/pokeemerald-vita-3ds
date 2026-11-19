@@ -1,0 +1,36 @@
+# What Core 0 and Core 2 may use of the game besides the game frame (include/platform/game_frame.h).
+# Read by tools/core_boundary/check_core_boundary.py; the rule syntax is in its Allow class.
+# Every rule says why it is safe. Anything not listed here is a violation of docs/THREADS.md.
+
+# ── Pure game functions: they read constant tables only ──────────────────────────────────────
+call MetatileBehavior_*            # sTileBitAttributes / comparisons of a behaviour value
+call GetMapHeaderFromConnection    # gMapGroups, constant map headers
+call LZDecompressWram              # decompresses its argument into the caller's buffer
+
+# ── Channel 1: the emulated GBA display (read only, tears for a frame at worst) ──────────────
+# Core 1 writes it, the 2D frame drawer and the overlay pass read it (docs/THREADS.md, "Who owns
+# what": emulated VRAM, OAM, palettes, registers, extended sprite palettes).
+data REG_BASE
+data VRAM_
+data OAM
+data PLTT
+data gPlttExt
+data gOamExt
+data gPlttExtInUse
+# The screen-sprite mask and the HBlank scroll effect are part of what the GBA frame shows:
+# only the frame drawer reads them, as it reads the registers.
+data DrawSprites:gScreenOam
+data Widescreen_PrepareDraw:gScanlineEffect
+
+# ── Channel 2: the current map's grid, under sMapMutationLock ─────────────────────────────────
+# The map loader calls GameFrame_BeginMapMutation before it changes them; Core 0 builds from them
+# only while GameFrame_MapSettled() (the pinned frame is of the map they hold), and the chunk
+# worker is launched only then. gBackupMapLayout.map is a static array, never freed.
+data gMapHeader
+data gBackupMapLayout
+data sMapMutationLock              # the barrier itself
+
+# ── Port tables Core 0 reads without calling their functions ──────────────────────────────────
+# Core 0 reads the extras' names and values (VitaExtras_GetFast). Their act()/step() functions
+# are called by VitaExtras_Step, from the new UI on Core 1.
+table VitaExtras_Init:gVitaExtras

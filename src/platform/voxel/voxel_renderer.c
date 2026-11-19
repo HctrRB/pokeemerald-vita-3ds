@@ -62,6 +62,7 @@ static inline void VoxelGl_DrawArrays(GLenum mode, GLint first, GLsizei count)
 #include "platform/vita_extras.h"
 #include "platform/ui.h"
 #include "platform/voxel_snapshot.h"
+#include "platform/game_frame.h"
 #include "../vita/vita_platform.h"
 
 #include "voxel_renderer.h"
@@ -4857,19 +4858,14 @@ static inline bool VoxelRenderer_HasActiveUi(bool inBattle3D)
 {
     if (inBattle3D)
         return true;
-    extern bool8 BattleTransition_IsActiveForUi(void);
-    if (BattleTransition_IsActiveForUi())
+    const GameFrameOverlay *const overlay = &GameFrame_Get()->overlay;
+    if (overlay->battleTransition)
         return true;
 
-    extern bool8 Shop_IsBuyMenuActive(void);
-    if (Shop_IsBuyMenuActive())
+    if (overlay->buyMenu)
         return true;
 
-    const bool inFieldMove = FieldEffectActiveListContains(FLDEFF_FIELD_MOVE_SHOW_MON)
-                          || FieldEffectActiveListContains(FLDEFF_FIELD_MOVE_SHOW_MON_INIT);
-    const bool inFlyAnim = FieldEffectActiveListContains(FLDEFF_USE_FLY)
-                        || FieldEffectActiveListContains(FLDEFF_FLY_IN);
-    if (inFieldMove || inFlyAnim)
+    if (overlay->fieldMoveShowMon || overlay->flyAnim)
         return true;
 
     if ((REG_DISPCNT & 0x0100) == 0)
@@ -4880,26 +4876,20 @@ static inline bool VoxelRenderer_HasActiveUi(bool inBattle3D)
         return false;
 
     // Standard message box active (NPC dialogues, signposts, text)
-    extern u8 GetFieldMessageBoxMode(void);
-    if (GetFieldMessageBoxMode() != 0) // 0 == FIELD_MESSAGE_BOX_HIDDEN
+    if (overlay->messageBox)
         return true;
 
     // Map name popup banner (e.g. "LITTLEROOT TOWN")
-    extern u8 GetMapNamePopUpWindowId(void);
-    if (GetMapNamePopUpWindowId() != 0xFF) // 0xFF == WINDOW_NONE
+    if (overlay->mapNamePopUp)
         return true;
 
     // Active text printer on standard window 0
-    extern bool16 IsTextPrinterActive(u8 id);
-    if (IsTextPrinterActive(0))
+    if (overlay->textPrinter0)
         return true;
 
     // Any secondary active window on BG0 (YES/NO, multichoice menus, etc.)
-    for (int32_t w = 1; w < WINDOWS_MAX; w++)
-    {
-        if (gWindows[w].window.bg == 0 && gWindows[w].tileData != NULL)
-            return true;
-    }
+    if (overlay->bg0Window)
+        return true;
 
     // A message box that finished printing and waits for A, or anything else still drawn on BG0
     return Bg0ShowsTiles();
@@ -4995,9 +4985,10 @@ static bool Frame_Begin(VoxelFrame *const f)
     if (sWorkerBusyThisFrame)
     {
         const VoxelMapInstance *const current = VoxelWorld_InstanceCount() > 0 ? VoxelWorld_Instance(0) : NULL;
-        const bool worldStands = current != NULL && gSaveBlock1Ptr != NULL
-            && current->mapGroup == gSaveBlock1Ptr->location.mapGroup
-            && current->mapNum == gSaveBlock1Ptr->location.mapNum;
+        const GameFrameField *const field = &GameFrame_Get()->field;
+        const bool worldStands = current != NULL && field->saveLoaded
+            && current->mapGroup == field->mapGroup
+            && current->mapNum == field->mapNum;
         if (inBattle3D || sNeedsFullWarmup || !worldStands)
             EnsureWorkerIdle();
         else
@@ -5009,7 +5000,8 @@ static bool Frame_Begin(VoxelFrame *const f)
 
     // Zero-Stall Multicore Concurrency: when Core 1 is mutating map layout in
     // LoadMapFromCameraTransition / DoMapLoadLoop, render using previous instances and snapshot.
-    const bool mapLocked = (__atomic_load_n(&sMapMutationLock, __ATOMIC_ACQUIRE) != 0u);
+    // (and the frame Core 0 pinned is of the map the grid holds: GameFrame_MapSettled)
+    const bool mapLocked = !GameFrame_MapSettled();
     // (with the worker busy the instances stay as they are: it reads them, and the current map
     // has not changed)
     if (!inBattle3D && !mapLocked && !sWorkerBusyThisFrame)
@@ -5026,9 +5018,8 @@ static bool Frame_Begin(VoxelFrame *const f)
     const VoxelMapInstance *inst0 = VoxelWorld_Instance(0);
     if (!inst0)
         return false;
-    /* Pin one immutable entity snapshot for the entire Core 0 frame so camera, Z-shift,
-     * ground height and entity billboards never observe a mid-frame map transition or torn write. */
-    VoxelEntities_BeginFrameSnapshot();
+    /* The game frame was pinned for this whole Core 0 frame (MainThread_Run, GameFrame_Pin): the
+     * camera, Z-shift, ground height and billboards all see the same one. */
     f->startMs = frameStartMs;
     f->inBattle3D = inBattle3D;
     f->mapLocked = mapLocked;
@@ -5213,7 +5204,7 @@ static void Frame_FollowCamera(VoxelFrame *const f)
             sBattleFx.flashTimer = 0.0f;
             sBattleFx.shakeTimer = 0.0f;
             for (int32_t b = 0; b < MAX_BATTLERS_COUNT; b++)
-                sBattleFx.prevHp[b] = gBattleMons[b].hp;
+                sBattleFx.prevHp[b] = GameFrame_Get()->battle.hp[b];
         }
         else
         {
@@ -5225,19 +5216,15 @@ static void Frame_FollowCamera(VoxelFrame *const f)
             bool hitOccurred = false;
             for (int32_t b = 0; b < MAX_BATTLERS_COUNT; b++)
             {
-                const uint16_t curHp = gBattleMons[b].hp;
+                const uint16_t curHp = GameFrame_Get()->battle.hp[b];
                 if (curHp < sBattleFx.prevHp[b])
                     hitOccurred = true;
                 sBattleFx.prevHp[b] = curHp;
             }
             if (hitOccurred)
             {
-                const bool isCrit = (gCritMultiplier > 1u);
-                uint8_t mType = TYPE_NORMAL;
-                if (gBattleStruct != NULL && (gBattleStruct->dynamicMoveType & 0x3Fu) != 0u)
-                    mType = (uint8_t)(gBattleStruct->dynamicMoveType & 0x3Fu);
-                else if (gCurrentMove != 0u)
-                    mType = gBattleMoves[gCurrentMove].type;
+                const bool isCrit = GameFrame_Get()->battle.critical;
+                const uint8_t mType = GameFrame_Get()->battle.moveType;
 
                 BattleTypeToFlashRgb(mType, sBattleFx.flashRgb);
                 if (isCrit)
@@ -8344,9 +8331,10 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         glDisable(GL_BLEND);
 
         float lowHpPulse = 0.0f;
-        if (f->inBattle3D && gBattleMons[0].maxHP > 0u && gBattleMons[0].hp > 0u)
+        const GameFrameBattle *const battle = &GameFrame_Get()->battle;
+        if (f->inBattle3D && battle->maxHp[0] > 0u && battle->hp[0] > 0u)
         {
-            const float hpRatio = (float)gBattleMons[0].hp / (float)gBattleMons[0].maxHP;
+            const float hpRatio = (float)battle->hp[0] / (float)battle->maxHp[0];
             if (hpRatio < 0.25f)
                 lowHpPulse = (0.45f + 0.55f * sinf(f->seconds * 6.5f)) * (1.0f - hpRatio * 4.0f);
         }
@@ -8504,13 +8492,11 @@ static void Pass_Overlay2D(const VoxelFrame *const f)
 {
     const bool inBattle3D = f->inBattle3D;
     const float fadeAmount = f->fadeAmount;
-    const bool inFieldMove = FieldEffectActiveListContains(FLDEFF_FIELD_MOVE_SHOW_MON)
-                          || FieldEffectActiveListContains(FLDEFF_FIELD_MOVE_SHOW_MON_INIT);
-    const bool inFlyAnim = FieldEffectActiveListContains(FLDEFF_USE_FLY)
-                        || FieldEffectActiveListContains(FLDEFF_FLY_IN);
+    const GameFrameOverlay *const overlay = &GameFrame_Get()->overlay;
+    const bool inFieldMove = overlay->fieldMoveShowMon;
+    const bool inFlyAnim = overlay->flyAnim;
     // Battle transition on the field: drawn 16:9, stretched as the field-move banners
-    extern bool8 BattleTransition_IsActiveForUi(void);
-    const bool inTransition = !inBattle3D && BattleTransition_IsActiveForUi();
+    const bool inTransition = !inBattle3D && overlay->battleTransition;
 
     if (inBattle3D || (REG_DISPCNT & 0x0100) || inFieldMove || inFlyAnim || inTransition)
     {
@@ -8690,8 +8676,7 @@ static void Pass_Overlay2D(const VoxelFrame *const f)
         const bool needUi = VoxelRenderer_HasActiveUi(inBattle3D);
         if (needUi)
         {
-            extern bool8 Shop_IsBuyMenuActive(void);
-            const bool inBuyMenu = Shop_IsBuyMenuActive();
+            const bool inBuyMenu = overlay->buyMenu;
             // The 3D battle uses the margins (stretched text box, weather); every other overlay
             // is shown centred, so only the GBA's 240 px are drawn, converted and uploaded.
             const bool overlayWide = inBattle3D;
@@ -9029,7 +9014,6 @@ static void RenderFlyCloudFrame(const VoxelFrame *const f)
     glDepthMask(GL_FALSE);
     glDisable(GL_BLEND);
     glDisable(GL_ALPHA_TEST);
-    VoxelEntities_EndFrameSnapshot();
     REG_VCOUNT = 161;
 }
 
@@ -9068,8 +9052,7 @@ bool VoxelRenderer_RenderFrame(void)
         glDepthMask(GL_FALSE);
         glDisable(GL_BLEND);
         glDisable(GL_ALPHA_TEST);
-        VoxelEntities_EndFrameSnapshot();
-        REG_VCOUNT = 161;
+            REG_VCOUNT = 161;
         return true;
     }
 
@@ -9174,7 +9157,6 @@ bool VoxelRenderer_RenderFrame(void)
     glDisable(GL_BLEND);
     glDisable(GL_ALPHA_TEST);
 
-    VoxelEntities_EndFrameSnapshot();
     REG_VCOUNT = 161;
     return true;
 }
@@ -9190,7 +9172,7 @@ void VoxelRenderer_SwapBuffers(void)
     VitaPerf_MarkSwapEnd();
     // Core 0 is done with the voxel world until the next frame: the chunk chosen this frame
     // is computed on Core 2 meanwhile. Not while Core 1 is rebuilding the map layout.
-    if (sMapMutationLock == 0 && !sMenuBgValid)
+    if (GameFrame_MapSettled() && !sMenuBgValid)
         ChunkWorker_Launch();
 }
 
@@ -9211,7 +9193,6 @@ void VoxelRenderer_OnReset(void)
     sBattleFx.shakeTimer = 0.0f;
     sMenuBgValid = false;
     InvalidateChunkCache();
-    VoxelEntities_EndFrameSnapshot();
     VoxelEntities_Reset();
 }
 

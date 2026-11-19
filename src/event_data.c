@@ -1,5 +1,6 @@
 #include "global.h"
 #include "event_data.h"
+#include "platform/game_thread.h"
 #include "pokedex.h"
 
 #define SPECIAL_FLAGS_SIZE  (NUM_SPECIAL_FLAGS / 8)  // 8 flags per byte
@@ -181,6 +182,7 @@ u16 VarGet(u16 id)
 
 bool8 VarSet(u16 id, u16 value)
 {
+    GAME_THREAD_ONLY();
     u16 *ptr = GetVarPointer(id);
     if (!ptr)
         return FALSE;
@@ -205,6 +207,7 @@ u8 *GetFlagPointer(u16 id)
 
 u8 FlagSet(u16 id)
 {
+    GAME_THREAD_ONLY();
     u8 *ptr = GetFlagPointer(id);
     if (ptr)
         *ptr |= 1 << (id & 7);
@@ -213,6 +216,7 @@ u8 FlagSet(u16 id)
 
 u8 FlagClear(u16 id)
 {
+    GAME_THREAD_ONLY();
     u8 *ptr = GetFlagPointer(id);
     if (ptr)
         *ptr &= ~(1 << (id & 7));

@@ -69,6 +69,8 @@ typedef struct
 
 /* Cheap enough to call once per frame: no payload is touched. */
 bool VoxelWorld_IsMapAvailable(void);
+/* Core 1 (the game thread): the same question asked of the game's own state. */
+bool VoxelWorld_FieldShownLive(void);
 /* The same during a battle, which keeps the map it was started from. */
 bool VoxelWorld_IsBattleMapAvailable(void);
 
@@ -140,6 +142,8 @@ bool VoxelWorld_MapIsConnected(void);
  * map by map (GetMapClosedEdges, field_camera.c; CTR_FIELD_EDGE_*). */
 uint32_t VoxelWorld_ClosedEdges(void);
 void VoxelWorld_GetPlayerWorldCoords(float *worldX, float *worldZ);
+/* Core 1: from the game's own player object. */
+void VoxelWorld_GetPlayerWorldCoordsLive(float *worldX, float *worldZ);
 void VoxelWorld_GetLocation(int32_t *mapGroup, int32_t *mapNum);
 /* Small renderer-facing classification of the original field weather state. */
 typedef enum {

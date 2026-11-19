@@ -30,6 +30,7 @@
 #include "voxel_world.h"
 #include "voxel_regions.h"
 #include "platform/voxel_snapshot.h"
+#include "platform/game_frame.h"
 #include "voxel_tree.h"
 #include "voxel_atlas.h"
 #include "voxel_relief.h"
@@ -255,7 +256,9 @@ failed:
     return true;
 }
 
-bool VoxelWorld_IsMapAvailable(void)
+/* Core 1: whether the field is on screen, from the game's own state (the game asks it through
+ * Platform_IsVoxelOverworldActive; Core 0 reads the published answer). */
+bool VoxelWorld_FieldShownLive(void)
 {
     if (gMapHeader.mapLayout == NULL)
         return false;
@@ -274,7 +277,7 @@ bool VoxelWorld_IsMapAvailable(void)
         || Overworld_IsReturningToField();
 }
 
-bool VoxelWorld_IsBattleMapAvailable(void)
+static bool BattleSceneShownLive(void)
 {
     extern void BattleMainCB2(void);
     /* A battle leaves the map it was started from loaded, live grid and all:
@@ -286,6 +289,16 @@ bool VoxelWorld_IsBattleMapAvailable(void)
         && gMapHeader.mapLayout != NULL
         && gSaveBlock1Ptr != NULL
         && gBackupMapLayout.map != NULL;
+}
+
+bool VoxelWorld_IsMapAvailable(void)
+{
+    return GameFrame_Get()->field.fieldShown;
+}
+
+bool VoxelWorld_IsBattleMapAvailable(void)
+{
+    return GameFrame_Get()->field.battleSceneShown;
 }
 
 /* ── Instances ──────────────────────────────────────────────────────────── */
@@ -300,6 +313,8 @@ bool VoxelWorld_IsBattleMapAvailable(void)
  * crossed into the route. `swapped` says, as the script does, whether the
  * map is entered with `layoutId`; NULL: always.
  */
+/* The predicates ask the game (the party, flags): they run on Core 1 alone, in
+ * VoxelWorld_CaptureField, and Core 0 reads their answers from the game frame. */
 static bool MirageTowerHidden(void)
 {
     return !FlagGet(FLAG_MIRAGE_TOWER_VISIBLE);
@@ -310,22 +325,32 @@ static bool MirageIslandShown(void)
     return IsMirageIslandPresent();
 }
 
+/* What Core 0 reads: plain data. */
 static const struct
 {
     u8 mapGroup, mapNum;
-    bool (*swapped)(void);
     u16 layoutId;
 } sLayoutSwaps[] = {
-    { MAP_GROUP(MAP_ROUTE111), MAP_NUM(MAP_ROUTE111), MirageTowerHidden, LAYOUT_ROUTE111_NO_MIRAGE_TOWER },
-    { MAP_GROUP(MAP_ROUTE130), MAP_NUM(MAP_ROUTE130), MirageIslandShown, LAYOUT_ROUTE130_MIRAGE_ISLAND },
-    { MAP_GROUP(MAP_ROUTE131), MAP_NUM(MAP_ROUTE131), NULL, LAYOUT_ROUTE131_SKY_PILLAR },
+    { MAP_GROUP(MAP_ROUTE111), MAP_NUM(MAP_ROUTE111), LAYOUT_ROUTE111_NO_MIRAGE_TOWER },
+    { MAP_GROUP(MAP_ROUTE130), MAP_NUM(MAP_ROUTE130), LAYOUT_ROUTE130_MIRAGE_ISLAND },
+    { MAP_GROUP(MAP_ROUTE131), MAP_NUM(MAP_ROUTE131), LAYOUT_ROUTE131_SKY_PILLAR },
 };
+
+/* Whether each applies, asked on Core 1 alone (VoxelWorld_CaptureField); NULL: always. */
+static bool (*const sLayoutSwapApplies[])(void) = {
+    MirageTowerHidden,
+    MirageIslandShown,
+    NULL,
+};
+
+_Static_assert(ARRAY_COUNT(sLayoutSwaps) == ARRAY_COUNT(sLayoutSwapApplies), "one predicate per layout swap");
+_Static_assert(ARRAY_COUNT(sLayoutSwaps) <= 32, "the swaps fit layoutSwapMask");
 
 static u16 NeighbourLayoutId(const struct MapHeader *header, int32_t mapGroup, int32_t mapNum)
 {
     for (uint32_t i = 0; i < ARRAY_COUNT(sLayoutSwaps); ++i)
         if (sLayoutSwaps[i].mapGroup == mapGroup && sLayoutSwaps[i].mapNum == mapNum
-         && (sLayoutSwaps[i].swapped == NULL || sLayoutSwaps[i].swapped())
+         && (GameFrame_Get()->field.layoutSwapMask & (1u << i))
          && Port_GetMapLayoutById(sLayoutSwaps[i].layoutId) != NULL)
             return sLayoutSwaps[i].layoutId;
     return header->mapLayoutId;
@@ -582,10 +607,14 @@ static int32_t CurrentLift(int32_t mapGroup, int32_t mapNum)
 
 void VoxelWorld_BuildInstances(void)
 {
-    if (sMapMutationLock != 0)
+    /* The grid and gMapHeader must be the pinned frame's map. */
+    if (!GameFrame_MapSettled())
+        return;
+    const GameFrameField *const field = &GameFrame_Get()->field;
+    if (!field->saveLoaded)
         return;
     uint32_t near;
-    int32_t lift = CurrentLift(gSaveBlock1Ptr->location.mapGroup, gSaveBlock1Ptr->location.mapNum);
+    int32_t lift = CurrentLift(field->mapGroup, field->mapNum);
 
 #if 1
     VoxelBuildings_SetVariantFits(VariantFits);
@@ -597,16 +626,15 @@ void VoxelWorld_BuildInstances(void)
         return;
 
     /* Instance 0 is always the current map, at the origin. */
-    FillInstance(&sPlaced[0], &gMapHeader, gSaveBlock1Ptr->mapLayoutId,
-                 gSaveBlock1Ptr->location.mapGroup,
-                 gSaveBlock1Ptr->location.mapNum, 0, 0);
+    FillInstance(&sPlaced[0], &gMapHeader, field->mapLayoutId,
+                 field->mapGroup, field->mapNum, 0, 0);
     /* Its layout is the save block's: a script that swaps it in
      * (setmaplayoutindex - Route 130's Mirage Island, Route 131's Sky Pillar,
      * the Sky Pillar's clean floors, Route 111 without its tower)
      * sets that and gMapHeader.mapLayout, never gMapHeader.mapLayoutId
      * (overworld.c, SetCurrentMapLayout). Keyed by the header's, the
      * relief, regions and buildings were the default layout's. */
-    sPlaced[0].layoutId = gSaveBlock1Ptr->mapLayoutId;
+    sPlaced[0].layoutId = field->mapLayoutId;
     sPlaced[0].lift = sPlaced[0].indoor ? 0 : lift;
     sInstances[0] = sPlaced[0];
     sInstances[0].live = true;
@@ -1042,11 +1070,34 @@ void VoxelWorld_GetMapDimensions(int32_t *width, int32_t *height)
     }
 }
 
-void VoxelWorld_GetPlayerWorldCoords(float *worldX, float *worldZ)
+static void PlayerTile(float *x, float *z)
 {
     const struct ObjectEvent *player = &gObjectEvents[gPlayerAvatar.objectEventId];
-    float x = (float)(player->currentCoords.x - MAP_OFFSET);
-    float z = (float)(player->currentCoords.y - MAP_OFFSET);
+
+    *x = (float)(player->currentCoords.x - MAP_OFFSET);
+    *z = (float)(player->currentCoords.y - MAP_OFFSET);
+}
+
+/* Core 1. */
+void VoxelWorld_GetPlayerWorldCoordsLive(float *worldX, float *worldZ)
+{
+    float x, z;
+
+    PlayerTile(&x, &z);
+    if (sInstanceCount > 0)
+    {
+        x += (float)sInstances[0].originX;
+        z += (float)sInstances[0].originY;
+    }
+    if (worldX != NULL) *worldX = x;
+    if (worldZ != NULL) *worldZ = z;
+}
+
+/* Core 0. */
+void VoxelWorld_GetPlayerWorldCoords(float *worldX, float *worldZ)
+{
+    float x = GameFrame_Get()->field.playerTileX;
+    float z = GameFrame_Get()->field.playerTileZ;
 
     if (sInstanceCount > 0)
     {
@@ -1057,7 +1108,7 @@ void VoxelWorld_GetPlayerWorldCoords(float *worldX, float *worldZ)
     if (worldZ != NULL) *worldZ = z;
 }
 
-VoxelWeatherClass VoxelWorld_Weather(void)
+static VoxelWeatherClass WeatherLive(void)
 {
 #if 1
     switch (GetCurrentWeather())
@@ -1088,7 +1139,7 @@ VoxelWeatherClass VoxelWorld_Weather(void)
     return VOXEL_WEATHER_CLEAR;
 }
 
-float VoxelWorld_WeatherAmount(void)
+static float WeatherAmountLive(void)
 {
 #if 1
     float amount;
@@ -1125,7 +1176,7 @@ float VoxelWorld_WeatherAmount(void)
 }
 
 /* The bolt's colour map is 19, the storm's own 3 (Thunderstorm_Main). */
-float VoxelWorld_Lightning(void)
+static float LightningLive(void)
 {
 #if 1
     if (GetCurrentWeather() != WEATHER_RAIN_THUNDERSTORM || gWeatherPtr->colorMapIndex <= 3)
@@ -1140,7 +1191,7 @@ float VoxelWorld_Lightning(void)
  * The fog's own blend: the sprites come in at EVA 12 (4 under water) over a
  * few frames and leave the same way, so the world's fog follows them.
  */
-float VoxelWorld_FogDensity(void)
+static float FogDensityLive(void)
 {
 #if 1
     float density;
@@ -1152,6 +1203,26 @@ float VoxelWorld_FogDensity(void)
 #else
     return 0.0f;
 #endif
+}
+
+VoxelWeatherClass VoxelWorld_Weather(void)
+{
+    return (VoxelWeatherClass)GameFrame_Get()->weather.weatherClass;
+}
+
+float VoxelWorld_WeatherAmount(void)
+{
+    return GameFrame_Get()->weather.amount;
+}
+
+float VoxelWorld_Lightning(void)
+{
+    return GameFrame_Get()->weather.lightning;
+}
+
+float VoxelWorld_FogDensity(void)
+{
+    return GameFrame_Get()->weather.fogDensity;
 }
 
 bool VoxelWorld_Underground(void)
@@ -1226,7 +1297,7 @@ static void FadeFit(const u16 *shown, const u16 *unfaded, uint32_t count,
     }
 }
 
-bool VoxelWorld_ScreenFade(float *amount, float rgb[3])
+static bool ScreenFadeLive(float *amount, float rgb[3])
 {
     *amount = 0.0f;
     rgb[0] = rgb[1] = rgb[2] = 0.0f;
@@ -1262,10 +1333,62 @@ bool VoxelWorld_ScreenFade(float *amount, float rgb[3])
     return *amount > 0.0f;
 }
 
+bool VoxelWorld_ScreenFade(float *amount, float rgb[3])
+{
+    const GameFrameFade *const fade = &GameFrame_Get()->fade;
+
+    *amount = fade->amount;
+    rgb[0] = fade->rgb[0];
+    rgb[1] = fade->rgb[1];
+    rgb[2] = fade->rgb[2];
+    return fade->fading;
+}
+
 void VoxelWorld_GetLocation(int32_t *mapGroup, int32_t *mapNum)
 {
-    if (mapGroup != NULL) *mapGroup = gSaveBlock1Ptr != NULL ? gSaveBlock1Ptr->location.mapGroup : -1;
-    if (mapNum != NULL) *mapNum = gSaveBlock1Ptr != NULL ? gSaveBlock1Ptr->location.mapNum : -1;
+    const GameFrameField *const field = &GameFrame_Get()->field;
+
+    if (mapGroup != NULL) *mapGroup = field->mapGroup;
+    if (mapNum != NULL) *mapNum = field->mapNum;
+}
+
+/* Core 1: the field's part of the game frame. */
+void VoxelWorld_CaptureField(GameFrameField *field, GameFrameWeather *weather, GameFrameFade *fade, bool8 voxel)
+{
+    field->saveLoaded = gSaveBlock1Ptr != NULL;
+    field->fieldShown = VoxelWorld_FieldShownLive();
+    field->overworldCallback = gMapHeader.mapLayout != NULL && gSaveBlock1Ptr != NULL
+                            && (gMain.callback2 == CB2_Overworld || gMain.callback2 == CB2_OverworldBasic);
+    field->battleSceneShown = BattleSceneShownLive();
+    field->mapGroup = gSaveBlock1Ptr != NULL ? gSaveBlock1Ptr->location.mapGroup : -1;
+    field->mapNum = gSaveBlock1Ptr != NULL ? gSaveBlock1Ptr->location.mapNum : -1;
+    field->mapLayoutId = gSaveBlock1Ptr != NULL ? gSaveBlock1Ptr->mapLayoutId : 0;
+    field->layoutSwapMask = 0;
+    /* The swaps' predicates read the party (12 decrypted Pokemon): only for the 3D field. */
+    if (voxel && gSaveBlock1Ptr != NULL)
+    {
+        for (uint32_t i = 0; i < ARRAY_COUNT(sLayoutSwaps); ++i)
+            if (sLayoutSwapApplies[i] == NULL || sLayoutSwapApplies[i]())
+                field->layoutSwapMask |= 1u << i;
+    }
+    PlayerTile(&field->playerTileX, &field->playerTileZ);
+    field->playerFacing = gObjectEvents[gPlayerAvatar.objectEventId].facingDirection;
+    field->playerSurfing = TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_SURFING) != 0;
+    field->callback2 = (const void *)gMain.callback2;
+
+    if (!voxel)
+    {
+        /* The 2D frame shows the game's own weather and fade. */
+        memset(weather, 0, sizeof(*weather));
+        memset(fade, 0, sizeof(*fade));
+        return;
+    }
+    weather->weatherClass = (u8)WeatherLive();
+    weather->amount = WeatherAmountLive();
+    weather->lightning = LightningLive();
+    weather->fogDensity = FogDensityLive();
+
+    fade->fading = ScreenFadeLive(&fade->amount, fade->rgb);
 }
 
 static int32_t sMaterialView[4], sMaterialMargin;

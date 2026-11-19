@@ -8,6 +8,7 @@
 #include "platform/vita_daynight.h"
 #include "platform/vita_extras.h"
 #include "vita_platform.h"
+#include "platform/game_frame.h"
 
 static const uint32_t sSpeeds[VITA_DAYNIGHT_SPEED_COUNT] = {1, 6, 12, 24, 60, 120, 1000};
 static VitaDayNightClock sClock;
@@ -407,13 +408,10 @@ bool VitaGame_IsOutdoor(void)
     }
 }
 
+/* Core 0: as the pinned game frame has it (VoxelWorld_CaptureField). */
 bool VitaGame_IsOverworld(void)
 {
-    if (gMapHeader.mapLayout == NULL || gSaveBlock1Ptr == NULL)
-    {
-        return false;
-    }
-    return (gMain.callback2 == CB2_Overworld || gMain.callback2 == CB2_OverworldBasic);
+    return GameFrame_Get()->field.overworldCallback;
 }
 
 bool VitaGame_LocalTimeSeconds(uint32_t *const seconds)

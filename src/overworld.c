@@ -70,6 +70,7 @@
 #include "constants/songs.h"
 #include "constants/trainer_hill.h"
 #include "constants/weather.h"
+#include "platform/game_frame.h"
 
 struct CableClubPlayer
 {
@@ -803,7 +804,7 @@ bool8 SetDiveWarpDive(u16 x, u16 y)
 
 void LoadMapFromCameraTransition(u8 mapGroup, u8 mapNum)
 {
-    sMapMutationLock = 1;
+    GameFrame_BeginMapMutation();
     s32 paletteIndex;
 
     SetWarpDestination(mapGroup, mapNum, WARP_ID_NONE, -1, -1);
@@ -1620,7 +1621,7 @@ void CB2_WhiteOut(void)
 
 void CB2_LoadMap(void)
 {
-    sMapMutationLock = 1;
+    GameFrame_BeginMapMutation();
     FieldClearVBlankHBlankCallbacks();
     ScriptContext_Init();
     UnlockPlayerFieldControls();
@@ -1632,7 +1633,7 @@ void CB2_LoadMap(void)
 static void CB2_LoadMap2(void)
 {
     DoMapLoadLoop(&gMain.state);
-    /* sMapMutationLock is released atomically by VoxelEntities_PublishSnapshot() at frame end
+    /* sMapMutationLock is released when the next game frame is published (GameFrame_CaptureAndPublish)
      * so Core 0 never builds new-map instances against the previous map's entity snapshot. */
     SetFieldVBlankCallback();
     SetMainCallback1(CB1_Overworld);
@@ -2033,8 +2034,8 @@ static bool32 ReturnToFieldLocal(u8 *state)
     {
     case 0:
         /* Guard Core 0 from reading transient object/layout state while returning to the field;
-         * released atomically by VoxelEntities_PublishSnapshot() at frame end. */
-        sMapMutationLock = 1;
+         * released when the next game frame is published (GameFrame_CaptureAndPublish). */
+        GameFrame_BeginMapMutation();
         ResetMirageTowerAndSaveBlockPtrs();
         ResetScreenForMapLoad();
         ResumeMap(FALSE);
@@ -2137,9 +2138,9 @@ static bool32 ReturnToFieldLink(u8 *state)
 
 static void DoMapLoadLoop(u8 *state)
 {
-    sMapMutationLock = 1;
+    GameFrame_BeginMapMutation();
     while (!LoadMapInStepsLocal(state, FALSE));
-    /* Keep sMapMutationLock set until VoxelEntities_PublishSnapshot() publishes the new map's entities. */
+    /* Keep sMapMutationLock set until the next game frame (the new map's) is published. */
 }
 
 static void ResetMirageTowerAndSaveBlockPtrs(void)

@@ -17,6 +17,9 @@
 #include "field_player_avatar.h"
 #include "metatile_behavior.h"
 #include "sprite.h"
+#include "constants/battle.h"
+#include "constants/pokemon.h"
+#include "platform/game_frame.h"
 
 #include "port_platform.h"
 #define CTR_GAME_WIDTH 400
@@ -32,14 +35,15 @@
 
 #define DEG_TO_RAD (3.14159265358979323846f / 180.0f)
 
+/* Core 0 reads the battle as Core 1 published it (VoxelBattle_Capture, at the end of this file). */
 bool VoxelBattle_GameInBattle(void)
 {
-    return gMain.inBattle;
+    return GameFrame_Get()->battle.inBattle;
 }
 
 bool VoxelBattle_IsLink(void)
 {
-    return (gBattleTypeFlags & BATTLE_TYPE_LINK) != 0;
+    return GameFrame_Get()->battle.isLink;
 }
 
 /* ── The battle camera, as the stage search sees it ─────────────────────── */
@@ -384,11 +388,10 @@ static struct
 
 void VoxelBattle_BeginStage(void)
 {
-    const struct ObjectEvent *player = &gObjectEvents[gPlayerAvatar.objectEventId];
+    const GameFrame *const frame = GameFrame_Get();
     const VoxelMapInstance *current = VoxelWorld_Instance(0);
-    bool surfing = TestPlayerAvatarFlags(PLAYER_AVATAR_FLAG_SURFING) != 0;
-    bool wild = !(gBattleTypeFlags & (BATTLE_TYPE_TRAINER | BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK
-                                      | BATTLE_TYPE_FRONTIER | BATTLE_TYPE_EREADER_TRAINER));
+    bool surfing = frame->field.playerSurfing;
+    bool wild = frame->battle.isWild;
     StageSearch *search = &sStage.search;
     int32_t frontX = 0, frontZ = 0;
     float px, pz;
@@ -410,7 +413,7 @@ void VoxelBattle_BeginStage(void)
     }
 
     VoxelWorld_GetPlayerWorldCoords(&px, &pz);
-    switch (player->facingDirection)
+    switch (frame->field.playerFacing)
     {
     case DIR_NORTH: frontZ = -1; break;
     case DIR_SOUTH: frontZ = 1; break;
@@ -489,7 +492,8 @@ bool VoxelBattle_StepStage(uint32_t cells, uint32_t candidates, float *targetX, 
 
 /* ── Shadows ────────────────────────────────────────────────────────────── */
 
-uint32_t VoxelBattle_Shadows(VoxelBattleShadow *out, uint32_t max)
+/* Core 1: where the battlers' shadows go, for the frame being captured. */
+static uint32_t ShadowsLive(VoxelBattleShadow *out, uint32_t max)
 {
     uint32_t count = 0;
 
@@ -525,5 +529,53 @@ uint32_t VoxelBattle_Shadows(VoxelBattleShadow *out, uint32_t max)
     return count;
 }
 
+/* Core 0. */
+uint32_t VoxelBattle_Shadows(VoxelBattleShadow *out, uint32_t max)
+{
+    const GameFrameBattle *const battle = &GameFrame_Get()->battle;
+    uint32_t count = battle->shadowCount < max ? battle->shadowCount : max;
 
+    for (uint32_t i = 0; i < count; ++i)
+    {
+        out[i].x = battle->shadows[i].x;
+        out[i].y = battle->shadows[i].y;
+        out[i].rx = battle->shadows[i].rx;
+        out[i].ry = battle->shadows[i].ry;
+    }
+    return count;
+}
 
+/* Core 1: the battle's part of the game frame. */
+void VoxelBattle_Capture(GameFrameBattle *battle, bool8 voxel)
+{
+    VoxelBattleShadow shadows[GAME_FRAME_BATTLERS];
+
+    memset(battle, 0, sizeof(*battle));
+    battle->inBattle = gMain.inBattle;
+    battle->isLink = (gBattleTypeFlags & BATTLE_TYPE_LINK) != 0;
+    battle->isWild = !(gBattleTypeFlags & (BATTLE_TYPE_TRAINER | BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK
+                                           | BATTLE_TYPE_FRONTIER | BATTLE_TYPE_EREADER_TRAINER));
+    battle->moveType = TYPE_NORMAL;
+    if (!gMain.inBattle)
+        return;
+    for (uint32_t b = 0; b < GAME_FRAME_BATTLERS; ++b)
+    {
+        battle->hp[b] = gBattleMons[b].hp;
+        battle->maxHp[b] = gBattleMons[b].maxHP;
+    }
+    battle->critical = gCritMultiplier > 1u;
+    if (gBattleStruct != NULL && (gBattleStruct->dynamicMoveType & 0x3Fu) != 0u)
+        battle->moveType = (u8)(gBattleStruct->dynamicMoveType & 0x3Fu);
+    else if (gCurrentMove != 0u && gCurrentMove < MOVES_COUNT)
+        battle->moveType = gBattleMoves[gCurrentMove].type;
+    if (!voxel)
+        return;
+    battle->shadowCount = ShadowsLive(shadows, GAME_FRAME_BATTLERS);
+    for (uint32_t i = 0; i < battle->shadowCount; ++i)
+    {
+        battle->shadows[i].x = shadows[i].x;
+        battle->shadows[i].y = shadows[i].y;
+        battle->shadows[i].rx = shadows[i].rx;
+        battle->shadows[i].ry = shadows[i].ry;
+    }
+}

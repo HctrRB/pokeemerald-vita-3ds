@@ -21,7 +21,6 @@ bool VitaStage_IsStageActive(void);
 int32_t VitaStage_GetActiveKind(void);
 
 // Evaluates the current scene to determine which stage mode applies
-void VitaStage_UpdateSceneState(void);
 
 // Renders widescreen extensions in vitaGL for the active stage
 void VitaStage_RenderWidescreenMargins(float vx0, float vx1, float vy0, float vy1);
