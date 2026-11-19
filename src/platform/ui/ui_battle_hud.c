@@ -523,7 +523,7 @@ static void MovesGba(u8 b, int32_t by, int32_t bh, int st, bool tap, int32_t tx,
             UiW_GbaArrowH(mx + 10, my + (ch - 12) / 2, true, UI_RGBA(230, 8, 8, 255));
         }
 
-        const u16 move = mi->moves[i];
+        const u16 move = mi->moves[i] < MOVES_COUNT ? mi->moves[i] : MOVE_NONE;
         if (move != MOVE_NONE)
             UiGame_MoveName(move, name, sizeof(name));
         else
@@ -542,7 +542,7 @@ static void MovesGba(u8 b, int32_t by, int32_t bh, int st, bool tap, int32_t tx,
     // Right tactical PP / Type / PWR / ACC / STAB card
     UiW_GbaWin(610, by, 344, bh, UI_GBA_WIN_LAVENDER);
     const int sel = cursor & 3;
-    const u16 move = mi->moves[sel];
+    const u16 move = mi->moves[sel] < MOVES_COUNT ? mi->moves[sel] : MOVE_NONE;
     if (st == ST_TARGET)
     {
         UiW_GbaSectionStrip(622, by + 12, 320, 28, UI_GBA_TAG_SLATE, "TARGET", NULL);
@@ -659,12 +659,13 @@ static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)
                          i == from ? TH->gold : 0);
         if (on)
             UiW_Arrow(x + (PILL ? 16 : 10), y + ch / 2 - 6, TH->selInk);
-        if (mi->moves[i] != MOVE_NONE)
-            UiGame_MoveName(mi->moves[i], name, sizeof(name));
+        const u16 move = mi->moves[i] < MOVES_COUNT ? mi->moves[i] : MOVE_NONE;
+        if (move != MOVE_NONE)
+            UiGame_MoveName(move, name, sizeof(name));
         else
             snprintf(name, sizeof(name), "-");
         UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, x + (PILL ? 36 : 30), y + 6, name, on ? TH->selInk : UI_COL_INK);
-        if (tap && st == ST_MOVE && mi->moves[i] != MOVE_NONE && Hit(tx, ty, x, y, cw, ch))
+        if (tap && st == ST_MOVE && move != MOVE_NONE && Hit(tx, ty, x, y, cw, ch))
         {
             if (i == cursor) UiMirror_Inject(A_BUTTON);
             else gMoveSelectionCursor[b] = (u8)i;
@@ -674,7 +675,7 @@ static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)
     const int32_t px = UI_SCREEN_W - 16 - 312, py = BOX_Y + 18;
     UiW_ThemeBox(px, py, 312, 131, 2, TH->darkEdge, TH->darkTop, TH->darkBot, TH->darkHi, TH->darkBot, 0, false, 0);
     const int sel = cursor & 3;
-    const u16 move = mi->moves[sel];
+    const u16 move = mi->moves[sel] < MOVES_COUNT ? mi->moves[sel] : MOVE_NONE;
     if (st == ST_TARGET)
     {
         UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 14, "TARGET", UI_COL_ON_SOFT);

@@ -174,7 +174,7 @@ void HandleAction_UseMove(void)
         }
         if (var == 4)
         {
-            if (gBattleMoves[gChosenMove].target & MOVE_TARGET_RANDOM)
+            if (gChosenMove < MOVES_COUNT && (gBattleMoves[gChosenMove].target & MOVE_TARGET_RANDOM))
             {
                 if (GetBattlerSide(gBattlerAttacker) == B_SIDE_PLAYER)
                 {
@@ -218,8 +218,9 @@ void HandleAction_UseMove(void)
             gBattlerTarget = gActiveBattler;
         }
     }
-    else if (gBattleTypeFlags & BATTLE_TYPE_DOUBLE
-             && gBattleMoves[gChosenMove].target & MOVE_TARGET_RANDOM)
+    else if ((gBattleTypeFlags & BATTLE_TYPE_DOUBLE)
+             && gChosenMove < MOVES_COUNT
+             && (gBattleMoves[gChosenMove].target & MOVE_TARGET_RANDOM))
     {
         if (GetBattlerSide(gBattlerAttacker) == B_SIDE_PLAYER)
         {

@@ -64,8 +64,10 @@ open_issues:
   - Cave fog banks (`DrawFogBanks` with `underground = true`) can look slightly odd over cave floor/wall relief transitions.
 
 untested_on_hardware:
-  - Battle AI MOVE_UNAVAILABLE (0xFFFF) OOB fix in src/battle_ai_script_commands.c (#8, v0.5.7b):
-    needs confirmation on hardware (e.g. Wally outside Mauville Gym with move_split=1 after a failed turn such as confusion self-hit).
+  - Battle AI MOVE_UNAVAILABLE (0xFFFF) OOB fixes in src/battle_ai_script_commands.c (#8, v0.5.7b),
+    src/battle_ai_switch_items.c (ShouldSwitchIfNaturalCure, Winona's Swablu/Altaria),
+    src/battle_util.c (GetMoveTarget double battle guard) and src/platform/ui/ui_battle_hud.c:
+    need confirmation on hardware (e.g. Wally outside Mauville Gym with move_split=1, sleeping Natural Cure mons in Fortree Gym, double battles in Mossdeep Gym).
   - GBA Gen 3 x Vita UI skin (UI_THEME_GBA default, matched against design/stitch/gba_vita/index.html 20-screen mockup):
     01_hub (centered zone sign + Hub plate, 2x2 dark status card, 2x3 mini-party, START menu) & 10_save;
     02_party & 04_summary (clipped long Pokemon names / levels / abilities); 03_bag (redundant header box
