@@ -1,0 +1,32 @@
+# Names documents may cite that are not files or symbols of this repository.
+# Read by tools/doc_check/check_docs.py; shell wildcards (*, ?) allowed. Say why for each group.
+
+# Files the game reads or writes on the console (ux0:data/POKEVITA/, docs/reference/RUNTIME_FILES.md)
+settings.txt
+pokeemerald.cfg
+followers/followers.pak
+followers.pak
+debug.log
+thread_violations.log
+ui_stall.log
+perf_summary.txt
+perf_frames.csv
+pokeemerald*.sav
+saves/pokeemerald*.sav
+*.psp2dmp
+
+# Build outputs (build-vita/)
+eboot.bin
+pokeemerald.vpk
+core_boundary.ok
+core_boundary_report.txt
+doc_check_report.txt
+
+# PS Vita SDK: fields of a core dump, read by vita-parse-core
+MODULE_INFO
+THREAD_REG_INFO
+
+# Emerald 3DS's voxel generators and their inputs: outside this repository (docs/reference/ASSETS.md)
+scripts/gen_voxel_*.py
+gen_voxel_*.py
+relief_fixes.json

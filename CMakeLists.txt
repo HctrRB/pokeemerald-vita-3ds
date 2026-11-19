@@ -282,6 +282,25 @@ add_custom_command(
     VERBATIM)
 add_custom_target(core_boundary ALL DEPENDS "${CORE_BOUNDARY_STAMP}")
 add_dependencies(eboot.bin-self core_boundary)
+
+# The documentation check (docs/README.md, "Rules for documentation"): every file, symbol and link
+# a reference document or guide cites exists, none cites a line number, and a guide and its
+# translation stay in step. Errors there fail the build; plans and reports only get warnings.
+# It runs again when a document, the code (through the ELF) or the checker changes.
+file(GLOB_RECURSE DOC_FILES CONFIGURE_DEPENDS "${ROOT}/docs/*.md")
+set(DOC_CHECK_STAMP "${CMAKE_BINARY_DIR}/doc_check.ok")
+add_custom_command(
+    OUTPUT "${DOC_CHECK_STAMP}"
+    COMMAND "${Python3_EXECUTABLE}" "${ROOT}/tools/doc_check/check_docs.py" --strict
+            --report "${CMAKE_BINARY_DIR}/doc_check_report.txt"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${DOC_CHECK_STAMP}"
+    DEPENDS pokeemerald "$<TARGET_FILE:pokeemerald>" ${DOC_FILES}
+            "${ROOT}/README.md" "${ROOT}/CONTRIBUTING.md" "${ROOT}/NOTICE.md"
+            "${ROOT}/tools/doc_check/check_docs.py" "${ROOT}/tools/doc_check/allow.txt"
+    COMMENT "Checking the documentation (tools/doc_check)"
+    VERBATIM)
+add_custom_target(doc_check ALL DEPENDS "${DOC_CHECK_STAMP}")
+add_dependencies(eboot.bin-self doc_check)
 # Equivalent of vita_create_vpk, which joins its -a arguments into one string and splits it
 # on spaces, so it breaks when the checkout path has one (e.g. "Pokemon Esmeralda").
 # LiveArea images are 8-bit indexed PNGs made by vita/make_livearea.sh.

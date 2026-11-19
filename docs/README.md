@@ -39,3 +39,5 @@ The design mocks of the new UI are in [../design/stitch/](../design/stitch/READM
 - **A commit that changes documented behaviour updates the document in the same commit.**
 - Every document here starts with two lines: `Type · Audience · Status` and
   `Verified against: <commit>`.
+- The build checks it (`tools/doc_check`): a reference document or guide that cites a missing file,
+  symbol or link, or a line number, fails the build ([guides/BUILD.md](guides/BUILD.md), step 8).

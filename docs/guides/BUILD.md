@@ -61,7 +61,8 @@ From the repository root:
    or from the MSYS shell: `./build_vita.sh`.
 
 Output: `build-vita/pokeemerald.vpk`, plus `eboot.bin`, the ELF `build-vita/pokeemerald` (keep it:
-crash dumps are decoded against it) and `build-vita/core_boundary_report.txt` (step 7 below). `build_vita.sh` drops a CMake cache created in
+crash dumps are decoded against it), `build-vita/core_boundary_report.txt` and
+`build-vita/doc_check_report.txt` (steps 7 and 8 below). `build_vita.sh` drops a CMake cache created in
 another checkout path; for a clean rebuild delete `build-vita/`.
 
 ## CMake options
@@ -96,9 +97,15 @@ another checkout path; for a clean rebuild delete `build-vita/`.
    or writable state except as `tools/core_boundary/allow.txt` declares, and the game thread may not
    read Core 0's pinned game frame ([THREADS.md](../reference/THREADS.md)). `eboot.bin` depends on its stamp
    (`core_boundary.ok`): a violation fails the build, and the report says which path.
-8. `vita_create_self(... UNSAFE)` (the app writes `ux0:data/`), then `vita-mksfoex` and
+8. Checks the documentation (`tools/doc_check/check_docs.py --strict`, target `doc_check`): every
+   file, symbol and link a reference document or guide cites exists, none cites a line number, and
+   a guide and its translation stay in step. Errors there fail the build; plans and reports only
+   get warnings (`build-vita/doc_check_report.txt`). Names that are not in the repository (files
+   on the console, build outputs, SDK fields, external generators) are listed in
+   `tools/doc_check/allow.txt`.
+9. `vita_create_self(... UNSAFE)` (the app writes `ux0:data/`), then `vita-mksfoex` and
    `vita-pack-vpk` called directly (`vita_create_vpk` breaks on paths with spaces).
-9. Packs `vita/sce_sys/` (LiveArea), `assets/voxel/` → `voxel/`, `assets/ui/` → `ui/`,
+10. Packs `vita/sce_sys/` (LiveArea), `assets/voxel/` → `voxel/`, `assets/ui/` → `ui/`,
    `assets/ui2/` → `ui2/`, and `assets/followers/{mon,text}/*.bin` packed by
    `tools/pack_followers.py` into `followers/followers.pak` (PKF1 container).
 

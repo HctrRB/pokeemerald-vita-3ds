@@ -51,9 +51,9 @@ CSV columns:
 
 | Marker | Where |
 |---|---|
-| `VitaPerf_BeginFrame` / `EndFrame` | `sdl2.c` presentation loop (`EndFrame` gets the target FPS) |
+| `VitaPerf_BeginFrame` / `VitaPerf_EndFrame` | `sdl2.c` presentation loop (`VitaPerf_EndFrame` gets the target FPS) |
 | `VitaPerf_MarkAtlasAnim*`, `MarkCull*`, `MarkBuild*`, `MarkDraw3D*` | `VoxelRenderer_RenderFrame` |
-| `VitaPerf_SubBegin/SubEnd`, `AddCount`, `MarkEvent` | `BuildChunk` phases, atlas animation, map shift, entities, live digest, and New UI render/tick (`VITA_PERF_T_UI2_RENDER`, `VITA_PERF_T_UI2_TICK`) |
+| `VitaPerf_SubBegin` / `VitaPerf_SubEnd`, `VitaPerf_AddCount`, `VitaPerf_MarkEvent` | `BuildChunk` phases, atlas animation, map shift, entities, live digest, and New UI render/tick (`VITA_PERF_T_UI2_RENDER`, `VITA_PERF_T_UI2_TICK`) |
 | `VitaPerf_MarkUiScanlines*`, `MarkUiUpload*` | Pass 6 (GBA overlay) |
 | `VitaPerf_MarkSwap*` | around `vglSwapBuffers` |
 | `VitaPerf_Core1*` | `VBlankIntrWait` (logic, VBlank and audio, pacing) |

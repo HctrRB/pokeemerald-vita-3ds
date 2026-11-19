@@ -20,7 +20,7 @@ backgrounds, sprites, windows, blending, mosaic, per-line scroll effects.
 
 - `DrawFrame()` runs each line's hardware events in order on the calling thread and captures
   the registers and palette that line sees; two workers on Core 2 draw the captured lines in
-  parallel (`gba_fast_draw_b.c` and `_c.c` recompile the renderer so each has its own state).
+  parallel (`gba_fast_draw_b.c` and `gba_fast_draw_c.c` recompile the renderer so each has its own state).
 - Lines are **288 px** wide (`FRAME_LINE_WIDTH`), with the GBA screen at x = 24. What goes into
   the margins is decided per scene by `widescreen.c`; see [SCENES_16_9.md](SCENES_16_9.md).
 - Workers convert BGR555 to RGB565 with NEON. `VDraw` uploads the frame into a ring of

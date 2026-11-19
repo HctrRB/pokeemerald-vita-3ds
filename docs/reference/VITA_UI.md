@@ -45,7 +45,7 @@ it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture (fixed atlas `as
 
 - **Field overlay (`Open`)**: opened from the overworld with START / Square (`LockPlayerFieldControls`).
 - **Script-driven (`UiCore_OpenFromScript`)**: opened by field script tasks (Poké Mart and decoration shops, PC boxes, player's PC, Day Care / tutor party choice, forget a move); the game task waits for `!Ui_IsOpen()`.
-- **Hosted full-screen (`UiCore_OpenHosted` / `CB2_UiHost`)**: replaces a GBA `MainCallback2` scene (naming screen, Easy Chat, Berry Blender / Berry Crush choice, title-menu options) while keeping GBA sprites and tasks alive and running scene resets before opening.
+- **Hosted full-screen (`UiCore_OpenHosted` / `CB2_UiHost`)**: replaces a GBA scene run from `gMain.callback2` (naming screen, Easy Chat, Berry Blender / Berry Crush choice, title-menu options) while keeping GBA sprites and tasks alive and running scene resets before opening.
 
 ### Themes (`ui_theme.c`)
 
