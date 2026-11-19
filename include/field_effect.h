@@ -10,6 +10,9 @@ extern void (*gPostMenuFieldCallback)(void);
 extern bool8 (*gFieldCallback2)(void);
 
 u32 FieldEffectStart(u8 id);
+struct Sprite;
+bool8 FieldEffect_IsHealMachineBall(const struct Sprite *sprite);
+bool8 FieldEffect_IsHealMachineMonitor(const struct Sprite *sprite);
 bool8 FieldEffectActiveListContains(u8 id);
 void FieldEffectActiveListClear(void);
 void ReturnToFieldFromFlyMapSelect(void);

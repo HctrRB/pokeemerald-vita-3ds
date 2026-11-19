@@ -20,6 +20,9 @@ typedef struct {
     u64 visibleWild;                    // bit n: sprite n is a visible wild Pokemon
     u64 weatherSprites;                 // bit n: sprite n is drawn by the weather (CtrSprite_IsVoxelWeather)
     u64 cloudSprites;                   // bit n: sprite n is a cloud (CtrSprite_IsVoxelCloud)
+    u64 healSprites;                    // bit n: sprite n is a ball of the Pokecenter's healing machine
+    s16 spriteCoordOffsetX;             // gSpriteCoordOffsetX/Y: takes a screen sprite to the objects' frame
+    s16 spriteCoordOffsetY;
     struct OamMatrix oamMatrices[OAM_MATRIX_COUNT];
     u8 playerObjectEventId;             // gPlayerAvatar.objectEventId
     // The door being animated (PortDoor_Get) and its twin (PortDoor_GetTwin)

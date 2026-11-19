@@ -13,6 +13,7 @@
 #include "main.h"
 #include "sprite.h"
 #include "event_object_movement.h"
+#include "field_effect.h"
 #include "field_player_avatar.h"
 #include "palette.h"
 #include "constants/event_objects.h"
@@ -249,6 +250,9 @@ void VoxelEntities_Capture(VoxelEntitySnapshot *snap, const VoxelEntitySnapshot 
     snap->visibleWild = 0;
     snap->weatherSprites = 0;
     snap->cloudSprites = 0;
+    snap->healSprites = 0;
+    snap->spriteCoordOffsetX = gSpriteCoordOffsetX;
+    snap->spriteCoordOffsetY = gSpriteCoordOffsetY;
     for (uint32_t id = 0; id < MAX_SPRITES; ++id)
     {
         const struct Sprite *sprite = &gSprites[id];
@@ -263,6 +267,8 @@ void VoxelEntities_Capture(VoxelEntitySnapshot *snap, const VoxelEntitySnapshot 
             snap->weatherSprites |= (u64)1 << id;
         if (sprite->inUse && CtrSprite_IsVoxelCloud(sprite))
             snap->cloudSprites |= (u64)1 << id;
+        if (sprite->inUse && FieldEffect_IsHealMachineBall(sprite))
+            snap->healSprites |= (u64)1 << id;
     }
     for (uint32_t i = 0; i < OBJECT_EVENTS_COUNT; ++i)
     {
@@ -1524,7 +1530,16 @@ typedef struct
     bool surf;               /* the surf mon: lying on the water, ridden */
     bool cloud;              /* a cloud, laid on the water (EmitCloud) */
     bool gate;               /* a rotating gate, turned on the ground (EmitTurnedDecal) */
+    bool heal;               /* a ball of the Pokecenter's healing machine (VOXEL_HEAL_BALL_LIFT) */
+    int32_t shiftX, shiftY;  /* takes a screen sprite's x, y to the object sprites' frame (a heal ball) */
 } VoxelEffectCard;
+
+/* The healing machine's balls are screen sprites: the GBA draws them at fixed pixels where the
+ * machine is on its camera, so over the 3D field they hung above it. They are placed from the
+ * player as the other effects are, then stood on the machine: their picture row is that of a
+ * point this high over the floor (tiles), so the floor point is this much further south.
+ * (After Bravely Emerald's port, CC BY-NC-SA 4.0.) */
+#define VOXEL_HEAL_BALL_LIFT 0.75f
 
 static bool IsTemplate(const struct SpriteTemplate *template, uint32_t first, uint32_t last)
 {
@@ -1846,7 +1861,9 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
 
             /* sprite->invisible is honoured: an effect hidden on purpose (a
              * blinking one's off frames) is hidden here too. */
-            if (!sprite->inUse || sprite->invisible || !sprite->coordOffsetEnabled || objectSprite[id])
+            const bool heal = sprite->inUse && !sprite->coordOffsetEnabled && ((snap->healSprites >> id) & 1);
+
+            if (!sprite->inUse || sprite->invisible || (!sprite->coordOffsetEnabled && !heal) || objectSprite[id])
                 continue;
             cloud = (snap->cloudSprites >> id) & 1;
             if (IsTemplate(sprite->template, FLDEFFOBJ_SHADOW_S, FLDEFFOBJ_SHADOW_XL)
@@ -1867,9 +1884,12 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
             effect->gate = IsRotatingGate(sprite);
             effect->decal = effect->gate || IsDecal(sprite->template) || cloud;
             effect->tile = IsTileEffect(sprite->template);
+            effect->heal = heal;
+            effect->shiftX = heal ? -snap->spriteCoordOffsetX : 0;
+            effect->shiftY = heal ? -snap->spriteCoordOffsetY : 0;
             /* A visible wild Pokemon stands on its own tile, never on an object:
              * a tile south of the player, owned by it, it sank under the ground. */
-            effect->owner = effect->decal || effect->tile || SnapIsVisibleWild(id)
+            effect->owner = effect->decal || effect->tile || effect->heal || SnapIsVisibleWild(id)
                           ? -1 : EffectOwner(sprite, objects);
             effect->front = effect->owner < 0 || DrawnOver(sprite, objects[effect->owner].sprite);
 
@@ -1903,9 +1923,9 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
             }
             else if (reference != NULL && reference->drawn)
             {
-                int32_t base = sprite->y + sprite->centerToCornerVecY + h;
+                int32_t base = sprite->y + effect->shiftY + sprite->centerToCornerVecY + h;
                 float cx = reference->worldX + 0.5f
-                         + (sprite->x + sprite->x2 - reference->screenX) / VOXEL_PIXELS_PER_TILE;
+                         + (sprite->x + effect->shiftX + sprite->x2 - reference->screenX) / VOXEL_PIXELS_PER_TILE;
                 float cz = reference->worldZ + 0.5f + (base - reference->base) / VOXEL_PIXELS_PER_TILE;
 
                 inRange = fabsf(cx - camera->targetX) <= VOXEL_EFFECT_RANGE
@@ -2031,8 +2051,8 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
         if (!sSlots[effect->slot].valid)
             continue;
         h = sSlots[effect->slot].height;
-        x = sprite->x + sprite->x2;
-        base = sprite->y + sprite->centerToCornerVecY + h;
+        x = sprite->x + effect->shiftX + sprite->x2;
+        base = sprite->y + effect->shiftY + sprite->centerToCornerVecY + h;
         if (effect->cloud)
         {
             /* Placed from the player as a decal is: its picture's bottom
@@ -2136,10 +2156,12 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
                 continue;
             }
             cz = reference->worldZ + 0.5f + (base - reference->base) / VOXEL_PIXELS_PER_TILE;
+            if (effect->heal)
+                cz += VOXEL_HEAL_BALL_LIFT;
             if (fabsf(cx - camera->targetX) > 24.0f || fabsf(cz - camera->targetZ) > 24.0f)
                 continue;
             EmitBillboard(builder, &sSlots[effect->slot], effect->slot, cx, cz, 0.0f, 0.0f,
-                          -sprite->y2 * pixel, reference->deck, rightX, rightZ, stretch,
+                          -sprite->y2 * pixel + (effect->heal ? VOXEL_HEAL_BALL_LIFT : 0.0f), reference->deck, rightX, rightZ, stretch,
                           reference->shade, SpriteScale(sprite), false);
         }
     }
