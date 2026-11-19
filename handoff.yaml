@@ -3,7 +3,7 @@
 # docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
 last_updated: "2026-11-19"
 branch: main
-current_milestone: "v0.5.7b released (32efa04) + Gym 6/7 battle OOB fixes committed locally (5a0af13)"
+current_milestone: "v0.5.7b released (32efa04) + Gym 6/7 battle OOB fixes and League/Frontier audit pushed to main (5a0af13)"
 
 phases:
   phase_0_safety_net: done
@@ -58,7 +58,7 @@ open_issues:
   - "Walda's FRIENDS wallpaper ignores tile frames."
 
 next_steps:
-  - "Push local commits (5a0af13 + docs) and tag next release once hardware feedback on v0.5.7b / Gym 6-7 is confirmed (docs/plan/AUDITORIA_COMBATES_LIGA_FRENTE.md)."
+  - "Tag next release once hardware feedback on v0.5.7b (#8) and Gym 6/7 fixes (5a0af13) is confirmed (docs/plan/AUDITORIA_COMBATES_LIGA_FRENTE.md; watch item: battle_controllers.c:1150 gBattleMoves[gCurrentMove].type kept untouched per vanilla Emerald)."
   - "Migrate remaining secondary GBA screens (Batch 2 & 3) and implement Contest UI replacement (docs/plan/PLAN_UI_CONCURSO.md, design/contest_mockups.html)."
   - "Run general performance & long-session telemetry pass on PS Vita and tune Core 2 worker priority / atlas composition if spikes show up."
   - "Resume map-by-map voxel terrain fixes (docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md) and Refactoring Phase 4b/4c & Phase 5 (docs/plan/ESTUDIO_REFACTORIZACION.md)."
