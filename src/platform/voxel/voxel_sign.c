@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 
 #include "voxel_sign.h"
 #include "voxel_file.h"
@@ -218,19 +219,46 @@ static void LampGround(VoxelBuilder *builder, const VoxelMapInstance *inst,
         }
 }
 
-void VoxelSign_EmitNight(VoxelBuilder *glass, VoxelBuilder *ground,
-                       const VoxelMapInstance *inst, int32_t x0, int32_t y0, int32_t x1, int32_t y1)
+/* The first record at or after (layout, y, x) in sIndex's order. */
+static uint32_t LowerBound(uint32_t layout, uint32_t y, uint32_t x)
 {
+    uint32_t want = (layout << 20) | (y << 10) | x, lo = 0, hi = sCount;
+
+    while (lo < hi)
+    {
+        uint32_t mid = lo + (hi - lo) / 2;
+        const SignRecord *r = &sIndex[mid];
+        uint32_t key = ((uint32_t)r->layout << 20) | ((uint32_t)r->y << 10) | r->x;
+        if (key < want) lo = mid + 1;
+        else hi = mid;
+    }
+    return lo;
+}
+
+uint32_t VoxelSign_EmitNight(VoxelBuilder *glass, VoxelBuilder *ground,
+                             const VoxelMapInstance *inst, int32_t x0, int32_t y0, int32_t x1, int32_t y1,
+                             float (*lights)[3], uint32_t lightCapacity)
+{
+    uint32_t lightCount = 0;
+    int32_t firstRow, lastRow;
+
     if (glass == NULL || inst == NULL || inst->indoor || !LoadMasks())
-        return;
-    for (uint32_t index = 0; index < sCount; ++index)
+        return 0;
+    /* The map's rows the window holds: sIndex is sorted by layout, row, column. */
+    firstRow = y0 - inst->originY < 0 ? 0 : y0 - inst->originY;
+    lastRow = y1 - inst->originY > inst->height ? inst->height : y1 - inst->originY;
+    if (firstRow >= lastRow || x1 <= inst->originX || x0 >= inst->originX + inst->width)
+        return 0;
+    for (uint32_t index = LowerBound((uint32_t)inst->layoutId, (uint32_t)firstRow, 0); index < sCount; ++index)
     {
         const SignRecord *record = &sIndex[index];
         int32_t xpos = inst->originX + record->x, zpos = inst->originY + record->y;
-        if (record->layout != inst->layoutId || !VoxelSign_IsLantern(record->head)
-            || xpos < x0 || xpos >= x1 || zpos < y0 || zpos >= y1
+        if (record->layout != inst->layoutId || record->y >= lastRow)
+            break;
+        if (!VoxelSign_IsLantern(record->head) || xpos < x0 || xpos >= x1
             || VoxelRegions_RoleAt(inst->layoutId, record->x, record->y) != VOXEL_ROLE_SIGNPOST)
             continue;
+        uint32_t glassFirst = glass->count;
         int32_t last = 16;
         for (uint32_t row = 0; row < 16; ++row)
             if (record->rows[row] != 0)
@@ -253,7 +281,7 @@ void VoxelSign_EmitNight(VoxelBuilder *glass, VoxelBuilder *ground,
             if (left > right)
                 continue;
             if (glass->capacity - glass->count < 12u)
-                return;
+                return lightCount;
             float leftX = xpos + left / 16.0f, rightX = xpos + (right + 1) / 16.0f;
             float bottom = (last - (int32_t)row) / 16.0f, top = bottom + 1.0f / 16.0f;
             for (uint32_t face = 0; face < 2; ++face)
@@ -267,7 +295,25 @@ void VoxelSign_EmitNight(VoxelBuilder *glass, VoxelBuilder *ground,
             }
         }
         LampGround(ground, inst, xpos + 0.5f, (front + back) * 0.5f);
+        /* Its light: the middle of the glass just emitted, where the builder put it. */
+        if (lights != NULL && lightCount < lightCapacity && glass->count > glassFirst)
+        {
+            float lo[3] = { FLT_MAX, FLT_MAX, FLT_MAX }, hi[3] = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
+            for (uint32_t k = glassFirst; k < glass->count; ++k)
+            {
+                const float p[3] = { glass->vertices[k].x, glass->vertices[k].y, glass->vertices[k].z };
+                for (uint32_t axis = 0; axis < 3; ++axis)
+                {
+                    if (p[axis] < lo[axis]) lo[axis] = p[axis];
+                    if (p[axis] > hi[axis]) hi[axis] = p[axis];
+                }
+            }
+            for (uint32_t axis = 0; axis < 3; ++axis)
+                lights[lightCount][axis] = (lo[axis] + hi[axis]) * 0.5f;
+            ++lightCount;
+        }
     }
+    return lightCount;
 }
 
 static void PixelUV(const VoxelSignMask *m, uint32_t x, uint32_t y, float *u, float *v)

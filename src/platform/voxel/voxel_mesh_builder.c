@@ -150,10 +150,15 @@ void VoxelBuilder_Tri(VoxelBuilder *builder, const VoxelVertex *a,
         VoxelVertex *out = &builder->vertices[builder->count++];
 
         *out = *v[i];
-        out->x -= builder->originX;
-        out->y += builder->lift + builder->base;
-        out->z = VoxelBuilder_StretchZ(builder, out->z + builder->shift) - builder->originZ;
+        VoxelBuilder_Place(builder, &out->x, &out->y, &out->z);
     }
+}
+
+void VoxelBuilder_Place(const VoxelBuilder *builder, float *x, float *y, float *z)
+{
+    *x -= builder->originX;
+    *y += builder->lift + builder->base;
+    *z = VoxelBuilder_StretchZ(builder, *z + builder->shift) - builder->originZ;
 }
 
 void VoxelBuilder_Quad(VoxelBuilder *builder, const VoxelVertex *a, const VoxelVertex *b,

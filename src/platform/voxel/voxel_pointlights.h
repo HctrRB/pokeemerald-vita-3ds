@@ -1,6 +1,7 @@
 #ifndef VOXEL_POINTLIGHTS_H
 #define VOXEL_POINTLIGHTS_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #define VOXEL_POINTLIGHT_MAX 16
@@ -13,13 +14,14 @@ typedef struct
     float invRadiusSq;
     float intensity;
     float curR, curG, curB;
-    uint32_t seed;
+    bool flicker;   /* a flame (the cave lantern); electric lamps burn steady */
+    uint32_t seed;  /* the flicker's phase and speed */
 } VoxelPointLight;
 
 void VoxelPointLights_Clear(void);
 void VoxelPointLights_Add(float x, float y, float z,
                           float r, float g, float b,
-                          float radius, float intensity, uint32_t seed);
+                          float radius, float intensity, bool flicker, uint32_t seed);
 void VoxelPointLights_BeginFrame(float seconds);
 uint32_t VoxelPointLights_Count(void);
 const VoxelPointLight *VoxelPointLights_Get(uint32_t index);

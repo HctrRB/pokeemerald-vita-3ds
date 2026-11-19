@@ -100,6 +100,9 @@ void VoxelBuilder_SetStretch(VoxelBuilder *builder, const VoxelMapInstance *inst
  * south as it is high in the world, (u, h, v + h), so two maps meeting at one
  * height meet in the same row whatever their bases. */
 float VoxelBuilder_StretchZ(const VoxelBuilder *builder, float z);
+/* Moves a point where the builder puts every vertex it emits: the origin, the cell's
+ * lift and shift, the map's base and its ease. */
+void VoxelBuilder_Place(const VoxelBuilder *builder, float *x, float *y, float *z);
 void VoxelBuilder_Tri(VoxelBuilder *builder, const VoxelVertex *a,
                       const VoxelVertex *b, const VoxelVertex *c);
 /* A B C / A C D, the winding the reference quads already use. */

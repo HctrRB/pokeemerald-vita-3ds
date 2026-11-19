@@ -77,6 +77,19 @@
 #define VOXEL_WINDOW_GLOW_STRENGTH_STD  0.90f /* additive alpha scale in normal Voxel mode */
 #define VOXEL_WINDOW_GLOW_STRENGTH_HD2D 0.68f /* lower scale in HD-2D for a soft bloom halo */
 
+/* ---- Night lamps (Pass_NightLamps, UpdatePointLights, VoxelLamps_EmitChunk) ----------- */
+
+#define VOXEL_LAMP_R 1.00f                  /* lamp light: Bravely Emerald / Emerald 3DS amber (255,191,107) */
+#define VOXEL_LAMP_G 0.75f
+#define VOXEL_LAMP_B 0.42f
+#define VOXEL_LAMP_GLASS_GAIN 1.00f         /* additive glass: bright enough to cross the bloom threshold */
+#define VOXEL_LAMP_POOL_GAIN 0.80f          /* pool on the ground: dst * (1 + gain * falloff * amber) */
+#define VOXEL_LAMP_POOL_LIFT 0.02f          /* the pool's lift off the ground it lies on (plus a depth offset) */
+#define VOXEL_LAMP_HALO_LIFT 0.30f          /* halo pulled toward the camera so the lantern does not cut it */
+#define VOXEL_LAMP_LIGHT_RADIUS 3.5f        /* reach of a lamp's light on characters (lamps stand close together) */
+#define VOXEL_LAMP_LIGHT_GAIN 0.85f         /* light added to characters at the lamp, before the night veil */
+#define VOXEL_LAMP_HALO_MAX 64              /* halos drawn per frame */
+
 /* ---- Fog and sand banks --------------------------------------------------------------- */
 
 #define VOXEL_FOG_DIM 64

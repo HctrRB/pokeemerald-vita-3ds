@@ -12,7 +12,7 @@ void VoxelPointLights_Clear(void)
 
 void VoxelPointLights_Add(const float x, const float y, const float z,
                           const float r, const float g, const float b,
-                          const float radius, const float intensity, const uint32_t seed)
+                          const float radius, const float intensity, const bool flicker, const uint32_t seed)
 {
     if (sLightCount >= VOXEL_POINTLIGHT_MAX || radius <= 0.05f || intensity <= 0.001f)
         return;
@@ -30,6 +30,7 @@ void VoxelPointLights_Add(const float x, const float y, const float z,
     l->curR = r * intensity;
     l->curG = g * intensity;
     l->curB = b * intensity;
+    l->flicker = flicker;
     l->seed = seed;
 }
 
@@ -38,6 +39,8 @@ void VoxelPointLights_BeginFrame(const float seconds)
     for (uint32_t i = 0; i < sLightCount; ++i)
     {
         VoxelPointLight *const l = &sLights[i];
+        if (!l->flicker)
+            continue;
         const float phase = (float)(l->seed & 0xFFu) * 0.02454369f;
         const float speed = 3.2f + (float)((l->seed >> 8) & 0xFu) * 0.18f;
         const float wave = sinf(seconds * speed + phase) * 0.06f

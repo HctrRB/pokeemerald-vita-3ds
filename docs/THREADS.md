@@ -104,7 +104,8 @@ The fix is a boundary, not a patch:
   and the current map is unchanged, the frame goes on without rebuilding the map instances,
   building chunks or sampling light for the billboards (`VoxelEntities_AllowLighting`), and
   waits in mid-frame (`EnsureWorkerIdle`) only before a map, tileset or tile change, the sun
-  moving, a hole to build or lamps to rebuild. A map change, warm-up or 3D battle waits at once.
+  moving or a hole to build. A map change, warm-up or 3D battle waits at once. The night lamps are
+  part of each chunk's build (`EmitChunkLamps`), so they never make Core 0 wait.
 - **Commit**: at the start of the first frame that finds the job done, before the chunk pass
   (`ChunkWorker_Commit`). The result is dropped if `sWorldEpoch` or the generation of an atlas
   slot it used changed meanwhile.

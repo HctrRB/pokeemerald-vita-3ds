@@ -68,10 +68,15 @@ void VoxelSign_Shutdown(void);
 /* How far, in cells, a lamp's pool of light reaches on the ground. Its ground
  * vertices carry texture coordinates for a disc of this radius centred in the
  * texture (ctr_voxel.c's lamp pool texture). */
-#define VOXEL_LAMP_POOL_RADIUS 1.75f
+#define VOXEL_LAMP_POOL_RADIUS 2.25f
 
 bool VoxelSign_IsLantern(const uint16_t head[16]);
-void VoxelSign_EmitNight(VoxelBuilder *glass, VoxelBuilder *ground,
-                       const VoxelMapInstance *inst, int32_t x0, int32_t y0, int32_t x1, int32_t y1);
+/* The night lamps of the map's cells in [x0, x1) x [y0, y1): their lantern glass into `glass`,
+ * the pool of light each casts into `ground`, and each light's centre (the middle of its glass,
+ * where the builder put it) into `lights`, up to lightCapacity. Returns how many lights. Reads
+ * only data loaded at start (VoxelSign_Init) and the relief: safe on the chunk worker. */
+uint32_t VoxelSign_EmitNight(VoxelBuilder *glass, VoxelBuilder *ground,
+                             const VoxelMapInstance *inst, int32_t x0, int32_t y0, int32_t x1, int32_t y1,
+                             float (*lights)[3], uint32_t lightCapacity);
 
 #endif

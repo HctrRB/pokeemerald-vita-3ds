@@ -21,7 +21,8 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 | `voxel_lighting.c/h` | Sun from the in-game clock, baked into vertex colours; cast shadows; face shading |
 | `voxel_grade.c/h` | Colour grade (GBA / HD-2D) and CPU-baked tile relief |
 | `voxel_hd2d_shader.c/h` | HD-2D 30 FPS post-processing shaders (box downsample, bright-pass, Kawase bloom, DoF composite) |
-| `voxel_pointlights.c/h` | Dynamic point lights for street lamps, cave lanterns & battle glow |
+| `voxel_lamps.c/h` | Night lights per chunk: the street lamps found among the signs plus fixed lights (Lilycove's beacon) |
+| `voxel_pointlights.c/h` | Point lights on characters: night lamps (steady) and the cave lantern (flickering) |
 | `voxel_entities.c/h` | Player, NPC and follower billboards from the entity snapshot; cast shadows |
 | `voxel_sprite_slots.c/h` | Slots of the sprite atlas used by the billboards |
 | `voxel_battle.c/h` | The 3D battle stage built from the map the battle started on |

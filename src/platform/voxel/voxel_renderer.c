@@ -74,6 +74,7 @@ static inline void VoxelGl_DrawArrays(GLenum mode, GLint first, GLsizei count)
 #include "voxel_relief.h"
 #include "voxel_regions.h"
 #include "voxel_sign.h"
+#include "voxel_lamps.h"
 #include "voxel_battle.h"
 #include "voxel_entities.h"
 #include "voxel_lighting.h"
@@ -126,7 +127,8 @@ static uint8_t sUiTexIdx = 0;
 static bool sUiImageValid = false;
 static bool sUiImageHasUi = false;
 static uint32_t sUiImageHash = 0;
-static GLuint sLampPoolTex = 0;
+static GLuint sLampPoolTex = 0;   // radial falloff in RGB: lamp pools, water glints, battle ovals
+static GLuint sLampHaloTex = 0;   // soft radial alpha, white: the night lamps' halo
 static GLuint sRippleTex = 0;
 static GLuint sSoftMistTex = 0;
 static GLuint sFogTex = 0;
@@ -373,13 +375,17 @@ static void BattleCamera(void)
 #define CHUNK_GROUND_TOTAL_CAP (VOXEL_MAX_ATLAS_PAGES * CHUNK_GROUND_CAP)
 #define CHUNK_TREE_CAP 2560
 #define CHUNK_BUILDING_CAP 12288
+// Night lamps (VoxelLamps_EmitChunk): lantern glass, then the pools of light, after the buildings.
+#define CHUNK_LAMP_GLASS_CAP 512
+#define CHUNK_LAMP_POOL_CAP 768
+#define CHUNK_LAMP_CAP (CHUNK_LAMP_GLASS_CAP + CHUNK_LAMP_POOL_CAP)
 #define MAX_CHUNK_GROUND_SPANS 24
 #define MAX_CHUNK_BUILDING_SPANS 4
 
 #define MAX_CHUNKS 160
 #define CHUNK_WORKER_BATCH 4
 #define CHUNK_WORKER_BATCH_NORMAL 2
-#define CHUNK_VERTS_PER_SLOT (CHUNK_GROUND_TOTAL_CAP + CHUNK_TREE_CAP + CHUNK_BUILDING_CAP)
+#define CHUNK_VERTS_PER_SLOT (CHUNK_GROUND_TOTAL_CAP + CHUNK_TREE_CAP + CHUNK_BUILDING_CAP + CHUNK_LAMP_CAP)
 
 typedef struct
 {
@@ -422,8 +428,15 @@ typedef struct
     uint16_t treeOpaqueCount;
     uint16_t treeStaticCount;
     uint16_t buildingFirstVert;
+    // Night lamps: lampGlassCount glass vertices from lampFirstVert, then lampPoolCount pool ones.
+    uint16_t lampFirstVert;
+    uint16_t lampGlassCount;
+    uint16_t lampPoolCount;
     uint16_t totalVertCount;
     uint16_t vboCap;
+    // The lamps' light centres, in the chunk's build coordinates (add drawOffsetX/Z).
+    uint8_t lampLightCount;
+    float lampLights[VOXEL_LAMP_CHUNK_LIGHTS][3];
     GLuint vbo;
     VoxelChunkGroundSpan groundSpans[MAX_CHUNK_GROUND_SPANS];
     VoxelChunkBuildingSpan buildingSpans[MAX_CHUNK_BUILDING_SPANS];
@@ -444,6 +457,7 @@ typedef struct
     VoxelGlVertex *groundVerts;
     VoxelGlVertex *treeVerts;
     VoxelGlVertex *buildingVerts;
+    VoxelGlVertex *lampVerts;
 } VoxelChunkSlot;
 
 static VoxelChunkSlot sChunks[MAX_CHUNKS];
@@ -474,6 +488,10 @@ static VoxelVertex sScratch[SCRATCH_VERTICES];
 static VoxelVertex sEntityVerts[MAX_ENTITY_VERTS];
 static VoxelGlVertex sEntityGlVerts[MAX_ENTITY_VERTS];
 static uint32_t sEntityGlCount = 0;
+// The cards a lamp lights, again, with the light as their colour: added after the night veil
+// (Pass_EntityLamps), since a card's own colour is already near white and cannot take more.
+static VoxelGlVertex sEntityLitVerts[MAX_ENTITY_VERTS];
+static uint32_t sEntityLitCount = 0;
 
 static VoxelVertex sShadowVerts[MAX_SHADOW_VERTS];
 static VoxelGlVertex sShadowGlVerts[MAX_SHADOW_VERTS];
@@ -483,16 +501,6 @@ static VoxelVertex sReflectionVerts[MAX_REFLECTION_VERTS];
 static VoxelGlVertex sReflectionGlVerts[MAX_REFLECTION_VERTS];
 static uint32_t sReflectionGlCount = 0;
 
-// Night street lamps (lantern glass & street light pools, ported from ctr_voxel.c)
-#define VOXEL_LAMP_GLASS_CAP 1024
-#define VOXEL_LAMP_GROUND_CAP 1024
-static VoxelVertex sLampGlassScratch[VOXEL_LAMP_GLASS_CAP];
-static VoxelVertex sLampGroundScratch[VOXEL_LAMP_GROUND_CAP];
-static VoxelGlVertex sLampGlassVerts[VOXEL_LAMP_GLASS_CAP];
-static VoxelGlVertex sLampGroundVerts[VOXEL_LAMP_GROUND_CAP];
-static uint32_t sLampGlassCount = 0;
-static uint32_t sLampGroundCount = 0;
-static bool sLampsBuilt = false;
 
 // ---- Emerald 3DS Weather & Atmospheric Lighting System (ported from ctr_voxel.c) ----
 
@@ -1527,7 +1535,6 @@ static void InvalidateChunkCache(void)
     sChunkOriginY = 0;
     sNeedsFullWarmup = true;
     sWarmupFrames = 10;
-    sLampsBuilt = false;
     // A chunk the worker computed for the previous map is dropped at commit.
     sWorldEpoch++;
 }
@@ -1546,7 +1553,6 @@ static void ShiftChunkCoordinates(int32_t shiftTilesX, int32_t shiftTilesY)
     int32_t shiftCy = FloorDivChunk(totalY);
     sChunkOriginX = totalX - shiftCx * CHUNK_SIZE;
     sChunkOriginY = totalY - shiftCy * CHUNK_SIZE;
-    sLampsBuilt = false;
 
     float sx = (float)shiftTilesX;
     float sz = (float)shiftTilesY;
@@ -1616,6 +1622,10 @@ static bool EnsureChunkPool(void)
         sChunks[i].buildingCount = 0;
         sChunks[i].treeFirstVert = 0;
         sChunks[i].buildingFirstVert = 0;
+        sChunks[i].lampFirstVert = 0;
+        sChunks[i].lampGlassCount = 0;
+        sChunks[i].lampPoolCount = 0;
+        sChunks[i].lampLightCount = 0;
         sChunks[i].totalVertCount = 0;
         sChunks[i].vboCap = 0;
         sChunks[i].drawOffsetX = 0.0f;
@@ -1625,6 +1635,7 @@ static bool EnsureChunkPool(void)
         sChunks[i].groundVerts = NULL;
         sChunks[i].treeVerts = NULL;
         sChunks[i].buildingVerts = NULL;
+        sChunks[i].lampVerts = NULL;
     }
     sChunksAllocated = true;
     return true;
@@ -2254,6 +2265,13 @@ static void UploadChunkVbo(VoxelChunkSlot *slot, const bool gpuMayRead)
                         (GLsizeiptr)(slot->buildingCount * sizeof(VoxelGlVertex)),
                         slot->buildingVerts);
     }
+    if (slot->lampGlassCount + slot->lampPoolCount > 0)
+    {
+        glBufferSubData(GL_ARRAY_BUFFER,
+                        (GLintptr)(slot->lampFirstVert * sizeof(VoxelGlVertex)),
+                        (GLsizeiptr)((slot->lampGlassCount + slot->lampPoolCount) * sizeof(VoxelGlVertex)),
+                        slot->lampVerts);
+    }
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -2301,6 +2319,7 @@ typedef struct
     VoxelGlVertex *groundVerts;
     VoxelGlVertex *treeVerts;
     VoxelGlVertex *buildingVerts;
+    VoxelGlVertex *lampVerts;
     uint32_t groundTotalCount;
     uint32_t treeCount;
     uint32_t treeOpaqueCount;
@@ -2326,6 +2345,9 @@ typedef struct
     float bldWest, bldEast, bldNorth, bldSouth, bldTop;
     // Exact vertical AABB of all emitted geometry in this chunk (Core 2).
     float minY, maxY;
+    // Night lamps (VoxelChunkSlot::lampFirstVert...).
+    uint32_t lampGlassCount, lampPoolCount, lampLightCount;
+    float lampLights[VOXEL_LAMP_CHUNK_LIGHTS][3];
 } VoxelChunkJobOutput;
 
 static void PrepareChunkJob(VoxelChunkJobInput *in, int32_t chunkX, int32_t chunkY)
@@ -2656,6 +2678,50 @@ static uint32_t PartitionBuildingGlowTriangles(VoxelVertex *const verts, const u
     return write;
 }
 
+// The chunk's night lamps (VoxelLamps_EmitChunk): lantern glass and pools of light into the
+// lamp part of the staging buffer, their light centres into the output. Uses sScratch, free once
+// the buildings are packed. Static geometry, built day or night: at night it is drawn with the
+// glow as a constant colour (Pass_NightLamps), so the clock never rebuilds a chunk.
+static void EmitChunkLamps(const VoxelChunkJobInput *in, VoxelChunkJobOutput *out)
+{
+    VoxelBuilder glass, pool;
+    VoxelBuilder_Init(&glass, sScratch, CHUNK_LAMP_GLASS_CAP);
+    VoxelBuilder_Init(&pool, sScratch + CHUNK_LAMP_GLASS_CAP, CHUNK_LAMP_POOL_CAP);
+
+    const uint32_t instanceCount = VoxelWorld_InstanceCount();
+    for (uint32_t i = 0; i < instanceCount && out->lampLightCount < VOXEL_LAMP_CHUNK_LIGHTS; i++)
+    {
+        const VoxelMapInstance *inst = VoxelWorld_Instance(i);
+        if (!inst || inst->indoor || in->x0 >= inst->originX + inst->width || in->x1 <= inst->originX
+            || in->y0 >= inst->originY + inst->height || in->y1 <= inst->originY)
+            continue;
+        VoxelBuilder_SetStretch(&glass, inst);
+        VoxelBuilder_SetStretch(&pool, inst);
+        out->lampLightCount += VoxelLamps_EmitChunk(&glass, &pool, inst, in->x0, in->y0, in->x1, in->y1,
+                                                    out->lampLights + out->lampLightCount,
+                                                    VOXEL_LAMP_CHUNK_LIGHTS - out->lampLightCount);
+    }
+    if (glass.count + pool.count == 0)
+        return;
+
+    // Lamps and pools reach past the chunk's cells: the culling bounds take them in.
+    for (uint32_t k = 0; k < glass.count; k++)
+        ExpandChunkVertexBounds(out, (float)in->x0, (float)in->y0, (float)in->x1, (float)in->y1,
+                                sScratch[k].x, sScratch[k].y, sScratch[k].z);
+    for (uint32_t k = 0; k < pool.count; k++)
+    {
+        const VoxelVertex *const v = &sScratch[CHUNK_LAMP_GLASS_CAP + k];
+        ExpandChunkVertexBounds(out, (float)in->x0, (float)in->y0, (float)in->x1, (float)in->y1, v->x, v->y, v->z);
+    }
+    PackVoxelVertices(sScratch, out->lampVerts, glass.count, true);
+    PackVoxelVertices(sScratch + CHUNK_LAMP_GLASS_CAP, out->lampVerts + glass.count, pool.count, true);
+    // The pools lie on the ground they light: lifted off it (and drawn with a depth offset).
+    for (uint32_t k = 0; k < pool.count; k++)
+        out->lampVerts[glass.count + k].y += VOXEL_LAMP_POOL_LIFT;
+    out->lampGlassCount = glass.count;
+    out->lampPoolCount = pool.count;
+}
+
 static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *out, VoxelGlVertex *staging)
 {
     const double computeStart = VitaPerf_NowMs();
@@ -2668,6 +2734,10 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     out->groundVerts = staging;
     out->treeVerts = staging + CHUNK_GROUND_TOTAL_CAP;
     out->buildingVerts = out->treeVerts + CHUNK_TREE_CAP;
+    out->lampVerts = out->buildingVerts + CHUNK_BUILDING_CAP;
+    out->lampGlassCount = 0;
+    out->lampPoolCount = 0;
+    out->lampLightCount = 0;
     out->groundTotalCount = 0;
     out->treeCount = 0;
     out->buildingCount = 0;
@@ -2837,6 +2907,8 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
         PackVoxelVertices(sScratch, out->buildingVerts, count, !in->indoor);
         out->buildingCount = count;
     }
+    if (!in->indoor)
+        EmitChunkLamps(in, out);
     if (out->minY > out->maxY)
     {
         out->minY = -2.5f;
@@ -2898,6 +2970,10 @@ static void CommitChunkJob(VoxelChunkSlot *const slot, const int32_t chunkX, con
     slot->treeOpaqueCount = (uint16_t)out->treeOpaqueCount;
     slot->treeStaticCount = (uint16_t)out->treeStaticCount;
     slot->buildingCount = out->buildingCount;
+    slot->lampGlassCount = (uint16_t)out->lampGlassCount;
+    slot->lampPoolCount = (uint16_t)out->lampPoolCount;
+    slot->lampLightCount = (uint8_t)out->lampLightCount;
+    memcpy(slot->lampLights, out->lampLights, sizeof(out->lampLights[0]) * out->lampLightCount);
     // Built in the current coordinates, so drawn where it is built.
     slot->drawOffsetX = 0.0f;
     slot->drawOffsetZ = 0.0f;
@@ -2912,13 +2988,15 @@ static void CommitChunkJob(VoxelChunkSlot *const slot, const int32_t chunkX, con
     }
     slot->treeFirstVert = (uint16_t)slot->groundTotalCount;
     slot->buildingFirstVert = (uint16_t)(slot->groundTotalCount + slot->treeCount);
-    slot->totalVertCount = (uint16_t)(slot->groundTotalCount + slot->treeCount + slot->buildingCount);
+    slot->lampFirstVert = (uint16_t)(slot->buildingFirstVert + slot->buildingCount);
+    slot->totalVertCount = (uint16_t)(slot->lampFirstVert + slot->lampGlassCount + slot->lampPoolCount);
     VitaPerf_AddCount(VITA_PERF_C_BUILD_VERTS, slot->totalVertCount);
 
     // UploadChunkVbo reads the staging buffer through the slot's part pointers.
     slot->groundVerts = out->groundVerts;
     slot->treeVerts = out->treeVerts;
     slot->buildingVerts = out->buildingVerts;
+    slot->lampVerts = out->lampVerts;
     VitaPerf_SubBegin(VITA_PERF_T_BUILD_UPLOAD);
     UploadChunkVbo(slot, gpuMayRead);
     VitaPerf_SubEnd(VITA_PERF_T_BUILD_UPLOAD);
@@ -2926,6 +3004,7 @@ static void CommitChunkJob(VoxelChunkSlot *const slot, const int32_t chunkX, con
     slot->groundVerts = NULL;
     slot->treeVerts = NULL;
     slot->buildingVerts = NULL;
+    slot->lampVerts = NULL;
 
     slot->valid = true;
 }
@@ -4028,152 +4107,6 @@ static inline void PushFlatVertex3D(uint32_t *const vOut, const float x, const f
     v->a = a;
 }
 
-static void EnsureNightLampsBuilt(void)
-{
-    if (sLampsBuilt)
-        return;
-
-    // (built with sScratch, which the chunk worker uses)
-    EnsureWorkerIdle();
-    VoxelBuilder glassB, groundB;
-    VoxelBuilder_Init(&glassB, sLampGlassScratch, VOXEL_LAMP_GLASS_CAP);
-    VoxelBuilder_Init(&groundB, sLampGroundScratch, VOXEL_LAMP_GROUND_CAP);
-
-    const uint32_t instCount = VoxelWorld_InstanceCount();
-    for (uint32_t i = 0; i < instCount; ++i)
-    {
-        const VoxelMapInstance *const inst = VoxelWorld_Instance(i);
-        if (!inst || inst->indoor) continue;
-        glassB.base = VoxelRelief_Base(inst);
-        groundB.base = VoxelRelief_Base(inst);
-        VoxelBuilder_SetStretch(&glassB, inst);
-        VoxelBuilder_SetStretch(&groundB, inst);
-        VoxelSign_EmitNight(&glassB, &groundB, inst,
-                            inst->originX, inst->originY,
-                            inst->originX + inst->width, inst->originY + inst->height);
-    }
-
-    sLampGlassCount = glassB.count;
-    sLampGroundCount = groundB.count;
-    sLampsBuilt = true;
-}
-
-static void UpdateAndDrawNightLamps(float glow)
-{
-    if (glow <= 0.01f)
-        return;
-
-    EnsureNightLampsBuilt();
-
-    if (sLampGlassCount == 0 && sLampGroundCount == 0)
-        return;
-
-    glDisable(GL_ALPHA_TEST);
-    glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-
-    if (sLampGroundCount > 0 && sLampPoolTex != 0)
-    {
-        const float k = glow * 0.62f;
-        uint8_t r = (uint8_t)Voxel_ClampF(k * 255.0f + 0.5f, 0.0f, 255.0f);
-        uint8_t g = (uint8_t)Voxel_ClampF(k * 155.0f + 0.5f, 0.0f, 255.0f);
-        uint8_t b = (uint8_t)Voxel_ClampF(k * 64.0f + 0.5f, 0.0f, 255.0f);
-        for (uint32_t i = 0; i < sLampGroundCount; ++i)
-        {
-            sLampGroundVerts[i].x = sLampGroundScratch[i].x;
-            sLampGroundVerts[i].y = sLampGroundScratch[i].y + 0.015f;
-            sLampGroundVerts[i].z = sLampGroundScratch[i].z;
-            sLampGroundVerts[i].u = sLampGroundScratch[i].u;
-            sLampGroundVerts[i].v = sLampGroundScratch[i].v;
-            sLampGroundVerts[i].r = r;
-            sLampGroundVerts[i].g = g;
-            sLampGroundVerts[i].b = b;
-            sLampGroundVerts[i].a = 255;
-        }
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, sLampPoolTex);
-        glBlendFunc(GL_DST_COLOR, GL_ONE);
-        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sLampGroundVerts[0].x);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sLampGroundVerts[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sLampGroundVerts[0].r);
-        glDrawArrays(GL_TRIANGLES, 0, sLampGroundCount);
-    }
-
-    if (sLampGlassCount > 0)
-    {
-        uint8_t a = (uint8_t)(glow * 235.0f + 0.5f);
-        for (uint32_t i = 0; i < sLampGlassCount; ++i)
-        {
-            sLampGlassVerts[i].x = sLampGlassScratch[i].x;
-            sLampGlassVerts[i].y = sLampGlassScratch[i].y;
-            sLampGlassVerts[i].z = sLampGlassScratch[i].z;
-            sLampGlassVerts[i].u = 0.0f;
-            sLampGlassVerts[i].v = 0.0f;
-            sLampGlassVerts[i].r = 255;
-            sLampGlassVerts[i].g = 232;
-            sLampGlassVerts[i].b = 168;
-            sLampGlassVerts[i].a = a;
-        }
-        glDisable(GL_TEXTURE_2D);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sLampGlassVerts[0].x);
-        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sLampGlassVerts[0].u);
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sLampGlassVerts[0].r);
-        glDrawArrays(GL_TRIANGLES, 0, sLampGlassCount);
-
-        // Soft 3D bulb core halo (bright center, feathered outward by 2-pass Kawase bloom)
-        if (sLampPoolTex != 0 && sLampGlassCount >= 6u)
-        {
-            const uint8_t ca = (uint8_t)Voxel_ClampF(glow * 145.0f, 0.0f, 255.0f);
-            const float rad = 0.24f;
-            uint32_t vHalo = 0u;
-            for (uint32_t i = 0; i + 5u < sLampGlassCount && (vHalo + 6u) <= 4096u; i += 6u)
-            {
-                const float cx = (sLampGlassScratch[i].x + sLampGlassScratch[i + 2].x) * 0.5f;
-                const float cy = (sLampGlassScratch[i].y + sLampGlassScratch[i + 2].y) * 0.5f;
-                const float cz = (sLampGlassScratch[i].z + sLampGlassScratch[i + 2].z) * 0.5f;
-                static const float qx[6] = {-1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f};
-                static const float qy[6] = {-1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f};
-                static const float qu[6] = { 0.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f};
-                static const float qv[6] = { 0.0f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f};
-                for (int32_t k = 0; k < 6; ++k)
-                {
-                    VoxelGlVertex *const v = &sBatchGlVerts[vHalo++];
-                    v->x = cx + qx[k] * rad;
-                    v->y = cy + qy[k] * rad;
-                    v->z = cz + qy[k] * (rad * 0.45f);
-                    v->u = qu[k];
-                    v->v = qv[k];
-                    v->r = 255; v->g = 224; v->b = 148; v->a = ca;
-                }
-            }
-            if (vHalo > 0u)
-            {
-                glEnable(GL_TEXTURE_2D);
-                glBindTexture(GL_TEXTURE_2D, sLampPoolTex);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-                glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
-                glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].u);
-                glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
-                glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vHalo);
-            }
-        }
-        glEnable(GL_TEXTURE_2D);
-    }
-
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-}
-
-
-
 // Mouse look / orbit
 void VoxelRenderer_HandleMouseMotion(int32_t dx, int32_t dy)
 {
@@ -4507,6 +4440,50 @@ static bool InitPostTargets(PostRenderTargets *const t)
 }
 
 // Initialize the voxel renderer. Call after OpenGL context is created.
+// (1 - d^2)^2: a lamp's pool of light, d the distance from the centre in radii.
+static float PoolFalloff(const float d2)
+{
+    const float inv = 1.0f - d2;
+    return inv * inv;
+}
+
+// A bright core fading out softly: the halo round a lamp's glass.
+static float HaloFalloff(const float d2)
+{
+    const float inv = 1.0f - d2;
+    return inv * inv * expf(-2.5f * d2);
+}
+
+// A 64x64 RGBA8 radial texture, profile(d^2) at each texel and 0 past the edge (d = 1): into RGB
+// (alpha 1), or into alpha (white RGB).
+static GLuint CreateRadialTexture(float (*const profile)(float), const bool inAlpha)
+{
+    enum { DIM = 64 };
+    static uint32_t pixels[DIM * DIM];
+    for (int32_t y = 0; y < DIM; y++)
+    {
+        const float dy = ((float)y + 0.5f) / (DIM / 2) - 1.0f;
+        for (int32_t x = 0; x < DIM; x++)
+        {
+            const float dx = ((float)x + 0.5f) / (DIM / 2) - 1.0f;
+            const float d2 = dx * dx + dy * dy;
+            const float value = d2 < 1.0f ? Voxel_ClampF(profile(d2), 0.0f, 1.0f) : 0.0f;
+            const uint32_t level = (uint32_t)(value * 255.0f + 0.5f);
+            pixels[y * DIM + x] = inAlpha ? ((level << 24) | 0x00FFFFFFu)
+                                          : (0xFF000000u | (level << 16) | (level << 8) | level);
+        }
+    }
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, DIM, DIM, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    return tex;
+}
+
 bool VoxelRenderer_Init(void)
 {
     VITA_LOG("[VOXEL] Initializing Emerald-3DS architecture on PS Vita (vitaGL)...\n");
@@ -4640,34 +4617,11 @@ bool VoxelRenderer_Init(void)
     sUiTexIdx = 0;
     sUiTex = sUiTexRing[0];
 
-    // Generate 16x16 RGBA5551 radial luminance texture (512 B) for night street-lamp pools & 3D battle ovals
-    {
-        uint16_t lampPoolPixels[16 * 16];
-        for (int32_t y = 0; y < 16; y++)
-        {
-            const float dy = ((float)y + 0.5f - 8.0f) / 7.5f;
-            for (int32_t x = 0; x < 16; x++)
-            {
-                const float dx = ((float)x + 0.5f - 8.0f) / 7.5f;
-                const float d2 = dx * dx + dy * dy;
-                float falloff = 0.0f;
-                if (d2 < 1.0f)
-                {
-                    const float inv = 1.0f - d2;
-                    falloff = inv * inv;
-                }
-                const uint16_t c5 = (uint16_t)(falloff * 31.0f + 0.5f);
-                lampPoolPixels[y * 16 + x] = (uint16_t)((c5 << 11) | (c5 << 6) | (c5 << 1) | 1u);
-            }
-        }
-        glGenTextures(1, &sLampPoolTex);
-        glBindTexture(GL_TEXTURE_2D, sLampPoolTex);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 16, 16, 0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, lampPoolPixels);
-    }
+    // Radial textures (64x64 RGBA8, 16 KB each): the pool falloff in RGB (night lamp pools, water
+    // glints, 3D battle ovals; 256 levels, it was 16x16 RGBA5551 and drawn in rings) and the night
+    // lamps' halo in alpha.
+    sLampPoolTex = CreateRadialTexture(PoolFalloff, false);
+    sLampHaloTex = CreateRadialTexture(HaloFalloff, true);
 
     // Generate 16x16 RGBA4444 concentric ring texture (512 B) for rain ripples on water/puddles
     {
@@ -4945,6 +4899,7 @@ typedef struct
     bool liveChanged;
     VoxelLight light;
     float seconds;                      // atmosphere animation clock
+    float nightGlow;                    // lamp and window light, 0..1 (0 indoors, by day, in battle)
     VoxelChunkSlot *visible[MAX_CHUNKS];
     int32_t visibleCount;
     int32_t holesLeft;                  // visible chunks still awaiting build (Core 2)
@@ -5650,8 +5605,6 @@ static void Frame_TrackWorldChanges(VoxelFrame *const f)
         VoxelBuildings_MapChanged();
         VoxelLighting_Reset();
         VitaPerf_SubEnd(VITA_PERF_T_MAP_SHIFT);
-        if (mapChanged || crossed)
-            sLampsBuilt = false;
     }
     
     f->indoor = indoor;
@@ -5681,6 +5634,12 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
     f->seconds = (float)((double)(SDL_GetPerformanceCounter() - sVoxelAtmosphereStart) / (double)SDL_GetPerformanceFrequency());
     f->hd2dPreset = GetHd2dPreset();
     f->hd2dMarkedGrade = Hd2dPost(f->hd2dPreset);
+    {
+        // Read once: the windows, the lamps and the light on characters agree within the frame.
+        const VitaDayNightLight *const dn = VitaDayNight_Get();
+        f->nightGlow = (!f->indoor && !f->inBattle3D && dn != NULL && VitaGame_IsOutdoor())
+                     ? Voxel_ClampF(dn->glow, 0.0f, 1.0f) : 0.0f;
+    }
 
     // Smooth zone-crossing & weather transitions in Core 0 (snaps on warp fades / indoor switches)
     static bool sAtmosSmoothReady = false;
@@ -6284,47 +6243,126 @@ static void Frame_SelectChunks(VoxelFrame *const f)
     f->holesLeft = holesLeft;
 }
 
-// Populate active HD-2D point lights from cached street lamps / cave lantern (zero Core 2 race)
+// What the night lamps cost at each HD-2D level (indexed by Hd2dPreset): the same look, cheaper
+// below. The halo is the only glow without the post pass (OFF, LOW); with it the bloom adds its own.
+typedef struct
+{
+    float haloSize;         // halo radius, in tiles
+    float haloAlpha;        // halo strength at full glow
+    uint8_t maxLights;      // lamps lighting the characters (VOXEL_POINTLIGHT_MAX at most)
+    bool perVertex;         // characters lit at each corner (feet to head) rather than once a card
+} LampLevel;
+
+static const LampLevel kLampLevels[] = {
+    [HD2D_PRESET_OFF]  = { 0.50f, 0.85f, 4,  false },
+    [HD2D_PRESET_LOW]  = { 0.60f, 0.85f, 8,  true },
+    [HD2D_PRESET_MED]  = { 0.55f, 0.55f, 12, true },
+    [HD2D_PRESET_HIGH] = { 0.50f, 0.40f, 16, true },
+};
+
+static inline const LampLevel *LampLevelOf(const VoxelFrame *const f)
+{
+    return &kLampLevels[(uint32_t)f->hd2dPreset < 4u ? (uint32_t)f->hd2dPreset : (uint32_t)HD2D_PRESET_HIGH];
+}
+
+// The light point lights for this frame's characters: the cave lantern (HD-2D) and, at night, the
+// lamps of the visible chunks nearest the camera's target (VoxelLamps_EmitChunk), steady.
 static void UpdatePointLights(const VoxelFrame *const f)
 {
     VoxelPointLights_Clear();
-    if (f->inBattle3D || f->hd2dPreset == HD2D_PRESET_OFF)
+    if (f->inBattle3D)
         return;
 
-    if (f->underground)
+    if (f->underground && f->hd2dPreset != HD2D_PRESET_OFF)
     {
         // Warm explorer lantern in dark caves
         VoxelPointLights_Add(f->playerX + 0.5f, sCamera.ground + 0.9f, f->playerZ + 0.5f,
-                             1.0f, 0.78f, 0.48f, 4.8f, 0.75f, 0xCA7E11u);
+                             1.0f, 0.78f, 0.48f, 4.8f, 0.75f, true, 0xCA7E11u);
     }
 
-    if (!f->indoor && VitaGame_IsOutdoor())
+    if (f->nightGlow > 0.02f)
     {
-        const VitaDayNightLight *const dn = VitaDayNight_Get();
-        const float glow = (dn != NULL) ? dn->glow : 0.0f;
-        if (glow > 0.02f)
+        // The nearest maxLights lamps, kept sorted by distance (a handful: insertion is enough).
+        enum { CAP = VOXEL_POINTLIGHT_MAX };
+        float nearX[CAP], nearY[CAP], nearZ[CAP], nearD2[CAP];
+        uint32_t nearCount = 0;
+        const uint32_t maxLights = LampLevelOf(f)->maxLights < CAP ? LampLevelOf(f)->maxLights : CAP;
+        for (int32_t c = 0; c < f->visibleCount; c++)
         {
-            EnsureNightLampsBuilt();
-            if (sLampGroundCount >= 6u)
+            const VoxelChunkSlot *const chunk = f->visible[c];
+            for (uint32_t l = 0; l < chunk->lampLightCount; l++)
             {
-            for (uint32_t i = 0; i + 5 < sLampGroundCount; i += 6)
-            {
-                const float lx = (sLampGroundScratch[i].x + sLampGroundScratch[i + 2].x) * 0.5f;
-                const float ly = sLampGroundScratch[i].y + 1.15f;
-                const float lz = (sLampGroundScratch[i].z + sLampGroundScratch[i + 2].z) * 0.5f;
-                const float dx = lx - f->playerX;
-                const float dz = lz - f->playerZ;
-                if (dz <= 8.5f && (dx * dx + dz * dz) <= 13.5f * 13.5f)
+                const float x = chunk->lampLights[l][0] + chunk->drawOffsetX;
+                const float z = chunk->lampLights[l][2] + chunk->drawOffsetZ;
+                const float dx = x - sCamera.targetX, dz = z - sCamera.targetZ;
+                const float d2 = dx * dx + dz * dz;
+                if (nearCount == maxLights && d2 >= nearD2[nearCount - 1])
+                    continue;
+                uint32_t at = nearCount < maxLights ? nearCount++ : nearCount - 1;
+                while (at > 0 && nearD2[at - 1] > d2)
                 {
-                    VoxelPointLights_Add(lx, ly, lz, 1.0f, 0.68f, 0.34f,
-                                         4.4f, glow * 0.92f, i * 2654435761u);
+                    nearX[at] = nearX[at - 1];
+                    nearY[at] = nearY[at - 1];
+                    nearZ[at] = nearZ[at - 1];
+                    nearD2[at] = nearD2[at - 1];
+                    --at;
                 }
-            }
+                nearX[at] = x;
+                nearY[at] = chunk->lampLights[l][1];
+                nearZ[at] = z;
+                nearD2[at] = d2;
             }
         }
+        for (uint32_t i = 0; i < nearCount; i++)
+            VoxelPointLights_Add(nearX[i], nearY[i], nearZ[i], VOXEL_LAMP_R, VOXEL_LAMP_G, VOXEL_LAMP_B,
+                                 VOXEL_LAMP_LIGHT_RADIUS, f->nightGlow * VOXEL_LAMP_LIGHT_GAIN, false, 0u);
     }
 
     VoxelPointLights_BeginFrame(f->seconds);
+}
+
+// The point lights on the packed character cards (6 vertices each), as copies of the lit cards
+// whose colour is the light (sEntityLitVerts, drawn by Pass_EntityLamps). It cannot go into the
+// cards' own colour: that is already near white, and the night veil drawn after them would dim
+// whatever was added.
+static void LightCards(const VoxelFrame *const f, const VoxelGlVertex *const verts, const uint32_t count)
+{
+    const bool perVertex = LampLevelOf(f)->perVertex;
+    sEntityLitCount = 0;
+    for (uint32_t i = 0; i + 5 < count; i += 6)
+    {
+        float light[6][3];
+        bool lit = false;
+        if (!perVertex)
+        {
+            const float cx = (verts[i].x + verts[i + 2].x) * 0.5f;
+            const float cy = (verts[i].y + verts[i + 2].y) * 0.5f;
+            const float cz = (verts[i].z + verts[i + 2].z) * 0.5f;
+            VoxelPointLights_SampleAdd(cx, cy, cz, &light[0][0], &light[0][1], &light[0][2]);
+            for (uint32_t k = 1; k < 6; ++k)
+                for (uint32_t ch = 0; ch < 3; ch++)
+                    light[k][ch] = light[0][ch];
+        }
+        else
+        {
+            for (uint32_t k = 0; k < 6; ++k)
+                VoxelPointLights_SampleAdd(verts[i + k].x, verts[i + k].y, verts[i + k].z,
+                                           &light[k][0], &light[k][1], &light[k][2]);
+        }
+        for (uint32_t k = 0; k < 6 && !lit; ++k)
+            lit = light[k][0] + light[k][1] + light[k][2] > 0.01f;
+        if (!lit)
+            continue;
+        for (uint32_t k = 0; k < 6; ++k)
+        {
+            VoxelGlVertex *const v = &sEntityLitVerts[sEntityLitCount++];
+            *v = verts[i + k];
+            v->r = (uint8_t)Voxel_ClampF(light[k][0] * 255.0f + 0.5f, 0.0f, 255.0f);
+            v->g = (uint8_t)Voxel_ClampF(light[k][1] * 255.0f + 0.5f, 0.0f, 255.0f);
+            v->b = (uint8_t)Voxel_ClampF(light[k][2] * 255.0f + 0.5f, 0.0f, 255.0f);
+            v->a = 255;
+        }
+    }
 }
 
 // Stage 7: entity billboards, their cast shadows and water reflections (field only).
@@ -6363,32 +6401,9 @@ static void Frame_EmitEntities(const VoxelFrame *const f)
         if (sEntityGlCount > 0)
         {
             PackVoxelVertices(sEntityVerts, sEntityGlVerts, sEntityGlCount, !indoor);
-            if (f->hd2dPreset != HD2D_PRESET_OFF && VoxelPointLights_Count() > 0)
-            {
-                for (uint32_t i = 0; i + 5 < sEntityGlCount; i += 6)
-                {
-                    const float cx = (sEntityGlVerts[i].x + sEntityGlVerts[i + 2].x) * 0.5f;
-                    const float cy = (sEntityGlVerts[i].y + sEntityGlVerts[i + 2].y) * 0.5f;
-                    const float cz = (sEntityGlVerts[i].z + sEntityGlVerts[i + 2].z) * 0.5f;
-                    float ar = 0.0f, ag = 0.0f, ab = 0.0f;
-                    VoxelPointLights_SampleAdd(cx, cy, cz, &ar, &ag, &ab);
-                    if (ar > 0.004f || ag > 0.004f || ab > 0.004f)
-                    {
-                        const int32_t dr = (int32_t)(ar * 255.0f + 0.5f);
-                        const int32_t dg = (int32_t)(ag * 255.0f + 0.5f);
-                        const int32_t db = (int32_t)(ab * 255.0f + 0.5f);
-                        for (uint32_t k = 0; k < 6; ++k)
-                        {
-                            int32_t r = (int32_t)sEntityGlVerts[i + k].r + dr;
-                            int32_t g = (int32_t)sEntityGlVerts[i + k].g + dg;
-                            int32_t b = (int32_t)sEntityGlVerts[i + k].b + db;
-                            sEntityGlVerts[i + k].r = (uint8_t)(r > 255 ? 255 : r);
-                            sEntityGlVerts[i + k].g = (uint8_t)(g > 255 ? 255 : g);
-                            sEntityGlVerts[i + k].b = (uint8_t)(b > 255 ? 255 : b);
-                        }
-                    }
-                }
-            }
+            sEntityLitCount = 0;
+            if (VoxelPointLights_Count() > 0)
+                LightCards(f, sEntityGlVerts, sEntityGlCount);
         }
 
         sShadowGlCount = shadowBuilder.count;
@@ -6935,6 +6950,37 @@ static void Pass_Entities(void)
     }
 }
 
+// Pass 5.15: the lamps' light on the characters (LightCards), after the night veil: their lit
+// cards again, textured with the sprite atlas and coloured by the light, added (GL_SRC_ALPHA, GL_ONE:
+// the sprite's transparent texels add nothing, so no alpha test). Same vertices as Pass_Entities,
+// so GL_LEQUAL lands on the same depth.
+static void Pass_EntityLamps(void)
+{
+    if (sEntityLitCount == 0 || sSpriteTex == 0)
+        return;
+    glDisable(GL_ALPHA_TEST);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, sSpriteTex);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glDepthFunc(GL_LEQUAL);   // (the 3D passes' own, Pass_SetupWorld3D)
+    glDepthMask(GL_FALSE);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sEntityLitVerts[0].x);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sEntityLitVerts[0].u);
+    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sEntityLitVerts[0].r);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)sEntityLitCount);
+    sFrameDrawCalls++;
+    sFrameVertCount += sEntityLitCount;
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+}
+
 // Pass 5.1: day/night and atmosphere modulation of the whole 3D world, in hardware
 // (destination colour blending).
 static void Pass_DayNightGrade(const VoxelFrame *const f)
@@ -7002,11 +7048,7 @@ static void Pass_DayNightGrade(const VoxelFrame *const f)
 // before HD-2D post-processing so bright windows pick up a soft bloom halo.
 static void Pass_BuildingGlow(const VoxelFrame *const f)
 {
-    if (f->indoor || f->inBattle3D || !VitaGame_IsOutdoor())
-        return;
-
-    const VitaDayNightLight *const dn = VitaDayNight_Get();
-    if (dn == NULL || dn->glow <= 0.01f)
+    if (f->nightGlow <= 0.01f)
         return;
 
     VoxelChunkSlot *const *const visibleChunks = f->visible;
@@ -7046,7 +7088,7 @@ static void Pass_BuildingGlow(const VoxelFrame *const f)
     const float strength = Hd2dPost(f->hd2dPreset)
         ? VOXEL_WINDOW_GLOW_STRENGTH_HD2D
         : VOXEL_WINDOW_GLOW_STRENGTH_STD;
-    const float alpha = Voxel_ClampF(dn->glow * strength, 0.0f, 1.0f);
+    const float alpha = Voxel_ClampF(f->nightGlow * strength, 0.0f, 1.0f);
 
     // Pure additive blend with GL_ALPHA_TEST OFF avoids SGX543 TBDR punch-through discard stalls
     // now that glowVertCount contains only triangles overlapping glow > 0 UV cells.
@@ -7109,19 +7151,132 @@ static void Pass_BuildingGlow(const VoxelFrame *const f)
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
-// Pass 5.2: night street lamps and their light pools (Emerald 3DS VoxelSign_EmitNight).
-static void Pass_NightLamps(const VoxelFrame *const f)
+// Draws one part of the visible chunks' lamp geometry (VoxelChunkSlot::lampFirstVert...) from
+// their VBOs: the pools (pool) or the glass. State is set by the caller.
+static void DrawChunkLampPart(const VoxelFrame *const f, const bool pool)
 {
-    const bool indoor = f->indoor;
-    const bool inBattle3D = f->inBattle3D;
-    if (!indoor && !inBattle3D && VitaGame_IsOutdoor())
+    GLuint lastVbo = 0;
+    ChunkOffsets_Begin();
+    for (int32_t i = 0; i < f->visibleCount; i++)
     {
-        const VitaDayNightLight *dn = VitaDayNight_Get();
-        if (dn != NULL && dn->glow > 0.01f)
+        const VoxelChunkSlot *const chunk = f->visible[i];
+        const uint32_t count = pool ? chunk->lampPoolCount : chunk->lampGlassCount;
+        if (count == 0 || chunk->vbo == 0)
+            continue;
+        if (lastVbo != chunk->vbo)
         {
-            UpdateAndDrawNightLamps(dn->glow);
+            glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
+            glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
+            glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
+            lastVbo = chunk->vbo;
+        }
+        ChunkOffsets_Apply(chunk);
+        const uint32_t first = chunk->lampFirstVert + (pool ? chunk->lampGlassCount : 0u);
+        glDrawArrays(GL_TRIANGLES, (GLint)first, (GLsizei)count);
+        sFrameDrawCalls++;
+        sFrameVertCount += count;
+    }
+    ChunkOffsets_End();
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+// One camera-facing halo per visible lamp light, pulled toward the camera so its own lantern does
+// not cut it. Built per frame into sBatchGlVerts: a few dozen vertices.
+static void DrawLampHalos(const VoxelFrame *const f, const LampLevel *const level)
+{
+    const float *const view = sViewState.view;
+    const float right[3] = { view[0], view[4], view[8] };
+    const float up[3] = { view[1], view[5], view[9] };
+    const float toCamera[3] = { view[2], view[6], view[10] };
+    static const float kCornerX[6] = { -1.0f, 1.0f, 1.0f, -1.0f, 1.0f, -1.0f };
+    static const float kCornerY[6] = { -1.0f, -1.0f, 1.0f, -1.0f, 1.0f, 1.0f };
+    const float size = level->haloSize;
+    uint32_t vertCount = 0;
+
+    for (int32_t i = 0; i < f->visibleCount && vertCount + 6u <= VOXEL_LAMP_HALO_MAX * 6u; i++)
+    {
+        const VoxelChunkSlot *const chunk = f->visible[i];
+        for (uint32_t l = 0; l < chunk->lampLightCount && vertCount + 6u <= VOXEL_LAMP_HALO_MAX * 6u; l++)
+        {
+            const float c[3] = {
+                chunk->lampLights[l][0] + chunk->drawOffsetX + toCamera[0] * VOXEL_LAMP_HALO_LIFT,
+                chunk->lampLights[l][1] + toCamera[1] * VOXEL_LAMP_HALO_LIFT,
+                chunk->lampLights[l][2] + chunk->drawOffsetZ + toCamera[2] * VOXEL_LAMP_HALO_LIFT,
+            };
+            for (uint32_t k = 0; k < 6; k++)
+            {
+                VoxelGlVertex *const v = &sBatchGlVerts[vertCount++];
+                v->x = c[0] + (right[0] * kCornerX[k] + up[0] * kCornerY[k]) * size;
+                v->y = c[1] + (right[1] * kCornerX[k] + up[1] * kCornerY[k]) * size;
+                v->z = c[2] + (right[2] * kCornerX[k] + up[2] * kCornerY[k]) * size;
+                v->u = kCornerX[k] * 0.5f + 0.5f;
+                v->v = kCornerY[k] * 0.5f + 0.5f;
+            }
         }
     }
+    if (vertCount == 0 || sLampHaloTex == 0)
+        return;
+    glBindTexture(GL_TEXTURE_2D, sLampHaloTex);
+    glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].u);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vertCount);
+    sFrameDrawCalls++;
+    sFrameVertCount += vertCount;
+}
+
+// Pass 5.2: night lamps (VoxelLamps_EmitChunk). Their geometry is static in the chunk VBOs and
+// the glow is a constant colour, so a frame costs two draws per lamp chunk plus one for the halos,
+// and no vertex is written:
+//   pools: the ground under each lamp brightened, dst * (1 + gain * falloff * amber), drawn with
+//          a depth offset over the ground it lies on;
+//   glass: additive amber, bright enough for the bloom to spread it (MED, HIGH);
+//   halos: one billboard per lamp, sized and weighted by the HD-2D level (LampLevel).
+static void Pass_NightLamps(const VoxelFrame *const f)
+{
+    const float glow = f->nightGlow;
+    if (glow <= 0.01f)
+        return;
+    bool anyLamp = false;
+    for (int32_t i = 0; i < f->visibleCount && !anyLamp; i++)
+        anyLamp = f->visible[i]->lampLightCount > 0;
+    if (!anyLamp)
+        return;
+
+    const LampLevel *const level = LampLevelOf(f);
+    glDisable(GL_ALPHA_TEST);
+    glEnable(GL_BLEND);
+    glDepthMask(GL_FALSE);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+
+    if (sLampPoolTex != 0)
+    {
+        const float k = glow * VOXEL_LAMP_POOL_GAIN;
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, sLampPoolTex);
+        glBlendFunc(GL_DST_COLOR, GL_ONE);
+        glColor4f(VOXEL_LAMP_R * k, VOXEL_LAMP_G * k, VOXEL_LAMP_B * k, 1.0f);
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(-1.0f, -2.0f);
+        DrawChunkLampPart(f, true);
+        glDisable(GL_POLYGON_OFFSET_FILL);
+    }
+
+    glDisable(GL_TEXTURE_2D);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glColor4f(VOXEL_LAMP_R, VOXEL_LAMP_G, VOXEL_LAMP_B, Voxel_ClampF(glow * VOXEL_LAMP_GLASS_GAIN, 0.0f, 1.0f));
+    DrawChunkLampPart(f, false);
+
+    glEnable(GL_TEXTURE_2D);
+    glColor4f(VOXEL_LAMP_R, VOXEL_LAMP_G, VOXEL_LAMP_B, Voxel_ClampF(glow * level->haloAlpha, 0.0f, 1.0f));
+    DrawLampHalos(f, level);
+
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
 }
 
 enum
@@ -8645,7 +8800,7 @@ static void Pass_Overlay2D(const VoxelFrame *const f)
             }
         }
 
-        // In 3D battles, draw smooth 32-level radial ovals beneath battling Pokémon using sLampPoolTex (16x16 RGBA5551)
+        // In 3D battles, draw smooth radial ovals beneath battling Pokémon using sLampPoolTex
         if (inBattle3D && fadeAmount < 0.99f && sLampPoolTex != 0)
         {
             VoxelBattleShadow bShadows[4];
@@ -9159,6 +9314,7 @@ bool VoxelRenderer_RenderFrame(void)
         glDisable(GL_ALPHA_TEST);
 
         Pass_DayNightGrade(&f);
+        Pass_EntityLamps();
         Pass_BuildingGlow(&f);
         Pass_NightLamps(&f);
         Pass_Atmosphere3D(&f);
