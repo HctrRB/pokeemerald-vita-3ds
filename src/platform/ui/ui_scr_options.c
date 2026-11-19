@@ -39,7 +39,7 @@ static int32_t OptVisRows(void)
     return gUiTheme->gbaFrame ? GBA_ROWS : ROWS;
 }
 
-static const char *const sTabs[VITA_TAB_COUNT] = { "GENERAL", "WORLD", "BATTLE", "MODES", "CHEATS" };
+static const char *const sTabs[VITA_TAB_COUNT] = { "GENERAL", "GRAPHICS", "WORLD", "BATTLE", "MODES", "CHEATS" };
 static const char *const sCoreNames[6] = { "TEXT SPEED", "BATTLE SCENE", "BATTLE STYLE", "SOUND OUTPUT", "MASTER VOLUME", "BUTTON MODE" };
 static const char *const sActions[VITA_ACTION_COUNT] = { "A BUTTON", "B BUTTON", "L SHOULDER", "R SHOULDER", "START", "SELECT", "FAST FORWARD", "QUICK OPTIONS" };
 static const char *const sButtons[16] = { "UP", "DOWN", "LEFT", "RIGHT", "CROSS", "CIRCLE", "SQUARE", "TRIANGLE", "L", "R", "START", "SELECT", "R-STICK UP", "R-STICK DOWN", "R-STICK LEFT", "R-STICK RIGHT" };
@@ -71,10 +71,12 @@ static const struct { const char *key, *help; } sExtraHelp[] = {
     { "ui_theme", "Colour and style of the menus." },
     { "voxel_3d", "Draw the overworld as a 3D voxel diorama." },
     { "voxel_blur", "Blur the far background. Bloom and light shafts stay on." },
-    { "voxel_bloom", "Strength of bright-pass bloom on the 3D world (0 = off, 10 = max)." },
-    { "voxel_sky_bloom", "Strength of sun and moon sky glow (0 = off, 5 = normal, 10 = 2x)." },
-    { "voxel_shafts", "Strength of sun and moon light shafts (0 = off, 5 = normal, 10 = 2x)." },
+    { "voxel_bloom", "Glow of bright parts of the world (0 = off). Needs HD-2D MED or HIGH." },
+    { "voxel_sky_bloom", "Sun and moon sky glow (5 = normal). Needs HD-2D MED or HIGH." },
+    { "voxel_shafts", "Sun and moon light shafts (5 = normal). Needs HD-2D MED or HIGH." },
     { "voxel_fps", "Frame rate of the 3D world. 60 uses more battery." },
+    { "voxel_hd2d", "LOW: sway, relief, particles. MED/HIGH: + bloom, shafts, grade." },
+    { "voxel_fov", "Camera tilt: 35 is the classic view, 25 looks more from the side." },
     { "day_night", "Light changes with the clock." },
     { "timed_encounters", "Some POKEMON appear only by day or by night." },
     { "clock_speed", "How fast the in-game clock runs." },

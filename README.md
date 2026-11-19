@@ -55,8 +55,8 @@ The full list is under [Features](#features).
 ### 3D world
 
 - Voxel overworld built live from the game's maps: sun and shadows, day/night cycle, weather,
-  water reflections, 3D buildings and trees. 30 or 60 FPS (OPTIONS > WORLD), plus classic 2D mode.
-- **HD-2D mode** (OPTIONS > WORLD): tilt-shift depth of field, bloom and light emitters, split-tone
+  water reflections, 3D buildings and trees. 30 or 60 FPS (OPTIONS > GRAPHICS), plus classic 2D mode.
+- **HD-2D mode** (OPTIONS > GRAPHICS, OFF / LOW / MED / HIGH, independent of the framerate): tilt-shift depth of field, bloom and light emitters, split-tone
   colour grading and vignette, street lamp / cave lantern point lights, dynamic sun/moon light
   shafts, night fireflies, swaying foliage, 16×16 Sobel tile relief, soft contact shadows, HD-2D
   rain and adjustable camera angle (including 25°).

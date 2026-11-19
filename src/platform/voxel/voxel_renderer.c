@@ -176,17 +176,30 @@ static int32_t sMenuBgBloom = 10;
 static int32_t sMenuBgSkyBloom = 5;
 static int32_t sMenuBgShafts = 5;
 
+// GRAPHICS -> HD-2D (voxel_hd2d), independent of the framerate:
+//   OFF  classic renderer;
+//   LOW  the world's HD-2D effects (relief, sway, flowers, particles, fireflies, surface FX), no post;
+//   MED  + the post pass at its light settings (RGBA5551 scene, no wide blur, softer bloom/grade);
+//   HIGH + the post pass at full quality.
+// != HD2D_PRESET_OFF asks for the world effects, Hd2dPost() for the post pass.
 typedef enum
 {
-    HD2D_PRESET_OFF = 0,
-    HD2D_PRESET_LOW = 1,
-    HD2D_PRESET_HIGH = 2,
+    HD2D_PRESET_OFF = VOXEL_HD2D_OFF,
+    HD2D_PRESET_LOW = VOXEL_HD2D_LOW,
+    HD2D_PRESET_MED = VOXEL_HD2D_MED,
+    HD2D_PRESET_HIGH = VOXEL_HD2D_HIGH,
 } Hd2dPreset;
 
 static inline Hd2dPreset GetHd2dPreset(void)
 {
-    // Unified mode: 30 FPS = full HD-2D quality, 60 FPS = classic fast renderer (all HD-2D effects OFF)
-    return (VitaExtras_GetFast(FAST_EXTRA_VOXEL_FPS) == 0) ? HD2D_PRESET_HIGH : HD2D_PRESET_OFF;
+    const int32_t level = VitaExtras_GetFast(FAST_EXTRA_VOXEL_HD2D);
+    return (level >= VOXEL_HD2D_OFF && level < VOXEL_HD2D_COUNT) ? (Hd2dPreset)level : HD2D_PRESET_HIGH;
+}
+
+// The post pass (bloom, sky bloom, shader shafts, cinematic grade): MED and HIGH.
+static inline bool Hd2dPost(const Hd2dPreset preset)
+{
+    return preset >= HD2D_PRESET_MED;
 }
 
 // Animated tiles tracking (water waves, flowers, waterfalls)
@@ -5667,7 +5680,7 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
         sVoxelAtmosphereStart = SDL_GetPerformanceCounter();
     f->seconds = (float)((double)(SDL_GetPerformanceCounter() - sVoxelAtmosphereStart) / (double)SDL_GetPerformanceFrequency());
     f->hd2dPreset = GetHd2dPreset();
-    f->hd2dMarkedGrade = (f->hd2dPreset != HD2D_PRESET_OFF);
+    f->hd2dMarkedGrade = Hd2dPost(f->hd2dPreset);
 
     // Smooth zone-crossing & weather transitions in Core 0 (snaps on warp fades / indoor switches)
     static bool sAtmosSmoothReady = false;
@@ -6440,7 +6453,7 @@ static void Frame_BeginPasses(VoxelFrame *const f, const GLuint defaultTargetFbo
 
     const bool dioramaSetting = (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
     const bool isIndoor = (inst0 != NULL && inst0->indoor);
-    const bool hd2dOn = (f->hd2dPreset != HD2D_PRESET_OFF);
+    const bool hd2dOn = Hd2dPost(f->hd2dPreset);
     // The scene goes to the post FBO for the HD-2D post effects (bloom, sky bloom, shafts, grade)
     // or for the depth of field. The DoF option only decides the blurred bands: it used to gate
     // every post effect, so DoF OFF silently lost bloom, sky bloom and shafts.
@@ -7029,7 +7042,8 @@ static void Pass_BuildingGlow(const VoxelFrame *const f)
     if (glowPageCount == 0)
         return;
 
-    const float strength = (f->hd2dPreset != HD2D_PRESET_OFF)
+    // (a softer window light where the bloom spreads it)
+    const float strength = Hd2dPost(f->hd2dPreset)
         ? VOXEL_WINDOW_GLOW_STRENGTH_HD2D
         : VOXEL_WINDOW_GLOW_STRENGTH_STD;
     const float alpha = Voxel_ClampF(dn->glow * strength, 0.0f, 1.0f);
@@ -7775,7 +7789,7 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
         DrawSurfaceFx(f);
 
         // ---- PASS 5.75: World-anchored 3D Sun/Moon Rays (60 Classic, or fallback if HD-2D shaft shader unavailable) ----
-        if (!underground && (f->hd2dPreset == HD2D_PRESET_OFF || !VoxelHd2dShader_ShaftsReady()
+        if (!underground && (!Hd2dPost(f->hd2dPreset) || !VoxelHd2dShader_ShaftsReady()
                              || !f->dioramaActive))
         {
             const uint32_t timeMs = VitaDayNight_GetTimeMs();
@@ -7998,7 +8012,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     const int32_t scratchH = renderH / 2;
     const float uS = (float)scratchW / (float)VOXEL_SCRATCH_FBO_W;
     const float vS = (float)scratchH / (float)VOXEL_SCRATCH_FBO_H;
-    const bool hd2dOn = (f->hd2dPreset != HD2D_PRESET_OFF);
+    const bool hd2dOn = Hd2dPost(f->hd2dPreset);   // the post effects (MED / HIGH)
     const bool hd2dHigh = (f->hd2dPreset == HD2D_PRESET_HIGH);
     const PostRenderTargets *const pt = &sPostTargets[sPostTargetIndex];
     // The DoF bands; with DoF OFF the pass still runs for bloom, sky bloom and shafts. The HD-2D

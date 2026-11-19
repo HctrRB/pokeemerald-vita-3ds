@@ -81,7 +81,7 @@ Per frame (`VoxelRenderer_RenderFrame`):
 | 5.2 | Street lamps, light pools & point-light emitters | `voxel_pointlights.c` |
 | 5.4–5.8 | Fog / sand banks, dust motes / fireflies, surface FX & weather particles | Fog/sand banks conform to a cached world-snapped terrain grid (`SmoothedFogWorldY`), motes/fireflies and surface FX (`DrawSurfaceFx`) anchor to `SurfaceWorldY(wx, wz)` |
 | 5.9 | 2D atmosphere: sun rays, moonlight, fades, lightning, cave gloom | |
-| DoF / Bloom | HD-2D post-processing (DoF, Kawase Bloom, Composite) | Scene rendered to a 960×544 RGBA8 FBO, downscaled to 1/4 (240×136) for `smoothstep` tilt-shift DoF + 2-pass Kawase bloom (`voxel_hd2d_shader.c`), split-tone & vignette. Off in `60 (CLASSIC)`, indoors (bloom), or during fades |
+| DoF / Bloom | HD-2D post-processing (DoF, Kawase Bloom, Composite) | Scene rendered to a 960×544 RGBA8 FBO, downscaled to 1/4 (240×136) for `smoothstep` tilt-shift DoF + 2-pass Kawase bloom (`voxel_hd2d_shader.c`), split-tone & vignette. Runs with OPTIONS > GRAPHICS > HD-2D at MED or HIGH (bloom, sky bloom, shafts, grade) or with DEPTH OF FIELD on (bands only); off during fades. LOW keeps the world effects (relief, sway, particles) without this pass |
 | 6 | GBA overlay | See below |
 
 In the code each step is a `Frame_*` function (`Frame_FollowCamera`, `Frame_UpdateAtlas`,

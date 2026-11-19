@@ -18,6 +18,7 @@ phases:
   voxelgen_terrain_fixes: in_progress     # local untracked voxelgen/ quick relief + 3D viewer/editor, Route 119 bridge & Lilycove/Mirage Island fixes, wide building culling extent (83300a5)
   ext_palettes_and_visible_wilds: done    # F1-F7 implemented per docs/plan/PLAN_PALETAS_EXT.md
   hd2d_30fps_upgrade: done                # 30 FPS HD-2D post-FX (Kawase bloom, DoF, split-tone, point lights, foliage sway/anim/ash-grass, surface FX); 60 (CLASSIC) untouched
+  graphics_options_and_lamps: in_progress # docs/plan/PLAN_FAROLAS.md (local, git-ignored): phase 1 DoF decoupled from post (6eb9aa1, tested); phase 2 GRAPHICS tab, HD-2D OFF/LOW/MED/HIGH independent of FPS (built, console test pending; MED is the never-used light post path); lamps phases 3-7 wait for the user's decisions
 
 tags:
   stable: stable/2026-11-05               # last tested build before the docs cleanup

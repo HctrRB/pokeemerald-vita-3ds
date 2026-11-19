@@ -63,9 +63,6 @@ static inline int32_t LookupFastId(const char *key)
         if (strcmp(key, "field_hms") == 0) return FAST_EXTRA_FIELD_HMS;
         if (strcmp(key, "fast_eggs") == 0) return FAST_EXTRA_FAST_EGGS;
         break;
-    case 'h':
-        if (strcmp(key, "hd2d_mode") == 0) return FAST_EXTRA_VOXEL_HD2D;
-        break;
     case 'i':
         if (strcmp(key, "infinite_tms") == 0) return FAST_EXTRA_INFINITE_TMS;
         if (strcmp(key, "ivs_evs") == 0) return FAST_EXTRA_IVS_EVS;
@@ -96,14 +93,13 @@ static inline int32_t LookupFastId(const char *key)
     case 'v':
         if (strcmp(key, "voxel_3d") == 0) return FAST_EXTRA_VOXEL_3D;
         if (strcmp(key, "voxel_battle") == 0) return FAST_EXTRA_VOXEL_BATTLE;
-        if (strcmp(key, "voxel_res") == 0) return FAST_EXTRA_VOXEL_RES;
         if (strcmp(key, "voxel_fps") == 0) return FAST_EXTRA_VOXEL_FPS;
+        if (strcmp(key, "voxel_hd2d") == 0) return FAST_EXTRA_VOXEL_HD2D;
         if (strcmp(key, "voxel_blur") == 0) return FAST_EXTRA_VOXEL_BLUR;
         if (strcmp(key, "voxel_bloom") == 0) return FAST_EXTRA_VOXEL_BLOOM;
         if (strcmp(key, "voxel_sky_bloom") == 0) return FAST_EXTRA_VOXEL_SKY_BLOOM;
         if (strcmp(key, "voxel_shafts") == 0) return FAST_EXTRA_VOXEL_SHAFTS;
         if (strcmp(key, "voxel_fov") == 0) return FAST_EXTRA_VOXEL_FOV;
-        if (strcmp(key, "voxel_grade") == 0) return FAST_EXTRA_VOXEL_GRADE;
         if (strcmp(key, "visible_wild") == 0) return FAST_EXTRA_VISIBLE_WILD;
         break;
     default:
@@ -140,7 +136,9 @@ static const char *const sFFButtonValues[] = { "HOLD", "TOGGLE", NULL };
 static const char *const sFilterValues[] = { "NEAREST", "BILINEAR", "SHARP", NULL };
 // Order = UI_THEME_* (src/platform/ui/ui_internal.h); GBA is the default
 static const char *const sUiThemeValues[] = { "GBA", "RED", "EMERALD", "CRYSTAL", "TROPICAL", "ROYAL", NULL };
-static const char *const sVoxelFpsValues[] = { "30 (HD-2D)", "60 (CLASSIC)", NULL };
+static const char *const sVoxelFpsValues[] = { "30 FPS", "60 FPS", NULL };
+// Order = VOXEL_HD2D_* (include/platform/vita_extras.h)
+static const char *const sVoxelHd2dValues[] = { "OFF", "LOW", "MED", "HIGH", NULL };
 static const char *const sVoxelFovValues[] = { "35 DEG", "25 DEG", NULL };
 static const char *const sLevel0To10Values[] = { "0 (OFF)", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", NULL };
 static const char *const sSaveSlotValues[] = { "SLOT 1", "SLOT 2", "SLOT 3", NULL };
@@ -283,14 +281,17 @@ const VitaExtra gVitaExtras[] = {
     { VITA_TAB_GENERAL, "DISPLAY",    "2D SCALER",         "filter",           3, 0, sFilterValues,      NULL, NULL, NULL },
     { VITA_TAB_GENERAL, "DISPLAY",    "MENU COLOR",        "ui_theme",         6, 0, sUiThemeValues,     NULL, NULL, NULL },
 
+    // ---- [GRAPHICS] ----
+    { VITA_TAB_GRAPHICS, "RENDERER",  "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, "RENDERER",  "FRAMERATE",         "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, "RENDERER",  "HD-2D",             "voxel_hd2d",       VOXEL_HD2D_COUNT, VOXEL_HD2D_HIGH, sVoxelHd2dValues, NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, "RENDERER",  "CAMERA ANGLE",      "voxel_fov",        2, 0, sVoxelFovValues,    NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, "HD-2D EFFECTS", "WORLD BLOOM",   "voxel_bloom",     11, 10, sLevel0To10Values,  NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, "HD-2D EFFECTS", "LIGHT SHAFTS",  "voxel_shafts",    11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, "HD-2D EFFECTS", "SKY BLOOM",     "voxel_sky_bloom", 11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, "HD-2D EFFECTS", "DEPTH OF FIELD","voxel_blur",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+
     // ---- [WORLD] ----
-    { VITA_TAB_WORLD,   "RENDERER",   "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "RENDERER",   "DIORAMA BLUR (DOF)","voxel_blur",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "RENDERER",   "WORLD BLOOM",       "voxel_bloom",     11, 10, sLevel0To10Values,  NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "RENDERER",   "SKY BLOOM",         "voxel_sky_bloom", 11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "RENDERER",   "LIGHT SHAFTS",      "voxel_shafts",    11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "RENDERER",   "MODE / FRAMERATE",  "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "RENDERER",   "CAMERA ANGLE",      "voxel_fov",        2, 0, sVoxelFovValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "DAY / NIGHT CYCLE", "day_night",        2, 1, sDayNightValues,    NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "TIMED ENCOUNTERS",  "timed_encounters", 2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_WORLD,   "TIME & SKY", "CLOCK SPEED",       "clock_speed",      7, 0, sClockSpeedValues,  NULL, NULL, NULL },
@@ -396,18 +397,34 @@ void VitaExtras_Init(void)
     }
 
     char line[128];
+    bool hd2dRead = false;
     while (fgets(line, sizeof(line), f) != NULL)
     {
         char key[32];
         int32_t val = 0;
         if (sscanf(line, "%31[^=]=%d", key, &val) == 2)
         {
+            // Retired keys, read by nothing: dropped so they are not saved again.
+            if (strcmp(key, "hd2d_mode") == 0 || strcmp(key, "voxel_grade") == 0 || strcmp(key, "voxel_res") == 0)
+                continue;
             const int32_t idx = FindSettingIndex(key, true);
             if (idx >= 0)
                 sSettings[idx].value = val;
+            if (strcmp(key, "voxel_hd2d") == 0)
+                hd2dRead = true;
         }
     }
     fclose(f);
+
+    // The HD-2D level used to follow the framerate (30 = full HD-2D, 60 = classic). A settings file
+    // from before voxel_hd2d keeps that look; the file gets the new key at the next save.
+    if (!hd2dRead)
+    {
+        const int32_t fpsIdx = FindSettingIndex("voxel_fps", false);
+        const int32_t hd2dIdx = FindSettingIndex("voxel_hd2d", true);
+        if (hd2dIdx >= 0)
+            sSettings[hd2dIdx].value = (fpsIdx >= 0 && sSettings[fpsIdx].value != 0) ? VOXEL_HD2D_OFF : VOXEL_HD2D_HIGH;
+    }
 
     SyncFastExtras();
     for (uint32_t i = 0; i < sSettingCount; i++)

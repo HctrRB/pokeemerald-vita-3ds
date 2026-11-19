@@ -7,7 +7,8 @@
 enum
 {
     VITA_TAB_GENERAL = 0,   // Text, Sound, Volume, Fast-Forward, Button Remap
-    VITA_TAB_WORLD,         // 3D Voxel, Day/Night, Clock Speed, HGSS Follower, Field QoL
+    VITA_TAB_GRAPHICS,      // 3D Voxel, Framerate, HD-2D level, Camera, Bloom / Shafts / Sky Bloom, DoF
+    VITA_TAB_WORLD,         // Day/Night, Clock Speed, Visible Wild, HGSS Follower, Field QoL
     VITA_TAB_BATTLE,        // 3D Battles, Native HD HUD, Battle Speed, Move Split, Exp Share
     VITA_TAB_MODES,         // Nuzlocke, Level Caps
     VITA_TAB_CHEATS,        // Shiny Odds, Always Catch, Infinite TMs, Money, Dex, Give Items
@@ -61,8 +62,7 @@ typedef enum
     FAST_EXTRA_SHINY_ODDS,
     FAST_EXTRA_ALWAYS_CATCH,
     FAST_EXTRA_TRADE_EVO,
-    FAST_EXTRA_VOXEL_RES,
-    FAST_EXTRA_VOXEL_FPS,
+    FAST_EXTRA_VOXEL_FPS,      // 0 = 30 FPS, 1 = 60 FPS (pacing only; the look is FAST_EXTRA_VOXEL_HD2D)
     FAST_EXTRA_VOXEL_BLUR,
     FAST_EXTRA_VOXEL_BLOOM,    // 0 = OFF, 1..10 = bright-pass world bloom strength (default 10)
     FAST_EXTRA_VOXEL_SKY_BLOOM,// 0 = OFF, 5 = default (1.0x), 10 = 2.0x directional sky bloom
@@ -70,11 +70,20 @@ typedef enum
     FAST_EXTRA_UI_THEME,       // colour theme of the new UI menus (UI_THEME_*)
     FAST_EXTRA_VISIBLE_WILD,
     FAST_EXTRA_ENCOUNTER_RATE,
-    FAST_EXTRA_VOXEL_HD2D,     // 0=AUTO(30:HIGH/60:LOW), 1=OFF, 2=LOW, 3=HIGH
-    FAST_EXTRA_VOXEL_FOV,      // 0=35 deg, 1=30 deg (telephoto diorama)
-    FAST_EXTRA_VOXEL_GRADE,    // 0=GBA faithful, 1=HD-2D cinematic
+    FAST_EXTRA_VOXEL_HD2D,     // VOXEL_HD2D_*: 0 = OFF, 1 = LOW, 2 = MED, 3 = HIGH (key voxel_hd2d)
+    FAST_EXTRA_VOXEL_FOV,      // camera pitch: 0 = 35 deg, 1 = 25 deg (telephoto diorama)
     FAST_EXTRA_COUNT
 } FastExtraId;
+
+// GRAPHICS -> HD-2D (voxel_hd2d). Independent of the framerate.
+enum
+{
+    VOXEL_HD2D_OFF = 0,  // classic renderer
+    VOXEL_HD2D_LOW,      // HD-2D world effects (relief, sway, particles), no post-processing
+    VOXEL_HD2D_MED,      // + light post-processing (bloom, sky bloom, shafts, grade)
+    VOXEL_HD2D_HIGH,     // + full post-processing
+    VOXEL_HD2D_COUNT
+};
 
 // Fast O(1) query & mutation
 int VitaExtras_GetFast(FastExtraId id);
