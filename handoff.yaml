@@ -10,20 +10,20 @@ phases:
   phase_1_file_cleanup: done
   phase_2_documentation: done
   phase_3_wide_scene: done                  # stage scenes, pass 6 masks, 240-px overlay; HM banner deferred
-  phase_4_structure_readability: superseded # 4a done; the rest moved to docs/plan/PLAN_DEPURACION_REFACTOR.md
-  phase_5_typing_and_warnings: superseded   # fixed-width types done; the rest moved to docs/plan/PLAN_DEPURACION_REFACTOR.md
+  phase_4_structure_readability: superseded # 4a done; the rest moved to docs/plan/DEBUG_AND_REFACTOR_PLAN.md
+  phase_5_typing_and_warnings: superseded   # fixed-width types done; the rest moved to docs/plan/DEBUG_AND_REFACTOR_PLAN.md
   phase_6_public_repo_and_docs: done        # fetch_assets, build_all, BUILD_YOUR_OWN/COMPILA_TU_VPK, NOTICE.md
   chunk_streaming_performance: done         # E0-E4 + no-wait frames + 3D Fly + procedural culling
   native_ui_core_and_themes: done           # src/platform/ui/ + battle HUD + 6 themes; old 3DS UI removed (6c481fd)
-  native_ui_remaining_screens: pending      # Batch 2 & 3 secondary GBA screens + full Contest UI
+  native_ui_remaining_screens: to_replan    # secondary GBA screens and contests: re-planned from scratch after the documentation work
   ext_palettes_and_visible_wilds: done      # F1-F7 (docs/history/plans/PLAN_PALETAS_EXT.md)
   hd2d_30fps_upgrade: done                  # 30 FPS HD-2D post-FX + night window glow
   multicore_game_frame_boundary: done       # ba18aca: GameFrame contract + build-time tools/core_boundary check
   graphics_options_and_lamps: done          # v0.5.7 (dc42d7e): GRAPHICS tab, DoF decoupled, per-chunk night lamps + Lilycove beacon
   battle_ai_oob_audit: done                 # v0.5.7b (#8) + Gym 6/7 (5a0af13) + League/Frontier audit (docs/reports/AUDITORIA_COMBATES_LIGA_FRENTE.md)
-  voxelgen_terrain_fixes: in_progress       # docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md
+  voxelgen_terrain_fixes: in_progress       # docs/plan/VOXEL_TERRAIN_PLAN.md
   documentation_reorganisation: in_progress # docs/plan/DOCS_AND_STATE_STUDY.md: steps 1-4 done (8eff5032, 90ead2f8, layout by type)
-  debugging_and_refactor: planned           # docs/plan/PLAN_DEPURACION_REFACTOR.md, re-validated after the documentation work
+  debugging_and_refactor: planned           # docs/plan/DEBUG_AND_REFACTOR_PLAN.md, re-validated after the documentation work
 
 tags:
   latest_release: v0.5.7c                   # battle OOB hardening (v0.5.7b #8 + Gym 6/7 Natural Cure / doubles / HUD fixes)
@@ -58,12 +58,12 @@ open_issues:
   - "Secondary GBA screens still falling back to Pass 6: post-catch Pokédex entry over 3D battle, PC box summary (sBoxCursorArea), Move Relearner / Deleter, Contest & Battle Frontier party choice, Battle Pyramid in-battle / toss bag, Easy Chat Bard / quiz. (Link/recorded battles, Wally tutorial and Battle Arena judgment intentionally keep GBA HUD.)"
   - "Warmer night lamp colour (94c301c, reverted in ba2543a): dropped below 30 FPS due to the full-screen warm-keep term in the HD-2D composite shader; redo warmth without touching that shader."
   - "Cave fog banks (DrawFogBanks with underground=true) can look slightly odd over cave floor/wall relief transitions."
-  - "Remaining voxel terrain / relief-mesh fixes catalogued in docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md."
+  - "Remaining voxel terrain / relief-mesh fixes catalogued in docs/plan/VOXEL_TERRAIN_PLAN.md."
   - "Walda's FRIENDS wallpaper ignores tile frames."
 
 next_steps:
-  - "Documentation reorganisation (docs/plan/DOCS_AND_STATE_STUDY.md, Part D): translate and merge the living plans (docs/plan/README.md lists them), 5 (docs/guides/RELEASE.md + release scrub patch), 6 (tools/doc_check in the build), 7 (public README, after fetching GitHub edits), 8 (re-validate PLAN_DEPURACION_REFACTOR.md)."
+  - "Documentation reorganisation (docs/plan/DOCS_AND_STATE_STUDY.md, Part D): 5 (docs/guides/RELEASE.md + release scrub patch), 6 (tools/doc_check in the build), 7 (public README, after fetching GitHub edits), 8 (re-validate docs/plan/DEBUG_AND_REFACTOR_PLAN.md)."
   - "Tag next release once hardware feedback on v0.5.7b (#8) and Gym 6/7 fixes (5a0af13) is confirmed (docs/reports/AUDITORIA_COMBATES_LIGA_FRENTE.md; watch item: battle_controllers.c:1150 gBattleMoves[gCurrentMove].type kept untouched per vanilla Emerald)."
-  - "Migrate remaining secondary GBA screens (Batch 2 & 3) and implement Contest UI replacement (docs/plan/PLAN_UI_CONCURSO.md, design/contest_mockups.html)."
+  - "Re-plan all pending UI work from scratch once the documentation work is done (secondary GBA screens, contests); the old contest plans are archived in docs/history/plans/ (decided 2026-11-19)."
   - "Run general performance & long-session telemetry pass on PS Vita and tune Core 2 worker priority / atlas composition if spikes show up."
-  - "Resume map-by-map voxel terrain fixes (docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md); the debugging, typing and refactor work follows docs/plan/PLAN_DEPURACION_REFACTOR.md once the documentation work is done."
+  - "Resume map-by-map voxel terrain fixes (docs/plan/VOXEL_TERRAIN_PLAN.md); the debugging, typing and refactor work follows docs/plan/DEBUG_AND_REFACTOR_PLAN.md once the documentation work is done."
