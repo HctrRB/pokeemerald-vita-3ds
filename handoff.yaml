@@ -3,7 +3,7 @@
 # docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
 last_updated: "2026-11-19"
 branch: main
-current_milestone: "v0.5.7b released (32efa04) + Gym 6/7 battle OOB fixes and League/Frontier audit pushed to main (5a0af13)"
+current_milestone: "v0.5.7c released: battle AI / Natural Cure switch / double-battle & HUD MOVE_UNAVAILABLE OOB hardening (#8 + Gyms 6/7 + League/Frontier audit)"
 
 phases:
   phase_0_safety_net: done
@@ -24,7 +24,7 @@ phases:
   voxelgen_terrain_fixes: in_progress       # docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md
 
 tags:
-  latest_release: v0.5.7b                   # 32efa04: battle AI MOVE_UNAVAILABLE (#8) fix on top of v0.5.7
+  latest_release: v0.5.7c                   # battle OOB hardening (v0.5.7b #8 + Gym 6/7 Natural Cure / doubles / HUD fixes)
   stable: stable/2026-11-05
   rollback_pre_refactor: rollback/pre-refactor-2026-11-19
   rollback_pre_battle_exit_fix: rollback/pre-battle-exit-fix
