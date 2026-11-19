@@ -1,5 +1,8 @@
 # Voxel engine
 
+Type: reference · Audience: developers · Status: current
+Verified against: `55868979`
+
 The 3D overworld ("diorama") is drawn from the live GBA map state: the game still runs its
 2D field logic, and `src/platform/voxel/` turns the current map and its neighbours into 3D
 geometry every frame. The logic comes from pokeemerald-multiplatform's voxel renderer and
@@ -9,7 +12,7 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 
 | File | Role |
 |---|---|
-| `voxel_world.c/h` | Logical map view: map instances (current map + connected maps) with their offsets, layout swaps, tile/metatile queries. `VoxelWorld_IsMapAvailable` decides when the 3D path runs |
+| `voxel_world.c/h` | Logical map view: map instances (current map + connected maps) with their offsets, layout swaps, tile/metatile queries. Its game-side questions (is the field shown, location, layout swaps, weather, fade) are asked on Core 1 in `VoxelWorld_CaptureField` and read by Core 0 from the game frame (`VoxelWorld_IsMapAvailable`…) |
 | `voxel_camera.c/h` | Follow camera, pure state and math (no GL). Shift on map changes |
 | `voxel_atlas.c/h` | Metatile atlas: composes GBA tiles into texture pages; tracks animated metatiles per page |
 | `voxel_mesh_builder.c/h` | CPU geometry for one chunk: ground rows, cliffs, seam skirts, water |
@@ -23,7 +26,8 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 | `voxel_hd2d_shader.c/h` | HD-2D 30 FPS post-processing shaders (box downsample, bright-pass, Kawase bloom, DoF composite) |
 | `voxel_lamps.c/h` | Night lights per chunk: the street lamps found among the signs plus fixed lights (Lilycove's beacon) |
 | `voxel_pointlights.c/h` | Point lights on characters: night lamps (steady) and the cave lantern (flickering) |
-| `voxel_entities.c/h` | Player, NPC and follower billboards from the entity snapshot; cast shadows |
+| `voxel_entities.c/h` | Player, NPC, follower and field-effect billboards from the game frame's entities (captured on Core 1 by `VoxelEntities_Capture`); cast shadows, doors |
+| `voxel_fly.c/h`, `voxel_fly_game.c/h` | The 3D Fly cinematic: the state machine, and its Core 1 owner with the `VoxelFlySnapshot` Core 0 draws from |
 | `voxel_sprite_slots.c/h` | Slots of the sprite atlas used by the billboards |
 | `voxel_battle.c/h` | The 3D battle stage built from the map the battle started on |
 | `voxel_swoop.c/h` | The transition between the voxel field and 2D screens |
@@ -35,7 +39,7 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 
 ## Chunks
 
-- The world is split into chunks of `CHUNK_SIZE` = 8×8 metatiles. Up to `MAX_CHUNKS` = 104
+- The world is split into chunks of `CHUNK_SIZE`×`CHUNK_SIZE` metatiles. Up to `MAX_CHUNKS`
   chunk slots are cached, each with its own GL vertex buffer; the geometry lives only there.
 - A build has three phases: `PrepareChunkJob` (Core 0: the chunk's window and the atlas slot of
   every map it touches), `ComputeChunkJob` (geometry and lighting into `sChunkStaging`, no GL)
@@ -45,7 +49,7 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 - Per frame: frustum-cull candidate chunks (widened by how far each chunk's buildings reach)
   and draw the built ones. Visible holes are built on
   Core 0; every other build (chunks about to enter the view, dated chunks, pre-warming ahead of
-  the movement) goes to `VoxelChunkWorker` on Core 2, one per frame. See
+  the movement) goes to `VoxelChunkWorker` on Core 2, in batches. See
   [RENDERING.md](RENDERING.md) for the policy and [THREADS.md](THREADS.md) for the worker.
 - A chunk is rebuilt when its content hash changes (scripts changing tiles, doors, the sun
   moving). The hash is compared once per world epoch (`sWorldEpoch`, bumped on those changes), so
@@ -56,11 +60,11 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 
 ## Atlas
 
-- Metatile pages are composed by `VoxelAtlas_JobStep` into `VOXEL_ATLAS_SLOTS` = 5 LRU slots,
+- Metatile pages are composed by `VoxelAtlas_JobStep` into `VOXEL_ATLAS_SLOTS` LRU slots,
   so neighbouring maps with other tilesets keep their textures. A slot used by a chunk on screen
   is marked used every frame, so the LRU never recomposes it for another tileset while visible.
 - When the current map changes during play (a crossing), its slot is extended over several frames
-  (`AtlasExtend_*`, 1.5 ms a frame): the slot keeps serving meanwhile, since an extension keeps
+  (`AtlasExtend_*`, `VOXEL_ATLAS_EXTEND_BUDGET_MS` a frame): the slot keeps serving meanwhile, since an extension keeps
   every metatile where it was, and its tile animation waits until the end. Warps extend at once.
 - Animated tiles (water, flowers, shores) are re-read from BG VRAM and the dirty rows of
   the active slot and visible same-primary neighbours are written directly (`WriteAtlasRowsDirect`)
@@ -70,8 +74,10 @@ Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
 
 ## Map changes
 
-Crossing into a connected map: Core 1 rebuilds the layout under `sMapMutationLock`; Core 0
-keeps drawing the previous instances and snapshot, then `VoxelCamera_Shift` re-bases the camera
+Crossing into a connected map: Core 1 calls `GameFrame_BeginMapMutation` (sets `sMapMutationLock`
+and starts a new map epoch) and rebuilds the layout. Core 0 keeps drawing the previous instances and
+game frame until `GameFrame_MapSettled()` (no change under way, and the pinned frame is of the new
+map), then `VoxelCamera_Shift` re-bases the camera
 and `VoxelWorld_GetInstanceOffset` aligns entities that are still in the old map's
 coordinates. Cached chunks are not rebuilt nor re-uploaded: `ShiftChunkCoordinates` moves their
 grid position and their `drawOffsetX/Z`, a translation applied when they are drawn. Chunk

@@ -1,5 +1,8 @@
 # Assets
 
+Type: reference · Audience: developers · Status: current
+Verified against: `55868979`
+
 Three kinds of data end up in the VPK.
 
 ## 1. Game data from the decompilation
@@ -31,7 +34,8 @@ git-ignored.
 
 The voxel data files are made by Emerald 3DS's Python generators (CC BY-NC-SA 4.0). They read
 the decompilation, not a ROM. The generators and the terrain editor used to fix faulty maps are
-kept outside this repository (several GB); the files in `assets/voxel/` are committed as built.
+kept outside this repository (several GB; the author's working copy is an untracked voxelgen/
+folder of the checkout); the files in `assets/voxel/` are committed as built.
 Terrain faults are corrected as data (`relief_fixes.json`, read by `gen_voxel_relief.py`), never
 by hand-editing `relief.bin`.
 

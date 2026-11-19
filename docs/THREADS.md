@@ -1,5 +1,8 @@
 # Threads and shared data
 
+Type: reference · Audience: developers · Status: current
+Verified against: `55868979`
+
 The Vita gives an application three user cores (Cortex-A9). The port uses all three. Most
 regressions in this project have been races between Core 0 and Core 1, so read this before
 touching anything that crosses threads.
@@ -8,7 +11,7 @@ touching anything that crosses threads.
 
 | Thread | Core | Created in | Work |
 |---|---|---|---|
-| `MainThread` | 0 | `sdl2.c` (`main`) | Input, presentation (vitaGL, voxel renderer, 2D overlay, the new UI's draw list), `vglSwapBuffers`. The GXM display-queue driver thread also stays on Core 0: moving it caused a GPU crash |
+| `MainThread` | 0 | `sdl2.c` (`main`: `MainThread_Boot`, then `MainThread_Run`) | Input, presentation (vitaGL, voxel renderer, 2D overlay, the new UI's draw list), `vglSwapBuffers`. The GXM display-queue driver thread also stays on Core 0: moving it caused a GPU crash |
 | `AgbMain` | 1 | `sdl2.c` (`main` → `DoMain`) | The original game loop, the m4a/CGB sound mixer, VBlank work, 60 Hz pacing |
 | `DrawWorker1`, `DrawWorker2` | 2 | `gba_fast_draw.c` (`StartWorkers`) | Draw even/odd scanlines of a GBA frame and convert them to RGB565 with NEON |
 | `VoxelIoWorker` | 2 | `voxel_renderer.c` (`VoxelRenderer_Init`) | Reads building texture pages from the VPK with its own buffered file handle |
@@ -33,6 +36,7 @@ touching anything that crosses threads.
 |---|---|---|---|
 | Game state: `gMain`, tasks, the party, flags, `gObjectEvents`, `gSprites`, battle structs, save blocks | Core 1 only | nobody else | Core 0 and Core 2 never call game code nor read its writable state: they read the game frame below. The new UI reads game state on Core 1 (`Ui_Tick`) and hands Core 0 only a draw list |
 | The game frame `GameFrame` (`include/platform/game_frame.h`, `vita_game_frame.c`): field, weather, fade, overlay, battle, entities | Core 1, `GameFrame_CaptureAndPublish()` in VBlank | Core 0, `GameFrame_Get()` (inline) | 4-slot ring; Core 0 pins one per rendered frame (`GameFrame_Pin` in `MainThread_Run`) and Core 1 never writes the pinned nor the latest slot. See "The game frame" |
+| The 3D Fly cinematic `VoxelFlySnapshot` (`voxel_fly_game.c`) | Core 1, `VoxelFlyGame_Tick()` in VBlank | Core 0, `VoxelFly_GetSnapshot()`; Core 0 reports back the warp it drew (`VoxelFly_NotifyFrameDrawn`) | Its own `VOXEL_FLY_SNAP_SLOTS` ring, index published atomically. Platform data, not game state, so it lives outside the game frame and `tools/core_boundary` does not concern it |
 | The current map's grid: `gMapHeader`, `gBackupMapLayout` | Core 1 (`CB2_LoadMap`, `DoMapLoadLoop`, connection transitions) | Core 0 (`voxel_world.c`), the chunk worker | The loader calls `GameFrame_BeginMapMutation()` (sets `sMapMutationLock`, bumps the map epoch); the lock is cleared when the next frame is published. Core 0 builds from the grid, and launches the chunk worker, only while `GameFrame_MapSettled()`: no change under way and the pinned frame is of that map |
 | Emulated VRAM, OAM, palettes, registers | Core 1 | Draw workers (2D), Core 0 (overlay pass) | 2D: Core 1 is blocked while the frame is captured line by line. Overlay pass: read only; layers it hides are masked in each line's captured copy (`gFastDrawDispcntClear`, `gFastDrawBldcntClear`), never in the live registers |
 | Extended sprite palettes `gPlttExt[256]`, `gOamExt[128]` | Core 1 (VBlank: `TransferPlttBuffer`, `LoadOam`) | Draw workers (2D, latched once per `DrawFrame`), Core 1 (`RefreshSlot` reads `gPlttBufferUnfaded` in VBlank) | Same as `PLTT`/`OAM`; zero-cost skip when `gPlttExtInUse == 0` |
@@ -94,11 +98,13 @@ The fix is a boundary, not a patch:
 
 ## The chunk worker
 
-`VoxelChunkWorker` computes one chunk at a time (`ComputeChunkJob`); see
-[VOXEL_ENGINE.md](VOXEL_ENGINE.md) for the three build phases.
+`VoxelChunkWorker` computes a batch of chunks per launch (`ComputeChunkJob` for each; up to
+`CHUNK_WORKER_BATCH`, `CHUNK_WORKER_BATCH_NORMAL` in normal play), and a batch can be aborted
+cooperatively (`sAsyncAbortBatch`); see [VOXEL_ENGINE.md](VOXEL_ENGINE.md) for the three build
+phases.
 
-- **Launch**: after `vglSwapBuffers` (`ChunkWorker_Launch`), never while `sMapMutationLock` is
-  set. The chunk is chosen during the frame (`ChunkWorker_Choose`) and prepared on Core 0 at
+- **Launch**: after `vglSwapBuffers` (`ChunkWorker_Launch`), only while `GameFrame_MapSettled()`.
+  The batch is chosen during the frame (`ChunkWorker_ChooseBatch`) and prepared on Core 0 at
   launch (`PrepareChunkJob` may compose an atlas slot, which uses GL).
 - **Frames that overlap it**: a 3D frame polls the job (`ChunkWorker_Poll`). If it still runs
   and the current map is unchanged, the frame goes on without rebuilding the map instances,
@@ -110,9 +116,9 @@ The fix is a boundary, not a patch:
   (`ChunkWorker_Commit`). The result is dropped if `sWorldEpoch` or the generation of an atlas
   slot it used changed meanwhile.
 - **Shared lookup caches**: while a job runs, `VoxelWorld_FreezeMemos` stops the world lookup
-  memos from being written. Core 1's entity snapshot (`VoxelRelief_ShiftAt`,
-  `VoxelBuildings_DeckAt`, `VoxelWorld_*`) and Core 0's billboards may look up at the same time,
-  so the caches tolerate a half-written entry: the relief cell and cut memos write the index
+  memos from being written. Core 0's billboards may look up at the same time (Core 1 no longer
+  does: its capture, `VoxelEntities_Capture`, reads only instance 0's origin, in
+  `VoxelWorld_GetPlayerWorldCoordsLive`), so the caches tolerate a half-written entry: the relief cell and cut memos write the index
   before the key and check a found index against its cell; the world memos publish an entry
   before the count; the building placement bands and cell grids rebuild in place, never free
   their memory while running (`CELL_GRID_CAP`) and keep every lookup inside the slot, the
@@ -124,5 +130,14 @@ The fix is a boundary, not a patch:
 - **Overlay pass reads VRAM while Core 1 writes it.** Text can tear for a frame while a window
   is being printed.
 - **The chunk worker shares Core 2 with the draw workers.** A job can run while the GBA overlay
-  is drawn: its scanlines went from 3.5 to 5 ms on average in logs/sesion 27. Giving the chunk
-  worker a priority below `DrawWorker1/2` would remove it.
+  is drawn: its scanlines went from 3.5 to 5 ms on average in logs/sesion 27. No Core 2 thread
+  has a priority of its own (`VitaPlatform_PinCurrentThread` sets affinity only; the chunk worker
+  sets `SDL_THREAD_PRIORITY_NORMAL`). Giving it a priority below `DrawWorker1/2` would remove it.
+- **The extras initialise lazily.** `VitaExtras_GetFast` calls `VitaExtras_Init` (which may write
+  `settings.txt` and `pokeemerald.cfg`) when it has not run, and both cores call `VitaExtras_GetFast`. It
+  does not happen today, since `MainThread_Boot` initialises them first; the lazy branch is a
+  latent race.
+- **Core 1 reads one Core 0 value.** When the player object has no sprite,
+  `VoxelWorld_GetPlayerWorldCoordsLive` (Core 1) adds instance 0's origin, which Core 0 writes
+  in `VoxelWorld_BuildInstances`. A torn read can only misplace that fallback position for a
+  frame.

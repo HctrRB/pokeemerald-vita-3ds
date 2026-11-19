@@ -1,5 +1,8 @@
 # Architecture
 
+Type: reference · Audience: developers · Status: current
+Verified against: `55868979`
+
 How the port is put together and what happens in one frame. Thread rules are in
 [THREADS.md](THREADS.md), the GPU passes in [RENDERING.md](RENDERING.md).
 
@@ -7,81 +10,102 @@ How the port is put together and what happens in one frame. Thread rules are in
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐
-│ Game: pret/pokeemerald decompilation                                       │
-│   src/*.c, include/, data/, sound/, asm/, graphics/                        │
-│   Compiled with -DPORTABLE -DNONMATCHING -DMODERN=1 -DUBFIX -DPLATFORM_VITA│
-│   ~17 game files carry small Vita hooks under #ifdef                       │
+│ Game side: linked into game_combined.o, runs on Core 1 only                │
+│   pret/pokeemerald decompilation: src/*.c, include/, data/, sound/, asm/,  │
+│   graphics/, compiled with -DPORTABLE -DNONMATCHING -DMODERN=1 -DUBFIX     │
+│   -DPLATFORM_VITA; some game files carry small Vita hooks under #ifdef     │
+│   GBA hardware emulated in RAM: src/platform/bios.c, dma.c, cgb_audio.c    │
 ├────────────────────────────────────────────────────────────────────────────┤
-│ GBA hardware emulation             src/platform/                           │
-│   sdl2.c          main(), threads, 60 Hz clock, saves, config, RTC         │
+│ Platform side: src/platform/{sdl2,widescreen,gba_fast_draw*}.c, vita/,      │
+│ voxel/, ui/                                                                │
+│   sdl2.c          main() (MainThread_Boot / MainThread_Run), the game      │
+│                   thread, the 60 Hz clock, saves, config, RTC              │
 │   gba_fast_draw*.c software GBA PPU (scanline renderer, 3 cores, NEON)     │
 │   widescreen.c    288-px lines: what fills the margins in each scene       │
-│   bios.c dma.c cgb_audio.c mods/mod_manager.c                              │
 ├─────────────────────────────────────┬──────────────────────────────────────┤
 │ Voxel 3D world   src/platform/voxel │ Vita features      src/platform/vita │
-│   world, chunks, meshes, atlas,     │   controls, intro stage, day/night,  │
-│   buildings, trees, relief, signs,  │   extras, Nuzlocke, telemetry;       │
-│   lighting, weather, entities,      │   the UI itself: src/platform/ui     │
-│   3D battle, depth of field         │                                      │
-│                                     │                                      │
+│   world, chunks, meshes, atlas,     │   controls, stage scenes, day/night, │
+│   buildings, trees, relief, signs,  │   extras, Nuzlocke, telemetry, the   │
+│   lamps, lighting, weather,         │   game frame and the game-thread     │
+│   entities, 3D battle, 3D Fly, HD-2D│   tripwire; the UI: src/platform/ui  │
 ├─────────────────────────────────────┴──────────────────────────────────────┤
-│ VitaSDK 2026.08 · vitaGL · SDL2 (audio device, threads, timers)            │
+│ VitaSDK · vitaGL · SDL2 (audio device, threads, timers)                    │
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
 The game never talks to the Vita directly. It writes emulated GBA registers, VRAM, OAM and
-palettes in RAM; the platform layer reads them back to draw, and supplies the services the GBA
-hardware did (VBlank, DMA, timers, sound mixing, flash saves, the real-time clock).
+palettes in RAM; the platform reads them back to draw, and supplies the services the GBA hardware
+did (VBlank, DMA, timers, sound mixing, flash saves, the real-time clock).
+
+**The game side / platform side split** is made by `CMakeLists.txt` (`PLATFORM_SIDE_REGEX`):
+every `src/**/*.c` that does not match it is game side, including `src/platform/bios.c`, `dma.c`
+and `cgb_audio.c`. The game side is linked first into `game_combined.o`, whose `.data`/`.bss`
+become `gamedata`/`gamebss` so that `vita_reset.c` can restore a power-on copy of them. The same
+split is what `tools/core_boundary` checks: Core 0 and Core 2 may not reach the game side's code
+or writable state except as [THREADS.md](THREADS.md) allows.
 
 ## Boot
 
-`main()` in [`src/platform/sdl2.c`](../src/platform/sdl2.c):
+`main()` in [`src/platform/sdl2.c`](../src/platform/sdl2.c) pins itself to Core 0
+(`VitaPlatform_PinCurrentThread`) and runs `MainThread_Boot`, before the game thread exists (the
+only time Core 0 may set up game state):
 
-1. Pins itself to Core 0 (`VitaPlatform_PinCurrentThread`), creates `ux0:data/POKEVITA/`, sets
-   the clocks (`vita_platform.c`: CPU 444, bus 222, GPU 222, GPU crossbar 166 MHz).
-2. Initialises vitaGL with `vglInitWithCustomSizes` (8 MB GXM pool, 40 MB RAM, 88 MB CDRAM,
-   8 MB physically contiguous) at 960×544.
-3. Reads `pokeemerald.cfg` and `settings.txt`, opens the save, starts audio (48 kHz stereo).
-4. `VoxelRenderer_Init()` and `Ui_Init()` decode the heavy assets once.
-5. Starts the `AgbMain` thread (4 MB stack, Core 1), which runs the original game loop.
-6. Enters the presentation loop.
+1. `VitaPlatform_Init`: creates `ux0:data/POKEVITA/` and `saves/`, sets the CPU, bus, GPU and GPU
+   crossbar clocks, reads the extras (`VitaExtras_Init`, `settings.txt`). Then `VitaPerf_Init` and
+   `ModManager_Init`.
+2. Reads `pokeemerald.cfg` and the save file of the chosen slot.
+3. Initialises vitaGL with `vglInitWithCustomSizes` at 960×544 (pool sizes: the call in
+   `MainThread_Boot`).
+4. `VoxelRenderer_Init()`, the platform settings, the GBA frame textures and `Ui_Init()` decode the
+   heavy assets once.
+5. Starts audio (48 kHz stereo, `cgb_audio_init` and the SDL device).
+6. Takes the power-on snapshot of the game's memory (`VitaReset_TakeBootSnapshot`) and sets the
+   game's clock.
+
+Then `main()` creates the game thread `AgbMain` (`DoMain`, stack `GAME_THREAD_STACK_SIZE`, Core 1),
+which registers itself (`GameThread_Register`) and runs the original game loop, and enters
+`MainThread_Run`, Core 0's steady state.
 
 ## One frame
 
 ```
-Core 1 (AgbMain)                      Core 0 (MainThread)                 Core 2
-────────────────                      ───────────────────                 ──────
+Core 1 (AgbMain)                      Core 0 (MainThread_Run)             Core 2
+────────────────                      ───────────────────────             ──────
 game logic for one GBA frame
-Ui_Tick(): new UI draw list
 VBlankIntrWait():
-  VBlank handler, m4a mixer → audio
-  publish entity snapshot
+  line events, VBlank handler,
+  m4a mixer → audio
+  Ui_Tick(): new UI draw list
+  VoxelFlyGame_Tick()
+  GameFrame_CaptureAndPublish()
   post sFrameReadySem  ──────────────► wait for it (one post at 60 FPS,
   pace to 60.00 Hz on the                two at 30 FPS in 3D)
-  audio buffer                         read input
+  audio buffer                         GameFrame_Pin(): the frame every
+                                         decision below reads
+                                       read input
                                        choose a path:
                                         · 3D field / battle →
-                                          VoxelRenderer_RenderFrame()   ◄─ chunk computed since
+                                          VoxelRenderer_RenderFrame()   ◄─ chunks computed since
                                         · else → VDraw() +                 the last swap
                                           RenderGameTexture()              (VoxelChunkWorker)
                                        Ui_Render(): the new UI on top
-                                       vglSwapBuffers(), then hand the  ─► next chunk
-                                       next chunk to the worker            DrawWorker1/2: GBA
+                                       swap, then hand the next chunks  ─► next batch
+                                       to the worker                       DrawWorker1/2: GBA
                                                                            scanlines (2D and
                                                                            the overlay)
 ```
 
-The 3D world renders at 30 FPS by default (`voxelFps`; 60 FPS is an option), the game logic and
-audio always at 60 Hz, and every rendered frame shows the latest game frame. Which path is taken
-is decided in `sdl2.c` from `VoxelWorld_IsMapAvailable()` (field callbacks, shop buy menu) and
-`VoxelWorld_IsBattleMapAvailable()` (`BattleMainCB2`).
+The game logic and audio always run at 60 Hz; the 3D world renders at the framerate chosen in
+OPTIONS > GRAPHICS, and every rendered frame shows the latest game frame. The path is chosen from
+the pinned game frame (`VoxelWorld_IsMapAvailable`, `VoxelWorld_IsBattleMapAvailable`), which Core 1
+computes from the field callbacks, the shop's buy menu and `BattleMainCB2`.
 
 ## Where to find things
 
 | Topic | Code | Document |
 |---|---|---|
-| Thread ownership, snapshot, map lock | `voxel_entities.c`, `overworld.c`, `sdl2.c` | [THREADS.md](THREADS.md) |
-| vitaGL passes, DoF, 2D overlay | `voxel/voxel_renderer.c` | [RENDERING.md](RENDERING.md) |
+| Thread ownership, the game frame, the map lock, the boundary check | `src/platform/vita/vita_game_frame.c`, `include/platform/game_frame.h`, `overworld.c`, `sdl2.c`, `tools/core_boundary/` | [THREADS.md](THREADS.md) |
+| vitaGL passes, HD-2D, 2D overlay | `voxel/voxel_renderer.c`, `voxel/voxel_hd2d_shader.c` | [RENDERING.md](RENDERING.md) |
 | 16:9 handling of GBA screens | `widescreen.c`, `src/platform/vita/vita_stage.c` | [SCENES_16_9.md](SCENES_16_9.md) |
 | Voxel world | `src/platform/voxel/` | [VOXEL_ENGINE.md](VOXEL_ENGINE.md) |
 | User interface | `src/platform/ui/` | [VITA_UI.md](VITA_UI.md) |
@@ -91,11 +115,13 @@ is decided in `sdl2.c` from `VoxelWorld_IsMapAvailable()` (field callbacks, shop
 
 ## Runtime files (`ux0:data/POKEVITA/`)
 
-| File | Written by | Content |
-|---|---|---|
-| `saves/pokeemerald*.sav` | `sdl2.c` | Saves, 128 KB GBA flash layout; slot 1–3 |
-| `pokeemerald.cfg` | `sdl2.c` `StoreConfigFile` | Platform settings (filter, widescreen, buttons, 3D on/off, FPS cap…) |
-| `settings.txt` | `src/platform/vita/vita_extras.c` | QoL extras and voxel options (`VitaExtras_GetFast`) |
-| `debug.log` | `VITA_LOG` | Boot and error log |
-| `perf_summary.txt`, `perf_frames.csv` | `src/platform/vita/vita_perf.c` | Per-frame telemetry |
-| `ui_stall.log` | `src/platform/ui/ui_stall.c` | New UI stalls over 100 ms, and which core held the frame |
+| File | Written by | When | Content |
+|---|---|---|---|
+| `saves/pokeemerald*.sav` | `sdl2.c` | Always | Saves, 128 KB GBA flash layout; slot 1–3 |
+| `pokeemerald.cfg` | `sdl2.c` `StoreConfigFile` | Always | Platform settings (filter, buttons, 3D on/off, framerate…) |
+| `settings.txt` | `src/platform/vita/vita_extras.c` | Always | Extras, graphics and voxel options (`VitaExtras_GetFast`) |
+| `followers/followers.pak` | read by `src/follower_mon.c` (`vita_pak.c`) | Read only | Follower sprites and messages, if installed there instead of in the VPK |
+| `thread_violations.log` | `src/platform/vita/vita_game_thread.c` | Only on a violation | Game state changed off the game thread, with the caller's address ([DEBUGGING.md](DEBUGGING.md)) |
+| `debug.log` | `VITA_LOG` | Builds with `VITA_LOGGING` | Boot and error log |
+| `perf_summary.txt`, `perf_frames.csv` | `src/platform/vita/vita_perf.c` | Builds with `VITA_TELEMETRY` | Per-frame telemetry |
+| `ui_stall.log` | `src/platform/ui/ui_stall.c` | Builds with `VITA_TELEMETRY` | New UI stalls over 100 ms, and which core held the frame |

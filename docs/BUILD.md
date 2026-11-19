@@ -1,5 +1,8 @@
 # Building
 
+Type: guide · Audience: developers · Status: current
+Verified against: `55868979`
+
 `build_all.ps1` (Windows) or `./build_all.sh` (in MSYS2) installs everything below and runs every
 step; users should follow [BUILD_YOUR_OWN.md](BUILD_YOUR_OWN.md). This page is the detail behind
 it, for development.
@@ -57,8 +60,8 @@ From the repository root:
    ```
    or from the MSYS shell: `./build_vita.sh`.
 
-Output: `build-vita/pokeemerald.vpk`, plus `eboot.bin` and the ELF `build-vita/pokeemerald`
-(keep it: crash dumps are decoded against it). `build_vita.sh` drops a CMake cache created in
+Output: `build-vita/pokeemerald.vpk`, plus `eboot.bin`, the ELF `build-vita/pokeemerald` (keep it:
+crash dumps are decoded against it) and `build-vita/core_boundary_report.txt` (step 7 below). `build_vita.sh` drops a CMake cache created in
 another checkout path; for a clean rebuild delete `build-vita/`.
 
 ## CMake options
@@ -76,8 +79,11 @@ another checkout path; for a clean rebuild delete `build-vita/`.
 2. **Preprocesses** each game file with `arm-vita-eabi-gcc -E`, then `tools/preproc` (charmap
    strings, `INCBIN`), into `build-vita/generated/`. Some files get extra forced includes here
    (`src/intro.c` gets `src/platform/vita/compat/ctr_gba_stage.h`).
-3. Compiles with `-O2 -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -fno-strict-aliasing -fwrapv`.
-   The decomp relies on type punning and signed overflow, hence the last two flags.
+3. Compiles both sides with `-O2 -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=hard -fno-strict-aliasing
+   -fwrapv -fno-builtin -fcommon` (`COMMON_COMPILE_OPTIONS`). The decomp relies on type punning and
+   signed overflow, hence `-fno-strict-aliasing` and `-fwrapv`. The platform side adds
+   `-Wall -Wextra` and `-fno-section-anchors` (every static table addressed by its own symbol, for
+   step 7). CMake's Release flags put `-O3` first; the project's own `-O2` comes later and wins.
 4. Assembles `data/*.s` and the songs into one `game_data.o` (`.rodata` renamed to `.data`
    because it holds pointers).
 5. Links the game side into `game_combined.o` with its `.data`/`.bss` renamed (`gamedata`/`gamebss`), so all game
@@ -85,9 +91,14 @@ another checkout path; for a clean rebuild delete `build-vita/`.
    a 4-byte sentinel in `.noinit` (after `gamebss`) so `__stop_gamebss` stays strictly below the RW segment's
    `p_vaddr + p_memsz` and its relocations are preserved in `.sce.rel` by `vita-elf-create`.
 6. Links through `vita/vita_link.sh` (pads the code segment for `vita-elf-create`).
-7. `vita_create_self(... UNSAFE)` (the app writes `ux0:data/`), then `vita-mksfoex` and
+7. Checks the thread boundary on the linked ELF (`tools/core_boundary/check_core_boundary.py
+   --strict`, target `core_boundary`): no path from Core 0 or Core 2 may reach the game side's code
+   or writable state except as `tools/core_boundary/allow.txt` declares, and the game thread may not
+   read Core 0's pinned game frame ([THREADS.md](THREADS.md)). `eboot.bin` depends on its stamp
+   (`core_boundary.ok`): a violation fails the build, and the report says which path.
+8. `vita_create_self(... UNSAFE)` (the app writes `ux0:data/`), then `vita-mksfoex` and
    `vita-pack-vpk` called directly (`vita_create_vpk` breaks on paths with spaces).
-8. Packs `vita/sce_sys/` (LiveArea), `assets/voxel/` → `voxel/`, `assets/ui/` → `ui/`,
+9. Packs `vita/sce_sys/` (LiveArea), `assets/voxel/` → `voxel/`, `assets/ui/` → `ui/`,
    `assets/ui2/` → `ui2/`, and `assets/followers/{mon,text}/*.bin` packed by
    `tools/pack_followers.py` into `followers/followers.pak` (PKF1 container).
 

@@ -1,5 +1,8 @@
 # Debugging and profiling
 
+Type: guide · Audience: developers · Status: current
+Verified against: `55868979`
+
 ## Logs
 
 - `VITA_LOG(...)` (`src/platform/vita/vita_platform.h`) writes to
@@ -10,7 +13,7 @@
 
 ## UI stall log (`ui_stall.c`)
 
-With a screen of the new UI open, `ux0:data/POKEVITA/ui_stall.log` gets a line (200 at most per
+Built only with `-DVITA_TELEMETRY=ON`. With a screen of the new UI open, `ux0:data/POKEVITA/ui_stall.log` gets a line (200 at most per
 session) whenever Core 1 did not tick the UI for more than 100 ms, Core 0 did not render for more
 than 100 ms, or Core 0 kept drawing the same list while Core 1 was publishing new ones. Each line
 gives the screen and the ages of the other core, so it says which core held the frame.
@@ -21,7 +24,8 @@ Read a run of consecutive Core 0 gaps with that in mind.
 
 ## Per-frame telemetry (`vita_perf.c/h`)
 
-Always compiled in. Timestamps cost ~40 ns (`sceKernelGetProcessTimeWide`); results are buffered
+Built only with `-DVITA_TELEMETRY=ON` (off by default, so normal builds write no telemetry).
+Timestamps cost ~40 ns (`sceKernelGetProcessTimeWide`); results are buffered
 in RAM and written with 32 KB buffers.
 
 | File | Content |
@@ -72,6 +76,20 @@ awk -F, 'NR==1 {for (i=1;i<=NF;i++) c[$i]=i; next}
   $c["frame_ms"]>16.7 && $c["render3d"]==1 {slow++}
   END {print "worker chunk:", w/n, "ms;", slow, "frames over 16.7 ms"}' logs/<session>/perf_frames.csv
 ```
+
+## Thread violations (`thread_violations.log`)
+
+Always compiled in. The game's in-place mutators (the Pokémon data cipher, `FlagSet`, `FlagClear`,
+`VarSet`) check that they run on the game thread (`GAME_THREAD_ONLY`, a stack-range test). A call
+from any other thread writes one line per call site to `ux0:data/POKEVITA/thread_violations.log`
+with the caller's address: resolve it with `arm-vita-eabi-addr2line -f -e build-vita/pokeemerald
+<lr>` against the ELF of that build. The file is absent when all is well; any line in it is a path
+from another core into the game that `tools/core_boundary` did not see (a callback set at run time).
+
+## Thread boundary report
+
+Every build writes `build-vita/core_boundary_report.txt`: for each thread, the functions reached and
+each violation with the path that leads to it ([BUILD.md](BUILD.md), step 7).
 
 ## Crash dumps
 

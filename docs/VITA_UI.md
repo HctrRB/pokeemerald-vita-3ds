@@ -1,7 +1,10 @@
 # User interface
 
+Type: reference · Audience: developers · Status: current
+Verified against: `55868979`
+
 The port's menus, dialogue boxes, battle HUD and the scenes it replaces are the new UI
-(`src/platform/ui/`), drawn natively over the 3D world, with five menu themes. It is the only
+(`src/platform/ui/`), drawn natively over the 3D world, with six menu themes (GBA by default). It is the only
 menu system: the old 3DS-style Vita menu (`vita_ui*.c`) was removed on 2026-11-13. Where the new UI
 has no screen, or cannot open one, the game's own GBA screen is used:
 
@@ -29,7 +32,7 @@ it in one call over one 1024×2048 RGBA5551 texture (fixed atlas `assets/ui2/ui_
 | Files | Role |
 |---|---|
 | `ui_core.c`, `ui_draw.c`, `ui_render.c`, `ui_assets.c`, `ui_sprites.c` | Screen stack, input, draw list, texture, atlas, sprite cache |
-| `ui_theme.c` | Five menu themes (`RED`, `EMERALD`, `CRYSTAL`, `TROPICAL`, `ROYAL`): colour tokens, box geometry, battle HUD tokens and baked font face IDs |
+| `ui_theme.c` | Six menu themes (`GBA`, `RED`, `EMERALD`, `CRYSTAL`, `TROPICAL`, `ROYAL`; order of `UI_THEME_*`): colour tokens, box geometry, battle HUD tokens and baked font face IDs |
 | `ui_widgets.c`, `ui_kit.c` | Boxes, rows, buttons, lists, popups, toasts |
 | `ui_scr_*.c` | Screens: START hub, Pokédex, party, bag, PokéNav, trainer card, options, Nuzlocke, mart, PC boxes, player's PC (items, mailbox, decorations), naming keyboard, Easy Chat, berry choice, forget a move, choose a Pokémon |
 | `ui_contest.c` | Contest appeal choice |
@@ -50,7 +53,8 @@ Selected in `OPTIONS > GENERAL > DISPLAY > MENU COLOR` (extra `"ui_theme"`):
 
 | Theme | Characteristics | Fonts |
 |---|---|---|
-| `RED` (default) | Chamfered dark-slate corners, diagonal frame stripes, red highlight bar | Saira Condensed |
+| `GBA` (default) | Gen 3 look: translucent teal frame, GBA bevel and shadow | VT323 (antialiased) |
+| `RED` | Chamfered dark-slate corners, diagonal frame stripes, red highlight bar | Saira Condensed |
 | `EMERALD` | Warm paper panels, double bevel, dark teal frame | Press Start 2P + VT323 |
 | `CRYSTAL` | Cool ice panels, glossy pill highlights | M PLUS Rounded 1c |
 | `TROPICAL` | Warm sand panels, coral/amber pills, heavy dark outlines | Fredoka |

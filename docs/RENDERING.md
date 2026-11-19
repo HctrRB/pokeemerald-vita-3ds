@@ -1,5 +1,8 @@
 # Rendering
 
+Type: reference · Audience: developers · Status: current
+Verified against: `55868979`
+
 Everything on screen goes through vitaGL (OpenGL ES 1.x style fixed pipeline over SceGxm) at
 960×544. There are two presentation paths, chosen every frame in `sdl2.c` (see
 [ARCHITECTURE.md](ARCHITECTURE.md)); on both, the new UI is drawn last, on top.
@@ -39,15 +42,17 @@ Per frame (`VoxelRenderer_RenderFrame`):
 
 1. **Camera**: follow camera with sub-tile interpolation (`voxel_camera.c`), battle camera in
    3D battles.
-2. **Atlas**: metatile atlas pages composed on demand in 5 LRU slots (`voxel_atlas.c`);
+2. **Atlas**: metatile atlas pages composed on demand in `VOXEL_ATLAS_SLOTS` LRU slots (`voxel_atlas.c`);
    animated tiles (water, flowers, shores) recomposed on the CPU when the game animates them and
    written straight into the page texture via `WriteAtlasRowsDirect` (see "Textures rewritten at
    run time" below), keeping the active map and visible neighbours in sync on the exact same frame.
 3. **Lighting**: sun position from the clock (`voxel_lighting.c`); chunks whose lighting hash
    changed are rebuilt progressively.
-4. **Culling** (`Frame_SelectChunks`): a chunk is a candidate when it overlaps the tile window
-   around the camera target (36 tiles north, 12 south, 12–18 to the sides), then must pass the
-   frustum test (`Frustum_ChunkInView`, `zFar = 62`). A building is emitted only by the chunk
+4. **Culling** (`ComputeViewAndFrustum`, `Frame_SelectChunks`): the frustum's corner rays are
+   projected onto the ground, clamped to `VOXEL_VIEW_REACH_MAX` around the camera target and
+   widened by `VOXEL_VIEW_SLACK_TILES`; a chunk is a candidate when it overlaps that area, then
+   must pass the frustum test (`Frustum_ChunkInView`). Near and far planes follow the camera each
+   frame (`VOXEL_VIEW_NEAR_*`, `VOXEL_VIEW_FAR_*`), so high aerial poses keep their depth precision. A building is emitted only by the chunk
    holding its north-west cell, so each chunk records how far its building models reach past its
    own cells and how tall they are (`bldWest/East/North/South/Top`, measured from the vertices
    on the worker); both tests use that extent, and chunks up to 3 west and 4 north of the window
@@ -56,12 +61,13 @@ Per frame (`VoxelRenderer_RenderFrame`):
    vanished at the screen's west edge while still in view.
 5. **Chunk builds**: in three phases (`PrepareChunkJob`, `ComputeChunkJob`, `CommitChunkJob`).
    Visible holes, and chunks drawn with an outdated atlas, are built on Core 0 in the frame:
-   up to two whatever the budget, more if they fit it (`ChunkBuildFits`: the estimated build
-   cost plus `VOXEL_BUILD_TAIL_MS` must stay inside 16.7 ms at 60 FPS or 33.3 ms at 30 FPS).
-   Every other build goes to the chunk worker on Core 2, one per frame: first a chunk the view
-   will reach within 8 tiles of movement (`Frustum_ChunkInViewAhead`), then the dated chunk
-   (sun moved, tile changed) nearest to the player, then the unbuilt chunk nearest to a point
-   12 tiles ahead of the movement. It is launched after the swap and committed at the start of
+   `VOXEL_HOLE_BUILDS_PER_FRAME` whatever the budget, more if they fit it (`ChunkBuildFits`: the
+   estimated build cost plus `VOXEL_BUILD_TAIL_MS` must stay inside the frame time).
+   Every other build goes to the chunk worker on Core 2 in batches (`ChunkWorker_ChooseBatch`):
+   first chunks the view will reach within `VOXEL_VIEW_AHEAD_TILES` of movement
+   (`Frustum_ChunkInViewAhead`), then the dated chunks (sun moved, tile changed) nearest to the
+   player, then the unbuilt chunks nearest to a point `VOXEL_PREFETCH_LOOKAHEAD` tiles ahead of the
+   movement. A batch is launched after the swap and committed at the start of
    the first frame that finds it done; a frame that starts while it still runs does not wait
    for it (see THREADS.md). While an atlas slot is being extended after a crossing, nothing is
    handed to the worker: each of those frames waits for it before touching the atlas. Without
@@ -154,7 +160,7 @@ avoid `glTexSubImage2D` via direct `vglGetTexDataPointer` writes or use double-b
   may still read it for the previous frame, so a billboard can show its new frame one frame early.
 - GBA overlay (pass 6): not converted nor uploaded when its image hash is unchanged.
 - New UI texture (`src/platform/ui/`, 1024×2048 RGBA5551): the fixed atlas on top (rows 0–1023,
-  `assets/ui2/ui_atlas.bin` v3 built by `tools/ui2/build_atlas.py`, holding the five themes'
+  `assets/ui2/ui_atlas.bin` v3 built by `tools/ui2/build_atlas.py`, holding every theme's
   baked fonts and fixed GBA sprites) is uploaded once; the 256 64×64 cells below (rows 1024–2047)
   receive sprites decoded at run time (Pokémon icons and front sprites, trainers, item icons,
   footprints, decorations, PC box wallpapers, mail stationery and zone sign plates). Each new
