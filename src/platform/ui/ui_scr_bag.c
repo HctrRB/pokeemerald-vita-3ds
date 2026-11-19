@@ -1,14 +1,20 @@
 // BAG of the new UI (design/stitch/mochila): pocket tabs, bag art by pocket, item card with its
 // action buttons, item list. X opens the action popup (USE / GIVE / TOSS / REGISTER), SELECT
 // sorts the pocket. GIVE mode (opened from the party's ITEM > GIVE): the only action is GIVE.
+// CHOOSE mode (Ui_OpenBagChoice, hosted): a script asks for an item (berry tree, Favor and Quiz
+// Ladies, Apprentice); the only action is the location's (item_menu.c ItemMenu_*ForUi), or
+// choosing the item itself when the location has none.
 
 #include <stdio.h>
 #include <string.h>
 #include "ui_internal.h"
 #include "ui_game.h"
+#include "platform/ui.h"
 #include "../vita/vita_platform.h"
 
 #include "global.h"
+#include "item_menu.h"
+#include "berry_tag_screen.h"
 #include "mail.h"
 #include "sound.h"
 #include "constants/item.h"
@@ -27,8 +33,8 @@
 #define GBA_ROWS 8
 #define MAX_ROWS 64
 
-enum { ACT_USE, ACT_CHECK, ACT_GIVE, ACT_TOSS, ACT_REGISTER, ACT_CANCEL, ACT_COUNT };
-static const char *const sActNames[ACT_COUNT] = { "USE", "CHECK", "GIVE", "TOSS", "REGISTER", "CANCEL" };
+enum { ACT_USE, ACT_CHECK, ACT_GIVE, ACT_TOSS, ACT_REGISTER, ACT_CANCEL, ACT_CHOOSE, ACT_TAG, ACT_COUNT };
+static const char *const sActNames[ACT_COUNT] = { "USE", "CHECK", "GIVE", "TOSS", "REGISTER", "CANCEL", "CHOOSE", "CHECK TAG" };
 static const char *const sPocketTabs[POCKETS_COUNT] = { "ITEMS", "POKé BALLS", "TMs & HMs", "BERRIES", "KEY ITEMS" };
 static const char *const sPocketShort[POCKETS_COUNT] = { "ITEMS", "BALLS", "TMs", "BERRIES", "KEY" };
 static const char *const sPocketCat[POCKETS_COUNT] = { "ITEM", "BALL", "TM / HM", "BERRY", "KEY ITEM" };
@@ -39,6 +45,10 @@ static UiList sList[POCKETS_COUNT];
 static UiBagRow sRows[MAX_ROWS];
 static int32_t sCount;
 static int32_t sGiveTo = -1;
+static bool sChoose;                       // CHOOSE mode (Ui_OpenBagChoice)
+static int32_t sReopenPocket = -1;         // the pocket to open on, once (after the berry tag)
+static int32_t sChoosePocket = POCKETS_COUNT;   // < POCKETS_COUNT: that pocket only
+static char sChooseName[16];               // the location's action (SHOW, GIVE...), "" for none
 static int32_t sSort;
 static UiMenu sMenu;
 static UiQty sQty;
@@ -78,20 +88,39 @@ static void BuildActs(uint16_t item)
         if (UiGame_BattleItemUsable(item)) sActs[sActCount++] = ACT_USE;
         return;
     }
+    if (sChoose)
+    {
+        if (ItemMenu_CanChooseForUi(item)) sActs[sActCount++] = ACT_CHOOSE;
+        return;
+    }
     if (sGiveTo >= 0)
     {
         if (UiGame_CanGive(item)) sActs[sActCount++] = ACT_GIVE;
         return;
     }
+    if (sPocket == BERRIES_POCKET) sActs[sActCount++] = ACT_TAG;     // the GBA bag's CHECK TAG
     if (sPocket != BALLS_POCKET) sActs[sActCount++] = ItemIsMail(item) ? ACT_CHECK : ACT_USE;
     if (UiGame_CanGive(item)) sActs[sActCount++] = ACT_GIVE;
     if (UiGame_CanToss(item) && sPocket != TMHM_POCKET) sActs[sActCount++] = ACT_TOSS;
     if (UiGame_CanRegister(item)) sActs[sActCount++] = ACT_REGISTER;
 }
 
+static bool FixedPocket(void)
+{
+    return sChoose && sChoosePocket < POCKETS_COUNT;
+}
+
+static const char *ActName(int32_t act)
+{
+    return act == ACT_CHOOSE && sChooseName[0] ? sChooseName : sActNames[act];
+}
+
 static void Enter(void)
 {
-    sPocket = ITEMS_POCKET;            // menus always open on their first tab
+    if (!UiCore_IsHostCallback())
+        sChoose = false;                // CHOOSE mode is only ever hosted (Ui_OpenBagChoice)
+    sPocket = FixedPocket() ? sChoosePocket : sReopenPocket >= 0 ? sReopenPocket : ITEMS_POCKET;   // menus open on their first tab
+    sReopenPocket = -1;
     sMenu.open = false;
     sQty.open = false;
     Refresh();
@@ -102,9 +131,56 @@ static void Resume(void)
     Refresh();
 }
 
+static void ExitChoose(void)
+{
+    sChoose = false;
+    ItemMenu_ExitForUi();
+}
+
+static void CloseChoose(bool chosen)
+{
+    if (chosen)
+        ItemMenu_ChooseForUi(CurItem());
+    else
+        ItemMenu_CancelForUi();
+    UiNav_Close(ExitChoose);
+}
+
+// CHECK TAG: the GBA berry tag (a scene, shown in the GBA's format), then this BAG again
+static uint16_t sTagItem, sTagPos;
+
+static void PrepareReopenBerries(void)
+{
+    sReopenPocket = BERRIES_POCKET;
+}
+
+static void CB2_BackFromBerryTag(void)
+{
+    UiCore_ReopenAfterField(&gUiBagScreen, PrepareReopenBerries);
+}
+
+static void LaunchBerryTag(void)
+{
+    DoBerryTagScreenForUi(sTagItem, sTagPos, CB2_BackFromBerryTag);
+}
+
 static void DoAction(int32_t act)
 {
     const uint16_t item = CurItem();
+    if (act == ACT_TAG)
+    {
+        PlaySE(SE_SELECT);
+        sTagItem = item;
+        sTagPos = (uint16_t)sList[sPocket].sel;
+        UiCore_CloseToScene(LaunchBerryTag);
+        return;
+    }
+    if (act == ACT_CHOOSE)
+    {
+        PlaySE(SE_SELECT);
+        CloseChoose(true);
+        return;
+    }
     char name[24], msg[80];
     UiGame_ItemName(item, name, sizeof(name));
     switch (act)
@@ -241,7 +317,7 @@ static void OpenMenu(void)
         UiMenu_Open(&sMenu, name, LIST_X + LIST_W - 260, LIST_Y + row * ROW_H, 240);
     }
     for (int32_t i = 0; i < sActCount; i++)
-        UiMenu_Add(&sMenu, sActNames[sActs[i]], sActs[i]);
+        UiMenu_Add(&sMenu, ActName(sActs[i]), sActs[i]);
     UiMenu_Add(&sMenu, "CANCEL", ACT_CANCEL);
 }
 
@@ -272,11 +348,16 @@ static bool Update(const UiInput *in)
     if (in->pressed & VITA_BTN_CIRCLE)
     {
         PlaySE(SE_SELECT);
+        if (sChoose)
+        {
+            CloseChoose(false);
+            return true;
+        }
         sGiveTo = -1;
         return false;
     }
-    // Battle Pyramid: one list (ITEMS), no pockets and no sorting, as its GBA bag
-    const bool pyr = UiGame_InPyramid();
+    // Battle Pyramid, and a script's bag kept to one pocket: one list, no pockets and no sorting
+    const bool pyr = UiGame_InPyramid() || FixedPocket();
     int32_t tab = -1;
     if (!pyr)
     {
@@ -342,8 +423,19 @@ static bool Update(const UiInput *in)
         PlaySE(SE_SELECT);
         if (a == sCount)
         {
+            if (sChoose)
+            {
+                CloseChoose(false);
+                return true;
+            }
             sGiveTo = -1;
             return false;                                  // CLOSE BAG
+        }
+        // A location with no action of its own (berry tree): the item is the choice
+        if (sChoose && sChooseName[0] == '\0')
+        {
+            DoAction(ACT_CHOOSE);
+            return true;
         }
         OpenMenu();
     }
@@ -352,15 +444,15 @@ static bool Update(const UiInput *in)
 
 static void BuildGba(void)
 {
-    const bool pyr = UiGame_InPyramid();
+    const bool pyr = UiGame_InPyramid() || FixedPocket();
     char buf[128];
-    UiW_GbaTopBar(UI_GBA_BG_BAG, UI_SPR_START_BAG, pyr ? "BATTLE BAG" : "BAG", 0, 0, false, NULL);
+    UiW_GbaTopBar(UI_GBA_BG_BAG, UI_SPR_START_BAG, UiGame_InPyramid() ? "BATTLE BAG" : "BAG", 0, 0, false, NULL);
 
     int32_t rx = UI_SCREEN_W - 14;
     UiW_GbaHelpBadge(&rx, "O", "CLOSE", true);
     if (!pyr)
         UiW_GbaHelpBadge(&rx, "TRI", "SORT", false);
-    UiW_GbaHelpBadge(&rx, "X", sGiveTo >= 0 ? "GIVE" : "OPTIONS", false);
+    UiW_GbaHelpBadge(&rx, "X", sChoose ? (sChooseName[0] ? sChooseName : "CHOOSE") : sGiveTo >= 0 ? "GIVE" : "OPTIONS", false);
 
     // Left column (14, 60, 316, 372)
     // 1. Pocket signboard (.bag-pocket-sign)
@@ -377,7 +469,7 @@ static void BuildGba(void)
         UiW_GbaArrowH(75, 80, false, UI_RGBA(255, 253, 240, 255));
         UiW_GbaArrowH(74, 79, false, UI_RGBA(208, 48, 48, 255));
     }
-    UiW_GbaTextCentred(UI_FACE_VT323, 28, 86, 68, 214, 34, pyr ? "PYRAMID BAG" : sPocketTabs[sPocket],
+    UiW_GbaTextCentred(UI_FACE_VT323, 28, 86, 68, 214, 34, UiGame_InPyramid() ? "PYRAMID BAG" : sPocketTabs[sPocket],
                        UI_RGBA(40, 56, 64, 255), UI_RGBA(255, 253, 240, 255));
     if (!pyr)
     {
@@ -421,7 +513,7 @@ static void BuildGba(void)
     UiDraw_PopClip();
 
     const uint16_t bagBase = UiGame_PlayerIsMale() ? UI_SPR_BAG_MALE_FIRST : UI_SPR_BAG_FEMALE_FIRST;
-    UiDraw_Sprite((uint16_t)(bagBase + (pyr ? ITEMS_POCKET : sPocket)), 33, matY + (matH - 128) / 2, 2);
+    UiDraw_Sprite((uint16_t)(bagBase + (UiGame_InPyramid() ? ITEMS_POCKET : sPocket)), 33, matY + (matH - 128) / 2, 2);
 
     // 3 Stats cards beside mat (.bag-mini-box: 178, matY, 140, matH)
     const int32_t boxX = 178, boxW = 140, boxH = 74;
@@ -434,7 +526,7 @@ static void BuildGba(void)
     // 2) SORT BY / CAPACITY box (tap to cycle sort)
     const int32_t b2Y = matY + 84;
     UiW_GbaBox(boxX, b2Y, boxW, boxH, 3, UI_RGBA(20, 26, 28, 255), C_WHITE, C_WHITE, UI_GBA_SHAD_LIGHT, 2);
-    if (pyr)
+    if (UiGame_InPyramid())
     {
         UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, b2Y + 8, "CAPACITY", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
         snprintf(buf, sizeof(buf), "%d / %d", (int)sCount, PYRAMID_BAG_ITEMS_COUNT);
@@ -467,7 +559,7 @@ static void BuildGba(void)
 
     // Right gold ledger (.gba-win.bag-gold)
     UiW_GbaWin(342, 60, 604, 372, UI_GBA_WIN_GOLD);
-    snprintf(buf, sizeof(buf), "%s POCKET", pyr ? "PYRAMID" : sPocketTabs[sPocket]);
+    snprintf(buf, sizeof(buf), "%s POCKET", UiGame_InPyramid() ? "PYRAMID" : sPocketTabs[sPocket]);
     UiW_GbaTextMid(UI_FACE_VT323, 28, 362, 70, 32, buf, UI_RGBA(92, 50, 16, 255), UI_RGBA(255, 250, 224, 255));
     UiW_GbaTextMid(UI_FACE_VT323, 28, 868, 70, 32, "QTY", UI_RGBA(92, 50, 16, 255), UI_RGBA(255, 250, 224, 255));
     UiDraw_Rect(358, 103, 572, 3, UI_RGBA(200, 160, 56, 255));
@@ -552,7 +644,9 @@ static void Build(void)
         return;
     }
     const bool pyr = UiGame_InPyramid();
-    if (pyr)
+    if (FixedPocket())
+        UiKit_Header("BAG", &sPocketTabs[sPocket], 1, 0, sTabX, sTabW, 8);
+    else if (pyr)
         UiKit_Header("BATTLE BAG", sPocketTabs, 1, 0, sTabX, sTabW, 8);
     else
         UiKit_Header("BAG", sPocketTabs, POCKETS_COUNT, sPocket, sTabX, sTabW, 8);
@@ -612,12 +706,12 @@ static void Build(void)
         BuildActs(item);
         if (sActCount > 0)
         {
-            static const uint8_t colours[ACT_COUNT] = { UI_BTN_GREEN, UI_BTN_AMBER, UI_BTN_RED, UI_BTN_AMBER, UI_BTN_GREEN };
+            static const uint8_t colours[ACT_COUNT] = { UI_BTN_GREEN, UI_BTN_AMBER, UI_BTN_RED, UI_BTN_AMBER, UI_BTN_GREEN, UI_BTN_AMBER, UI_BTN_GREEN, UI_BTN_AMBER };
             sActW = (272 - (sActCount - 1) * 6) / sActCount;
             for (int32_t i = 0; i < sActCount; i++)
             {
                 sActX[i] = 32 + i * (sActW + 6);
-                const char *label = sActs[i] == ACT_REGISTER && UiGame_RegisteredItem() == item ? "UNREG." : sActNames[sActs[i]];
+                const char *label = sActs[i] == ACT_REGISTER && UiGame_RegisteredItem() == item ? "UNREG." : ActName(sActs[i]);
                 UiW_Button(sActX[i], 440, sActW, label, colours[sActs[i]], false);
             }
         }
@@ -658,9 +752,10 @@ static void Build(void)
     UiW_ScrollBar(LIST_X + LIST_W - 9, LIST_Y, ROWS * ROW_H, l->first, ROWS, sCount + 1);
 
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Options");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sChoose ? (sChooseName[0] ? "Options" : "Choose") : "Options");
     UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
-    UiW_FooterKey(&fx, "SELECT", "Sort");
+    if (!FixedPocket())
+        UiW_FooterKey(&fx, "SELECT", "Sort");
     UiKit_FooterClock();
     if (sMenu.open)
         UiMenu_Draw(&sMenu);
@@ -669,3 +764,20 @@ static void Build(void)
 }
 
 const UiScreen gUiBagScreen = { Enter, Update, Build, Resume };
+
+// A script's bag (item_menu.c GoToBagMenu): the BAG in CHOOSE mode, hosted over the black the script
+// faded to. The location's rules and what choosing does stay in item_menu.c.
+bool Ui_OpenBagChoice(uint8_t pocket)
+{
+    if (!Ui_IsEnabled() || Ui_IsOpen())
+        return false;
+    sChoose = true;
+    sGiveTo = -1;
+    sChoosePocket = pocket;
+    const u8 *action = ItemMenu_ChooseActionForUi();
+    sChooseName[0] = '\0';
+    if (action != NULL)
+        UiGame_Text(action, sChooseName, sizeof(sChooseName));
+    UiCore_OpenHosted(&gUiBagScreen, NULL);
+    return true;
+}

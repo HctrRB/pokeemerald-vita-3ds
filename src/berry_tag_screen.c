@@ -173,6 +173,21 @@ static void TryChangeDisplayedBerry(u8 taskId, s8 toMove);
 static void HandleBagCursorPositionChange(s8 toMove);
 
 // code
+#ifdef PLATFORM_VITA
+// Port: the tag opened from the new UI's BAG; it goes back to `exit` instead of the GBA bag
+static void (*sExitForUi)(void);
+
+void DoBerryTagScreenForUi(u16 itemId, u16 pocketPosition, void (*exit)(void))
+{
+    // The tag browses the BERRIES pocket from the bag's position (TryChangeDisplayedBerry)
+    gBagPosition.scrollPosition[BERRIES_POCKET] = 0;
+    gBagPosition.cursorPosition[BERRIES_POCKET] = pocketPosition;
+    gSpecialVar_ItemId = itemId;
+    sExitForUi = exit;
+    DoBerryTagScreen();
+}
+#endif
+
 void DoBerryTagScreen(void)
 {
     sBerryTag = AllocZeroed(sizeof(*sBerryTag));
@@ -529,6 +544,15 @@ static void Task_CloseBerryTagScreen(u8 taskId)
         DestroyFlavorCircleSprites();
         Free(sBerryTag);
         FreeAllWindowBuffers();
+#ifdef PLATFORM_VITA
+        if (sExitForUi != NULL)
+        {
+            void (*exit)(void) = sExitForUi;
+            sExitForUi = NULL;
+            SetMainCallback2(exit);
+        }
+        else
+#endif
         SetMainCallback2(CB2_ReturnToBagMenuPocket);
         DestroyTask(taskId);
     }

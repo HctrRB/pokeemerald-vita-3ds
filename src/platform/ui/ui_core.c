@@ -29,6 +29,9 @@
 #include "field_player_avatar.h"
 #include "sprite.h"
 #include "task.h"
+#include "field_screen_effect.h"
+#include "scanline_effect.h"
+#include "constants/rgb.h"
 #include "constants/songs.h"
 
 #define REPEAT_DELAY 18
@@ -268,6 +271,82 @@ void UiCore_OpenHosted(const UiScreen *screen, void (*afterClose)(void))
     sFromScript = true;
     Open(screen);
     sAfterClose = afterClose;
+}
+
+// ---------- A GBA scene started from a screen on the field, and a screen again afterwards ----------
+// (the Pokéblock eating scene, the berry tag...). The UI closes, the field fades to black and is
+// stopped as the GBA menus that open those scenes stop it, then `start` runs the scene.
+static void (*sSceneStart)(void);
+static const UiScreen *sReopen;
+static void (*sReopenPrepare)(void);
+
+static void Task_FadeToScene(u8 taskId)
+{
+    if (gTasks[taskId].data[0] == 0)
+    {
+        BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
+        gTasks[taskId].data[0] = 1;
+        return;
+    }
+    if (gPaletteFade.active)
+        return;
+    DestroyTask(taskId);
+    void (*start)(void) = sSceneStart;
+    sSceneStart = NULL;
+    CleanupOverworldWindowsAndTilemaps();
+    ScanlineEffect_Stop();
+    ResetTasks();
+    gMain.state = 0;                   // the scenes' loaders are gMain.state switches
+    if (start != NULL)
+        start();
+}
+
+static void FadeToScene(void)
+{
+    LockPlayerFieldControls();
+    FreezeObjectEvents();
+    CreateTask(Task_FadeToScene, 80);
+}
+
+void UiCore_CloseToScene(void (*start)(void))
+{
+    sSceneStart = start;
+    UiNav_Close(FadeToScene);
+}
+
+static void Task_ReopenAfterField(u8 taskId)
+{
+    if (gPaletteFade.active)
+        return;
+    DestroyTask(taskId);
+    const UiScreen *screen = sReopen;
+    sReopen = NULL;
+    if (screen != NULL && Ui_IsEnabled() && !Ui_IsOpen())
+    {
+        if (sReopenPrepare != NULL)
+            sReopenPrepare();
+        UiCore_OpenScreen(screen);     // as the START menu: it unfreezes the field when it closes
+    }
+    else
+    {
+        ScriptUnfreezeObjectEvents();
+        UnlockPlayerFieldControls();
+    }
+}
+
+static void FieldCB_ReopenAfterField(void)
+{
+    LockPlayerFieldControls();
+    FadeInFromBlack();
+    CreateTask(Task_ReopenAfterField, 80);
+}
+
+void UiCore_ReopenAfterField(const UiScreen *screen, void (*prepare)(void))
+{
+    sReopen = screen;
+    sReopenPrepare = prepare;
+    gFieldCallback = FieldCB_ReopenAfterField;
+    SetMainCallback2(CB2_ReturnToField);
 }
 
 void UiCore_OpenScreen(const UiScreen *screen)

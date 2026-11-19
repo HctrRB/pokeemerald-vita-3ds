@@ -85,6 +85,13 @@ struct BagMenu
 extern struct BagMenu *gBagMenu;
 extern u16 gSpecialVar_ItemId;
 
+// Port: the bags scripts open to ask for an item, chosen in the new UI (item_menu.c)
+bool8 ItemMenu_CanChooseForUi(u16 itemId);
+const u8 *ItemMenu_ChooseActionForUi(void);
+void ItemMenu_ChooseForUi(u16 itemId);
+void ItemMenu_CancelForUi(void);
+void ItemMenu_ExitForUi(void);
+
 void CB2_GoToItemDepositMenu(void);
 void FavorLadyOpenBagMenu(void);
 void QuizLadyOpenBagMenu(void);

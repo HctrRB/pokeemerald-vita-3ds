@@ -8,6 +8,8 @@
 #include "field_screen_effect.h"
 #include "gpu_regs.h"
 #include "move_relearner.h"
+#include "platform/ui.h"
+#include "scanline_effect.h"
 #include "list_menu.h"
 #include "malloc.h"
 #include "menu.h"
@@ -157,7 +159,6 @@ enum {
 #define GFXTAG_UI       5525
 #define PALTAG_UI       5526
 
-#define MAX_RELEARNER_MOVES max(MAX_LEVEL_UP_MOVES, 25)
 
 static EWRAM_DATA struct
 {
@@ -378,11 +379,67 @@ void TeachMoveRelearnerMove(void)
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 0x10, RGB_BLACK);
 }
 
+#ifdef PLATFORM_VITA
+// ---------- Port: the new UI's MOVE RELEARNER (ui_scr_forget.c) ----------
+// The scene's own resets, then the new UI hosted; the GBA scene when it can't open.
+static void CB2_InitLearnMoveForUi(void)
+{
+    ResetSpriteData();
+    FreeAllSpritePalettes();
+    ResetTasks();
+    ClearScheduledBgCopiesToVram();
+    SetVBlankHBlankCallbacksToNull();
+    ScanlineEffect_Stop();
+    if (!Ui_OpenMoveRelearner())
+        SetMainCallback2(CB2_InitLearnMove);
+}
+
+// The moves the POKéMON in VAR_0x8004 can remember (CreateLearnableMovesList)
+u8 MoveRelearner_MovesForUi(u16 *moves)
+{
+    return GetMoveRelearnerMoves(&gPlayerParty[gSpecialVar_0x8004], moves);
+}
+
+// MENU_STATE_TEACH_MOVE_CONFIRM: FALSE when it already knows four moves (nothing changes)
+bool8 MoveRelearner_TeachForUi(u16 move)
+{
+    if (GiveMoveToMon(&gPlayerParty[gSpecialVar_0x8004], move) == MON_HAS_MAX_MOVES)
+        return FALSE;
+    gSpecialVar_0x8004 = TRUE;
+    return TRUE;
+}
+
+// MENU_STATE_TRY_OVERWRITE_MOVE: the move in `slot` is forgotten for the new one
+void MoveRelearner_ReplaceForUi(u8 slot, u16 move)
+{
+    struct Pokemon *mon = &gPlayerParty[gSpecialVar_0x8004];
+    RemoveMonPPBonus(mon, slot);
+    SetMonMoveSlot(mon, move, slot);
+    gSpecialVar_0x8004 = TRUE;
+}
+
+// MENU_STATE_GIVE_UP_CONFIRM
+void MoveRelearner_GiveUpForUi(void)
+{
+    gSpecialVar_0x8004 = FALSE;
+}
+
+// MENU_STATE_RETURN_TO_FIELD (gFieldCallback was set when the scene started)
+void MoveRelearner_ExitForUi(void)
+{
+    SetMainCallback2(CB2_ReturnToField);
+}
+#endif
+
 static void Task_WaitForFadeOut(u8 taskId)
 {
     if (!gPaletteFade.active)
     {
+#ifdef PLATFORM_VITA
+        SetMainCallback2(Ui_IsEnabled() ? CB2_InitLearnMoveForUi : CB2_InitLearnMove);
+#else
         SetMainCallback2(CB2_InitLearnMove);
+#endif
         gFieldCallback = FieldCB_ContinueScriptHandleMusic;
         DestroyTask(taskId);
     }

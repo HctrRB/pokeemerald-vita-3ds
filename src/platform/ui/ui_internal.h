@@ -368,6 +368,11 @@ void UiNav_Replace(const UiScreen *screen);
 void UiNav_Pop(void);
 void UiNav_Close(void (*afterClose)(void));   // closes the UI, then runs afterClose (may be NULL) in the field
 void UiCore_OpenScreen(const UiScreen *screen);
+// From a screen on the field: close the UI, fade the field out and stop it, then `start` a GBA
+// scene; and from that scene's exit callback: back to the field, then `screen` opens again
+// (`prepare`, may be NULL, runs just before)
+void UiCore_CloseToScene(void (*start)(void));
+void UiCore_ReopenAfterField(const UiScreen *screen, void (*prepare)(void));
 bool UiSign_Draw(void);                         // ui_sign.c: zone sign overlay while no screen is open
 void UiSign_Reset(void);
 bool UiMirror_Draw(void);                       // ui_mirror.c: field windows (dialogue, YES / NO)

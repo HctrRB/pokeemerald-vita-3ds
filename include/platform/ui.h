@@ -55,6 +55,9 @@ enum { UI_PC_CENTER, UI_PC_BEDROOM, UI_PC_SECRET_BASE };   // POKéMON CENTER: I
 bool Ui_OpenPlayerPc(uint8_t taskId, uint8_t tab, uint8_t kind);
 struct Pokemon;
 bool Ui_OpenForgetMove(struct Pokemon *mons, uint8_t monIndex, uint16_t newMove, void (*callback)(void));
+// The MOVE RELEARNER (move_relearner.c, POKéMON in VAR_0x8004): its move list, hosted. False: the
+// GBA scene. Results as the scene leaves them (VAR_0x8004 TRUE when a move was learned).
+bool Ui_OpenMoveRelearner(void);
 // Core 1 (map_name_popup.c): the new UI's zone sign instead of the GBA popup when the UI is on
 void Ui_ShowZoneSign(uint16_t mapSec);
 // Core 0 (pass 6): true while every visible game window has a new-UI mirror (no GBA frame needed)
@@ -65,7 +68,7 @@ void Ui_HideZoneSign(void);
 // Core 1, from the script specials of party_menu.c: the new "choose a POKéMON" screen. Sets the
 // same results as the GBA screen (VAR_RESULT for the tutor, VAR_0x8004 for the others) and
 // resumes the script. False if the new UI is off (the GBA screen opens).
-enum { UI_CHOOSE_TUTOR, UI_CHOOSE_DAYCARE, UI_CHOOSE_ANY };
+enum { UI_CHOOSE_TUTOR, UI_CHOOSE_DAYCARE, UI_CHOOSE_ANY, UI_CHOOSE_CONTEST, UI_CHOOSE_RELEARNER, UI_CHOOSE_COUNT };
 bool Ui_OpenChooseMon(int kind);
 
 // Battle controller: the new BAG / POKEMON instead of the old Vita UI (false: not taken)
@@ -77,6 +80,10 @@ bool Ui_OpenNaming(uint8_t templateNum, uint8_t *destBuffer, uint16_t species, u
 bool Ui_OpenPc(uint8_t option);
 // Berry for the BERRY BLENDER / BERRY CRUSH (item_menu.c ChooseBerryForMachine)
 bool Ui_OpenBerryChoice(void (*exitCallback)(void));
+// A BAG a script opens to ask for an item (item_menu.c GoToBagMenu: berry tree, Favor and Quiz
+// Ladies, Apprentice): the BAG in "choose" mode, hosted; pocket < POCKETS_COUNT keeps it to one
+// pocket. The game side (ItemMenu_*ForUi) holds each location's rules.
+bool Ui_OpenBagChoice(uint8_t pocket);
 // Easy Chat (easy_chat.c DoEasyChatScreen): mail, profile, interviews, trendy saying...
 bool Ui_OpenEasyChat(uint8_t type, uint16_t *words, void (*exitCallback)(void), uint8_t personType);
 bool Ui_OpenBattleBag(void);

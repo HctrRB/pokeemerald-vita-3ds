@@ -144,7 +144,7 @@ static char sResultText[5][48];
 static int32_t sResultN;
 static int16_t sResultGain[5];
 static uint8_t sFedMon;
-static void StartFeedScene(void);
+static void LaunchFeedScene(void);
 
 static int16_t sGain[5], sSheenGain;
 
@@ -207,7 +207,7 @@ static bool FeedUpdate(const UiInput *in)
         if (id == ACT_YES)
         {
             sFedMon = (uint8_t)sMons.sel;
-            UiNav_Close(StartFeedScene);
+            UiCore_CloseToScene(LaunchFeedScene);
         }
         return true;
     }
@@ -313,38 +313,21 @@ static const UiScreen sFeedScreen = { FeedEnter, FeedUpdate, FeedBuild, NULL };
 
 // After YES: the field fades out and the GBA eating scene plays (use_pokeblock.c FeedPokeblockToMon)
 static void CB2_AfterFeedScene(void);
-static void Task_StartFeedScene(u8 taskId)
+static void LaunchFeedScene(void)
 {
-    if (gTasks[taskId].data[0] == 0)
-    {
-        BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
-        gTasks[taskId].data[0] = 1;
-        return;
-    }
-    if (gPaletteFade.active)
-        return;
-    DestroyTask(taskId);
-    CleanupOverworldWindowsAndTilemaps();
-    // In the game the GBA case has already stopped the field (InitPokeblockMenu's ResetTasks) when
-    // the scene starts; the scene's loader runs from state 0
-    ScanlineEffect_Stop();
-    ResetTasks();
-    gMain.state = 0;
     gPokeblockMonId = sFedMon;
     gSpecialVar_ItemId = sFeedBlock;
     gMain.savedCallback = CB2_AfterFeedScene;
     PreparePokeblockFeedScene();
 }
 
-static void StartFeedScene(void)
+static void PrepareReopenFeed(void)
 {
-    LockPlayerFieldControls();
-    FreezeObjectEvents();
-    CreateTask(Task_StartFeedScene, 80);
+    sMode = PBLOCK_CASE_FIELD;
+    Refresh();
 }
 
 // Back from the scene: the block's effect (AddPokeblockToConditions), the result lines, the field
-static void FieldCB_ReopenFeed(void);
 static void CB2_AfterFeedScene(void)
 {
     static const u8 *const words[5] = { gText_Coolness, gText_Beauty3, gText_Cuteness, gText_Smartness, gText_Toughness };
@@ -366,34 +349,7 @@ static void CB2_AfterFeedScene(void)
     if (sResultN == 0)
         UiGame_Text(gText_NothingChanged, sResultText[sResultN++], sizeof(sResultText[0]));
     sResult = true;
-    gFieldCallback = FieldCB_ReopenFeed;
-    SetMainCallback2(CB2_ReturnToField);
-}
-
-static void Task_ReopenFeed(u8 taskId)
-{
-    if (gPaletteFade.active)
-        return;
-    if (Ui_IsEnabled() && !Ui_IsOpen())
-    {
-        sMode = PBLOCK_CASE_FIELD;
-        Refresh();
-        UiCore_OpenScreen(&sFeedScreen);
-    }
-    else
-    {
-        sResult = false;
-        ScriptUnfreezeObjectEvents();
-        UnlockPlayerFieldControls();
-    }
-    DestroyTask(taskId);
-}
-
-static void FieldCB_ReopenFeed(void)
-{
-    LockPlayerFieldControls();
-    FadeInFromBlack();
-    CreateTask(Task_ReopenFeed, 80);
+    UiCore_ReopenAfterField(&sFeedScreen, PrepareReopenFeed);
 }
 
 // ---------- CASE ----------

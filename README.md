@@ -121,6 +121,9 @@ These parts are built, but have not been checked on the console yet:
   without the new UI's touch buttons; the GBA window frame following the menu theme.
 - The new boxes for the Game Corner coins and the scrolling lists of the field (Game Corner prizes,
   Lilycove Dept. Store, Battle Frontier exchange and tutors).
+- The new screens for the bags scripts open (planting a berry, the Favor and Quiz Ladies, the
+  Apprentice), the CONTEST entry choice, the Move Deleter, the Move Relearner and CHECK TAG for
+  berries in the bag.
 - The POKéDEX page after catching a new species, now the new UI's page over the battle (with its
   cry; A or B closes it).
 - The new POKéBLOCK CASE: from the bag and SELECT (USE, TOSS, moving blocks), in a Safari battle,
@@ -138,7 +141,7 @@ These parts are built, but have not been checked on the console yet:
 Screens still on the GBA interface:
 
 - The summary of a boxed POKéMON in the PC.
-- Move Relearner / Move Deleter, and Contest / Battle Frontier party choice.
+- Battle Frontier party choice.
 - The Battle Pyramid bag inside battles and its "bag full: choose what to drop" step.
 - Easy Chat's Bard song and quiz screens.
 - Link and recorded battles, Wally's catching tutorial and the Battle Arena judgment keep the

@@ -6267,6 +6267,8 @@ static void Task_PartyMenuWaitForFade(u8 taskId)
 
 void ChooseContestMon(void)
 {
+    if (Ui_OpenChooseMon(UI_CHOOSE_CONTEST))
+        return;
     LockPlayerFieldControls();
     FadeScreen(FADE_TO_BLACK, 0);
     CreateTask(Task_ChooseContestMon, 10);
@@ -6314,6 +6316,8 @@ static void Task_ChoosePartyMon(u8 taskId)
 
 void ChooseMonForMoveRelearner(void)
 {
+    if (Ui_OpenChooseMon(UI_CHOOSE_RELEARNER))
+        return;
     LockPlayerFieldControls();
     FadeScreen(FADE_TO_BLACK, 0);
     CreateTask(Task_ChooseMonForMoveRelearner, 10);
@@ -6376,7 +6380,8 @@ static void Task_BattlePyramidChooseMonHeldItems(u8 taskId)
 
 void MoveDeleterChooseMoveToForget(void)
 {
-    ShowPokemonSummaryScreen(SUMMARY_MODE_SELECT_MOVE, gPlayerParty, gSpecialVar_0x8004, gPlayerPartyCount - 1, CB2_ReturnToField);
+    // The select-move summary with no new move (the same screen); the port's new UI takes it there
+    ShowSelectMovePokemonSummaryScreen(gPlayerParty, gSpecialVar_0x8004, gPlayerPartyCount - 1, CB2_ReturnToField, MOVE_NONE);
     gFieldCallback = FieldCB_ContinueScriptHandleMusic;
 }
 

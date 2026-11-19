@@ -630,8 +630,100 @@ void QuizLadyOpenBagMenu(void)
     gSpecialVar_Result = FALSE;
 }
 
+#ifdef PLATFORM_VITA
+// ---------- Port: the bags scripts open to ask for an item, chosen in the new UI's BAG ----------
+// The rules of each location stay here, shared with the GBA bag's own actions.
+static bool8 IsScriptChoiceLocation(u8 location)
+{
+    return location == ITEMMENULOCATION_BERRY_TREE || location == ITEMMENULOCATION_FAVOR_LADY
+        || location == ITEMMENULOCATION_QUIZ_LADY || location == ITEMMENULOCATION_APPRENTICE;
+}
+
+// The item can be offered (OpenContextMenu: the ladies and the apprentice refuse important items)
+bool8 ItemMenu_CanChooseForUi(u16 itemId)
+{
+    switch (gBagPosition.location)
+    {
+    case ITEMMENULOCATION_APPRENTICE:
+    case ITEMMENULOCATION_FAVOR_LADY:
+    case ITEMMENULOCATION_QUIZ_LADY:
+        return !GetItemImportance(itemId) && itemId != ITEM_ENIGMA_BERRY;
+    default:
+        return TRUE;
+    }
+}
+
+// The location's action name (SHOW, GIVE, CONFIRM); NULL: choosing the item is enough (berry tree)
+const u8 *ItemMenu_ChooseActionForUi(void)
+{
+    switch (gBagPosition.location)
+    {
+    case ITEMMENULOCATION_APPRENTICE: return gMenuText_Show;
+    case ITEMMENULOCATION_FAVOR_LADY: return gMenuText_Give2;
+    case ITEMMENULOCATION_QUIZ_LADY:  return gMenuText_Confirm;
+    default:                          return NULL;
+    }
+}
+#endif
+
+// What choosing the item does for the script that opened the bag (ItemMenu_Show / GiveFavorLady /
+// ConfirmQuizLady; the berry tree only needs gSpecialVar_ItemId)
+static void ApplyScriptChoice(u16 itemId)
+{
+    gSpecialVar_ItemId = itemId;
+    switch (gBagPosition.location)
+    {
+    case ITEMMENULOCATION_APPRENTICE:
+        gSpecialVar_0x8005 = itemId;
+        gSpecialVar_Result = TRUE;
+        break;
+    case ITEMMENULOCATION_FAVOR_LADY:
+        RemoveBagItem(itemId, 1);
+        gSpecialVar_Result = TRUE;
+        break;
+    case ITEMMENULOCATION_QUIZ_LADY:
+        gSpecialVar_Result = TRUE;
+        break;
+    }
+}
+
+#ifdef PLATFORM_VITA
+void ItemMenu_ChooseForUi(u16 itemId)
+{
+    ApplyScriptChoice(itemId);
+}
+
+// B / CLOSE BAG: as the GBA bag's LIST_CANCEL
+void ItemMenu_CancelForUi(void)
+{
+    gSpecialVar_ItemId = ITEM_NONE;
+}
+
+void ItemMenu_ExitForUi(void)
+{
+    SetMainCallback2(gBagPosition.exitCallback);
+}
+#endif
+
 void GoToBagMenu(u8 location, u8 pocket, void ( *exitCallback)())
 {
+#ifdef PLATFORM_VITA
+    // Port: the new UI's BAG in its "choose an item" mode for the scripts that ask for one
+    if (IsScriptChoiceLocation(location) && Ui_OpenBagChoice(pocket))
+    {
+        gBagPosition.location = location;
+        gBagPosition.exitCallback = exitCallback;
+        // SetupBagMenu's resets: the field under it stops running (it is reloaded on exit)
+        SetVBlankHBlankCallbacksToNull();
+        ClearScheduledBgCopiesToVram();
+        ScanlineEffect_Stop();
+        FreeAllSpritePalettes();
+        ResetPaletteFade();
+        ResetSpriteData();
+        ResetTasks();
+        return;
+    }
+#endif
     gBagMenu = AllocZeroed(sizeof(*gBagMenu));
     if (gBagMenu == NULL)
     {
@@ -2383,8 +2475,7 @@ static void Task_WallyTutorialBagMenu(u8 taskId)
 // they ask what item they should make their Pokémon hold
 static void ItemMenu_Show(u8 taskId)
 {
-    gSpecialVar_0x8005 = gSpecialVar_ItemId;
-    gSpecialVar_Result = TRUE;
+    ApplyScriptChoice(gSpecialVar_ItemId);
     RemoveContextWindow();
     Task_FadeAndCloseBagMenu(taskId);
 }
@@ -2397,8 +2488,7 @@ static void CB2_ApprenticeExitBagMenu(void)
 
 static void ItemMenu_GiveFavorLady(u8 taskId)
 {
-    RemoveBagItem(gSpecialVar_ItemId, 1);
-    gSpecialVar_Result = TRUE;
+    ApplyScriptChoice(gSpecialVar_ItemId);
     RemoveContextWindow();
     Task_FadeAndCloseBagMenu(taskId);
 }
@@ -2413,7 +2503,7 @@ static void CB2_FavorLadyExitBagMenu(void)
 // a prize for a custom quiz with the Lilycove Quiz Lady
 static void ItemMenu_ConfirmQuizLady(u8 taskId)
 {
-    gSpecialVar_Result = TRUE;
+    ApplyScriptChoice(gSpecialVar_ItemId);
     RemoveContextWindow();
     Task_FadeAndCloseBagMenu(taskId);
 }
