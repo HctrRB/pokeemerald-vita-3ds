@@ -167,8 +167,8 @@ static void LampPoolQuad(VoxelBuilder *b, float x0, float z0, float x1, float z1
  * it in visible squares, and it left out the lamp's own cell (a signpost) and
  * any fence beside it: dark squares where the light is brightest.
  */
-void VoxelSign_EmitLampPool(VoxelBuilder *builder, const VoxelMapInstance *inst,
-                            float centerX, float centerZ)
+static void LampGround(VoxelBuilder *builder, const VoxelMapInstance *inst,
+                       float centerX, float centerZ)
 {
     const float r = VOXEL_LAMP_POOL_RADIUS;
     int32_t firstX = (int32_t)floorf(centerX - r), lastX = (int32_t)floorf(centerX + r);
@@ -294,7 +294,7 @@ uint32_t VoxelSign_EmitNight(VoxelBuilder *glass, VoxelBuilder *ground,
                     &(VoxelVertex){leftX, top, depth, 0.0f, 0.0f, 1.0f});
             }
         }
-        VoxelSign_EmitLampPool(ground, inst, xpos + 0.5f, (front + back) * 0.5f);
+        LampGround(ground, inst, xpos + 0.5f, (front + back) * 0.5f);
         /* Its light: the middle of the glass just emitted, where the builder put it. */
         if (lights != NULL && lightCount < lightCapacity && glass->count > glassFirst)
         {

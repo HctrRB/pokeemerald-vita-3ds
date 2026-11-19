@@ -7225,11 +7225,11 @@ static void DrawLampHalos(const VoxelFrame *const f, const LampLevel *const leve
 }
 
 // Pass 5.2: night lamps (VoxelLamps_EmitChunk). Their geometry is static in the chunk VBOs and
-// the glow is a constant colour, so a frame costs three draws per lamp chunk plus one for the
-// halos, and no vertex is written:
-//   pools: the ground under each lamp brightened red most, dst * (1 + k * falloff * tint), then the
-//          lamp's light added (VOXEL_LAMP_POOL_*), drawn with a depth offset over the ground;
-//   glass: additive warm orange, bright enough for the bloom to spread it (MED, HIGH);
+// the glow is a constant colour, so a frame costs two draws per lamp chunk plus one for the halos,
+// and no vertex is written:
+//   pools: the ground under each lamp brightened, dst * (1 + gain * falloff * amber), drawn with
+//          a depth offset over the ground it lies on;
+//   glass: additive amber, bright enough for the bloom to spread it (MED, HIGH);
 //   halos: one billboard per lamp, sized and weighted by the HD-2D level (LampLevel).
 static void Pass_NightLamps(const VoxelFrame *const f)
 {
@@ -7253,18 +7253,12 @@ static void Pass_NightLamps(const VoxelFrame *const f)
     if (sLampPoolTex != 0)
     {
         const float k = glow * VOXEL_LAMP_POOL_GAIN;
-        const float add = glow * VOXEL_LAMP_POOL_ADD;
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, sLampPoolTex);
+        glBlendFunc(GL_DST_COLOR, GL_ONE);
+        glColor4f(VOXEL_LAMP_R * k, VOXEL_LAMP_G * k, VOXEL_LAMP_B * k, 1.0f);
         glEnable(GL_POLYGON_OFFSET_FILL);
         glPolygonOffset(-1.0f, -2.0f);
-        // The ground brightened, red most: dst * (1 + k * falloff * tint).
-        glBlendFunc(GL_DST_COLOR, GL_ONE);
-        glColor4f(VOXEL_LAMP_POOL_TINT_R * k, VOXEL_LAMP_POOL_TINT_G * k, VOXEL_LAMP_POOL_TINT_B * k, 1.0f);
-        DrawChunkLampPart(f, true);
-        // The lamp's own light on it: dst + add * falloff * lamp colour.
-        glBlendFunc(GL_ONE, GL_ONE);
-        glColor4f(VOXEL_LAMP_R * add, VOXEL_LAMP_G * add, VOXEL_LAMP_B * add, 1.0f);
         DrawChunkLampPart(f, true);
         glDisable(GL_POLYGON_OFFSET_FILL);
     }
@@ -8545,7 +8539,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                                   bloomAmt, gradeAmt, curveAmt, vignetteAmt,
                                   saturation, backBlur, backDim,
                                   0.0f, 0.0f, lowHpPulse,
-                                  shadowTint, highTint, f->inBattle3D ? 0.0f : nightBlend);
+                                  shadowTint, highTint);
 
         sFrameDrawCalls++;
         sFrameVertCount += 4u;

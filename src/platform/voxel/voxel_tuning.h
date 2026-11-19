@@ -79,18 +79,11 @@
 
 /* ---- Night lamps (Pass_NightLamps, UpdatePointLights, VoxelLamps_EmitChunk) ----------- */
 
-#define VOXEL_LAMP_R 1.00f                  /* lamp light: warm orange (~2500 K, 255,179,97), against the cool night */
-#define VOXEL_LAMP_G 0.70f
-#define VOXEL_LAMP_B 0.38f
+#define VOXEL_LAMP_R 1.00f                  /* lamp light: Bravely Emerald / Emerald 3DS amber (255,191,107) */
+#define VOXEL_LAMP_G 0.75f
+#define VOXEL_LAMP_B 0.42f
 #define VOXEL_LAMP_GLASS_GAIN 1.00f         /* additive glass: bright enough to cross the bloom threshold */
-/* Pool on the ground, two layers: the ground brightened, red most (dst * (1 + gain * falloff *
- * tint), a tint warmer than the light so a blue night ground turns warm and not just lighter),
- * then the light itself added (add * falloff * lamp colour), which also warms dark ground. */
-#define VOXEL_LAMP_POOL_GAIN 0.65f
-#define VOXEL_LAMP_POOL_TINT_R 1.00f
-#define VOXEL_LAMP_POOL_TINT_G 0.60f
-#define VOXEL_LAMP_POOL_TINT_B 0.22f
-#define VOXEL_LAMP_POOL_ADD 0.14f
+#define VOXEL_LAMP_POOL_GAIN 0.80f          /* pool on the ground: dst * (1 + gain * falloff * amber) */
 #define VOXEL_LAMP_POOL_LIFT 0.02f          /* the pool's lift off the ground it lies on (plus a depth offset) */
 #define VOXEL_LAMP_HALO_LIFT 0.30f          /* halo pulled toward the camera so the lantern does not cut it */
 #define VOXEL_LAMP_LIGHT_RADIUS 3.5f        /* reach of a lamp's light on characters (lamps stand close together) */
