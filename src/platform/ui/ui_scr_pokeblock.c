@@ -234,8 +234,9 @@ static bool FeedUpdate(const UiInput *in)
 static void FeedBuild(void)
 {
     const bool gba = gUiTheme->gbaFrame;
+    // (after the eating scene the block is eaten and the case compacted: its slot holds another)
     const UiBlock *b = NULL;
-    for (int32_t i = 0; i < sCount; i++)
+    for (int32_t i = 0; i < sCount && !sResult; i++)
         if (sBlocks[i].slot == sFeedBlock) b = &sBlocks[i];
     UiMon m;
     const bool have = UiGame_Mon(sMons.sel, &m);

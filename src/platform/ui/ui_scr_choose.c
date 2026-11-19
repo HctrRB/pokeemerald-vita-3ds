@@ -37,6 +37,7 @@ typedef struct
     const char *foot;                            // its footer guide
     bool eggOk;                                  // an EGG can be chosen (the script answers it)
     const char *(*tag)(int32_t slot, bool *ok);  // chip by the POKéMON and whether it can be chosen
+    void (*prepare)(void);                       // once when the screen opens (NULL: nothing)
     void (*defaults)(void);                      // the results if nothing is chosen
     bool (*chosen)(int32_t slot);                // sets the results; true: the screen closes
 } ChooseKind;
@@ -145,6 +146,15 @@ static bool ContestChosen(int32_t slot)
 }
 
 // Move Relearner (CB2_ChooseMonForMoveRelearner): how many moves it can remember, in VAR_0x8005
+// (counted once when the screen opens: it walks the learnset)
+static u8 sRelearnable[PARTY_SIZE];
+
+static void RelearnerPrepare(void)
+{
+    for (int32_t i = 0; i < UiGame_PartyCount() && i < PARTY_SIZE; i++)
+        sRelearnable[i] = GetNumberOfRelearnableMoves(&gPlayerParty[i]);
+}
+
 static const char *RelearnerTag(int32_t slot, bool *ok)
 {
     static char sBuf[16];
@@ -153,29 +163,29 @@ static const char *RelearnerTag(int32_t slot, bool *ok)
     *ok = true;                                      // the script answers an EGG or no moves itself
     if (m.egg)
         return NULL;
-    const u8 n = GetNumberOfRelearnableMoves(&gPlayerParty[slot]);
+    const u8 n = sRelearnable[slot];
     snprintf(sBuf, sizeof(sBuf), n == 1 ? "1 MOVE" : "%u MOVES", (unsigned)n);
     return sBuf;
 }
 
 static bool RelearnerChosen(int32_t slot)
 {
-    gSpecialVar_0x8005 = GetNumberOfRelearnableMoves(&gPlayerParty[slot]);
+    gSpecialVar_0x8005 = sRelearnable[slot];
     return SlotChosen(slot);
 }
 
 static const ChooseKind sKinds[UI_CHOOSE_COUNT] = {
     [UI_CHOOSE_TUTOR]     = { NULL, "Choose who will learn the move. Those marked ABLE can learn it.", "TEACH", "Teach",
-                              false, TutorTag, TutorDefaults, TutorChosen },
+                              false, TutorTag, NULL, TutorDefaults, TutorChosen },
     [UI_CHOOSE_DAYCARE]   = { "DAY CARE", "Choose the POKéMON to leave at the DAY CARE.", "CHOOSE", "Choose",
-                              false, DaycareTag, SlotDefaults, SlotChosen },
+                              false, DaycareTag, NULL, SlotDefaults, SlotChosen },
     // ChoosePartyMon (PARTY_ACTION_CHOOSE_AND_CLOSE) takes an EGG: the scripts (Name Rater, Move
     // Deleter, trades) answer it themselves
-    [UI_CHOOSE_ANY]       = { NULL, "Choose a POKéMON.", "CHOOSE", "Choose", true, NULL, SlotDefaults, SlotChosen },
+    [UI_CHOOSE_ANY]       = { NULL, "Choose a POKéMON.", "CHOOSE", "Choose", true, NULL, NULL, SlotDefaults, SlotChosen },
     [UI_CHOOSE_CONTEST]   = { "CONTEST", "Choose the POKéMON that will enter the CONTEST.", "ENTER", "Enter",
-                              true, NULL, ContestDefaults, ContestChosen },
+                              true, NULL, NULL, ContestDefaults, ContestChosen },
     [UI_CHOOSE_RELEARNER] = { "MOVE RELEARNER", "Choose the POKéMON that will remember a move.", "CHOOSE", "Choose",
-                              true, RelearnerTag, SlotDefaults, RelearnerChosen },
+                              true, RelearnerTag, RelearnerPrepare, SlotDefaults, RelearnerChosen },
 };
 
 bool Ui_OpenChooseMon(int kind)
@@ -205,6 +215,8 @@ static void Enter(void)
     sList.sel = sList.first = 0;
     sForget.open = false;
     UiList_Reset(&sList, UiGame_PartyCount(), 6);
+    if (sKinds[sKind].prepare != NULL)
+        sKinds[sKind].prepare();
 }
 
 static bool Update(const UiInput *in)

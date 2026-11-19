@@ -280,7 +280,6 @@ int32_t UiGame_SpeciesAreas(uint16_t species, uint8_t *out, int32_t count)
 // ---------- POKEBLOCKS (CONDITION tab) ----------
 #include "item.h"
 #include "pokeblock.h"
-#include "pokemon_summary_screen.h"
 #include "constants/items.h"
 
 bool UiGame_HasPokeblockCase(void)
@@ -355,21 +354,6 @@ int32_t UiGame_PokeblockGains(int32_t slot, int32_t pkblSlot, int16_t gain[5], i
     if (sh > MAX_SHEEN) sh = MAX_SHEEN;
     *sheen = (int16_t)(sh - curSheen);
     return dir;
-}
-
-// The nature's name and the flavours it likes and dislikes (gPokeblockFlavorCompatibilityTable)
-void UiGame_NatureTaste(int32_t slot, char *nature, size_t cap, int8_t *likes, int8_t *dislikes)
-{
-    struct Pokemon *mon = &gPlayerParty[slot];
-    const u8 n = GetNature(mon);
-    UiGame_Text(gNatureNamePointers[n], nature, cap);
-    *likes = *dislikes = -1;
-    for (int32_t f = 0; f < FLAVOR_COUNT; f++)
-    {
-        const s8 rel = gPokeblockFlavorCompatibilityTable[n * FLAVOR_COUNT + f];
-        if (rel > 0) *likes = (int8_t)f;
-        if (rel < 0) *dislikes = (int8_t)f;
-    }
 }
 
 // Same result as the GBA feeding scene plus use_pokeblock.c's AddPokeblockToConditions.

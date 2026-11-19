@@ -306,7 +306,7 @@ const UiScreen gUiForgetMoveScreen = { Enter, Update, Build, NULL };
 // older move?" opens FORGET (the summary screen's hook) and comes back here. Circle or CANCEL:
 // "Give up?". The game's texts; every step goes through move_relearner.c's MoveRelearner_*ForUi.
 
-enum { RL_LIST, RL_ASK_TEACH, RL_ASK_DELETE, RL_ASK_GIVE_UP, RL_RESULT };
+enum { RL_LIST, RL_ASK_TEACH, RL_ASK_DELETE, RL_ASK_STOP, RL_ASK_GIVE_UP, RL_RESULT };
 #define RL_ROWS 5
 static uint16_t sRlMoves[MAX_RELEARNER_MOVES];
 static int32_t sRlCount, sRlState;
@@ -377,8 +377,9 @@ static void RlEnter(void)
         }
         else
         {
-            // FORGET left with the new move or circle: "Stop trying to teach X?" (GBA: back to the list)
+            // FORGET left with the new move or circle: "Stop trying to teach X?" (MENU_STATE_PRINT_STOP_TEACHING)
             RlExpand(gText_MoveRelearnerStopTryingToTeachMove, move, MOVE_NONE);
+            RlAsk(RL_ASK_STOP, "STOP TEACHING?");
         }
     }
 }
@@ -416,6 +417,19 @@ static bool RlUpdate(const UiInput *in)
             sRlBack = true;
             sRlSlot = MAX_MON_MOVES;
             UiNav_Close(RlStartForget);
+            return true;
+        }
+        // "Delete an older move?" NO, or "Stop teaching?" NO: the other question, as the GBA scene
+        if (sRlState == RL_ASK_DELETE && !yes)
+        {
+            RlExpand(gText_MoveRelearnerStopTryingToTeachMove, move, MOVE_NONE);
+            RlAsk(RL_ASK_STOP, "STOP TEACHING?");
+            return true;
+        }
+        if (sRlState == RL_ASK_STOP && !yes)
+        {
+            RlExpand(gText_MoveRelearnerPkmnTryingToLearnMove, move, MOVE_NONE);
+            RlAsk(RL_ASK_DELETE, "DELETE A MOVE?");
             return true;
         }
         if (sRlState == RL_ASK_GIVE_UP && yes)

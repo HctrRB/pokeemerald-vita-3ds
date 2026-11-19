@@ -709,10 +709,14 @@ void GoToBagMenu(u8 location, u8 pocket, void ( *exitCallback)())
 {
 #ifdef PLATFORM_VITA
     // Port: the new UI's BAG in its "choose an item" mode for the scripts that ask for one
-    if (IsScriptChoiceLocation(location) && Ui_OpenBagChoice(pocket))
+    // (the location first: the new BAG reads its action and rules from it when it opens)
+    if (IsScriptChoiceLocation(location))
     {
         gBagPosition.location = location;
         gBagPosition.exitCallback = exitCallback;
+    }
+    if (IsScriptChoiceLocation(location) && Ui_OpenBagChoice(pocket))
+    {
         // SetupBagMenu's resets: the field under it stops running (it is reloaded on exit)
         SetVBlankHBlankCallbacksToNull();
         ClearScheduledBgCopiesToVram();

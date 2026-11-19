@@ -143,7 +143,6 @@ int32_t UiGame_FeedPokeblock(int32_t slot, int32_t pkblSlot);   // 1 loved, 0 at
 // What feeding would add, in UiGame_Condition's order (COOL BEAUTY CUTE SMART TOUGH), capped at
 // the maximum, and the sheen it would add; returns the taste (1 loved, 0, -1 disliked)
 int32_t UiGame_PokeblockGains(int32_t slot, int32_t pkblSlot, int16_t gain[5], int16_t *sheen);
-void UiGame_NatureTaste(int32_t slot, char *nature, size_t cap, int8_t *likes, int8_t *dislikes);   // flavour index or -1
 bool UiGame_OpenBattleMenu(const void *screen);
 
 // Battle BAG / POKEMON (ui_game_battle.c)
