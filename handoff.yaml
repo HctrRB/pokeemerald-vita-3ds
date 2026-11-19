@@ -3,15 +3,15 @@
 # docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
 last_updated: "2026-11-19"
 branch: main
-current_milestone: "v0.5.7c released: battle AI / Natural Cure switch / double-battle & HUD MOVE_UNAVAILABLE OOB hardening (#8 + Gyms 6/7 + League/Frontier audit)"
+current_milestone: "Documentation reorganised by type and corrected against the code (docs/plan/DOCS_AND_STATE_STUDY.md) before the debugging/refactor work; latest release v0.5.7c"
 
 phases:
   phase_0_safety_net: done
   phase_1_file_cleanup: done
   phase_2_documentation: done
   phase_3_wide_scene: done                  # stage scenes, pass 6 masks, 240-px overlay; HM banner deferred
-  phase_4_structure_readability: paused     # 4a done; 4b/4c (voxel_renderer.c split) left; tag rollback/pre-phase4
-  phase_5_typing_and_warnings: paused       # fixed-width types done; const pass pending; tag rollback/pre-phase5
+  phase_4_structure_readability: superseded # 4a done; the rest moved to docs/plan/PLAN_DEPURACION_REFACTOR.md
+  phase_5_typing_and_warnings: superseded   # fixed-width types done; the rest moved to docs/plan/PLAN_DEPURACION_REFACTOR.md
   phase_6_public_repo_and_docs: done        # fetch_assets, build_all, BUILD_YOUR_OWN/COMPILA_TU_VPK, NOTICE.md
   chunk_streaming_performance: done         # E0-E4 + no-wait frames + 3D Fly + procedural culling
   native_ui_core_and_themes: done           # src/platform/ui/ + battle HUD + 6 themes; old 3DS UI removed (6c481fd)
@@ -22,10 +22,13 @@ phases:
   graphics_options_and_lamps: done          # v0.5.7 (dc42d7e): GRAPHICS tab, DoF decoupled, per-chunk night lamps + Lilycove beacon
   battle_ai_oob_audit: done                 # v0.5.7b (#8) + Gym 6/7 (5a0af13) + League/Frontier audit (docs/plan/AUDITORIA_COMBATES_LIGA_FRENTE.md)
   voxelgen_terrain_fixes: in_progress       # docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md
+  documentation_reorganisation: in_progress # docs/plan/DOCS_AND_STATE_STUDY.md: steps 1-2 done (8eff5032), 3 = this commit
+  debugging_and_refactor: planned           # docs/plan/PLAN_DEPURACION_REFACTOR.md, re-validated after the documentation work
 
 tags:
   latest_release: v0.5.7c                   # battle OOB hardening (v0.5.7b #8 + Gym 6/7 Natural Cure / doubles / HUD fixes)
   stable: stable/2026-11-05
+  rollback_pre_docs: rollback/pre-docs-2026-11-19
   rollback_pre_refactor: rollback/pre-refactor-2026-11-19
   rollback_pre_battle_exit_fix: rollback/pre-battle-exit-fix
   rollback_pre_refactor_voxel: rollback/pre-refactor-voxel
@@ -35,7 +38,7 @@ tags:
 # Active pending checks on real PS Vita hardware (Vita3K cannot be used for visuals/perf).
 pending_hardware_tests:
   today_2026_11_19:
-    - "Pokecenter heal machine (uncommitted, VPK built, after Bravely Emerald): the balls are drawn as cards on the machine in the 3D field and the monitor flash is hidden there; check 1 and 6 Pokemon, several Pokecenters, and that the Hall of Fame record is unchanged."
+    - "Pokecenter heal machine (55868979, after Bravely Emerald): the balls are drawn as cards on the machine in the 3D field and the monitor flash is hidden there; check 1 and 6 Pokemon, several Pokecenters, and that the Hall of Fame record is unchanged."
     - "Issue #8 / v0.5.7b (src/battle_ai_script_commands.c): battle vs Wally outside Mauville Gym with move_split=1 after a failed turn (confusion self-hit / paralysis / sleep / flinch); awaiting reporter feedback on v0.5.7b."
     - "Gym 6 & 7 battle fixes (5a0af13): Winona's sleeping Natural Cure Swablu/Altaria (ShouldSwitchIfNaturalCure in battle_ai_switch_items.c), Tate & Liza double battle (GetMoveTarget in battle_util.c, target selection & cancel in ui_battle_hud.c)."
     - "v0.5.7 graphics & night lamps: GRAPHICS tab (HD-2D OFF/LOW/MED/HIGH combined with 30/60 FPS), DoF off keeping bloom/shafts, per-chunk night street lamps + character lighting + Lilycove beacon pool."
@@ -46,8 +49,8 @@ pending_hardware_tests:
     - "Native UI visual & navigation pass across the 6 themes (GBA default, RED, EMERALD, CRYSTAL, TROPICAL, ROYAL): HUB, Party, Summary, Bag, Pokédex, PokéNav (CONDITION radar & Pokéblock feeding), Trainer Card, Options, PC Boxes, Player PC (WITHDRAW/DEPOSIT/decorations) and Battle HUD."
     - "Dialogue mirrors (ui_mirror.c) in 2D evolution, egg-hatch and trade scenes."
 
-  performance_general:
-    - "Long-session memory stability (>30 min play): monitor free newlib RAM, vitaGL VRAM/RAM/CDRAM (40 MB RAM / 88 MB CDRAM pools) and PHYCONT in perf_summary.txt."
+  performance_general:   # all of these need a build with -DVITA_TELEMETRY=ON (off by default)
+    - "Long-session memory stability (>30 min play): monitor free newlib RAM, vitaGL VRAM/RAM/CDRAM (pools: the vglInitWithCustomSizes call in MainThread_Boot) and PHYCONT in perf_summary.txt (needs a -DVITA_TELEMETRY=ON build)."
     - "General framerate & pacing telemetry (perf_summary.txt / perf_frames.csv): locked 30 FPS in HD-2D HIGH (dense trees, Rustboro/Mauville at night) and 60 FPS in HD-2D LOW."
     - "Map-crossing spikes (10-20 ms when composing a fresh atlas slot), long mountain chunks on Core 2 (15-35 ms), Core 2 contention between VoxelChunkWorker and DrawWorker1/2, and intermittent memory-card sync stalls (ui_stall.log)."
 
@@ -59,7 +62,8 @@ open_issues:
   - "Walda's FRIENDS wallpaper ignores tile frames."
 
 next_steps:
+  - "Documentation reorganisation (docs/plan/DOCS_AND_STATE_STUDY.md, Part D): step 4 (git mv into guides/, reference/, plan/, reports/, history/; finished plans archived; living plans translated to English), 5 (docs/guides/RELEASE.md + release scrub patch), 6 (tools/doc_check in the build), 7 (public README, after fetching GitHub edits), 8 (re-validate PLAN_DEPURACION_REFACTOR.md)."
   - "Tag next release once hardware feedback on v0.5.7b (#8) and Gym 6/7 fixes (5a0af13) is confirmed (docs/plan/AUDITORIA_COMBATES_LIGA_FRENTE.md; watch item: battle_controllers.c:1150 gBattleMoves[gCurrentMove].type kept untouched per vanilla Emerald)."
   - "Migrate remaining secondary GBA screens (Batch 2 & 3) and implement Contest UI replacement (docs/plan/PLAN_UI_CONCURSO.md, design/contest_mockups.html)."
   - "Run general performance & long-session telemetry pass on PS Vita and tune Core 2 worker priority / atlas composition if spikes show up."
-  - "Resume map-by-map voxel terrain fixes (docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md) and Refactoring Phase 4b/4c & Phase 5 (docs/plan/ESTUDIO_REFACTORIZACION.md)."
+  - "Resume map-by-map voxel terrain fixes (docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md); the debugging, typing and refactor work follows docs/plan/PLAN_DEPURACION_REFACTOR.md once the documentation work is done."

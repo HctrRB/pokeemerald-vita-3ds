@@ -159,7 +159,7 @@ avoid `glTexSubImage2D` via direct `vglGetTexDataPointer` writes or use double-b
   (`WriteSpriteAtlasSlots`, `vglGetTexDataPointer`), as vitaGL's own direct path does; the GPU
   may still read it for the previous frame, so a billboard can show its new frame one frame early.
 - GBA overlay (pass 6): not converted nor uploaded when its image hash is unchanged.
-- New UI texture (`src/platform/ui/`, 1024×2048 RGBA5551): the fixed atlas on top (rows 0–1023,
+- New UI texture (`src/platform/ui/`, `UI_TEX_W`×`UI_TEX_H` RGBA8888, unpacked from the atlas's 16-bit texels): the fixed atlas on top (rows 0–1023,
   `assets/ui2/ui_atlas.bin` v3 built by `tools/ui2/build_atlas.py`, holding every theme's
   baked fonts and fixed GBA sprites) is uploaded once; the 256 64×64 cells below (rows 1024–2047)
   receive sprites decoded at run time (Pokémon icons and front sprites, trainers, item icons,

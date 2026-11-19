@@ -6,7 +6,9 @@ project:
   target: PS Vita (Cortex-A9 x3 user cores, PowerVR SGX543MP4+, 512 MB RAM)
   toolchain: VitaSDK 2026.08 in MSYS2, CMake, vitaGL
   branch: main (published on GitHub at HctrRB/pokeemerald-vita-3ds; history squashed on 2026-11-05)
-  language: English for code, comments and documentation (decided 2026-11-05)
+  language: English for code, comments and every document (decided 2026-11-05, confirmed
+    2026-11-19). The players' build guide is also kept in Spanish (BUILD_YOUR_OWN in two
+    languages, both changed in the same commit); docs/history keeps its original language.
 
 licensing:
   - Files derived from Emerald 3DS (ZallaxDev/emerald-3ds v0.5.0) are CC BY-NC-SA 4.0; MIT covers
@@ -33,19 +35,20 @@ gpu_and_threads:
     in tools/core_boundary/allow.txt; the build fails otherwise (check_core_boundary.py on the
     linked ELF). Code ported from Emerald 3DS (single-threaded) must be split into a Core 1
     capture and a Core 0 reader, never called from the renderer as it is.
+  - The map loader calls GameFrame_BeginMapMutation (sets sMapMutationLock, starts a map epoch);
+    publishing the next game frame clears the lock. Core 0 uses the live map grid only while
+    GameFrame_MapSettled() (the pinned frame is of that map): without the epoch, the pinned
+    frame's old location and the live new grid mixed for one frame. Plan and its outcome:
+    docs/plan/PLAN_FRONTERA_MULTICORE.md.
   - vitaGL's glTexSubImage2D copies a whole texture drawn in the last 4 swaps: textures rewritten
     at run time use spares or are written in place (docs/RENDERING.md).
   - Animated atlas tiles may only be refreshed from BG VRAM for the active atlas slot (VRAM holds
     only the current map's tileset).
   - Opaque passes keep alpha test and blending off for SGX543 early-Z; fullscreen blended quads
     are avoided.
-  - Entity snapshot (`voxel_entities.c`) uses a 4-slot lock-free ring (`VOXEL_SNAP_SLOTS = 4`)
-    with Core 0 per-frame pinning (`VoxelEntities_BeginFrameSnapshot` / `EndFrameSnapshot`);
-    `sMapMutationLock` is released exclusively by `VoxelEntities_PublishSnapshot()` so Core 0
-    never mixes new-map instances with old-map entity coordinates.
   - Core 2 `VoxelChunkWorker` processes adaptive 2/4-chunk batches with cooperative abort
     (`sAsyncAbortBatch`), never stalled/duplicated by Core 0 hole builds while busy; `UploadChunkVbo`
-    orphans VBOs drawn within `VOXEL_VITAGL_PURGE_FRAMES` (4) so SGX543 never reads overwritten CDRAM.
+    orphans VBOs drawn within `VOXEL_VITAGL_PURGE_FRAMES` so SGX543 never reads overwritten CDRAM.
   - `VoxelWorld_MarkUsedMetatiles` caches static per-`layoutId` metatile masks in a 32-entry LRU
     (~34 KB BSS) so zone crossings merge in <1 ms instead of rescanning 40,000 tiles.
   - 3D Fly cinematic (`voxel_fly.c/.h` CC BY-NC-SA 4.0 from emerald-3ds `8bba417`, Core 1/Core 0
@@ -54,14 +57,16 @@ gpu_and_threads:
 
 storage:
   app_assets: app0:voxel/, app0:ui/, app0:ui2/, app0:followers/followers.pak (PKF1 container)
-  user_data: ux0:data/POKEVITA/ (saves/, pokeemerald.cfg, settings.txt, debug.log, perf_*)
+  user_data: ux0:data/POKEVITA/ (saves/, pokeemerald.cfg, settings.txt; thread_violations.log only
+    on a violation; debug.log, perf_* and ui_stall.log only in VITA_LOGGING / VITA_TELEMETRY builds)
   notes:
     - Logging to the memory card can stall for hundreds of ms: never log per frame.
 
 widescreen:
-  - widescreen.c is what makes GBA screens panoramic (288-px lines). The user's console has it
-    enabled through pokeemerald.cfg. Approved replacement: "Wide Scene" (docs/plan/ANALISIS_WIDESCREEN.md),
-    recycling Emerald 3DS's scene classification and margin policies, not its GPU compositor.
+  - widescreen.c makes GBA screens panoramic (288-px lines) and is always on (Widescreen_IsOn).
+    The "Wide Scene" design (docs/plan/ANALISIS_WIDESCREEN.md) recycled Emerald 3DS's scene
+    classification and margin policies, not its GPU compositor; what is left is listed in
+    docs/SCENES_16_9.md, "Not done".
 
 menus:
   - The GBA menus and the GBA overlay over 3D were replaced by the native touch UI in
@@ -93,7 +98,7 @@ new_ui:
     and UiPlayerPc_ReenterFromField reopens the tab on return.
   - Every menu opens on its first tab; circle held 1 s closes the whole UI.
   - Menu themes: OPTIONS > GENERAL > DISPLAY > MENU COLOR (extra "ui_theme", ui_theme.c): GBA
-    (default, Press Start 2P / VT323, stepped 9-slice Gen 3 framing and scanlines via gbaFrame),
+    (default, antialiased VT323, Gen 3 framing via gbaFrame),
     RED (Saira Condensed), EMERALD (Press Start 2P / VT323), CRYSTAL (M PLUS Rounded 1c),
     TROPICAL (Fredoka), ROYAL (Exo 2). Applied across every menu screen, the battle HUD
     (ui_battle_hud.c via UiW_ThemeBox), and zone signs (ui_sign.c); design/stitch mocks support ?theme=.
@@ -124,3 +129,19 @@ battle_memory_invariants:
     (`C2-12828-1`). Any AI, battle-util, or UI code reading `gLastMoves[]`, `gLastLandedMoves[]`,
     `BATTLE_HISTORY->usedMoves[]`, `gChosenMove`, or `gCurrentMove` must sanitize/validate
     `< MOVES_COUNT` before indexing `gBattleMoves[]` or `gMoveCategories[]`.
+
+documentation:
+  - Decided 2026-11-19, after a code-based audit found the reference docs stale while their links
+    still resolved (study: docs/plan/DOCS_AND_STATE_STUDY.md).
+  - Organised by type. Front page at the root; docs/guides and docs/reference (public);
+    docs/plan (living plans only), docs/reports, docs/proposals and docs/history (private, kept
+    out of the public snapshot). docs/reference is the only technical source of truth.
+  - Reference docs cite symbols and constant names, never line numbers or copied values; every doc
+    under docs/ starts with "Type · Audience · Status" and "Verified against: <commit>"; a commit
+    that changes documented behaviour updates its reference doc in the same commit.
+  - This file is the record of decisions; an entry that needs more detail links to the document
+    that explains it, in that document's own folder (no separate decisions folder).
+  - CONTRIBUTING rules relaxed: a file header only for new or rewritten files; no mandatory
+    @brief, a comment where a function's thread, ownership or side effects are not obvious.
+  - The documentation check fails the build on docs/reference and docs/guides and only warns
+    on plans, reports, proposals and history.

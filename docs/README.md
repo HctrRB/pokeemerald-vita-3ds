@@ -20,3 +20,14 @@ changing. Contribution rules are in [../CONTRIBUTING.md](../CONTRIBUTING.md).
 | [DEBUGGING.md](DEBUGGING.md) | Logs, per-frame telemetry, thread violations, crash dumps |
 
 The design mocks of the new UI are in [../design/stitch/](../design/stitch/README.md).
+
+## Rules for documentation
+
+- **English**, for every document. The players' build guide is also kept in Spanish
+  ([COMPILA_TU_VPK.md](COMPILA_TU_VPK.md)); both change in the same commit.
+- **Reference documents describe the code as it is today** and are the only technical source of
+  truth. They cite symbols and constant names, never line numbers or copied values (a number copied
+  into a document goes stale; a name can be looked up).
+- **A commit that changes documented behaviour updates the document in the same commit.**
+- Every document here starts with two lines: `Type · Audience · Status` and
+  `Verified against: <commit>`.

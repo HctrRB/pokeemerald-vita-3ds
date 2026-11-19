@@ -25,7 +25,7 @@ chord after a reset until at least one button is released).
 ## New UI (`src/platform/ui/`)
 
 Core 1 (the game thread) runs `Ui_Tick` between game frames and builds a draw list; Core 0 draws
-it in one call over one 1024×2048 RGBA5551 texture (fixed atlas `assets/ui2/ui_atlas.bin` in rows
+it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture (fixed atlas `assets/ui2/ui_atlas.bin` in rows
 0–1023 + 256 64×64 cells in rows 1024–2047 for sprites decoded at run time). See
 [THREADS.md](THREADS.md) and [RENDERING.md](RENDERING.md).
 

@@ -26,13 +26,15 @@ Language: **English** for identifiers, comments and documentation.
    per function, aiming at ≤ 50 lines. Hot loops in the renderers may be longer when splitting
    them costs measurable time; say so in a comment.
 3. **No magic values**: named constants, enums or macros. No duplicated blocks.
-4. **File header**: every file starts with a comment saying what it does, which thread runs it,
-   and where it comes from (original, pokeemerald-multiplatform, Emerald 3DS) with its licence.
-5. **Public functions** in headers get a `/** @brief … */` comment: what it does, parameters,
-   thread, ownership of returned pointers.
+4. **File header**: a new file, or one split off or rewritten, starts with a comment saying what it
+   does, which thread runs it, and where it comes from (original, pokeemerald-multiplatform,
+   Emerald 3DS) with its licence.
+5. **Comments where it is not obvious**: a function whose thread, ownership of returned pointers
+   or side effects cannot be told from its name and signature gets a comment saying so.
 6. **Vita safety**: check every `sce*` return value (negative is an error). No buffers over
    4 KB on the stack. No `printf`; use `VITA_LOG`. Exit with `sceKernelExitProcess(0)`.
-7. **Threads**: follow [docs/THREADS.md](docs/THREADS.md). Core 0 never writes game state.
+7. **Threads**: follow [docs/THREADS.md](docs/THREADS.md). The game runs on Core 1 only: Core 0 and
+   Core 2 read it through the game frame, and the build checks it (`tools/core_boundary`).
 8. **CMake**: target properties only (`target_include_directories`, `target_link_libraries`, …).
 
 Formatting: `src/platform/.clang-format` and `.editorconfig` (Allman braces, 4 spaces, 110
@@ -47,7 +49,9 @@ columns). Format only the lines you change; don't mix formatting with logic in o
    `perf_frames.csv` before and after ([docs/DEBUGGING.md](docs/DEBUGGING.md)).
 4. Commit in small steps. Message: `type(scope): summary` (`feat`, `fix`, `perf`, `refactor`,
    `docs`, `build`, `chore`), with a body explaining why.
-5. Update the documentation in `docs/` that your change makes wrong, in the same branch.
+5. Update the documentation your change makes wrong in the same commit, in English. Reference
+   docs cite symbols and constant names, never line numbers or copied values. A change to the
+   players' build guide goes into both of its languages. See [docs/README.md](docs/README.md).
 
 ## Smoke test (on hardware: Vita3K shows a black screen)
 
@@ -59,4 +63,5 @@ columns). Format only the lines you change; don't mix formatting with logic in o
 6. START: every screen of the menu hub; save from the hub.
 7. Buy and sell in a shop.
 8. A field move (Cut or Surf) and Fly.
-9. Quit to LiveArea.
+9. OPTIONS > GRAPHICS: each HD-2D level at 30 and 60 FPS, by day and at night (street lamps).
+10. Quit to LiveArea, then check that `ux0:data/POKEVITA/thread_violations.log` does not exist.
