@@ -116,3 +116,11 @@ soft_reset:
     before Core 1 calls `Ui_OnReset()` and `VitaReset_RestoreBootSnapshot()`.
   - `rfu_REQ_stopMode()` / `rfu_waitREQComplete()` in `AgbMain` and `link.c` are guarded by
     `#ifndef PORTABLE` because `InitRFU()` is skipped on portable builds (`gSTWIStatus == NULL`).
+
+battle_memory_invariants:
+  - `gBattleMoves[MOVES_COUNT]` is mutable in `.bss` (`src/platform/mods/mod_manager.c`) near the
+    end of `seg2`. Unlike GBA ROM (no MMU), indexing `gBattleMoves[MOVE_UNAVAILABLE]` (`0xFFFF`,
+    offset `+0x8FFF7`) lands in unmapped memory and triggers an immediate ARM Data Abort
+    (`C2-12828-1`). Any AI, battle-util, or UI code reading `gLastMoves[]`, `gLastLandedMoves[]`,
+    `BATTLE_HISTORY->usedMoves[]`, `gChosenMove`, or `gCurrentMove` must sanitize/validate
+    `< MOVES_COUNT` before indexing `gBattleMoves[]` or `gMoveCategories[]`.

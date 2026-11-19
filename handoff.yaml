@@ -1,136 +1,63 @@
-# Current state and next steps. Earlier logs: docs/history/handoff_2026-11-05.yaml and the
-# performance study docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
+# Current state and next steps.
+# Earlier logs: docs/history/handoff_2026-11-05.yaml and
+# docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
 last_updated: "2026-11-19"
 branch: main
-current_milestone: "v0.5.7b released: fix battle AI MOVE_UNAVAILABLE (0xFFFF) OOB crash (#8) on top of v0.5.7"
+current_milestone: "v0.5.7b released (32efa04) + Gym 6/7 battle OOB fixes committed locally (5a0af13)"
 
 phases:
   phase_0_safety_net: done
   phase_1_file_cleanup: done
   phase_2_documentation: done
-  phase_3_wide_scene: done            # stage scenes, pass 6 masks, 240-px overlay; HM banner deferred
-  phase_4_structure_readability: paused   # 4a done (RenderFrame split); 4b/4c (voxel_renderer.c file split) left; tag rollback/pre-phase4
-  phase_5_typing_and_warnings: paused     # items 1, 3 and fixed-width types done; const pass pending now that UIs are replaced; tag rollback/pre-phase5
-  phase_6_public_repo_and_docs: done      # fetch_assets, build_all, BUILD_YOUR_OWN/COMPILA_TU_VPK, NOTICE.md, full docs sync + dead-code & unused SDL2_image removal
-  chunk_streaming_performance: done       # E0-E4 + no-wait frames; tags perf/e0 .. perf/nowait
-  native_ui_core_and_themes: done         # src/platform/ui/ Phases A-H, battle HUD Phases 0-6, 6 menu themes (GBA default + RED/EMERALD/CRYSTAL/TROPICAL/ROYAL) + unified GBA Gen 3 x Vita 20-screen UI/mockup (clean VT323 in ui_atlas.bin 1024x928, alpha 152 translucency, centered signs, fixed PokéNav/Pass/Bag header, GBA bevel/shadow/highlight polish & full UI nav/hitbox audit), old 3DS UI removed
-  native_ui_remaining_screens: pending    # batch 2 & 3 secondary GBA screens
-  voxelgen_terrain_fixes: in_progress     # local untracked voxelgen/ quick relief + 3D viewer/editor, Route 119 bridge & Lilycove/Mirage Island fixes, wide building culling extent (83300a5)
-  ext_palettes_and_visible_wilds: done    # F1-F7 implemented per docs/plan/PLAN_PALETAS_EXT.md
-  hd2d_30fps_upgrade: done                # 30 FPS HD-2D post-FX (Kawase bloom, DoF, split-tone, point lights, foliage sway/anim/ash-grass, surface FX); 60 (CLASSIC) untouched
-  graphics_options_and_lamps: done        # released as v0.5.7 (dc42d7e): DoF decoupled, GRAPHICS tab + HD-2D OFF/LOW/MED/HIGH, per-chunk night lamps + Lilycove beacon pool. Warmer lamp colour (94c301c) reverted in ba2543a: it dropped below 30 FPS, most likely the full-screen warm-keep term in the HD-2D composite shader; redo the warmth without touching that shader
+  phase_3_wide_scene: done                  # stage scenes, pass 6 masks, 240-px overlay; HM banner deferred
+  phase_4_structure_readability: paused     # 4a done; 4b/4c (voxel_renderer.c split) left; tag rollback/pre-phase4
+  phase_5_typing_and_warnings: paused       # fixed-width types done; const pass pending; tag rollback/pre-phase5
+  phase_6_public_repo_and_docs: done        # fetch_assets, build_all, BUILD_YOUR_OWN/COMPILA_TU_VPK, NOTICE.md
+  chunk_streaming_performance: done         # E0-E4 + no-wait frames + 3D Fly + procedural culling
+  native_ui_core_and_themes: done           # src/platform/ui/ + battle HUD + 6 themes; old 3DS UI removed (6c481fd)
+  native_ui_remaining_screens: pending      # Batch 2 & 3 secondary GBA screens + full Contest UI
+  ext_palettes_and_visible_wilds: done      # F1-F7 (docs/plan/PLAN_PALETAS_EXT.md)
+  hd2d_30fps_upgrade: done                  # 30 FPS HD-2D post-FX + night window glow
+  multicore_game_frame_boundary: done       # ba18aca: GameFrame contract + build-time tools/core_boundary check
+  graphics_options_and_lamps: done          # v0.5.7 (dc42d7e): GRAPHICS tab, DoF decoupled, per-chunk night lamps + Lilycove beacon
+  battle_ai_oob_audit: in_progress          # v0.5.7b (#8) + Gym 6/7 (5a0af13) done; remaining battle/trainer routines audit next
+  voxelgen_terrain_fixes: in_progress       # docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md
 
 tags:
-  stable: stable/2026-11-05               # last tested build before the docs cleanup
-  rollback_pre_perf: rollback/pre-perf-streaming
+  latest_release: v0.5.7b                   # 32efa04: battle AI MOVE_UNAVAILABLE (#8) fix on top of v0.5.7
+  stable: stable/2026-11-05
+  rollback_pre_refactor: rollback/pre-refactor-2026-11-19
+  rollback_pre_battle_exit_fix: rollback/pre-battle-exit-fix
+  rollback_pre_refactor_voxel: rollback/pre-refactor-voxel
   rollback_pre_phase4: rollback/pre-phase4
   rollback_pre_phase5: rollback/pre-phase5
-  rollback_pre_tree_hsr: rollback-e537861 # before opaque tree core HSR optimization
-  rollback_pre_refactor_voxel: rollback/pre-refactor-voxel # pre-refactor snapshot of Fly/culling/streaming fixes
-  rollback_pre_battle_exit_fix: rollback/pre-battle-exit-fix # before battle-exit freeze/teleport fix (03555d1)
 
-performance_sesion_49:   # logs/sesion 49, 30/60 FPS, 3D (5749 3D frames, 44 zone crossings)
-  - Frame p50 / p95 / p99: 24.29 / 33.21 / 39.23 ms; 44 zone crossings at 0.54-0.94 ms atlas_slots_ms
-    (100x faster via 32-layout VoxelWorld_MarkUsedMetatiles cache), 0 black chunks in normal play,
-    Fly cloud loading screen ~1-2 ms/frame while Core 2 drains 96 aerial chunks in 4-chunk batches.
+# Active pending checks on real PS Vita hardware (Vita3K cannot be used for visuals/perf).
+pending_hardware_tests:
+  today_2026_11_19:
+    - "Issue #8 / v0.5.7b (src/battle_ai_script_commands.c): battle vs Wally outside Mauville Gym with move_split=1 after a failed turn (confusion self-hit / paralysis / sleep / flinch); awaiting reporter feedback on v0.5.7b."
+    - "Gym 6 & 7 battle fixes (5a0af13): Winona's sleeping Natural Cure Swablu/Altaria (ShouldSwitchIfNaturalCure in battle_ai_switch_items.c), Tate & Liza double battle (GetMoveTarget in battle_util.c, target selection & cancel in ui_battle_hud.c)."
+    - "v0.5.7 graphics & night lamps: GRAPHICS tab (HD-2D OFF/LOW/MED/HIGH combined with 30/60 FPS), DoF off keeping bloom/shafts, per-chunk night street lamps + character lighting + Lilycove beacon pool."
+    - "Dewford Gym (Gym 2) 3D visual check: verify Flash darkness radius (REG_WIN0H / Pass 6) renders cleanly in 3D."
 
-performance_sesion_27:   # logs/sesion 27, 60 FPS, 3D
-  - Frame mean / p95 / p99: 7.5 / 14.3 / 19.7 ms; >16.7 ms 1.65 %, >33.3 ms 0.01 % (was 12.7 % and
-    0.83 % before the work). No visible holes; chunk builds on Core 2, Core 0 waits gone.
-  - GBA menus and the battle HUD have since been replaced by the native touch UI in
-    src/platform/ui/ (~0.8 ms Core 0 / ~0.3 ms Core 1 in session 31, down from 5-18 ms in Pass 6).
+  ui:
+    - "Native UI visual & navigation pass across the 6 themes (GBA default, RED, EMERALD, CRYSTAL, TROPICAL, ROYAL): HUB, Party, Summary, Bag, Pokédex, PokéNav (CONDITION radar & Pokéblock feeding), Trainer Card, Options, PC Boxes, Player PC (WITHDRAW/DEPOSIT/decorations) and Battle HUD."
+    - "Dialogue mirrors (ui_mirror.c) in 2D evolution, egg-hatch and trade scenes."
 
-vita3k:
-  - Vita3K (A:\juegos\Vita3k, v0.2.1) boots the game with the Vulkan backend but shows a black
-    screen (vitaGL output not presented); the OpenGL backend crashes the emulator. Visual checks
-    and performance numbers are taken on hardware.
+  performance_general:
+    - "Long-session memory stability (>30 min play): monitor free newlib RAM, vitaGL VRAM/RAM/CDRAM (40 MB RAM / 88 MB CDRAM pools) and PHYCONT in perf_summary.txt."
+    - "General framerate & pacing telemetry (perf_summary.txt / perf_frames.csv): locked 30 FPS in HD-2D HIGH (dense trees, Rustboro/Mauville at night) and 60 FPS in HD-2D LOW."
+    - "Map-crossing spikes (10-20 ms when composing a fresh atlas slot), long mountain chunks on Core 2 (15-35 ms), Core 2 contention between VoxelChunkWorker and DrawWorker1/2, and intermittent memory-card sync stalls (ui_stall.log)."
 
 open_issues:
-  - Secondary screens still falling back to GBA (Pass 6): post-catch Pokedex entry over 3D battle,
-    summary opened from a PC box (sBoxCursorArea), Move Relearner / Deleter, Contest / Battle
-    Frontier party choice, Battle Pyramid bag in battle and its "bag full: toss" step, and Easy
-    Chat Bard song / quiz variants. Link / recorded battles, Wally's catching tutorial and Battle
-    Arena judgment intentionally keep the GBA HUD. Walda's FRIENDS wallpaper ignores tile frames.
-  - Chunk worker shares Core 2 with DrawWorker1/2: overlay scanlines 3.5 -> 5 ms on average when
-    running together. Fix if needed: lower VoxelChunkWorker priority below DrawWorker1/2 (docs/THREADS.md).
-  - Long mountain chunks cost 15-35 ms on Core 2; lighting is most of it (E5b pending).
-  - Map crossing frame still costs 10-20 ms when an atlas slot has to be composed from scratch
-    (ComposeAtlasSlot is not spread over frames; extensions are).
-  - Long-session CDRAM stability (>30 min play) still needs hardware verification after raising
-    vitaGL pools to 40 MB RAM / 88 MB CDRAM (aecb746) to stop chunk VBO fragmentation; also monitor
-    intermittent stalls caused by synchronous memory card writes (ui_stall.c, 120-frame perf_frames.csv flush).
-  - Faulty voxel terrain and black relief-mesh holes on routes and caves catalogued in
-    docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md (Route 119 long bridge, Lilycove and Mirage Island fixed locally).
-  - Cave fog banks (`DrawFogBanks` with `underground = true`) can look slightly odd over cave floor/wall relief transitions.
-
-untested_on_hardware:
-  - Battle AI MOVE_UNAVAILABLE (0xFFFF) OOB fixes in src/battle_ai_script_commands.c (#8, v0.5.7b),
-    src/battle_ai_switch_items.c (ShouldSwitchIfNaturalCure, Winona's Swablu/Altaria),
-    src/battle_util.c (GetMoveTarget double battle guard) and src/platform/ui/ui_battle_hud.c:
-    need confirmation on hardware (e.g. Wally outside Mauville Gym with move_split=1, sleeping Natural Cure mons in Fortree Gym, double battles in Mossdeep Gym).
-  - GBA Gen 3 x Vita UI skin (UI_THEME_GBA default, matched against design/stitch/gba_vita/index.html 20-screen mockup):
-    01_hub (centered zone sign + Hub plate, 2x2 dark status card, 2x3 mini-party, START menu) & 10_save;
-    02_party & 04_summary (clipped long Pokemon names / levels / abilities); 03_bag (redundant header box
-    removed, fixed 304px pager, gold 8-row ledger, Battle Pyramid bag); 05_battle_cmd & 06_battle_fight
-    (asymmetric plates + diagonal tails); 07_pokedex (alpha-152 translucency + clean header, cry_meter);
-    08_pokenav (redundant bottom mode dock removed; L/R & touch navigation + fixed Ribbon memo height); 09_card
-    (Gold Card + clipped Frontier Pass rows + R ribbon/badge cycling); 11_options (GBA top pager + curved UiW_GbaBox list/pills/help).
-  - GBA skin polish pass (ui_widgets.c: 9-slice vibrant Emerald frames, specular top highlights & bottom inner bevels,
-    Hp/Exp track borders & highlights, tiled backdrop scanlines, L/R & pager bevels) and UI navigation/hitbox audit fixes.
-  - Clean antialiased GBA typography (ui_atlas.bin 1024x928, 32 fonts, 3168 glyphs; UI_THEME_GBA
-    faceTitle=14, faceBody=15, faceSign=15), semi-transparent alpha-152 menu backdrops showing the
-    3D voxel world behind menus, non-GBA themes (RED/EMERALD/CRYSTAL/TROPICAL/ROYAL), and centered
-    biome zone entry plates (ui_sign.c, ui_scr_hub.c).
-  - PC boxes (ui_scr_pc.c: GBA Emerald skin + wallpaper drop shadow, centered box plate/L-R/info pills,
-    curved selection + pointer triangle, GBA popups; MOVE ITEMS Egg empty-menu fix & sHeldItem exit guard)
-    and player's PC (ui_scr_playerpc.c: integrated WITHDRAW/DEPOSIT header + non-overlapping 5-pocket sub-bar,
-    DPAD_LEFT/RIGHT pocket switching, Circle cancels SELECT move; mailbox, decoration return flow via UiPlayerPc_ReenterFromField).
-  - PokéNav CONDITION tab (ui_scr_nav.c: GBA non-linear sCondLen[256] spider curve, vertex numeric points,
-    theme-aware radar/attrs across all 6 themes, rounded attribute bars, Sheen sparkles, Egg handling,
-    continuous Pokéblock feeding without closing popup, X/Square feed trigger).
-  - Decoration shops (ui_scr_mart.c) and four-move forget-move screen (ui_scr_forget.c).
-  - Naming keyboard (ui_scr_naming.c), Easy Chat (ui_scr_easychat.c), berry choice (ui_scr_berry.c),
-    contest appeal choice (ui_contest.c), Day Care / tutor party choice (ui_scr_choose.c), multi-battle
-    party and Battle Pyramid field bag.
-  - Dialogue mirrors (ui_mirror.c) in 2D evolution, egg-hatch and trade scenes, and hold-frame flicker
-    suppression after PokeNav calls / YES-NO boxes.
-  - Smooth fade into 3D wild battles (battle_setup.c).
-  # Hardware-verified on PS Vita (2026-11-19): 3D Fly cinematic (climb/seamless clouds/descend + HD-2D
-  # preserved), procedural frustum culling (3-height projection + real ground/tree/building AABBs +
-  # plane slack, verified in Ever Grande City & Rustboro City), 4-slot pinned lock-free entity snapshot,
-  # 32-layout VoxelWorld_MarkUsedMetatiles cache (<1 ms crossings), Core 2 adaptive 2/4-chunk batching
-  # with cooperative abort, UploadChunkVbo VitaGL purge-window orphaning, EmitReliefUV NULL guard,
-  # and menu sMenuBgFbo freeze fix.
-  - Wide building culling extent (bldWest/East/North/South/Top in 83300a5, e.g. Rustboro's Devon Corp.).
-  - Long-session stability with 40 MB RAM / 88 MB CDRAM vitaGL pools (aecb746).
-  - Extended sprite palettes (`gPlttExt`) for the follower, its Poké Ball and reflection, and visible wild Pokémon in the overworld (`visible_wild` [default FEW], `encounter_rate` [default NORMAL]).
-  - [RELEASE TEST PENDING — not yet testable on current save] Buried trainers (Routes 111/113) & Route 120 bridge Kecleon hiding (`voxel_entities.c`), and rotating OAM gates (Fortree Gym / Trick House) projected flat on the ground via snapshotted `gOamMatrices` (`voxel_snapshot.h`, `voxel_entities.c`).
-  - Follower doorway hold in voxel mode (`follower_mon.c`), `relief_bare` fix in `VoxelBuildings_CellAt` + `lilycove_beacon` in `assets/voxel/buildings.bin`.
-  - Night building window glow (`Pass_BuildingGlow` + `VoxelBuildings_ReadGlowWorker` + Core 2 32x32 UV glow-occupancy bitmask partition `PartitionBuildingGlowTriangles` without `GL_ALPHA_TEST` in `voxel_renderer.c` / `voxel_unswizzle.h` / `voxel_tuning.h`, plus `voxel_windows.py` 53-building masks in `assets/voxel/buildings.bin`): verify all city houses glow at night and Rustboro City holds locked 30 FPS.
-  - Battle-exit freeze/teleport fix (`voxel_renderer.c`, `overworld.c`): decoupled same-map camera snap from `InvalidateChunkCache()`, restored overworld camera on the exact battle-exit frame, and guarded `ReturnToFieldLocal` with `sMapMutationLock`. Verify smooth wild/trainer battle exits while holding D-pad/stick.
-  - HD-2D 30 FPS final ash-grass polish (`19bb1ab`): `gTileset_Fallarbor` `MB_ASHGRASS` 3D sprite in Route 113 switching to green `MB_TALL_GRASS` on step (core HD-2D 30 FPS pass—DoF, 2-pass Kawase bloom, point lights, foliage wind-sway/player-bend shader, flower frame anim, grass step particles, softer fog—already verified at 30.1 FPS / 60.0 Hz / 0 holes in `logs/sesion 43/perf_summary.txt`).
-  - Smooth zone atmosphere transitions, 1-frame streetlamp blackout fix & 1-frame white flash suppression (`2068d7e`), Match Call random-call OOB trainer lookup crash fix (`e537861`), and opaque tree core HSR split (`bc842d1`; dense-tree FPS telemetry check pending). Standing-foliage-only wind sway (`TagAndPartitionTreeSway` restricted to standing grass/flowers/ash grass, all trees static), atlas mode-switch slot invalidation (`Frame_UpdateAtlas`), terrain-conformed fog (`DrawFogBanks` cached world grid), world-anchored motes (`DrawMotes`), UI dynamic sprite decompression & ring hardening (GitHub issue #7 fix in `ui_sprites.c`, `ui_core.c`, `decoration.c`: 8192-byte 4-frame `KIND_MON_FRONT` buffer for `Marshtomp`/`Poochyena`/`Blaziken`/`Walrein`/`Swablu`/`Castform`/`Rayquaza`, `UnpackLz` bounds validation, `sCellUpload` flush barrier, `UiSpr_BeginTick` in overlay pass, and `up->cell < UI_CELL_COUNT` guard), and soft-reset fix (GitHub issue #6 in `main.c`, `link.c`, `vita_reset.c`, `sdl2.c`, `ui_core.c`, `ui_sign.c`, `voxel_renderer.c`: `#ifndef PORTABLE` around `rfu_REQ_stopMode`/`rfu_waitREQComplete`, `.noinit` sentinel so `vita-elf-create` relocates `__stop_gamebss` in `.sce.rel`, Core 1 ↔ Core 0/Core 2 reset barrier + `VoxelRenderer_OnReset`/`Ui_OnReset`, and 4-button chord enabled in overworld) all hardware-verified on PS Vita (cave fog anomaly tracked in `open_issues`).
+  - "Secondary GBA screens still falling back to Pass 6: post-catch Pokédex entry over 3D battle, PC box summary (sBoxCursorArea), Move Relearner / Deleter, Contest & Battle Frontier party choice, Battle Pyramid in-battle / toss bag, Easy Chat Bard / quiz. (Link/recorded battles, Wally tutorial and Battle Arena judgment intentionally keep GBA HUD.)"
+  - "Warmer night lamp colour (94c301c, reverted in ba2543a): dropped below 30 FPS due to the full-screen warm-keep term in the HD-2D composite shader; redo warmth without touching that shader."
+  - "Cave fog banks (DrawFogBanks with underground=true) can look slightly odd over cave floor/wall relief transitions."
+  - "Remaining voxel terrain / relief-mesh fixes catalogued in docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md."
+  - "Walda's FRIENDS wallpaper ignores tile frames."
 
 next_steps:
-  - Multicore boundary build tested on PS Vita by the user (2026-11-19): weather, 3D battles,
-    Routes 130 / 131, Pacifidlog Town, shops; no Bad Eggs, no crash, no
-    ux0:data/POKEVITA/thread_violations.log. Keep that file in mind after future ports from
-    Emerald 3DS: any line in it is a new Core 0 -> game path (resolve lr with addr2line).
-  - Saves corrupted before this fix keep their Bad Eggs (the UI no longer crashes on them).
-    Optional: a repair of Pokemon whose secure block was left in plain text (plan, section 5).
-  - Inspect `ux0:data/POKEVITA/perf_summary.txt` / `perf_frames.csv` in dense-tree zones after `bc842d1` to confirm 30 FPS stability (if GPU fragment load or `Entities emit` spikes remain, apply internal diorama FBO scaling / entity atlas upload budgeting).
-  - Test the current VPK (build_vita.ps1) on PS Vita against untested_on_hardware (including PokéNav CONDITION,
-    Player PC Item Storage WITHDRAW/DEPOSIT, and Lanette's PC MOVE ITEMS) and inspect
-    ux0:data/POKEVITA/perf_summary.txt (free CDRAM and PHYCONT).
-  - Implement full Contest UI replacement following docs/plan/PLAN_UI_CONCURSO.md,
-    docs/plan/ANALISIS_CONCURSO_POKEMON.md, and design/contest_mockups.html (Phase 1: Stage HUD +
-    gFastDrawDispcntClear + sprite.c tag filter + 2x2 DPAD; Phase 2: PARTY_MENU_TYPE_CONTEST;
-    Phase 3: Results & Museum Painting).
-  - Implement Batch 2 & 3 of remaining secondary GBA screens in src/platform/ui/: post-catch Pokedex
-    entry, PC box summary, Move Relearner / Deleter, Frontier party choice, Battle Pyramid
-    in-battle / toss bag, and Easy Chat Bard / quiz.
-  - Continue map-by-map voxel terrain fixes (docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md,
-    docs/plan/ESTUDIO_TERRENO_RUTA119.md) and let VoxelFile_Open try ux0:data/POKEVITA/voxel/ before
-    app0:voxel/ so relief.bin edits can be tested without rebuilding the VPK.
-  - Resume Refactoring Phase 4b/4c (split voxel_renderer.c modules) and Phase 5 (const pass in
-    src/platform/) per docs/plan/ESTUDIO_REFACTORIZACION.md.
+  - "Continue battle & trainer routine audit (Elite Four, Battle Frontier, remaining battle scripts and AI paths for MOVE_UNAVAILABLE / OOB / double-battle edge cases), then push & release when ready."
+  - "Migrate remaining secondary GBA screens (Batch 2 & 3) and implement Contest UI replacement (docs/plan/PLAN_UI_CONCURSO.md, design/contest_mockups.html)."
+  - "Run general performance & long-session telemetry pass on PS Vita and tune Core 2 worker priority / atlas composition if spikes show up."
+  - "Resume map-by-map voxel terrain fixes (docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md) and Refactoring Phase 4b/4c & Phase 5 (docs/plan/ESTUDIO_REFACTORIZACION.md)."
