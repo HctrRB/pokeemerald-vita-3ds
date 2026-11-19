@@ -20,7 +20,7 @@ phases:
   hd2d_30fps_upgrade: done                  # 30 FPS HD-2D post-FX + night window glow
   multicore_game_frame_boundary: done       # ba18aca: GameFrame contract + build-time tools/core_boundary check
   graphics_options_and_lamps: done          # v0.5.7 (dc42d7e): GRAPHICS tab, DoF decoupled, per-chunk night lamps + Lilycove beacon
-  battle_ai_oob_audit: in_progress          # v0.5.7b (#8) + Gym 6/7 (5a0af13) done; remaining battle/trainer routines audit next
+  battle_ai_oob_audit: done                 # v0.5.7b (#8) + Gym 6/7 (5a0af13) + League/Frontier audit (docs/plan/AUDITORIA_COMBATES_LIGA_FRENTE.md)
   voxelgen_terrain_fixes: in_progress       # docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md
 
 tags:
@@ -38,7 +38,8 @@ pending_hardware_tests:
     - "Issue #8 / v0.5.7b (src/battle_ai_script_commands.c): battle vs Wally outside Mauville Gym with move_split=1 after a failed turn (confusion self-hit / paralysis / sleep / flinch); awaiting reporter feedback on v0.5.7b."
     - "Gym 6 & 7 battle fixes (5a0af13): Winona's sleeping Natural Cure Swablu/Altaria (ShouldSwitchIfNaturalCure in battle_ai_switch_items.c), Tate & Liza double battle (GetMoveTarget in battle_util.c, target selection & cancel in ui_battle_hud.c)."
     - "v0.5.7 graphics & night lamps: GRAPHICS tab (HD-2D OFF/LOW/MED/HIGH combined with 30/60 FPS), DoF off keeping bloom/shafts, per-chunk night street lamps + character lighting + Lilycove beacon pool."
-    - "Dewford Gym (Gym 2) 3D visual check: verify Flash darkness radius (REG_WIN0H / Pass 6) renders cleanly in 3D."
+    - "Dewford Gym (Gym 2) & Battle Pyramid 3D visual check: verify Flash darkness radius (REG_WIN0H / Pass 6) renders cleanly in 3D."
+    - "Battle Palace & Battle Arena hardware spot-check: verify native HUD stays out of the way of nature-based move choice and Arena judging (docs/plan/AUDITORIA_COMBATES_LIGA_FRENTE.md)."
 
   ui:
     - "Native UI visual & navigation pass across the 6 themes (GBA default, RED, EMERALD, CRYSTAL, TROPICAL, ROYAL): HUB, Party, Summary, Bag, Pokédex, PokéNav (CONDITION radar & Pokéblock feeding), Trainer Card, Options, PC Boxes, Player PC (WITHDRAW/DEPOSIT/decorations) and Battle HUD."
@@ -57,7 +58,7 @@ open_issues:
   - "Walda's FRIENDS wallpaper ignores tile frames."
 
 next_steps:
-  - "Continue battle & trainer routine audit (Elite Four, Battle Frontier, remaining battle scripts and AI paths for MOVE_UNAVAILABLE / OOB / double-battle edge cases), then push & release when ready."
+  - "Push local commits (5a0af13 + docs) and tag next release once hardware feedback on v0.5.7b / Gym 6-7 is confirmed (docs/plan/AUDITORIA_COMBATES_LIGA_FRENTE.md)."
   - "Migrate remaining secondary GBA screens (Batch 2 & 3) and implement Contest UI replacement (docs/plan/PLAN_UI_CONCURSO.md, design/contest_mockups.html)."
   - "Run general performance & long-session telemetry pass on PS Vita and tune Core 2 worker priority / atlas composition if spikes show up."
   - "Resume map-by-map voxel terrain fixes (docs/plan/LISTA_TERRENO_RUTAS_CUEVAS.md) and Refactoring Phase 4b/4c & Phase 5 (docs/plan/ESTUDIO_REFACTORIZACION.md)."
