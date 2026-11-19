@@ -32,7 +32,7 @@ touching anything that crosses threads.
 | Data | Writer | Reader | Protection |
 |---|---|---|---|
 | Game state: `gMain`, tasks, `gObjectEvents`, `gSprites`, save blocks | Core 1 | Core 0 (renderer) | Renderer reads entities only through the snapshot below. The new UI reads game state on Core 1 (`Ui_Tick`) and hands Core 0 only a draw list |
-| Entity snapshot `VoxelEntitySnapshot sSnapshots[2]` (`voxel_entities.c`, `include/platform/voxel_snapshot.h`) | Core 1, `VoxelEntities_PublishSnapshot()` in VBlank | Core 0, `VoxelEntities_GetVisibleSnapshot()` | Double buffer; index swap between release fences, acquire fence on read |
+| Entity snapshot `VoxelEntitySnapshot sSnapshots[4]` (`voxel_entities.c`, `include/platform/voxel_snapshot.h`) | Core 1, `VoxelEntities_PublishSnapshot()` in VBlank | Core 0, `VoxelEntities_BeginFrameSnapshot()` / `EndFrameSnapshot()` | 4-slot lock-free ring with Core 0 per-frame pinning (`sPinnedSnapIdx`); Core 1 skips the pinned slot |
 | Map layout during a map change | Core 1 (`CB2_LoadMap`, `DoMapLoadLoop`, connection transitions) | Core 0 (`voxel_world.c`) | `volatile uint32_t sMapMutationLock` (`overworld.c:102`): set by the loader, cleared when the next snapshot is published. Core 0 keeps drawing the previous instances meanwhile |
 | Emulated VRAM, OAM, palettes, registers | Core 1 | Draw workers (2D), Core 0 (overlay pass) | 2D: Core 1 is blocked while the frame is captured line by line. Overlay pass: read only; layers it hides are masked in each line's captured copy (`gFastDrawDispcntClear`, `gFastDrawBldcntClear`), never in the live registers |
 | Extended sprite palettes `gPlttExt[256]`, `gOamExt[128]` | Core 1 (VBlank: `TransferPlttBuffer`, `LoadOam`) | Draw workers (2D, latched once per `DrawFrame`), Core 1 (`RefreshSlot` reads `gPlttBufferUnfaded` in VBlank) | Same as `PLTT`/`OAM`; zero-cost skip when `gPlttExtInUse == 0` |
@@ -83,9 +83,6 @@ touching anything that crosses threads.
 
 ## Known risks (to fix)
 
-- **Snapshot reuse at 30 FPS.** With two buffers, Core 1 publishes twice per 3D frame, so the
-  second publish writes into the buffer Core 0 may still be reading. A third buffer, or a
-  sequence counter checked after reading, removes the race.
 - **Overlay pass reads VRAM while Core 1 writes it.** Text can tear for a frame while a window
   is being printed.
 - **The chunk worker shares Core 2 with the draw workers.** A job can run while the GBA overlay

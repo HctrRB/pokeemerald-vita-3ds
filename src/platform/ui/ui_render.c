@@ -23,10 +23,13 @@
 #define UI_BACKDROP_TILE  16
 #define UI_TOPBAR_H       52
 
+#define UI_VBO_RING_SIZE  4u
+
 static GLuint sTexture;
 static GLuint sBackdropTex[UI_BACKDROP_COUNT];
 static bool sBackdropReady;
-static GLuint sUiVbo[2];
+static GLuint sUiVbo[UI_VBO_RING_SIZE];
+static uint32_t sUiVboCap[UI_VBO_RING_SIZE];
 static uint32_t sUiVboIdx;
 static uint32_t sLastUploadedSeq;
 
@@ -108,15 +111,22 @@ static void Draw(const UiDrawList *list, GLuint texture)
     if (list->vcount == 0)
         return;
     if (sUiVbo[0] == 0)
-        glGenBuffers(2, sUiVbo);
-    if (sUiVbo[0] != 0 && sUiVbo[1] != 0)
+        glGenBuffers((GLsizei)UI_VBO_RING_SIZE, sUiVbo);
+    if (sUiVbo[0] != 0)
     {
         if (list->seq != sLastUploadedSeq)
         {
-            sUiVboIdx ^= 1u;
+            sUiVboIdx = (sUiVboIdx + 1u) & (UI_VBO_RING_SIZE - 1u);
             glBindBuffer(GL_ARRAY_BUFFER, sUiVbo[sUiVboIdx]);
-            glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(list->vcount * sizeof(UiGlVertex)),
-                         list->verts, GL_DYNAMIC_DRAW);
+            if (list->vcount > sUiVboCap[sUiVboIdx])
+            {
+                const uint32_t allocCap = (list->vcount + 511u) & ~511u;
+                glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(allocCap * sizeof(UiGlVertex)),
+                             NULL, GL_DYNAMIC_DRAW);
+                sUiVboCap[sUiVboIdx] = allocCap;
+            }
+            glBufferSubData(GL_ARRAY_BUFFER, 0,
+                            (GLsizeiptr)(list->vcount * sizeof(UiGlVertex)), list->verts);
             sLastUploadedSeq = list->seq;
         }
         else

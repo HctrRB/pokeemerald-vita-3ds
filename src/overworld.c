@@ -893,6 +893,9 @@ static void LoadMapFromWarp(bool32 a1)
         UpdateTVScreensOnMap(gBackupMapLayout.width, gBackupMapLayout.height);
         InitSecretBaseAppearance(TRUE);
     }
+#ifdef VOXEL_SUPPORTED
+    VoxelFlyGame_OnWarpLoaded();
+#endif
 }
 
 void ResetInitialPlayerAvatarState(void)
@@ -1629,7 +1632,8 @@ void CB2_LoadMap(void)
 static void CB2_LoadMap2(void)
 {
     DoMapLoadLoop(&gMain.state);
-    sMapMutationLock = 0;
+    /* sMapMutationLock is released atomically by VoxelEntities_PublishSnapshot() at frame end
+     * so Core 0 never builds new-map instances against the previous map's entity snapshot. */
     SetFieldVBlankCallback();
     SetMainCallback1(CB1_Overworld);
     SetMainCallback2(CB2_Overworld);
@@ -2132,7 +2136,7 @@ static void DoMapLoadLoop(u8 *state)
 {
     sMapMutationLock = 1;
     while (!LoadMapInStepsLocal(state, FALSE));
-    sMapMutationLock = 0;
+    /* Keep sMapMutationLock set until VoxelEntities_PublishSnapshot() publishes the new map's entities. */
 }
 
 static void ResetMirageTowerAndSaveBlockPtrs(void)

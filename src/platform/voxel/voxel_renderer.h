@@ -24,6 +24,9 @@ void VoxelRenderer_OnReset(void);
 // Notify of animated tiles written to BG VRAM (water, waves, flowers)
 void VoxelRenderer_NotifyTilesetAnimWrite(const void *dest, uint32_t bytes);
 
+// Draw the 3D Fly cinematic's cloud cover over a 2D fallback frame (e.g. during warp load frames).
+void VoxelRenderer_DrawFlyCloudCover(void);
+
 #endif // VOXEL_SUPPORTED || PLATFORM_VITA || NATIVE_LINUX
 #endif // PLATFORM_SDL2
 #endif // GUARD_VOXEL_RENDERER_H

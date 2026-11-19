@@ -83,6 +83,7 @@ static inline void VoxelGl_DrawArrays(GLenum mode, GLint first, GLsizei count)
 #include "voxel_unswizzle.h"
 #include "voxel_mesh_builder.h"
 #include "voxel_tuning.h"
+#include "voxel_fly_game.h"
 
 // External state
 extern SDL_Window *sdlWindow;
@@ -99,10 +100,9 @@ typedef struct
 #define VOXEL_MAX_ATLAS_PAGES 4
 static GLuint sAtlasTex[VOXEL_MAX_ATLAS_PAGES] = {0};
 static uint32_t sAtlasPageCount = 0;
-static GLuint sTreeTex = 0;
+static GLuint sTreeTex[3] = { 0, 0, 0 };
 static uint16_t sFlowerFrames[3][16 * 16];
 static bool sFlowerFramesReady = false;
-static uint32_t sLastFlowerStep = 0xFFFFFFFFu;
 static GLuint sTreeShaderProg = 0;
 static GLint sTreeShaderUMvp = -1;
 static GLint sTreeShaderUChunkDelta = -1;
@@ -112,13 +112,14 @@ static GLint sTreeShaderUPlayerXZ = -1;
 static GLint sTreeShaderUTex = -1;
 static bool sTreeShaderReady = false;
 #define VOXEL_MAX_BUILDING_PAGES 272
-#define VOXEL_BUILDING_CACHE_SLOTS 24
+#define VOXEL_BUILDING_CACHE_SLOTS 56
 #define VOXEL_BUILDING_REQ_CAP 32
 static GLuint sSpriteTex = 0;
 static GLuint sUiTex = 0;
-// Two overlay textures used in turn: uploading into the one drawn last frame made vitaGL copy it
-// first (every frame in battles, where the sprites always move)
-static GLuint sUiTexRing[2] = { 0, 0 };
+// Four overlay textures used in turn: vitaGL's FRAME_PURGE_FREQ is 4 swaps, so a 4-slot
+// ring ensures glTexSubImage2D never hits a texture still in flight on the GPU.
+#define VOXEL_UI_TEX_RING 4u
+static GLuint sUiTexRing[VOXEL_UI_TEX_RING] = { 0, 0, 0, 0 };
 static uint8_t sUiTexIdx = 0;
 // The last overlay image converted for sUiTex (pass 6); cleared whenever sUiTex is recreated.
 static bool sUiImageValid = false;
@@ -212,7 +213,7 @@ void VoxelRenderer_NotifyTilesetAnimWrite(const void *dest, uint32_t bytes)
 }
 
 // ---- Textures & Atlas State (Multi-Atlas LRU Cache matching Emerald 3DS) ----
-#define VOXEL_ATLAS_SLOTS 5
+#define VOXEL_ATLAS_SLOTS 8
 
 typedef struct
 {
@@ -361,7 +362,9 @@ static void BattleCamera(void)
 #define MAX_CHUNK_GROUND_SPANS 24
 #define MAX_CHUNK_BUILDING_SPANS 4
 
-#define MAX_CHUNKS 104
+#define MAX_CHUNKS 160
+#define CHUNK_WORKER_BATCH 4
+#define CHUNK_WORKER_BATCH_NORMAL 2
 #define CHUNK_VERTS_PER_SLOT (CHUNK_GROUND_TOTAL_CAP + CHUNK_TREE_CAP + CHUNK_BUILDING_CAP)
 
 typedef struct
@@ -405,6 +408,7 @@ typedef struct
     uint16_t treeStaticCount;
     uint16_t buildingFirstVert;
     uint16_t totalVertCount;
+    uint16_t vboCap;
     GLuint vbo;
     VoxelChunkGroundSpan groundSpans[MAX_CHUNK_GROUND_SPANS];
     VoxelChunkBuildingSpan buildingSpans[MAX_CHUNK_BUILDING_SPANS];
@@ -589,12 +593,23 @@ static const MoteSpec sMoteSpecs[VOXEL_MOTE_COUNT] = {
     { 21.4f, 17.3f, 1.38f, 0.27f, 0.9f, 2.5f, -0.16f,  0.10f, 1.7f, 6.1f },
 };
 
-// ---- Frustum Culling Helpers ----
+// ---- Frustum Culling & Single-Source Camera Matrices ----
 typedef struct {
     float a, b, c, d;
 } FrustumPlane;
 
+typedef struct {
+    float proj[16];
+    float view[16];
+    float mvp[16];
+    float zNear;
+    float zFar;
+    float minX, maxX, minZ, maxZ;
+    float yMin, yMax;
+} VoxelViewState;
+
 static FrustumPlane sFrustumPlanes[6];
+static VoxelViewState sViewState;
 
 static void Matrix4_Multiply(float *out, const float *a, const float *b)
 {
@@ -668,11 +683,13 @@ static bool Frustum_IntersectsAABB(float minX, float minY, float minZ,
 {
     for (int32_t i = 0; i < 6; i++)
     {
-        float px = (sFrustumPlanes[i].a > 0.0f) ? maxX : minX;
-        float py = (sFrustumPlanes[i].b > 0.0f) ? maxY : minY;
-        float pz = (sFrustumPlanes[i].c > 0.0f) ? maxZ : minZ;
+        const float px = (sFrustumPlanes[i].a > 0.0f) ? maxX : minX;
+        const float py = (sFrustumPlanes[i].b > 0.0f) ? maxY : minY;
+        const float pz = (sFrustumPlanes[i].c > 0.0f) ? maxZ : minZ;
 
-        if (sFrustumPlanes[i].a * px + sFrustumPlanes[i].b * py + sFrustumPlanes[i].c * pz + sFrustumPlanes[i].d < 0.0f)
+        // Planes are unit-length, so signed distance is in world tiles; VOXEL_FRUSTUM_PLANE_SLACK
+        // keeps tall roofs, tree crowns and south-edge structures from popping out at screen borders.
+        if (sFrustumPlanes[i].a * px + sFrustumPlanes[i].b * py + sFrustumPlanes[i].c * pz + sFrustumPlanes[i].d < -VOXEL_FRUSTUM_PLANE_SLACK)
             return false;
     }
     return true;
@@ -702,41 +719,51 @@ static bool Frustum_ChunkInView(int32_t cx, int32_t cy, const VoxelChunkSlot *sl
         return (cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1);
     }
 
-    // Outdoors: robust vertical column [-4.0f, 14.0f] guaranteeing elevated terrain,
-    // mountains, buildings, and tree canopies are never falsely culled.
-    // Relaxed margins (-2.5f on left/west and +3.0f on south/bottom).
-    float minX = (float)(sChunkOriginX + cx * CHUNK_SIZE) - 2.5f;
-    float maxX = (float)(sChunkOriginX + (cx + 1) * CHUNK_SIZE) + 2.0f;
-    float minZ = (float)(sChunkOriginY + cy * CHUNK_SIZE) - 2.0f;
-    float maxZ = (float)(sChunkOriginY + (cy + 1) * CHUNK_SIZE) + 3.0f;
-    float maxY = 14.0f;
+    const float baseX0 = (float)(sChunkOriginX + cx * CHUNK_SIZE);
+    const float baseX1 = (float)(sChunkOriginX + (cx + 1) * CHUNK_SIZE);
+    const float baseZ0 = (float)(sChunkOriginY + cy * CHUNK_SIZE);
+    const float baseZ1 = (float)(sChunkOriginY + (cy + 1) * CHUNK_SIZE);
 
-    // and as far as its building models reach (a model stands in the chunk of its
-    // north-west cell, the rest of it east and south of there)
+    float minX, maxX, minZ, maxZ, minY, maxY;
     if (slot != NULL && slot->valid)
     {
-        minX = fminf(minX, (float)(sChunkOriginX + cx * CHUNK_SIZE) - slot->bldWest);
-        maxX = fmaxf(maxX, (float)(sChunkOriginX + (cx + 1) * CHUNK_SIZE) + slot->bldEast);
-        minZ = fminf(minZ, (float)(sChunkOriginY + cy * CHUNK_SIZE) - slot->bldNorth);
-        maxZ = fmaxf(maxZ, (float)(sChunkOriginY + (cy + 1) * CHUNK_SIZE) + slot->bldSouth);
-        maxY = fmaxf(maxY, slot->bldTop);
+        // Tight AABB from actual emitted vertices (Core 2) + building model reach
+        minX = baseX0 - slot->bldWest - 0.5f;
+        maxX = baseX1 + slot->bldEast + 0.5f;
+        minZ = baseZ0 - slot->bldNorth - 0.5f;
+        maxZ = baseZ1 + slot->bldSouth + 0.5f;
+        minY = slot->minY;
+        maxY = fmaxf(slot->maxY, slot->bldTop);
+    }
+    else
+    {
+        // Unbuilt chunk: conservative vertical column + oblique relief Z-stretch margin so tall
+        // cliffs (e.g. Ever Grande City) and sea-level terraces are never missed before building.
+        minX = baseX0 - 1.0f;
+        maxX = baseX1 + 1.0f;
+        minZ = baseZ0 - 2.0f;
+        maxZ = baseZ1 + 6.0f;
+        minY = sViewState.yMin - 1.0f;
+        maxY = sViewState.yMax + 2.0f;
     }
 
-    return Frustum_IntersectsAABB(minX, -4.0f, minZ, maxX, maxY, maxZ);
+    return Frustum_IntersectsAABB(minX, minY, minZ, maxX, maxY, maxZ);
 }
 
-// How many chunks west and north of the candidate area a chunk may stand and still have a
-// building model reaching into it: models are at most 17 cells wide (the Battle Frontier's)
-// and stand south of their cell by the terrain's lift as well.
+// How many chunks west and north of the candidate area a chunk may stand and still have
+// geometry (buildings or relief-stretched tall cliffs) reaching into the view.
 #define VOXEL_BUILDING_REACH_CHUNKS_X 3
 #define VOXEL_BUILDING_REACH_CHUNKS_Y 4
 
-// Whether a built chunk's building models reach into the tile window [wx0, wx1] x [wz0, wz1]
-// (Frame_SelectChunks' candidate rectangle for its row).
+// Whether a built chunk's geometry (buildings or oblique relief-stretched cliffs/trees) reaches
+// into the tile window [wx0, wx1] x [wz0, wz1].
 static bool ChunkModelsReachWindow(const VoxelChunkSlot *slot, int32_t cx, int32_t cy,
                                    float wx0, float wx1, float wz0, float wz1)
 {
-    if (slot == NULL || !slot->valid || slot->buildingCount == 0)
+    if (slot == NULL || !slot->valid)
+        return false;
+    if (slot->bldWest <= 0.0f && slot->bldEast <= 0.0f
+     && slot->bldNorth <= 0.0f && slot->bldSouth <= 0.0f)
         return false;
     const float x0 = (float)(sChunkOriginX + cx * CHUNK_SIZE) - slot->bldWest;
     const float x1 = (float)(sChunkOriginX + (cx + 1) * CHUNK_SIZE) + slot->bldEast;
@@ -750,98 +777,192 @@ static bool ChunkModelsReachWindow(const VoxelChunkSlot *slot, int32_t cx, int32
 // the layout is already drawn).
 static bool Frustum_ChunkInViewAhead(int32_t cx, int32_t cy, float aheadX, float aheadZ)
 {
-    float minX = (float)(sChunkOriginX + cx * CHUNK_SIZE) - 2.5f - aheadX;
-    float maxX = (float)(sChunkOriginX + (cx + 1) * CHUNK_SIZE) + 2.0f - aheadX;
-    float minZ = (float)(sChunkOriginY + cy * CHUNK_SIZE) - 2.0f - aheadZ;
-    float maxZ = (float)(sChunkOriginY + (cy + 1) * CHUNK_SIZE) + 3.0f - aheadZ;
+    const float minX = (float)(sChunkOriginX + cx * CHUNK_SIZE) - 1.0f - aheadX;
+    const float maxX = (float)(sChunkOriginX + (cx + 1) * CHUNK_SIZE) + 1.0f - aheadX;
+    const float minZ = (float)(sChunkOriginY + cy * CHUNK_SIZE) - 1.0f - aheadZ;
+    const float maxZ = (float)(sChunkOriginY + (cy + 1) * CHUNK_SIZE) + 1.0f - aheadZ;
 
-    return Frustum_IntersectsAABB(minX, -4.0f, minZ, maxX, 14.0f, maxZ);
+    return Frustum_IntersectsAABB(minX, sViewState.yMin - 1.0f, minZ, maxX, sViewState.yMax + 2.0f, maxZ);
 }
 
-// Update frustum planes based on camera position and FOV
-static void UpdateFrustumPlanes(void)
+// Single-source camera matrices, dynamic zNear/zFar, projected ground bounds, and frustum planes.
+static void ComputeViewAndFrustum(void)
 {
-    float f = 1.0f / tanf(sCamera.fov * (3.14159265f / 360.0f));
-    float aspect = 960.0f / 544.0f;
-    float zNear = 1.0f, zFar = 62.0f;
-    float proj[16] = {0};
-    proj[0] = f / aspect;
-    proj[5] = f;
-    proj[10] = (zFar + zNear) / (zNear - zFar);
-    proj[11] = -1.0f;
-    proj[14] = (2.0f * zFar * zNear) / (zNear - zFar);
+    const float aspect = 960.0f / 544.0f;
+    const float tanY = tanf(sCamera.fov * (3.14159265f / 360.0f));
+    const float tanX = tanY * aspect;
+    const float f = 1.0f / tanY;
 
-    float view[16];
     float forward[3], side[3], up[3];
     forward[0] = sCamera.targetX - sCamera.x;
     forward[1] = sCamera.targetY - sCamera.y;
     forward[2] = sCamera.targetZ - sCamera.z;
-    float len = sqrtf(forward[0]*forward[0] + forward[1]*forward[1] + forward[2]*forward[2]);
-    if (len > 0.0f) { forward[0] /= len; forward[1] /= len; forward[2] /= len; }
+    float len = sqrtf(forward[0] * forward[0] + forward[1] * forward[1] + forward[2] * forward[2]);
+    if (len > 1e-5f)
+    {
+        forward[0] /= len;
+        forward[1] /= len;
+        forward[2] /= len;
+    }
+    else
+    {
+        forward[0] = 0.0f;
+        forward[1] = -0.5735764f;
+        forward[2] = -0.8191520f;
+    }
 
     side[0] = -forward[2];
     side[1] = 0.0f;
     side[2] = forward[0];
-    len = sqrtf(side[0]*side[0] + side[2]*side[2]);
-    if (len > 0.0f) { side[0] /= len; side[2] /= len; }
+    len = sqrtf(side[0] * side[0] + side[2] * side[2]);
+    if (len > 1e-5f)
+    {
+        side[0] /= len;
+        side[2] /= len;
+    }
+    else
+    {
+        side[0] = 1.0f;
+        side[2] = 0.0f;
+    }
 
-    up[0] = side[1]*forward[2] - side[2]*forward[1];
-    up[1] = side[2]*forward[0] - side[0]*forward[2];
-    up[2] = side[0]*forward[1] - side[1]*forward[0];
+    up[0] = side[1] * forward[2] - side[2] * forward[1];
+    up[1] = side[2] * forward[0] - side[0] * forward[2];
+    up[2] = side[0] * forward[1] - side[1] * forward[0];
 
-    view[0] = side[0];     view[4] = side[1];     view[8]  = side[2];     view[12] = -(side[0] * sCamera.x + side[1] * sCamera.y + side[2] * sCamera.z);
-    view[1] = up[0];       view[5] = up[1];       view[9]  = up[2];       view[13] = -(up[0] * sCamera.x + up[1] * sCamera.y + up[2] * sCamera.z);
-    view[2] = -forward[0]; view[6] = -forward[1]; view[10] = -forward[2]; view[14] = -(-forward[0] * sCamera.x - forward[1] * sCamera.y - forward[2] * sCamera.z);
-    view[3] = 0.0f;        view[7] = 0.0f;        view[11] = 0.0f;        view[15] = 1.0f;
+    // Project the 4 frustum corner rays onto [yMin, yMax] to obtain exact world XZ bounds.
+    // yMin always reaches Hoenn sea level (0) even atop tall plateaus like Ever Grande City;
+    // yMax reaches tall cliffs + roofs even when standing at sea level.
+    float tallest = VoxelBuildings_MaxTop();
+    if (tallest < 4.0f) tallest = 4.0f;
+    if (tallest > 14.0f) tallest = 14.0f;
+    const float yMin = fminf(sCamera.ground - 4.0f, -2.5f);
+    const float yMax = fmaxf(sCamera.ground + tallest, 18.0f);
+    // Include a height sample just below the camera eye so bottom rays (sy=-1) project to
+    // the true south-most visible roofs/canopies even when yMax sits above sCamera.y.
+    const float yNearEye = fmaxf(yMin, fminf(yMax, sCamera.y - 0.5f));
+    const float heights[3] = { yMin, yNearEye, yMax };
 
-    float mvp[16];
-    Matrix4_Multiply(mvp, proj, view);
-    ExtractFrustumPlanes(mvp);
+    float minX = sCamera.targetX, maxX = sCamera.targetX;
+    float minZ = sCamera.targetZ, maxZ = sCamera.targetZ;
+    const float maxRayT = 4.0f * VOXEL_VIEW_REACH_MAX;
+    for (int32_t sy = -1; sy <= 1; sy += 2)
+    {
+        for (int32_t sx = -1; sx <= 1; sx += 2)
+        {
+            const float rx = forward[0] + (float)sx * tanX * side[0] + (float)sy * tanY * up[0];
+            const float ry = forward[1] + (float)sx * tanX * side[1] + (float)sy * tanY * up[1];
+            const float rz = forward[2] + (float)sx * tanX * side[2] + (float)sy * tanY * up[2];
+            for (int32_t h = 0; h < 3; ++h)
+            {
+                float t = (ry < -0.001f) ? (heights[h] - sCamera.y) / ry : -1.0f;
+                if (t < 0.0f || t > maxRayT)
+                    t = maxRayT;
+                const float wx = sCamera.x + rx * t;
+                const float wz = sCamera.z + rz * t;
+                if (wx < minX) minX = wx;
+                if (wx > maxX) maxX = wx;
+                if (wz < minZ) minZ = wz;
+                if (wz > maxZ) maxZ = wz;
+            }
+        }
+    }
+
+    const float loX = sCamera.targetX - VOXEL_VIEW_REACH_MAX;
+    const float hiX = sCamera.targetX + VOXEL_VIEW_REACH_MAX;
+    const float loZ = sCamera.targetZ - VOXEL_VIEW_REACH_MAX;
+    const float hiZ = sCamera.targetZ + VOXEL_VIEW_REACH_MAX;
+    if (minX < loX) minX = loX;
+    if (maxX > hiX) maxX = hiX;
+    if (minZ < loZ) minZ = loZ;
+    if (maxZ > hiZ) maxZ = hiZ;
+
+    minX -= VOXEL_VIEW_SLACK_TILES;
+    maxX += VOXEL_VIEW_SLACK_TILES;
+    minZ -= VOXEL_VIEW_SLACK_TILES;
+    maxZ += VOXEL_VIEW_SLACK_TILES;
+
+    // Dynamic zNear/zFar keep zFar/zNear <= ~65 even for high aerial poses (24-bit Z-buffer).
+    const float eyeHeight = fabsf(sCamera.y - sCamera.ground);
+    const float zNear = Voxel_ClampF(eyeHeight * 0.08f, VOXEL_VIEW_NEAR_MIN, VOXEL_VIEW_NEAR_MAX);
+    float maxDistSq = 0.0f;
+    const float cxList[2] = { minX, maxX };
+    const float czList[2] = { minZ, maxZ };
+    const float dyEye = yMin - sCamera.y;
+    for (int32_t ix = 0; ix < 2; ++ix)
+    {
+        for (int32_t iz = 0; iz < 2; ++iz)
+        {
+            const float dxEye = cxList[ix] - sCamera.x;
+            const float dzEye = czList[iz] - sCamera.z;
+            const float d2 = dxEye * dxEye + dyEye * dyEye + dzEye * dzEye;
+            if (d2 > maxDistSq)
+                maxDistSq = d2;
+        }
+    }
+    const float zFar = Voxel_ClampF(sqrtf(maxDistSq) + VOXEL_VIEW_FAR_MARGIN,
+                                    VOXEL_VIEW_FAR_MIN, VOXEL_VIEW_FAR_MAX);
+
+    memset(sViewState.proj, 0, sizeof(sViewState.proj));
+    sViewState.proj[0]  = f / aspect;
+    sViewState.proj[5]  = f;
+    sViewState.proj[10] = (zFar + zNear) / (zNear - zFar);
+    sViewState.proj[11] = -1.0f;
+    sViewState.proj[14] = (2.0f * zFar * zNear) / (zNear - zFar);
+
+    sViewState.view[0]  = side[0];     sViewState.view[4]  = side[1];     sViewState.view[8]  = side[2];
+    sViewState.view[12] = -(side[0] * sCamera.x + side[1] * sCamera.y + side[2] * sCamera.z);
+    sViewState.view[1]  = up[0];       sViewState.view[5]  = up[1];       sViewState.view[9]  = up[2];
+    sViewState.view[13] = -(up[0] * sCamera.x + up[1] * sCamera.y + up[2] * sCamera.z);
+    sViewState.view[2]  = -forward[0]; sViewState.view[6]  = -forward[1]; sViewState.view[10] = -forward[2];
+    sViewState.view[14] = (forward[0] * sCamera.x + forward[1] * sCamera.y + forward[2] * sCamera.z);
+    sViewState.view[3]  = 0.0f;        sViewState.view[7]  = 0.0f;        sViewState.view[11] = 0.0f;
+    sViewState.view[15] = 1.0f;
+
+    sViewState.zNear = zNear;
+    sViewState.zFar  = zFar;
+    sViewState.minX  = minX;
+    sViewState.maxX  = maxX;
+    sViewState.minZ  = minZ;
+    sViewState.maxZ  = maxZ;
+    sViewState.yMin  = yMin;
+    sViewState.yMax  = yMax;
+
+    Matrix4_Multiply(sViewState.mvp, sViewState.proj, sViewState.view);
+    ExtractFrustumPlanes(sViewState.mvp);
 }
 
-// ---- GL Math Helpers ----
-static void Voxel_gluPerspective(float fovy, float aspect, float zNear, float zFar)
+// Exact trapezoidal X span of the frustum across a chunk row [rowZ0, rowZ1] over [yMin, yMax].
+static void Frustum_RowBoundsX(float rowZ0, float rowZ1, float *outMinX, float *outMaxX)
 {
-    float f = 1.0f / tanf(fovy * (3.14159265f / 360.0f));
-    float m[16] = {0};
-    m[0] = f / aspect;
-    m[5] = f;
-    m[10] = (zFar + zNear) / (zNear - zFar);
-    m[11] = -1.0f;
-    m[14] = (2.0f * zFar * zNear) / (zNear - zFar);
-    glMultMatrixf(m);
-}
-
-static void Voxel_gluLookAt(float eyex, float eyey, float eyez,
-                            float centerx, float centery, float centerz,
-                            float upx, float upy, float upz)
-{
-    float forward[3], side[3], up[3];
-    float m[16];
-
-    forward[0] = centerx - eyex;
-    forward[1] = centery - eyey;
-    forward[2] = centerz - eyez;
-    float len = sqrtf(forward[0]*forward[0] + forward[1]*forward[1] + forward[2]*forward[2]);
-    if (len > 0.0f) { forward[0] /= len; forward[1] /= len; forward[2] /= len; }
-
-    side[0] = forward[1]*upz - forward[2]*upy;
-    side[1] = forward[2]*upx - forward[0]*upz;
-    side[2] = forward[0]*upy - forward[1]*upx;
-    len = sqrtf(side[0]*side[0] + side[1]*side[1] + side[2]*side[2]);
-    if (len > 0.0f) { side[0] /= len; side[1] /= len; side[2] /= len; }
-
-    up[0] = side[1]*forward[2] - side[2]*forward[1];
-    up[1] = side[2]*forward[0] - side[0]*forward[2];
-    up[2] = side[0]*forward[1] - side[1]*forward[0];
-
-    m[0] = side[0];    m[4] = side[1];    m[8]  = side[2];    m[12] = 0.0f;
-    m[1] = up[0];      m[5] = up[1];      m[9]  = up[2];      m[13] = 0.0f;
-    m[2] = -forward[0];m[6] = -forward[1];m[10] = -forward[2];m[14] = 0.0f;
-    m[3] = 0.0f;       m[7] = 0.0f;       m[11] = 0.0f;       m[15] = 1.0f;
-
-    glMultMatrixf(m);
-    glTranslatef(-eyex, -eyey, -eyez);
+    const FrustumPlane *const pL = &sFrustumPlanes[0];
+    const FrustumPlane *const pR = &sFrustumPlanes[1];
+    if (pL->a > 0.01f && pR->a < -0.01f)
+    {
+        float xMin = FLT_MAX;
+        float xMax = -FLT_MAX;
+        const float zs[2] = { rowZ0, rowZ1 };
+        const float ys[2] = { sViewState.yMin, sViewState.yMax };
+        for (int32_t iz = 0; iz < 2; ++iz)
+        {
+            for (int32_t iy = 0; iy < 2; ++iy)
+            {
+                const float xL = -(pL->b * ys[iy] + pL->c * zs[iz] + pL->d) / pL->a;
+                const float xR = -(pR->b * ys[iy] + pR->c * zs[iz] + pR->d) / pR->a;
+                if (xL < xMin) xMin = xL;
+                if (xR > xMax) xMax = xR;
+            }
+        }
+        xMin -= VOXEL_VIEW_SLACK_TILES;
+        xMax += VOXEL_VIEW_SLACK_TILES;
+        if (xMin < sViewState.minX) xMin = sViewState.minX;
+        if (xMax > sViewState.maxX) xMax = sViewState.maxX;
+        *outMinX = xMin;
+        *outMaxX = xMax;
+        return;
+    }
+    *outMinX = sViewState.minX;
+    *outMaxX = sViewState.maxX;
 }
 
 // Convert VoxelVertex shade into Emerald 3DS warm-sun / cool-shadow graded RGB
@@ -1341,7 +1462,7 @@ static void InvalidateChunkCache(void)
     sWorldEpoch++;
 }
 
-static void UploadChunkVbo(VoxelChunkSlot *slot);
+static void UploadChunkVbo(VoxelChunkSlot *slot, const bool gpuMayRead);
 
 // Walking into a connected map re-bases the world coordinates by whole tiles. Cached chunks
 // keep their vertices as built and only move their drawing offset (drawOffsetX/Z, applied as a
@@ -1411,7 +1532,7 @@ static bool EnsureChunkPool(void)
 {
     if (sChunksAllocated) return true;
 
-    sChunkStaging = (VoxelGlVertex *)malloc((size_t)CHUNK_VERTS_PER_SLOT * sizeof(VoxelGlVertex));
+    sChunkStaging = (VoxelGlVertex *)malloc((size_t)CHUNK_WORKER_BATCH * (size_t)CHUNK_VERTS_PER_SLOT * sizeof(VoxelGlVertex));
     if (!sChunkStaging)
         return false;
 
@@ -1426,6 +1547,7 @@ static bool EnsureChunkPool(void)
         sChunks[i].treeFirstVert = 0;
         sChunks[i].buildingFirstVert = 0;
         sChunks[i].totalVertCount = 0;
+        sChunks[i].vboCap = 0;
         sChunks[i].drawOffsetX = 0.0f;
         sChunks[i].drawOffsetZ = 0.0f;
         if (!sChunks[i].vbo)
@@ -1455,28 +1577,33 @@ static void RememberInstanceOrigins(void)
     }
 }
 
-// True for a walking crossing (shift camera, no snap); false for a cut/warp (snap camera)
-static bool HandleMapChange(int32_t mapGroup, int32_t mapNum, float playerX, float playerZ)
+// True for a walking/biking crossing (shift camera, no snap); false for a cut/warp (snap camera).
+// Combines deterministic `warpOccurred` from Core 1's LoadMapFromWarp with a generous spatial
+// sanity guard (VOXEL_CROSSING_STEP) so no warp or script cut can ever shift instead of snap.
+static bool HandleMapChange(int32_t mapGroup, int32_t mapNum, float playerX, float playerZ, bool warpOccurred)
 {
-    for (uint32_t i = 0; i < sPreviousOriginCount; ++i)
+    if (!warpOccurred)
     {
-        if (sPreviousOrigins[i].mapGroup != mapGroup || sPreviousOrigins[i].mapNum != mapNum)
-            continue;
-        if (sPreviousOrigins[i].originX == 0 && sPreviousOrigins[i].originY == 0)
-            break;
+        for (uint32_t i = 0; i < sPreviousOriginCount; ++i)
+        {
+            if (sPreviousOrigins[i].mapGroup != mapGroup || sPreviousOrigins[i].mapNum != mapNum)
+                continue;
+            if (sPreviousOrigins[i].originX == 0 && sPreviousOrigins[i].originY == 0)
+                break;
 
-        if (fabsf(playerX - (sLastPlayerX - (float)sPreviousOrigins[i].originX)) > VOXEL_CROSSING_STEP
-         || fabsf(playerZ - (sLastPlayerZ - (float)sPreviousOrigins[i].originY)) > VOXEL_CROSSING_STEP)
-            break;
+            if (fabsf(playerX - (sLastPlayerX - (float)sPreviousOrigins[i].originX)) > VOXEL_CROSSING_STEP
+             || fabsf(playerZ - (sLastPlayerZ - (float)sPreviousOrigins[i].originY)) > VOXEL_CROSSING_STEP)
+                break;
 
-        VoxelCamera_Shift(&sCamera, (float)-sPreviousOrigins[i].originX,
-                                  (float)-sPreviousOrigins[i].originY);
-        sLastPlayerX -= (float)sPreviousOrigins[i].originX;
-        sLastPlayerZ -= (float)sPreviousOrigins[i].originY;
-        return true;
+            VoxelCamera_Shift(&sCamera, (float)-sPreviousOrigins[i].originX,
+                                      (float)-sPreviousOrigins[i].originY);
+            sLastPlayerX -= (float)sPreviousOrigins[i].originX;
+            sLastPlayerZ -= (float)sPreviousOrigins[i].originY;
+            return true;
+        }
     }
 
-    VoxelCamera_SetGround(&sCamera, VoxelEntities_PlayerGround(), 1);
+    VoxelCamera_SetGround(&sCamera, VoxelEntities_PlayerGround(), 1, 0.0f);
     VoxelCamera_Snap(&sCamera, playerX, playerZ);
     sLastPlayerX = playerX;
     sLastPlayerZ = playerZ;
@@ -2013,17 +2140,29 @@ static int32_t EnsureAtlasSlotForInstance(const VoxelMapInstance *inst)
     return victimSlot;
 }
 
-// Upload static chunk geometry to GPU VBO in CDRAM (Zero-Copy rendering on PS Vita)
-static void UploadChunkVbo(VoxelChunkSlot *slot)
+// Upload static chunk geometry to GPU VBO in CDRAM (Zero-Copy rendering on PS Vita).
+// Reuses existing VBO storage via glBufferSubData when the slot was not drawn in the last 4 frames
+// (vitaGL FRAME_PURGE_FREQ=4); orphans via glBufferData when the GPU may still read the old VBO.
+static void UploadChunkVbo(VoxelChunkSlot *slot, const bool gpuMayRead)
 {
     if (!slot || slot->totalVertCount == 0)
         return;
 
     if (!slot->vbo)
+    {
         glGenBuffers(1, &slot->vbo);
+        slot->vboCap = 0;
+    }
 
     glBindBuffer(GL_ARRAY_BUFFER, slot->vbo);
-    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(slot->totalVertCount * sizeof(VoxelGlVertex)), NULL, GL_STATIC_DRAW);
+    if (slot->totalVertCount > slot->vboCap || gpuMayRead)
+    {
+        uint32_t allocCap = ((uint32_t)slot->totalVertCount + 255u) & ~255u;
+        if (allocCap > 65535u)
+            allocCap = 65535u;
+        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(allocCap * sizeof(VoxelGlVertex)), NULL, GL_STATIC_DRAW);
+        slot->vboCap = (uint16_t)allocCap;
+    }
 
     if (slot->groundTotalCount > 0)
     {
@@ -2115,6 +2254,8 @@ typedef struct
     int16_t pages[CHUNK_JOB_MAX_PAGES];
     // How far its building models reach past its cells (VoxelChunkSlot::bldWest...).
     float bldWest, bldEast, bldNorth, bldSouth, bldTop;
+    // Exact vertical AABB of all emitted geometry in this chunk (Core 2).
+    float minY, maxY;
 } VoxelChunkJobOutput;
 
 static void PrepareChunkJob(VoxelChunkJobInput *in, int32_t chunkX, int32_t chunkY)
@@ -2169,8 +2310,26 @@ static void PrepareChunkJob(VoxelChunkJobInput *in, int32_t chunkX, int32_t chun
 
 static uint8_t sScratchTriBucket[SCRATCH_VERTICES / 3];
 
+static inline void ExpandChunkVertexBounds(VoxelChunkJobOutput *const out,
+                                           const float x0, const float y0,
+                                           const float x1, const float y1,
+                                           const float vx, const float vy, const float vz)
+{
+    if (vy < out->minY) out->minY = vy;
+    if (vy > out->maxY) out->maxY = vy;
+    const float west = x0 - vx;
+    const float east = vx - x1;
+    const float north = y0 - vz;
+    const float south = vz - y1;
+    if (west > out->bldWest) out->bldWest = west;
+    if (east > out->bldEast) out->bldEast = east;
+    if (north > out->bldNorth) out->bldNorth = north;
+    if (south > out->bldSouth) out->bldSouth = south;
+}
+
 static void PackGroundIntoJob(VoxelChunkJobOutput *const out, const VoxelBuilder *const builder,
-                              const int32_t aSlot, const bool outdoor)
+                              const int32_t aSlot, const bool outdoor,
+                              const float x0, const float y0, const float x1, const float y1)
 {
     if (builder->count == 0)
         return;
@@ -2232,9 +2391,13 @@ static void PackGroundIntoJob(VoxelChunkJobOutput *const out, const VoxelBuilder
         for (uint32_t j = 0; j < 3u; j++)
         {
             VoxelGlVertex *const dst = &out->groundVerts[dstBase + j];
-            dst->x = sScratch[srcBase + j].x;
-            dst->y = sScratch[srcBase + j].y;
-            dst->z = sScratch[srcBase + j].z;
+            const float vx = sScratch[srcBase + j].x;
+            const float vy = sScratch[srcBase + j].y;
+            const float vz = sScratch[srcBase + j].z;
+            dst->x = vx;
+            dst->y = vy;
+            dst->z = vz;
+            ExpandChunkVertexBounds(out, x0, y0, x1, y1, vx, vy, vz);
             dst->u = sScratch[srcBase + j].u - (float)page * 2.0f;
             dst->v = sScratch[srcBase + j].v;
             BakeGradedVertexColor(sScratch[srcBase + j].shade, outdoor, &dst->r, &dst->g, &dst->b);
@@ -2347,7 +2510,7 @@ static uint32_t TagAndPartitionTreeSway(VoxelGlVertex *const verts, const uint32
     return staticCount;
 }
 
-static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *out)
+static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *out, VoxelGlVertex *staging)
 {
     const double computeStart = VitaPerf_NowMs();
     VoxelLightingWork lightBefore;
@@ -2356,8 +2519,8 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     const VoxelMapInstance *inst0 = VoxelWorld_Instance(0);
     const uint32_t instanceCount = VoxelWorld_InstanceCount();
 
-    out->groundVerts = sChunkStaging;
-    out->treeVerts = sChunkStaging + CHUNK_GROUND_TOTAL_CAP;
+    out->groundVerts = staging;
+    out->treeVerts = staging + CHUNK_GROUND_TOTAL_CAP;
     out->buildingVerts = out->treeVerts + CHUNK_TREE_CAP;
     out->groundTotalCount = 0;
     out->treeCount = 0;
@@ -2370,6 +2533,8 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     out->pageCount = 0;
     out->bldWest = out->bldEast = out->bldNorth = out->bldSouth = 0.0f;
     out->bldTop = 0.0f;
+    out->minY = FLT_MAX;
+    out->maxY = -FLT_MAX;
 
     VoxelMesh_BeginWindow(x0 - 1, y0 - VOXEL_CHUNK_MARGIN_NORTH, x1 + 1, y1 + 1);
 
@@ -2406,7 +2571,8 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
         if (builder.uncovered > 0)
             out->uncoveredAtlasMask |= (uint8_t)(1u << aSlot);
 
-        PackGroundIntoJob(out, &builder, aSlot, !inst->indoor);
+        PackGroundIntoJob(out, &builder, aSlot, !inst->indoor,
+                          (float)x0, (float)y0, (float)x1, (float)y1);
     }
     out->groundMs = VitaPerf_NowMs() - phaseStart;
 
@@ -2444,6 +2610,11 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
     if (builder.count > 0)
     {
         const uint32_t count = builder.count > CHUNK_TREE_CAP ? CHUNK_TREE_CAP : builder.count;
+        for (uint32_t k = 0; k < count; k++)
+        {
+            const VoxelVertex *const v = &sScratch[k];
+            ExpandChunkVertexBounds(out, (float)x0, (float)y0, (float)x1, (float)y1, v->x, v->y, v->z);
+        }
         PackVoxelVertices(sScratch, out->treeVerts, count, !in->indoor);
         out->treeStaticCount = TagAndPartitionTreeSway(out->treeVerts, count, sScratchTriBucket, &out->treeOpaqueCount);
         out->treeCount = count;
@@ -2502,23 +2673,26 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
         // How far the models reach past the chunk's cells (built with origin 0, so in the
         // same coordinates as x0..y1): read off their vertices, a pass over at most
         // CHUNK_BUILDING_CAP of them, on the worker as the rest of the build.
-        float minX = (float)x0, maxX = (float)x1, minZ = (float)y0, maxZ = (float)y1, maxY = 0.0f;
+        float maxY = out->bldTop;
         for (uint32_t k = 0; k < count; k++)
         {
-            const VoxelVertex *v = &sScratch[k];
-            if (v->x < minX) minX = v->x;
-            if (v->x > maxX) maxX = v->x;
-            if (v->z < minZ) minZ = v->z;
-            if (v->z > maxZ) maxZ = v->z;
+            const VoxelVertex *const v = &sScratch[k];
+            ExpandChunkVertexBounds(out, (float)x0, (float)y0, (float)x1, (float)y1, v->x, v->y, v->z);
             if (v->y > maxY) maxY = v->y;
         }
-        out->bldWest = (float)x0 - minX;
-        out->bldEast = maxX - (float)x1;
-        out->bldNorth = (float)y0 - minZ;
-        out->bldSouth = maxZ - (float)y1;
         out->bldTop = maxY;
         PackVoxelVertices(sScratch, out->buildingVerts, count, !in->indoor);
         out->buildingCount = count;
+    }
+    if (out->minY > out->maxY)
+    {
+        out->minY = -2.5f;
+        out->maxY = 2.0f;
+    }
+    else
+    {
+        out->minY -= 0.25f;
+        out->maxY += 0.25f;
     }
     out->buildingsMs = VitaPerf_NowMs() - phaseStart;
     {
@@ -2539,6 +2713,10 @@ static void CommitChunkJob(VoxelChunkSlot *const slot, const int32_t chunkX, con
                            const uint32_t hash, const VoxelChunkJobOutput *const out,
                            const uint32_t *const atlasGen, const uint32_t *const atlasExt)
 {
+    // Check if the SGX543 GPU command queue (VOXEL_VITAGL_PURGE_FRAMES) may still read this slot's VBO.
+    const bool gpuMayRead = (slot->valid && slot->vboCap > 0u
+                             && (uint32_t)(sFrameCounter - slot->lastUsedFrame) <= VOXEL_VITAGL_PURGE_FRAMES);
+
     // Building pages first: synchronous while warming up or faded, as before.
     for (uint32_t k = 0; k < out->pageCount; k++)
         RequestOrLoadBuildingPage(out->pages[k], sSyncBuildingLoads);
@@ -2571,10 +2749,8 @@ static void CommitChunkJob(VoxelChunkSlot *const slot, const int32_t chunkX, con
     slot->drawOffsetX = 0.0f;
     slot->drawOffsetZ = 0.0f;
 
-    // Canonical vertical bounds matching Frustum_ChunkInView [-2.5f, 12.0f];
-    // Eradicates iterating over up to 30,000 float vertices on CPU in every chunk build.
-    slot->minY = -2.5f;
-    slot->maxY = 12.0f;
+    slot->minY = out->minY;
+    slot->maxY = out->maxY;
 
     for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
     {
@@ -2591,7 +2767,7 @@ static void CommitChunkJob(VoxelChunkSlot *const slot, const int32_t chunkX, con
     slot->treeVerts = out->treeVerts;
     slot->buildingVerts = out->buildingVerts;
     VitaPerf_SubBegin(VITA_PERF_T_BUILD_UPLOAD);
-    UploadChunkVbo(slot);
+    UploadChunkVbo(slot, gpuMayRead);
     VitaPerf_SubEnd(VITA_PERF_T_BUILD_UPLOAD);
     // The staging buffer belongs to the next build now.
     slot->groundVerts = NULL;
@@ -2652,14 +2828,14 @@ static void BuildChunk(VoxelChunkSlot *slot, int32_t chunkX, int32_t chunkY, uin
     static VoxelChunkJobOutput sJobOut;
 
     PrepareChunkJob(&sJobIn, chunkX, chunkY);
-    ComputeChunkJob(&sJobIn, &sJobOut);
+    ComputeChunkJob(&sJobIn, &sJobOut, sChunkStaging);
     ReportChunkJobWork(&sJobOut, false);
 
     // Metatiles missing from an atlas slot: extend the slot and compute again, so the chunk is
     // drawn complete (what the single-phase build did for the instance in place).
     if (sJobOut.uncoveredAtlasMask != 0 && ExtendJobAtlasSlots(&sJobIn, &sJobOut))
     {
-        ComputeChunkJob(&sJobIn, &sJobOut);
+        ComputeChunkJob(&sJobIn, &sJobOut, sChunkStaging);
         ReportChunkJobWork(&sJobOut, false);
     }
 
@@ -2668,10 +2844,9 @@ static void BuildChunk(VoxelChunkSlot *slot, int32_t chunkX, int32_t chunkY, uin
 
 // ---- Chunk worker (Core 2) ----
 //
-// One chunk at a time is computed on Core 2 (ComputeChunkJob), the rest of its build staying
-// on Core 0 (PrepareChunkJob, CommitChunkJob). The job runs in the window where Core 0 does
-// not touch the voxel world: launched after the swap (ChunkWorker_Launch), waited for at the
-// start of the next VoxelRenderer_RenderFrame (ChunkWorker_Join) and committed there, before
+// Adaptive batches of 2 (normal traversal) or 4 (visible holes / Fly) chunks are computed on Core 2
+// (ComputeChunkJob) while Core 0 renders, with cooperative abort on map changes (sAsyncAbortBatch).
+// PrepareChunkJob and CommitChunkJob stay on Core 0 (GL and atlas ownership).
 // the frame looks at the chunks. In that window the worker owns the lighting caches, the
 // building module's caches, the mesh builder's window, sScratch and sChunkStaging; the world
 // lookups' memos are frozen (VoxelWorld_FreezeMemos). A result is dropped when the world
@@ -2691,10 +2866,14 @@ static SDL_sem *sChunkJobSem = NULL;
 static SDL_sem *sChunkDoneSem = NULL;
 static SDL_atomic_t sChunkWorkerStop;
 static ChunkJobState sChunkJobState = CHUNK_JOB_NONE;
-static VoxelChunkJobInput sAsyncIn;
-static VoxelChunkJobOutput sAsyncOut;
-static int32_t sAsyncCx, sAsyncCy;
-static uint32_t sAsyncHash;
+static int32_t sAsyncBatchCount = 0;
+static int32_t sAsyncDoneCount = 0;
+static volatile int32_t sAsyncAbortBatch = 0;
+static VoxelChunkJobInput sAsyncIn[CHUNK_WORKER_BATCH];
+static VoxelChunkJobOutput sAsyncOut[CHUNK_WORKER_BATCH];
+static int32_t sAsyncCx[CHUNK_WORKER_BATCH];
+static int32_t sAsyncCy[CHUNK_WORKER_BATCH];
+static uint32_t sAsyncHash[CHUNK_WORKER_BATCH];
 static uint32_t sAsyncEpoch;
 static uint32_t sAsyncAtlasGen[VOXEL_ATLAS_SLOTS];
 static uint32_t sAsyncAtlasExt[VOXEL_ATLAS_SLOTS];
@@ -2705,15 +2884,23 @@ static int32_t VoxelChunkWorkerMain(void *data)
 #ifdef PLATFORM_VITA
     VitaPlatform_PinCurrentThread("VoxelChunkWorker", 2);
 #endif
-    // Below the draw workers and the I/O worker that share Core 2.
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_LOW);
+    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_NORMAL);
     while (!SDL_AtomicGet(&sChunkWorkerStop))
     {
         if (SDL_SemWait(sChunkJobSem) != 0)
             continue;
         if (SDL_AtomicGet(&sChunkWorkerStop))
             break;
-        ComputeChunkJob(&sAsyncIn, &sAsyncOut);
+        int32_t done = 0;
+        for (int32_t i = 0; i < sAsyncBatchCount; ++i)
+        {
+            if (i > 0 && __atomic_load_n(&sAsyncAbortBatch, __ATOMIC_ACQUIRE) != 0)
+                break;
+            VoxelGlVertex *const staging = sChunkStaging + (size_t)i * (size_t)CHUNK_VERTS_PER_SLOT;
+            ComputeChunkJob(&sAsyncIn[i], &sAsyncOut[i], staging);
+            done = i + 1;
+        }
+        sAsyncDoneCount = done;
         SDL_SemPost(sChunkDoneSem);
     }
     return 0;
@@ -2747,6 +2934,7 @@ static void ChunkWorker_Join(void)
     if (sChunkJobState != CHUNK_JOB_RUNNING)
         return;
     VitaPerf_SubBegin(VITA_PERF_T_WORKER_WAIT);
+    __atomic_store_n(&sAsyncAbortBatch, 1, __ATOMIC_RELEASE);
     SDL_SemWait(sChunkDoneSem);
     VitaPerf_SubEnd(VITA_PERF_T_WORKER_WAIT);
     VoxelWorld_FreezeMemos(false);
@@ -2785,64 +2973,87 @@ static void EnsureWorkerIdle(void)
     sWorkerBusyThisFrame = false;
 }
 
-// Chooses the chunk the worker computes after this frame (Core 0, during the chunk pass).
-static void ChunkWorker_Choose(int32_t cx, int32_t cy, uint32_t hash)
+// Chooses a batch of up to CHUNK_WORKER_BATCH chunks for Core 2 to compute after this frame.
+static void ChunkWorker_ChooseBatch(const int32_t *cx, const int32_t *cy, const uint32_t *hash, int32_t count)
 {
-    sAsyncCx = cx;
-    sAsyncCy = cy;
-    sAsyncHash = hash;
+    if (count <= 0)
+        return;
+    if (count > CHUNK_WORKER_BATCH)
+        count = CHUNK_WORKER_BATCH;
+    for (int32_t i = 0; i < count; ++i)
+    {
+        sAsyncCx[i] = cx[i];
+        sAsyncCy[i] = cy[i];
+        sAsyncHash[i] = hash[i];
+    }
+    sAsyncBatchCount = count;
     sChunkJobState = CHUNK_JOB_CHOSEN;
 }
 
-// After the swap (Core 0): prepares the chosen chunk and hands it to the worker.
+// After the swap (Core 0): prepares the chosen batch and hands it to Core 2.
 static void ChunkWorker_Launch(void)
 {
-    if (sChunkJobState != CHUNK_JOB_CHOSEN || !ChunkWorker_Available())
+    if (sChunkJobState != CHUNK_JOB_CHOSEN || sAsyncBatchCount <= 0 || !ChunkWorker_Available())
         return;
-    PrepareChunkJob(&sAsyncIn, sAsyncCx, sAsyncCy);
+    for (int32_t i = 0; i < sAsyncBatchCount; ++i)
+        PrepareChunkJob(&sAsyncIn[i], sAsyncCx[i], sAsyncCy[i]);
     sAsyncEpoch = sWorldEpoch;
     for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
     {
         sAsyncAtlasGen[s] = sAtlasSlots[s].generation;
         sAsyncAtlasExt[s] = sAtlasSlots[s].extension;
     }
+    __atomic_store_n(&sAsyncAbortBatch, 0, __ATOMIC_RELEASE);
+    sAsyncDoneCount = 0;
     VoxelWorld_FreezeMemos(true);
     sChunkJobState = CHUNK_JOB_RUNNING;
     SDL_SemPost(sChunkJobSem);
 }
 
-// Commits a finished job if the world it was computed in still stands (Core 0, before the
-// chunk pass). A dropped job's chunk is simply chosen again.
+// Commits a finished batch if the world it was computed in still stands (Core 0, before the
+// chunk pass). Dropped jobs are simply chosen again.
 static void ChunkWorker_Commit(void)
 {
     if (sChunkJobState != CHUNK_JOB_DONE)
         return;
     sChunkJobState = CHUNK_JOB_NONE;
 
-    bool current = (sAsyncEpoch == sWorldEpoch && !sNeedsFullWarmup);
-    for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS && current; s++)
+    const int32_t count = sAsyncDoneCount;
+    sAsyncBatchCount = 0;
+    sAsyncDoneCount = 0;
+    for (int32_t i = 0; i < count; ++i)
     {
-        if ((sAsyncOut.usedAtlasMask & (1u << s))
-            && (!sAtlasSlots[s].valid || sAtlasSlots[s].generation != sAsyncAtlasGen[s]))
+        bool current = (sAsyncEpoch == sWorldEpoch && !sNeedsFullWarmup);
+        for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS && current; s++)
+        {
+            if ((sAsyncOut[i].usedAtlasMask & (1u << s))
+                && (!sAtlasSlots[s].valid || sAtlasSlots[s].generation != sAsyncAtlasGen[s]))
+                current = false;
+        }
+        VoxelChunkSlot *slot = FindChunkSlot(sAsyncCx[i], sAsyncCy[i]);
+        // Rebuilt on Core 0 meanwhile (it became a hole or the frame warmed up).
+        if (slot != NULL && slot->valid && slot->checkedEpoch == sWorldEpoch && slot->hash == sAsyncHash[i])
             current = false;
+        if (!current)
+        {
+            VitaPerf_AddCount(VITA_PERF_C_WORKER_DROPPED, 1);
+            continue;
+        }
+        ReportChunkJobWork(&sAsyncOut[i], true);
+        if (slot == NULL)
+            slot = GetAvailableChunkSlot(sAsyncCx[i], sAsyncCy[i]);
+        if (sAsyncOut[i].uncoveredAtlasMask != 0 && ExtendJobAtlasSlots(&sAsyncIn[i], &sAsyncOut[i]))
+        {
+            // Never commit a half-black chunk: recompute immediately against the extended atlas.
+            ComputeChunkJob(&sAsyncIn[i], &sAsyncOut[i], sChunkStaging);
+            ReportChunkJobWork(&sAsyncOut[i], false);
+            CommitChunkJob(slot, sAsyncCx[i], sAsyncCy[i], sAsyncHash[i], &sAsyncOut[i], NULL, NULL);
+        }
+        else
+        {
+            CommitChunkJob(slot, sAsyncCx[i], sAsyncCy[i], sAsyncHash[i], &sAsyncOut[i], sAsyncAtlasGen, sAsyncAtlasExt);
+        }
     }
-    VoxelChunkSlot *slot = FindChunkSlot(sAsyncCx, sAsyncCy);
-    // Rebuilt on Core 0 meanwhile (it became a hole or the frame warmed up).
-    if (slot != NULL && slot->valid && slot->checkedEpoch == sWorldEpoch && slot->hash == sAsyncHash)
-        current = false;
-    if (!current)
-    {
-        VitaPerf_AddCount(VITA_PERF_C_WORKER_DROPPED, 1);
-        return;
-    }
-    ReportChunkJobWork(&sAsyncOut, true);
-    if (slot == NULL)
-        slot = GetAvailableChunkSlot(sAsyncCx, sAsyncCy);
-    // Missing metatiles: the chunk is committed with the version it was computed in (sAsyncAtlasExt),
-    // so ChunkNeedsRebuild() marks it urgent and Core 0 rebuilds it complete next frame.
-    if (sAsyncOut.uncoveredAtlasMask != 0)
-        ExtendJobAtlasSlots(&sAsyncIn, &sAsyncOut);
-    CommitChunkJob(slot, sAsyncCx, sAsyncCy, sAsyncHash, &sAsyncOut, sAsyncAtlasGen, sAsyncAtlasExt);
 }
 
 // ---- Chunk build budget and pre-warming direction ----
@@ -2914,8 +3125,10 @@ static void MovementLookahead(float *x, float *z)
     const float speed = sqrtf(sMoveVelX * sMoveVelX + sMoveVelZ * sMoveVelZ);
     if (speed > VOXEL_MOVE_THRESHOLD)
     {
-        *x += sMoveVelX / speed * VOXEL_PREFETCH_LOOKAHEAD;
-        *z += sMoveVelZ / speed * VOXEL_PREFETCH_LOOKAHEAD;
+        const float lookahead = Voxel_ClampF(VOXEL_PREFETCH_LOOKAHEAD + speed * VOXEL_PREFETCH_SPEED_GAIN,
+                                             VOXEL_PREFETCH_LOOKAHEAD, VOXEL_PREFETCH_LOOKAHEAD_MAX);
+        *x += sMoveVelX / speed * lookahead;
+        *z += sMoveVelZ / speed * lookahead;
     }
 }
 
@@ -3123,9 +3336,9 @@ static VoxelLight LightFor(bool indoor, VoxelWeatherClass weather, float weather
     return light;
 }
 
-static float DappleLattice(int32_t x, int32_t y, int32_t period, uint32_t seed)
+static float DappleLattice(int32_t x, int32_t y, int32_t periodX, int32_t periodY, uint32_t seed)
 {
-    uint32_t h = (uint32_t)(x % period) * 374761393u + (uint32_t)(y % period) * 668265263u
+    uint32_t h = (uint32_t)(x % periodX) * 374761393u + (uint32_t)(y % periodY) * 668265263u
                + seed * 2246822519u;
 
     h = (h ^ (h >> 13)) * 1274126177u;
@@ -3138,12 +3351,12 @@ static float Quintic(float t)
     return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
 }
 
-static float DappleNoise(float u, float v, int32_t period, uint32_t seed)
+static float DappleNoise(float u, float v, int32_t periodX, int32_t periodY, uint32_t seed)
 {
     int32_t x = (int32_t)u, y = (int32_t)v;
     float fx = Quintic(u - (float)x), fy = Quintic(v - (float)y);
-    float a = DappleLattice(x, y, period, seed), b = DappleLattice(x + 1, y, period, seed);
-    float c = DappleLattice(x, y + 1, period, seed), d = DappleLattice(x + 1, y + 1, period, seed);
+    float a = DappleLattice(x, y, periodX, periodY, seed), b = DappleLattice(x + 1, y, periodX, periodY, seed);
+    float c = DappleLattice(x, y + 1, periodX, periodY, seed), d = DappleLattice(x + 1, y + 1, periodX, periodY, seed);
     float top = a + (b - a) * fx, bottom = c + (d - c) * fx;
 
     return top + (bottom - top) * fy;
@@ -3158,10 +3371,12 @@ static void MakeFog(void)
         for (int32_t x = 0; x < VOXEL_FOG_DIM; ++x)
         {
             float u = (float)x / (float)VOXEL_FOG_DIM;
-            float n = DappleNoise(u * 3.0f,  v * 2.0f, 3,  0xF06B10u) * 0.50f
-                    + DappleNoise(u * 6.0f,  v * 4.0f, 6,  0xF06B21u) * 0.28f
-                    + DappleNoise(u * 12.0f, v * 8.0f, 12, 0xF06B32u) * 0.15f
-                    + DappleNoise(u * 24.0f, v * 16.0f, 24, 0xF06B43u) * 0.07f;
+            // Wrap U by periodX (3,6,12,24) and V by periodY (2,4,8,16) so the cloud/fog
+            // texture tiles 100% seamlessly in both axes with zero horizontal seams.
+            float n = DappleNoise(u * 3.0f,  v * 2.0f,  3,  2, 0xF06B10u) * 0.50f
+                    + DappleNoise(u * 6.0f,  v * 4.0f,  6,  4, 0xF06B21u) * 0.28f
+                    + DappleNoise(u * 12.0f, v * 8.0f,  12, 8, 0xF06B32u) * 0.15f
+                    + DappleNoise(u * 24.0f, v * 16.0f, 24, 16, 0xF06B43u) * 0.07f;
             float t = (n - 0.34f) * (1.0f / (0.64f - 0.34f));
             if (t < 0.0f) t = 0.0f;
             if (t > 1.0f) t = 1.0f;
@@ -3220,15 +3435,29 @@ static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_
     if (!sFogTex || amount <= 0.005f)
         return;
 
-    const float stepX = (2.0f * VOXEL_FOG_SPAN_X) / (float)VOXEL_FOG_GRID;
-    const float stepZ = (VOXEL_FOG_SOUTH + VOXEL_FOG_NORTH) / (float)VOXEL_FOG_GRID;
+    // Expand fog bank span dynamically when the procedural camera frustum widens (e.g. pitch 25°).
+    const float viewHalfX = fmaxf(fabsf(sViewState.maxX - sCamera.targetX),
+                                  fabsf(sCamera.targetX - sViewState.minX));
+    const float viewSouth = fmaxf(sViewState.maxZ - sCamera.targetZ, 0.0f);
+    const float viewNorth = fmaxf(sCamera.targetZ - sViewState.minZ, 0.0f);
+    const float spanX = fmaxf(VOXEL_FOG_SPAN_X, viewHalfX + 4.0f);
+    const float spanSouth = fmaxf(VOXEL_FOG_SOUTH, viewSouth + 4.0f);
+    const float spanNorth = fmaxf(VOXEL_FOG_NORTH, viewNorth + 4.0f);
+
+    const float stepX = (2.0f * spanX) / (float)VOXEL_FOG_GRID;
+    const float stepZ = (spanSouth + spanNorth) / (float)VOXEL_FOG_GRID;
     const int32_t snapCellX = (int32_t)floorf(sCamera.targetX / stepX);
     const int32_t snapCellZ = (int32_t)floorf(sCamera.targetZ / stepZ);
 
-    if (!sFogCacheValid || snapCellX != sFogSnapCellX || snapCellZ != sFogSnapCellZ)
+    static float sFogCachedSpanX = 0.0f;
+    static float sFogCachedSpanN = 0.0f;
+    if (!sFogCacheValid || snapCellX != sFogSnapCellX || snapCellZ != sFogSnapCellZ
+     || fabsf(spanX - sFogCachedSpanX) > 2.0f || fabsf(spanNorth - sFogCachedSpanN) > 2.0f)
     {
         sFogSnapCellX = snapCellX;
         sFogSnapCellZ = snapCellZ;
+        sFogCachedSpanX = spanX;
+        sFogCachedSpanN = spanNorth;
         sFogCacheValid = true;
         const float snapX = (float)snapCellX * stepX;
         const float snapZ = (float)snapCellZ * stepZ;
@@ -3236,15 +3465,15 @@ static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_
             sFogNodeX[vx] = snapX + ((float)vx - 0.5f * (float)VOXEL_FOG_GRID) * stepX;
         for (int32_t vz = 0; vz <= VOXEL_FOG_GRID; ++vz)
         {
-            sFogNodeZ[vz] = snapZ + VOXEL_FOG_SOUTH - (float)vz * stepZ;
+            sFogNodeZ[vz] = snapZ + spanSouth - (float)vz * stepZ;
             for (int32_t vx = 0; vx <= VOXEL_FOG_GRID; ++vx)
                 sFogNodeY[vz][vx] = SmoothedFogWorldY(sFogNodeX[vx], sFogNodeZ[vz]);
         }
     }
 
-    const float maxRx = VOXEL_FOG_SPAN_X - stepX;
-    const float maxSouth = VOXEL_FOG_SOUTH - stepZ;
-    const float maxNorth = VOXEL_FOG_NORTH - stepZ;
+    const float maxRx = spanX - stepX;
+    const float maxSouth = spanSouth - stepZ;
+    const float maxNorth = spanNorth - stepZ;
     const float invFadeX = 1.0f / (maxRx * 0.30f);
     const float invFadeSouth = 1.0f / (maxSouth * 0.40f);
     const float invFadeNorth = 1.0f / (maxNorth * 0.30f);
@@ -3851,7 +4080,6 @@ static void InitFlowerFrames(uint16_t *const treeLinear)
         }
     }
     sFlowerFramesReady = true;
-    sLastFlowerStep = 0u;
     for (int32_t localGlY = 0; localGlY < 16; ++localGlY)
     {
         const int32_t glY = (int32_t)VOXEL_TREE_TEXTURE_DIM - 1 - (112 + (15 - localGlY));
@@ -4150,15 +4378,30 @@ bool VoxelRenderer_Init(void)
             InitFlowerFrames(sTreeLinear);
             InitAshGrassTexel(sTreeLinear);
             VoxelTree_SetAtlasPixels(sTreeLinear);
-            glGenTextures(1, &sTreeTex);
-            glBindTexture(GL_TEXTURE_2D, sTreeTex);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_TREE_TEXTURE_DIM, VOXEL_TREE_TEXTURE_DIM,
-                         0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, sTreeLinear);
-            VITA_LOG("[VOXEL] Loaded trees.rgba5551 successfully.\n");
+            // Pre-bake 3 tree atlas textures (one per flower animation frame) so Pass_Trees
+            // only switches texture bind without ever calling glTexSubImage2D on an active texture.
+            glGenTextures(3, sTreeTex);
+            for (uint32_t ff = 0; ff < 3u; ++ff)
+            {
+                if (sFlowerFramesReady)
+                {
+                    for (uint32_t y = 0; y < 16u; ++y)
+                        memcpy(&sTreeLinear[y * VOXEL_TREE_TEXTURE_DIM], &sFlowerFrames[ff][y * 16u], 16u * sizeof(uint16_t));
+                }
+                glBindTexture(GL_TEXTURE_2D, sTreeTex[ff]);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, VOXEL_TREE_TEXTURE_DIM, VOXEL_TREE_TEXTURE_DIM,
+                             0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, sTreeLinear);
+            }
+            if (sFlowerFramesReady)
+            {
+                for (uint32_t y = 0; y < 16u; ++y)
+                    memcpy(&sTreeLinear[y * VOXEL_TREE_TEXTURE_DIM], &sFlowerFrames[0][y * 16u], 16u * sizeof(uint16_t));
+            }
+            VITA_LOG("[VOXEL] Loaded trees.rgba5551 successfully (3 flower frames pre-baked).\n");
 
             InitTreeSwayShader();
         }
@@ -4214,10 +4457,10 @@ bool VoxelRenderer_Init(void)
     sSpriteTex = CreateRgba5551Texture(VOXEL_SPRITE_ATLAS_W, VOXEL_SPRITE_ATLAS_H, NULL);
     sSpriteAtlasNeedsAll = true;
 
-    // Pre-allocate 2D UI overlay texture at maximum dimensions once
-    glGenTextures(2, sUiTexRing);
+    // Pre-allocate 2D UI overlay texture ring at maximum dimensions once
+    glGenTextures((GLsizei)VOXEL_UI_TEX_RING, sUiTexRing);
     sUiImageValid = false;
-    for (int32_t t = 0; t < 2; t++)
+    for (uint32_t t = 0; t < VOXEL_UI_TEX_RING; t++)
     {
         glBindTexture(GL_TEXTURE_2D, sUiTexRing[t]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -4532,17 +4775,21 @@ typedef struct
     bool crossed;                       // the map change was a walk across a connection
     float playerX, playerZ;             // player position in the current map's tiles
     bool indoor;
-    float fadeAmount;                   // palette fade, 0..1
+    float fadeAmount;                   // real GBA palette fade, 0..1 (used for atmosphere snap & sync builds)
+    float drawFade;                     // drawn screen fade, 0..1 (0 when Fly noFade hides fade under clouds)
     float fadeRgb[3];
+    VoxelFlySnapshot fly;               // Core 1 Fly cinematic snapshot for this frame
     VoxelWeatherClass weather;
     float weatherAmount;
     float fogDensity;
     float bolt;                         // lightning flash, 0..1
     bool underground;
+    bool liveChanged;
     VoxelLight light;
     float seconds;                      // atmosphere animation clock
     VoxelChunkSlot *visible[MAX_CHUNKS];
     int32_t visibleCount;
+    int32_t holesLeft;                  // visible chunks still awaiting build (Core 2)
     VoxelFrameGrade grade;
     int32_t renderW, renderH;
     bool dioramaActive;                 // the 3D scene goes to the FBO for the depth of field
@@ -4551,16 +4798,22 @@ typedef struct
     float playerScreenY;                // 0..1 screen Y of the player (focal plane center)
 } VoxelFrame;
 
-// Chunk builds left after the visibility loop: unbuilt chunks outside the view (pre-warm) and
-// visible chunks whose content is only dated (stale).
+// Chunk builds left after the visibility loop: urgent visible holes (center-out), unbuilt
+// chunks outside the view (pre-warm), and visible chunks whose content is only dated (stale).
 typedef struct
 {
     double frameStartMs;
     double budgetMs;                    // frame time the builds may use (ChunkBuildFits)
-    int32_t built;                          // chunks built this frame
+    int32_t built;                      // chunks built this frame
     bool indoor;
     float playerX, playerZ;
+    float targetX, targetZ;             // camera target: holes are filled nearest to this first
     float lookX, lookZ;                 // where pre-warming aims (MovementLookahead)
+    int32_t holeCx[MAX_CHUNKS];
+    int32_t holeCy[MAX_CHUNKS];
+    uint32_t holeHash[MAX_CHUNKS];
+    bool holeHashValid[MAX_CHUNKS];
+    int32_t holeCount;
     int32_t prewarmCx[VOXEL_PREFETCH_MAX];
     int32_t prewarmCy[VOXEL_PREFETCH_MAX];
     bool prewarmSoon[VOXEL_PREFETCH_MAX]; // the view reaches it within VOXEL_VIEW_AHEAD_TILES
@@ -4614,8 +4867,8 @@ static bool Frame_Begin(VoxelFrame *const f)
         return false;
 
     // Zero-Stall Multicore Concurrency: when Core 1 is mutating map layout in
-    // LoadMapFromCameraTransition, render the active valid diorama using previous instances and snapshot
-    const bool mapLocked = (sMapMutationLock != 0);
+    // LoadMapFromCameraTransition / DoMapLoadLoop, render using previous instances and snapshot.
+    const bool mapLocked = (__atomic_load_n(&sMapMutationLock, __ATOMIC_ACQUIRE) != 0u);
     // (with the worker busy the instances stay as they are: it reads them, and the current map
     // has not changed)
     if (!inBattle3D && !mapLocked && !sWorkerBusyThisFrame)
@@ -4632,10 +4885,17 @@ static bool Frame_Begin(VoxelFrame *const f)
     const VoxelMapInstance *inst0 = VoxelWorld_Instance(0);
     if (!inst0)
         return false;
+    /* Pin one immutable entity snapshot for the entire Core 0 frame so camera, Z-shift,
+     * ground height and entity billboards never observe a mid-frame map transition or torn write. */
+    VoxelEntities_BeginFrameSnapshot();
     f->startMs = frameStartMs;
     f->inBattle3D = inBattle3D;
     f->mapLocked = mapLocked;
+    f->mapChanged = false;
+    f->crossed = false;
+    f->liveChanged = false;
     f->inst0 = inst0;
+    f->fly = *VoxelFly_GetSnapshot();
     return true;
 }
 
@@ -4680,28 +4940,66 @@ static void BattleTypeToFlashRgb(const uint8_t moveType, float outRgb[3])
     }
 }
 
+/* Last warp version observed from Core 1's LoadMapFromWarp (reset on SoftReset). */
+static uint32_t sLastFlyWarpVersion = 1u;
+
+/* Full Mode B Fly camera (tuning knobs live in voxel_tuning.h). */
+static void FlyCamera(const VoxelFlyFrame *const fly)
+{
+    const float lift = Voxel_ClampF(fly->lift, 0.0f, 1.0f);
+    const float pitch = sCamera.pitch + (VOXEL_FLY_PITCH - sCamera.pitch) * lift;
+    float distance;
+
+    if (fly->lift < 0.0f)
+    {
+        distance = sCamera.distance * (1.0f + Voxel_ClampF(fly->lift, -1.0f, 0.0f));
+    }
+    else
+    {
+        const float targetDist = fmaxf(sCamera.distance, VOXEL_FLY_DISTANCE);
+        distance = sCamera.distance + (targetDist - sCamera.distance) * lift;
+    }
+
+    const float lead = VOXEL_FLY_LEAD * lift * (fly->oldMap ? 1.0f : -1.0f);
+    const float dx = fly->dirX * lead;
+    const float dz = fly->dirZ * lead;
+
+    VoxelCamera_Frame(&sCamera, sCamera.targetX + dx, sCamera.targetZ + dz,
+                      sCamera.ground, pitch, distance);
+    sCamera.swoopX += dx;
+    sCamera.swoopZ += dz;
+    sCamera.y += VOXEL_FLY_RISE * Voxel_ClampF(fly->rise, 0.0f, 1.0f);
+}
+
+/* Deterministic warp detection via Core 1's LoadMapFromWarp counter (covers same-map warps too). */
+static bool DetectWarpSnap(const VoxelFrame *const f)
+{
+    if (f->mapLocked || f->fly.warpVersion == 0u || f->fly.warpVersion == sLastFlyWarpVersion)
+        return false;
+    sLastFlyWarpVersion = f->fly.warpVersion;
+    sNeedCameraSnap = true;
+    return true;
+}
+
 static void Frame_FollowCamera(VoxelFrame *const f)
 {
     const bool inBattle3D = f->inBattle3D;
     const bool mapLocked = f->mapLocked;
     const VoxelMapInstance *const inst0 = f->inst0;
-    int32_t mapGroup = inst0->mapGroup;
-    int32_t mapNum   = inst0->mapNum;
-    bool mapChanged = (mapGroup != sMeshMapGroup || mapNum != sMeshMapNum);
+    const int32_t mapGroup = inst0->mapGroup;
+    const int32_t mapNum   = inst0->mapNum;
+    const bool mapChanged = (mapGroup != sMeshMapGroup || mapNum != sMeshMapNum);
+    const bool warpOccurred = DetectWarpSnap(f);
     bool crossed = false;
 
-    const VoxelEntitySnapshot *snap = VoxelEntities_GetVisibleSnapshot();
-    float playerWorldX = (snap != NULL) ? snap->playerWorldX : 0.0f;
-    float playerWorldZ = (snap != NULL) ? snap->playerWorldZ : 0.0f;
-    if (snap != NULL && snap->mapGroup >= 0 && snap->mapNum >= 0)
-    {
-        int32_t snapOffX = 0, snapOffY = 0;
-        if (VoxelWorld_GetInstanceOffset(snap->mapGroup, snap->mapNum, &snapOffX, &snapOffY))
-        {
-            playerWorldX += (float)snapOffX;
-            playerWorldZ += (float)snapOffY;
-        }
-    }
+    static double sPrevCamMs = 0.0;
+    float camDt = (sPrevCamMs > 0.0) ? (float)((f->startMs - sPrevCamMs) * 0.001) : (1.0f / 30.0f);
+    if (camDt < 0.001f) camDt = 0.001f;
+    if (camDt > VOXEL_FOLLOW_DT_MAX) camDt = VOXEL_FOLLOW_DT_MAX;
+    sPrevCamMs = f->startMs;
+
+    float playerWorldX = 0.0f, playerWorldZ = 0.0f;
+    VoxelEntities_GetPlayerCameraTarget(&playerWorldX, &playerWorldZ);
 
     if (!mapLocked && (mapChanged || sNeedCameraSnap))
     {
@@ -4718,12 +5016,12 @@ static void Frame_FollowCamera(VoxelFrame *const f)
                 }
             }
             VitaPerf_SubBegin(VITA_PERF_T_MAP_SHIFT);
-            crossed = HandleMapChange(mapGroup, mapNum, playerWorldX, playerWorldZ);
+            crossed = HandleMapChange(mapGroup, mapNum, playerWorldX, playerWorldZ, warpOccurred);
             VitaPerf_SubEnd(VITA_PERF_T_MAP_SHIFT);
         }
         else
         {
-            VoxelCamera_SetGround(&sCamera, VoxelEntities_PlayerGround(), 1);
+            VoxelCamera_SetGround(&sCamera, VoxelEntities_PlayerGround(), 1, camDt);
             VoxelCamera_Snap(&sCamera, playerWorldX, playerWorldZ);
             sLastPlayerX = playerWorldX;
             sLastPlayerZ = playerWorldZ;
@@ -4851,13 +5149,16 @@ static void Frame_FollowCamera(VoxelFrame *const f)
             sNeedCameraSnap = true;
         }
 
-        // Smooth camera tracking continues on every frame (except crossing frames where VoxelCamera_Shift already shifted camera, matching Emerald 3DS: CtrVoxel_Update)
-        if (!sNeedCameraSnap && !crossed)
+        // Smooth framerate-independent camera tracking continues on every frame, including
+        // crossing frames (right after VoxelCamera_Shift), so biking across borders never pauses 1 frame.
+        if (!sNeedCameraSnap)
         {
             const float playerGround = VoxelEntities_PlayerGround();
-            VoxelCamera_SetGround(&sCamera, playerGround, 0);
-            VoxelCamera_Update(&sCamera, playerWorldX, playerWorldZ);
+            VoxelCamera_SetGround(&sCamera, playerGround, 0, camDt);
+            VoxelCamera_Update(&sCamera, playerWorldX, playerWorldZ, camDt);
         }
+        if (f->fly.active)
+            FlyCamera(&f->fly.frame);
     }
 
     if (!mapLocked)
@@ -4873,6 +5174,40 @@ static void Frame_FollowCamera(VoxelFrame *const f)
     f->crossed = crossed;
     f->playerX = playerWorldX;
     f->playerZ = playerWorldZ;
+}
+
+// Proactively extend already-cached direct neighbor atlases incrementally (AtlasExtend_Step,
+// <=4 ms/frame) on calm frames before the player crosses the border. Returns true when every
+// direct neighbor is already covered (no extension job started).
+static bool ExtendDirectNeighborAtlases(const VoxelMapInstance *const inst0)
+{
+    const uint32_t instCount = VoxelWorld_InstanceCount();
+    for (uint32_t i = 1u; i < instCount; ++i)
+    {
+        const VoxelMapInstance *const nInst = VoxelWorld_Instance(i);
+        if (nInst == NULL || nInst->secondaryTileset == NULL)
+            continue;
+        if (nInst->originX > inst0->width + VOXEL_NEIGHBOR_MARGIN_TILES
+         || nInst->originX + nInst->width < -VOXEL_NEIGHBOR_MARGIN_TILES
+         || nInst->originY > inst0->height + VOXEL_NEIGHBOR_MARGIN_TILES
+         || nInst->originY + nInst->height < -VOXEL_NEIGHBOR_MARGIN_TILES)
+            continue;
+
+        for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; ++s)
+        {
+            if (!sAtlasSlots[s].valid
+             || sAtlasSlots[s].primaryTileset != nInst->primaryTileset
+             || sAtlasSlots[s].secondaryTileset != nInst->secondaryTileset)
+                continue;
+            if (AtlasExtend_Start(s, nInst))
+            {
+                EnsureWorkerIdle();
+                return false;
+            }
+            break;
+        }
+    }
+    return true;
 }
 
 // Stage 2: metatile atlas slots for the current map (multi-atlas LRU, as Emerald 3DS).
@@ -4901,8 +5236,11 @@ static void Frame_UpdateAtlas(const VoxelFrame *const f)
     }
     const VoxelMapInstance *const inst0 = f->inst0;
     const bool mapChanged = f->mapChanged;
+    static bool sNeighborsAtlasChecked = false;
     VitaPerf_SubBegin(VITA_PERF_T_ATLAS_SLOTS);
     bool tilesetChanged = (inst0->primaryTileset != sLastPrimary || inst0->secondaryTileset != sLastSecondary);
+    if (tilesetChanged || mapChanged)
+        sNeighborsAtlasChecked = false;
     // Composing, extending or activating an atlas slot changes the maps the worker reads.
     if (tilesetChanged || sActiveAtlasSlot < 0 || mapChanged || sNeedAtlasExtension || sExtendSlot >= 0)
         EnsureWorkerIdle();
@@ -4945,6 +5283,11 @@ static void Frame_UpdateAtlas(const VoxelFrame *const f)
             sNeedAtlasExtension = false;
             AtlasExtend_Start(sActiveAtlasSlot, inst0);
         }
+    }
+    if (sExtendSlot < 0 && !sNeighborsAtlasChecked && !mapChanged && !tilesetChanged
+        && !f->fly.active && !sNeedsFullWarmup)
+    {
+        sNeighborsAtlasChecked = ExtendDirectNeighborAtlases(inst0);
     }
     AtlasExtend_Step();
 
@@ -5140,6 +5483,7 @@ static void Frame_TrackWorldChanges(VoxelFrame *const f)
     }
     
     f->indoor = indoor;
+    f->liveChanged = liveChanged;
 }
 
 // Stage 5: screen fade, weather and the light of the frame.
@@ -5150,6 +5494,7 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
     f->fadeRgb[1] = 0.0f;
     f->fadeRgb[2] = 0.0f;
     VoxelWorld_ScreenFade(&f->fadeAmount, f->fadeRgb);
+    f->drawFade = (f->fly.active && f->fly.frame.noFade) ? 0.0f : f->fadeAmount;
 
     const float targetWeatherAmt = VoxelWorld_WeatherAmount();
     const float targetFogDensity = VoxelWorld_FogDensity();
@@ -5212,7 +5557,7 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
 // not just dated (no geometry, or texture coordinates into an atlas that was recomposed or
 // extended since). `hash` is set, and `hashValid`, when the content hash had to be computed.
 static bool ChunkNeedsRebuild(VoxelChunkSlot *const slot, const int32_t cx0, const int32_t cy0, const bool indoor,
-                              bool *const urgent, uint32_t *const hash, bool *const hashValid)
+                              int32_t *const hashBudget, bool *const urgent, uint32_t *const hash, bool *const hashValid)
 {
     *urgent = false;
     if (!slot || !slot->valid)
@@ -5238,9 +5583,14 @@ static bool ChunkNeedsRebuild(VoxelChunkSlot *const slot, const int32_t cx0, con
     }
     // The hash is only compared once per world epoch (sWorldEpoch): a chunk that still matches
     // is marked checked; one that does not keeps being compared until it is rebuilt, also if it
-    // was off screen when the change happened.
+    // was off screen when the change happened. Non-urgent epoch verification is amortized by
+    // hashBudget so a zone crossing or sun tick does not hash all visible chunks in one frame.
     if (slot->checkedEpoch != sWorldEpoch)
     {
+        if (hashBudget != NULL && *hashBudget <= 0)
+            return false;
+        if (hashBudget != NULL)
+            (*hashBudget)--;
         *hash = ChunkContentHash(cx0, cy0, indoor);
         *hashValid = true;
         if (slot->hash != *hash)
@@ -5250,58 +5600,176 @@ static bool ChunkNeedsRebuild(VoxelChunkSlot *const slot, const int32_t cx0, con
     return false;
 }
 
-// With the worker, the chunks that are not holes are not built on Core 0 at all: one a frame
-// goes to Core 2 (computed after the swap, committed next frame). First a chunk about to enter
-// the view, then the dated chunk nearest to the player, then the pre-warm chunk nearest to the
-// lookahead point. The others wait for later frames.
-// While an atlas slot is being extended (after a crossing) nothing is handed over: every frame
-// of the extension waits for the worker before touching the atlas (Frame_UpdateAtlas), so a job
-// would only move its cost onto Core 0 (waits of up to 31 ms, logs/SESION 28). Those chunks are
-// not holes; they wait the few frames the extension lasts.
-static void BuildQueue_SendToWorker(VoxelBuildQueue *const q)
+// With the worker, non-hole chunks are offloaded to Core 2 in adaptive batches (2 during normal
+// traversal, 4 when holes exist or during Fly), prioritized: holes nearest camera target,
+// pre-warm chunks about to enter the view, dated chunks nearest the player, and lookahead chunks.
+// While an atlas slot is being extended (sExtendSlot >= 0), dispatches wait so Core 0 never
+// stalls behind a worker touching the same atlas maps.
+// Build visible holes nearest to the camera target first so rapid camera pullbacks fill
+// from the center outward. Any holes left after budget exhaustion remain in q->hole* so
+// BuildQueue_SendToWorker can hand them to Core 2 immediately.
+static int32_t BuildQueue_BuildHoles(VoxelBuildQueue *const q, VoxelChunkSlot **const visibleChunks,
+                                     int32_t *const visibleChunkCount)
+{
+    // If Core 2 is already computing a batch in parallel, never stall Core 0 with EnsureWorkerIdle()
+    // only to rebuild the same hole on Core 0 and drop Core 2's finished work next frame.
+    if (!sSyncBuildingLoads && sWorkerBusyThisFrame && ChunkWorker_Available())
+        return q->holeCount;
+
+    while (q->holeCount > 0)
+    {
+        if (!sSyncBuildingLoads && !ChunkBuildFits(q->frameStartMs, q->budgetMs, q->built, true))
+            break;
+
+        int32_t best = 0;
+        float bestDist = FLT_MAX;
+        for (int32_t p = 0; p < q->holeCount; p++)
+        {
+            const float dx = (float)(sChunkOriginX + q->holeCx[p] * CHUNK_SIZE + CHUNK_SIZE / 2) - q->targetX;
+            const float dz = (float)(sChunkOriginY + q->holeCy[p] * CHUNK_SIZE + CHUNK_SIZE / 2) - q->targetZ;
+            const float dist = dx * dx + dz * dz;
+            if (dist < bestDist)
+            {
+                bestDist = dist;
+                best = p;
+            }
+        }
+
+        const int32_t cx = q->holeCx[best];
+        const int32_t cy = q->holeCy[best];
+        uint32_t hash = q->holeHash[best];
+        const bool hashValid = q->holeHashValid[best];
+        const int32_t last = q->holeCount - 1;
+        q->holeCx[best] = q->holeCx[last];
+        q->holeCy[best] = q->holeCy[last];
+        q->holeHash[best] = q->holeHash[last];
+        q->holeHashValid[best] = q->holeHashValid[last];
+        q->holeCount = last;
+
+        const int32_t cx0 = sChunkOriginX + cx * CHUNK_SIZE;
+        const int32_t cy0 = sChunkOriginY + cy * CHUNK_SIZE;
+        if (!hashValid)
+            hash = ChunkContentHash(cx0, cy0, q->indoor);
+
+        VoxelChunkSlot *slot = FindChunkSlot(cx, cy);
+        if (!slot)
+            slot = GetAvailableChunkSlot(cx, cy);
+        EnsureWorkerIdle();
+        TimedBuildChunk(slot, cx, cy, hash);
+        q->built++;
+
+        if (slot != NULL && slot->valid)
+        {
+            slot->lastUsedFrame = sFrameCounter;
+            for (int32_t s = 0; s < VOXEL_ATLAS_SLOTS; s++)
+            {
+                if (slot->usedAtlasMask & (1u << s))
+                    sAtlasSlots[s].stamp = sFrameCounter;
+            }
+            if (*visibleChunkCount < MAX_CHUNKS)
+                visibleChunks[(*visibleChunkCount)++] = slot;
+        }
+    }
+    return q->holeCount;
+}
+
+static void BuildQueue_SendToWorker(VoxelBuildQueue *const q, const bool flyActive)
 {
     if (!ChunkWorker_Available() || sSyncBuildingLoads)
         return;
     if (sExtendSlot >= 0)
     {
+        q->holeCount = 0;
         q->staleCount = 0;
         q->prewarmCount = 0;
         VitaPerf_AddCount(VITA_PERF_C_WORKER_HELD, 1);
         return;
     }
 
-    int32_t pickCx = 0, pickCy = 0;
-    bool picked = false;
-    float bestDist = FLT_MAX;
-    for (int32_t pass = 0; pass < 3 && !picked; pass++)
+    if (sChunkJobState == CHUNK_JOB_NONE)
     {
-        const int32_t count = (pass == 1) ? q->staleCount : q->prewarmCount;
-        for (int32_t p = 0; p < count; p++)
+        int32_t batchCx[CHUNK_WORKER_BATCH];
+        int32_t batchCy[CHUNK_WORKER_BATCH];
+        uint32_t batchHash[CHUNK_WORKER_BATCH];
+        int32_t batchCount = 0;
+        // Adaptive batch size: 4 chunks during Fly or when visible holes exist (max throughput),
+        // 2 chunks during normal traversal so Core 2 finishes within ~1 frame and rarely stalls
+        // Core 0 on sudden map crossings or tile animations.
+        const int32_t maxBatch = (q->holeCount > 0 || flyActive)
+                               ? CHUNK_WORKER_BATCH
+                               : CHUNK_WORKER_BATCH_NORMAL;
+
+        // Pass 0: visible holes nearest to camera target (highest priority).
+        // Pass 1: pre-warm chunks about to enter the view.
+        // Pass 2: dated chunks nearest to the player.
+        // Pass 3: pre-warm chunks nearest to the lookahead point.
+        for (int32_t pass = 0; pass < 4 && batchCount < maxBatch; pass++)
         {
-            if (pass == 0 && !q->prewarmSoon[p])
-                continue;
-            const int32_t cx = (pass == 1) ? q->staleCx[p] : q->prewarmCx[p];
-            const int32_t cy = (pass == 1) ? q->staleCy[p] : q->prewarmCy[p];
-            const float aimX = (pass == 1) ? q->playerX : q->lookX;
-            const float aimZ = (pass == 1) ? q->playerZ : q->lookZ;
-            const float dx = (float)(sChunkOriginX + cx * CHUNK_SIZE + CHUNK_SIZE / 2) - aimX;
-            const float dz = (float)(sChunkOriginY + cy * CHUNK_SIZE + CHUNK_SIZE / 2) - aimZ;
-            const float dist = dx * dx + dz * dz;
-            if (dist < bestDist)
+            while (batchCount < maxBatch)
             {
-                bestDist = dist;
-                pickCx = cx;
-                pickCy = cy;
-                picked = true;
+                const int32_t count = (pass == 0) ? q->holeCount
+                                    : (pass == 2) ? q->staleCount
+                                    : q->prewarmCount;
+                int32_t bestIdx = -1;
+                float bestDist = FLT_MAX;
+                for (int32_t p = 0; p < count; p++)
+                {
+                    if (pass == 1 && !q->prewarmSoon[p])
+                        continue;
+                    const int32_t cx = (pass == 0) ? q->holeCx[p]
+                                     : (pass == 2) ? q->staleCx[p]
+                                     : q->prewarmCx[p];
+                    const int32_t cy = (pass == 0) ? q->holeCy[p]
+                                     : (pass == 2) ? q->staleCy[p]
+                                     : q->prewarmCy[p];
+                    bool dup = false;
+                    for (int32_t b = 0; b < batchCount; ++b)
+                    {
+                        if (batchCx[b] == cx && batchCy[b] == cy)
+                        {
+                            dup = true;
+                            break;
+                        }
+                    }
+                    if (dup)
+                        continue;
+                    const float aimX = (pass == 0) ? q->targetX
+                                     : (pass == 2) ? q->playerX
+                                     : q->lookX;
+                    const float aimZ = (pass == 0) ? q->targetZ
+                                     : (pass == 2) ? q->playerZ
+                                     : q->lookZ;
+                    const float dx = (float)(sChunkOriginX + cx * CHUNK_SIZE + CHUNK_SIZE / 2) - aimX;
+                    const float dz = (float)(sChunkOriginY + cy * CHUNK_SIZE + CHUNK_SIZE / 2) - aimZ;
+                    const float dist = dx * dx + dz * dz;
+                    if (dist < bestDist)
+                    {
+                        bestDist = dist;
+                        bestIdx = p;
+                    }
+                }
+                if (bestIdx < 0)
+                    break;
+                const int32_t cx = (pass == 0) ? q->holeCx[bestIdx]
+                                 : (pass == 2) ? q->staleCx[bestIdx]
+                                 : q->prewarmCx[bestIdx];
+                const int32_t cy = (pass == 0) ? q->holeCy[bestIdx]
+                                 : (pass == 2) ? q->staleCy[bestIdx]
+                                 : q->prewarmCy[bestIdx];
+                const int32_t cx0 = sChunkOriginX + cx * CHUNK_SIZE;
+                const int32_t cy0 = sChunkOriginY + cy * CHUNK_SIZE;
+                batchCx[batchCount] = cx;
+                batchCy[batchCount] = cy;
+                batchHash[batchCount] = (pass == 0 && q->holeHashValid[bestIdx])
+                                      ? q->holeHash[bestIdx]
+                                      : ChunkContentHash(cx0, cy0, q->indoor);
+                batchCount++;
             }
         }
+        if (batchCount > 0)
+            ChunkWorker_ChooseBatch(batchCx, batchCy, batchHash, batchCount);
     }
-    if (picked && sChunkJobState == CHUNK_JOB_NONE)
-    {
-        const int32_t cx0 = sChunkOriginX + pickCx * CHUNK_SIZE;
-        const int32_t cy0 = sChunkOriginY + pickCy * CHUNK_SIZE;
-        ChunkWorker_Choose(pickCx, pickCy, ChunkContentHash(cx0, cy0, q->indoor));
-    }
+    q->holeCount = 0;
     q->staleCount = 0;
     q->prewarmCount = 0;
 }
@@ -5399,9 +5867,11 @@ static void BuildQueue_Prewarm(VoxelBuildQueue *const q)
 static void Frame_SelectChunks(VoxelFrame *const f)
 {
     const bool indoor = f->indoor;
+    const bool fullLayout = indoor || (gMapHeader.mapType == MAP_TYPE_UNDERGROUND);
+    const VoxelMapInstance *const inst0 = f->inst0;
 
-    // Update camera frustum planes for hardware culling
-    UpdateFrustumPlanes();
+    // Single-source camera matrices, dynamic zNear/zFar, projected bounds, and frustum planes.
+    ComputeViewAndFrustum();
 
     // The chunk the worker computed since the last frame, if the world it was computed in
     // still stands (after this frame's map change, epoch and atlas updates).
@@ -5410,48 +5880,59 @@ static void Frame_SelectChunks(VoxelFrame *const f)
     const float camTargetX = sCamera.targetX;
     const float camTargetZ = sCamera.targetZ;
 
-    // Procedural horizon/lateral culling scaled from the classic 40-deg reference camera
-    float northTiles = VOXEL_VIEW_NORTH_TILES;
-    float farScale = 1.0f;
-    if (!indoor)
+    // Indoors and caves scan the full layout (clamped to VOXEL_VIEW_REACH_MAX) so tall gym
+    // walls and rock ceilings are never clipped; outdoors scan the camera's projected trapezoid.
+    int32_t minTileY, maxTileY;
+    int32_t layoutMinTileX = 0, layoutMaxTileX = 0;
+    if (fullLayout && inst0 != NULL)
     {
-        const float deg2rad = 0.0174532925f;
-        const float pitchDeg = Voxel_ClampF(sCamera.pitch, 18.0f, 60.0f);
-        const float halfDeg = sCamera.fov * 0.5f;
-        const float classicUpper = (40.0f - halfDeg) * deg2rad;
-        const float curUpper = ((pitchDeg > halfDeg + 3.0f) ? (pitchDeg - halfDeg) : 3.0f) * deg2rad;
-        const float classicNorthRatio = (tanf(40.0f * deg2rad) / tanf(classicUpper)) - 1.0f;
-        const float curNorthRatio = (tanf(pitchDeg * deg2rad) / tanf(curUpper)) - 1.0f;
-        const float extraNorth = Voxel_ClampF((curNorthRatio - classicNorthRatio) * sCamera.distance, 0.0f, 12.0f);
-        northTiles += extraNorth;
-        farScale = 1.0f + extraNorth * 0.022f;
+        const float loZ = camTargetZ - VOXEL_VIEW_REACH_MAX;
+        const float hiZ = camTargetZ + VOXEL_VIEW_REACH_MAX;
+        const float loX = camTargetX - VOXEL_VIEW_REACH_MAX;
+        const float hiX = camTargetX + VOXEL_VIEW_REACH_MAX;
+        const float z0 = fmaxf((float)(inst0->originY - CHUNK_SIZE), loZ);
+        const float z1 = fminf((float)(inst0->originY + inst0->height + CHUNK_SIZE), hiZ);
+        const float x0 = fmaxf((float)(inst0->originX - CHUNK_SIZE), loX);
+        const float x1 = fminf((float)(inst0->originX + inst0->width + CHUNK_SIZE), hiX);
+        minTileY = (int32_t)floorf(z0);
+        maxTileY = (int32_t)ceilf(z1);
+        layoutMinTileX = (int32_t)floorf(x0);
+        layoutMaxTileX = (int32_t)ceilf(x1);
     }
-
-    int32_t minTileY = (int32_t)floorf(camTargetZ - northTiles);
-    int32_t maxTileY = (int32_t)ceilf(camTargetZ + VOXEL_VIEW_SOUTH_TILES);
+    else
+    {
+        minTileY = (int32_t)floorf(sViewState.minZ);
+        maxTileY = (int32_t)ceilf(sViewState.maxZ);
+    }
 
     int32_t minChunkY = FloorDivChunk(minTileY - sChunkOriginY);
     int32_t maxChunkY = FloorDivChunk(maxTileY - sChunkOriginY);
 
     VoxelChunkSlot **const visibleChunks = f->visible;
     int32_t visibleChunkCount = 0;
-    VoxelBuildQueue q;
+    static VoxelBuildQueue q;
     q.frameStartMs = f->startMs;
     q.built = 0;
     q.indoor = indoor;
     q.playerX = f->playerX;
     q.playerZ = f->playerZ;
+    q.targetX = camTargetX;
+    q.targetZ = camTargetZ;
+    q.holeCount = 0;
     q.prewarmCount = 0;
     q.staleCount = 0;
 
-    const bool isWarmingUp = (sWarmupFrames > 0 || sNeedsFullWarmup);
+    const bool flyActive = f->fly.active;
+    if (flyActive)
+        sWarmupFrames = 0;
+    const bool isWarmingUp = !flyActive && (sWarmupFrames > 0 || sNeedsFullWarmup);
     if (sWarmupFrames > 0)
     {
         sWarmupFrames--;
         if (sWarmupFrames == 0)
             VitaPerf_LogMemory("map warm-up done");
     }
-    sSyncBuildingLoads = (isWarmingUp || f->fadeAmount >= 0.99f);
+    sSyncBuildingLoads = !flyActive && (isWarmingUp || f->fadeAmount >= 0.99f);
     if (isWarmingUp)
         VitaPerf_MarkEvent(VITA_PERF_E_WARMUP);
     else if (sSyncBuildingLoads)
@@ -5465,49 +5946,62 @@ static void Frame_SelectChunks(VoxelFrame *const f)
     q.lookZ = f->playerZ;
     MovementLookahead(&q.lookX, &q.lookZ);
 
-    // The candidate area reaches one chunk further on the side the player is heading to, so
-    // chunks about to enter the view are built before they do. That extra band is only ever
-    // pre-warmed, never drawn: the drawn set must not depend on the movement, or chunks at
-    // the edge would appear and vanish as the speed changes (a crossing used to drop them for
-    // one long frame, showing the background).
+    // The candidate area reaches 1 chunk (or 2 chunks at Mach Bike speed) further on the side
+    // the player is heading to, so chunks about to enter the view are built before they do.
+    // That extra band is only ever pre-warmed, never drawn: the drawn set (baseMin/Max) stays
+    // independent of movement speed.
+    const float moveSpeed = sqrtf(sMoveVelX * sMoveVelX + sMoveVelZ * sMoveVelZ);
+    const bool moving = moveSpeed > VOXEL_MOVE_THRESHOLD;
+    const int32_t prewarmTiles = (moveSpeed >= VOXEL_FAST_MOVE_SPEED) ? (2 * CHUNK_SIZE) : CHUNK_SIZE;
     const int32_t baseMinChunkY = minChunkY;
     const int32_t baseMaxChunkY = maxChunkY;
     const int32_t baseMinTileY = minTileY;
     const int32_t baseMaxTileY = maxTileY;
-    if (sMoveVelZ < -VOXEL_MOVE_THRESHOLD) minTileY -= CHUNK_SIZE;
-    if (sMoveVelZ > VOXEL_MOVE_THRESHOLD) maxTileY += CHUNK_SIZE;
-    minChunkY = FloorDivChunk(minTileY - sChunkOriginY);
-    maxChunkY = FloorDivChunk(maxTileY - sChunkOriginY);
-    const int32_t extraLeft = (sMoveVelX < -VOXEL_MOVE_THRESHOLD) ? CHUNK_SIZE : 0;
-    const int32_t extraRight = (sMoveVelX > VOXEL_MOVE_THRESHOLD) ? CHUNK_SIZE : 0;
+    if (!fullLayout)
+    {
+        if (sMoveVelZ < -VOXEL_MOVE_THRESHOLD) minTileY -= prewarmTiles;
+        if (sMoveVelZ > VOXEL_MOVE_THRESHOLD) maxTileY += prewarmTiles;
+        minChunkY = FloorDivChunk(minTileY - sChunkOriginY);
+        maxChunkY = FloorDivChunk(maxTileY - sChunkOriginY);
+    }
+    const int32_t extraLeft = (!fullLayout && sMoveVelX < -VOXEL_MOVE_THRESHOLD) ? prewarmTiles : 0;
+    const int32_t extraRight = (!fullLayout && sMoveVelX > VOXEL_MOVE_THRESHOLD) ? prewarmTiles : 0;
 
-    const float moveSpeed = sqrtf(sMoveVelX * sMoveVelX + sMoveVelZ * sMoveVelZ);
-    const bool moving = moveSpeed > VOXEL_MOVE_THRESHOLD;
     const float aheadX = moving ? sMoveVelX / moveSpeed * VOXEL_VIEW_AHEAD_TILES : 0.0f;
     const float aheadZ = moving ? sMoveVelZ / moveSpeed * VOXEL_VIEW_AHEAD_TILES : 0.0f;
-    int32_t holesLeft = 0;
+    int32_t epochHashBudget = (f->liveChanged || f->crossed || sSyncBuildingLoads)
+                            ? MAX_CHUNKS
+                            : VOXEL_EPOCH_HASH_BUDGET;
 
-    // Visible frustum chunks: drawn, and built now when they are holes
+    // Visible frustum chunks: drawn, and holes queued for center-out building
     VitaPerf_MarkCullStart();
     int32_t candidateChunks = 0;
     // Outdoors the scan also reaches a few chunks west and north of the candidate area: a
     // building model stands in the chunk of its north-west cell and may reach into the view
     // from there. Those chunks are only drawn (never built or pre-warmed from here).
-    const int32_t reachY = indoor ? 0 : VOXEL_BUILDING_REACH_CHUNKS_Y;
-    const int32_t reachX = indoor ? 0 : VOXEL_BUILDING_REACH_CHUNKS_X;
+    const int32_t reachY = fullLayout ? 0 : VOXEL_BUILDING_REACH_CHUNKS_Y;
+    const int32_t reachX = fullLayout ? 0 : VOXEL_BUILDING_REACH_CHUNKS_X;
     for (int32_t cy = maxChunkY; cy >= minChunkY - reachY; cy--)
     {
-        float chunkZ = (float)(sChunkOriginY + cy * CHUNK_SIZE);
-        // Frustum width expands with distance north of camera:
-        // Expanded lateral bounds, especially on the left (west) and south (bottom)
-        float lateralMarginLeft = (indoor || chunkZ < camTargetZ - VOXEL_VIEW_FAR_ROW_TILES) ? (VOXEL_VIEW_FAR_LEFT * farScale) : VOXEL_VIEW_NEAR_LEFT;
-        float lateralMarginRight = (indoor || chunkZ < camTargetZ - VOXEL_VIEW_FAR_ROW_TILES) ? (VOXEL_VIEW_FAR_RIGHT * farScale) : VOXEL_VIEW_NEAR_RIGHT;
-        int32_t rowMinTileX = (int32_t)floorf(camTargetX - lateralMarginLeft);
-        int32_t rowMaxTileX = (int32_t)ceilf(camTargetX + lateralMarginRight);
+        int32_t rowMinTileX, rowMaxTileX;
+        if (fullLayout)
+        {
+            rowMinTileX = layoutMinTileX;
+            rowMaxTileX = layoutMaxTileX;
+        }
+        else
+        {
+            const float rowZ0 = (float)(sChunkOriginY + cy * CHUNK_SIZE);
+            const float rowZ1 = rowZ0 + (float)CHUNK_SIZE;
+            float rMinX, rMaxX;
+            Frustum_RowBoundsX(rowZ0, rowZ1, &rMinX, &rMaxX);
+            rowMinTileX = (int32_t)floorf(rMinX);
+            rowMaxTileX = (int32_t)ceilf(rMaxX);
+        }
         const int32_t baseMinChunkX = FloorDivChunk(rowMinTileX - sChunkOriginX);
         const int32_t baseMaxChunkX = FloorDivChunk(rowMaxTileX - sChunkOriginX);
-        int32_t minChunkX = FloorDivChunk(rowMinTileX - extraLeft - sChunkOriginX);
-        int32_t maxChunkX = FloorDivChunk(rowMaxTileX + extraRight - sChunkOriginX);
+        const int32_t minChunkX = FloorDivChunk(rowMinTileX - extraLeft - sChunkOriginX);
+        const int32_t maxChunkX = FloorDivChunk(rowMaxTileX + extraRight - sChunkOriginX);
         const bool rowInBase = (cy >= baseMinChunkY && cy <= baseMaxChunkY);
 
         for (int32_t cx = minChunkX - reachX; cx <= maxChunkX; cx++)
@@ -5515,7 +6009,7 @@ static void Frame_SelectChunks(VoxelFrame *const f)
             VoxelChunkSlot *slot = FindChunkSlot(cx, cy);
             // whether its building models reach into this row's window (the base area, not
             // the movement's extra band, so the drawn set stays independent of the speed)
-            const bool modelsReach = !indoor
+            const bool modelsReach = !fullLayout
                 && ChunkModelsReachWindow(slot, cx, cy, (float)rowMinTileX, (float)rowMaxTileX,
                                           (float)baseMinTileY, (float)baseMaxTileY);
             if (cy < minChunkY || cx < minChunkX)
@@ -5537,7 +6031,7 @@ static void Frame_SelectChunks(VoxelFrame *const f)
                 {
                     q.prewarmCx[q.prewarmCount] = cx;
                     q.prewarmCy[q.prewarmCount] = cy;
-                    q.prewarmSoon[q.prewarmCount] = moving && !indoor
+                    q.prewarmSoon[q.prewarmCount] = moving && !fullLayout
                         && Frustum_ChunkInViewAhead(cx, cy, aheadX, aheadZ);
                     q.prewarmCount++;
                 }
@@ -5549,7 +6043,7 @@ static void Frame_SelectChunks(VoxelFrame *const f)
             uint32_t hash = 0;
             bool hashValid = false;
             bool urgent = false;
-            const bool needRebuild = ChunkNeedsRebuild(slot, cx0, cy0, indoor, &urgent, &hash, &hashValid);
+            const bool needRebuild = ChunkNeedsRebuild(slot, cx0, cy0, indoor, &epochHashBudget, &urgent, &hash, &hashValid);
 
             if (needRebuild && !urgent && !sSyncBuildingLoads)
             {
@@ -5564,23 +6058,16 @@ static void Frame_SelectChunks(VoxelFrame *const f)
             }
             else if (needRebuild)
             {
-                if (sSyncBuildingLoads
-                    || ChunkBuildFits(q.frameStartMs, q.budgetMs, q.built, urgent))
+                // Urgent hole or outdated atlas: queue for radial center-out building after the scan.
+                if (q.holeCount < MAX_CHUNKS)
                 {
-                    if (!hashValid)
-                        hash = ChunkContentHash(cx0, cy0, indoor);
-                    if (!slot)
-                        slot = GetAvailableChunkSlot(cx, cy);
-                    EnsureWorkerIdle();
-                    TimedBuildChunk(slot, cx, cy, hash);
-                    q.built++;
+                    q.holeCx[q.holeCount] = cx;
+                    q.holeCy[q.holeCount] = cy;
+                    q.holeHash[q.holeCount] = hash;
+                    q.holeHashValid[q.holeCount] = hashValid;
+                    q.holeCount++;
                 }
-                else
-                {
-                    // Left for a later frame; its checkedEpoch stays old, so it is compared again.
-                    // Missing or drawn with an outdated atlas: wrong on screen either way.
-                    holesLeft++;
-                }
+                continue;
             }
 
             // If chunk has valid geometry, draw it!
@@ -5602,14 +6089,27 @@ static void Frame_SelectChunks(VoxelFrame *const f)
         }
     }
 
-    BuildQueue_SendToWorker(&q);
-    BuildQueue_BuildStale(&q);
-    BuildQueue_Prewarm(&q);
+    // During Fly with Core 2 available, offload all chunk builds to Core 2 (4-chunk batches)
+    // so Core 0 never stalls or drops frames rendering clouds/HD-2D.
+    int32_t holesLeft;
+    if (flyActive && ChunkWorker_Available())
+    {
+        holesLeft = q.holeCount;
+        BuildQueue_SendToWorker(&q, true);
+    }
+    else
+    {
+        holesLeft = BuildQueue_BuildHoles(&q, visibleChunks, &visibleChunkCount);
+        BuildQueue_SendToWorker(&q, false);
+        BuildQueue_BuildStale(&q);
+        BuildQueue_Prewarm(&q);
+    }
 
     VitaPerf_AddCount(VITA_PERF_C_HOLES, (uint32_t)holesLeft);
     sNeedsFullWarmup = false;
     VitaPerf_MarkCullEnd(candidateChunks, visibleChunkCount);
     f->visibleCount = visibleChunkCount;
+    f->holesLeft = holesLeft;
 }
 
 // Populate active HD-2D point lights from cached street lamps / cave lantern (zero Core 2 race)
@@ -5774,7 +6274,7 @@ static void Frame_EmitEntities(const VoxelFrame *const f)
 static void Frame_BeginPasses(VoxelFrame *const f, const GLuint defaultTargetFbo)
 {
     const VoxelMapInstance *const inst0 = f->inst0;
-    const float fadeAmount = f->fadeAmount;
+    const float fadeAmount = f->drawFade;
     const float *const fadeRgb = f->fadeRgb;
     const int32_t renderW = VitaPlatform_GetRenderWidth();
     const int32_t renderH = VitaPlatform_GetRenderHeight();
@@ -5806,14 +6306,10 @@ static void Frame_BeginPasses(VoxelFrame *const f, const GLuint defaultTargetFbo
     glViewport(0, 0, renderW, renderH);
 
     glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    Voxel_gluPerspective(sCamera.fov, 960.0f / 544.0f, 1.0f, 62.0f);
+    glLoadMatrixf(sViewState.proj);
 
     glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    Voxel_gluLookAt(sCamera.x, sCamera.y, sCamera.z,
-                    sCamera.targetX, sCamera.targetY, sCamera.targetZ,
-                    0.0f, 1.0f, 0.0f);
+    glLoadMatrixf(sViewState.view);
 
     glDepthMask(GL_TRUE);
     {
@@ -5958,22 +6454,17 @@ static void Pass_Trees(const VoxelFrame *const f)
 {
     VoxelChunkSlot *const *const visibleChunks = f->visible;
     const int32_t visibleChunkCount = f->visibleCount;
-    if (!sTreeTex)
+    if (!sTreeTex[0])
         return;
 
-    glBindTexture(GL_TEXTURE_2D, sTreeTex);
-
+    uint32_t flowerFrame = 0u;
     if (sFlowerFramesReady && f->hd2dPreset != HD2D_PRESET_OFF)
     {
         static const uint8_t kFlowerSeq[4] = { 0u, 1u, 0u, 2u };
         const uint32_t step = (uint32_t)(f->seconds * (60.0f / 16.0f)) & 3u;
-        if (step != sLastFlowerStep)
-        {
-            sLastFlowerStep = step;
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 16, 16, GL_RGBA,
-                            GL_UNSIGNED_SHORT_5_5_5_1, sFlowerFrames[kFlowerSeq[step]]);
-        }
+        flowerFrame = kFlowerSeq[step];
     }
+    glBindTexture(GL_TEXTURE_2D, sTreeTex[flowerFrame]);
 
     const bool useSwayShader = (sTreeShaderReady && f->hd2dPreset != HD2D_PRESET_OFF);
     bool hasSway = false;
@@ -6029,27 +6520,13 @@ static void Pass_Trees(const VoxelFrame *const f)
             sAppliedOffsetZ = 0.0f;
         }
 
-        float proj[16], mv[16], mvp[16];
-        glGetFloatv(GL_PROJECTION_MATRIX, proj);
-        glGetFloatv(GL_MODELVIEW_MATRIX, mv);
-        for (int32_t c = 0; c < 4; ++c)
-        {
-            for (int32_t r = 0; r < 4; ++r)
-            {
-                mvp[c * 4 + r] = proj[0 * 4 + r] * mv[c * 4 + 0]
-                               + proj[1 * 4 + r] * mv[c * 4 + 1]
-                               + proj[2 * 4 + r] * mv[c * 4 + 2]
-                               + proj[3 * 4 + r] * mv[c * 4 + 3];
-            }
-        }
-
         glDisable(GL_ALPHA_TEST);
         glDisableClientState(GL_COLOR_ARRAY);
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
 
         glUseProgram(sTreeShaderProg);
-        glUniformMatrix4fv(sTreeShaderUMvp, 1, GL_FALSE, mvp);
+        glUniformMatrix4fv(sTreeShaderUMvp, 1, GL_FALSE, sViewState.mvp);
         glUniform1f(sTreeShaderUTime, f->seconds);
         glUniform2f(sTreeShaderUWind, 0.85f, 0.52f);
         glUniform2f(sTreeShaderUPlayerXZ, sCamera.targetX, sCamera.targetZ);
@@ -6090,7 +6567,7 @@ static bool Pass_Buildings(const VoxelFrame *const f)
 {
     VoxelChunkSlot *const *const visibleChunks = f->visible;
     const int32_t visibleChunkCount = f->visibleCount;
-    int32_t activeBuildingPages[16];
+    int32_t activeBuildingPages[32];
     int32_t activeBuildingPageCount = 0;
     for (int32_t i = 0; i < visibleChunkCount; i++)
     {
@@ -6109,60 +6586,62 @@ static bool Pass_Buildings(const VoxelFrame *const f)
                     break;
                 }
             }
-            if (!alreadyInList && activeBuildingPageCount < 16)
+            if (!alreadyInList && activeBuildingPageCount < 32)
                 activeBuildingPages[activeBuildingPageCount++] = p;
         }
     }
 
+    // Two clean passes for PowerVR SGX543MP4+ TBDR HSR: opaque building pages first
+    // (GL_ALPHA_TEST OFF), then cutout pages (GL_ALPHA_TEST ON).
     bool buildingAlphaEnabled = false;
     glDisable(GL_ALPHA_TEST);
 
-    for (int32_t ap = 0; ap < activeBuildingPageCount; ap++)
+    for (uint32_t alphaPass = 0u; alphaPass < 2u; alphaPass++)
     {
-        const int32_t p = activeBuildingPages[ap];
-        if (p < 0 || p >= VOXEL_MAX_BUILDING_PAGES) continue;
-        const GLuint bTex = RequestOrLoadBuildingPage(p, sSyncBuildingLoads);
-        if (!bTex) continue;
-
-        const bool pageNeedsAlpha = (sBuildingPageHasAlpha[p] == 2u);
-        if (pageNeedsAlpha != buildingAlphaEnabled)
+        const bool wantAlpha = (alphaPass == 1u);
+        for (int32_t ap = 0; ap < activeBuildingPageCount; ap++)
         {
-            if (pageNeedsAlpha)
+            const int32_t p = activeBuildingPages[ap];
+            if (p < 0 || p >= VOXEL_MAX_BUILDING_PAGES) continue;
+            const GLuint bTex = RequestOrLoadBuildingPage(p, sSyncBuildingLoads);
+            if (!bTex) continue;
+
+            const bool pageNeedsAlpha = (sBuildingPageHasAlpha[p] == 2u);
+            if (pageNeedsAlpha != wantAlpha)
+                continue;
+
+            if (wantAlpha && !buildingAlphaEnabled)
             {
                 glEnable(GL_ALPHA_TEST);
                 glAlphaFunc(GL_GREATER, 0.0f);
+                buildingAlphaEnabled = true;
             }
-            else
+
+            glBindTexture(GL_TEXTURE_2D, bTex);
+
+            GLuint lastVbo = 0;
+            for (int32_t i = 0; i < visibleChunkCount; i++)
             {
-                glDisable(GL_ALPHA_TEST);
-            }
-            buildingAlphaEnabled = pageNeedsAlpha;
-        }
+                const VoxelChunkSlot *const chunk = visibleChunks[i];
 
-        glBindTexture(GL_TEXTURE_2D, bTex);
-
-        GLuint lastVbo = 0;
-        for (int32_t i = 0; i < visibleChunkCount; i++)
-        {
-            const VoxelChunkSlot *const chunk = visibleChunks[i];
-
-            for (uint8_t sp = 0; sp < chunk->buildingSpanCount; sp++)
-            {
-                const VoxelChunkBuildingSpan *const bspan = &chunk->buildingSpans[sp];
-                if (bspan->page != (int16_t)p || bspan->vertCount == 0)
-                    continue;
-
-                if (lastVbo != chunk->vbo)
+                for (uint8_t sp = 0; sp < chunk->buildingSpanCount; sp++)
                 {
-                    glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
-                    glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
-                    glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
-                    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
-                    lastVbo = chunk->vbo;
-                }
+                    const VoxelChunkBuildingSpan *const bspan = &chunk->buildingSpans[sp];
+                    if (bspan->page != (int16_t)p || bspan->vertCount == 0)
+                        continue;
 
-                ChunkOffsets_Apply(chunk);
-                glDrawArrays(GL_TRIANGLES, (GLint)(chunk->buildingFirstVert + bspan->firstVert), (GLsizei)bspan->vertCount);
+                    if (lastVbo != chunk->vbo)
+                    {
+                        glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
+                        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
+                        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
+                        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
+                        lastVbo = chunk->vbo;
+                    }
+
+                    ChunkOffsets_Apply(chunk);
+                    glDrawArrays(GL_TRIANGLES, (GLint)(chunk->buildingFirstVert + bspan->firstVert), (GLsizei)bspan->vertCount);
+                }
             }
         }
     }
@@ -6888,6 +7367,95 @@ static void DrawWorldRays(const float strength, const float seconds, const bool 
     glDisable(GL_BLEND);
 }
 
+// High-altitude cloud wisps for the 3D Fly cinematic (independent of DrawFogBanks terrain cache).
+static void DrawCloudWisps(const VoxelFlyFrame *const fly, const float seconds)
+{
+    const float strength = Voxel_ClampF(fly->wisps, 0.0f, 1.0f);
+    if (!sFogTex || strength <= 0.005f)
+        return;
+
+    static const struct { float height, speedScale, alpha, period, offU, offV; } kBanks[2] = {
+        { 24.0f, 0.7f, 0.55f, 22.0f, 0.00f, 0.00f },
+        { 33.0f, 1.0f, 0.75f, 16.0f, 0.41f, 0.67f },
+    };
+    const float wispSpeed = 9.0f;
+    const float span = 44.0f;
+    const int32_t grid = VOXEL_FOG_GRID;
+    const float step = (2.0f * span) / (float)grid;
+    const float cx = sCamera.targetX;
+    const float cz = sCamera.targetZ;
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, sFogTex);
+    glDisable(GL_ALPHA_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].x);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), &sBatchGlVerts[0].u);
+    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), &sBatchGlVerts[0].r);
+
+    for (uint32_t b = 0u; b < 2u; ++b)
+    {
+        const float wy = sCamera.ground + kBanks[b].height;
+        const float driftX = -fly->dirX * wispSpeed * kBanks[b].speedScale * seconds;
+        const float driftZ = -fly->dirZ * wispSpeed * kBanks[b].speedScale * seconds;
+        const float invP = 1.0f / kBanks[b].period;
+        const float baseAlpha = strength * kBanks[b].alpha;
+        uint32_t vOut = 0u;
+
+        for (int32_t iz = 0; iz < grid; ++iz)
+        {
+            const float z0 = cz - span + (float)iz * step;
+            const float z1 = z0 + step;
+            const float ez0 = Voxel_ClampF((span - fabsf(z0 - cz)) / (span * 0.35f), 0.0f, 1.0f);
+            const float ez1 = Voxel_ClampF((span - fabsf(z1 - cz)) / (span * 0.35f), 0.0f, 1.0f);
+            const float sz0 = ez0 * ez0 * (3.0f - 2.0f * ez0);
+            const float sz1 = ez1 * ez1 * (3.0f - 2.0f * ez1);
+
+            for (int32_t ix = 0; ix < grid; ++ix)
+            {
+                const float x0 = cx - span + (float)ix * step;
+                const float x1 = x0 + step;
+                const float ex0 = Voxel_ClampF((span - fabsf(x0 - cx)) / (span * 0.35f), 0.0f, 1.0f);
+                const float ex1 = Voxel_ClampF((span - fabsf(x1 - cx)) / (span * 0.35f), 0.0f, 1.0f);
+                const float sx0 = ex0 * ex0 * (3.0f - 2.0f * ex0);
+                const float sx1 = ex1 * ex1 * (3.0f - 2.0f * ex1);
+
+                const float xs[4] = { x0, x1, x1, x0 };
+                const float zs[4] = { z0, z0, z1, z1 };
+                const float as[4] = { sx0 * sz0, sx1 * sz0, sx1 * sz1, sx0 * sz1 };
+                static const int32_t kIdx[6] = { 0, 1, 2, 0, 2, 3 };
+                for (int32_t k = 0; k < 6; ++k)
+                {
+                    const int32_t q = kIdx[k];
+                    VoxelGlVertex *const v = &sBatchGlVerts[vOut++];
+                    v->x = xs[q];
+                    v->y = wy;
+                    v->z = zs[q];
+                    v->u = (xs[q] + driftX) * invP + kBanks[b].offU;
+                    v->v = (zs[q] + driftZ) * invP + kBanks[b].offV;
+                    v->r = 244u;
+                    v->g = 248u;
+                    v->b = 251u;
+                    v->a = (uint8_t)(baseAlpha * as[q] * 255.0f + 0.5f);
+                }
+            }
+        }
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)vOut);
+    }
+
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+}
+
 // Passes 5.4-5.8: 3D fog and sand banks, dust motes and weather particles.
 static void Pass_Atmosphere3D(const VoxelFrame *const f)
 {
@@ -6912,6 +7480,10 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
         if (weather == VOXEL_WEATHER_SAND && weatherAmount > 0.005f)
         {
             DrawFogBanks(sSandBanks, weatherAmount, 224, 190, 136, seconds);
+        }
+        if (f->fly.active && f->fly.frame.wisps > 0.005f)
+        {
+            DrawCloudWisps(&f->fly.frame, seconds);
         }
 
         // ---- PASS 5.6: 3D Sunlit Dust Motes & Night Fireflies ----
@@ -6971,7 +7543,7 @@ static void Pass_Atmosphere2D(const VoxelFrame *const f)
     const bool indoor = f->indoor;
     const float bolt = f->bolt;
     const bool underground = f->underground;
-    const float fadeAmount = f->fadeAmount;
+    const float fadeAmount = f->drawFade;
     const float *const fadeRgb = f->fadeRgb;
     static const float sUnitQuad[8] = {
         0.0f, 0.0f,
@@ -7463,7 +8035,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         }
         const float baseCurve = (kLutCurve[0] * day + kLutCurve[1] * dusk + kLutCurve[2] * night) / sum;
 
-        const bool dofEnabled = !f->inBattle3D && (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
+        const bool dofEnabled = !f->inBattle3D && !f->fly.active && (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
         float yTop = f->playerScreenY - (hd2dHigh ? 0.11f : 0.16f);
         float yBot = f->playerScreenY + (hd2dHigh ? 0.15f : 0.16f);
         if (yTop < 0.16f) yTop = 0.16f;
@@ -7547,7 +8119,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
             glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
         }
 
-        const bool dofEnabled = (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
+        const bool dofEnabled = !f->fly.active && (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
         if (dofEnabled)
         {
             float yTop = hd2dOn ? (f->playerScreenY - 0.16f) : (VOXEL_DOF_TOP_ROWS / 544.0f);
@@ -7970,7 +8542,7 @@ static void Pass_Overlay2D(const VoxelFrame *const f)
             {
                 if (!uiUnchanged)
                 {
-                    sUiTexIdx ^= 1;
+                    sUiTexIdx = (uint8_t)((sUiTexIdx + 1u) & (VOXEL_UI_TEX_RING - 1u));
                     sUiTex = sUiTexRing[sUiTexIdx];
                     glBindTexture(GL_TEXTURE_2D, sUiTex);
                     // A centred overlay is sampled only inside the GBA's 240 px, so the stale
@@ -8089,6 +8661,109 @@ static void DrawMenuFrozenBackdrop(void)
     glDisableClientState(GL_VERTEX_ARRAY);
 }
 
+// Fullscreen churning cloud cover for the 3D Fly cinematic (vitaGL ortho 0..1, 16:9).
+// Cool sky/cloud-shadow backdrop shared by DrawCloudCover and RenderFlyCloudFrame so the
+// 3 layered white scrolling cloud sheets always show clear depth and motion instead of flat white.
+static const float kFlyCloudBackdropRgb[3] = {
+    156.0f / 255.0f, 186.0f / 255.0f, 218.0f / 255.0f
+};
+
+static void DrawCloudCover(const float amount)
+{
+    const float k = Voxel_ClampF(amount, 0.0f, 1.0f);
+    if (k <= 0.005f)
+        return;
+
+    static uint64_t sCloudStart = 0;
+    if (sCloudStart == 0)
+        sCloudStart = SDL_GetPerformanceCounter();
+    const double seconds = (double)(SDL_GetPerformanceCounter() - sCloudStart)
+                         / (double)SDL_GetPerformanceFrequency();
+
+    glViewport(0, 0, VitaPlatform_GetRenderWidth(), VitaPlatform_GetRenderHeight());
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0.0, 1.0, 1.0, 0.0, -1.0, 1.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_ALPHA_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    static const float sQuad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glVertexPointer(2, GL_FLOAT, 0, sQuad);
+
+    glDisable(GL_TEXTURE_2D);
+    glColor4f(kFlyCloudBackdropRgb[0], kFlyCloudBackdropRgb[1], kFlyCloudBackdropRgb[2], k * k);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    if (sFogTex != 0)
+    {
+        static const struct {
+            float repeats, speedU, speedV;
+            float r, g, b, alpha;
+        } kSheets[3] = {
+            { 1.2f,  0.022f,  0.010f, 0.78f, 0.85f, 0.93f, 0.90f }, /* deep cloud shadows */
+            { 2.0f, -0.042f,  0.020f, 0.96f, 0.97f, 0.99f, 0.92f }, /* main bright billows */
+            { 3.4f,  0.068f, -0.030f, 1.00f, 1.00f, 1.00f, 0.72f }, /* fast wispy foreground */
+        };
+        const float aspect = 544.0f / 960.0f;
+
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, sFogTex);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        for (uint32_t s = 0u; s < 3u; ++s)
+        {
+            float u = (float)fmod(seconds * kSheets[s].speedU, 1.0);
+            float v = (float)fmod(seconds * kSheets[s].speedV, 1.0);
+            if (u < 0.0f) u += 1.0f;
+            if (v < 0.0f) v += 1.0f;
+            const float ru = kSheets[s].repeats;
+            const float rv = kSheets[s].repeats * aspect;
+            const float uvs[8] = { u, v, u + ru, v, u + ru, v + rv, u, v + rv };
+
+            glColor4f(kSheets[s].r, kSheets[s].g, kSheets[s].b, k * kSheets[s].alpha);
+            glTexCoordPointer(2, GL_FLOAT, 0, uvs);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        }
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    }
+
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisable(GL_BLEND);
+    glEnable(GL_TEXTURE_2D);
+}
+
+void VoxelRenderer_DrawFlyCloudCover(void)
+{
+    const VoxelFlySnapshot *const snap = VoxelFly_GetSnapshot();
+    if (snap != NULL && snap->active && snap->frame.whiteout > 0.005f)
+        DrawCloudCover(snap->frame.whiteout);
+}
+
+// Under 100% opaque Fly cloud cover: skip 3D rendering so Core 0 animates layered clouds
+// at locked 30/60 FPS (~1 ms) while Core 2 streams all aerial destination chunks in 4-chunk batches.
+static void RenderFlyCloudFrame(const VoxelFrame *const f)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(kFlyCloudBackdropRgb[0], kFlyCloudBackdropRgb[1], kFlyCloudBackdropRgb[2], 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    DrawCloudCover(f->fly.frame.whiteout);
+    Ui_Render(VitaPlatform_GetRenderWidth(), VitaPlatform_GetRenderHeight());
+    if (f->holesLeft == 0)
+        VoxelFly_NotifyFrameDrawn(f->fly.warpVersion);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_BLEND);
+    glDisable(GL_ALPHA_TEST);
+    VoxelEntities_EndFrameSnapshot();
+    REG_VCOUNT = 161;
+}
+
 // Render one frame of the 3D voxel world
 bool VoxelRenderer_RenderFrame(void)
 {
@@ -8104,17 +8779,19 @@ bool VoxelRenderer_RenderFrame(void)
     const int32_t curBloom = VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLOOM);
     const int32_t curSkyBloom = VitaExtras_GetFast(FAST_EXTRA_VOXEL_SKY_BLOOM);
     const int32_t curShafts = VitaExtras_GetFast(FAST_EXTRA_VOXEL_SHAFTS);
+    const bool menuMapChanged = (f.inst0->mapGroup != sMeshMapGroup || f.inst0->mapNum != sMeshMapNum);
     const bool menuFreeze = (sMenuBgFbo != 0 && sMenuBgTex != 0
-                             && Ui_IsOpen() && !f.inBattle3D && curFade < 0.99f);
+                             && Ui_IsOpen() && !f.inBattle3D && !f.fly.active && curFade < 0.99f);
     if (!menuFreeze)
     {
         sMenuBgValid = false;
     }
-    else if (sMenuBgValid && !f.mapChanged && sMenuBgPreset == (int32_t)curPreset && sMenuBgBlur == curBlur
+    else if (sMenuBgValid && !menuMapChanged && sMenuBgPreset == (int32_t)curPreset && sMenuBgBlur == curBlur
              && sMenuBgBloom == curBloom && sMenuBgSkyBloom == curSkyBloom && sMenuBgShafts == curShafts)
     {
         f.inBattle3D = false;
         f.fadeAmount = curFade;
+        f.drawFade = curFade;
         f.hd2dPreset = curPreset;
         DrawMenuFrozenBackdrop();
         Pass_Overlay2D(&f);
@@ -8122,13 +8799,14 @@ bool VoxelRenderer_RenderFrame(void)
         glDepthMask(GL_FALSE);
         glDisable(GL_BLEND);
         glDisable(GL_ALPHA_TEST);
+        VoxelEntities_EndFrameSnapshot();
         REG_VCOUNT = 161;
         return true;
     }
 
     Frame_FollowCamera(&f);
     Frame_UpdateAtlas(&f);
-    const bool freezeMenuHd2d = (!f.inBattle3D && Ui_IsOpen());
+    const bool freezeMenuHd2d = (!f.inBattle3D && !f.fly.active && Ui_IsOpen());
     if (!freezeMenuHd2d)
         Frame_AnimateTiles(&f);
     Frame_TrackWorldChanges(&f);
@@ -8154,6 +8832,12 @@ bool VoxelRenderer_RenderFrame(void)
         }
     }
     Frame_SelectChunks(&f);
+    if (f.fly.active && f.fly.frame.whiteout >= 0.99f)
+    {
+        RenderFlyCloudFrame(&f);
+        return true;
+    }
+
     BuildFrameGrade(&f.grade, &f.light, f.indoor);
     Frame_EmitEntities(&f);
     const GLuint finalTargetFbo = menuFreeze ? sMenuBgFbo : 0;
@@ -8161,7 +8845,7 @@ bool VoxelRenderer_RenderFrame(void)
 
     // Faded out completely (a warp): no 3D geometry. The visible chunks were built above all
     // the same, so the fade-in has nothing left to build.
-    if (f.fadeAmount < 0.99f)
+    if (f.drawFade < 0.99f)
     {
         Pass_SetupWorld3D();
 
@@ -8191,6 +8875,7 @@ bool VoxelRenderer_RenderFrame(void)
         Pass_Atmosphere3D(&f);
         Pass_Atmosphere2D(&f);
         VitaPerf_MarkDraw3DEnd(sFrameDrawCalls, sFrameVertCount);
+        VoxelFly_NotifyFrameDrawn(f.fly.warpVersion);
     }
 
     if (f.dioramaActive)
@@ -8209,6 +8894,9 @@ bool VoxelRenderer_RenderFrame(void)
 
     Pass_Overlay2D(&f);
 
+    if (f.fly.active && f.fly.frame.whiteout > 0.005f)
+        DrawCloudCover(f.fly.frame.whiteout);
+
     // New UI over everything (Core 1 list, one draw call)
     Ui_Render(VitaPlatform_GetRenderWidth(), VitaPlatform_GetRenderHeight());
 
@@ -8216,6 +8904,7 @@ bool VoxelRenderer_RenderFrame(void)
     glDisable(GL_BLEND);
     glDisable(GL_ALPHA_TEST);
 
+    VoxelEntities_EndFrameSnapshot();
     REG_VCOUNT = 161;
     return true;
 }
@@ -8243,6 +8932,7 @@ void VoxelRenderer_OnReset(void)
     sMeshMapGroup = -1;
     sMeshMapNum = -1;
     sPreviousOriginCount = 0;
+    sLastFlyWarpVersion = 1u;
     sNeedCameraSnap = true;
     sBattleState.begun = false;
     sBattleState.chosen = false;
@@ -8251,6 +8941,7 @@ void VoxelRenderer_OnReset(void)
     sBattleFx.shakeTimer = 0.0f;
     sMenuBgValid = false;
     InvalidateChunkCache();
+    VoxelEntities_EndFrameSnapshot();
     VoxelEntities_Reset();
 }
 

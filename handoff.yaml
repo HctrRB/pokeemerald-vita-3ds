@@ -1,8 +1,8 @@
 # Current state and next steps. Earlier logs: docs/history/handoff_2026-11-05.yaml and the
 # performance study docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
-last_updated: "2026-11-18"
+last_updated: "2026-11-19"
 branch: main
-current_milestone: "HD-2D 30 FPS upgrade, native UI completion, voxel terrain fixes & hardware verification"
+current_milestone: "3D Fly cinematic, procedural culling, Vita-native chunk/atlas streaming & clean-code refactor"
 
 phases:
   phase_0_safety_net: done
@@ -25,6 +25,12 @@ tags:
   rollback_pre_phase4: rollback/pre-phase4
   rollback_pre_phase5: rollback/pre-phase5
   rollback_pre_tree_hsr: rollback-e537861 # before opaque tree core HSR optimization
+  rollback_pre_refactor_voxel: rollback/pre-refactor-voxel # pre-refactor snapshot of Fly/culling/streaming fixes
+
+performance_sesion_49:   # logs/sesion 49, 30/60 FPS, 3D (5749 3D frames, 44 zone crossings)
+  - Frame p50 / p95 / p99: 24.29 / 33.21 / 39.23 ms; 44 zone crossings at 0.54-0.94 ms atlas_slots_ms
+    (100x faster via 32-layout VoxelWorld_MarkUsedMetatiles cache), 0 black chunks in normal play,
+    Fly cloud loading screen ~1-2 ms/frame while Core 2 drains 96 aerial chunks in 4-chunk batches.
 
 performance_sesion_27:   # logs/sesion 27, 60 FPS, 3D
   - Frame mean / p95 / p99: 7.5 / 14.3 / 19.7 ms; >16.7 ms 1.65 %, >33.3 ms 0.01 % (was 12.7 % and
@@ -48,7 +54,6 @@ open_issues:
   - Long mountain chunks cost 15-35 ms on Core 2; lighting is most of it (E5b pending).
   - Map crossing frame still costs 10-20 ms when an atlas slot has to be composed from scratch
     (ComposeAtlasSlot is not spread over frames; extensions are).
-  - Entity snapshot double buffer can be overwritten while Core 0 reads it at 30 FPS (docs/THREADS.md).
   - Long-session CDRAM stability (>30 min play) still needs hardware verification after raising
     vitaGL pools to 40 MB RAM / 88 MB CDRAM (aecb746) to stop chunk VBO fragmentation; also monitor
     intermittent stalls caused by synchronous memory card writes (ui_stall.c, 120-frame perf_frames.csv flush).
@@ -84,6 +89,12 @@ untested_on_hardware:
   - Dialogue mirrors (ui_mirror.c) in 2D evolution, egg-hatch and trade scenes, and hold-frame flicker
     suppression after PokeNav calls / YES-NO boxes.
   - Smooth fade into 3D wild battles (battle_setup.c).
+  # Hardware-verified on PS Vita (2026-11-19): 3D Fly cinematic (climb/seamless clouds/descend + HD-2D
+  # preserved), procedural frustum culling (3-height projection + real ground/tree/building AABBs +
+  # plane slack, verified in Ever Grande City & Rustboro City), 4-slot pinned lock-free entity snapshot,
+  # 32-layout VoxelWorld_MarkUsedMetatiles cache (<1 ms crossings), Core 2 adaptive 2/4-chunk batching
+  # with cooperative abort, UploadChunkVbo VitaGL purge-window orphaning, EmitReliefUV NULL guard,
+  # and menu sMenuBgFbo freeze fix.
   - Wide building culling extent (bldWest/East/North/South/Top in 83300a5, e.g. Rustboro's Devon Corp.).
   - Long-session stability with 40 MB RAM / 88 MB CDRAM vitaGL pools (aecb746).
   - Extended sprite palettes (`gPlttExt`) for the follower, its Poké Ball and reflection, and visible wild Pokémon in the overworld (`visible_wild` [default FEW], `encounter_rate` [default NORMAL]).

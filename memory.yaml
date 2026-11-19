@@ -33,6 +33,18 @@ gpu_and_threads:
     only the current map's tileset).
   - Opaque passes keep alpha test and blending off for SGX543 early-Z; fullscreen blended quads
     are avoided.
+  - Entity snapshot (`voxel_entities.c`) uses a 4-slot lock-free ring (`VOXEL_SNAP_SLOTS = 4`)
+    with Core 0 per-frame pinning (`VoxelEntities_BeginFrameSnapshot` / `EndFrameSnapshot`);
+    `sMapMutationLock` is released exclusively by `VoxelEntities_PublishSnapshot()` so Core 0
+    never mixes new-map instances with old-map entity coordinates.
+  - Core 2 `VoxelChunkWorker` processes adaptive 2/4-chunk batches with cooperative abort
+    (`sAsyncAbortBatch`), never stalled/duplicated by Core 0 hole builds while busy; `UploadChunkVbo`
+    orphans VBOs drawn within `VOXEL_VITAGL_PURGE_FRAMES` (4) so SGX543 never reads overwritten CDRAM.
+  - `VoxelWorld_MarkUsedMetatiles` caches static per-`layoutId` metatile masks in a 32-entry LRU
+    (~34 KB BSS) so zone crossings merge in <1 ms instead of rescanning 40,000 tiles.
+  - 3D Fly cinematic (`voxel_fly.c/.h` CC BY-NC-SA 4.0 from emerald-3ds `8bba417`, Core 1/Core 0
+    triple-buffered bridge in `voxel_fly_game.c/.h`) animates layered clouds at ~1 ms/frame in
+    `VOXEL_FLY_CLOUD` while Core 2 streams aerial destination chunks; `SoftReset` calls `VoxelFlyGame_OnReset`.
 
 storage:
   app_assets: app0:voxel/, app0:ui/, app0:ui2/, app0:followers/followers.pak (PKF1 container)

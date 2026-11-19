@@ -1398,7 +1398,11 @@ static void Task_FlyIntoMap(u8 taskId)
     task = &gTasks[taskId];
     if (task->data[0] == 0)
     {
+#ifdef VOXEL_SUPPORTED
+        if (gPaletteFade.active || Port_FlyBusy())
+#else
         if (gPaletteFade.active)
+#endif
         {
             return;
         }
@@ -3387,7 +3391,14 @@ static void SpriteCB_FlyBirdSwoopDown(struct Sprite *sprite)
 {
     sprite->x2 = FlySwoopX(sprite->data[2]);
     sprite->y2 = Sin(sprite->data[2], 0x48);
+#ifdef VOXEL_SUPPORTED
+    if (!Port_FlyHover() || sprite->sPlayerSpriteId == MAX_SPRITES)
+        sprite->data[2] = (sprite->data[2] + 4) & 0xff;
+    else
+        sprite->data[2] = (sprite->data[2] + 1) & 0xff;
+#else
     sprite->data[2] = (sprite->data[2] + 4) & 0xff;
+#endif
     if (sprite->sPlayerSpriteId != MAX_SPRITES)
     {
         struct Sprite *sprite1 = &gSprites[sprite->sPlayerSpriteId];

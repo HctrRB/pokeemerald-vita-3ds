@@ -787,8 +787,10 @@ static void EmitRelief(VoxelBuilder *b, int32_t x, int32_t y, const int16_t *g, 
 void VoxelMesh_ReliefGround(VoxelBuilder *b, const VoxelMapInstance *inst, int32_t x, int32_t y,
                             float u0, float v0, float u1, float v1)
 {
-    EmitReliefUV(b, x, y, VoxelRelief_Cell(inst, x, y), VoxelRelief_Depth(inst, x, y),
-                 u0, v0, u1, v1, false, 0, NULL);
+    const int16_t *const g = VoxelRelief_Cell(inst, x, y);
+    if (g == NULL)
+        return;
+    EmitReliefUV(b, x, y, g, g, u0, v0, u1, v1, false, 0, NULL);
 }
 
 /* Is a tree's cell drawn as the rock its cut record names (`wall` with
@@ -908,6 +910,8 @@ static void EmitReliefUV(VoxelBuilder *b, int32_t x, int32_t y, const int16_t *g
                          float u0, float v0, float u1, float v1,
                          bool onFloor, int32_t floor, const uint8_t *rows)
 {
+    if (g == NULL || s == NULL)
+        return;
     const int32_t n = VOXEL_RELIEF_SIDE - 1;
     CutDiagonals cut;
 
@@ -1570,6 +1574,8 @@ static void EmitCliffWalls(VoxelBuilder *b, const VoxelMapInstance *inst, int32_
                            const int16_t *g, const int16_t *s, int32_t wall, int32_t art, int32_t artY,
                            uint32_t sides, bool backed)
 {
+    if (g == NULL || s == NULL)
+        return;
     static const int16_t kLevel[VOXEL_RELIEF_SIDE * VOXEL_RELIEF_SIDE];
     const int32_t n = VOXEL_RELIEF_SIDE - 1, R = VOXEL_RELIEF_SIDE;
     float f0, g0, f1, g1;      /* the face */

@@ -20,6 +20,12 @@ typedef struct {
 extern volatile uint32_t sMapMutationLock;
 
 void VoxelEntities_PublishSnapshot(void);
+void VoxelEntities_BeginFrameSnapshot(void);
+void VoxelEntities_EndFrameSnapshot(void);
 const VoxelEntitySnapshot *VoxelEntities_GetVisibleSnapshot(void);
+
+#ifdef VOXEL_SUPPORTED
+void VoxelFlyGame_OnWarpLoaded(void);
+#endif
 
 #endif // GUARD_VOXEL_SNAPSHOT_H

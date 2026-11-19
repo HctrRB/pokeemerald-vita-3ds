@@ -222,20 +222,33 @@ static float ObjectDeck(const struct ObjectEvent *obj, float worldX, float world
     return VoxelBuildings_DeckAt(inst, cx, cz, obj->currentElevation, &lift) ? lift : 0.0f;
 }
 
-static VoxelEntitySnapshot sSnapshots[2];
-static volatile uint32_t sVisibleSnapshotIdx = 0;
-static uint32_t sWriteSnapshotIdx = 1;
+/* 4-slot lock-free ring with Core 0 pinning: Core 1 publishes at 60 Hz while Core 0 renders at
+ * 30/60 FPS, so pinning one slot at Frame_Begin guarantees every Core 0 reader (camera, Z-shift,
+ * ground height, entity billboards) sees the exact same immutable snapshot and Core 1 can never
+ * overwrite the slot Core 0 is reading mid-frame (eliminating torn mapGroup/coords teleports). */
+#define VOXEL_SNAP_SLOTS 4
+
+static VoxelEntitySnapshot sSnapshots[VOXEL_SNAP_SLOTS];
+static volatile int32_t sLatestSnapIdx = 0;
+static volatile int32_t sPinnedSnapIdx = -1;
+static int32_t sCore0FrameSnapIdx = -1;
 
 void VoxelEntities_PublishSnapshot(void)
 {
     if (Shop_IsBuyMenuActive())
     {
         // Retain the active overworld entity state while the shop buy menu is open
-        sMapMutationLock = 0;
+        __atomic_store_n(&sMapMutationLock, 0u, __ATOMIC_RELEASE);
         return;
     }
 
-    VoxelEntitySnapshot *snap = &sSnapshots[sWriteSnapshotIdx];
+    const int32_t latest = __atomic_load_n(&sLatestSnapIdx, __ATOMIC_RELAXED);
+    const int32_t pinned = __atomic_load_n(&sPinnedSnapIdx, __ATOMIC_ACQUIRE);
+    int32_t writeIdx = (latest + 1) & (VOXEL_SNAP_SLOTS - 1);
+    if (writeIdx == pinned)
+        writeIdx = (writeIdx + 1) & (VOXEL_SNAP_SLOTS - 1);
+
+    VoxelEntitySnapshot *snap = &sSnapshots[writeIdx];
     memcpy(snap->objectEvents, gObjectEvents, sizeof(gObjectEvents));
     for (uint32_t i = 0; i < OBJECT_EVENTS_COUNT; ++i)
     {
@@ -251,13 +264,13 @@ void VoxelEntities_PublishSnapshot(void)
         }
     }
 
-    // Compute player world position atomically on Core 1 from consistent live state
+    // Compute raw player world position atomically on Core 1 (relief & bridge deck Z shift
+    // are applied on Core 0 via VoxelEntities_PlayerZShift using Core 0's consistent sInstances[]).
     const struct ObjectEvent *pObj = &gObjectEvents[gPlayerAvatar.objectEventId];
     float px = 0.0f, pz = 0.0f;
     if (pObj->active && pObj->spriteId < MAX_SPRITES)
     {
         GetObjectWorldPos(pObj, &gSprites[pObj->spriteId], &px, &pz);
-        pz += VoxelRelief_ShiftAt(px + 0.5f, pz + 0.5f) + ObjectDeck(pObj, px, pz);
     }
     else
     {
@@ -268,59 +281,94 @@ void VoxelEntities_PublishSnapshot(void)
     snap->mapGroup = (gSaveBlock1Ptr != NULL) ? (int16_t)gSaveBlock1Ptr->location.mapGroup : (int16_t)-1;
     snap->mapNum   = (gSaveBlock1Ptr != NULL) ? (int16_t)gSaveBlock1Ptr->location.mapNum   : (int16_t)-1;
     snap->frameNum++;
-    __atomic_thread_fence(__ATOMIC_RELEASE);
-    sVisibleSnapshotIdx = sWriteSnapshotIdx;
-    sWriteSnapshotIdx ^= 1;
-    __atomic_thread_fence(__ATOMIC_RELEASE);
+    __atomic_store_n(&sLatestSnapIdx, writeIdx, __ATOMIC_RELEASE);
 
     // Release map mutation lock once the snapshot for the new map state is fully published
-    sMapMutationLock = 0;
+    __atomic_store_n(&sMapMutationLock, 0u, __ATOMIC_RELEASE);
+}
+
+void VoxelEntities_BeginFrameSnapshot(void)
+{
+    int32_t idx = __atomic_load_n(&sLatestSnapIdx, __ATOMIC_ACQUIRE);
+    for (int32_t attempt = 0; attempt < 2; ++attempt)
+    {
+        __atomic_store_n(&sPinnedSnapIdx, idx, __ATOMIC_SEQ_CST);
+        const int32_t check = __atomic_load_n(&sLatestSnapIdx, __ATOMIC_ACQUIRE);
+        if (check == idx)
+            break;
+        idx = check;
+    }
+    sCore0FrameSnapIdx = idx;
+}
+
+void VoxelEntities_EndFrameSnapshot(void)
+{
+    sCore0FrameSnapIdx = -1;
+    __atomic_store_n(&sPinnedSnapIdx, -1, __ATOMIC_RELEASE);
 }
 
 const VoxelEntitySnapshot *VoxelEntities_GetVisibleSnapshot(void)
 {
-    const uint32_t idx = sVisibleSnapshotIdx;
-    __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    if (sCore0FrameSnapIdx >= 0 && sCore0FrameSnapIdx < VOXEL_SNAP_SLOTS)
+        return &sSnapshots[sCore0FrameSnapIdx];
+    const int32_t idx = __atomic_load_n(&sLatestSnapIdx, __ATOMIC_ACQUIRE);
     return &sSnapshots[idx];
+}
+
+/* Transform map-local coordinates from a snapshot into Core 0's current inst0 world space. */
+static inline void ApplySnapshotMapOffset(const VoxelEntitySnapshot *const snap,
+                                          float *const worldX, float *const worldZ)
+{
+    if (snap == NULL || snap->mapGroup < 0 || snap->mapNum < 0)
+        return;
+    int32_t offX = 0, offY = 0;
+    if (VoxelWorld_GetInstanceOffset(snap->mapGroup, snap->mapNum, &offX, &offY))
+    {
+        *worldX += (float)offX;
+        *worldZ += (float)offY;
+    }
 }
 
 float VoxelEntities_PlayerDeck(void)
 {
-    const VoxelEntitySnapshot *snap = VoxelEntities_GetVisibleSnapshot();
-    const struct ObjectEvent *obj = &snap->objectEvents[gPlayerAvatar.objectEventId];
+    const VoxelEntitySnapshot *const snap = VoxelEntities_GetVisibleSnapshot();
+    const struct ObjectEvent *const obj = &snap->objectEvents[gPlayerAvatar.objectEventId];
     float x = 0.0f, z = 0.0f;
 
     if (!obj->active || obj->spriteId >= MAX_SPRITES)
         return 0.0f;
     GetObjectWorldPos(obj, &snap->sprites[gPlayerAvatar.objectEventId], &x, &z);
-    int32_t offX = 0, offY = 0;
-    if (snap != NULL && snap->mapGroup >= 0 && snap->mapNum >= 0)
-    {
-        VoxelWorld_GetInstanceOffset(snap->mapGroup, snap->mapNum, &offX, &offY);
-    }
-    x += (float)offX;
-    z += (float)offY;
+    ApplySnapshotMapOffset(snap, &x, &z);
     return ObjectDeck(obj, x, z);
+}
+
+float VoxelEntities_PlayerZShift(void)
+{
+    const VoxelEntitySnapshot *const snap = VoxelEntities_GetVisibleSnapshot();
+    const struct ObjectEvent *const obj = &snap->objectEvents[gPlayerAvatar.objectEventId];
+    if (!obj->active || obj->spriteId >= MAX_SPRITES)
+        return 0.0f;
+
+    float x = snap->playerWorldX;
+    float z = snap->playerWorldZ;
+    ApplySnapshotMapOffset(snap, &x, &z);
+    return VoxelRelief_ShiftAt(x + 0.5f, z + 0.5f) + ObjectDeck(obj, x, z);
 }
 
 float VoxelEntities_PlayerGround(void)
 {
-    const VoxelEntitySnapshot *snap = VoxelEntities_GetVisibleSnapshot();
-    const struct ObjectEvent *obj = &snap->objectEvents[gPlayerAvatar.objectEventId];
+    const VoxelEntitySnapshot *const snap = VoxelEntities_GetVisibleSnapshot();
+    const struct ObjectEvent *const obj = &snap->objectEvents[gPlayerAvatar.objectEventId];
     float x = 0.0f, z = 0.0f;
 
     if (!obj->active || obj->spriteId >= MAX_SPRITES)
+    {
         VoxelWorld_GetPlayerWorldCoords(&x, &z);
+    }
     else
     {
         GetObjectWorldPos(obj, &snap->sprites[gPlayerAvatar.objectEventId], &x, &z);
-        int32_t offX = 0, offY = 0;
-        if (snap != NULL && snap->mapGroup >= 0 && snap->mapNum >= 0)
-        {
-            VoxelWorld_GetInstanceOffset(snap->mapGroup, snap->mapNum, &offX, &offY);
-        }
-        x += (float)offX;
-        z += (float)offY;
+        ApplySnapshotMapOffset(snap, &x, &z);
     }
     /* Where the player's card stands (EmitBillboard): on the cell it is in,
      * not on the one its drawing is shifted south over. */
@@ -329,18 +377,19 @@ float VoxelEntities_PlayerGround(void)
 
 void VoxelEntities_GetPlayerWorldPos(float *worldX, float *worldZ)
 {
-    const VoxelEntitySnapshot *snap = VoxelEntities_GetVisibleSnapshot();
+    const VoxelEntitySnapshot *const snap = VoxelEntities_GetVisibleSnapshot();
     float px = (snap != NULL) ? snap->playerWorldX : 0.0f;
     float pz = (snap != NULL) ? snap->playerWorldZ : 0.0f;
-    if (snap != NULL && snap->mapGroup >= 0 && snap->mapNum >= 0)
-    {
-        int32_t offX = 0, offY = 0;
-        if (VoxelWorld_GetInstanceOffset(snap->mapGroup, snap->mapNum, &offX, &offY))
-        {
-            px += (float)offX;
-            pz += (float)offY;
-        }
-    }
+    ApplySnapshotMapOffset(snap, &px, &pz);
+    if (worldX != NULL) *worldX = px;
+    if (worldZ != NULL) *worldZ = pz;
+}
+
+void VoxelEntities_GetPlayerCameraTarget(float *worldX, float *worldZ)
+{
+    float px = 0.0f, pz = 0.0f;
+    VoxelEntities_GetPlayerWorldPos(&px, &pz);
+    pz += VoxelEntities_PlayerZShift();
     if (worldX != NULL) *worldX = px;
     if (worldZ != NULL) *worldZ = pz;
 }

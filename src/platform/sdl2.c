@@ -44,6 +44,7 @@
 #include "voxel/voxel_renderer.h"
 #include "voxel/voxel_world.h"
 #include "voxel/voxel_battle.h"
+#include "voxel/voxel_fly_game.h"
 #endif
 
 #include "platform/vita_daynight.h"
@@ -666,6 +667,9 @@ int main(int argc, char **argv)
                     const double perfT1 = PerfNowMs();
                     sPerfTotal[PERF_DRAW] += perfT1 - sPerfFrameStart;
                     RenderGameTexture();
+#ifdef VOXEL_SUPPORTED
+                    VoxelRenderer_DrawFlyCloudCover();
+#endif
                     Ui_Render(sRenderWidth, sRenderHeight);
                     sPerfTotal[PERF_RENDER] += PerfNowMs() - perfT1;
                     didPresent2D = true;
@@ -1199,7 +1203,10 @@ void VBlankIntrWait(void)
     // New UI: input, screens and actions between two game frames, then its draw list for Core 0
     Ui_Tick();
 
-    // 3. Publish atomic snapshot of active entities to Core 0 (Zero-Copy Double Buffer)
+    // 3. Step 3D Fly cinematic (60 Hz) & publish atomic snapshots to Core 0 (4-slot pinned lock-free ring)
+#ifdef VOXEL_SUPPORTED
+    VoxelFlyGame_Tick();
+#endif
     VoxelEntities_PublishSnapshot();
 
     // 4. Signal Core 0 that a new frame state is ready for GPU rendering. The profiler counts
@@ -1403,6 +1410,9 @@ void SoftReset(u32 resetFlags)
             VitaPlatform_DelayMicroseconds(200);
 
         Ui_OnReset();
+#ifdef VOXEL_SUPPORTED
+        VoxelFlyGame_OnReset();
+#endif
         const bool restored = VitaReset_RestoreBootSnapshot();
         if (restored)
         {

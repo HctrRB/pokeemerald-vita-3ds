@@ -68,6 +68,10 @@ float VoxelEntities_PlayerDeck(void);
  * relief read there is that of a cell further south: on Route 120's bridges,
  * three tiles up, it was the water's, and the camera dipped. */
 float VoxelEntities_PlayerGround(void);
+/* Core 0: relief + bridge deck Z shift at the player's current world position (uses Core 0's instances). */
+float VoxelEntities_PlayerZShift(void);
+/* Core 0: player world position in inst0 space with relief + bridge deck Z shift applied. */
+void VoxelEntities_GetPlayerCameraTarget(float *worldX, float *worldZ);
 /* First vertex of the emitted player quad, or -1 when invisible/not emitted. */
 int32_t VoxelEntities_PlayerVertexFirst(void);
 

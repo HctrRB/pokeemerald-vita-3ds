@@ -13,32 +13,48 @@
 #ifndef VOXEL_TUNING_H
 #define VOXEL_TUNING_H
 
-/* ---- Chunks considered around the camera target (tiles) ------------------------------- */
+/* ---- Procedural camera frustum & chunk reach (tiles) ---------------------------------- */
 
-#define VOXEL_VIEW_NORTH_TILES 36.0f  /* candidate rows reach this far north of the target */
-#define VOXEL_VIEW_SOUTH_TILES 12.0f  /* and this far south */
-#define VOXEL_VIEW_FAR_ROW_TILES 8.0f /* rows further north than this use the far margins */
-#define VOXEL_VIEW_FAR_LEFT 18.0f     /* lateral margins of the far rows (and indoors) */
-#define VOXEL_VIEW_FAR_RIGHT 16.0f
-#define VOXEL_VIEW_NEAR_LEFT 14.0f    /* lateral margins of the near rows */
-#define VOXEL_VIEW_NEAR_RIGHT 12.0f
+#define VOXEL_VIEW_REACH_MAX 48.0f    /* max horizontal reach from target (within VOXEL_WORLD_REACH=56) */
+#define VOXEL_VIEW_SLACK_TILES 6.0f   /* safety margin around projected frustum XZ bounds (tiles) */
+#define VOXEL_FRUSTUM_PLANE_SLACK 3.5f /* outward plane slack in world tiles (prevents edge pop-out) */
+#define VOXEL_VIEW_NEAR_MIN 1.0f      /* dynamic near plane floor (normal follow camera) */
+#define VOXEL_VIEW_NEAR_MAX 3.5f      /* dynamic near plane ceiling (high aerial cameras) */
+#define VOXEL_VIEW_FAR_MIN 64.0f      /* dynamic far plane floor */
+#define VOXEL_VIEW_FAR_MAX 200.0f     /* dynamic far plane ceiling */
+#define VOXEL_VIEW_FAR_MARGIN 16.0f   /* extra depth margin past farthest ground corner */
+
+/* ---- Follow camera & 3D Fly cinematic (tiles / degrees / seconds) --------------------- */
+
+#define VOXEL_FOLLOW_TAU 0.09f        /* exponential follow time constant (identical at 30 & 60 FPS) */
+#define VOXEL_FOLLOW_DT_MAX 0.10f     /* max frame dt fed to camera smoothing (clamps lag spikes) */
+#define VOXEL_FLY_PITCH 62.0f         /* aerial pullback camera pitch (degrees) */
+#define VOXEL_FLY_DISTANCE 24.0f      /* aerial pullback horizontal distance (tiles) */
+#define VOXEL_FLY_RISE 22.0f          /* aerial vertical lift at peak climb (tiles) */
+#define VOXEL_FLY_LEAD 8.0f           /* forward lead along flight heading (tiles) */
 
 /* ---- Chunk builds and pre-warming (RENDERING.md, step 5) ------------------------------ */
 
 #define VOXEL_CHUNK_WORKER 1          /* 0 builds every chunk on Core 0, as before the worker */
 #define VOXEL_BUILD_TAIL_MS 6.0       /* passes after the build loop: entities, draw, overlay, swap */
 #define VOXEL_BUILD_COST_INIT_MS 8.0  /* first estimate of one build, refined as chunks are built */
-#define VOXEL_HOLE_BUILDS_PER_FRAME 2 /* visible holes filled per frame regardless of the budget */
-#define VOXEL_PREFETCH_MAX 32         /* unbuilt chunks outside the view considered per frame */
-#define VOXEL_PREFETCH_LOOKAHEAD 12.0f /* tiles ahead of the player that pre-warming aims at */
+#define VOXEL_HOLE_BUILDS_PER_FRAME 1 /* visible holes filled on Core 0 per frame (Core 2 takes 4-chunk batches) */
+#define VOXEL_PREFETCH_MAX 48         /* unbuilt chunks outside the view considered per frame */
+#define VOXEL_PREFETCH_LOOKAHEAD 12.0f /* base tiles ahead of the player */
+#define VOXEL_PREFETCH_SPEED_GAIN 45.0f /* extra lookahead tiles per tile/frame of movement speed */
+#define VOXEL_PREFETCH_LOOKAHEAD_MAX 22.0f /* cap on speed-scaled prewarm lookahead (tiles) */
+#define VOXEL_FAST_MOVE_SPEED 0.16f   /* speed (tiles/frame) above which prewarm widens to 2 chunks */
+#define VOXEL_EPOCH_HASH_BUDGET 8     /* max non-urgent epoch hash checks per calm frame (sun ticks) */
 #define VOXEL_VIEW_AHEAD_TILES 8.0f   /* camera advance for which chunks are pre-warmed first */
 #define VOXEL_MOVE_THRESHOLD 0.02f    /* tiles per frame under which the player counts as still */
 #define VOXEL_STALE_MAX 32            /* dated visible chunks considered per frame */
 
-/* ---- Atlas and textures rewritten at run time (RENDERING.md) -------------------------- */
+/* ---- Atlas, VBOs and textures rewritten at run time (RENDERING.md) -------------------- */
 
-#define VOXEL_ATLAS_EXTEND_BUDGET_MS 1.5      /* atlas extension work per frame on crossings */
-#define VOXEL_ATLAS_EXTEND_STEP_METATILES 16u /* metatiles composed per extension step */
+#define VOXEL_ATLAS_EXTEND_BUDGET_MS 4.0      /* atlas extension work per frame on Vita */
+#define VOXEL_ATLAS_EXTEND_STEP_METATILES 64u /* metatiles composed per extension step */
+#define VOXEL_NEIGHBOR_MARGIN_TILES 8         /* border margin for direct-neighbor proactive atlas extend */
+#define VOXEL_VITAGL_PURGE_FRAMES 4u          /* vitaGL FRAME_PURGE_FREQ: frames a drawn VBO stays in GPU flight */
 
 /* ---- Map crossings -------------------------------------------------------------------- */
 

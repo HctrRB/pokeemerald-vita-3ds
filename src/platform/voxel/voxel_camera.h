@@ -47,10 +47,10 @@ typedef struct
 void VoxelCamera_Init(VoxelCamera *cam);
 /* Places the camera on the player with no interpolation (map change, re-entry). */
 void VoxelCamera_Snap(VoxelCamera *cam, float playerWorldX, float playerWorldZ);
-void VoxelCamera_Update(VoxelCamera *cam, float playerWorldX, float playerWorldZ);
+void VoxelCamera_Update(VoxelCamera *cam, float playerWorldX, float playerWorldZ, float dt);
 /* The height of the ground under the player (VoxelRelief_LiftAt): followed
  * as the player is, or taken at once with `snap`. Call before Snap/Update. */
-void VoxelCamera_SetGround(VoxelCamera *cam, float ground, int32_t snap);
+void VoxelCamera_SetGround(VoxelCamera *cam, float ground, int32_t snap, float dt);
 /* Shifts the whole camera by a map-instance offset, keeping the framing. */
 void VoxelCamera_Shift(VoxelCamera *cam, float dx, float dz);
 /* Places the camera on a target of its own, with its own pitch and distance

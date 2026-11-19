@@ -1339,6 +1339,84 @@ static void MarkCut(int32_t x, int32_t y, int32_t ground, int32_t wall, void *ct
         mark->used[wall] = (uint8_t)priority;
 }
 
+#define VOXEL_LAYOUT_USED_CACHE_SLOTS 32u
+
+typedef struct {
+    int32_t layoutId;
+    uint32_t stamp;
+    uint8_t used[VOXEL_METATILE_IDS];
+} VoxelLayoutUsedCacheEntry;
+
+static VoxelLayoutUsedCacheEntry sLayoutUsedCache[VOXEL_LAYOUT_USED_CACHE_SLOTS];
+static uint32_t sLayoutUsedCacheStamp = 0u;
+
+/* Static per-layout metatile set (layout tiles + edge fills + building grounds + relief cuts).
+ * Cached by layoutId so zone crossings merge 1024 bytes in ~0.002 ms instead of rescanning
+ * 15,000-40,000 tiles and calling VoxelBuildings_CellAt() on every border crossing (~25 ms each). */
+static const uint8_t *GetCachedLayoutUsedMask(const VoxelMapInstance *inst)
+{
+    if (inst == NULL || inst->layout == NULL || inst->layoutId <= 0)
+        return NULL;
+
+    ++sLayoutUsedCacheStamp;
+    uint32_t victim = 0u;
+    uint32_t oldest = UINT32_MAX;
+    for (uint32_t s = 0u; s < VOXEL_LAYOUT_USED_CACHE_SLOTS; ++s)
+    {
+        if (sLayoutUsedCache[s].layoutId == inst->layoutId)
+        {
+            sLayoutUsedCache[s].stamp = sLayoutUsedCacheStamp;
+            return sLayoutUsedCache[s].used;
+        }
+        if (sLayoutUsedCache[s].layoutId == 0)
+        {
+            victim = s;
+            oldest = 0u;
+            break;
+        }
+        if (sLayoutUsedCache[s].stamp < oldest)
+        {
+            oldest = sLayoutUsedCache[s].stamp;
+            victim = s;
+        }
+    }
+
+    VoxelLayoutUsedCacheEntry *const entry = &sLayoutUsedCache[victim];
+    memset(entry->used, 0, sizeof(entry->used));
+    entry->layoutId = inst->layoutId;
+    entry->stamp = sLayoutUsedCacheStamp;
+
+    MarkEdgeFills(inst, entry->used);
+    const uint16_t *const map = Voxel_ResolveMap(inst->layout);
+    if (map != NULL)
+    {
+        const int32_t w = inst->width;
+        const int32_t h = inst->height;
+        for (int32_t y = 0; y < h; ++y)
+        {
+            const uint16_t *const row = map + (size_t)y * (size_t)w;
+            for (int32_t x = 0; x < w; ++x)
+            {
+                const uint32_t m = row[x] & MAPGRID_METATILE_ID_MASK;
+                if (entry->used[m] < 2u)
+                    entry->used[m] = 2u;
+
+                int32_t ground = -1;
+                if (VoxelBuildings_CellAt(inst, x + inst->originX, y + inst->originY, &ground, NULL))
+                {
+                    if (ground >= 0 && ground < (int32_t)VOXEL_METATILE_IDS && entry->used[ground] < 2u)
+                        entry->used[ground] = 2u;
+                }
+            }
+        }
+    }
+    {
+        CutMark mark = {inst, 0, 0, inst->width, inst->height, entry->used};
+        VoxelRelief_ForEachCut(inst, MarkCut, &mark);
+    }
+    return entry->used;
+}
+
 void VoxelWorld_MarkUsedMetatiles(const void *primaryTileset, const void *secondaryTileset,
                                   uint8_t *used)
 {
@@ -1350,6 +1428,42 @@ void VoxelWorld_MarkUsedMetatiles(const void *primaryTileset, const void *second
         if (inst->primaryTileset != primaryTileset
          || inst->secondaryTileset != secondaryTileset)
             continue;
+
+        if (!sMaterialViewSet)
+        {
+            const uint8_t *const cached = GetCachedLayoutUsedMask(inst);
+            if (cached != NULL)
+            {
+                for (uint32_t m = 0u; m < VOXEL_METATILE_IDS; ++m)
+                {
+                    if (cached[m] > used[m])
+                        used[m] = cached[m];
+                }
+                /* Also pick up any live script-mutated metatiles on the active map (fast linear pass). */
+                if (i == 0 && gBackupMapLayout.map != NULL)
+                {
+                    const int32_t stride = gBackupMapLayout.width;
+                    const int32_t maxBy = gBackupMapLayout.height;
+                    for (int32_t y = 0; y < inst->height; ++y)
+                    {
+                        const int32_t by = y + MAP_OFFSET;
+                        if (by < 0 || by >= maxBy)
+                            continue;
+                        const uint16_t *const row = gBackupMapLayout.map + (size_t)by * (size_t)stride;
+                        for (int32_t x = 0; x < inst->width; ++x)
+                        {
+                            const int32_t bx = x + MAP_OFFSET;
+                            if (bx < 0 || bx >= stride)
+                                continue;
+                            const uint32_t m = row[bx] & MAPGRID_METATILE_ID_MASK;
+                            if (used[m] < 2u)
+                                used[m] = 2u;
+                        }
+                    }
+                }
+                continue;
+            }
+        }
 
         int32_t x0 = 0, y0 = 0, x1 = inst->width, y1 = inst->height;
         if (sMaterialViewSet)

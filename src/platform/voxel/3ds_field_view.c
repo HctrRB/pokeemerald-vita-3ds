@@ -27,7 +27,7 @@
 #define VOXEL_DISTANCE 13.0f
 #define VOXEL_GROUND_DROP 1.0f
 #define VOXEL_PERSON_HEIGHT 2.0f
-#define VOXEL_REACH_MAX 28.0f
+#define VOXEL_REACH_MAX 40.0f
 
 void CtrFieldView_Flat(CtrFieldView *view)
 {

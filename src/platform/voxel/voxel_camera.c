@@ -10,10 +10,19 @@
 #include "platform/vita_extras.h"
 #include "voxel_camera.h"
 #include "voxel_relief.h"
+#include "voxel_tuning.h"
 #include "voxel_world.h"
 
 #define VOXEL_DEG_TO_RAD (3.14159265358979323846f / 180.0f)
-#define VOXEL_FOLLOW 0.15f
+
+static inline float FollowAlpha(float dt)
+{
+    if (dt <= 0.0f)
+        return 0.0f;
+    if (dt > VOXEL_FOLLOW_DT_MAX)
+        dt = VOXEL_FOLLOW_DT_MAX;
+    return 1.0f - expf(-dt / VOXEL_FOLLOW_TAU);
+}
 /* The follow camera's vertical field of view and pitch presets. */
 #define VOXEL_CAMERA_FOV 35.0f
 #define VOXEL_CAMERA_PITCH_DEFAULT 35.0f
@@ -74,9 +83,10 @@ void VoxelCamera_Init(VoxelCamera *cam)
     cam->lay = 0.0f;
 }
 
-void VoxelCamera_SetGround(VoxelCamera *cam, float ground, int32_t snap)
+void VoxelCamera_SetGround(VoxelCamera *cam, float ground, int32_t snap, float dt)
 {
-    cam->ground = snap ? ground : cam->ground + (ground - cam->ground) * VOXEL_FOLLOW;
+    const float k = snap ? 1.0f : FollowAlpha(dt);
+    cam->ground += (ground - cam->ground) * k;
 }
 
 /* Places the eye for the current target, pitch, yaw and distance. */
@@ -174,17 +184,18 @@ void VoxelCamera_Snap(VoxelCamera *cam, float playerWorldX, float playerWorldZ)
     Place(cam);
 }
 
-void VoxelCamera_Update(VoxelCamera *cam, float playerWorldX, float playerWorldZ)
+void VoxelCamera_Update(VoxelCamera *cam, float playerWorldX, float playerWorldZ, float dt)
 {
     float x, z;
+    const float k = FollowAlpha(dt);
 
     cam->targetX -= cam->swoopX;
     cam->targetZ -= cam->swoopZ;
     cam->swoopX = cam->swoopZ = 0.0f;
     AdaptDistance(cam);
     Aim(cam, playerWorldX, playerWorldZ, &x, &z);
-    cam->targetX += (x - cam->targetX) * VOXEL_FOLLOW;
-    cam->targetZ += (z - cam->targetZ) * VOXEL_FOLLOW;
+    cam->targetX += (x - cam->targetX) * k;
+    cam->targetZ += (z - cam->targetZ) * k;
     Place(cam);
 }
 
