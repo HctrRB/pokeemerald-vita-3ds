@@ -2,7 +2,7 @@
 # performance study docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
 last_updated: "2026-11-19"
 branch: main
-current_milestone: "Multicore boundary: GameFrame contract, build-time core boundary check, Bad Egg race fix (docs/plan/PLAN_FRONTERA_MULTICORE.md)"
+current_milestone: "v0.5.7 released: GRAPHICS tab (HD-2D level independent of FPS), DoF decoupled from post FX, per-chunk night lamps (docs/plan/PLAN_FAROLAS.md)"
 
 phases:
   phase_0_safety_net: done
@@ -18,7 +18,7 @@ phases:
   voxelgen_terrain_fixes: in_progress     # local untracked voxelgen/ quick relief + 3D viewer/editor, Route 119 bridge & Lilycove/Mirage Island fixes, wide building culling extent (83300a5)
   ext_palettes_and_visible_wilds: done    # F1-F7 implemented per docs/plan/PLAN_PALETAS_EXT.md
   hd2d_30fps_upgrade: done                # 30 FPS HD-2D post-FX (Kawase bloom, DoF, split-tone, point lights, foliage sway/anim/ash-grass, surface FX); 60 (CLASSIC) untouched
-  graphics_options_and_lamps: in_progress # docs/plan/PLAN_FAROLAS.md (local, git-ignored): DoF decoupled (6eb9aa1), GRAPHICS tab + HD-2D OFF/LOW/MED/HIGH (ede07bb); lamps phases 3-5 built, console test pending: per-chunk glass/pool spans on Core 2 (voxel_lamps.c), halos, steady character light by level, Lilycove beacon (position to check). Phase 6 (real light on walls) and extras dropped by the user
+  graphics_options_and_lamps: done        # released as v0.5.7 (dc42d7e): DoF decoupled, GRAPHICS tab + HD-2D OFF/LOW/MED/HIGH, per-chunk night lamps + Lilycove beacon pool. Warmer lamp colour (94c301c) reverted in ba2543a: it dropped below 30 FPS, most likely the full-screen warm-keep term in the HD-2D composite shader; redo the warmth without touching that shader
 
 tags:
   stable: stable/2026-11-05               # last tested build before the docs cleanup
