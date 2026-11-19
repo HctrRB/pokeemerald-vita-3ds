@@ -619,18 +619,29 @@ static void BattleAI_DoAIProcessing(void)
     }
 }
 
+// Battle scripts store MOVE_UNAVAILABLE (0xFFFF) in gLastMoves when a battler
+// fails to act; the AI domain only deals in valid move IDs or MOVE_NONE.
+static inline u16 AI_SanitizeMoveId(u32 move)
+{
+    return (move < MOVES_COUNT) ? (u16)move : MOVE_NONE;
+}
+
 static void RecordLastUsedMoveByTarget(void)
 {
     s32 i;
+    const u16 lastMove = AI_SanitizeMoveId(gLastMoves[gBattlerTarget]);
+
+    if (lastMove == MOVE_NONE)
+        return;
 
     for (i = 0; i < MAX_MON_MOVES; i++)
     {
-        if (BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i] == gLastMoves[gBattlerTarget])
+        if (BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i] == lastMove)
             break;
 
         if (BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i] == MOVE_NONE)
         {
-            BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i] = gLastMoves[gBattlerTarget];
+            BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i] = lastMove;
             break;
         }
     }
@@ -1246,9 +1257,9 @@ static void Cmd_get_how_powerful_move_is(void)
 static void Cmd_get_last_used_battler_move(void)
 {
     if (gAIScriptPtr[1] == AI_USER)
-        AI_THINKING_STRUCT->funcResult = gLastMoves[sBattler_AI];
+        AI_THINKING_STRUCT->funcResult = AI_SanitizeMoveId(gLastMoves[sBattler_AI]);
     else
-        AI_THINKING_STRUCT->funcResult = gLastMoves[gBattlerTarget];
+        AI_THINKING_STRUCT->funcResult = AI_SanitizeMoveId(gLastMoves[gBattlerTarget]);
 
     gAIScriptPtr += 2;
 }
@@ -1903,12 +1914,13 @@ static void Cmd_if_has_move_with_effect(void)
     case AI_TARGET_PARTNER:
         for (i = 0; i < MAX_MON_MOVES; i++)
         {
+            const u16 usedMove = AI_SanitizeMoveId(BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i]);
             // BUG: checks sBattler_AI instead of gBattlerTarget.
             #ifndef BUGFIX
-            if (gBattleMons[sBattler_AI].moves[i] != 0 && gBattleMoves[BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i]].effect == gAIScriptPtr[2])
+            if (gBattleMons[sBattler_AI].moves[i] != 0 && gBattleMoves[usedMove].effect == gAIScriptPtr[2])
                 break;
             #else
-            if (gBattleMons[gBattlerTarget].moves[i] != 0 && gBattleMoves[BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i]].effect == gAIScriptPtr[2])
+            if (gBattleMons[gBattlerTarget].moves[i] != 0 && gBattleMoves[usedMove].effect == gAIScriptPtr[2])
                 break;
             #endif
         }
@@ -1942,7 +1954,8 @@ static void Cmd_if_doesnt_have_move_with_effect(void)
     case AI_TARGET_PARTNER:
         for (i = 0; i < MAX_MON_MOVES; i++)
         {
-            if (BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i] && gBattleMoves[BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i]].effect == gAIScriptPtr[2])
+            const u16 usedMove = AI_SanitizeMoveId(BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i]);
+            if (usedMove != MOVE_NONE && gBattleMoves[usedMove].effect == gAIScriptPtr[2])
                 break;
         }
         if (i != MAX_MON_MOVES)
@@ -2072,8 +2085,9 @@ static void Cmd_if_holds_item(void)
 // ENHANCEMENTS' PHYS/SPEC SPLIT, its type's otherwise; status for a move with
 // no power. The scripts' guesses at physical and special (Counter, Mirror
 // Coat, Reflect, the stat moves) went by types alone.
-static u8 AI_GetMoveCategory(u16 move)
+static u8 AI_GetMoveCategory(u32 moveId)
 {
+    const u16 move = AI_SanitizeMoveId(moveId);
     if (gBattleMoves[move].power == 0)
         return MOVE_CATEGORY_STATUS;
     if (IS_MOVE_PHYSICAL(move, gBattleMoves[move].type))
@@ -2103,7 +2117,7 @@ static void Cmd_if_target_may_use_category(void)
     {
         for (i = 0; i < MAX_MON_MOVES; i++)
         {
-            u16 move = BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i];
+            const u16 move = AI_SanitizeMoveId(BATTLE_HISTORY->usedMoves[gBattlerTarget].moves[i]);
 
             if (move == MOVE_NONE || gBattleMoves[move].power == 0)
                 continue;
@@ -2191,21 +2205,21 @@ static void Cmd_get_used_held_item(void)
 
 static void Cmd_get_move_type_from_result(void)
 {
-    AI_THINKING_STRUCT->funcResult = gBattleMoves[AI_THINKING_STRUCT->funcResult].type;
+    AI_THINKING_STRUCT->funcResult = gBattleMoves[AI_SanitizeMoveId(AI_THINKING_STRUCT->funcResult)].type;
 
     gAIScriptPtr += 1;
 }
 
 static void Cmd_get_move_power_from_result(void)
 {
-    AI_THINKING_STRUCT->funcResult = gBattleMoves[AI_THINKING_STRUCT->funcResult].power;
+    AI_THINKING_STRUCT->funcResult = gBattleMoves[AI_SanitizeMoveId(AI_THINKING_STRUCT->funcResult)].power;
 
     gAIScriptPtr += 1;
 }
 
 static void Cmd_get_move_effect_from_result(void)
 {
-    AI_THINKING_STRUCT->funcResult = gBattleMoves[AI_THINKING_STRUCT->funcResult].effect;
+    AI_THINKING_STRUCT->funcResult = gBattleMoves[AI_SanitizeMoveId(AI_THINKING_STRUCT->funcResult)].effect;
 
     gAIScriptPtr += 1;
 }

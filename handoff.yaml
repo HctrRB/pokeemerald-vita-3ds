@@ -2,7 +2,7 @@
 # performance study docs/history/ESTUDIO_RENDIMIENTO_STREAMING.md (sessions 16-27).
 last_updated: "2026-11-19"
 branch: main
-current_milestone: "v0.5.7 released: GRAPHICS tab (HD-2D level independent of FPS), DoF decoupled from post FX, per-chunk night lamps (docs/plan/PLAN_FAROLAS.md)"
+current_milestone: "v0.5.7b released: fix battle AI MOVE_UNAVAILABLE (0xFFFF) OOB crash (#8) on top of v0.5.7"
 
 phases:
   phase_0_safety_net: done
@@ -64,6 +64,8 @@ open_issues:
   - Cave fog banks (`DrawFogBanks` with `underground = true`) can look slightly odd over cave floor/wall relief transitions.
 
 untested_on_hardware:
+  - Battle AI MOVE_UNAVAILABLE (0xFFFF) OOB fix in src/battle_ai_script_commands.c (#8, v0.5.7b):
+    needs confirmation on hardware (e.g. Wally outside Mauville Gym with move_split=1 after a failed turn such as confusion self-hit).
   - GBA Gen 3 x Vita UI skin (UI_THEME_GBA default, matched against design/stitch/gba_vita/index.html 20-screen mockup):
     01_hub (centered zone sign + Hub plate, 2x2 dark status card, 2x3 mini-party, START menu) & 10_save;
     02_party & 04_summary (clipped long Pokemon names / levels / abilities); 03_bag (redundant header box
