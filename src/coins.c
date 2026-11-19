@@ -36,7 +36,18 @@ void HideCoinsWindow(void)
 {
     ClearStdWindowAndFrame(sCoinsWindowId, TRUE);
     RemoveWindow(sCoinsWindowId);
+#ifdef PLATFORM_VITA
+    sCoinsWindowId = WINDOW_NONE;
+#endif
 }
+
+#ifdef PLATFORM_VITA
+// New UI mirror: the coins box window while it is shown (WINDOW_NONE otherwise), as the money box
+u8 GetCoinsBoxWindowForUi(void)
+{
+    return (sCoinsWindowId != 0 && sCoinsWindowId < WINDOWS_MAX && gWindows[sCoinsWindowId].tileData != NULL) ? sCoinsWindowId : WINDOW_NONE;
+}
+#endif
 
 u16 GetCoins(void)
 {

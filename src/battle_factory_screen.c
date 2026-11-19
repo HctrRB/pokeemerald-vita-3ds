@@ -4332,3 +4332,15 @@ static void Swap_CreateMonSprite(void)
 
     sFactorySwapScreen->monPicAnimating = FALSE;
 }
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 FactoryScreen_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_InitSelectScreen
+        || gMain.callback2 == CB2_SelectScreen
+        || gMain.callback2 == CB2_InitSwapScreen
+        || gMain.callback2 == Swap_CB2;
+}
+#endif

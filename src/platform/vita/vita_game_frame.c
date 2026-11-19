@@ -43,8 +43,53 @@ void GameFrame_BeginMapMutation(void)
 
 // `voxel`: the 3D field is on; without it Core 0 draws the GBA frame and needs none of the
 // sprite palettes (nor the entities, the weather or the fade, VoxelWorld / VoxelEntities).
+// Full-screen GBA scenes shown in the GBA's own format (UI plan, principle 6): mini-games, the
+// contest, the Pokéblock eating scene, the Battle Dome tree and Factory screens, the berry tag,
+// the Union Room chat and the system screens. Each scene file answers for its own callbacks.
+bool8 BerryBlender_IsGbaFormatForUi(void);
+bool8 BerryCrush_IsGbaFormatForUi(void);
+bool8 PokemonJump_IsGbaFormatForUi(void);
+bool8 DodrioBerryPicking_IsGbaFormatForUi(void);
+bool8 SlotMachine_IsGbaFormatForUi(void);
+bool8 Roulette_IsGbaFormatForUi(void);
+bool8 Contest_IsGbaFormatForUi(void);
+bool8 ContestResults_IsGbaFormatForUi(void);
+bool8 ContestPainting_IsGbaFormatForUi(void);
+bool8 PokeblockFeed_IsGbaFormatForUi(void);
+bool8 DomeTourneyTree_IsGbaFormatForUi(void);
+bool8 FactoryScreen_IsGbaFormatForUi(void);
+bool8 BerryTag_IsGbaFormatForUi(void);
+bool8 UnionRoomChat_IsGbaFormatForUi(void);
+bool8 SaveFailed_IsGbaFormatForUi(void);
+bool8 ResetRtc_IsGbaFormatForUi(void);
+bool8 ClearSaveData_IsGbaFormatForUi(void);
+bool8 BerryFix_IsGbaFormatForUi(void);
+
+static bool8 GbaFormatScene(void)
+{
+    return BerryBlender_IsGbaFormatForUi()
+        || BerryCrush_IsGbaFormatForUi()
+        || PokemonJump_IsGbaFormatForUi()
+        || DodrioBerryPicking_IsGbaFormatForUi()
+        || SlotMachine_IsGbaFormatForUi()
+        || Roulette_IsGbaFormatForUi()
+        || Contest_IsGbaFormatForUi()
+        || ContestResults_IsGbaFormatForUi()
+        || ContestPainting_IsGbaFormatForUi()
+        || PokeblockFeed_IsGbaFormatForUi()
+        || DomeTourneyTree_IsGbaFormatForUi()
+        || FactoryScreen_IsGbaFormatForUi()
+        || BerryTag_IsGbaFormatForUi()
+        || UnionRoomChat_IsGbaFormatForUi()
+        || SaveFailed_IsGbaFormatForUi()
+        || ResetRtc_IsGbaFormatForUi()
+        || ClearSaveData_IsGbaFormatForUi()
+        || BerryFix_IsGbaFormatForUi();
+}
+
 static void CaptureOverlay(GameFrameOverlay *o, bool8 voxel)
 {
+    o->gbaFormat = GbaFormatScene();
     o->battleTransition = BattleTransition_IsActiveForUi();
     o->buyMenu = Shop_IsBuyMenuActive();
     o->decorationMode = Decoration_IsFieldModeActive();

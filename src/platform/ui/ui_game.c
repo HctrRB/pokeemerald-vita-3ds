@@ -21,6 +21,7 @@
 #include "pokedex.h"
 #include "string_util.h"
 #include "money.h"
+#include "coins.h"
 #include "platform.h"
 #include "pokemon.h"
 #include "region_map.h"
@@ -208,6 +209,11 @@ uint16_t UiGame_RepelSteps(void)
     return VarGet(VAR_REPEL_STEP_COUNT);
 }
 
+uint16_t UiGame_Coins(void)
+{
+    return GetCoins();
+}
+
 bool UiGame_InSafari(void)
 {
     return GetSafariZoneFlag();
@@ -216,6 +222,11 @@ bool UiGame_InSafari(void)
 uint8_t UiGame_SafariBalls(void)
 {
     return gNumSafariBalls;
+}
+
+uint16_t UiGame_SafariSteps(void)
+{
+    return SafariZoneGetStepsLeft();
 }
 
 bool UiGame_HasFlag(uint16_t flag)

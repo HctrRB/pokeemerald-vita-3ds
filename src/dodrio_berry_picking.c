@@ -4613,7 +4613,7 @@ static void LoadGfx(void)
         sGfx->state++;
         break;
     case 4:
-        LoadWindowFrameGfx(gSaveBlock2Ptr->optionsWindowFrameType);
+        LoadWindowFrameGfx(TextWindow_PlayerFrameType());
         LoadUserWindowFrameGfx();
         sGfx->state++;
         break;
@@ -5223,3 +5223,12 @@ static bool32 LoadBgGfx(void)
     sGfx->loadState++;
     return FALSE;
 }
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 DodrioBerryPicking_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_DodrioGame;
+}
+#endif

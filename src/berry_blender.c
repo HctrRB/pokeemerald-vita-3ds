@@ -3917,3 +3917,18 @@ static bool32 PrintMessage(s16 *textState, const u8 *string, s32 textSpeed)
 
     return FALSE;
 }
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 BerryBlender_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_LoadBerryBlender
+        || gMain.callback2 == CB2_StartBlenderLink
+        || gMain.callback2 == CB2_StartBlenderLocal
+        || gMain.callback2 == CB2_PlayBlender
+        || gMain.callback2 == CB2_EndBlenderGame
+        || gMain.callback2 == CB2_CheckPlayAgainLocal
+        || gMain.callback2 == CB2_CheckPlayAgainLink;
+}
+#endif

@@ -280,6 +280,7 @@ int32_t UiGame_SpeciesAreas(uint16_t species, uint8_t *out, int32_t count)
 // ---------- POKEBLOCKS (CONDITION tab) ----------
 #include "item.h"
 #include "pokeblock.h"
+#include "pokemon_summary_screen.h"
 #include "constants/items.h"
 
 bool UiGame_HasPokeblockCase(void)
@@ -301,26 +302,26 @@ int32_t UiGame_Pokeblocks(UiBlock *out, int32_t max)
         out[n].slot = (uint8_t)i;
         out[n].color = b->color;
         out[n].level = GetHighestPokeblocksFlavorLevel(b);
-        out[n].feel = b->feel;
+        out[n].feel = GetPokeblocksFeel(b);
+        out[n].flavor[0] = b->spicy;
+        out[n].flavor[1] = b->dry;
+        out[n].flavor[2] = b->sweet;
+        out[n].flavor[3] = b->bitter;
+        out[n].flavor[4] = b->sour;
         n++;
     }
     return n;
 }
 
-// Same result as the GBA feeding scene plus use_pokeblock.c's AddPokeblockToConditions.
-// Returns 1 loved, 0 ate, -1 disliked, -2 sheen maxed (not eaten), -3 egg.
-int32_t UiGame_FeedPokeblock(int32_t slot, int32_t pkblSlot)
+// use_pokeblock.c's CalculatePokeblockEffectiveness: each condition gets its flavour, and the one the
+// nature likes (or dislikes) moves by a tenth in the direction of the overall taste.
+// boost[] in the game's order COOL TOUGH SMART CUTE BEAUTY; returns the taste.
+static const u32 sCondData[5] = { MON_DATA_COOL, MON_DATA_TOUGH, MON_DATA_SMART, MON_DATA_CUTE, MON_DATA_BEAUTY };
+static s8 Boosts(struct Pokemon *mon, const struct Pokeblock *b, s16 boost[5])
 {
-    static const u32 data[5] = { MON_DATA_COOL, MON_DATA_TOUGH, MON_DATA_SMART, MON_DATA_CUTE, MON_DATA_BEAUTY };
     static const u8 flavor[5] = { FLAVOR_SPICY, FLAVOR_SOUR, FLAVOR_BITTER, FLAVOR_SWEET, FLAVOR_DRY };
-    struct Pokemon *mon = &gPlayerParty[slot];
-    struct Pokeblock *b = &gSaveBlock1Ptr->pokeblocks[pkblSlot];
-    if (GetMonData(mon, MON_DATA_IS_EGG))
-        return -3;
-    if (GetMonData(mon, MON_DATA_SHEEN) == MAX_SHEEN)
-        return -2;
     const s16 gain = PokeblockGetGain(GetNature(mon), b);
-    s16 boost[5] = { b->spicy, b->sour, b->bitter, b->sweet, b->dry };
+    boost[0] = b->spicy; boost[1] = b->sour; boost[2] = b->bitter; boost[3] = b->sweet; boost[4] = b->dry;
     const s8 dir = gain > 0 ? 1 : gain < 0 ? -1 : 0;
     for (int32_t i = 0; i < 5 && dir; i++)
     {
@@ -330,6 +331,60 @@ int32_t UiGame_FeedPokeblock(int32_t slot, int32_t pkblSlot)
         if (GetMonFlavorRelation(mon, flavor[i]) == dir)
             boost[i] += extra * dir;
     }
+    return dir;
+}
+
+int32_t UiGame_PokeblockGains(int32_t slot, int32_t pkblSlot, int16_t gain[5], int16_t *sheen)
+{
+    // UiGame_Condition's order (COOL BEAUTY CUTE SMART TOUGH) from the game's (COOL TOUGH SMART CUTE BEAUTY)
+    static const u8 order[5] = { 0, 4, 3, 2, 1 };
+    struct Pokemon *mon = &gPlayerParty[slot];
+    const struct Pokeblock *b = &gSaveBlock1Ptr->pokeblocks[pkblSlot];
+    s16 boost[5];
+    const s8 dir = Boosts(mon, b, boost);
+    for (int32_t i = 0; i < 5; i++)
+    {
+        const s16 cur = (s16)GetMonData(mon, sCondData[order[i]]);
+        s16 v = cur + boost[order[i]];
+        if (v < 0) v = 0;
+        if (v > MAX_CONDITION) v = MAX_CONDITION;
+        gain[i] = (int16_t)(v - cur);
+    }
+    const s16 curSheen = (s16)GetMonData(mon, MON_DATA_SHEEN);
+    s16 sh = curSheen + b->feel;
+    if (sh > MAX_SHEEN) sh = MAX_SHEEN;
+    *sheen = (int16_t)(sh - curSheen);
+    return dir;
+}
+
+// The nature's name and the flavours it likes and dislikes (gPokeblockFlavorCompatibilityTable)
+void UiGame_NatureTaste(int32_t slot, char *nature, size_t cap, int8_t *likes, int8_t *dislikes)
+{
+    struct Pokemon *mon = &gPlayerParty[slot];
+    const u8 n = GetNature(mon);
+    UiGame_Text(gNatureNamePointers[n], nature, cap);
+    *likes = *dislikes = -1;
+    for (int32_t f = 0; f < FLAVOR_COUNT; f++)
+    {
+        const s8 rel = gPokeblockFlavorCompatibilityTable[n * FLAVOR_COUNT + f];
+        if (rel > 0) *likes = (int8_t)f;
+        if (rel < 0) *dislikes = (int8_t)f;
+    }
+}
+
+// Same result as the GBA feeding scene plus use_pokeblock.c's AddPokeblockToConditions.
+// Returns 1 loved, 0 ate, -1 disliked, -2 sheen maxed (not eaten), -3 egg.
+int32_t UiGame_FeedPokeblock(int32_t slot, int32_t pkblSlot)
+{
+    const u32 *data = sCondData;
+    struct Pokemon *mon = &gPlayerParty[slot];
+    struct Pokeblock *b = &gSaveBlock1Ptr->pokeblocks[pkblSlot];
+    if (GetMonData(mon, MON_DATA_IS_EGG))
+        return -3;
+    if (GetMonData(mon, MON_DATA_SHEEN) == MAX_SHEEN)
+        return -2;
+    s16 boost[5];
+    const s8 dir = Boosts(mon, b, boost);
     for (int32_t i = 0; i < 5; i++)
     {
         s16 v = (s16)GetMonData(mon, data[i]) + boost[i];

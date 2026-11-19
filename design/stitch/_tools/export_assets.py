@@ -152,6 +152,15 @@ def export_sprites():
     save(to_rgba(os.path.join(G, "party_menu", "hold_icons.png")), "ui_gba/hold_icons.png")
     save(to_rgba(os.path.join(G, "interface", "mon_markings.png")), "ui_gba/mon_markings.png")
     save(to_rgba(os.path.join(G, "pokeblock", "pokeblock.png")), "ui_gba/pokeblock.png")
+    # POKéBLOCK CASE (pokeblock.c): the case sprite, one block icon per colour with the game's own
+    # palette (sPokeblockSpritePal_*), and the PokéNav condition graph and sheen sparkles
+    save(to_rgba(os.path.join(G, "pokeblock", "device.png")), "ui_gba/pokeblock_case.png")
+    for c in ("red", "blue", "pink", "green", "yellow", "purple", "indigo", "brown", "liteblue",
+              "olive", "gray", "black", "white", "gold"):
+        save(to_rgba(os.path.join(G, "pokeblock", "pokeblock.png"), read_jasc(os.path.join(G, "pokeblock", c + ".pal"))),
+             f"pokeblocks/{c}.png")
+    save(to_rgba(os.path.join(G, "pokenav", "condition", "graph.png")), "ui_gba/condition_graph.png")
+    save(to_rgba(os.path.join(G, "pokenav", "condition", "sparkle.png")), "ui_gba/sparkle.png")
     # Ribbons as the PokéNav draws them (sRibbonGfxData, pokenav_ribbons_summary.c): a 32x32 frame of
     # icons_big.png and one of the five icons*.pal palettes, saved by ribbon id (constants/pokemon.h)
     ribbon_gfx = [(0, 1)] + [(1 + r, 1 + c) for c in range(5) for r in range(4)] + [

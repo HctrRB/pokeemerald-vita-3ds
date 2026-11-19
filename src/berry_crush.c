@@ -3505,3 +3505,12 @@ static void SetPrintMessageArgs(u8 *args, u8 msgId, u8 flags, u16 waitKeys, u8 f
     args[3] = ((u8 *)&waitKeys)[1];
     args[4] = followupState;
 }
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 BerryCrush_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == MainCB;
+}
+#endif

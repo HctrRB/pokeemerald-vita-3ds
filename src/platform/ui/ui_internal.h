@@ -45,6 +45,7 @@ typedef struct
     uint8_t faceTitle;   // font face of the Press Start 2P role (titles, labels, footer)
     uint8_t faceBody;    // font face of the VT323 role (text, dialogue)
     uint8_t faceSign;    // regular-weight text face of the zone signs (role 32)
+    uint8_t gbaWindowFrame;   // GBA text window frame (0-19) the full-screen GBA scenes use with this theme
 } UiTheme;
 
 enum { UI_THEME_GBA, UI_THEME_RED, UI_THEME_EMERALD, UI_THEME_CRYSTAL, UI_THEME_TROPICAL, UI_THEME_ROYAL, UI_THEME_COUNT };
@@ -184,6 +185,9 @@ bool UiSpr_ZonePlate(uint8_t theme, bool underwater, int32_t x, int32_t y, int32
 bool UiSpr_Decoration(uint16_t decor, int32_t bx, int32_t by, int32_t box);               // decoration picture, centred in a box
 bool UiSpr_MailStationery(uint8_t mailType, int32_t x, int32_t y, int32_t scale);   // 240x160 mail paper
 bool UiSpr_Trainer(uint16_t trainerPic, int32_t x, int32_t y, int32_t scale);                // 64x64
+bool UiSpr_Pokeblock(uint8_t color, int32_t x, int32_t y, int32_t scale);                    // 8x8, PBLOCK_CLR_*
+bool UiSpr_PokeblockTint(uint8_t color, int32_t x, int32_t y, int32_t scale, uint32_t rgba);
+bool UiSpr_PokeblockCase(int32_t x, int32_t y, int32_t scale);                                // 64x64
 bool UiSpr_MonFrontTint(uint16_t species, int32_t x, int32_t y, int32_t scale, uint32_t rgba);
 bool UiSpr_MonFrontSized(uint16_t species, int32_t x, int32_t y, int32_t w, int32_t h);
 bool UiSpr_TrainerSized(uint16_t pic, int32_t x, int32_t y, int32_t w, int32_t h);
@@ -398,6 +402,13 @@ extern const UiScreen gUiChooseScreen;
 extern bool gUiVoxelFrame;   // sdl2.c (Core 0): the frame is the 3D world
 void UiFly_Set(uint8_t partySlot);
 void UiMap_DrawArea(const uint8_t *areas, uint32_t frame);   // Hoenn map with highlighted areas (ui_scr_nav.c)
+// PokéNav CONDITION pieces (ui_scr_nav.c), shared with the POKéBLOCK CASE's FEED step
+void UiCond_PartyList(int32_t sel);
+void UiCond_PartyListGba(int32_t sel);
+void UiCond_Radar(int32_t sel, float cx, float cy, float R, bool gba, const int16_t *gain);
+void UiCond_Attrs(int32_t sel, bool gba, const int16_t *gain, int16_t sheenGain, const char *button, bool buttonOn);
+extern const UiScreen gUiPokeblockScreen;
+void UiPokeblock_PushFromBag(void);   // the BAG's USE on the POKéBLOCK CASE
 
 // Arguments of the screens opened from others (set before UiNav_Push)
 enum { UI_TARGET_USE, UI_TARGET_GIVE, UI_TARGET_TM, UI_TARGET_BATTLE };
@@ -420,7 +431,6 @@ void UiStall_Render(uint32_t drawnSeq);                     // Core 0
 void UiMirror_Inject(uint16_t keys);                      // GBA keys for the next game frame
 bool UiMirror_Tap(int32_t *x, int32_t *y);                // tap this tick (one caller per tick)
 // Battle HUD (ui_battle_hud.c), Core 1
-bool UiContest_Draw(void);                                 // ui_contest.c: contest appeal choice overlay
 bool UiBattle_Active(void);                               // the battle HUD replaces the GBA one
 void UiBattle_Tick(void);                                 // every tick: hide flags for Core 0 / OAM
 bool UiBattle_Draw(void);                                 // overlay while no screen is open

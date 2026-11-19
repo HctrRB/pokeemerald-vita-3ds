@@ -47,6 +47,16 @@ extern s16 gPokeblockGain;
 
 void ChooseMonToGivePokeblock(struct Pokeblock *pokeblock, void (*callback)(void));
 
+// Port: the GBA case's actions for the new UI's case (pokeblock.c)
+void PokeblockCase_CompactForUi(void);
+void PokeblockCase_MoveForUi(u8 from, u8 to);
+void PokeblockCase_TossForUi(u8 pkblId);
+void PokeblockCase_UseInBattleForUi(u8 pkblId);
+void PokeblockCase_UseOnFeederForUi(u8 pkblId);
+void PokeblockCase_GiveToLadyForUi(u8 pkblId);
+void PokeblockCase_CancelForUi(void);
+void PokeblockCase_ExitForUi(u8 caseId, void (*callback)(void));
+
 // pokeblock feed
 void PreparePokeblockFeedScene(void);
 

@@ -376,7 +376,8 @@ void Widescreen_PrepareDraw(void)
     const void *const callback2 = GameFrame_Get()->field.callback2;
     sFieldFrame = sFieldCallback != NULL && callback2 == (const void *)sFieldCallback;
     sBattleFrame = sBattleCallback != NULL && callback2 == (const void *)sBattleCallback;
-    gFastDrawWide.output = Widescreen_IsOn();
+    // Full-screen GBA scenes in the GBA's own format: centred lines, the 816x544 quad, black bars
+    gFastDrawWide.output = Widescreen_IsOn() && !GameFrame_Get()->overlay.gbaFormat;
     gFastDrawWide.extendObj = FALSE;
     for (bg = 0; bg < 4; bg++)
     {

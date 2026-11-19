@@ -598,3 +598,13 @@ static void CreateContestPaintingPicture(u8 contestWinnerId, bool8 isForArtist)
     LoadContestPaintingFrame(contestWinnerId, isForArtist);
 }
 
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 ContestPainting_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_ContestPainting
+        || gMain.callback2 == CB2_HoldContestPainting
+        || gMain.callback2 == CB2_QuitContestPainting;
+}
+#endif

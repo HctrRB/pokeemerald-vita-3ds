@@ -128,6 +128,13 @@ static void DoAction(int32_t act)
             }
             break;
         }
+        if (item == ITEM_POKEBLOCK_CASE)
+        {
+            // The new UI's POKéBLOCK CASE over the BAG (ui_scr_pokeblock.c); ○ comes back here
+            PlaySE(SE_SELECT);
+            UiPokeblock_PushFromBag();
+            break;
+        }
         void (*after)(void) = NULL;
         const UiUseResult r = UiGame_UseFromBag(item, msg, sizeof(msg), &after);
         if (r == UI_USE_CLOSE)

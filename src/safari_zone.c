@@ -94,6 +94,12 @@ void SafariZoneRetirePrompt(void)
     ScriptContext_SetupScript(SafariZone_EventScript_RetirePrompt);
 }
 
+// Port: the steps left, for the new UI's START hub (the GBA START menu does not show them)
+u16 SafariZoneGetStepsLeft(void)
+{
+    return sSafariZoneStepCounter;
+}
+
 void CB2_EndSafariBattle(void)
 {
     sSafariZonePkblkUses += gBattleResults.pokeblockThrows;

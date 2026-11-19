@@ -250,6 +250,8 @@ static void DrawStageMarginFade(void)
 static void RenderGameTexture(void)
 {
     glViewport(0, 0, sRenderWidth, sRenderHeight);
+    // Black: the side bars of the scenes in the GBA's own format (the 3D path leaves its sky colour)
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     glDepthMask(GL_FALSE);

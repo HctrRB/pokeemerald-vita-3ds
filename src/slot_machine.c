@@ -7953,3 +7953,13 @@ static const struct SpritePalette sSlotMachineSpritePalettes[] =
 static const u32 sReelTimeGfx[] = INCBIN_U32("graphics/slot_machine/reel_time_gfx.4bpp.lz"); // reel_time_machine and reel_time_pikachu
 static const u16 sReelTimeWindow_Tilemap[] = INCBIN_U16("graphics/slot_machine/reel_time_window.bin");
 static const u16 sEmptyTilemap[] =  {0};
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 SlotMachine_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_SlotMachineSetup
+        || gMain.callback2 == CB2_SlotMachine;
+}
+#endif

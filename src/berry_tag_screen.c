@@ -692,3 +692,13 @@ static void Task_DisplayAnotherBerry(u8 taskId)
     if (tBerryY == 0)
         gTasks[taskId].func = Task_HandleInput;
 }
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 BerryTag_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_InitBerryTagScreen
+        || gMain.callback2 == CB2_BerryTagScreen;
+}
+#endif

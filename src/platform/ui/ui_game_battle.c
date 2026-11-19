@@ -35,6 +35,17 @@ void UiGame_BattleMenuEnd(void)
     sBattleMenu = false;
 }
 
+// A screen opened by a battle controller (the BAG, POKéMON, the Safari POKéBLOCK CASE): the UI stays
+// open over the battle until it closes
+bool UiGame_OpenBattleMenu(const void *screen)
+{
+    if (!Ui_IsEnabled() || Ui_IsOpen())
+        return false;
+    sBattleMenu = true;
+    UiCore_OpenFromScript((const UiScreen *)screen, NULL);
+    return true;
+}
+
 static bool CanOpenInBattle(void)
 {
     // The PYRAMID bag keeps the old screen; multi battles use the party in multi mode (2026-11-13)

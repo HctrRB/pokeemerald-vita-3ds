@@ -31,6 +31,7 @@
 #include "text_window.h"
 #include "constants/items.h"
 #include "constants/songs.h"
+#include "platform/ui.h"
 #include "constants/rgb.h"
 
 #define MAX_MENU_ITEMS 9
@@ -445,6 +446,23 @@ static const struct ListMenuTemplate sPokeblockListMenuTemplate =
 
 void OpenPokeblockCase(u8 caseId, void (*callback)(void))
 {
+#ifdef PLATFORM_VITA
+    // Port: the new UI's case for the Safari feeder and the Contest Lady (the bag, SELECT and the
+    // Safari battle open it before this, without the fade to black). False: the GBA case below.
+    if (Ui_OpenPokeblockCase(caseId, callback))
+    {
+        // InitPokeblockMenu's resets: the field under it stops running (it is reloaded on exit)
+        SetVBlankHBlankCallbacksToNull();
+        ClearScheduledBgCopiesToVram();
+        ScanlineEffect_Stop();
+        FreeAllSpritePalettes();
+        ResetPaletteFade();
+        ResetSpriteData();
+        if (caseId != PBLOCK_CASE_BATTLE)
+            ResetTasks();
+        return;
+    }
+#endif
     sPokeblockMenu = Alloc(sizeof(*sPokeblockMenu));
     sPokeblockMenu->caseId = caseId;
     sPokeblockMenu->callbackOnUse = NULL;
@@ -1253,7 +1271,7 @@ static void CloseTossPokeblockWindow(u8 taskId)
     gTasks[taskId].func = Task_HandlePokeblockMenuInput;
 }
 
-static void PokeblockAction_UseInBattle(u8 taskId)
+static void UseInBattle(void)
 {
     u8 nature = GetNature(&gEnemyParty[0]);
     s16 gain = PokeblockGetGain(nature, &gSaveBlock1Ptr->pokeblocks[gSpecialVar_ItemId]);
@@ -1267,27 +1285,97 @@ static void PokeblockAction_UseInBattle(u8 taskId)
         gSpecialVar_ItemId += 2;
     else
         gSpecialVar_ItemId += 3;
+}
 
+static void PokeblockAction_UseInBattle(u8 taskId)
+{
+    UseInBattle();
     FadePaletteAndSetTaskToClosePokeblockCase(taskId);
 }
 
-static void PokeblockAction_UseOnPokeblockFeeder(u8 taskId)
+static void UseOnPokeblockFeeder(void)
 {
     SafariZoneActivatePokeblockFeeder(gSpecialVar_ItemId);
     StringCopy(gStringVar1, gPokeblockNames[gSaveBlock1Ptr->pokeblocks[gSpecialVar_ItemId].color]);
     gSpecialVar_Result = gSpecialVar_ItemId;
     TryClearPokeblock(gSpecialVar_ItemId);
     gSpecialVar_ItemId = 0;
+}
+
+static void PokeblockAction_UseOnPokeblockFeeder(u8 taskId)
+{
+    UseOnPokeblockFeeder();
     FadePaletteAndSetTaskToClosePokeblockCase(taskId);
 }
 
-static void PokeblockAction_GiveToContestLady(u8 taskId)
+static void GiveToContestLady(void)
 {
     gSpecialVar_0x8004 = GivePokeblockToContestLady(&gSaveBlock1Ptr->pokeblocks[gSpecialVar_ItemId]);
     gSpecialVar_Result = gSpecialVar_ItemId;
     TryClearPokeblock(gSpecialVar_ItemId);
     gSpecialVar_ItemId = 0;
+}
+
+static void PokeblockAction_GiveToContestLady(u8 taskId)
+{
+    GiveToContestLady();
     FadePaletteAndSetTaskToClosePokeblockCase(taskId);
+}
+
+// ---------- Port: the new UI's POKéBLOCK CASE (src/platform/ui/ui_scr_pokeblock.c) ----------
+// The actions of the GBA case without its windows, so that both leave the game in the same state.
+// Core 1. pkblId is a slot of gSaveBlock1Ptr->pokeblocks after PokeblockCase_CompactForUi.
+
+void PokeblockCase_CompactForUi(void)
+{
+    CompactPokeblockSlots();
+}
+
+// SELECT in the GBA case: the block moves to the chosen place and the others shift
+void PokeblockCase_MoveForUi(u8 from, u8 to)
+{
+    if (from == to)
+        return;
+    SwapPokeblockMenuItems(from, to > from ? to + 1 : to);
+}
+
+void PokeblockCase_TossForUi(u8 pkblId)
+{
+    TryClearPokeblock(pkblId);
+    CompactPokeblockSlots();
+}
+
+void PokeblockCase_UseInBattleForUi(u8 pkblId)
+{
+    gSpecialVar_ItemId = pkblId;
+    UseInBattle();
+}
+
+void PokeblockCase_UseOnFeederForUi(u8 pkblId)
+{
+    gSpecialVar_ItemId = pkblId;
+    UseOnPokeblockFeeder();
+}
+
+void PokeblockCase_GiveToLadyForUi(u8 pkblId)
+{
+    gSpecialVar_ItemId = pkblId;
+    GiveToContestLady();
+}
+
+// STOW CASE / B: what the GBA case sets before it closes
+void PokeblockCase_CancelForUi(void)
+{
+    gSpecialVar_Result = 0xFFFF;
+    gSpecialVar_ItemId = 0;
+}
+
+// Task_FreeDataAndExitPokeblockCase: the feeder and the lady's scripts continue on the field
+void PokeblockCase_ExitForUi(u8 caseId, void (*callback)(void))
+{
+    if (caseId == PBLOCK_CASE_FEEDER || caseId == PBLOCK_CASE_GIVE)
+        gFieldCallback = FieldCB_ContinueScriptHandleMusic;
+    SetMainCallback2(callback);
 }
 
 static void PokeblockAction_Cancel(u8 taskId)

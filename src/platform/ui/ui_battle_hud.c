@@ -228,6 +228,15 @@ static void PlateGba(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool t
     }
 
     char name[24], buf[24];
+    // Safari: the player has no POKéMON out (gBattleMons[b] is all zero); the game's healthbox
+    // shows only "SAFARI BALLS" and the balls left (battle_interface.c)
+    if (safari)
+    {
+        UiW_GbaText(UI_FACE_PS2P, 16, x + 12, y + 10, "SAFARI BALLS", UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        snprintf(buf, sizeof(buf), "Left: %u", (unsigned)gNumSafariBalls);
+        UiW_GbaText(UI_FACE_VT323, 28, x + 12, y + 42, buf, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        return;
+    }
     UiGame_Text(gBattleMons[b].nickname, name, sizeof(name));
     const u16 species = gBattleMons[b].species;
     const int32_t nameRoom = w - 24 - 84;
@@ -244,12 +253,6 @@ static void PlateGba(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool t
     snprintf(buf, sizeof(buf), "Lv%u", (unsigned)gBattleMons[b].level);
     UiW_GbaText(UI_FACE_PS2P, 16, x + w - 12 - UiText_Width(UI_FACE_PS2P, 16, buf), y + 10, buf, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
 
-    if (safari)
-    {
-        snprintf(buf, sizeof(buf), "SAFARI BALLS  %u", (unsigned)gNumSafariBalls);
-        UiW_GbaText(UI_FACE_VT323, 28, x + 12, y + 42, buf, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-        return;
-    }
     const int32_t max = gBattleMons[b].maxHP ? gBattleMons[b].maxHP : 1;
     const int32_t hp = ShownHp(b);
     const int st = StatusIndex(gBattleMons[b].status1);
@@ -294,6 +297,14 @@ static void Plate(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool turn
     if (turn)
         UiW_Arrow(x - 22, y + 24, TH->gold);
     char name[24], buf[24];
+    // Safari: no POKéMON out on the player's side (gBattleMons[b] is all zero), only the balls left
+    if (mine && (gBattleTypeFlags & BATTLE_TYPE_SAFARI))
+    {
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y + 1, "SAFARI BALLS", UI_COL_INK);
+        snprintf(buf, sizeof(buf), "Left: %u", (unsigned)gNumSafariBalls);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y + 40, buf, UI_COL_INK);
+        return;
+    }
     UiGame_Text(gBattleMons[b].nickname, name, sizeof(name));
     const u16 species = gBattleMons[b].species;
     // Name in the body face (as tall as the level) for legibility; the small title face only when a
@@ -315,12 +326,6 @@ static void Plate(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool turn
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 12 - lvW, y + 1, buf, UI_COL_INK);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 14 - lvW - UiText_Width(UI_FACE_VT323, UI_BODY_PX, "Lv"), y + 1, "Lv", TH->lvInk);
 
-    if (mine && (gBattleTypeFlags & BATTLE_TYPE_SAFARI))
-    {
-        snprintf(buf, sizeof(buf), "SAFARI BALLS  %u", (unsigned)gNumSafariBalls);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y + 40, buf, UI_COL_INK);
-        return;
-    }
     const int32_t max = gBattleMons[b].maxHP ? gBattleMons[b].maxHP : 1;
     const int32_t hp = ShownHp(b), pct = hp * 100 / max;
     uint32_t top, bottom;

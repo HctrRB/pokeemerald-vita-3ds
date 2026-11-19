@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Revisión UI — Zona Safari (960×544)</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 20px; background: #071310; color: #e2f5ee; font-family: system-ui, -apple-system, sans-serif; }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1 { margin: 0 0 6px; font-size: 20px; color: #6ee7b7; }
+  p { margin: 0 0 14px; color: #9ab8ad; font-size: 14px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .bar button, .bar a { font: 13px/1.2 inherit; padding: 7px 12px; border-radius: 6px; border: 1px solid #2b5849;
+    background: #0e2b25; color: #e2f5ee; cursor: pointer; text-decoration: none; }
+  .bar button.on { background: #34d399; color: #061a16; border-color: #34d399; font-weight: 700; }
+  .bar .sep { width: 1px; height: 22px; background: #1e4035; margin: 0 4px; }
+  .note { background: #0c221c; border: 1px solid #1e4035; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 13px; color: #bfe6d8; }
+  .frame-wrap { width: 960px; height: 590px; background: #000; border: 2px solid #2b5849; border-radius: 8px; overflow: hidden; }
+  iframe { width: 960px; height: 590px; border: 0; display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Revisión de Mockups — Zona Safari (960×544)</h1>
+  <p>Diseño unificado sobre <code>_shared/ui.css</code> y <code>theme.js</code> con los 5 temas + modo GBA clásico.</p>
+
+  <div class="bar" id="screens"></div>
+  <div class="bar" id="themes"></div>
+  <div class="note" id="note"></div>
+
+  <div class="frame-wrap">
+    <iframe id="view" src="../pokecubos/index.html?mode=battle&theme=gba"></iframe>
+  </div>
+</div>
+<script>
+const SCREENS = [
+  { id: 'pb_field', label: '1. Tubo (Mochila / SELECT)', url: '../pokecubos/index.html?mode=field',
+    note: 'Sustituye pokeblock.c en modo campo: USE / TOSS / CANCEL, SELECT intercambia. Sprites originales: tubo, Pokécubo con la paleta de su color, cuadrícula de sabores y FEEL. Prueba también ?count=0 y ?count=40.' },
+  { id: 'pb_feed', label: '2. Alimentar (tras USE)', url: '../pokecubos/index.html?mode=field&view=feed',
+    note: 'Sustituye use_pokeblock.c con la maqueta de CONDITION del PokéNav: vista previa (+n, contorno discontinuo) con la fórmula del juego, YES / NO, la animación GBA (pokeblock_feed.c) a pantalla completa con bandas negras y el resultado con los textos del juego.' },
+  { id: 'pb_battle', label: '3. Tubo (Combate Safari)', url: '../pokecubos/index.html?mode=battle',
+    note: 'Sustituye OpenPokeblockCaseInBattle(): USE / CANCEL; el resultado lo cuenta el combate.' },
+  { id: 'pb_feeder', label: '4. Tubo (Comedero)', url: '../pokecubos/index.html?mode=feeder',
+    note: 'Sustituye OpenPokeblockCaseOnFeeder(): USE / CANCEL; el script muestra el mensaje del comedero.' },
+  { id: 'pb_give', label: '5. Tubo (Dama del Concurso)', url: '../pokecubos/index.html?mode=give',
+    note: 'Sustituye OpenPokeblockCaseForContestLady(): GIVE / CANCEL.' },
+  { id: 'battle', label: '6. Combate Safari (HUD)', url: '../combate/index.html?battle=safari',
+    note: 'Placa del jugador como en el GBA: SAFARI BALLS y Left: N (sin nombre ni Lv).' },
+  { id: 'hub', label: '7. Hub START', url: '../hub/index.html',
+    note: 'Pendiente de revisar: en la Safari, RETIRE pregunta una sola vez (la del juego) y la cápsula muestra bolas y pasos.' }
+];
+const THEMES = ['gba', 'red', 'emerald', 'crystal', 'tropical', 'royal'];
+let curScreen = SCREENS[0], curTheme = 'gba';
+
+function update() {
+  const sep = curScreen.url.includes('?') ? '&' : '?';
+  const full = `${curScreen.url}${sep}theme=${curTheme}`;
+  document.getElementById('view').src = full;
+  document.getElementById('note').innerHTML = `${curScreen.note} · <a href="${full}" target="_blank" style="color:#6ee7b7">Abrir en pestaña nueva ↗</a>`;
+
+  document.getElementById('screens').innerHTML = SCREENS.map(s =>
+    `<button class="${s.id === curScreen.id ? 'on' : ''}" data-s="${s.id}">${s.label}</button>`).join('');
+  document.getElementById('themes').innerHTML = '<span style="font-size:12px;color:#9ab8ad">TEMA:</span>' + THEMES.map(t =>
+    `<button class="${t === curTheme ? 'on' : ''}" data-t="${t}">${t.toUpperCase()}</button>`).join('');
+
+  document.querySelectorAll('[data-s]').forEach(b => b.onclick = () => {
+    curScreen = SCREENS.find(x => x.id === b.dataset.s); update();
+  });
+  document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => {
+    curTheme = b.dataset.t; update();
+  });
+}
+update();
+</script>
+</body>
+</html>

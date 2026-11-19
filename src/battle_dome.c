@@ -6174,3 +6174,12 @@ static void CopyDomeBrainTrainerName(u8 *str)
         str[i] = gTrainers[TRAINER_TUCKER].trainerName[i];
     str[i] = EOS;
 }
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 DomeTourneyTree_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_TourneyTree;
+}
+#endif

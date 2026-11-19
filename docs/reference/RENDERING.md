@@ -26,7 +26,8 @@ backgrounds, sprites, windows, blending, mosaic, per-line scroll effects.
 - Workers convert BGR555 to RGB565 with NEON. `VDraw` uploads the frame into a ring of
   `VITA_GAME_TEXTURE_RING` textures so the GPU never reads a texture being written.
 - `RenderGameTexture` draws one quad: 288 px stretched to 960 with widescreen on, or the
-  middle 240 px at 816×544 (pillarboxed) with it off. The intro's leaves scene draws GPU margin
+  middle 240 px at 816×544 over a black clear with it off (the GBA-format scenes,
+  [SCENES_16_9.md](SCENES_16_9.md)). The intro's leaves scene draws GPU margin
   art beside it (`vita_stage.c`). Filter: nearest or bilinear (`filter` setting). The day/night
   tint is applied as the quad colour.
 - **Extended sprite palettes (`gPlttExt`)**: 16 port-only 4bpp overworld sprite palettes

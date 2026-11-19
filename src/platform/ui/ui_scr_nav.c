@@ -477,7 +477,9 @@ static void DrawGbaBtn(int32_t x, int32_t y, int32_t w, int32_t h, const char *l
     UiW_GbaTextCentred(UI_FACE_PS2P, 16, x, y, w, h, label, C_WHITE, UI_GBA_SHAD_DARK);
 }
 
-static void DrawGbaPartyList(void)
+// CONDITION's party list, radar and attributes are shared with the POKéBLOCK CASE's FEED step
+// (ui_scr_pokeblock.c): sel is the party slot shown, gain (NULL: none) what a block would add.
+void UiCond_PartyListGba(int32_t sel)
 {
     UiW_GbaWin(14, 60, 296, 414, UI_GBA_WIN_DEFAULT);
     UiW_GbaSectionStrip(26, 72, 272, 28, UI_GBA_TAG_BLUE, "PARTY", NULL);
@@ -486,7 +488,7 @@ static void DrawGbaPartyList(void)
         UiMon m;
         UiGame_Mon(i, &m);
         const int32_t y = 108 + i * 58;
-        const bool on = (i == sMonList.sel);
+        const bool on = (i == sel);
         if (on)
         {
             UiW_GbaBox(22, y + 1, 276, 52, 4, UI_RGBA(230, 148, 65, 255),
@@ -522,13 +524,13 @@ static const uint8_t sCondLen[256] = {
     34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 34, 35
 };
 
-static void DrawCondRadar(float cx, float cy, float R, bool gba)
+void UiCond_Radar(int32_t sel, float cx, float cy, float R, bool gba, const int16_t *gain)
 {
     static const char *const names[5] = { "COOL", "BEAUTY", "CUTE", "SMART", "TOUGH" };
     UiMon m;
-    if (!UiGame_Mon(sMonList.sel, &m)) return;
+    if (!UiGame_Mon(sel, &m)) return;
     uint8_t c[6];
-    UiGame_Condition(sMonList.sel, c);
+    UiGame_Condition(sel, c);
     float ax[5], ay[5];
     for (int32_t i = 0; i < 5; i++) { const float a = -1.5707963f + i * 1.2566371f; ax[i] = cosf(a); ay[i] = sinf(a); }
     for (int32_t ring = 1; ring <= 4; ring++)
@@ -556,6 +558,22 @@ static void DrawCondRadar(float cx, float cy, float R, bool gba)
         {
             UiDraw_Line(px[i], py[i], px[(i + 1) % 5], py[(i + 1) % 5], 2, gUiTheme->ink);
             UiDraw_Rect((int32_t)px[i] - 4, (int32_t)py[i] - 4, 8, 8, gUiTheme->ink);
+        }
+        if (gain != NULL)
+        {
+            // What the block would add: the new outline in the theme's selection colour
+            float gx[5], gy[5];
+            for (int32_t i = 0; i < 5; i++)
+            {
+                int32_t nv = c[i] + gain[i];
+                if (nv < 0) nv = 0;
+                if (nv > 255) nv = 255;
+                const float v = (float)sCondLen[nv] / 35.0f * R;
+                gx[i] = cx + ax[i] * v;
+                gy[i] = cy + ay[i] * v;
+            }
+            for (int32_t i = 0; i < 5; i++)
+                UiDraw_Line(gx[i], gy[i], gx[(i + 1) % 5], gy[(i + 1) % 5], 3, gUiTheme->selEdge);
         }
     }
     else
@@ -586,13 +604,13 @@ static void DrawCondRadar(float cx, float cy, float R, bool gba)
     }
 }
 
-static void DrawCondAttrs(bool gba)
+void UiCond_Attrs(int32_t sel, bool gba, const int16_t *gain, int16_t sheenGain, const char *button, bool buttonOn)
 {
     static const uint32_t cols[5][2] = { { 0xFF3A5FE0u, 0xFF2742B8u }, { 0xFFE0A04Au, 0xFFB87A2Fu }, { 0xFFC88CF0u, 0xFFA060D0u }, { 0xFF6BD07Au, 0xFF3FA050u }, { 0xFF39C8E8u, 0xFF1C9CC0u } };
     UiMon m;
-    if (!UiGame_Mon(sMonList.sel, &m)) return;
+    if (!UiGame_Mon(sel, &m)) return;
     uint8_t c[6];
-    UiGame_Condition(sMonList.sel, c);
+    UiGame_Condition(sel, c);
     const int32_t y0 = gba ? 108 : 106;
     const int32_t step = gba ? 44 : 42;
     for (int32_t i = 0; i < 5; i++)
@@ -600,7 +618,17 @@ static void DrawCondAttrs(bool gba)
         const int32_t y = y0 + i * step;
         const int32_t pct = m.egg ? 0 : (c[i] == 0 ? 0 : (c[i] * 100 + 254) / 255);
         UiDraw_Sprite((uint16_t)(UI_SPR_CONTEST_FIRST + i), 674, y + 4, 2);
-        UiW_Bar(750, y + 12, 128, 14, pct, cols[i][0], cols[i][1]);
+        // With a block to feed: a shorter bar and what it adds, in the theme's selection colour
+        UiW_Bar(750, y + 12, gain != NULL ? 88 : 128, 14, pct, cols[i][0], cols[i][1]);
+        if (gain != NULL && gain[i] != 0 && !m.egg)
+        {
+            char g[8];
+            snprintf(g, sizeof(g), "%+d", (int)gain[i]);
+            if (gba)
+                UiW_GbaTextMid(UI_FACE_VT323, 24, 844, y, 38, g, gUiTheme->selEdge, UI_GBA_SHAD_LIGHT);
+            else
+                UiText_DrawMid(UI_FACE_VT323, 24, 844, y, 38, g, gUiTheme->selEdge);
+        }
         char v[8];
         if (m.egg) snprintf(v, sizeof(v), "-");
         else snprintf(v, sizeof(v), "%u", (unsigned)c[i]);
@@ -612,6 +640,7 @@ static void DrawCondAttrs(bool gba)
     char buf[40];
     const uint8_t sparkles = m.egg ? 0 : (c[5] == 255 ? 10 : c[5] / 26);
     if (m.egg) snprintf(buf, sizeof(buf), "SHEEN -");
+    else if (gain != NULL) snprintf(buf, sizeof(buf), c[5] >= 255 ? "SHEEN %u / 255  MAX" : "SHEEN %u / 255  %+d", (unsigned)c[5], (int)sheenGain);
     else snprintf(buf, sizeof(buf), "SHEEN %u / 255  *%u/10", (unsigned)c[5], (unsigned)sparkles);
     const int32_t sy = gba ? 336 : 326;
     const int32_t sby = gba ? 370 : 362;
@@ -621,11 +650,19 @@ static void DrawCondAttrs(bool gba)
     else
         UiText_Draw(UI_FACE_VT323, 26, 676, sy, buf, UI_COL_INK);
     UiW_Bar(676, sby, 252, 12, spct, UI_RGBA(124, 192, 242, 255), UI_COL_EXP);
-    const bool canFeed = UiGame_HasPokeblockCase() && !m.egg && c[5] < 255;
     if (gba)
-        DrawGbaBtn(676, 420, 252, 42, "FEED POKéBLOCK", canFeed);
+        DrawGbaBtn(676, 420, 252, 42, button, buttonOn);
     else
-        UiW_Button(676, 424, 252, "FEED POKéBLOCK", canFeed ? UI_BTN_GREEN : UI_BTN_AMBER, false);
+        UiW_Button(676, 424, 252, button, buttonOn ? UI_BTN_GREEN : UI_BTN_AMBER, false);
+}
+
+static void DrawCondAttrs(bool gba)
+{
+    UiMon m;
+    uint8_t c[6];
+    if (!UiGame_Mon(sMonList.sel, &m)) return;
+    UiGame_Condition(sMonList.sel, c);
+    UiCond_Attrs(sMonList.sel, gba, NULL, 0, "FEED POKéBLOCK", UiGame_HasPokeblockCase() && !m.egg && c[5] < 255);
 }
 
 static void BuildMapTabGba(void)
@@ -747,13 +784,13 @@ static void BuildCallTabGba(void)
 
 static void BuildCondTabGba(void)
 {
-    DrawGbaPartyList();
+    UiCond_PartyListGba(sMonList.sel);
     UiMon m;
     if (!UiGame_Mon(sMonList.sel, &m)) return;
 
     UiW_GbaWin(322, 60, 326, 414, UI_GBA_WIN_DEFAULT);
     UiW_GbaSectionStrip(334, 72, 302, 28, UI_GBA_TAG_TEAL, "CONDITION", m.name);
-    DrawCondRadar(485, 290, 92.0f, true);
+    UiCond_Radar(sMonList.sel, 485, 290, 92.0f, true, NULL);
 
     UiW_GbaWin(660, 60, 286, 414, UI_GBA_WIN_DEFAULT);
     UiW_GbaSectionStrip(672, 72, 262, 28, UI_GBA_TAG_GOLD, "ATTRIBUTES", NULL);
@@ -762,7 +799,7 @@ static void BuildCondTabGba(void)
 
 static void BuildRibTabGba(void)
 {
-    DrawGbaPartyList();
+    UiCond_PartyListGba(sMonList.sel);
     UiW_GbaWin(322, 60, 624, 414, UI_GBA_WIN_DEFAULT);
     UiMon m;
     if (!UiGame_Mon(sMonList.sel, &m))
@@ -833,7 +870,7 @@ static void NavBuildGba(void)
     }
 }
 
-static void PartyList(void)
+void UiCond_PartyList(int32_t sel)
 {
     UiW_Panel(16, 60, 300, 432);
     for (int32_t i = 0; i < UiGame_PartyCount(); i++)
@@ -841,7 +878,7 @@ static void PartyList(void)
         UiMon m;
         UiGame_Mon(i, &m);
         const int32_t y = 66 + i * 44;
-        const bool on = i == sMonList.sel;
+        const bool on = i == sel;
         UiW_Row(22, y, 288, 44, on, i);
         UiSpr_MonIcon(m.species, 0, 30, y + 4, 1);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 68, y + 6, m.name, on ? UI_COL_SELECT_INK : UI_COL_INK);
@@ -916,14 +953,14 @@ static void BuildCallTab(void)
 
 static void BuildCondTab(void)
 {
-    PartyList();
+    UiCond_PartyList(sMonList.sel);
     UiMon m;
     if (!UiGame_Mon(sMonList.sel, &m)) return;
     char buf[64];
     snprintf(buf, sizeof(buf), "%s · CONDITION", m.name);
     UiW_Panel(328, 60, 320, 432);
     UiW_PanelHead(328, 60, 320, buf, NULL);
-    DrawCondRadar(488, 300, 92.0f, false);
+    UiCond_Radar(sMonList.sel, 488, 300, 92.0f, false, NULL);
 
     UiW_Panel(660, 60, 284, 432);
     UiW_PanelHead(660, 60, 284, "ATTRIBUTES", NULL);
@@ -932,7 +969,7 @@ static void BuildCondTab(void)
 
 static void BuildRibTab(void)
 {
-    PartyList();
+    UiCond_PartyList(sMonList.sel);
     UiW_Panel(328, 60, 616, 432);
     UiMon m;
     if (!UiGame_Mon(sMonList.sel, &m)) return;

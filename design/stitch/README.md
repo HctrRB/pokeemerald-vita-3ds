@@ -63,7 +63,6 @@ Abrir `http://localhost:8765/<pantalla>/index.html` con la ventana a 960×544.
 | Correo / Easy Chat (`?type=mail`, `profile`, `battle`, `interview`, `trendy`) | `correo` | Nueva (2026-11-13) |
 | Mochila de la Pirámide (`?loc=field`, `battle`, `toss`, `party`) | `mochila_piramide` | Nueva (2026-11-13) |
 | Equipo en combate múltiple (`?forced=1`: cambio obligado) | `equipo_multi` | Nueva (2026-11-13): `equipo_combate` en modo múltiple |
-| Concurso: elección de la actuación | `concurso` | Nueva (2026-11-13) |
 | Batidora de bayas: elección de baya y resultados | `batidora` | Nueva (2026-11-13) |
 | PC de casa (objetos, buzón, carta, decoración) | `pc_casa` | Nueva (2026-11-14, `ui_scr_playerpc.c`) |
 | Olvidar movimiento | `olvidar_movimiento` | Nueva (2026-11-14, `ui_scr_forget.c`) |
@@ -95,7 +94,7 @@ El runtime implementa la misma tabla.
   se tocan. Una pestaña abre otra pantalla o cambia el contenido de la misma.
 - **B / ○**: cierra primero el popup abierto; si no hay ninguno, vuelve un nivel
   (detalle → lista → menú START). Con un popup abierto, L/R no cambian de pestaña.
-- Secciones con `back: 'screen'` (PC, nombre, correo, Pirámide, concurso, batidora): ○ es una tecla
+- Secciones con `back: 'screen'` (PC, nombre, correo, Pirámide, batidora): ○ es una tecla
   de la pantalla (borrar letra, preguntar antes de salir, no se puede cancelar) y nunca sale sola.
   Con `lr: 'screen'` (PC) los gatillos son de la pantalla (cambiar de caja) y el carril no muestra L / R.
 

@@ -12,6 +12,7 @@
 #include "../vita/vita_platform.h"
 
 #include "global.h"
+#include "list_menu.h"
 #include "data.h"
 #include "field_message_box.h"
 #include "main.h"
@@ -34,6 +35,7 @@ extern const u8 *gUiChoiceTexts[8];
 extern bool8 Menu_GetCursorForUi(u8 windowId, s8 *cursor);
 extern void Menu_SetCursorForUi(s8 pos);
 extern u8 GetMoneyBoxWindowForUi(void);
+extern u8 GetCoinsBoxWindowForUi(void);
 extern bool gUiVoxelFrame;
 extern bool8 MatchCall_GetUiState(u8 *windowId, u8 *step, u16 *trainerIdx);
 extern bool32 IsMatchCallTaskActive(void);
@@ -148,11 +150,39 @@ void UiMirror_VisibleLines(const u8 *start, const u8 *end, char out[2][160])
     }
 }
 
-static bool OtherBg0Windows(u8 except, u8 except2)
+// Small boxes with one value shown beside the field's windows (money, coins): each gives its window
+// (WINDOW_NONE when hidden) and its text; the mirror draws them stacked at the top right
+typedef struct
+{
+    u8 (*window)(void);
+    void (*text)(char *out, size_t cap);
+} InfoBox;
+
+static void MoneyText(char *out, size_t cap) { snprintf(out, cap, "MONEY $%u", (unsigned)UiGame_Money()); }
+static void CoinsText(char *out, size_t cap) { snprintf(out, cap, "COINS %u", (unsigned)UiGame_Coins()); }
+
+static const InfoBox sInfoBoxes[] = {
+    { GetMoneyBoxWindowForUi, MoneyText },
+    { GetCoinsBoxWindowForUi, CoinsText },
+};
+#define INFO_BOX_COUNT ((int32_t)(sizeof(sInfoBoxes) / sizeof(sInfoBoxes[0])))
+
+// True when a window on BG0 other than these has tiles: a window with no mirror, so the GBA layer
+// shows everything (the mirrored info boxes are never counted)
+static bool OtherBg0Windows(const u8 *except, int32_t n)
 {
     for (int32_t w = 1; w < WINDOWS_MAX; w++)
-        if (w != except && w != except2 && gWindows[w].window.bg == 0 && gWindows[w].tileData != NULL)
+    {
+        if (gWindows[w].window.bg != 0 || gWindows[w].tileData == NULL)
+            continue;
+        bool mirrored = false;
+        for (int32_t i = 0; i < n && !mirrored; i++)
+            mirrored = except[i] == w;
+        for (int32_t i = 0; i < INFO_BOX_COUNT && !mirrored; i++)
+            mirrored = sInfoBoxes[i].window() == w;
+        if (!mirrored)
             return true;
+    }
     return false;
 }
 
@@ -204,14 +234,15 @@ bool UiMirror_Draw(void)
     // Script multichoice (PC access, NPC choices): window, options and the cursor of the game
     s8 choiceCursor = 0;
     const bool choice = field && !yesNo && gUiChoiceWindow < WINDOWS_MAX && Menu_GetCursorForUi(gUiChoiceWindow, &choiceCursor);
-    const u8 menuWin = yesNo ? yesWin : choice ? gUiChoiceWindow : 0;
-    const u8 moneyWin = field ? GetMoneyBoxWindowForUi() : WINDOW_NONE;
+    // A list menu of the field (scrollable multichoice, shop and frontier lists): its rows and cursor
+    const struct ListMenu *list = (field && !yesNo && !choice) ? ListMenu_GetFieldListForUi() : NULL;
+    const u8 menuWin = yesNo ? yesWin : choice ? gUiChoiceWindow : list != NULL ? list->template.windowId : 0;
     int32_t tapX = 0, tapY = 0;
     const bool tap = Tap(&tapX, &tapY);
     // A window without a mirror on BG0 (multichoice...): the GBA overlay shows everything
     if (call)
     {
-        if (OtherBg0Windows(callWin, 0))
+        if (OtherBg0Windows(&callWin, 1))
             return HeldBox();
         const struct TextPrinter *tp = GetTextPrinterForUi(callWin);
         const u8 *start = gUiPrinterStart[callWin];
@@ -241,7 +272,7 @@ bool UiMirror_Draw(void)
         __atomic_store_n(&sCovers, true, __ATOMIC_RELAXED);
         return true;
     }
-    if ((!box && !yesNo && !choice) || (!sceneBox && OtherBg0Windows(menuWin, moneyWin == WINDOW_NONE ? 0 : moneyWin)))
+    if ((!box && !yesNo && !choice && list == NULL) || (!sceneBox && OtherBg0Windows(&menuWin, 1)))
     {
         if (!field)
             sHold = 0;                                     // a battle, a menu, a 2D map: no hold
@@ -271,7 +302,7 @@ bool UiMirror_Draw(void)
         UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, x + 28, y + 58, lines[1], UI_COL_INK);
         // Waiting for A: the blinking arrow
         const bool waiting = !tp->active || tp->state == RENDER_STATE_WAIT;
-        if (waiting && !yesNo && !choice && ((sFrame / 16) & 1))
+        if (waiting && !yesNo && !choice && list == NULL && ((sFrame / 16) & 1))
             UiDraw_Tri(x + w - 40, y + h - 30, x + w - 24, y + h - 30, x + w - 32, y + h - 20, UI_COL_MONEY);
         // Item obtained / found: its icon and the pocket it goes to, above the box
         const u8 *src = sceneBox ? NULL : gUiFieldMessageSrc;
@@ -295,17 +326,19 @@ bool UiMirror_Draw(void)
     }
     else
         sShownItem = 0;
-    if (moneyWin != WINDOW_NONE)
+    // Info boxes (money, coins): stacked at the top right
+    for (int32_t i = 0, row = 0; field && i < INFO_BOX_COUNT; i++)
     {
-        // Money box (shops, games): top right
-        char money[24];
-        snprintf(money, sizeof(money), "MONEY $%u", (unsigned)UiGame_Money());
-        const int32_t mw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, money) + 28;
-        UiW_DialogBox(UI_SCREEN_W - 48 - mw, 16, mw, 44);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, UI_SCREEN_W - 48 - mw + 14, 20, money, UI_COL_INK);
+        if (sInfoBoxes[i].window() == WINDOW_NONE)
+            continue;
+        char text[32];
+        sInfoBoxes[i].text(text, sizeof(text));
+        const int32_t bw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, text) + 28, by = 16 + row++ * 52;
+        UiW_DialogBox(UI_SCREEN_W - 48 - bw, by, bw, 44);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, UI_SCREEN_W - 48 - bw + 14, by + 4, text, UI_COL_INK);
     }
     // A tap on the dialogue box is A (next page), as long as no menu is open
-    if (box && tap && !yesNo && !choice && tapY >= UI_SCREEN_H - 24 - 124 && tapY < UI_SCREEN_H - 24)
+    if (box && tap && !yesNo && !choice && list == NULL && tapY >= UI_SCREEN_H - 24 - 124 && tapY < UI_SCREEN_H - 24)
         sInjected |= A_BUTTON;
     if (choice)
     {
@@ -327,6 +360,41 @@ bool UiMirror_Draw(void)
             UiW_Row(x + 8, y + 8 + i * 42, w - 16, 42, choiceCursor == i, i);
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 36, y + 12 + i * 42, opt, choiceCursor == i ? UI_COL_SELECT_INK : UI_COL_INK);
         }
+        drew = true;
+    }
+    if (list != NULL)
+    {
+        // List menu (as the script multichoice, scrolling): right side, above the dialogue box. A tap
+        // on a row moves the game's cursor there (its callbacks run), a tap on the selected one is A.
+        const int32_t total = list->template.totalItems, shown = list->template.maxShowed;
+        const int32_t first = list->scrollOffset, cur = list->scrollOffset + list->selectedRow;
+        char opt[40];
+        int32_t w = 240;
+        for (int32_t i = 0; i < total; i++)
+        {
+            UiGame_Text(list->template.items[i].name, opt, sizeof(opt));
+            const int32_t tw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, opt) + 72;
+            if (tw > w) w = tw;
+        }
+        const int32_t h = 16 + shown * 42, x = UI_SCREEN_W - 48 - w, y = UI_SCREEN_H - 24 - 124 - 12 - h;
+        if (tap && tapX >= x + 8 && tapX < x + w - 8 && tapY >= y + 8 && tapY < y + 8 + shown * 42)
+        {
+            const int32_t r = (tapY - y - 8) / 42;
+            if (first + r < total)
+            {
+                if (r == list->selectedRow) sInjected |= A_BUTTON;
+                else ListMenu_MoveFieldListForUi(r - list->selectedRow);
+            }
+        }
+        UiW_DialogBox(x, y, w, h);
+        for (int32_t r = 0; r < shown && first + r < total; r++)
+        {
+            UiGame_Text(list->template.items[first + r].name, opt, sizeof(opt));
+            const bool on = first + r == cur;
+            UiW_Row(x + 8, y + 8 + r * 42, w - 28, 42, on, r);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 36, y + 12 + r * 42, opt, on ? UI_COL_SELECT_INK : UI_COL_INK);
+        }
+        UiW_ScrollBar(x + w - 18, y + 8, shown * 42, first, shown, total);
         drew = true;
     }
     if (yesNo)

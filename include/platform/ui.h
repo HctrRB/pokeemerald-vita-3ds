@@ -17,6 +17,9 @@ void Ui_Init(void);
 // True when the UI's atlas is loaded (the UI can be shown). Any thread.
 bool Ui_IsEnabled(void);
 
+// GBA window frame (0-19) that goes with the menu theme (ui_theme.c), for text_window.c
+uint8_t Ui_GbaWindowFrame(void);
+
 // Core 1, once per game frame from VBlankIntrWait: input, screens, actions, publishes the list.
 void Ui_Tick(void);
 
@@ -78,6 +81,18 @@ bool Ui_OpenBerryChoice(void (*exitCallback)(void));
 bool Ui_OpenEasyChat(uint8_t type, uint16_t *words, void (*exitCallback)(void), uint8_t personType);
 bool Ui_OpenBattleBag(void);
 bool Ui_OpenBattleParty(void);
+// POKéBLOCK CASE (ui_scr_pokeblock.c), Core 1. False: the GBA case is used.
+// From pokeblock.c's OpenPokeblockCase: the Safari feeder and the Contest Lady (PBLOCK_CASE_*),
+// replacing the case scene; it sets what the GBA case sets and then `callback`.
+bool Ui_OpenPokeblockCase(uint8_t caseId, void (*callback)(void));
+// SELECT on the field (item_use.c): the case over the field; closing it unfreezes the field.
+bool Ui_OpenPokeblockCaseField(void);
+// Safari battle (battle_controller_safari.c): the case as a battle menu; gSpecialVar_ItemId as the
+// GBA case leaves it. The controller waits for !Ui_IsOpen().
+bool Ui_OpenPokeblockCaseBattle(void);
+// After a catch (battle_script_commands.c Cmd_displaydexinfo): the new species' POKéDEX page over
+// the battle; the command waits for !Ui_IsOpen(). False: the GBA caught page.
+bool Ui_OpenCaughtDexPage(uint16_t nationalNum);
 
 // Battle HUD of the new UI: GBA layers to leave out of the frame (Core 0; DISPCNT_BG*_ON bits)
 uint16_t Ui_BattleDispcntClear(void);

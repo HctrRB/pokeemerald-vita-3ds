@@ -20,8 +20,10 @@ bool UiGame_PlayerIsMale(void);
 uint16_t UiGame_RegisteredItem(void);            // ITEM_NONE when none or no longer in the bag
 void UiGame_ItemName(uint16_t itemId, char *out, size_t cap);
 uint16_t UiGame_RepelSteps(void);
+uint16_t UiGame_Coins(void);
 bool UiGame_InSafari(void);
 uint8_t UiGame_SafariBalls(void);
+uint16_t UiGame_SafariSteps(void);   // steps left before the Safari game ends
 bool UiGame_HasFlag(uint16_t flag);
 uint8_t UiGame_BadgeCount(void);
 uint16_t UiGame_DexOwned(void);
@@ -133,11 +135,16 @@ void UiGame_Condition(int32_t slot, uint8_t out[6]);           // COOL BEAUTY CU
 int32_t UiGame_Ribbons(int32_t slot, uint8_t *ids, int32_t max);
 void UiGame_RibbonText(uint8_t id, char *name, size_t nc, char *desc, size_t dc);
 
-// POKEBLOCKS fed from the CONDITION tab
-typedef struct { uint8_t slot, color, level, feel; char name[24]; } UiBlock;
+// POKEBLOCKS (CONDITION tab and the POKéBLOCK CASE). flavor: SPICY DRY SWEET BITTER SOUR
+typedef struct { uint8_t slot, color, level, feel; uint8_t flavor[5]; char name[24]; } UiBlock;
 bool UiGame_HasPokeblockCase(void);
 int32_t UiGame_Pokeblocks(UiBlock *out, int32_t max);
 int32_t UiGame_FeedPokeblock(int32_t slot, int32_t pkblSlot);   // 1 loved, 0 ate, -1 disliked, -2 sheen max, -3 egg
+// What feeding would add, in UiGame_Condition's order (COOL BEAUTY CUTE SMART TOUGH), capped at
+// the maximum, and the sheen it would add; returns the taste (1 loved, 0, -1 disliked)
+int32_t UiGame_PokeblockGains(int32_t slot, int32_t pkblSlot, int16_t gain[5], int16_t *sheen);
+void UiGame_NatureTaste(int32_t slot, char *nature, size_t cap, int8_t *likes, int8_t *dislikes);   // flavour index or -1
+bool UiGame_OpenBattleMenu(const void *screen);
 
 // Battle BAG / POKEMON (ui_game_battle.c)
 typedef enum { UI_BUSE_FAIL, UI_BUSE_CLOSE, UI_BUSE_TARGET } UiBattleUse;

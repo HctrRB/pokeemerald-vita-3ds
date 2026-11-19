@@ -42,6 +42,7 @@
 #include "constants/item_effects.h"
 #include "constants/items.h"
 #include "constants/songs.h"
+#include "platform/ui.h"
 
 static void SetUpItemUseCallback(u8);
 static void FieldCB_UseItemOnField(void);
@@ -628,6 +629,11 @@ void ItemUseOutOfBattle_PokeblockCase(u8 taskId)
     {
         gBagMenu->newScreenCallback = CB2_OpenPokeblockFromBag;
         Task_FadeAndCloseBagMenu(taskId);
+    }
+    else if (Ui_OpenPokeblockCaseField())
+    {
+        // Port: SELECT opens the new UI's case over the field (it unfreezes the field when closed)
+        DestroyTask(taskId);
     }
     else
     {

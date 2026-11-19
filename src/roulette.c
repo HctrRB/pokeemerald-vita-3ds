@@ -4780,3 +4780,13 @@ static void SpriteCB_Taillow(struct Sprite *sprite)
     gSprites[sprite->sMonSpriteId].callback = SpriteCB_Taillow_FlyIn;
     m4aSongNumStart(SE_FALL);
 }
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 Roulette_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_LoadRoulette
+        || gMain.callback2 == CB2_Roulette;
+}
+#endif

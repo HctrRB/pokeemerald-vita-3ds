@@ -22,6 +22,7 @@
 #include "window.h"
 #include "constants/battle_anim.h"
 #include "constants/songs.h"
+#include "platform/ui.h"
 #include "constants/rgb.h"
 
 static void SafariHandleGetMonData(void);
@@ -286,7 +287,8 @@ static void SafariOpenPokeblockCase(void)
 
 static void CompleteWhenChosePokeblock(void)
 {
-    if (gMain.callback2 == BattleMainCB2 && !gPaletteFade.active)
+    // The new UI's case (Ui_OpenPokeblockCaseBattle) or the GBA one
+    if (!Ui_IsOpen() && gMain.callback2 == BattleMainCB2 && !gPaletteFade.active)
     {
         BtlController_EmitOneReturnValue(B_COMM_TO_ENGINE, gSpecialVar_ItemId);
         SafariBufferExecCompleted();
@@ -481,9 +483,15 @@ static void SafariHandleChooseMove(void)
 
 static void SafariHandleChooseItem(void)
 {
+    gBattlerInMenuId = gActiveBattler;
+    // Port: the new UI's case over the 3D battle, as the BAG of the player's controller
+    if (Ui_OpenPokeblockCaseBattle())
+    {
+        gBattlerControllerFuncs[gActiveBattler] = CompleteWhenChosePokeblock;
+        return;
+    }
     BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 0x10, RGB_BLACK);
     gBattlerControllerFuncs[gActiveBattler] = SafariOpenPokeblockCase;
-    gBattlerInMenuId = gActiveBattler;
 }
 
 static void SafariHandleChoosePokemon(void)

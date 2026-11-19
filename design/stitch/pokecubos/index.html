@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pokéblock Case</title>
+<link rel="stylesheet" href="../_shared/ui.css">
+<style>
+  /* POKéBLOCK CASE (pokeblock.c) and FEED (use_pokeblock.c), new UI. GBA originals kept: the case
+     sprite (graphics/pokeblock/device.png) that shakes when the choice changes; every block icon in
+     its own colour's palette (graphics/pokeblock/*.pal); the flavour grid of the GBA case (SPICY,
+     DRY, SWEET | BITTER, SOUR, FEEL, a block icon lit for each flavour the block has); the list as
+     the GBA writes it (name, Lv) ending in STOW CASE; the condition pentagon, the contest icons and
+     the sheen sparkles of the condition screen; the game's own texts.
+     Modes (?mode=): field (bag / SELECT: USE, TOSS, SELECT swaps), battle (Safari: USE throws it),
+     feeder (Safari feeder: USE places it), give (Contest Lady: GIVE). ?count=0 (empty), 40 (full,
+     every colour, LITEBLUE as the longest name). ?view=feed opens the FEED step (field USE).
+     After FEED YES the eating animation is the GBA scene (pokeblock_feed.c) full screen with black
+     bars; this screen comes back with the result. Everything is drawn with the theme's tokens. */
+  .left { width: 348px; flex: none; display: flex; flex-direction: column; gap: 12px; }
+  .casebox { height: 176px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .casebox img { width: 64px; height: 64px; zoom: 2.5; image-rendering: pixelated; }
+  .casebox img.shake { animation: shake 0.24s steps(2) 2; }
+  @keyframes shake { 0% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } 100% { transform: rotate(0); } }
+  .casebox .capsule { position: absolute; right: 10px; bottom: 10px; }
+  .flav { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto repeat(3, 1fr); column-gap: 14px; padding: 10px 12px; }
+  .flav .panel-head { grid-column: 1 / 3; }
+  .fcell { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .fcell .lbl { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
+  .fcell .v { width: 30px; text-align: right; flex: none; }
+  .fcell.off .pb { opacity: 0.25; filter: grayscale(1); }
+  .fcell.off .v { color: var(--ink-soft); }
+  .fcell.feel .v { color: var(--accent); }
+  .pb { width: 8px; height: 8px; zoom: 3; image-rendering: pixelated; flex: none; }
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .main .list { flex: 1; }
+  .main .row .lv { width: 64px; text-align: right; flex: none; white-space: nowrap; }
+  .main .row .grow { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row.swap { outline: 3px dashed var(--accent); outline-offset: -3px; }
+  .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--ink-soft); }
+
+  /* FEED A POKéMON: the CONDITION screen of the PokéNav (pokenav_condicion) with three changes:
+     the dashed outline and the +n of what the chosen block adds, the block and the POKéMON's taste
+     in the bottom line, and ✕ feeds (YES / NO, then the GBA scene, then the result). */
+  .party { width: 280px; flex: none; }
+  .party .row { height: 44px; }
+  .mon { width: 32px; height: 32px; background-size: 32px 64px; image-rendering: pixelated; flex: none; }
+  .radar { flex: 1; display: flex; align-items: center; justify-content: center; }
+  .stats { width: 260px; flex: none; display: flex; flex-direction: column; gap: 6px; }
+  .st { display: flex; align-items: center; gap: 8px; height: 36px; }
+  .st img { zoom: 2; }
+  .st .bar { flex: 1; min-width: 60px; }
+  .st .plus { min-width: 36px; flex: none; white-space: nowrap; text-align: right; color: var(--accent); }
+  .sheen { margin-top: auto; }
+  .sheen .kv { display: flex; gap: 6px; white-space: nowrap; }
+  .nat { display: flex; flex-direction: column; white-space: nowrap; }
+  .sheen .kv .plus { margin-left: auto; color: var(--accent); }
+  .blocks { display: flex; gap: 6px; align-items: center; white-space: nowrap; overflow: hidden; }
+  .blocks img { zoom: 3; image-rendering: pixelated; }
+  .gba-scene { width: 680px; height: 385px; background: #000; display: flex; align-items: center; justify-content: center; }
+  .gba-scene > div { width: 578px; height: 385px; background: #305878; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #fff; font-family: 'Press Start 2P'; font-size: 12px; text-align: center; }
+
+  .dev { max-width: 960px; margin: 10px auto 0; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font: 12px/1.4 system-ui, sans-serif; color: #9ab0a8; }
+  .dev button { font: inherit; padding: 3px 9px; border-radius: 4px; border: 1px solid #2b5849; background: #0e2b25; color: #e6fff8; cursor: pointer; }
+  .dev button.on { background: #34d399; color: #061a16; border-color: #34d399; font-weight: 700; }
+</style>
+</head>
+<body data-screen="pokecubos">
+<div class="stage">
+  <div class="frame">
+    <div class="header" data-nav="pokeblock:case"><span class="spacer"></span><span class="capsule" id="ctxCap"></span></div>
+    <!-- CASE -->
+    <div class="body" id="vCase">
+      <div class="left">
+        <div class="panel-dark casebox"><img id="caseSpr" src="../_assets/ui_gba/pokeblock_case.png" alt=""><span class="capsule vt-sm" id="countCap"></span></div>
+        <div class="panel flav" id="flav"></div>
+      </div>
+      <div class="panel main">
+        <div class="panel-head"><span class="ps">POKéBLOCKS</span><span class="spacer"></span><span class="vt-sm soft" id="listHint"></span></div>
+        <div class="list" id="pbList"></div>
+      </div>
+    </div>
+    <!-- FEED A POKéMON (use_pokeblock.c), laid out as the PokéNav CONDITION screen -->
+    <div class="body" id="vFeed" style="display:none">
+      <div class="panel party list" id="partyList"></div>
+      <div class="panel radar">
+        <svg width="340" height="300" viewBox="-170 -150 340 300" shape-rendering="crispEdges">
+          <polygon points="0,-120 114,-37 71,97 -71,97 -114,-37" fill="#EBE4CF" stroke="#DFD7BF" stroke-width="2"/>
+          <polygon points="0,-30 29,-9 18,24 -18,24 -29,-9" fill="none" stroke="#D1C8AF" stroke-width="2"/>
+          <polygon points="0,-60 57,-19 35,49 -35,49 -57,-19" fill="none" stroke="#D1C8AF" stroke-width="2"/>
+          <polygon points="0,-90 86,-28 53,73 -53,73 -86,-28" fill="none" stroke="#D1C8AF" stroke-width="2"/>
+          <line x1="0" y1="0" x2="0" y2="-120" stroke="#C7BC9E" stroke-width="2"/>
+          <line x1="0" y1="0" x2="114" y2="-37" stroke="#C7BC9E" stroke-width="2"/>
+          <line x1="0" y1="0" x2="71" y2="97" stroke="#C7BC9E" stroke-width="2"/>
+          <line x1="0" y1="0" x2="-71" y2="97" stroke="#C7BC9E" stroke-width="2"/>
+          <line x1="0" y1="0" x2="-114" y2="-37" stroke="#C7BC9E" stroke-width="2"/>
+          <polygon id="gain" fill="none" stroke="#D97706" stroke-width="3" stroke-dasharray="6 4"/>
+          <polygon id="cur" fill="#3FB76B" fill-opacity="0.75" stroke="#16271C" stroke-width="2"/>
+          <g id="dots" fill="#16271C"></g>
+          <circle cx="0" cy="0" r="3" fill="#7A6F55"/>
+          <text x="0" y="-128" text-anchor="middle" font-family="VT323" font-size="32">COOL</text>
+          <text x="114" y="-48" text-anchor="middle" font-family="VT323" font-size="32">BEAUTY</text>
+          <text x="74" y="118" font-family="VT323" font-size="32">CUTE</text>
+          <text x="-120" y="118" font-family="VT323" font-size="32">SMART</text>
+          <text x="-114" y="-48" text-anchor="middle" font-family="VT323" font-size="32">TOUGH</text>
+        </svg>
+      </div>
+      <div class="panel stats" id="stats"></div>
+    </div>
+    <div class="footer" id="foot"></div>
+    <div class="footer" id="feedFoot" style="display:none">
+      <span class="btn" data-btn="cross" id="ffFeed"><span class="glyph cross">✕</span>Feed</span>
+      <span class="btn" data-btn="circle" id="ffBack"><span class="glyph circle">○</span>Back to the case</span>
+      <span class="spacer"></span>
+    </div>
+  </div>
+
+  <!-- Actions (anchored by the list) -->
+  <div class="modal" id="acciones"><div class="win at" style="left:620px; top:170px; width:264px">
+    <div class="win-head"><span class="ps" id="actHead"></span></div>
+    <div class="list" id="actList" style="padding:6px"></div></div></div>
+  <!-- TOSS: the game's YES / NO -->
+  <div class="modal" id="tirar"><div class="win" style="width:480px">
+    <div class="win-head"><span class="ps">TOSS</span></div>
+    <div class="win-body vt-lg"><div id="tossMsg"></div>
+      <div class="choice-row"><div class="row" id="tossYes">YES</div><div class="row on" data-close>NO</div></div></div></div></div>
+  <!-- FEED: the game's question (gText_GetsAPokeBlockQuestion) -->
+  <div class="modal" id="preguntar"><div class="win" style="width:520px">
+    <div class="win-head"><span class="ps">POKéBLOCK CASE</span></div>
+    <div class="win-body vt-lg"><div id="askMsg"></div>
+      <div class="choice-row"><div class="row on" id="askYes">YES</div><div class="row" data-close>NO</div></div></div></div></div>
+  <!-- FEED: the game's result lines (gText_Coolness... gText_WasEnhanced / gText_NothingChanged) -->
+  <div class="modal" id="resultado"><div class="win" style="width:520px">
+    <div class="win-head"><span class="ps">POKéBLOCK CASE</span></div>
+    <div class="win-body vt-lg"><div id="resMsg"></div>
+      <div class="choice-row"><div class="row on" id="resOk">OK</div></div></div></div></div>
+  <!-- After YES on FEED: the GBA scene, then this screen again -->
+  <div class="modal" id="escena"><div class="win" style="width:720px">
+    <div class="win-head"><span class="ps">GBA SCENE</span><span class="spacer"></span><span class="vt-sm">pokeblock_feed.c · 816×544, black bars</span></div>
+    <div class="win-body" style="display:flex; justify-content:center"><div class="gba-scene"><div>
+      <img src="../_assets/ui_gba/pokeblock_case.png" alt="" style="zoom:1.5; image-rendering:pixelated">
+      <span id="sceneTxt"></span><span style="color:#ffe639">(the game's own animation)</span></div></div></div>
+    <div class="win-foot"><span class="btn" data-btn="cross" id="sceneDone"><span class="glyph cross">✕</span>Back to the case</span></div></div></div>
+</div>
+
+<div class="dev" id="dev"></div>
+
+<script src="../_shared/data.js"></script>
+<script src="../_shared/nav.js"></script>
+<script src="../_shared/screens.js"></script>
+<script>
+(() => {
+  const qs = new URLSearchParams(location.search);
+  const MODE = qs.get('mode') || 'field', THEME = (qs.get('theme') || 'gba').toLowerCase();
+  const COUNT = qs.has('count') ? +qs.get('count') : 7;
+  let view = qs.get('view') === 'feed' && MODE === 'field' ? 'feed' : 'case';
+  const $ = s => document.querySelector(s);
+
+  // Colours as gPokeblockNames writes them; flavour order SPICY DRY SWEET BITTER SOUR
+  const NAMES = { red: 'RED', blue: 'BLUE', pink: 'PINK', green: 'GREEN', yellow: 'YELLOW', purple: 'PURPLE', indigo: 'INDIGO',
+    brown: 'BROWN', liteblue: 'LITEBLUE', olive: 'OLIVE', gray: 'GRAY', black: 'BLACK', white: 'WHITE', gold: 'GOLD' };
+  const FLAV = ['SPICY', 'DRY', 'SWEET', 'BITTER', 'SOUR'], FLAV_ICON = ['red', 'blue', 'pink', 'green', 'yellow'];
+  const BASE = [
+    ['red', [23, 0, 0, 0, 0], 21], ['blue', [0, 18, 0, 0, 0], 22], ['liteblue', [0, 26, 0, 0, 14], 19], ['pink', [0, 0, 28, 0, 0], 20],
+    ['purple', [22, 0, 18, 0, 10], 19], ['gold', [0, 0, 0, 64, 0], 12], ['black', [8, 8, 8, 8, 8], 30], ['green', [0, 0, 0, 15, 0], 23],
+    ['yellow', [0, 0, 0, 0, 21], 21], ['indigo', [0, 20, 0, 18, 0], 22], ['brown', [16, 0, 0, 0, 22], 21], ['olive', [0, 0, 14, 0, 20], 22],
+    ['gray', [10, 0, 12, 0, 0], 24], ['white', [0, 0, 0, 0, 0], 25]];
+  let blocks = Array.from({ length: Math.max(0, Math.min(40, COUNT)) }, (_, i) => {
+    const b = BASE[i % BASE.length]; return { c: b[0], f: b[1].slice(), feel: b[2] };
+  });
+  const lv = b => Math.max(...b.f);
+  const name = b => `${NAMES[b.c]} POKéBLOCK`;
+  let sel = 0, swapFrom = -1;
+
+  // ---------- CASE ----------
+  const MODEINFO = {
+    field: { tab: 'CHOOSE A POKéBLOCK', cap: () => '', hint: 'SELECT: swap', acts: ['USE', 'TOSS', 'CANCEL'] },
+    battle: { tab: 'THROW A POKéBLOCK', cap: () => `SAFARI BALLS ${27}`, hint: 'Throw it to the POKéMON', acts: ['USE', 'CANCEL'] },
+    feeder: { tab: 'POKéBLOCK FEEDER', cap: () => 'SAFARI ZONE', hint: 'Place it on the FEEDER', acts: ['USE', 'CANCEL'] },
+    give: { tab: 'CONTEST LADY', cap: () => 'LILYCOVE', hint: 'Give one to the lady', acts: ['GIVE', 'CANCEL'] } }[MODE];
+
+  function setTab(t) { const tab = document.querySelector('.header .tab.on') || document.querySelector('.header .tab'); if (tab) tab.textContent = t; }
+
+  function renderCase(shake) {
+    setTab(MODEINFO.tab);
+    const cap = MODEINFO.cap(); $('#ctxCap').textContent = cap || ''; $('#ctxCap').style.display = cap ? '' : 'none';
+    $('#countCap').textContent = `${blocks.length} / 40`;
+    $('#listHint').textContent = blocks.length ? MODEINFO.hint : '';
+    const b = blocks[sel];
+    const spr = $('#caseSpr'); if (shake) { spr.classList.remove('shake'); void spr.offsetWidth; spr.classList.add('shake'); }
+    $('#flav').innerHTML = `<div class="panel-head"><span class="ps">${b ? name(b) : 'STOW CASE'}</span></div>`
+      + [0, 3, 1, 4, 2, 5].map(i => i < 5
+        ? `<div class="fcell${b && b.f[i] ? '' : ' off'}"><img class="pb" src="../_assets/pokeblocks/${FLAV_ICON[i]}.png" alt=""><span class="lbl">${FLAV[i]}</span><span class="v">${b ? b.f[i] : '-'}</span></div>`
+        : `<div class="fcell feel${b ? '' : ' off'}"><span class="lbl ps">FEEL</span><span class="v">${b ? b.feel : '-'}</span></div>`).join('');
+    const list = $('#pbList');
+    if (!blocks.length) {
+      list.innerHTML = `<div class="empty"><img src="../_assets/ui_gba/pokeblock_case.png" alt="" style="zoom:1.5;opacity:.5;image-rendering:pixelated"><span class="vt-lg">The CASE is empty.</span></div>`
+        + `<div class="row on" data-i="0"><span class="grow soft">STOW CASE</span></div>`;
+    } else {
+      list.innerHTML = blocks.map((it, i) => `<div class="row${sel === i ? ' on' : ''}${swapFrom === i ? ' swap' : ''}" data-i="${i}">
+          <img class="pb" src="../_assets/pokeblocks/${it.c}.png" alt=""><span class="grow">${name(it)}</span><span class="lv">Lv${lv(it)}</span></div>`).join('')
+        + `<div class="row${sel === blocks.length ? ' on' : ''}" data-i="${blocks.length}" style="border-bottom:0"><span class="pb"></span><span class="grow soft">STOW CASE</span></div>`;
+    }
+    list.querySelectorAll('.row').forEach(r => r.onclick = () => {
+      const i = +r.dataset.i;
+      if (swapFrom >= 0) { if (i < blocks.length) { [blocks[swapFrom], blocks[i]] = [blocks[i], blocks[swapFrom]]; sel = i; } swapFrom = -1; renderCase(true); return; }
+      if (i === sel) choose(); else { sel = i; renderCase(true); }
+    });
+    const on = list.querySelector('.row.on'); if (on) on.scrollIntoView({ block: 'nearest' });
+    $('#foot').innerHTML = `<span class="btn" data-btn="cross"><span class="glyph cross">✕</span>Choose</span>`
+      + (MODE === 'field' && blocks.length ? `<span class="btn" data-btn="select" id="fSwap"><span class="key">SELECT</span>${swapFrom >= 0 ? 'Put' : 'Swap'}</span>` : '')
+      + `<span class="btn" data-btn="circle"><span class="glyph circle">○</span>Stow</span><span class="spacer"></span>`;
+    const fs = $('#fSwap'); if (fs) fs.onclick = toggleSwap;
+    $('#foot [data-btn="cross"]').onclick = choose;
+    if (window.rescanLists) rescanLists();
+  }
+  function toggleSwap() { if (sel < blocks.length) { swapFrom = swapFrom >= 0 ? -1 : sel; renderCase(); } }
+  function choose() {
+    if (sel >= blocks.length) { UI.toast('The case is put away.'); return; }
+    $('#actHead').innerHTML = `<img class="pb" src="../_assets/pokeblocks/${blocks[sel].c}.png" alt=""> ${NAMES[blocks[sel].c]}`;
+    $('#actList').innerHTML = MODEINFO.acts.map((a, i) => `<div class="row${i ? '' : ' on'}" data-a="${a}"${i === MODEINFO.acts.length - 1 ? ' style="border-bottom:0"' : ''}>${a}</div>`).join('');
+    $('#actList').querySelectorAll('.row').forEach(r => r.onclick = () => act(r.dataset.a));
+    UI_MODALS.open('acciones');
+  }
+  function act(a) {
+    UI_MODALS.closeTop();
+    const b = blocks[sel];
+    if (a === 'CANCEL') return;
+    if (a === 'TOSS') { $('#tossMsg').innerHTML = `Throw away this<br>${name(b)}?`; UI_MODALS.open('tirar'); return; }
+    if (MODE === 'field') { view = 'feed'; show(); return; }
+    blocks.splice(sel, 1); if (sel > blocks.length) sel = blocks.length;
+    const msg = { battle: `Back to the battle: “BRENDAN threw a ${name(b)}!”`,
+                  feeder: `Back to the field: “The ${name(b)} was placed on the FEEDER.”`,
+                  give: `Back to the lady: she takes the ${name(b)}.` }[MODE];
+    UI.toast(msg, 2600); renderCase();
+  }
+  $('#tossYes').onclick = () => { const b = blocks.splice(sel, 1)[0]; if (sel > blocks.length) sel = blocks.length; UI_MODALS.closeTop(); UI.toast(`The ${name(b)} was thrown away.`); renderCase(); };
+
+  // ---------- FEED ----------
+  // Natures: the liked / disliked flavour (gPokeblockFlavorCompatibilityTable)
+  const party = [
+    { n: 'MUDKIP', sp: 'mudkip', lv: 15, nat: 'MODEST', like: 1, dis: 0, c: [70, 150, 60, 90, 40], sheen: 40 },
+    { n: 'TAILLOW', sp: 'taillow', lv: 12, nat: 'ADAMANT', like: 0, dis: 1, c: [180, 40, 50, 30, 90], sheen: 120 },
+    { n: 'RALTS', sp: 'ralts', lv: 10, nat: 'TIMID', like: 2, dis: 0, c: [30, 140, 230, 120, 20], sheen: 255 },
+    { n: 'ZIGZAGOON', sp: 'zigzagoon', lv: 9, nat: 'HARDY', like: -1, dis: -1, c: [40, 40, 60, 40, 60], sheen: 10 },
+    { egg: true, n: 'EGG', sp: 'egg' },
+    { n: 'LOTAD', sp: 'lotad', lv: 8, nat: 'CALM', like: 3, dis: 0, c: [20, 60, 40, 170, 30], sheen: 200 }];
+  // Condition order on the graph: COOL BEAUTY CUTE SMART TOUGH = flavours SPICY DRY SWEET BITTER SOUR
+  const COND = ['COOL', 'BEAUTY', 'CUTE', 'SMART', 'TOUGH'], ICON = ['cool', 'beauty', 'cute', 'smart', 'tough'];
+  const TIP = ['#D9483B', '#4A9FE0', '#F49BD8', '#3FB76B', '#E8B730'];
+  const ANG = COND.map((_, i) => -Math.PI / 2 + i * 2 * Math.PI / 5), R = 120;
+  const pt = (v, i) => [Math.round(Math.cos(ANG[i]) * R * Math.max(v, 8) / 255), Math.round(Math.sin(ANG[i]) * R * Math.max(v, 8) / 255)];
+  let monSel = 0;
+  // CalculatePokeblockEffectiveness: each condition gets its flavour; the liked (or disliked) one
+  // moves by 10 % (rounded) in the direction of the overall taste
+  function gains(m, b) {
+    const g = b.f.slice();
+    const taste = b.f.reduce((s, v, i) => s + (i === m.like ? v : i === m.dis ? -v : 0), 0);
+    const dir = Math.sign(taste);
+    if (dir) g.forEach((v, i) => { const rel = i === m.like ? 1 : i === m.dis ? -1 : 0; if (rel === dir) g[i] += dir * Math.round(v / 10); });
+    return g;
+  }
+  function renderFeed() {
+    setTab('FEED A POKéMON');
+    const b = blocks[sel] || { c: 'red', f: [23, 0, 0, 0, 0], feel: 21 };
+    $('#ctxCap').style.display = ''; $('#ctxCap').innerHTML = `<img class="pb" src="../_assets/pokeblocks/${b.c}.png" alt="">${name(b)} · Lv${lv(b)}`;
+    // As CONDITION: EGGs are not listed; icon, name, level
+    const mons = party.filter(m => !m.egg);
+    UI.rows($('#partyList'), mons, m => `<div class="row"><div class="mon" style="background-image:url(../_assets/pokemon/${m.sp}_icon.png)"></div><span class="grow">${m.n}</span><span>Lv${m.lv}</span></div>`);
+    const rows = [...$('#partyList').querySelectorAll('.row')];
+    rows.forEach(r => r.classList.remove('on')); rows[monSel].classList.add('on');
+    rows.forEach((r, i) => r.onclick = () => { if (i === monSel) feedAsk(); else { monSel = i; renderFeed(); } });
+    const m = mons[monSel], g = gains(m, b), can = m.sheen < 255;
+    $('#cur').setAttribute('points', m.c.map((v, i) => pt(v, i).join(',')).join(' '));
+    $('#gain').setAttribute('points', can ? m.c.map((v, i) => pt(Math.min(255, v + g[i]), i).join(',')).join(' ') : '');
+    $('#dots').innerHTML = m.c.map((v, i) => { const [x, y] = pt(v, i); return `<rect x="${x - 4}" y="${y - 4}" width="8" height="8"/>`; }).join('');
+    const taste = m.like >= 0 ? `likes ${FLAV[m.like]}, not ${FLAV[m.dis]}` : 'no likes or dislikes';
+    $('#stats').innerHTML = COND.map((c, i) => `<div class="st"><img src="../_assets/types/contest_${ICON[i]}.png" alt=""><div class="bar"><i style="width:${Math.round(100 * m.c[i] / 255)}%; background:${TIP[i]}"></i></div><span class="plus vt-sm">${can && g[i] ? '+' + g[i] : ''}</span></div>`).join('')
+      + `<div class="sheen"><div class="kv vt-sm"><span>SHEEN ${m.sheen} / 255</span><span class="plus">${can ? '+' + b.feel : 'MAX'}</span></div><div class="bar exp"><i style="width:${Math.round(100 * m.sheen / 255)}%"></i></div></div>`
+      + `<div class="nat vt-sm"><span>${m.nat}</span><span class="soft">${taste}</span></div>`;
+    $('#ffFeed').onclick = feedAsk;
+    $('#ffBack').onclick = () => { view = 'case'; show(); };
+    if (window.rescanLists) rescanLists();
+  }
+  function feedAsk() {
+    const m = party.filter(x => !x.egg)[monSel];
+    if (m.sheen >= 255) { UI.toast("It won't eat anymore…"); return; }
+    $('#askMsg').textContent = `${m.n} gets a POKéBLOCK?`;
+    UI_MODALS.open('preguntar');
+  }
+  $('#askYes').onclick = () => {
+    UI_MODALS.closeTop();
+    const m = party.filter(x => !x.egg)[monSel];
+    $('#sceneTxt').textContent = `${m.n} eats the ${name(blocks[sel] || { c: 'red' })}`;
+    UI_MODALS.open('escena');
+  };
+  $('#sceneDone').onclick = () => {
+    UI_MODALS.closeTop();
+    const m = party.filter(x => !x.egg)[monSel], b = blocks[sel] || { c: 'red', f: [23, 0, 0, 0, 0], feel: 21 }, g = gains(m, b);
+    m.c = m.c.map((v, i) => Math.min(255, v + g[i])); m.sheen = Math.min(255, m.sheen + b.feel);
+    const WORD = ['Coolness', 'Beauty', 'Cuteness', 'Smartness', 'Toughness'];
+    const up = g.map((v, i) => v > 0 ? i : -1).filter(i => i >= 0);
+    $('#resMsg').innerHTML = up.length ? up.map(i => `${m.n}'s ${WORD[i]} was enhanced!`).join('<br>') : 'Nothing changed!';
+    if (blocks[sel]) blocks.splice(sel, 1);
+    renderFeed();
+    UI_MODALS.open('resultado');
+  };
+  // As in the game, after feeding the case comes back
+  $('#resOk').onclick = () => { UI_MODALS.closeTop(); view = 'case'; show(); };
+
+  function show() {
+    $('#vCase').style.display = view === 'case' ? '' : 'none';
+    $('#vFeed').style.display = view === 'feed' ? '' : 'none';
+    $('#foot').style.display = view === 'case' ? '' : 'none';
+    $('#feedFoot').style.display = view === 'feed' ? '' : 'none';
+    if (view === 'case') renderCase(); else renderFeed();
+    renderDev();
+  }
+  function renderDev() {
+    const d = $('#dev');
+    const link = (k, v) => { const q = new URLSearchParams(location.search); q.set(k, v); if (k !== 'view') q.delete('view'); return '?' + q; };
+    const btn = (k, v, l, on) => `<button class="${on ? 'on' : ''}" onclick="location.search='${link(k, v)}'">${l}</button>`;
+    d.innerHTML = 'MODE: ' + [['field', 'Bag / SELECT'], ['battle', 'Safari battle'], ['feeder', 'Feeder'], ['give', 'Contest Lady']].map(([k, l]) => btn('mode', k, l, MODE === k)).join('')
+      + ' · BLOCKS: ' + [[0, 'empty'], [7, '7'], [40, '40 (full)']].map(([k, l]) => btn('count', k, l, COUNT === k)).join('')
+      + (MODE === 'field' ? ' · ' + btn('view', view === 'feed' ? 'case' : 'feed', view === 'feed' ? 'CASE view' : 'FEED view', false) : '')
+      + ' · THEME: ' + ['gba', 'red', 'emerald', 'crystal', 'tropical', 'royal'].map(t => btn('theme', t, t.toUpperCase(), THEME === t)).join('');
+  }
+  document.addEventListener('keydown', e => {
+    const k = e.key.toLowerCase();
+    if (view !== 'case' || UI_MODALS.stack.length) return;
+    const n = blocks.length + 1;
+    if (k === 'arrowdown') { sel = (sel + 1) % n; renderCase(true); }
+    if (k === 'arrowup') { sel = (sel + n - 1) % n; renderCase(true); }
+    if (k === 'x' || k === 'enter') choose();
+    if (k === 'v' && MODE === 'field') toggleSwap();
+  });
+  window.addEventListener('load', show);
+})();
+</script>
+</body>
+</html>

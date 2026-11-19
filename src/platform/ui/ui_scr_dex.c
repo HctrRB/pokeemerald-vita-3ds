@@ -7,6 +7,7 @@
 #include <string.h>
 #include "ui_internal.h"
 #include "ui_game.h"
+#include "platform/ui.h"
 #include "../vita/vita_platform.h"
 
 #include "global.h"
@@ -185,6 +186,7 @@ static void Enter(void)
 static void Resume(void) { BuildList(); }
 
 static uint16_t sDetailNat;
+static bool sCaughtPage;   // opened by a battle after a catch (Ui_OpenCaughtDexPage): one POKéMON
 static int32_t sListCryTicks;
 
 static void DrawDexCardBox(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t bg)
@@ -267,7 +269,7 @@ static bool Update(const UiInput *in)
     const int32_t a = UiList_Update(&sList, in, lx, ly, lw, rh, false);
     if (a >= 0)
     {
-        if (Caught(sNat[a])) { PlaySE(SE_SELECT); sDetailNat = sNat[a]; UiNav_Push(&gUiDexDetailScreen); }
+        if (Caught(sNat[a])) { PlaySE(SE_SELECT); sDetailNat = sNat[a]; sCaughtPage = false; UiNav_Push(&gUiDexDetailScreen); }
         else { PlaySE(SE_FAILURE); UiKit_Toast("Catch it to see its entry."); }
     }
     return true;
@@ -507,6 +509,14 @@ static void Cry(void)
 static bool DetUpdate(const UiInput *in)
 {
     if (sCryTicks > 0) sCryTicks--;
+    // After a catch: A or B closes the page and the battle goes on (the GBA caught page)
+    if (sCaughtPage && (in->pressed & (VITA_BTN_CIRCLE | (sDetTab != 2 ? VITA_BTN_CROSS : 0))))
+    {
+        PlaySE(SE_SELECT);
+        sCaughtPage = false;
+        UiNav_Close(NULL);
+        return true;
+    }
     if (in->pressed & VITA_BTN_CIRCLE) { PlaySE(SE_SELECT); return false; }
     int32_t t = -1;
     if (gUiTheme->gbaFrame)
@@ -521,8 +531,8 @@ static bool DetUpdate(const UiInput *in)
     if (in->pressed & VITA_BTN_R) t = (sDetTab + 1) % 4;
     if (t >= 0 && t != sDetTab) { sDetTab = t; PlaySE(SE_SELECT); if (t == 2) Cry(); }
     if (in->pressed & VITA_BTN_TRIANGLE || (sDetTab == 2 && (in->pressed & VITA_BTN_CROSS))) Cry();
-    if (in->repeat & VITA_BTN_UP) StepCaught(-1);
-    if (in->repeat & VITA_BTN_DOWN) StepCaught(1);
+    if (!sCaughtPage && (in->repeat & VITA_BTN_UP)) StepCaught(-1);
+    if (!sCaughtPage && (in->repeat & VITA_BTN_DOWN)) StepCaught(1);
     return true;
 }
 
@@ -534,9 +544,10 @@ static void DetBuildGba(void)
     UiW_GbaTopBar(UI_GBA_BG_POKEDEX, 0, "POKéDEX", 4, sDetTab, false, sDetTabs[sDetTab]);
 
     int32_t rx = UI_SCREEN_W - 14;
-    UiW_GbaHelpBadge(&rx, "O", "BACK", true);
+    UiW_GbaHelpBadge(&rx, "O", sCaughtPage ? "CLOSE" : "BACK", true);
     UiW_GbaHelpBadge(&rx, "TRI", "CRY", false);
-    UiW_GbaHelpBadge(&rx, "UD", "STEP", false);
+    if (!sCaughtPage)
+        UiW_GbaHelpBadge(&rx, "UD", "STEP", false);
 
     if (sDetTab == 1)
     {
@@ -699,10 +710,28 @@ static void DetBuild(void)
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 296, 84, buf, UI_COL_INK_SOFT);
     }
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, sCaughtPage ? "Close" : "Back");
     UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, "Cry");
-    UiW_FooterKey(&fx, "UP/DOWN", "Previous / next");
+    if (!sCaughtPage)
+        UiW_FooterKey(&fx, "UP/DOWN", "Previous / next");
     UiKit_FooterClock();
 }
 
 const UiScreen gUiDexDetailScreen = { DetEnter, DetUpdate, DetBuild, NULL };
+
+// After catching a new species (battle_script_commands.c Cmd_displaydexinfo): its POKéDEX page over
+// the battle as a battle menu, with its cry, instead of the GBA caught page. Core 1.
+bool Ui_OpenCaughtDexPage(uint16_t nationalNum)
+{
+    if (!Ui_IsEnabled() || Ui_IsOpen())
+        return false;
+    sDetailNat = nationalNum;
+    sCaughtPage = true;
+    if (!UiGame_OpenBattleMenu(&gUiDexDetailScreen))
+    {
+        sCaughtPage = false;
+        return false;
+    }
+    PlayCry_Normal(NationalPokedexNumToSpecies(nationalNum), 0);
+    return true;
+}

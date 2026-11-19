@@ -10,6 +10,7 @@
 static const UiTheme sThemes[UI_THEME_COUNT] = {
     [UI_THEME_GBA] = {
         .name = "GBA",
+        .gbaWindowFrame = 0,   // GBA text window frame 1, the game's default (Ui_GbaWindowFrame)
         .faceTitle = 14, .faceBody = 15, .faceSign = 15,   // Clean antialiased VT323 matching mockup
         .frameA = UI_RGBA(35, 88, 82, 152), .barTop = RGB(46, 59, 64), .barBot = RGB(32, 41, 45), .barLine = RGB(115, 205, 164),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(168, 224, 208), .title = RGB(255, 230, 57),
@@ -37,6 +38,7 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
     },
     [UI_THEME_RED] = {
         .name = "RED",
+        .gbaWindowFrame = 6,   // GBA text window frame 7, red (Ui_GbaWindowFrame)
         .faceTitle = 2, .faceBody = 3, .faceSign = 10,   // Saira Condensed
         .frameA = UI_RGBA(30, 30, 38, 214), .barTop = RGB(46, 46, 56), .barBot = RGB(30, 30, 38), .barLine = RGB(224, 48, 58),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(183, 183, 194), .title = RGB(255, 255, 255),
@@ -64,6 +66,7 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
     },
     [UI_THEME_EMERALD] = {
         .name = "EMERALD",
+        .gbaWindowFrame = 13,   // GBA text window frame 14, warm paper (Ui_GbaWindowFrame)
         .faceTitle = 0, .faceBody = 1, .faceSign = 1,   // Press Start 2P / VT323
         .frameA = UI_RGBA(4, 20, 16, 209), .barTop = RGB(14, 43, 37), .barBot = RGB(6, 26, 22), .barLine = RGB(43, 88, 73),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(126, 166, 156), .title = RGB(153, 246, 228),
@@ -91,6 +94,7 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
     },
     [UI_THEME_CRYSTAL] = {
         .name = "CRYSTAL",
+        .gbaWindowFrame = 8,   // GBA text window frame 9, ice blue (Ui_GbaWindowFrame)
         .faceTitle = 4, .faceBody = 5, .faceSign = 11,   // M PLUS Rounded 1c
         .frameA = UI_RGBA(8, 36, 62, 214), .barTop = RGB(47, 143, 192), .barBot = RGB(11, 62, 99), .barLine = RGB(79, 179, 214),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(156, 199, 219), .title = RGB(159, 234, 255),
@@ -118,6 +122,7 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
     },
     [UI_THEME_TROPICAL] = {
         .name = "TROPICAL",
+        .gbaWindowFrame = 17,   // GBA text window frame 18, sand yellow (Ui_GbaWindowFrame)
         .faceTitle = 6, .faceBody = 7, .faceSign = 12,   // Fredoka
         .frameA = UI_RGBA(12, 104, 112, 214), .barTop = RGB(255, 154, 42), .barBot = RGB(240, 122, 20), .barLine = RGB(42, 30, 59),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(255, 233, 207), .title = RGB(255, 210, 63),
@@ -145,6 +150,7 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
     },
     [UI_THEME_ROYAL] = {
         .name = "ROYAL",
+        .gbaWindowFrame = 9,   // GBA text window frame 10, gold (Ui_GbaWindowFrame)
         .faceTitle = 8, .faceBody = 9, .faceSign = 13,   // Exo 2
         .frameA = UI_RGBA(4, 34, 26, 214), .barTop = RGB(17, 85, 63), .barBot = RGB(7, 51, 38), .barLine = RGB(201, 166, 70),
         .onFrame = RGB(255, 255, 255), .onSoft = RGB(147, 184, 166), .title = RGB(246, 231, 168),
@@ -173,6 +179,14 @@ static const UiTheme sThemes[UI_THEME_COUNT] = {
 };
 
 const UiTheme *gUiTheme = &sThemes[UI_THEME_GBA];
+
+// The GBA window frame of the current theme (UiTheme.gbaWindowFrame), for text_window.c: the
+// full-screen GBA scenes match the menus (UI plan, D4). Any thread: reads the cached extra.
+uint8_t Ui_GbaWindowFrame(void)
+{
+    const int v = VitaExtras_GetFast(FAST_EXTRA_UI_THEME);
+    return sThemes[v >= 0 && v < UI_THEME_COUNT ? v : UI_THEME_GBA].gbaWindowFrame;
+}
 
 void UiTheme_Refresh(void)
 {

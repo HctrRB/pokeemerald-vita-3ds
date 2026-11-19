@@ -45,8 +45,8 @@ const UI_NAV = {
       tabs: [{ id: 'items', label: 'ITEMS' }, { id: 'balls', label: 'POKé BALLS' }, { id: 'berries', label: 'BERRIES' }] },
     { id: 'party_battle', label: 'POKéMON', home: 'equipo_combate', hidden: true, back: 'battle',
       tabs: [{ id: 'status', label: 'CHOOSE A POKéMON' }] },
-    // Screens still on the GBA UI (2026-11-13 designs): PC, naming, mail, Battle Pyramid bag,
-    // contest appeals and Berry Blender. The multi battle party is equipo_combate in multi mode.
+    // Screens still on the GBA UI (2026-11-13 designs): PC, naming, mail, Battle Pyramid bag and
+    // Berry Blender. The contest stays wholly GBA (2026-11-19); its mock-ups are in docs/history/design. The multi battle party is equipo_combate in multi mode.
     // PC: the mode (WITHDRAW / DEPOSIT / MOVE POKéMON / MOVE ITEMS) is chosen in the PC menu
     // before entering, as in the game; L / R change the box. ○ goes back to the PC menu.
     { id: 'pc', label: 'PC', home: 'pc_cajas', hidden: true, back: 'screen', lr: 'screen',
@@ -57,10 +57,12 @@ const UI_NAV = {
       tabs: [{ id: 'groups', label: 'GROUPS' }, { id: 'abc', label: 'A-Z' }] },
     { id: 'bag_pyramid', label: 'BATTLE BAG', home: 'mochila_piramide', hidden: true, back: 'screen',
       tabs: [{ id: 'items', label: 'ITEMS' }] },
-    { id: 'contest', label: 'CONTEST', home: 'concurso', hidden: true, back: 'screen',
-      tabs: [{ id: 'appeal', label: 'APPEAL' }] },
     { id: 'blender', label: 'BERRY BLENDER', home: 'batidora', hidden: true, back: 'screen',
       tabs: [{ id: 'berry', label: 'CHOOSE A BERRY' }] },
+    // POKéBLOCK CASE (pokeblock.c): field / Safari battle / feeder / Contest Lady; the tab names the
+    // mode; FEED A POKéMON (use_pokeblock.c) after USE. The eating animation stays GBA.
+    { id: 'pokeblock', label: 'POKéBLOCK CASE', home: 'pokecubos', hidden: true, back: 'screen',
+      tabs: [{ id: 'case', label: 'CHOOSE A POKéBLOCK' }] },
   ],
 };
 

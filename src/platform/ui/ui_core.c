@@ -323,11 +323,7 @@ void Ui_Tick(void)
         UiDraw_Begin();
         UiSpr_BeginTick();
         bool any = UiSign_Draw();
-        // Contest appeal choice first: it owns this tick's tap (ui_contest.c)
-        const bool contest = UiContest_Draw();
-        any |= contest;
-        if (!contest)
-            any |= UiBattle_Active() ? UiBattle_Draw() : UiMirror_Draw();
+        any |= UiBattle_Active() ? UiBattle_Draw() : UiMirror_Draw();
         if (any || sOverlayShown)
             UiDraw_Publish(0.0f);
         sOverlayShown = any;

@@ -16,6 +16,7 @@
 #include "global.h"
 #include "data.h"
 #include "decompress.h"
+#include "graphics.h"
 #include "item_icon.h"
 #include "pokemon_icon.h"
 #include "constants/species.h"
@@ -203,7 +204,14 @@ static void ComposePopup(int32_t key)
 #define UI_SPR_DECODES_PER_TICK 16 // bounds the Core 1 cost of opening a full screen (allows full 9-cell wallpaper + party in 1 tick)
 #define UI_SPR_IDLE_TICKS 4        // a cell is reusable after this many ticks without being drawn (triple-buffered draw lists)
 
-enum { KIND_MON_ICON = 1, KIND_MON_FRONT, KIND_MON_FRONT_SHINY, KIND_ITEM, KIND_FOOTPRINT, KIND_TRAINER, KIND_WALLPAPER, KIND_POPUP, KIND_DECOR, KIND_MAIL };
+enum { KIND_MON_ICON = 1, KIND_MON_FRONT, KIND_MON_FRONT_SHINY, KIND_ITEM, KIND_FOOTPRINT, KIND_TRAINER, KIND_WALLPAPER, KIND_POPUP, KIND_DECOR, KIND_MAIL,
+       KIND_POKEBLOCK, KIND_POKEBLOCK_CASE };
+
+// POKéBLOCK colours (PBLOCK_CLR_RED..GOLD = 1..14): pokeblock_feed.c's sPokeblocksPals
+static const u32 *const sPokeblockPals[14] = {
+    gPokeblockRed_Pal, gPokeblockBlue_Pal, gPokeblockPink_Pal, gPokeblockGreen_Pal, gPokeblockYellow_Pal,
+    gPokeblockPurple_Pal, gPokeblockIndigo_Pal, gPokeblockBrown_Pal, gPokeblockLiteBlue_Pal, gPokeblockOlive_Pal,
+    gPokeblockGray_Pal, gPokeblockBlack_Pal, gPokeblockWhite_Pal, gPokeblockGold_Pal };
 #define KEY(kind, id) (((uint32_t)(kind) << 16) | (uint32_t)(id))
 
 // ---------- Core 1: cache ----------
@@ -368,6 +376,26 @@ static bool Decode(uint32_t key, uint16_t *dst)
                 dst[y * UI_CELL + x] = sMail[(y0 + y) * MAIL_W + x0 + x];
         return true;
     }
+    case KIND_POKEBLOCK:
+    {
+        // The 8x8 block of the feeding scene in its colour's palette
+        static uint8_t tiles[32];
+        static uint16_t pal[16];
+        if (id < 1 || id > 14 || !UnpackLz(gPokeblock_Gfx, tiles, sizeof(tiles)) || !UnpackLz(sPokeblockPals[id - 1], pal, sizeof(pal)))
+            return false;
+        Tiles4bpp(dst, 0, 0, tiles, 1, 1, pal);
+        return true;
+    }
+    case KIND_POKEBLOCK_CASE:
+    {
+        // The case of the GBA POKéBLOCK CASE screen (gPokeblockCase_SpriteSheet), 64x64
+        static uint8_t tiles[0x800];
+        static uint16_t pal[16];
+        if (!UnpackLz(gMenuPokeblockDevice_Gfx, tiles, sizeof(tiles)) || !UnpackLz(gMenuPokeblockDevice_Pal, pal, sizeof(pal)))
+            return false;
+        Tiles4bpp(dst, 0, 0, tiles, 8, 8, pal);
+        return true;
+    }
     case KIND_POPUP:
     {
         // id = popup key (theme * 2 + underwater palette) * 2 + part (x 0-63, x 64-95)
@@ -457,6 +485,25 @@ bool UiSpr_ItemIcon(uint16_t itemId, int32_t x, int32_t y, int32_t scale)
     if (itemId == 0)
         return false;
     return DrawCell(KEY(KIND_ITEM, itemId), 0, 0, 24, 24, x, y, scale, 0xFFFFFFFFu);
+}
+
+bool UiSpr_Pokeblock(uint8_t color, int32_t x, int32_t y, int32_t scale)
+{
+    if (color < 1 || color > 14)
+        return false;
+    return DrawCell(KEY(KIND_POKEBLOCK, color), 0, 0, 8, 8, x, y, scale, 0xFFFFFFFFu);
+}
+
+bool UiSpr_PokeblockTint(uint8_t color, int32_t x, int32_t y, int32_t scale, uint32_t rgba)
+{
+    if (color < 1 || color > 14)
+        return false;
+    return DrawCell(KEY(KIND_POKEBLOCK, color), 0, 0, 8, 8, x, y, scale, rgba);
+}
+
+bool UiSpr_PokeblockCase(int32_t x, int32_t y, int32_t scale)
+{
+    return DrawCell(KEY(KIND_POKEBLOCK_CASE, 0), 0, 0, 64, 64, x, y, scale, 0xFFFFFFFFu);
 }
 
 bool UiSpr_Trainer(uint16_t trainerPic, int32_t x, int32_t y, int32_t scale)

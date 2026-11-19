@@ -34,9 +34,8 @@ it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture (fixed atlas `as
 | `ui_core.c`, `ui_draw.c`, `ui_render.c`, `ui_assets.c`, `ui_sprites.c` | Screen stack, input, draw list, texture, atlas, sprite cache |
 | `ui_theme.c` | Six menu themes (`GBA`, `RED`, `EMERALD`, `CRYSTAL`, `TROPICAL`, `ROYAL`; order of `UI_THEME_*`): colour tokens, box geometry, battle HUD tokens and baked font face IDs |
 | `ui_widgets.c`, `ui_kit.c` | Boxes, rows, buttons, lists, popups, toasts |
-| `ui_scr_*.c` | Screens: START hub, Pokédex, party, bag, PokéNav, trainer card, options, Nuzlocke, mart, PC boxes, player's PC (items, mailbox, decorations), naming keyboard, Easy Chat, berry choice, forget a move, choose a Pokémon |
-| `ui_contest.c` | Contest appeal choice |
-| `ui_mirror.c`, `ui_sign.c` | Dialogue, YES/NO, multichoice and money boxes (including 2D evolution, egg-hatch and trade dialogue mirrors), plus zone signs |
+| `ui_scr_*.c` | Screens: START hub, Pokédex, party, bag, PokéNav, trainer card, options, Nuzlocke, mart, PC boxes, player's PC (items, mailbox, decorations), naming keyboard, Easy Chat, berry choice, forget a move, choose a Pokémon, Pokéblock case (`ui_scr_pokeblock.c`) |
+| `ui_mirror.c`, `ui_sign.c` | Dialogue, YES/NO, multichoice, the field's list menus (`ListMenu_GetFieldListForUi`: scrollable multichoice, shop and frontier lists) and the info boxes (`sInfoBoxes`: money, coins) (including 2D evolution, egg-hatch and trade dialogue mirrors), plus zone signs |
 | `ui_battle_hud.c`, `ui_game_battle.c` | Battle HUD (plates, party balls, messages, commands, moves, targets, level up) and the battle bag / party |
 | `ui_game*.c` | Game data and actions used by the screens |
 | `ui_stall.c` | Diagnostic: writes `ui_stall.log` when the UI stops updating for more than 100 ms |
@@ -45,9 +44,14 @@ it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture (fixed atlas `as
 
 - **Field overlay (`Open`)**: opened from the overworld with START / Square (`LockPlayerFieldControls`).
 - **Script-driven (`UiCore_OpenFromScript`)**: opened by field script tasks (Poké Mart and decoration shops, PC boxes, player's PC, Day Care / tutor party choice, forget a move); the game task waits for `!Ui_IsOpen()`.
-- **Hosted full-screen (`UiCore_OpenHosted` / `CB2_UiHost`)**: replaces a GBA scene run from `gMain.callback2` (naming screen, Easy Chat, Berry Blender / Berry Crush choice, title-menu options) while keeping GBA sprites and tasks alive and running scene resets before opening.
+- **Hosted full-screen (`UiCore_OpenHosted` / `CB2_UiHost`)**: replaces a GBA scene run from `gMain.callback2` (naming screen, Easy Chat, Berry Blender / Berry Crush choice, title-menu options, the Pokéblock case of the Safari feeder and the Contest Lady) while keeping GBA sprites and tasks alive and running scene resets before opening.
+- **Battle menu (`UiGame_OpenBattleMenu`)**: opened over the battle (bag, party, the Safari battle's Pokéblock case, and the Pokédex page after a catch, `Ui_OpenCaughtDexPage` from `Cmd_displaydexinfo`); the battle waits for `!Ui_IsOpen()`.
 
 ### Themes (`ui_theme.c`)
+
+Each theme also names the GBA text window frame (`UiTheme.gbaWindowFrame`) that the full-screen GBA
+scenes use with it: `text_window.c` reads `TextWindow_PlayerFrameType`, which returns
+`Ui_GbaWindowFrame` while the UI is enabled, so the save's OPTIONS frame is never rewritten.
 
 Selected in `OPTIONS > GENERAL > DISPLAY > MENU COLOR` (extra `"ui_theme"`):
 
@@ -62,6 +66,19 @@ Selected in `OPTIONS > GENERAL > DISPLAY > MENU COLOR` (extra `"ui_theme"`):
 
 Design mocks: [design/stitch/](../../design/stitch/README.md) (`?theme=` previews each theme). The atlas
 is built by `tools/ui2/build_atlas.py`.
+
+### Pokéblock case (`ui_scr_pokeblock.c`)
+
+Replaces `pokeblock.c`'s screen in its four modes (`PBLOCK_CASE_*`), laid out as the bag: from the
+bag's USE (pushed over it) or SELECT (`Ui_OpenPokeblockCaseField`), in a Safari battle
+(`Ui_OpenPokeblockCaseBattle`, a battle menu), and for the Safari feeder and the Contest Lady
+(`Ui_OpenPokeblockCase`, hosted, from `OpenPokeblockCase`). Every action calls `pokeblock.c`'s
+`PokeblockCase_*ForUi`, the GBA case's own code, so both leave the same game state. Sprites come
+from the game's graphics at run time (`UiSpr_Pokeblock` with each colour's palette,
+`UiSpr_PokeblockCase`). USE on the field opens the FEED step, drawn with the PokéNav CONDITION
+screen's pieces (`UiCond_*` in `ui_scr_nav.c`) plus what the block would add
+(`UiGame_PokeblockGains`); YES closes the UI and plays the GBA eating scene (`pokeblock_feed.c`),
+then the field comes back and the FEED step reopens with the result (`CB2_AfterFeedScene`).
 
 ## Game features behind the UI
 

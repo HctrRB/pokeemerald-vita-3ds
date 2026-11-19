@@ -1191,3 +1191,12 @@ static void CalculateMonAnimMovement(void)
         pokeblockFeed->animData[ANIMDATA_TIME]--;
     }
 }
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 PokeblockFeed_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_PokeblockFeed;
+}
+#endif

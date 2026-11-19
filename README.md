@@ -115,6 +115,17 @@ for a steady frame time; HD-2D **LOW** holds **60 FPS**; HD-2D **MED** is experi
 These parts are built, but have not been checked on the console yet:
 
 - The Pokécenter healing machine's balls drawn on the machine in the 3D world.
+- Safari Zone: the player's battle box (SAFARI BALLS and the balls left), RETIRE asking once, and
+  the balls and steps left in the START menu.
+- Mini-games and the contest in the GBA's own format (816×544, black side bars); the contest
+  without the new UI's touch buttons; the GBA window frame following the menu theme.
+- The new boxes for the Game Corner coins and the scrolling lists of the field (Game Corner prizes,
+  Lilycove Dept. Store, Battle Frontier exchange and tutors).
+- The POKéDEX page after catching a new species, now the new UI's page over the battle (with its
+  cry; A or B closes it).
+- The new POKéBLOCK CASE: from the bag and SELECT (USE, TOSS, moving blocks), in a Safari battle,
+  at a Safari feeder and with the Contest Lady; feeding a POKéMON plays the GBA eating scene and
+  comes back to the new screen.
 - The battle fixes for Wally's battle (#8) and Gyms 6 and 7 (Natural Cure, double battle targets).
 - The GRAPHICS tab (each HD-2D level with 30 and 60 FPS) and the night street lamps.
 - The Flash darkness in 3D (Dewford Gym, Battle Pyramid), and the battle HUD in the Battle Palace
@@ -126,8 +137,6 @@ These parts are built, but have not been checked on the console yet:
 
 Screens still on the GBA interface:
 
-- The Pokédex entry shown after a catch (description and stats): the GBA text is drawn with no
-  background over the 3D battle.
 - The summary of a boxed POKéMON in the PC.
 - Move Relearner / Move Deleter, and Contest / Battle Frontier party choice.
 - The Battle Pyramid bag inside battles and its "bag full: choose what to drop" step.

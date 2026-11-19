@@ -51,7 +51,7 @@ static const char *const sHints[HUB_COUNT] = {
 static uint8_t sEntries[HUB_COUNT];
 static int32_t sCount, sSel;
 static uint32_t sFrame;
-static int32_t sPopup;                 // 0 none, 1 save confirm, 2 save result, 3 retire confirm
+static int32_t sPopup;                 // 0 none, 1 save confirm, 2 save result
 static int32_t sPopupSel;
 static bool sSaveOk;
 static int32_t sRunX, sRunY, sRunW, sRunH;
@@ -97,7 +97,8 @@ static void Resume(void)
 
 static void RetireSafari(void)
 {
-    // Same as the game's START menu "RETIRE": the script asks and warps to the counter
+    // Same as the game's START menu "RETIRE": no question here, the script asks once
+    // (SafariZone_EventScript_RetirePrompt) and warps to the counter
     SafariZoneRetirePrompt();
 }
 
@@ -114,7 +115,7 @@ static bool Activate(void)
     case HUB_SAVE:     sPopup = 1; sPopupSel = 0; break;
     case HUB_OPTION:   UiNav_Push(&gUiOptionsScreen); break;
     case HUB_NUZLOCKE: UiNav_Push(&gUiNuzlockeScreen); break;
-    case HUB_RETIRE:   sPopup = 3; sPopupSel = 1; break;
+    case HUB_RETIRE:   UiNav_Close(RetireSafari); break;
     case HUB_EXIT:     return false;
     }
     return true;
@@ -186,15 +187,6 @@ static bool Update(const UiInput *in)
             PlaySE(SE_SELECT);
             sPopup = 0;
         }
-        return true;
-    }
-    if (sPopup == 3)
-    {
-        const int32_t r = UpdateYesNo(in);
-        if (r == 1)
-            UiNav_Close(RetireSafari);
-        else if (r == 0)
-            sPopup = 0;
         return true;
     }
 
@@ -317,12 +309,14 @@ static void BuildStatus(void)
         UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, "RUN: WALK", UI_COL_ON_SOFT);
     }
 
-    // Bottom-left: Safari balls or Repel steps
+    // Bottom-left: Safari balls and steps, or Repel steps
     UiW_Capsule(16, 110, 162, 34);
     if (UiGame_InSafari())
     {
-        snprintf(buf, sizeof(buf), "SAFARI: %u", (unsigned)UiGame_SafariBalls());
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, buf, UI_COL_ON_FRAME);
+        // Safari Ball, then balls · steps left (at most "30 · 500": 104 px in the widest theme face)
+        UiDraw_Sprite(UI_SPR_BALL_SAFARI, 24, 119, 1);
+        snprintf(buf, sizeof(buf), "%u · %u", (unsigned)UiGame_SafariBalls(), (unsigned)UiGame_SafariSteps());
+        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 46, 110, 34, buf, UI_COL_ON_FRAME);
     }
     else if (UiGame_RepelSteps() > 0)
     {
@@ -399,8 +393,7 @@ static void BuildPopup(void)
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 124, sSaveOk ? "Saved to ux0:data/POKEVITA/" : "Try again.", UI_COL_INK_SOFT);
         return;
     }
-    UiW_Window(POP_X, POP_Y, POP_W, 224, sPopup == 1 ? "SAVE" : "RETIRE");
-    if (sPopup == 1)
+    UiW_Window(POP_X, POP_Y, POP_W, 224, "SAVE");
     {
         char name[16], zone[32], time[16];
         UiGame_PlayerName(name, sizeof(name));
@@ -414,8 +407,6 @@ static void BuildPopup(void)
                     UiGame_SaveOverwritesOtherGame() ? "This overwrites the other game!" : "Would you like to save the game?",
                     UiGame_SaveOverwritesOtherGame() ? UI_COL_HP_LOW : UI_COL_INK);
     }
-    else
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 70, "Would you like to retire?", UI_COL_INK);
     static const char *const opt[2] = { "YES", "NO" };
     for (int32_t i = 0; i < 2; i++)
     {
@@ -466,7 +457,8 @@ static void BuildGbaHub(void)
     {
         UiDraw_Sprite(UI_SPR_BALL_SAFARI, 244, 118, 1);
         UiW_GbaTextMid(UI_FACE_VT323, 24, 266, 106, 40, "SAFARI", UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
-        snprintf(buf, sizeof(buf), "%u BALLS", (unsigned)UiGame_SafariBalls());
+        // Balls · steps left, as the REPEL cell's value
+        snprintf(buf, sizeof(buf), "%u · %u", (unsigned)UiGame_SafariBalls(), (unsigned)UiGame_SafariSteps());
         UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, buf), 106, 40, buf, UI_RGBA(115, 255, 172, 255), UI_GBA_SHAD_DARK);
     }
     else
@@ -589,21 +581,6 @@ static void BuildGbaSavePopup(void)
     UiGame_PlayerName(name, sizeof(name));
     UiGame_ZoneName(zone, sizeof(zone));
     UiGame_PlayTime(time, sizeof(time));
-
-    if (sPopup == 3)
-    {
-        UiW_GbaWin(POP_X, POP_Y, POP_W, 224, UI_GBA_WIN_DEFAULT);
-        UiW_GbaSectionStrip(POP_X + 10, POP_Y + 10, POP_W - 20, 28, UI_GBA_TAG_CRIMSON, "SAFARI ZONE", NULL);
-        UiW_GbaText(UI_FACE_VT323, 32, POP_X + 24, POP_Y + 60, "Would you like to retire?", UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-        static const char *const opt[2] = { "YES", "NO" };
-        for (int32_t i = 0; i < 2; i++)
-        {
-            const int32_t bx = POP_X + 16 + i * 208;
-            UiW_Row(bx, POP_Y + 168, 200, 40, sPopupSel == i, 0);
-            UiW_GbaTextMid(UI_FACE_PS2P, 16, bx + 76, POP_Y + 168, 40, opt[i], UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-        }
-        return;
-    }
 
     // Left Save Journal Card (.save-card: 22, 22, 500, 396) matching 10_save
     UiW_GbaWin(22, 22, 500, 396, UI_GBA_WIN_DEFAULT);

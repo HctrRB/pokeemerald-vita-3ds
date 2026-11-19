@@ -276,9 +276,10 @@
       dots.innerHTML = KEYS.map((k, j) => { const [x, y] = pt(Math.max(m.cond[k], 8), j); return `<rect x="${x - 4}" y="${y - 4}" width="8" height="8"/>`; }).join('');
       const bars = stats.querySelectorAll('.st .bar > i');
       KEYS.forEach((k, j) => { bars[j].style.width = Math.round(100 * m.cond[k] / 255) + '%'; bars[j].parentElement.title = m.cond[k]; });
-      stats.querySelector('.sheen .kv').textContent = `SHEEN ${m.cond.sheen} / 255 · ${m.nature}`;
+      stats.querySelector('.sheen .kv').textContent = `SHEEN ${m.cond.sheen} / 255`;
+      stats.querySelector('.nat').innerHTML = `<span>${m.nature}</span><span class="soft">${m.taste.replace('Likes ', 'likes ').replace(' · dislikes ', ', not ')}</span>`;
       stats.querySelector('.sheen .bar > i').style.width = Math.round(100 * m.cond.sheen / 255) + '%';
-      stats.querySelector('.blocks').innerHTML = `<img src="../_assets/ui_gba/pokeblock.png" alt=""> CASE: ${blocks.length} · ${m.taste}`;
+      stats.querySelector('.blocks').innerHTML = `<img src="../_assets/ui_gba/pokeblock.png" alt=""> POKéBLOCK CASE: ${blocks.length}`;
       $('#pokecubos .win-head').innerHTML = `<span class="ps">POKéBLOCK CASE</span><span class="spacer"></span><span class="vt-sm">Feed ${m.name} · SHEEN ${m.cond.sheen}/255</span>`;
     };
     const HUE = { RED: 0, BLUE: 200, PINK: 300, GREEN: 100, YELLOW: 50 };

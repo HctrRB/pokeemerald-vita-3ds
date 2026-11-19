@@ -12,6 +12,10 @@
 #include "strings.h"
 #include "sound.h"
 #include "constants/songs.h"
+#ifdef PLATFORM_VITA
+#include "overworld.h"
+static u8 sUiFieldListTaskId = TASK_NONE;   // the field's list menu for the new UI's mirror
+#endif
 
 // Cursors after this point are created using a sprite with their own task.
 // This allows them to have idle animations. Cursors prior to this are simply printed text.
@@ -460,6 +464,10 @@ void DestroyListMenuTask(u8 listTaskId, u16 *scrollOffset, u16 *selectedRow)
     if (list->taskId != TASK_NONE)
         ListMenuRemoveCursorObject(list->taskId, list->template.cursorKind - CURSOR_OBJECT_START);
 
+#ifdef PLATFORM_VITA
+    if (listTaskId == sUiFieldListTaskId)
+        sUiFieldListTaskId = TASK_NONE;
+#endif
     DestroyTask(listTaskId);
 }
 
@@ -542,10 +550,38 @@ u16 ListMenuGetYCoordForPrintingArrowCursor(u8 listTaskId)
     return list->selectedRow * yMultiplier + list->template.upText_Y;
 }
 
+#ifdef PLATFORM_VITA
+// Port: the newest list menu opened on the field (scrollable multichoice, shop and frontier lists),
+// shown by the new UI's mirror (ui_mirror.c) with the game's own state and cursor
+
+const struct ListMenu *ListMenu_GetFieldListForUi(void)
+{
+    const u8 t = sUiFieldListTaskId;
+    if (t == TASK_NONE || !gTasks[t].isActive || gTasks[t].func != ListMenuDummyTask)
+        return NULL;
+    const struct ListMenu *list = (const void *) gTasks[t].data;
+    if (list->template.windowId >= WINDOWS_MAX || gWindows[list->template.windowId].tileData == NULL)
+        return NULL;
+    return list;
+}
+
+// A tap on another row: the same as the d-pad, so the list's own callbacks run
+void ListMenu_MoveFieldListForUi(s32 delta)
+{
+    struct ListMenu *list = (struct ListMenu *) ListMenu_GetFieldListForUi();
+    if (list != NULL && delta != 0)
+        ListMenuChangeSelection(list, TRUE, (u8)(delta < 0 ? -delta : delta), delta > 0);
+}
+#endif
+
 static u8 ListMenuInitInternal(struct ListMenuTemplate *listMenuTemplate, u16 scrollOffset, u16 selectedRow)
 {
     u8 listTaskId = CreateTask(ListMenuDummyTask, 0);
     struct ListMenu *list = (void *) gTasks[listTaskId].data;
+#ifdef PLATFORM_VITA
+    if (gMain.callback2 == CB2_Overworld)
+        sUiFieldListTaskId = listTaskId;
+#endif
 
     list->template = *listMenuTemplate;
     list->scrollOffset = scrollOffset;

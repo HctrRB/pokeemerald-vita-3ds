@@ -12,6 +12,7 @@ void ExitSafariMode(void);
 
 bool8 SafariZoneTakeStep(void);
 void SafariZoneRetirePrompt(void);
+u16 SafariZoneGetStepsLeft(void);   // port: shown in the new UI's START hub
 
 void CB2_EndSafariBattle(void);
 

@@ -738,3 +738,13 @@ static void Task_ResetRtcScreen(u8 taskId)
         }
     }
 }
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 ResetRtc_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_InitResetRtcScreen
+        || gMain.callback2 == CB2_ResetRtcScreen;
+}
+#endif

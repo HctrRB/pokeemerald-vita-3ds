@@ -30,12 +30,23 @@ Scenes that declare a policy (each frame, while their `gMain.callback2` is curre
 | Field (`overworld.c`) | `Widescreen_SetFieldFrame` | BG1-3 `WIDE` from a 64-tile ring kept by `field_camera.c`; sprites extended |
 | Battle (`battle_main.c`) | `Widescreen_SetBattleFrame` | BG1-3 `WIDE`; BG0 text box rebuilt stretched to the edges; sprites extended |
 | Stage scenes: intro, title, credits, cable car, legendary cutscenes | Forced include `compat/ctr_gba_stage.h` (CMake) | Per layer, every frame (`PrepareStageFrame`, after Emerald 3DS `RecordScroll`): a layer panning horizontally (more than 4 px over 32 frames) or scrolled line by line by a scanline effect → `WIDE`; a still panorama behind scrolling scenery → `WIDE`; any other still layer → `WIDE_BG_EDGE_TILE`. Sprites extended. All-still frames get a GPU fade to black; the leaves scene draws its continuation art (`VitaStage_RenderLeavesMargins`) instead of repeated edges |
+| GBA-format scenes (below) | `GameFrameOverlay.gbaFormat` | No widescreen: centred lines, the 816×544 quad, black side bars |
 | Everything else | — | Back layer `FILL`, other layers and sprites centred |
 
-Widescreen is always on (`Widescreen_IsOn()` returns `TRUE`); the GBA options screen's DISPLAY
-page keeps only VOLUME. Every path shows the 288-px line with one mapping:
-`WIDESCREEN_VISIBLE_U0..U1` (columns 2.8–285.2) at a uniform ×3.4, so the GBA's 240 px sit at
-screen x 72–888.
+Widescreen is on (`Widescreen_IsOn()` returns `TRUE`) except for the GBA-format scenes; the GBA
+options screen's DISPLAY page keeps only VOLUME. Every widescreen frame shows the 288-px line with
+one mapping: `WIDESCREEN_VISIBLE_U0..U1` (columns 2.8–285.2) at a uniform ×3.4, so the GBA's 240 px
+sit at screen x 72–888.
+
+**GBA-format scenes.** The full-screen GBA mini-games and screens are shown in the GBA's own
+format, 816×544 with black side bars (decided 2026-11-19): Berry Blender, Berry Crush, Pokémon
+Jump, Dodrio Berry Picking, slot machine, roulette, the contest, its results and painting, the
+Pokéblock eating scene, the Battle Dome tree, the Battle Factory screens, the berry tag, the Union
+Room chat and the system screens (save failed, clock reset, clear save, berry fix). Each scene's
+file answers for its own callbacks (`*_IsGbaFormatForUi`); Core 1 publishes the result in the game
+frame (`GameFrameOverlay.gbaFormat`, `vita_game_frame.c`), and Core 0 turns widescreen off for that
+frame in `Widescreen_PrepareDraw`, so `RenderGameTexture` draws the centred quad over a black clear.
+Stage scenes, evolution, egg hatch, trade, the field and battles keep 16:9.
 
 **`vita_stage.c` (GPU, from Emerald 3DS).** Records the VBlank callback of stage scenes; Core 1
 puts whether a stage (and the leaves scene) is on screen in the game frame

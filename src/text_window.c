@@ -1,6 +1,7 @@
 #include "global.h"
 #include "text.h"
 #include "text_window.h"
+#include "platform/ui.h"
 #include "window.h"
 #include "palette.h"
 #include "bg.h"
@@ -82,6 +83,17 @@ static const struct TilesPal sWindowFrames[WINDOW_FRAMES_COUNT] =
 };
 
 // code
+// The player's window frame. Port: with the new UI the menu theme chooses it (Ui_GbaWindowFrame),
+// so the GBA scenes match the menus; the save's OPTIONS value is kept untouched.
+u8 TextWindow_PlayerFrameType(void)
+{
+#ifdef PLATFORM_VITA
+    if (Ui_IsEnabled())
+        return Ui_GbaWindowFrame();
+#endif
+    return gSaveBlock2Ptr->optionsWindowFrameType;
+}
+
 const struct TilesPal *GetWindowFrameTilesPal(u8 id)
 {
     if (id >= WINDOW_FRAMES_COUNT)
@@ -109,7 +121,7 @@ void LoadWindowGfx(u8 windowId, u8 frameId, u16 destOffset, u8 palOffset)
 
 void LoadUserWindowBorderGfx(u8 windowId, u16 destOffset, u8 palOffset)
 {
-    LoadWindowGfx(windowId, gSaveBlock2Ptr->optionsWindowFrameType, destOffset, palOffset);
+    LoadWindowGfx(windowId, TextWindow_PlayerFrameType(), destOffset, palOffset);
 }
 
 void DrawTextBorderOuter(u8 windowId, u16 tileNum, u8 palNum)
@@ -192,6 +204,6 @@ const u16 *GetOverworldTextboxPalettePtr(void)
 // Effectively LoadUserWindowBorderGfx but specifying the bg directly instead of a window from that bg
 void LoadUserWindowBorderGfxOnBg(u8 bg, u16 destOffset, u8 palOffset)
 {
-    LoadBgTiles(bg, sWindowFrames[gSaveBlock2Ptr->optionsWindowFrameType].tiles, 0x120, destOffset);
-    LoadPalette(GetWindowFrameTilesPal(gSaveBlock2Ptr->optionsWindowFrameType)->pal, palOffset, PLTT_SIZE_4BPP);
+    LoadBgTiles(bg, sWindowFrames[TextWindow_PlayerFrameType()].tiles, 0x120, destOffset);
+    LoadPalette(GetWindowFrameTilesPal(TextWindow_PlayerFrameType())->pal, palOffset, PLTT_SIZE_4BPP);
 }

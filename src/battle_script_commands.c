@@ -52,6 +52,7 @@
 #include "constants/party_menu.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#include "platform/ui.h"
 #include "constants/trainers.h"
 
 extern const u8 *const gBattleScriptsForMoveEffects[];
@@ -10163,9 +10164,23 @@ static void Cmd_displaydexinfo(void)
     switch (gBattleCommunication[0])
     {
     case 0:
+#ifdef PLATFORM_VITA
+        // Port: the new UI's POKéDEX page over the battle; the battle waits for it, no fade
+        if (Ui_OpenCaughtDexPage(SpeciesToNationalPokedexNum(species)))
+        {
+            gBattleCommunication[0] = 10;
+            break;
+        }
+#endif
         BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
         gBattleCommunication[0]++;
         break;
+#ifdef PLATFORM_VITA
+    case 10:
+        if (!Ui_IsOpen())
+            gBattlescriptCurrInstr++;
+        break;
+#endif
     case 1:
         if (!gPaletteFade.active)
         {

@@ -133,6 +133,9 @@ u8 ListMenuInit(struct ListMenuTemplate *listMenuTemplate, u16 scrollOffset, u16
 u8 ListMenuInitInRect(struct ListMenuTemplate *listMenuTemplate, struct ListMenuWindowRect *rect, u16 scrollOffset, u16 selectedRow);
 s32 ListMenu_ProcessInput(u8 listTaskId);
 void DestroyListMenuTask(u8 listTaskId, u16 *scrollOffset, u16 *selectedRow);
+// Port: the field's list menu for the new UI's mirror (NULL: none), and moving its cursor
+const struct ListMenu *ListMenu_GetFieldListForUi(void);
+void ListMenu_MoveFieldListForUi(s32 delta);
 void RedrawListMenu(u8 listTaskId);
 void ChangeListMenuPals(u8 listTaskId, u8 cursorPal, u8 fillValue, u8 cursorShadowPal);
 void ChangeListMenuCoords(u8 listTaskId, u8 x, u8 y);

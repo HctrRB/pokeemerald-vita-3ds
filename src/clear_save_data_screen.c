@@ -214,3 +214,13 @@ static void InitClearSaveDataScreenWindows(void)
     LoadWindowGfx(0, 0, 2, BG_PLTT_ID(14));
     LoadPalette(gStandardMenuPalette, BG_PLTT_ID(15), PLTT_SIZE_4BPP);
 }
+
+#ifdef PLATFORM_VITA
+// Port: this scene is shown in the GBA's own format, 816x544 with black side bars
+// (vita_game_frame.c, docs/reference/SCENES_16_9.md)
+bool8 ClearSaveData_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_InitClearSaveDataScreen
+        || gMain.callback2 == CB2_FadeAndDoReset;
+}
+#endif
