@@ -54,8 +54,9 @@ The full list is under [Features](#features).
 
 ### 3D world
 
-- Voxel overworld built live from the game's maps: sun and shadows, day/night cycle, weather,
-  water reflections, 3D buildings and trees. 30 or 60 FPS (OPTIONS > GRAPHICS), plus classic 2D mode.
+- Voxel overworld built live from the game's maps: sun and shadows, day/night cycle with lit
+  windows and night street lamps, weather, water reflections, 3D buildings and trees. 30 or 60 FPS
+  (OPTIONS > GRAPHICS), plus classic 2D mode.
 - **HD-2D mode** (OPTIONS > GRAPHICS, OFF / LOW / MED / HIGH, independent of the framerate): tilt-shift depth of field, bloom and light emitters, split-tone
   colour grading and vignette, street lamp / cave lantern point lights, dynamic sun/moon light
   shafts, night fireflies, swaying foliage, 16×16 Sobel tile relief, soft contact shadows, HD-2D
@@ -105,24 +106,21 @@ multiplier, Nuzlocke rules, field HM shortcuts, button remapping.
 > you did, what happened, and the log files from `ux0:data/POKEVITA/`. Feedback on screens
 > that are missing or feel wrong is very welcome.
 
-Performance: 60 FPS with drops to 55 at 333 / 166 MHz.
+Performance: the game sets the Vita's clocks itself (CPU 444 MHz, GPU 222 MHz; disable overclock
+plugins for it). The 3D world runs at 30 FPS by default. Recommended: HD-2D **HIGH** at **30 FPS**
+for a steady frame time; HD-2D **LOW** holds **60 FPS**; HD-2D **MED** is experimental.
 
 ### Not yet tested on a PS Vita
 
-These parts build and run in the design mocks, but have not been checked on the console yet:
+These parts are built, but have not been checked on the console yet:
 
-- The menu themes on every screen, the battle HUD in each theme, and the lighter TROPICAL font.
-- PC boxes and the player's PC (item storage, mailbox / mail reading, room and Secret Base
-  decoration), decoration shops, and the forget-move screen.
-- Naming keyboard: new game, box names, nicknames, a POKéMON caught with a full party.
-- Easy Chat in each of its uses, the berry choice and the contest appeal choice.
-- Day Care and move tutor choice (the right POKéMON is taken, the screen fades back in).
-- The dialogue box after PokéNav calls and YES / NO answers (it used to flicker).
-- The words of the PC choice menus, larger POKéMON names in battle.
-- The fade into wild battles in the 3D world.
-- Wide buildings no longer vanishing and popping back at the screen's west edge when you walk
-  away from them (Rustboro City).
-- Mirrored dialogue boxes in 2D evolution, egg-hatch and trade scenes.
+- The Pokécenter healing machine's balls drawn on the machine in the 3D world.
+- The battle fixes for Wally's battle (#8) and Gyms 6 and 7 (Natural Cure, double battle targets).
+- The GRAPHICS tab (each HD-2D level with 30 and 60 FPS) and the night street lamps.
+- The Flash darkness in 3D (Dewford Gym, Battle Pyramid), and the battle HUD in the Battle Palace
+  and Battle Arena.
+- The menu themes on every screen, and the mirrored dialogue boxes in 2D evolution, egg-hatch and
+  trade scenes.
 
 ### Known issues and gaps
 
@@ -142,8 +140,9 @@ Visual glitches:
 
 - Trainer and legendary battle transitions are the GBA ones and only partly show over the 3D
   world.
-- Intro and title screen margins at 16:9 are broken (sprites cut at the GBA edge, streaks
-  beside Rayquaza); a replacement is designed in [docs/reference/SCENES_16_9.md](docs/reference/SCENES_16_9.md).
+- Intro and title screen margins at 16:9: the title is filled, the leaves scene uses Emerald
+  3DS's continuation art and can still be improved, and the bike ride, legendary cutscenes and
+  credits are not checked yet ([docs/reference/SCENES_16_9.md](docs/reference/SCENES_16_9.md)).
 - Walda's FRIENDS wallpaper may draw without its frame.
 
 3D world:
@@ -156,8 +155,8 @@ Visual glitches:
 
 Stability:
 
-- The menu can freeze sometimes. Debug logs written to the memory card while a menu is open are
-  a suspected cause.
+- The menu could freeze in earlier builds. The suspected cause, debug and telemetry logs written to
+  the memory card, is now off in normal builds; please report it if you still see it.
 - Vita3K shows a black screen; test on hardware.
 
 ## Repository layout
@@ -174,9 +173,10 @@ src/platform/voxel/                  3D voxel world
 src/platform/ui/                     the new interface (screens, widgets, themes)
 src/platform/vita/                   Vita-specific features (clock, encounters, extras, stage)
 assets/                              port data packed into the VPK (voxel, UI atlas, followers)
-tools/                               pret host tools, UI atlas builder (tools/ui2), follower packer, generators
+tools/                               pret host tools, UI atlas builder (tools/ui2), follower packer,
+                                     generators, build checks (tools/core_boundary, tools/doc_check)
 design/stitch/                       HTML mocks of the new interface
-docs/                                technical documentation
+docs/                                documentation: guides (docs/guides) and reference (docs/reference)
 ```
 
 ## Build your own VPK
@@ -220,23 +220,24 @@ Do not share the VPK or the downloaded files: they contain Nintendo's game data.
 | Touch | Menu, battle action deck |
 
 Buttons can be remapped in Options. Settings and saves live in `ux0:data/POKEVITA/`
-(see [docs/reference/ARCHITECTURE.md](docs/reference/ARCHITECTURE.md#runtime-files-ux0datapokevita)).
+(see [docs/reference/RUNTIME_FILES.md](docs/reference/RUNTIME_FILES.md)).
 
 ## Documentation
 
 | Document | Covers |
 |---|---|
 | [docs/guides/BUILD_YOUR_OWN.md](docs/guides/BUILD_YOUR_OWN.md) ([español](docs/guides/BUILD_YOUR_OWN.es.md)) | Make your own VPK from your cartridge, step by step |
-| [docs/guides/BUILD.md](docs/guides/BUILD.md) | Toolchain, build steps, CMake options, installing and testing |
+| [docs/guides/BUILD.md](docs/guides/BUILD.md) | Toolchain, build steps, CMake options, the build-time checks, installing and testing |
+| [docs/guides/DEBUGGING.md](docs/guides/DEBUGGING.md) | Logs, per-frame telemetry, thread violations, crash dumps |
 | [docs/README.md](docs/README.md) | Index of the technical documentation |
-| [docs/reference/ARCHITECTURE.md](docs/reference/ARCHITECTURE.md) | Layers, boot, one frame, where things are, runtime files |
-| [docs/reference/THREADS.md](docs/reference/THREADS.md) | Cores, pacing, who owns which data |
+| [docs/reference/ARCHITECTURE.md](docs/reference/ARCHITECTURE.md) | Game side and platform side, boot, one frame, where things are |
+| [docs/reference/THREADS.md](docs/reference/THREADS.md) | Cores, pacing, the game frame, who owns which data |
 | [docs/reference/RENDERING.md](docs/reference/RENDERING.md) | Presentation paths, voxel passes, GBA overlay, GPU rules |
 | [docs/reference/VITA_UI.md](docs/reference/VITA_UI.md) | The user interface |
 | [docs/reference/VOXEL_ENGINE.md](docs/reference/VOXEL_ENGINE.md) | The 3D overworld |
 | [docs/reference/SCENES_16_9.md](docs/reference/SCENES_16_9.md) | How GBA screens fill 16:9 |
 | [docs/reference/ASSETS.md](docs/reference/ASSETS.md) | Where every data file comes from |
-| [docs/guides/DEBUGGING.md](docs/guides/DEBUGGING.md) | Logs, per-frame telemetry, crash dumps |
+| [docs/reference/RUNTIME_FILES.md](docs/reference/RUNTIME_FILES.md) | Files the game reads and writes on the memory card |
 | [design/stitch/README.md](design/stitch/README.md) | Design mocks of the new UI (Spanish) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Code standards and workflow |
 | [NOTICE.md](NOTICE.md) | Licences of the ported code and credits |
