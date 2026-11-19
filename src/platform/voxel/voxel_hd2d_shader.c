@@ -21,7 +21,7 @@ static GLuint sCompProg = 0;
 static GLint sCUScene = -1, sCUBlur = -1, sCUBloom = -1;
 static GLint sCUSceneUv = -1, sCUBlurUv = -1, sCUBloomUv = -1;
 static GLint sCUDof = -1, sCUPost = -1, sCUGrade = -1, sCUBump = -1;
-static GLint sCUShadowTint = -1, sCUHighTint = -1;
+static GLint sCUShadowTint = -1, sCUHighTint = -1, sCUWarmKeep = -1;
 
 static const char kFullVs[] =
     "attribute vec2 aPos;\n"
@@ -116,6 +116,7 @@ static const char kCompFs[] =
     "uniform vec3 uBump;\n"
     "uniform vec3 uShadowTint;\n"
     "uniform vec3 uHighTint;\n"
+    "uniform float uWarmKeep;\n"
     "varying vec2 vUv;\n"
     "void main() {\n"
     "    vec3 c = texture2D(uScene, vUv * uSceneUv).rgb;\n"
@@ -130,6 +131,10 @@ static const char kCompFs[] =
     "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n"
     "    float t = clamp((l - 0.15) * 1.6667, 0.0, 1.0);\n"
     "    vec3 tint = mix(uShadowTint, uHighTint, t);\n"
+    // Warm light at night (lamps, windows: red over blue in a blue night) keeps its warmth
+    // instead of taking the cool split-tone: the warm-cold contrast of HD-2D nights.
+    "    float warm = smoothstep(0.02, 0.16, c.r - c.b) * uWarmKeep;\n"
+    "    tint = mix(tint, vec3(1.05, 0.97, 0.86), warm);\n"
     "    vec3 g = mix(vec3(l), c * tint, uGrade.x);\n"
     "    c = clamp(mix(c, g, uPost.y), 0.0, 1.0);\n"
     "    vec3 sc = c * c * (3.0 - 2.0 * c);\n"
@@ -227,6 +232,7 @@ bool VoxelHd2dShader_Init(void)
         sCUBump       = glGetUniformLocation(sCompProg, "uBump");
         sCUShadowTint = glGetUniformLocation(sCompProg, "uShadowTint");
         sCUHighTint   = glGetUniformLocation(sCompProg, "uHighTint");
+        sCUWarmKeep   = glGetUniformLocation(sCompProg, "uWarmKeep");
         sShaderReady = true;
         VITA_LOG("[HD2D SHADER] Bright-Pass + Uber-Composite compiled successfully.\n");
     }
@@ -311,7 +317,7 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
                                 const float bloomAmt, const float gradeAmt, const float curveAmt, const float vignetteAmt,
                                 const float saturation, const float backBlur, const float backDim,
                                 const float bumpOffsetX, const float bumpOffsetY, const float bumpStrength,
-                                const float shadowTint[3], const float highTint[3])
+                                const float shadowTint[3], const float highTint[3], const float warmKeep)
 {
     if (!sShaderReady) return;
     static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
@@ -340,6 +346,7 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
     glUniform3f(sCUBump,    0.0f, 0.0f, bumpStrength);
     glUniform3fv(sCUShadowTint, 1, shadowTint);
     glUniform3fv(sCUHighTint,   1, highTint);
+    glUniform1f(sCUWarmKeep,    warmKeep);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);

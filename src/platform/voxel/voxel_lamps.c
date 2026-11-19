@@ -7,7 +7,8 @@
 #include "voxel_sign.h"
 
 /* A light that belongs to a building model rather than to a sign: where its lamp sits on the
- * map's cell (x, y), as an offset into the cell and a height above its ground, in tiles. */
+ * map's cell (x, y), as an offset into the cell and a height above its ground, in tiles. It casts
+ * a pool round its foot like a street lamp. */
 typedef struct
 {
     uint16_t layout;
@@ -22,7 +23,7 @@ static const FixedLight sFixedLights[] = {
     { LAYOUT_LILYCOVE_CITY, 61, 34, 0.5f, 0.5625f, 1.25f },
 };
 
-static uint32_t EmitFixedLights(const VoxelBuilder *place, const VoxelMapInstance *inst,
+static uint32_t EmitFixedLights(const VoxelBuilder *place, VoxelBuilder *pool, const VoxelMapInstance *inst,
                                 int32_t x0, int32_t y0, int32_t x1, int32_t y1,
                                 float (*lights)[3], uint32_t lightCapacity)
 {
@@ -40,6 +41,8 @@ static uint32_t EmitFixedLights(const VoxelBuilder *place, const VoxelMapInstanc
         at.lift = VoxelRelief_CellLift(inst, wx, wz);
         at.shift = VoxelRelief_CellShift(inst, wx, wz);
         float x = (float)wx + light->dx, y = light->height, z = (float)wz + light->dz;
+        /* Its pool on the ground round its foot, as a street lamp's. */
+        VoxelSign_EmitLampPool(pool, inst, x, z);
         VoxelBuilder_Place(&at, &x, &y, &z);
         lights[count][0] = x;
         lights[count][1] = y;
@@ -58,5 +61,5 @@ uint32_t VoxelLamps_EmitChunk(VoxelBuilder *glass, VoxelBuilder *pool, const Vox
     if (glass == NULL || pool == NULL || inst == NULL || inst->indoor)
         return 0;
     count = VoxelSign_EmitNight(glass, pool, inst, x0, y0, x1, y1, lights, lightCapacity);
-    return count + EmitFixedLights(glass, inst, x0, y0, x1, y1, lights + count, lightCapacity - count);
+    return count + EmitFixedLights(glass, pool, inst, x0, y0, x1, y1, lights + count, lightCapacity - count);
 }

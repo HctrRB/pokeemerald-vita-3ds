@@ -28,6 +28,7 @@ void VoxelHd2dShader_Shafts(float dirX, float dirY, float lenExp, float timeSec,
                             float colR, float colG, float colB);
 
 // Runs the single-pass 960x544 Uber-Composite (DoF + Battle Dim + Bloom + Reference Split-Tone/S-Curve + Vignette).
+// warmKeep (0..1, the night): how much warm-lit pixels keep their warmth instead of the cool split-tone.
 void VoxelHd2dShader_Composite(GLuint sceneTex, GLuint blurTex, GLuint bloomTex,
                                 float uSceneMax, float vSceneMax,
                                 float uBlurMax, float vBlurMax,
@@ -36,6 +37,6 @@ void VoxelHd2dShader_Composite(GLuint sceneTex, GLuint blurTex, GLuint bloomTex,
                                 float bloomAmt, float gradeAmt, float curveAmt, float vignetteAmt,
                                 float saturation, float backBlur, float backDim,
                                 float bumpOffsetX, float bumpOffsetY, float bumpStrength,
-                                const float shadowTint[3], const float highTint[3]);
+                                const float shadowTint[3], const float highTint[3], float warmKeep);
 
 #endif // VOXEL_HD2D_SHADER_H

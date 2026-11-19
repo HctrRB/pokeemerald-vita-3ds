@@ -71,6 +71,11 @@ void VoxelSign_Shutdown(void);
 #define VOXEL_LAMP_POOL_RADIUS 2.25f
 
 bool VoxelSign_IsLantern(const uint16_t head[16]);
+/* The pool of light a lamp casts round (centerX, centerZ), on the ground it may fall on: one quad
+ * on level lit ground, else a quad a lit cell. Its texture coordinates map the pool texture's disc
+ * of VOXEL_LAMP_POOL_RADIUS. */
+void VoxelSign_EmitLampPool(VoxelBuilder *builder, const VoxelMapInstance *inst,
+                            float centerX, float centerZ);
 /* The night lamps of the map's cells in [x0, x1) x [y0, y1): their lantern glass into `glass`,
  * the pool of light each casts into `ground`, and each light's centre (the middle of its glass,
  * where the builder put it) into `lights`, up to lightCapacity. Returns how many lights. Reads
