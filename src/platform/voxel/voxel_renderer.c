@@ -382,6 +382,7 @@ typedef struct
     int16_t page;
     uint16_t firstVert;
     uint16_t vertCount;
+    uint16_t glowVertCount; // upright wall triangles packed at [firstVert .. firstVert + glowVertCount)
 } VoxelChunkBuildingSpan;
 
 typedef struct
@@ -1194,6 +1195,7 @@ typedef struct
 {
     int16_t page;
     GLuint tex;
+    GLuint glowTex;
     uint32_t lastUsedFrame;
 } VoxelBuildingCacheSlot;
 
@@ -1216,10 +1218,14 @@ static bool sBuildingPageQueued[VOXEL_MAX_BUILDING_PAGES];
 
 static uint16_t sWorkerMortonBuf[512 * 512];
 static uint16_t sWorkerLinearBuf[512 * 512];
+static uint8_t sWorkerGlowMortonBuf[512 * 512];
+static uint16_t sWorkerGlowLinearBuf[512 * 512];
+static uint8_t sBuildingGlowMortonScratch[512 * 512];
 static int16_t sWorkerReadyPage = -1;
 static uint32_t sWorkerReadyW = 0;
 static uint32_t sWorkerReadyTexH = 0;
 static bool sWorkerReadyHasAlpha = false;
+static bool sWorkerReadyHasGlow = false;
 
 static bool ScanLinearPageAlpha(const uint16_t *const texels, const uint32_t count)
 {
@@ -1232,7 +1238,8 @@ static bool ScanLinearPageAlpha(const uint16_t *const texels, const uint32_t cou
 }
 
 static GLuint UploadBuildingPageToLru(const int32_t page, const uint32_t bw, const uint32_t btexH,
-                                      const bool hasAlpha, const uint16_t *const linearPixels)
+                                      const bool hasAlpha, const uint16_t *const linearPixels,
+                                      const uint16_t *const linearGlowPixels)
 {
     const int32_t existing = sBuildingPageToSlot[page];
     if (existing >= 0)
@@ -1269,6 +1276,11 @@ static GLuint UploadBuildingPageToLru(const int32_t page, const uint32_t bw, con
         glDeleteTextures(1, &slot->tex);
         slot->tex = 0;
     }
+    if (slot->glowTex != 0)
+    {
+        glDeleteTextures(1, &slot->glowTex);
+        slot->glowTex = 0;
+    }
 
     glGenTextures(1, &slot->tex);
     glBindTexture(GL_TEXTURE_2D, slot->tex);
@@ -1278,6 +1290,18 @@ static GLuint UploadBuildingPageToLru(const int32_t page, const uint32_t bw, con
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)bw, (GLsizei)btexH,
                  0, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, linearPixels);
+
+    if (linearGlowPixels != NULL)
+    {
+        glGenTextures(1, &slot->glowTex);
+        glBindTexture(GL_TEXTURE_2D, slot->glowTex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)bw, (GLsizei)btexH,
+                     0, GL_RGBA, GL_UNSIGNED_SHORT_4_4_4_4, linearGlowPixels);
+    }
 
     slot->page = (int16_t)page;
     slot->lastUsedFrame = sFrameCounter;
@@ -1296,16 +1320,19 @@ static void UploadReadyBuildingPage(void)
     const uint32_t bw = sWorkerReadyW;
     const uint32_t btexH = sWorkerReadyTexH;
     const bool hasAlpha = sWorkerReadyHasAlpha;
+    const bool hasGlow = sWorkerReadyHasGlow;
     SDL_UnlockMutex(sBuildingIoMutex);
 
     if (page < 0 || page >= VOXEL_MAX_BUILDING_PAGES)
         return;
 
-    UploadBuildingPageToLru(page, bw, btexH, hasAlpha, sWorkerLinearBuf);
+    UploadBuildingPageToLru(page, bw, btexH, hasAlpha, sWorkerLinearBuf,
+                            hasGlow ? sWorkerGlowLinearBuf : NULL);
 
     SDL_LockMutex(sBuildingIoMutex);
     sBuildingPageQueued[page] = false;
     sWorkerReadyPage = -1;
+    sWorkerReadyHasGlow = false;
     SDL_UnlockMutex(sBuildingIoMutex);
 
     SDL_SemPost(sBuildingConsumedSem);
@@ -1347,10 +1374,15 @@ static int32_t VoxelBuildingIoWorkerMain(void *data)
 
         uint32_t bw = 0, bh = 0, btexH = 0;
         bool readOk = false;
+        bool hasGlow = false;
         if (VoxelBuildings_PageSize((uint32_t)page, &bw, &bh, &btexH) && (bw * btexH <= 512u * 512u))
         {
             memset(sWorkerMortonBuf, 0, (size_t)bw * btexH * sizeof(uint16_t));
             readOk = VoxelBuildings_ReadPageWorker((uint32_t)page, 0, bw * bh, sWorkerMortonBuf);
+            if (readOk && VoxelBuildings_PageHasGlow((uint32_t)page))
+            {
+                hasGlow = VoxelBuildings_ReadGlowWorker((uint32_t)page, 0, bw * bh, sWorkerGlowMortonBuf);
+            }
         }
 
         if (!readOk)
@@ -1363,6 +1395,10 @@ static int32_t VoxelBuildingIoWorkerMain(void *data)
 
         // Unswizzle Morton -> Linear & detect cutout alpha on Core 2 (zero load on Core 0 / Core 1)
         Voxel_UnswizzleMortonToLinearEx(sWorkerMortonBuf, sWorkerLinearBuf, bw, bh, btexH);
+        if (hasGlow)
+        {
+            Voxel_UnswizzleMortonGlowToRgba4444(sWorkerGlowMortonBuf, sWorkerGlowLinearBuf, bw, bh, btexH);
+        }
         const bool hasAlpha = ScanLinearPageAlpha(sWorkerLinearBuf, bw * bh);
 
         SDL_LockMutex(sBuildingIoMutex);
@@ -1370,6 +1406,7 @@ static int32_t VoxelBuildingIoWorkerMain(void *data)
         sWorkerReadyW = bw;
         sWorkerReadyTexH = btexH;
         sWorkerReadyHasAlpha = hasAlpha;
+        sWorkerReadyHasGlow = hasGlow;
         SDL_UnlockMutex(sBuildingIoMutex);
 
         SDL_SemWait(sBuildingConsumedSem);
@@ -1419,12 +1456,17 @@ static GLuint RequestOrLoadBuildingPage(const int32_t page, const bool synchrono
 
     uint32_t bw = 0, bh = 0, btexH = 0;
     bool readOk = false;
+    bool hasGlow = false;
     if (sBuildingIoMutex != NULL)
         SDL_LockMutex(sBuildingIoMutex);
     if (VoxelBuildings_PageSize((uint32_t)page, &bw, &bh, &btexH) && (bw * btexH <= 512u * 512u))
     {
         memset(sBuildingPageMortonScratch, 0, (size_t)bw * btexH * sizeof(uint16_t));
         readOk = VoxelBuildings_ReadPage((uint32_t)page, 0, bw * bh, sBuildingPageMortonScratch);
+        if (readOk && VoxelBuildings_PageHasGlow((uint32_t)page))
+        {
+            hasGlow = VoxelBuildings_ReadGlow((uint32_t)page, 0, bw * bh, sBuildingGlowMortonScratch);
+        }
     }
     if (sBuildingIoMutex != NULL)
         SDL_UnlockMutex(sBuildingIoMutex);
@@ -1434,7 +1476,14 @@ static GLuint RequestOrLoadBuildingPage(const int32_t page, const bool synchrono
 
     Voxel_UnswizzleMortonToLinearEx(sBuildingPageMortonScratch, sBuildingPageLinearScratch, bw, bh, btexH);
     const bool hasAlpha = ScanLinearPageAlpha(sBuildingPageLinearScratch, bw * bh);
-    return UploadBuildingPageToLru(page, bw, btexH, hasAlpha, sBuildingPageLinearScratch);
+    // Reuse sBuildingPageMortonScratch (512*512*2 B) for linear RGBA4444 glow upload to save 512 KiB BSS.
+    uint16_t *glowLinear = NULL;
+    if (hasGlow)
+    {
+        Voxel_UnswizzleMortonGlowToRgba4444(sBuildingGlowMortonScratch, sBuildingPageMortonScratch, bw, bh, btexH);
+        glowLinear = sBuildingPageMortonScratch;
+    }
+    return UploadBuildingPageToLru(page, bw, btexH, hasAlpha, sBuildingPageLinearScratch, glowLinear);
 }
 
 // Spatial Hash Grid (32x32) for O(1) chunk lookups
@@ -2510,6 +2559,44 @@ static uint32_t TagAndPartitionTreeSway(VoxelGlVertex *const verts, const uint32
     return staticCount;
 }
 
+// Partition a building span's triangles in-place on Core 2 so upright wall triangles
+// (|normal.y| < 0.35, matching voxel_windows.py) sit at the front of the span.
+// Pass_BuildingGlow then draws only those wall triangles instead of roofs/floors/ground patches.
+static uint32_t PartitionBuildingGlowTriangles(VoxelVertex *const verts, const uint32_t vertCount)
+{
+    uint32_t write = 0;
+    for (uint32_t i = 0; i + 2u < vertCount; i += 3u)
+    {
+        const VoxelVertex *const a = &verts[i];
+        const VoxelVertex *const b = &verts[i + 1u];
+        const VoxelVertex *const c = &verts[i + 2u];
+        const float e1x = b->x - a->x, e1y = b->y - a->y, e1z = b->z - a->z;
+        const float e2x = c->x - a->x, e2y = c->y - a->y, e2z = c->z - a->z;
+        const float nx = e1y * e2z - e1z * e2y;
+        const float ny = e1z * e2x - e1x * e2z;
+        const float nz = e1x * e2y - e1y * e2x;
+        const float lenSq = nx * nx + ny * ny + nz * nz;
+        // Winding-independent upright wall test: |ny| < 0.35 * |n| -> ny^2 < 0.1225 * lenSq
+        if (lenSq > 1e-8f && (ny * ny) < 0.1225f * lenSq)
+        {
+            if (write != i)
+            {
+                const VoxelVertex t0 = verts[write];
+                const VoxelVertex t1 = verts[write + 1u];
+                const VoxelVertex t2 = verts[write + 2u];
+                verts[write]      = verts[i];
+                verts[write + 1u] = verts[i + 1u];
+                verts[write + 2u] = verts[i + 2u];
+                verts[i]          = t0;
+                verts[i + 1u]     = t1;
+                verts[i + 2u]     = t2;
+            }
+            write += 3u;
+        }
+    }
+    return write;
+}
+
 static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *out, VoxelGlVertex *staging)
 {
     const double computeStart = VitaPerf_NowMs();
@@ -2657,10 +2744,17 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
                     uint32_t clampedEnd = builder.count > CHUNK_BUILDING_CAP ? CHUNK_BUILDING_CAP : builder.count;
                     if (clampedEnd > countBefore && out->buildingSpanCount < MAX_CHUNK_BUILDING_SPANS)
                     {
+                        const uint32_t spanVerts = clampedEnd - countBefore;
+                        uint32_t glowVerts = 0;
+                        if (!inst->indoor && VoxelBuildings_PageHasGlow((uint32_t)p))
+                        {
+                            glowVerts = PartitionBuildingGlowTriangles(&sScratch[countBefore], spanVerts);
+                        }
                         VoxelChunkBuildingSpan *bspan = &out->buildingSpans[out->buildingSpanCount++];
                         bspan->page = (int16_t)p;
                         bspan->firstVert = (uint16_t)countBefore;
-                        bspan->vertCount = (uint16_t)(clampedEnd - countBefore);
+                        bspan->vertCount = (uint16_t)spanVerts;
+                        bspan->glowVertCount = (uint16_t)glowVerts;
                     }
                 }
             }
@@ -4436,6 +4530,7 @@ bool VoxelRenderer_Init(void)
     {
         sBuildingCache[i].page = -1;
         sBuildingCache[i].tex = 0;
+        sBuildingCache[i].glowTex = 0;
         sBuildingCache[i].lastUsedFrame = 0;
     }
     memset(sBuildingPageToSlot, -1, sizeof(sBuildingPageToSlot));
@@ -4445,6 +4540,7 @@ bool VoxelRenderer_Init(void)
     sBuildingReqTail = 0;
     sBuildingReqCount = 0;
     sWorkerReadyPage = -1;
+    sWorkerReadyHasGlow = false;
     SDL_AtomicSet(&sBuildingIoStop, 0);
     sBuildingIoMutex = SDL_CreateMutex();
     sBuildingReqSem = SDL_CreateSemaphore(0);
@@ -6822,6 +6918,118 @@ static void Pass_DayNightGrade(const VoxelFrame *const f)
     }
 }
 
+// Pass 5.15: lit building windows at night using buildings.bin L8 glow masks.
+// Drawn after Pass_DayNightGrade so the night veil never dims lit windows, and
+// before HD-2D post-processing so bright windows pick up a soft bloom halo.
+static void Pass_BuildingGlow(const VoxelFrame *const f)
+{
+    if (f->indoor || f->inBattle3D || !VitaGame_IsOutdoor())
+        return;
+
+    const VitaDayNightLight *const dn = VitaDayNight_Get();
+    if (dn == NULL || dn->glow <= 0.01f)
+        return;
+
+    VoxelChunkSlot *const *const visibleChunks = f->visible;
+    const int32_t visibleChunkCount = f->visibleCount;
+    int32_t glowPages[16];
+    int32_t glowPageCount = 0;
+
+    for (int32_t i = 0; i < visibleChunkCount; i++)
+    {
+        const VoxelChunkSlot *const chunk = visibleChunks[i];
+        for (uint8_t sp = 0; sp < chunk->buildingSpanCount; sp++)
+        {
+            const int32_t p = chunk->buildingSpans[sp].page;
+            if (p < 0 || p >= VOXEL_MAX_BUILDING_PAGES || chunk->buildingSpans[sp].glowVertCount == 0)
+                continue;
+            const int32_t slotIdx = sBuildingPageToSlot[p];
+            if (slotIdx < 0 || sBuildingCache[slotIdx].glowTex == 0)
+                continue;
+            bool already = false;
+            for (int32_t k = 0; k < glowPageCount; k++)
+            {
+                if (glowPages[k] == p)
+                {
+                    already = true;
+                    break;
+                }
+            }
+            if (!already && glowPageCount < 16)
+                glowPages[glowPageCount++] = p;
+        }
+    }
+
+    if (glowPageCount == 0)
+        return;
+
+    const float strength = (f->hd2dPreset != HD2D_PRESET_OFF)
+        ? VOXEL_WINDOW_GLOW_STRENGTH_HD2D
+        : VOXEL_WINDOW_GLOW_STRENGTH_STD;
+    const float alpha = Voxel_ClampF(dn->glow * strength, 0.0f, 1.0f);
+
+    // Alpha-test discards alpha==0 non-window wall pixels before SGX543 TBDR blending.
+    glEnable(GL_ALPHA_TEST);
+    glAlphaFunc(GL_GREATER, 0.0f);
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glDepthFunc(GL_LEQUAL);
+    glDepthMask(GL_FALSE);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glColor4f(VOXEL_WINDOW_GLOW_R, VOXEL_WINDOW_GLOW_G, VOXEL_WINDOW_GLOW_B, alpha);
+
+    ChunkOffsets_Begin();
+    for (int32_t gp = 0; gp < glowPageCount; gp++)
+    {
+        const int32_t p = glowPages[gp];
+        const int32_t slotIdx = sBuildingPageToSlot[p];
+        if (slotIdx < 0 || sBuildingCache[slotIdx].glowTex == 0)
+            continue;
+
+        glBindTexture(GL_TEXTURE_2D, sBuildingCache[slotIdx].glowTex);
+        GLuint lastVbo = 0;
+
+        for (int32_t i = 0; i < visibleChunkCount; i++)
+        {
+            const VoxelChunkSlot *const chunk = visibleChunks[i];
+            for (uint8_t sp = 0; sp < chunk->buildingSpanCount; sp++)
+            {
+                const VoxelChunkBuildingSpan *const bspan = &chunk->buildingSpans[sp];
+                if (bspan->page != (int16_t)p || bspan->glowVertCount == 0)
+                    continue;
+
+                if (lastVbo != chunk->vbo)
+                {
+                    glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
+                    glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
+                    glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
+                    lastVbo = chunk->vbo;
+                }
+
+                ChunkOffsets_Apply(chunk);
+                glDrawArrays(GL_TRIANGLES, (GLint)(chunk->buildingFirstVert + bspan->firstVert), (GLsizei)bspan->glowVertCount);
+                sFrameDrawCalls++;
+                sFrameVertCount += bspan->glowVertCount;
+            }
+        }
+    }
+    ChunkOffsets_End();
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDepthFunc(GL_LESS);
+    glDepthMask(GL_TRUE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_BLEND);
+    glDisable(GL_ALPHA_TEST);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
 // Pass 5.2: night street lamps and their light pools (Emerald 3DS VoxelSign_EmitNight).
 static void Pass_NightLamps(const VoxelFrame *const f)
 {
@@ -8871,6 +9079,7 @@ bool VoxelRenderer_RenderFrame(void)
         glDisable(GL_ALPHA_TEST);
 
         Pass_DayNightGrade(&f);
+        Pass_BuildingGlow(&f);
         Pass_NightLamps(&f);
         Pass_Atmosphere3D(&f);
         Pass_Atmosphere2D(&f);

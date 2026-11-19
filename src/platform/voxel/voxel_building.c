@@ -736,6 +736,26 @@ bool VoxelBuildings_ReadGlow(uint32_t page, uint32_t first, uint32_t count, uint
         && fread(dest, 1, count, sPageFile) == count;
 }
 
+bool VoxelBuildings_ReadGlowWorker(uint32_t page, uint32_t first, uint32_t count, uint8_t *dest)
+{
+    uint32_t pixels;
+
+    if (!VoxelBuildings_PageHasGlow(page))
+        return false;
+    pixels = (uint32_t)sPages[page].w * sPages[page].h;
+    if (first > pixels || count > pixels - first)
+        return false;
+    if (sWorkerPageFile == NULL)
+    {
+        sWorkerPageFile = VoxelFile_Open(VOXEL_BUILDINGS_PATH);
+        if (sWorkerPageFile == NULL)
+            return false;
+        setvbuf(sWorkerPageFile, sWorkerPageIoBuffer, _IOFBF, sizeof(sWorkerPageIoBuffer));
+    }
+    return fseek(sWorkerPageFile, (long)(sPages[page].offset + pixels * 2u + first), SEEK_SET) == 0
+        && fread(dest, 1, count, sWorkerPageFile) == count;
+}
+
 /* The placements of one layout, which the generator sorted by layout. */
 static const BuildingPlacement *PlacementsOf(int32_t layout, uint32_t *count)
 {
@@ -1261,7 +1281,10 @@ bool VoxelBuildings_CellAt(const VoxelMapInstance *inst, int32_t x, int32_t y,
     if (groundMetatile != NULL)
     {
         *groundMetatile = LayoutPlacements(inst, &count)[i].ground;
-        if (*groundMetatile == (int32_t)OWN_GROUND)
+        /* A relief_bare cell the relief does not lift (e.g. beach behind Lilycove's
+         * beacon, or stone around Sootopolis houses) keeps its own drawing less the
+         * model's quarters instead of taking the model's base ground metatile. */
+        if (*groundMetatile == (int32_t)OWN_GROUND || (sHeights[k] == 0 && sQuarters[k] != 0))
         {
             /* the cell's own drawing, less what the model stands for */
             uint32_t own = (uint32_t)VoxelWorld_GetMetatileId(x, y);

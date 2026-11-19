@@ -6,6 +6,7 @@
 #include "platform/vita_extras.h"
 #include "platform/vita_daynight.h"
 #include "platform/vita_pak.h"
+#include "platform.h"
 
 #define CtrLog_Write(...) ((void)0)
 
@@ -969,6 +970,28 @@ static void Advance(struct ObjectEvent *follower)
 }
 
 /*
+ * Out of a building the player is put on the door and steps off it. In voxel
+ * mode the door is recessed into the house's wall, so keep the follower in its
+ * ball until it has walked clear of the doorway. 2D behaviour is unchanged.
+ */
+static bool8 IsDoorAt(s16 x, s16 y)
+{
+    const u32 behavior = MapGridGetMetatileBehaviorAt(x, y);
+
+    return MetatileBehavior_IsDoor(behavior) || MetatileBehavior_IsNonAnimDoor(behavior);
+}
+
+static bool8 InDoorway(const struct ObjectEvent *const follower)
+{
+    if (!Platform_IsVoxelOverworldActive())
+        return FALSE;
+    if (IsDoorAt(follower->currentCoords.x, follower->currentCoords.y))
+        return TRUE;
+    return follower->heldMovementActive
+        && IsDoorAt(follower->previousCoords.x, follower->previousCoords.y);
+}
+
+/*
  * A door warp (field_screen_effect.c, Task_DoDoorWarp) freezes every object
  * but the player: the follower is let go, walks onto the door behind the
  * player and is gone in it before the door closes.
@@ -1178,7 +1201,7 @@ void FollowerMon_Update(void)
         bool8 onPlayer = follower->currentCoords.x == player->currentCoords.x
                       && follower->currentCoords.y == player->currentCoords.y;
 
-        if (!hide && sFollower.inBall && !onPlayer && !sFollower.door)
+        if (!hide && sFollower.inBall && !onPlayer && !sFollower.door && !InDoorway(follower))
         {
             ShowBall(follower, TRUE);
             sFollower.popTimer = POP_FRAMES;

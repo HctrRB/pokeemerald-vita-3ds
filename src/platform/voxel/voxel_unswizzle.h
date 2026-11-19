@@ -142,6 +142,40 @@ static inline void Voxel_UnswizzleLinearToMorton(const uint16_t *src, uint16_t *
     }
 }
 
+// Unswizzle 8-bit Morton window-glass glow mask into linear RGBA4444 (white RGB, alpha = mask >> 4).
+static inline void Voxel_UnswizzleMortonGlowToRgba4444(const uint8_t *const src, uint16_t *const dst,
+                                                       const uint32_t width, const uint32_t srcHeight,
+                                                       const uint32_t dstHeight)
+{
+    memset(dst, 0, (size_t)width * dstHeight * sizeof(uint16_t));
+    const uint32_t tilesPerRow = width >> 3;
+
+    for (uint32_t y = 0; y < srcHeight; y++)
+    {
+        const uint32_t glY = dstHeight - 1u - y;
+        const uint32_t tileY = y >> 3;
+        const uint32_t mortonY = ((y & 1u) << 1) | ((y & 2u) << 2) | ((y & 4u) << 3);
+        const uint32_t rowBase = (tileY * tilesPerRow) << 6;
+        uint16_t *const dstRow = &dst[glY * width];
+
+        for (uint32_t tileX = 0; tileX < tilesPerRow; tileX++)
+        {
+            const uint8_t *const tileSrc = &src[rowBase + (tileX << 6) + mortonY];
+            uint16_t *const tileDst = &dstRow[tileX << 3];
+            const uint8_t s0 = tileSrc[0],  s1 = tileSrc[1],  s2 = tileSrc[4],  s3 = tileSrc[5];
+            const uint8_t s4 = tileSrc[16], s5 = tileSrc[17], s6 = tileSrc[20], s7 = tileSrc[21];
+            tileDst[0] = s0 ? (uint16_t)(0xFFF0u | (s0 >> 4)) : 0u;
+            tileDst[1] = s1 ? (uint16_t)(0xFFF0u | (s1 >> 4)) : 0u;
+            tileDst[2] = s2 ? (uint16_t)(0xFFF0u | (s2 >> 4)) : 0u;
+            tileDst[3] = s3 ? (uint16_t)(0xFFF0u | (s3 >> 4)) : 0u;
+            tileDst[4] = s4 ? (uint16_t)(0xFFF0u | (s4 >> 4)) : 0u;
+            tileDst[5] = s5 ? (uint16_t)(0xFFF0u | (s5 >> 4)) : 0u;
+            tileDst[6] = s6 ? (uint16_t)(0xFFF0u | (s6 >> 4)) : 0u;
+            tileDst[7] = s7 ? (uint16_t)(0xFFF0u | (s7 >> 4)) : 0u;
+        }
+    }
+}
+
 #ifdef __cplusplus
 }
 #endif

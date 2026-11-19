@@ -15,6 +15,7 @@
 #include "event_object_movement.h"
 #include "field_player_avatar.h"
 #include "palette.h"
+#include "constants/event_objects.h"
 #include "constants/field_effects.h"
 #include "constants/event_object_movement.h"
 #include "constants/map_types.h"
@@ -250,6 +251,7 @@ void VoxelEntities_PublishSnapshot(void)
 
     VoxelEntitySnapshot *snap = &sSnapshots[writeIdx];
     memcpy(snap->objectEvents, gObjectEvents, sizeof(gObjectEvents));
+    memcpy(snap->oamMatrices, gOamMatrices, sizeof(snap->oamMatrices));
     for (uint32_t i = 0; i < OBJECT_EVENTS_COUNT; ++i)
     {
         const struct ObjectEvent *obj = &gObjectEvents[i];
@@ -888,6 +890,64 @@ static void EmitDecal(VoxelBuilder *builder, const VoxelSpriteSlot *slot, uint32
 }
 
 /*
+ * Rotating gates (rotating_gate.c) turn about their centre via an OAM affine
+ * matrix. Projecting them flat onto the ground through the matrix inverse keeps
+ * their arms readable over the cells they block.
+ */
+#define VOXEL_GATE_TAG_FIRST 0x1300u
+#define VOXEL_GATE_TAG_LAST  (VOXEL_GATE_TAG_FIRST + 7u)
+
+static bool IsRotatingGate(const struct Sprite *const sprite)
+{
+    if (!(sprite->oam.affineMode & ST_OAM_AFFINE_ON_MASK))
+        return false;
+    const uint32_t tag = GetSpriteTileTagByTileStart(sprite->sheetTileStart);
+    return tag >= VOXEL_GATE_TAG_FIRST && tag <= VOXEL_GATE_TAG_LAST;
+}
+
+static void EmitTurnedDecal(VoxelBuilder *const builder, const VoxelSpriteSlot *const slot,
+                            const uint32_t index, const struct Sprite *const sprite,
+                            const struct OamMatrix *const oamMatrices,
+                            const float cx, const float cz, const float shade)
+{
+    const struct OamMatrix *const matrix = &oamMatrices[sprite->oam.matrixNum & (OAM_MATRIX_COUNT - 1u)];
+    const int32_t a = (int16_t)matrix->a;
+    const int32_t b = (int16_t)matrix->b;
+    const int32_t c = (int16_t)matrix->c;
+    const int32_t d = (int16_t)matrix->d;
+    const int32_t det = a * d - b * c;
+
+    if (det == 0)
+    {
+        EmitDecal(builder, slot, index, cx, cz, 0.0f, shade);
+        return;
+    }
+
+    const uint32_t baseX = (index % VOXEL_SPRITE_COLUMNS) * VOXEL_SPRITE_SLOT_DIM;
+    const uint32_t baseY = (index / VOXEL_SPRITE_COLUMNS) * VOXEL_SPRITE_SLOT_DIM;
+    const float u0 = baseX / (float)VOXEL_SPRITE_ATLAS_W;
+    const float u1 = (baseX + slot->atlasWidth) / (float)VOXEL_SPRITE_ATLAS_W;
+    const float v0 = 1.0f - baseY / (float)VOXEL_SPRITE_ATLAS_H;
+    const float v1 = 1.0f - (baseY + slot->height) / (float)VOXEL_SPRITE_ATLAS_H;
+    const float halfW = slot->width / VOXEL_PIXELS_PER_TILE * 0.5f;
+    const float halfH = slot->height / VOXEL_PIXELS_PER_TILE * 0.5f;
+    const float y = VoxelRelief_LiftAt(cx, cz) + VOXEL_DECAL_LIFT;
+    const float z = cz + VoxelRelief_ShiftAt(cx, cz);
+    /* Inverse of 8.8 OAM matrix (det is 16.16). */
+    const float invScale = 256.0f / (float)det;
+    const float ia = (float)d * invScale;
+    const float ib = (float)(-b) * invScale;
+    const float ic = (float)(-c) * invScale;
+    const float id = (float)a * invScale;
+
+    VoxelBuilder_Quad(builder,
+        &(VoxelVertex){cx - ia * halfW + ib * halfH, y, z - ic * halfW + id * halfH, u0, v1, shade},
+        &(VoxelVertex){cx + ia * halfW + ib * halfH, y, z + ic * halfW + id * halfH, u1, v1, shade},
+        &(VoxelVertex){cx + ia * halfW - ib * halfH, y, z + ic * halfW - id * halfH, u1, v0, shade},
+        &(VoxelVertex){cx - ia * halfW - ib * halfH, y, z - ic * halfW - id * halfH, u0, v0, shade});
+}
+
+/*
  * A door opening or closing. The game draws its frames on the tilemap, which
  * this view does not show: the walker went through a door that stayed shut,
  * card and all. Here the frame the game draws (field_door.c, the same tiles
@@ -1438,6 +1498,7 @@ typedef struct
     bool front, decal, tile;
     bool surf;               /* the surf mon: lying on the water, ridden */
     bool cloud;              /* a cloud, laid on the water (EmitCloud) */
+    bool gate;               /* a rotating gate, turned on the ground (EmitTurnedDecal) */
 } VoxelEffectCard;
 
 static bool IsTemplate(const struct SpriteTemplate *template, uint32_t first, uint32_t last)
@@ -1643,6 +1704,10 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
          */
         if (obj->invisible)
             continue;
+        /* Buried trainers (ash/sand) are hidden on GBA via priority 3 under the top map layer
+         * until trainer_see.c raises them to priority 2 on reveal. */
+        if (obj->movementType == MOVEMENT_TYPE_BURIED && sprite->oam.priority == 3)
+            continue;
         /* Carried on the screen instead of the map - the rider of Fly's
          * bird - it is drawn with the screen's sprites, over the view. */
         if (!sprite->coordOffsetEnabled)
@@ -1769,7 +1834,8 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
             effect->slot = 0;
             effect->surf = sprite->template == gFieldEffectObjectTemplatePointers[FLDEFFOBJ_SURF_BLOB];
             effect->cloud = cloud;
-            effect->decal = IsDecal(sprite->template) || cloud;
+            effect->gate = IsRotatingGate(sprite);
+            effect->decal = effect->gate || IsDecal(sprite->template) || cloud;
             effect->tile = IsTileEffect(sprite->template);
             /* A visible wild Pokemon stands on its own tile, never on an object:
              * a tile south of the player, owned by it, it sank under the ground. */
@@ -1890,6 +1956,9 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
 
         if (!card->drawn)
             continue;
+        /* Route 120 bridge Kecleon: drawn under the bridge deck on GBA so only its water
+         * reflection shows until revealed. */
+        const bool underBridge = (snap->objectEvents[i].graphicsId == OBJ_EVENT_GFX_KECLEON_BRIDGE_SHADOW);
         /* Through an open door: gone, shadow and all. */
         dusk = DoorLight(doors, card->worldX + 0.5f, card->worldZ + 0.5f);
         if (dusk <= 0.0f)
@@ -1902,12 +1971,14 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
         /* Riding, it is off the ground: its shadow falls from its feet,
          * moved along the sun by how high they are, onto the water past
          * the mon's back. */
-        if (shadows != NULL && card->outdoor)
+        if (shadows != NULL && card->outdoor && !underBridge)
             EmitCastShadow(shadows, &sSlots[i], i, card->worldX, card->worldZ, rightX, rightZ,
                            stretch, card->shade, card->rise > 0.0f ? rise : 0.0f, card->deck);
         if (reflections != NULL && snap->objectEvents[i].hasReflection)
             EmitReflection(reflections, &sSlots[i], i, card->worldX, card->worldZ,
                            rightX, rightZ, stretch);
+        if (underBridge)
+            continue;
         uint32_t first = builder->count;
         EmitBillboard(builder, &sSlots[i], i, card->worldX + 0.5f, card->worldZ + 0.5f,
                       0.0f, 0.0f, rise, card->deck, rightX, rightZ, stretch, card->shade * dusk, 1.0f, dusk < 1.0f);
@@ -2005,6 +2076,12 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
                    + (base - h / 2 - (reference->base - 8)) / VOXEL_PIXELS_PER_TILE;
                 if (fabsf(cx - camera->targetX) > 24.0f || fabsf(cz - camera->targetZ) > 24.0f)
                     continue;
+                if (effect->gate)
+                {
+                    EmitTurnedDecal(builder, &sSlots[effect->slot], effect->slot, sprite,
+                                    snap->oamMatrices, cx, cz, reference->shade);
+                    continue;
+                }
                 if (effect->surf)
                 {
                     /* Up and down with the GBA's bob, its rider with it. */

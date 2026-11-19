@@ -64,6 +64,7 @@ bool VoxelBuildings_ReadPageWorker(uint32_t page, uint32_t first, uint32_t count
 void VoxelBuildings_CloseWorkerFile(void);
 bool VoxelBuildings_PageHasGlow(uint32_t page);
 bool VoxelBuildings_ReadGlow(uint32_t page, uint32_t first, uint32_t count, uint8_t *dest);
+bool VoxelBuildings_ReadGlowWorker(uint32_t page, uint32_t first, uint32_t count, uint8_t *dest);
 
 /*
  * Page texels drawn from tiles the game animates (Rustboro's fountain: its

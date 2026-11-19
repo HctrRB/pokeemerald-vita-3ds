@@ -69,6 +69,14 @@
 #define VOXEL_HAZE_COLOUR 0xFFFAE6D2u
 #define VOXEL_TREE_BRIGHTNESS 1.12f
 
+/* ---- Night building windows (Pass_BuildingGlow, VoxelBuildings_ReadGlow) -------------- */
+
+#define VOXEL_WINDOW_GLOW_R 1.00f             /* warm indoor window light tint (amber-gold) */
+#define VOXEL_WINDOW_GLOW_G 0.80f
+#define VOXEL_WINDOW_GLOW_B 0.38f
+#define VOXEL_WINDOW_GLOW_STRENGTH_STD  0.90f /* additive alpha scale in normal Voxel mode */
+#define VOXEL_WINDOW_GLOW_STRENGTH_HD2D 0.68f /* lower scale in HD-2D for a soft bloom halo */
+
 /* ---- Fog and sand banks --------------------------------------------------------------- */
 
 #define VOXEL_FOG_DIM 64

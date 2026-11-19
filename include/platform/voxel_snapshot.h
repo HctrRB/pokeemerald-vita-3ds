@@ -3,11 +3,13 @@
 
 #include "global.h"
 #include "global.fieldmap.h"
+#include "sprite.h"
 
-// Double-buffered snapshot of active object events and sprites for thread-safe rendering on Core 0
+// Lock-free 4-slot snapshot of active object events, sprites, and OAM matrices for thread-safe rendering on Core 0
 typedef struct {
     struct ObjectEvent objectEvents[OBJECT_EVENTS_COUNT];
     struct Sprite sprites[OBJECT_EVENTS_COUNT];
+    struct OamMatrix oamMatrices[OAM_MATRIX_COUNT];
     u8 extPalettes[OBJECT_EVENTS_COUNT];
     float playerWorldX;
     float playerWorldZ;
