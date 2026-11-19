@@ -1,5 +1,8 @@
 # Compila tu propia VPK
 
+Type: guide · Audience: players · Status: current
+Verified against: `55868979` · In English: [BUILD_YOUR_OWN.md](BUILD_YOUR_OWN.md)
+
 > **En desarrollo y en pruebas.** Por favor, reporta los errores que encuentres (ver el final de esta guía).
 
 Este repositorio no incluye los gráficos, sonidos ni datos binarios del juego, y no se

@@ -8,7 +8,7 @@
  * Only knobs that change how the 3D world looks or how its work is paced live here. Capacities
  * that size buffers and data layouts (chunk vertex caps, slot counts, FBO sizes) stay next to
  * the structures they size in voxel_renderer.c. Changing a value here changes behaviour: test
- * on the console and compare logs (docs/DEBUGGING.md).
+ * on the console and compare logs (docs/guides/DEBUGGING.md).
  */
 #ifndef VOXEL_TUNING_H
 #define VOXEL_TUNING_H

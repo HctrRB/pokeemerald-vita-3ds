@@ -3083,7 +3083,7 @@ static void BuildChunk(VoxelChunkSlot *slot, int32_t chunkX, int32_t chunkY, uin
 // building module's caches, the mesh builder's window, sScratch and sChunkStaging; the world
 // lookups' memos are frozen (VoxelWorld_FreezeMemos). A result is dropped when the world
 // epoch or the generation of an atlas slot it uses changed meanwhile. Visible holes and
-// warm-up/faded frames are still built on Core 0 (BuildChunk). See docs/THREADS.md.
+// warm-up/faded frames are still built on Core 0 (BuildChunk). See docs/reference/THREADS.md.
 
 typedef enum
 {

@@ -60,7 +60,7 @@ Selected in `OPTIONS > GENERAL > DISPLAY > MENU COLOR` (extra `"ui_theme"`):
 | `TROPICAL` | Warm sand panels, coral/amber pills, heavy dark outlines | Fredoka |
 | `ROYAL` | Deep emerald-and-gold forest aesthetic, chamfered selection bar | Exo 2 |
 
-Design mocks: [design/stitch/](../design/stitch/README.md) (`?theme=` previews each theme). The atlas
+Design mocks: [design/stitch/](../../design/stitch/README.md) (`?theme=` previews each theme). The atlas
 is built by `tools/ui2/build_atlas.py`.
 
 ## Game features behind the UI

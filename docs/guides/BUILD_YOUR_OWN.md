@@ -1,5 +1,8 @@
 # Build your own VPK
 
+Type: guide · Audience: players · Status: current
+Verified against: `55868979` · En español: [BUILD_YOUR_OWN.es.md](BUILD_YOUR_OWN.es.md)
+
 > **Work in progress, in active testing.** Please report the bugs you find (see the end of this guide).
 
 This repository does not contain the game's graphics, sounds or binary data, and it does not
@@ -15,7 +18,7 @@ distribute builds. You make your own VPK from your own copy of the game:
 
 Do not share the VPK or the downloaded files: they contain Nintendo's game data.
 
-Spanish version: [COMPILA_TU_VPK.md](COMPILA_TU_VPK.md).
+Spanish version: [COMPILA_TU_VPK.md](BUILD_YOUR_OWN.es.md).
 
 ## What you need
 

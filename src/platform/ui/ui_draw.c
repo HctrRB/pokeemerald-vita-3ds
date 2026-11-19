@@ -1,5 +1,5 @@
 #include <math.h>
-// Draw list of the new UI and its triple buffer (docs/RENDERING.md).
+// Draw list of the new UI and its triple buffer (docs/reference/RENDERING.md).
 //
 // Core 1 writes into the "back" list and publishes it by exchanging it with the "middle" slot,
 // marked fresh. Core 0 takes the middle slot only when it is fresh, exchanging it with its

@@ -24,7 +24,7 @@ gpu_and_threads:
     through globals and fills caches on lookups. A job starts after vglSwapBuffers; a 3D frame
     that starts while it runs only does work that touches none of its state and calls
     EnsureWorkerIdle() before anything that would. New Core 0 voxel code must do the same
-    (docs/THREADS.md, "The chunk worker").
+    (docs/reference/THREADS.md, "The chunk worker").
   - Core 1 (AgbMain) is the master clock at 60.00 Hz, paced on the audio queue. In 3D, Core 0
     renders once per game frame (twice per frame at 30 FPS, the default) by waiting on
     sFrameReadySem; its own 60 Hz timer drifted and repeated/skipped game frames. Core 0 never
@@ -39,9 +39,9 @@ gpu_and_threads:
     publishing the next game frame clears the lock. Core 0 uses the live map grid only while
     GameFrame_MapSettled() (the pinned frame is of that map): without the epoch, the pinned
     frame's old location and the live new grid mixed for one frame. Plan and its outcome:
-    docs/plan/PLAN_FRONTERA_MULTICORE.md.
+    docs/history/plans/PLAN_FRONTERA_MULTICORE.md.
   - vitaGL's glTexSubImage2D copies a whole texture drawn in the last 4 swaps: textures rewritten
-    at run time use spares or are written in place (docs/RENDERING.md).
+    at run time use spares or are written in place (docs/reference/RENDERING.md).
   - Animated atlas tiles may only be refreshed from BG VRAM for the active atlas slot (VRAM holds
     only the current map's tileset).
   - Opaque passes keep alpha test and blending off for SGX543 early-Z; fullscreen blended quads
@@ -64,9 +64,9 @@ storage:
 
 widescreen:
   - widescreen.c makes GBA screens panoramic (288-px lines) and is always on (Widescreen_IsOn).
-    The "Wide Scene" design (docs/plan/ANALISIS_WIDESCREEN.md) recycled Emerald 3DS's scene
+    The "Wide Scene" design (docs/history/plans/ANALISIS_WIDESCREEN.md) recycled Emerald 3DS's scene
     classification and margin policies, not its GPU compositor; what is left is listed in
-    docs/SCENES_16_9.md, "Not done".
+    docs/reference/SCENES_16_9.md, "Not done".
 
 menus:
   - The GBA menus and the GBA overlay over 3D were replaced by the native touch UI in

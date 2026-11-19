@@ -1,4 +1,4 @@
-// Battle HUD of the new UI (docs/VITA_UI.md, design/stitch/combate). The game keeps
+// Battle HUD of the new UI (docs/reference/VITA_UI.md, design/stitch/combate). The game keeps
 // the battle: its controllers read the buttons, its sprites (POKéMON, trainers, move animations,
 // weather) and transitions are drawn as before. This file mirrors the GBA HUD from the game state
 // on Core 1 and asks the GBA frame to leave out its own HUD: BG0 (text box and menus), BG1 while

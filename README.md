@@ -26,7 +26,7 @@ The full list is under [Features](#features).
 > This project is not affiliated with or endorsed by them. This repository does not contain the
 > game's graphics, sounds or binary data, nor any ROM: to build, you check a dump of **your own
 > cartridge** and the game files are downloaded from the public decompilation
-> ([docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md)). Like every decompilation, the tree still
+> ([docs/guides/BUILD_YOUR_OWN.md](docs/guides/BUILD_YOUR_OWN.md)). Like every decompilation, the tree still
 > holds the game's code and text in decompiled form. A built VPK contains Nintendo's data:
 > **do not distribute builds**.
 
@@ -143,7 +143,7 @@ Visual glitches:
 - Trainer and legendary battle transitions are the GBA ones and only partly show over the 3D
   world.
 - Intro and title screen margins at 16:9 are broken (sprites cut at the GBA edge, streaks
-  beside Rayquaza); a replacement is designed in [docs/SCENES_16_9.md](docs/SCENES_16_9.md).
+  beside Rayquaza); a replacement is designed in [docs/reference/SCENES_16_9.md](docs/reference/SCENES_16_9.md).
 - Walda's FRIENDS wallpaper may draw without its frame.
 
 3D world:
@@ -182,8 +182,8 @@ docs/                                technical documentation
 ## Build your own VPK
 
 No builds are distributed: you make your own from your Pokémon Emerald cartridge. Full guide,
-with every command and the common errors: [docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md)
-(en español: [docs/COMPILA_TU_VPK.md](docs/COMPILA_TU_VPK.md)).
+with every command and the common errors: [docs/guides/BUILD_YOUR_OWN.md](docs/guides/BUILD_YOUR_OWN.md)
+(en español: [docs/guides/BUILD_YOUR_OWN.es.md](docs/guides/BUILD_YOUR_OWN.es.md)).
 
 You need a Windows 10/11 PC, your Pokémon Emerald dump (`.gba`, any language, 16 MB) and a
 PS Vita with HENkaku or Ensō. Nothing else has to be installed by hand:
@@ -202,7 +202,7 @@ PS Vita with HENkaku or Ensō. Nothing else has to be installed by hand:
 
 To update: `git pull` and run `build_all.bat` again (the ROM is only asked for the first time;
 game files a new version needs are downloaded by themselves). The manual steps are in the guide
-and in [docs/BUILD.md](docs/BUILD.md).
+and in [docs/guides/BUILD.md](docs/guides/BUILD.md).
 
 Do not share the VPK or the downloaded files: they contain Nintendo's game data.
 
@@ -220,23 +220,23 @@ Do not share the VPK or the downloaded files: they contain Nintendo's game data.
 | Touch | Menu, battle action deck |
 
 Buttons can be remapped in Options. Settings and saves live in `ux0:data/POKEVITA/`
-(see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#runtime-files-ux0datapokevita)).
+(see [docs/reference/ARCHITECTURE.md](docs/reference/ARCHITECTURE.md#runtime-files-ux0datapokevita)).
 
 ## Documentation
 
 | Document | Covers |
 |---|---|
-| [docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md) ([español](docs/COMPILA_TU_VPK.md)) | Make your own VPK from your cartridge, step by step |
-| [docs/BUILD.md](docs/BUILD.md) | Toolchain, build steps, CMake options, installing and testing |
+| [docs/guides/BUILD_YOUR_OWN.md](docs/guides/BUILD_YOUR_OWN.md) ([español](docs/guides/BUILD_YOUR_OWN.es.md)) | Make your own VPK from your cartridge, step by step |
+| [docs/guides/BUILD.md](docs/guides/BUILD.md) | Toolchain, build steps, CMake options, installing and testing |
 | [docs/README.md](docs/README.md) | Index of the technical documentation |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Layers, boot, one frame, where things are, runtime files |
-| [docs/THREADS.md](docs/THREADS.md) | Cores, pacing, who owns which data |
-| [docs/RENDERING.md](docs/RENDERING.md) | Presentation paths, voxel passes, GBA overlay, GPU rules |
-| [docs/VITA_UI.md](docs/VITA_UI.md) | The user interface |
-| [docs/VOXEL_ENGINE.md](docs/VOXEL_ENGINE.md) | The 3D overworld |
-| [docs/SCENES_16_9.md](docs/SCENES_16_9.md) | How GBA screens fill 16:9 |
-| [docs/ASSETS.md](docs/ASSETS.md) | Where every data file comes from |
-| [docs/DEBUGGING.md](docs/DEBUGGING.md) | Logs, per-frame telemetry, crash dumps |
+| [docs/reference/ARCHITECTURE.md](docs/reference/ARCHITECTURE.md) | Layers, boot, one frame, where things are, runtime files |
+| [docs/reference/THREADS.md](docs/reference/THREADS.md) | Cores, pacing, who owns which data |
+| [docs/reference/RENDERING.md](docs/reference/RENDERING.md) | Presentation paths, voxel passes, GBA overlay, GPU rules |
+| [docs/reference/VITA_UI.md](docs/reference/VITA_UI.md) | The user interface |
+| [docs/reference/VOXEL_ENGINE.md](docs/reference/VOXEL_ENGINE.md) | The 3D overworld |
+| [docs/reference/SCENES_16_9.md](docs/reference/SCENES_16_9.md) | How GBA screens fill 16:9 |
+| [docs/reference/ASSETS.md](docs/reference/ASSETS.md) | Where every data file comes from |
+| [docs/guides/DEBUGGING.md](docs/guides/DEBUGGING.md) | Logs, per-frame telemetry, crash dumps |
 | [design/stitch/README.md](design/stitch/README.md) | Design mocks of the new UI (Spanish) |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Code standards and workflow |
 | [NOTICE.md](NOTICE.md) | Licences of the ported code and credits |

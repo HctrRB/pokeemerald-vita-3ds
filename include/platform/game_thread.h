@@ -2,7 +2,7 @@
 #define GUARD_PLATFORM_GAME_THREAD_H
 
 /*
- * The game runs on one thread: AgbMain, on Core 1 (docs/THREADS.md). The other cores see it
+ * The game runs on one thread: AgbMain, on Core 1 (docs/reference/THREADS.md). The other cores see it
  * only through the game frame (include/platform/game_frame.h), and tools/core_boundary proves it
  * on every build.
  *

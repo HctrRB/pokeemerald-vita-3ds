@@ -1,7 +1,7 @@
 #ifndef PLATFORM_UI_H
 #define PLATFORM_UI_H
 
-// New UI system (docs/VITA_UI.md, design in design/stitch/).
+// New UI system (docs/reference/VITA_UI.md, design in design/stitch/).
 // Logic runs on Core 1 (the game thread), drawing on Core 0. Core 1 builds a list of quads once
 // per game frame and publishes it through a lock-free triple buffer; Core 0 draws the latest
 // published list over the frame (3D or 2D) in one textured draw call.

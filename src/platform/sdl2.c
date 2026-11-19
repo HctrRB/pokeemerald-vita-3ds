@@ -429,7 +429,7 @@ static void RenderGameTexture(void)
 
 
 /*
- * The main thread has two lives (docs/THREADS.md):
+ * The main thread has two lives (docs/reference/THREADS.md):
  *  - MainThread_Boot: before the game thread exists. It is the only time Core 0 may set up
  *    game state (the save, the sound engine, the power-on snapshot).
  *  - MainThread_Run: Core 0's steady state, alongside the game on Core 1. It sees the game

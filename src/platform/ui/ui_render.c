@@ -4,7 +4,7 @@
 // fills and gradients, and 64x64 cells of sprites decoded at run time).
 // After the first frame only new sprite cells are written, straight into the texture memory and
 // never into a cell drawn in the last frames, so it never hits vitaGL's copy-on-write of textures
-// in flight (docs/RENDERING.md).
+// in flight (docs/reference/RENDERING.md).
 
 #include <stddef.h>
 #include <stdlib.h>

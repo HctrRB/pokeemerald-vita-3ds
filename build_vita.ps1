@@ -7,7 +7,7 @@ Set-Location -LiteralPath $scriptDir
 
 $bashExe = "C:\msys64\usr\bin\bash.exe"
 if (-not (Test-Path -LiteralPath $bashExe)) {
-    Write-Host "MSYS2 not found in C:\msys64. Run build_all.ps1, which installs it, or see docs/BUILD.md." -ForegroundColor Red
+    Write-Host "MSYS2 not found in C:\msys64. Run build_all.ps1, which installs it, or see docs/guides/BUILD.md." -ForegroundColor Red
     exit 1
 }
 

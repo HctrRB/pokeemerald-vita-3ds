@@ -1,6 +1,6 @@
 # What Core 0 and Core 2 may use of the game besides the game frame (include/platform/game_frame.h).
 # Read by tools/core_boundary/check_core_boundary.py; the rule syntax is in its Allow class.
-# Every rule says why it is safe. Anything not listed here is a violation of docs/THREADS.md.
+# Every rule says why it is safe. Anything not listed here is a violation of docs/reference/THREADS.md.
 
 # ── Pure game functions: they read constant tables only ──────────────────────────────────────
 call MetatileBehavior_*            # sTileBitAttributes / comparisons of a behaviour value
@@ -8,7 +8,7 @@ call GetMapHeaderFromConnection    # gMapGroups, constant map headers
 call LZDecompressWram              # decompresses its argument into the caller's buffer
 
 # ── Channel 1: the emulated GBA display (read only, tears for a frame at worst) ──────────────
-# Core 1 writes it, the 2D frame drawer and the overlay pass read it (docs/THREADS.md, "Who owns
+# Core 1 writes it, the 2D frame drawer and the overlay pass read it (docs/reference/THREADS.md, "Who owns
 # what": emulated VRAM, OAM, palettes, registers, extended sprite palettes).
 data REG_BASE
 data VRAM_

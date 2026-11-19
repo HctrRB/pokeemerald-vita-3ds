@@ -111,6 +111,6 @@ $code = Invoke-Msys 'cd $(cygpath -u $BUILD_ALL_DIR) && ./build_all.sh' "MINGW64
 if ($code -eq 0) {
     Write-Host "VPK: $scriptDir\EmeraldVita.vpk" -ForegroundColor Green
 } else {
-    Write-Host "The build failed (exit code $code). See the messages above and docs/BUILD_YOUR_OWN.md." -ForegroundColor Red
+    Write-Host "The build failed (exit code $code). See the messages above and docs/guides/BUILD_YOUR_OWN.md." -ForegroundColor Red
 }
 exit $code

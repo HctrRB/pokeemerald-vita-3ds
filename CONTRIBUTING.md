@@ -1,6 +1,6 @@
 # Contributing
 
-Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/THREADS.md](docs/THREADS.md) first.
+Read [docs/reference/ARCHITECTURE.md](docs/reference/ARCHITECTURE.md) and [docs/reference/THREADS.md](docs/reference/THREADS.md) first.
 Every change is tested on a real PS Vita before it is considered done.
 
 ## Where code goes
@@ -33,7 +33,7 @@ Language: **English** for identifiers, comments and documentation.
    or side effects cannot be told from its name and signature gets a comment saying so.
 6. **Vita safety**: check every `sce*` return value (negative is an error). No buffers over
    4 KB on the stack. No `printf`; use `VITA_LOG`. Exit with `sceKernelExitProcess(0)`.
-7. **Threads**: follow [docs/THREADS.md](docs/THREADS.md). The game runs on Core 1 only: Core 0 and
+7. **Threads**: follow [docs/reference/THREADS.md](docs/reference/THREADS.md). The game runs on Core 1 only: Core 0 and
    Core 2 read it through the game frame, and the build checks it (`tools/core_boundary`).
 8. **CMake**: target properties only (`target_include_directories`, `target_link_libraries`, …).
 
@@ -43,10 +43,10 @@ columns). Format only the lines you change; don't mix formatting with logic in o
 ## Workflow
 
 1. Work on a branch from `main`; one topic per branch.
-2. Build with `build_vita.ps1` (see [docs/BUILD.md](docs/BUILD.md)). The build must finish with no
+2. Build with `build_vita.ps1` (see [docs/guides/BUILD.md](docs/guides/BUILD.md)). The build must finish with no
    new warnings.
 3. Test on hardware with the smoke list below; for performance work, compare
-   `perf_frames.csv` before and after ([docs/DEBUGGING.md](docs/DEBUGGING.md)).
+   `perf_frames.csv` before and after ([docs/guides/DEBUGGING.md](docs/guides/DEBUGGING.md)).
 4. Commit in small steps. Message: `type(scope): summary` (`feat`, `fix`, `perf`, `refactor`,
    `docs`, `build`, `chore`), with a body explaining why.
 5. Update the documentation your change makes wrong in the same commit, in English. Reference

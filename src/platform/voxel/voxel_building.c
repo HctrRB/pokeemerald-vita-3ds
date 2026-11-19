@@ -1148,7 +1148,7 @@ static const CellGrid *CellGridOf(const VoxelMapInstance *inst, const BuildingPl
         if (p[i].when != NO_CONDITION)
             return NULL;
     /* Rebuilt in place, never freed until shutdown: the renderer's chunk
-     * worker and Core 0 may look up at once (docs/THREADS.md), and a grid
+     * worker and Core 0 may look up at once (docs/reference/THREADS.md), and a grid
      * freed under a reader was a use after free. Each slot holds the largest
      * layout (coordinates are bytes), so its memory never moves. */
     if (size > CELL_GRID_CAP)

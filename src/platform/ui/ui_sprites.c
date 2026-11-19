@@ -2,7 +2,7 @@
 // (Pokémon icons and front sprites, item icons, footprints), decoded from the game's own tables
 // into 64x64 cells of the UI texture (below the fixed atlas, UI_DYN_Y).
 //
-// Threads (docs/THREADS.md):
+// Threads (docs/reference/THREADS.md):
 // - Core 1 owns the cache (which key is in which cell, when each cell was last drawn). On a miss
 //   it decodes the sprite into a staging slot of a single-producer / single-consumer ring and
 //   publishes it with a release store, before the draw list that uses it is published.

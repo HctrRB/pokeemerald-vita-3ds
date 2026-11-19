@@ -3,7 +3,7 @@
 
 The game (everything linked into game_combined.o) runs on Core 1, in AgbMain. Core 0
 (presentation) and Core 2 (draw, chunk and building I/O workers) may only see the game
-through what Core 1 publishes for them (docs/THREADS.md). This script proves it on the
+through what Core 1 publishes for them (docs/reference/THREADS.md). This script proves it on the
 linked ELF:
 
   * it walks every function reachable from each thread's entry point, decoding the direct

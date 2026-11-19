@@ -35,7 +35,7 @@ static u16 sTextboxBase[32 * 64];
 static bool8 sTextboxBaseLoaded;
 static u16 sTextboxWide[64 * 64];
 
-// Always on: every GBA screen is presented at 16:9 (docs/SCENES_16_9.md).
+// Always on: every GBA screen is presented at 16:9 (docs/reference/SCENES_16_9.md).
 bool8 Widescreen_IsOn(void)
 {
     return TRUE;

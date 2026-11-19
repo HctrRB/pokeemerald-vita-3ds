@@ -46,7 +46,7 @@ or writable state except as [THREADS.md](THREADS.md) allows.
 
 ## Boot
 
-`main()` in [`src/platform/sdl2.c`](../src/platform/sdl2.c) pins itself to Core 0
+`main()` in [`src/platform/sdl2.c`](../../src/platform/sdl2.c) pins itself to Core 0
 (`VitaPlatform_PinCurrentThread`) and runs `MainThread_Boot`, before the game thread exists (the
 only time Core 0 may set up game state):
 
@@ -109,19 +109,11 @@ computes from the field callbacks, the shop's buy menu and `BattleMainCB2`.
 | 16:9 handling of GBA screens | `widescreen.c`, `src/platform/vita/vita_stage.c` | [SCENES_16_9.md](SCENES_16_9.md) |
 | Voxel world | `src/platform/voxel/` | [VOXEL_ENGINE.md](VOXEL_ENGINE.md) |
 | User interface | `src/platform/ui/` | [VITA_UI.md](VITA_UI.md) |
-| Build and packaging | `CMakeLists.txt`, `build_vita.*`, `vita/` | [BUILD.md](BUILD.md) |
+| Build and packaging | `CMakeLists.txt`, `build_vita.*`, `vita/` | [BUILD.md](../guides/BUILD.md) |
 | Data files | `assets/`, `tools/ui2/`, `tools/ui_gen/gen_intro_margins.py` | [ASSETS.md](ASSETS.md) |
-| Logs, telemetry, crash dumps | `src/platform/vita/vita_perf.c`, `src/platform/vita/vita_platform.c` | [DEBUGGING.md](DEBUGGING.md) |
+| Logs, telemetry, crash dumps | `src/platform/vita/vita_perf.c`, `src/platform/vita/vita_platform.c` | [DEBUGGING.md](../guides/DEBUGGING.md) |
 
-## Runtime files (`ux0:data/POKEVITA/`)
+## Runtime files
 
-| File | Written by | When | Content |
-|---|---|---|---|
-| `saves/pokeemerald*.sav` | `sdl2.c` | Always | Saves, 128 KB GBA flash layout; slot 1–3 |
-| `pokeemerald.cfg` | `sdl2.c` `StoreConfigFile` | Always | Platform settings (filter, buttons, 3D on/off, framerate…) |
-| `settings.txt` | `src/platform/vita/vita_extras.c` | Always | Extras, graphics and voxel options (`VitaExtras_GetFast`) |
-| `followers/followers.pak` | read by `src/follower_mon.c` (`vita_pak.c`) | Read only | Follower sprites and messages, if installed there instead of in the VPK |
-| `thread_violations.log` | `src/platform/vita/vita_game_thread.c` | Only on a violation | Game state changed off the game thread, with the caller's address ([DEBUGGING.md](DEBUGGING.md)) |
-| `debug.log` | `VITA_LOG` | Builds with `VITA_LOGGING` | Boot and error log |
-| `perf_summary.txt`, `perf_frames.csv` | `src/platform/vita/vita_perf.c` | Builds with `VITA_TELEMETRY` | Per-frame telemetry |
-| `ui_stall.log` | `src/platform/ui/ui_stall.c` | Builds with `VITA_TELEMETRY` | New UI stalls over 100 ms, and which core held the frame |
+What the game reads and writes on the memory card, and which build writes each file:
+[RUNTIME_FILES.md](RUNTIME_FILES.md).

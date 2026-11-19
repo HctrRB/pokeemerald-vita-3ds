@@ -261,7 +261,7 @@ set_property(TARGET pokeemerald PROPERTY RULE_LAUNCH_LINK "bash '${ROOT}/vita/vi
 # UNSAFE: the game reads and writes ux0:data/POKEVITA/.
 vita_create_self(eboot.bin pokeemerald UNSAFE)
 
-# The thread boundary (docs/THREADS.md): no path from Core 0 or Core 2 reaches the game's code or
+# The thread boundary (docs/reference/THREADS.md): no path from Core 0 or Core 2 reaches the game's code or
 # writable state except through the game frame and tools/core_boundary/allow.txt, and the game
 # thread never reads the game frame. No eboot.bin is made from an ELF that breaks it; the stamp
 # is only written when the check passes, so a failed check runs again on the next build.

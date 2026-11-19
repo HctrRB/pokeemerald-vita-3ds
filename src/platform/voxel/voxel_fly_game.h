@@ -1,7 +1,7 @@
 /*
  * voxel_fly_game.h - Core 1 owner and Core 0 double-buffered snapshot bridge for the 3D Fly cinematic.
  *
- * Threading (docs/THREADS.md):
+ * Threading (docs/reference/THREADS.md):
  * - Core 1 owns VoxelFly, answers Port_FlyHover() / Port_FlyBusy(), advances VoxelFly_Step()
  *   at exact 60 Hz game ticks (VoxelFlyGame_Tick), increments warpVersion in LoadMapFromWarp(),
  *   and publishes an atomic double-buffered VoxelFlySnapshot.

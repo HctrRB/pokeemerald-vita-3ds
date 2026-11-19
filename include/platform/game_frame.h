@@ -3,7 +3,7 @@
 
 /*
  * The game frame: everything the other cores may know about the game, as it stood at the end of
- * one game frame (docs/THREADS.md, "The game frame").
+ * one game frame (docs/reference/THREADS.md, "The game frame").
  *
  * The game runs on Core 1 alone. At each VBlank, Core 1 captures what Core 0 needs (each module
  * fills its own part: VoxelWorld_CaptureField, VoxelBattle_Capture, VoxelEntities_Capture...)

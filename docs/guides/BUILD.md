@@ -94,7 +94,7 @@ another checkout path; for a clean rebuild delete `build-vita/`.
 7. Checks the thread boundary on the linked ELF (`tools/core_boundary/check_core_boundary.py
    --strict`, target `core_boundary`): no path from Core 0 or Core 2 may reach the game side's code
    or writable state except as `tools/core_boundary/allow.txt` declares, and the game thread may not
-   read Core 0's pinned game frame ([THREADS.md](THREADS.md)). `eboot.bin` depends on its stamp
+   read Core 0's pinned game frame ([THREADS.md](../reference/THREADS.md)). `eboot.bin` depends on its stamp
    (`core_boundary.ok`): a violation fails the build, and the report says which path.
 8. `vita_create_self(... UNSAFE)` (the app writes `ux0:data/`), then `vita-mksfoex` and
    `vita-pack-vpk` called directly (`vita_create_vpk` breaks on paths with spaces).

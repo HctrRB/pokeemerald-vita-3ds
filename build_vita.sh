@@ -13,14 +13,14 @@ cd "$SCRIPT_DIR"
 # The game's files are not in the repository: fetch_assets.sh gets them first
 if [ ! -f .assets_ok ] || [ ! -f graphics/pokemon/bulbasaur/front.png ] || [ ! -f assets/ui2/ui_atlas.bin ]; then
     echo "ERROR: the game files are missing. Run ./fetch_assets.sh <your Pokemon Emerald .gba> first"
-    echo "       (Windows: fetch_assets.ps1 -Rom <file>). See docs/BUILD_YOUR_OWN.md."
+    echo "       (Windows: fetch_assets.ps1 -Rom <file>). See docs/guides/BUILD_YOUR_OWN.md."
     exit 1
 fi
 
 # The intro's 16:9 margins are made from the converted intro graphics (make -f vita/assets.mk)
 if [ ! -f assets/ui/intro_margins.bin ]; then
     if [ ! -f graphics/intro/scene_1/bg.4bpp ]; then
-        echo "ERROR: convert the game graphics first: make -f vita/assets.mk (see docs/BUILD_YOUR_OWN.md)"
+        echo "ERROR: convert the game graphics first: make -f vita/assets.mk (see docs/guides/BUILD_YOUR_OWN.md)"
         exit 1
     fi
     PY=python3; command -v python3 >/dev/null || PY=python

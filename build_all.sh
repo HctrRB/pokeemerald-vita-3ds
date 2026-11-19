@@ -87,7 +87,7 @@ if [ ! -x "$VITASDK/bin/arm-vita-eabi-gcc" ]; then
     git clone --quiet --depth 1 https://github.com/vitasdk/vdpm /tmp/vdpm
     (cd /tmp/vdpm && ./bootstrap-vitasdk.sh)
 fi
-[ -x "$VITASDK/bin/arm-vita-eabi-gcc" ] || die "VitaSDK did not install; see docs/BUILD.md"
+[ -x "$VITASDK/bin/arm-vita-eabi-gcc" ] || die "VitaSDK did not install; see docs/guides/BUILD.md"
 # The base VitaSDK has none of these. vdpm installs their dependencies too (vitaGL brings
 # vitaShaRK, libmathneon, SceShaccCgExt and taihen). Every file CMakeLists.txt links is checked,
 # so a VitaSDK installed earlier without one of them gets it here.
@@ -110,13 +110,13 @@ if [ -n "$need_pkgs" ]; then
         # Upstream 2026.08 channel snapshots occasionally ship incomplete package sets (missing vitaGL/sdl2).
         FALLBACK_VITA_PKG_URL="https://github.com/vitasdk/vitasdk-autobuild/releases/download/packages-2026.08-snapshot-20261115.68.1"
         echo "vdpm install failed; falling back to $FALLBACK_VITA_PKG_URL"
-        [ -f "$VITASDK/etc/pacman.conf" ] || die "missing $VITASDK/etc/pacman.conf; see docs/BUILD.md"
+        [ -f "$VITASDK/etc/pacman.conf" ] || die "missing $VITASDK/etc/pacman.conf; see docs/guides/BUILD.md"
         sed -i "s|^Server = https://github.com/vitasdk/vitasdk-autobuild/releases/download/.*|Server = $FALLBACK_VITA_PKG_URL|" "$VITASDK/etc/pacman.conf"
         rm -f "$VITASDK/var/lib/pacman/sync/vita.db"
         vdpm pacman -- -Syy --noconfirm $need_pkgs
     fi
     for f in "$VITA_INC/vitaGL.h" "$VITA_LIB/libvitaGL.a" "$VITA_LIB/libSDL2.a"; do
-        [ -f "$f" ] || die "$(basename "$f") is still missing after vdpm install $need_pkgs; see docs/BUILD.md"
+        [ -f "$f" ] || die "$(basename "$f") is still missing after vdpm install $need_pkgs; see docs/guides/BUILD.md"
     done
 fi
 
@@ -160,4 +160,4 @@ cp build-vita/pokeemerald.vpk EmeraldVita.vpk
 echo
 echo "=== Done: $ROOT/EmeraldVita.vpk ==="
 echo "Install it with VitaShell. This is a work in progress: please report the bugs you find"
-echo "as GitHub issues (see docs/BUILD_YOUR_OWN.md, 'Reporting bugs')."
+echo "as GitHub issues (see docs/guides/BUILD_YOUR_OWN.md, 'Reporting bugs')."

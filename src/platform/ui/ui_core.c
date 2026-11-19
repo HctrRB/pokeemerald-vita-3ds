@@ -1,6 +1,6 @@
 // Core of the new UI on Core 1 (the game thread). Ui_Tick runs once per game frame from
 // VBlankIntrWait, between two game frames, so it can read and change game state directly:
-// no locks, no snapshots (docs/THREADS.md).
+// no locks, no snapshots (docs/reference/THREADS.md).
 //
 // START in the field opens the hub (the options button, OPTIONS). The world keeps running
 // and rendering behind it; the player and the NPCs are frozen while it is open (decision D4).

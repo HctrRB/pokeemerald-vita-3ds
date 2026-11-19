@@ -6,7 +6,7 @@ Verified against: `55868979`
 The 3D overworld ("diorama") is drawn from the live GBA map state: the game still runs its
 2D field logic, and `src/platform/voxel/` turns the current map and its neighbours into 3D
 geometry every frame. The logic comes from pokeemerald-multiplatform's voxel renderer and
-Emerald 3DS (see [NOTICE.md](../NOTICE.md)); the GPU code is written for vitaGL.
+Emerald 3DS (see [NOTICE.md](../../NOTICE.md)); the GPU code is written for vitaGL.
 
 ## Modules
 
@@ -93,7 +93,7 @@ this repository; see [ASSETS.md](ASSETS.md).
 ## Tuning values
 
 Everything that changes how the 3D world looks or how its work is paced is in
-[`src/platform/voxel/voxel_tuning.h`](../src/platform/voxel/voxel_tuning.h): the chunk area around
+[`src/platform/voxel/voxel_tuning.h`](../../src/platform/voxel/voxel_tuning.h): the chunk area around
 the camera, build budgets and pre-warming, the chunk worker switch, atlas and texture pacing,
 colour grade and haze, fog, weather, motes and the depth-of-field bands. Capacities that size
 buffers (chunk vertex caps, slot counts, FBO sizes) stay next to their structures in
