@@ -1202,6 +1202,9 @@ typedef struct
 static VoxelBuildingCacheSlot sBuildingCache[VOXEL_BUILDING_CACHE_SLOTS];
 static int8_t sBuildingPageToSlot[VOXEL_MAX_BUILDING_PAGES];
 static uint8_t sBuildingPageHasAlpha[VOXEL_MAX_BUILDING_PAGES];
+// Per-page 32x32 UV occupancy bitmask of glow > 0 texels (published with release fence on load).
+static uint32_t sBuildingGlowGrid[VOXEL_MAX_BUILDING_PAGES][32];
+static volatile uint8_t sBuildingGlowGridReady[VOXEL_MAX_BUILDING_PAGES];
 static bool sSyncBuildingLoads = true;
 
 static SDL_Thread *sBuildingIoThread = NULL;
@@ -1397,7 +1400,9 @@ static int32_t VoxelBuildingIoWorkerMain(void *data)
         Voxel_UnswizzleMortonToLinearEx(sWorkerMortonBuf, sWorkerLinearBuf, bw, bh, btexH);
         if (hasGlow)
         {
-            Voxel_UnswizzleMortonGlowToRgba4444(sWorkerGlowMortonBuf, sWorkerGlowLinearBuf, bw, bh, btexH);
+            Voxel_UnswizzleMortonGlowToRgba4444(sWorkerGlowMortonBuf, sWorkerGlowLinearBuf, bw, bh, btexH,
+                                                sBuildingGlowGrid[page]);
+            __atomic_store_n(&sBuildingGlowGridReady[page], 1u, __ATOMIC_RELEASE);
         }
         const bool hasAlpha = ScanLinearPageAlpha(sWorkerLinearBuf, bw * bh);
 
@@ -1480,7 +1485,9 @@ static GLuint RequestOrLoadBuildingPage(const int32_t page, const bool synchrono
     uint16_t *glowLinear = NULL;
     if (hasGlow)
     {
-        Voxel_UnswizzleMortonGlowToRgba4444(sBuildingGlowMortonScratch, sBuildingPageMortonScratch, bw, bh, btexH);
+        Voxel_UnswizzleMortonGlowToRgba4444(sBuildingGlowMortonScratch, sBuildingPageMortonScratch, bw, bh, btexH,
+                                            sBuildingGlowGrid[page]);
+        __atomic_store_n(&sBuildingGlowGridReady[page], 1u, __ATOMIC_RELEASE);
         glowLinear = sBuildingPageMortonScratch;
     }
     return UploadBuildingPageToLru(page, bw, btexH, hasAlpha, sBuildingPageLinearScratch, glowLinear);
@@ -2559,11 +2566,16 @@ static uint32_t TagAndPartitionTreeSway(VoxelGlVertex *const verts, const uint32
     return staticCount;
 }
 
-// Partition a building span's triangles in-place on Core 2 so upright wall triangles
-// (|normal.y| < 0.35, matching voxel_windows.py) sit at the front of the span.
-// Pass_BuildingGlow then draws only those wall triangles instead of roofs/floors/ground patches.
-static uint32_t PartitionBuildingGlowTriangles(VoxelVertex *const verts, const uint32_t vertCount)
+// Partition a building span's triangles in-place on Core 2 so only upright wall triangles
+// (|normal.y| < 0.35) whose UV bounding box overlaps a glow > 0 cell in the page's 32x32
+// occupancy grid sit at the front of the span. Falls back to upright-only before page load.
+static uint32_t PartitionBuildingGlowTriangles(VoxelVertex *const verts, const uint32_t vertCount,
+                                               const int32_t page)
 {
+    const bool hasGrid = (page >= 0 && page < VOXEL_MAX_BUILDING_PAGES)
+        && (__atomic_load_n(&sBuildingGlowGridReady[page], __ATOMIC_ACQUIRE) != 0u);
+    const uint32_t *const grid = hasGrid ? sBuildingGlowGrid[page] : NULL;
+
     uint32_t write = 0;
     for (uint32_t i = 0; i + 2u < vertCount; i += 3u)
     {
@@ -2577,22 +2589,55 @@ static uint32_t PartitionBuildingGlowTriangles(VoxelVertex *const verts, const u
         const float nz = e1x * e2y - e1y * e2x;
         const float lenSq = nx * nx + ny * ny + nz * nz;
         // Winding-independent upright wall test: |ny| < 0.35 * |n| -> ny^2 < 0.1225 * lenSq
-        if (lenSq > 1e-8f && (ny * ny) < 0.1225f * lenSq)
+        if (lenSq <= 1e-8f || (ny * ny) >= 0.1225f * lenSq)
+            continue;
+
+        if (grid != NULL)
         {
-            if (write != i)
+            const float uMin = fminf(a->u, fminf(b->u, c->u));
+            const float uMax = fmaxf(a->u, fmaxf(b->u, c->u));
+            const float vMin = fminf(a->v, fminf(b->v, c->v));
+            const float vMax = fmaxf(a->v, fmaxf(b->v, c->v));
+            int32_t gx0 = (int32_t)(uMin * 32.0f);
+            int32_t gx1 = (int32_t)(uMax * 32.0f);
+            int32_t gy0 = (int32_t)(vMin * 32.0f);
+            int32_t gy1 = (int32_t)(vMax * 32.0f);
+            if (gx0 < 0) gx0 = 0;
+            if (gx0 > 31) gx0 = 31;
+            if (gx1 < 0) gx1 = 0;
+            if (gx1 > 31) gx1 = 31;
+            if (gy0 < 0) gy0 = 0;
+            if (gy0 > 31) gy0 = 31;
+            if (gy1 < 0) gy1 = 0;
+            if (gy1 > 31) gy1 = 31;
+            const int32_t spanX = gx1 - gx0;
+            const uint32_t xMask = (spanX >= 31) ? 0xFFFFFFFFu : (((1u << (spanX + 1)) - 1u) << gx0);
+            bool hitsGlow = false;
+            for (int32_t gy = gy0; gy <= gy1; ++gy)
             {
-                const VoxelVertex t0 = verts[write];
-                const VoxelVertex t1 = verts[write + 1u];
-                const VoxelVertex t2 = verts[write + 2u];
-                verts[write]      = verts[i];
-                verts[write + 1u] = verts[i + 1u];
-                verts[write + 2u] = verts[i + 2u];
-                verts[i]          = t0;
-                verts[i + 1u]     = t1;
-                verts[i + 2u]     = t2;
+                if ((grid[gy] & xMask) != 0u)
+                {
+                    hitsGlow = true;
+                    break;
+                }
             }
-            write += 3u;
+            if (!hitsGlow)
+                continue;
         }
+
+        if (write != i)
+        {
+            const VoxelVertex t0 = verts[write];
+            const VoxelVertex t1 = verts[write + 1u];
+            const VoxelVertex t2 = verts[write + 2u];
+            verts[write]      = verts[i];
+            verts[write + 1u] = verts[i + 1u];
+            verts[write + 2u] = verts[i + 2u];
+            verts[i]          = t0;
+            verts[i + 1u]     = t1;
+            verts[i + 2u]     = t2;
+        }
+        write += 3u;
     }
     return write;
 }
@@ -2748,7 +2793,7 @@ static void ComputeChunkJob(const VoxelChunkJobInput *in, VoxelChunkJobOutput *o
                         uint32_t glowVerts = 0;
                         if (!inst->indoor && VoxelBuildings_PageHasGlow((uint32_t)p))
                         {
-                            glowVerts = PartitionBuildingGlowTriangles(&sScratch[countBefore], spanVerts);
+                            glowVerts = PartitionBuildingGlowTriangles(&sScratch[countBefore], spanVerts, p);
                         }
                         VoxelChunkBuildingSpan *bspan = &out->buildingSpans[out->buildingSpanCount++];
                         bspan->page = (int16_t)p;
@@ -5100,7 +5145,7 @@ static void Frame_FollowCamera(VoxelFrame *const f)
     if (!mapLocked && (mapChanged || sNeedCameraSnap))
     {
         int32_t shiftTilesX = 0, shiftTilesY = 0;
-        if (!sNeedCameraSnap)
+        if (mapChanged && !sNeedCameraSnap)
         {
             for (uint32_t i = 0; i < sPreviousOriginCount; ++i)
             {
@@ -5124,6 +5169,8 @@ static void Frame_FollowCamera(VoxelFrame *const f)
             sNeedCameraSnap = false;
         }
 
+        /* Only invalidate the chunk cache on an actual non-crossing map change; a camera snap
+         * on the same map (same-map warp or battle return) keeps all valid cached chunks intact. */
         if (crossed)
         {
             VitaPerf_MarkEvent(VITA_PERF_E_CROSS);
@@ -5131,7 +5178,7 @@ static void Frame_FollowCamera(VoxelFrame *const f)
             ShiftChunkCoordinates(shiftTilesX, shiftTilesY);
             VitaPerf_SubEnd(VITA_PERF_T_MAP_SHIFT);
         }
-        else
+        else if (mapChanged)
         {
             VitaPerf_MarkEvent(VITA_PERF_E_MAP_RESET);
             InvalidateChunkCache();
@@ -5240,15 +5287,17 @@ static void Frame_FollowCamera(VoxelFrame *const f)
         sBattleFx.shakeTimer = 0.0f;
         if (sBattleState.begun)
         {
+            /* Snap directly back to the overworld camera on the exact exit frame without
+             * flagging sNeedCameraSnap or invalidating the still-valid overworld chunk cache. */
             sBattleState.begun = false;
             sBattleState.chosen = false;
-            sNeedCameraSnap = true;
+            VoxelCamera_SetGround(&sCamera, VoxelEntities_PlayerGround(), 1, camDt);
+            VoxelCamera_Snap(&sCamera, playerWorldX, playerWorldZ);
         }
-
-        // Smooth framerate-independent camera tracking continues on every frame, including
-        // crossing frames (right after VoxelCamera_Shift), so biking across borders never pauses 1 frame.
-        if (!sNeedCameraSnap)
+        else if (!sNeedCameraSnap)
         {
+            // Smooth framerate-independent camera tracking continues on every frame, including
+            // crossing frames (right after VoxelCamera_Shift), so biking across borders never pauses 1 frame.
             const float playerGround = VoxelEntities_PlayerGround();
             VoxelCamera_SetGround(&sCamera, playerGround, 0, camDt);
             VoxelCamera_Update(&sCamera, playerWorldX, playerWorldZ, camDt);
@@ -5386,6 +5435,19 @@ static void Frame_UpdateAtlas(const VoxelFrame *const f)
         sNeighborsAtlasChecked = ExtendDirectNeighborAtlases(inst0);
     }
     AtlasExtend_Step();
+
+    // Preload the current outdoor layout's glow page before chunk building so Core 2 has its
+    // 32x32 UV occupancy bitmask ready from the very first chunk (eliminating non-window walls).
+    if (!inst0->indoor)
+    {
+        const int32_t p0 = VoxelBuildings_PageOf(inst0);
+        if (p0 >= 0 && p0 < VOXEL_MAX_BUILDING_PAGES
+            && VoxelBuildings_PageHasGlow((uint32_t)p0)
+            && __atomic_load_n(&sBuildingGlowGridReady[p0], __ATOMIC_ACQUIRE) == 0u)
+        {
+            RequestOrLoadBuildingPage(p0, sNeedsFullWarmup);
+        }
+    }
 
     VitaPerf_SubEnd(VITA_PERF_T_ATLAS_SLOTS);
 }
@@ -6968,9 +7030,9 @@ static void Pass_BuildingGlow(const VoxelFrame *const f)
         : VOXEL_WINDOW_GLOW_STRENGTH_STD;
     const float alpha = Voxel_ClampF(dn->glow * strength, 0.0f, 1.0f);
 
-    // Alpha-test discards alpha==0 non-window wall pixels before SGX543 TBDR blending.
-    glEnable(GL_ALPHA_TEST);
-    glAlphaFunc(GL_GREATER, 0.0f);
+    // Pure additive blend with GL_ALPHA_TEST OFF avoids SGX543 TBDR punch-through discard stalls
+    // now that glowVertCount contains only triangles overlapping glow > 0 UV cells.
+    glDisable(GL_ALPHA_TEST);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -7026,7 +7088,6 @@ static void Pass_BuildingGlow(const VoxelFrame *const f)
     glDepthMask(GL_TRUE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_BLEND);
-    glDisable(GL_ALPHA_TEST);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 

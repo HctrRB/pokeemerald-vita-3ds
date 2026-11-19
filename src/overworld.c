@@ -2032,6 +2032,9 @@ static bool32 ReturnToFieldLocal(u8 *state)
     switch (*state)
     {
     case 0:
+        /* Guard Core 0 from reading transient object/layout state while returning to the field;
+         * released atomically by VoxelEntities_PublishSnapshot() at frame end. */
+        sMapMutationLock = 1;
         ResetMirageTowerAndSaveBlockPtrs();
         ResetScreenForMapLoad();
         ResumeMap(FALSE);

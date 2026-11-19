@@ -142,26 +142,32 @@ static inline void Voxel_UnswizzleLinearToMorton(const uint16_t *src, uint16_t *
     }
 }
 
-// Unswizzle 8-bit Morton window-glass glow mask into linear RGBA4444 (white RGB, alpha = mask >> 4).
+// Unswizzle 8-bit Morton window-glass glow mask into linear RGBA4444 (white RGB, alpha = mask >> 4)
+// and optionally populate a 32x32 UV occupancy bitmask (indexed by GL v-row gy in 0..31, bit gx in 0..31).
 static inline void Voxel_UnswizzleMortonGlowToRgba4444(const uint8_t *const src, uint16_t *const dst,
                                                        const uint32_t width, const uint32_t srcHeight,
-                                                       const uint32_t dstHeight)
+                                                       const uint32_t dstHeight, uint32_t glowGridOut[32])
 {
     memset(dst, 0, (size_t)width * dstHeight * sizeof(uint16_t));
+    if (glowGridOut != NULL)
+        memset(glowGridOut, 0, 32u * sizeof(uint32_t));
     const uint32_t tilesPerRow = width >> 3;
 
     for (uint32_t y = 0; y < srcHeight; y++)
     {
         const uint32_t glY = dstHeight - 1u - y;
+        const uint32_t gy = (glY * 32u) / dstHeight;
         const uint32_t tileY = y >> 3;
         const uint32_t mortonY = ((y & 1u) << 1) | ((y & 2u) << 2) | ((y & 4u) << 3);
         const uint32_t rowBase = (tileY * tilesPerRow) << 6;
         uint16_t *const dstRow = &dst[glY * width];
+        uint32_t rowBits = 0u;
 
         for (uint32_t tileX = 0; tileX < tilesPerRow; tileX++)
         {
             const uint8_t *const tileSrc = &src[rowBase + (tileX << 6) + mortonY];
-            uint16_t *const tileDst = &dstRow[tileX << 3];
+            const uint32_t baseX = tileX << 3;
+            uint16_t *const tileDst = &dstRow[baseX];
             const uint8_t s0 = tileSrc[0],  s1 = tileSrc[1],  s2 = tileSrc[4],  s3 = tileSrc[5];
             const uint8_t s4 = tileSrc[16], s5 = tileSrc[17], s6 = tileSrc[20], s7 = tileSrc[21];
             tileDst[0] = s0 ? (uint16_t)(0xFFF0u | (s0 >> 4)) : 0u;
@@ -172,7 +178,20 @@ static inline void Voxel_UnswizzleMortonGlowToRgba4444(const uint8_t *const src,
             tileDst[5] = s5 ? (uint16_t)(0xFFF0u | (s5 >> 4)) : 0u;
             tileDst[6] = s6 ? (uint16_t)(0xFFF0u | (s6 >> 4)) : 0u;
             tileDst[7] = s7 ? (uint16_t)(0xFFF0u | (s7 >> 4)) : 0u;
+            if (glowGridOut != NULL && (s0 | s1 | s2 | s3 | s4 | s5 | s6 | s7) != 0u)
+            {
+                if (s0) rowBits |= 1u << (((baseX + 0u) * 32u) / width);
+                if (s1) rowBits |= 1u << (((baseX + 1u) * 32u) / width);
+                if (s2) rowBits |= 1u << (((baseX + 2u) * 32u) / width);
+                if (s3) rowBits |= 1u << (((baseX + 3u) * 32u) / width);
+                if (s4) rowBits |= 1u << (((baseX + 4u) * 32u) / width);
+                if (s5) rowBits |= 1u << (((baseX + 5u) * 32u) / width);
+                if (s6) rowBits |= 1u << (((baseX + 6u) * 32u) / width);
+                if (s7) rowBits |= 1u << (((baseX + 7u) * 32u) / width);
+            }
         }
+        if (glowGridOut != NULL && rowBits != 0u)
+            glowGridOut[gy] |= rowBits;
     }
 }
 
