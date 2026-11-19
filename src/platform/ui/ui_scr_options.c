@@ -70,7 +70,7 @@ static const struct { const char *key, *help; } sExtraHelp[] = {
     { "filter", "How the 2D screens are scaled to the Vita display." },
     { "ui_theme", "Colour and style of the menus." },
     { "voxel_3d", "Draw the overworld as a 3D voxel diorama." },
-    { "voxel_blur", "Blur the far background of the diorama." },
+    { "voxel_blur", "Blur the far background. Bloom and light shafts stay on." },
     { "voxel_bloom", "Strength of bright-pass bloom on the 3D world (0 = off, 10 = max)." },
     { "voxel_sky_bloom", "Strength of sun and moon sky glow (0 = off, 5 = normal, 10 = 2x)." },
     { "voxel_shafts", "Strength of sun and moon light shafts (0 = off, 5 = normal, 10 = 2x)." },

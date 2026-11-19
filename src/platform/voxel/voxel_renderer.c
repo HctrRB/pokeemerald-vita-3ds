@@ -4478,6 +4478,18 @@ static bool InitPostTargets(PostRenderTargets *const t)
     t->bloomTexB = CreatePostColorTexture(VOXEL_BLOOM_FBO_W, VOXEL_BLOOM_FBO_H, GL_LINEAR, GL_UNSIGNED_BYTE);
     AttachColorFbo(&t->bloomFboB, t->bloomTexB);
 
+    // Without these targets every post effect (bloom, sky bloom, shafts, grade, DoF) is off for the
+    // whole run: say which one failed.
+    if (t->dioramaFbo == 0 || t->scratchFbo == 0 || t->blurFbo == 0
+     || t->bloomFboA == 0 || t->bloomFboB == 0)
+    {
+        VITA_LOG("[VOXEL ERROR] Post targets: diorama fbo=%u tex=%u fast=%u depth=%u, scratch fbo=%u tex=%u, "
+                 "blur fbo=%u tex=%u, bloom fbo=%u/%u tex=%u/%u\n",
+                 (unsigned)t->dioramaFbo, (unsigned)t->dioramaColorTex, (unsigned)t->dioramaColorTexFast,
+                 (unsigned)t->dioramaDepthRb, (unsigned)t->scratchFbo, (unsigned)t->scratchColorTex,
+                 (unsigned)t->blurFbo, (unsigned)t->blurTex, (unsigned)t->bloomFboA, (unsigned)t->bloomFboB,
+                 (unsigned)t->bloomTexA, (unsigned)t->bloomTexB);
+    }
     return (t->dioramaFbo != 0 && t->scratchFbo != 0 && t->blurFbo != 0);
 }
 
@@ -4795,6 +4807,8 @@ bool VoxelRenderer_Init(void)
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     sDioramaFboReady = allPostReady;
+    if (!allPostReady)
+        VITA_LOG("[VOXEL ERROR] Post targets unavailable: no bloom, sky bloom, shafts, grade or DoF this run\n");
 
     // Frozen 3D+PostFX backdrop target used while pause/UI menus are open on the overworld
     sMenuBgTex = CreatePostColorTexture(VOXEL_DIORAMA_FBO_W, VOXEL_DIORAMA_FBO_H, GL_NEAREST, GL_UNSIGNED_BYTE);
@@ -6427,8 +6441,11 @@ static void Frame_BeginPasses(VoxelFrame *const f, const GLuint defaultTargetFbo
     const bool dioramaSetting = (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
     const bool isIndoor = (inst0 != NULL && inst0->indoor);
     const bool hd2dOn = (f->hd2dPreset != HD2D_PRESET_OFF);
+    // The scene goes to the post FBO for the HD-2D post effects (bloom, sky bloom, shafts, grade)
+    // or for the depth of field. The DoF option only decides the blurred bands: it used to gate
+    // every post effect, so DoF OFF silently lost bloom, sky bloom and shafts.
     const bool dioramaActive = sDioramaFboReady && (fadeAmount < 0.99f)
-                             && ((dioramaSetting && (!isIndoor || hd2dOn)) || (f->inBattle3D && hd2dOn));
+                             && (hd2dOn || (dioramaSetting && !isIndoor));
 
     if (dioramaActive)
     {
@@ -7758,7 +7775,8 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
         DrawSurfaceFx(f);
 
         // ---- PASS 5.75: World-anchored 3D Sun/Moon Rays (60 Classic, or fallback if HD-2D shaft shader unavailable) ----
-        if (!underground && (f->hd2dPreset == HD2D_PRESET_OFF || !VoxelHd2dShader_ShaftsReady()))
+        if (!underground && (f->hd2dPreset == HD2D_PRESET_OFF || !VoxelHd2dShader_ShaftsReady()
+                             || !f->dioramaActive))
         {
             const uint32_t timeMs = VitaDayNight_GetTimeMs();
             const VitaDayNightPath sunP = VitaDayNight_SunPathAt(timeMs);
@@ -7983,7 +8001,13 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     const bool hd2dOn = (f->hd2dPreset != HD2D_PRESET_OFF);
     const bool hd2dHigh = (f->hd2dPreset == HD2D_PRESET_HIGH);
     const PostRenderTargets *const pt = &sPostTargets[sPostTargetIndex];
-    const bool useBlurFbo = (!hd2dOn || hd2dHigh || f->inBattle3D);
+    // The DoF bands; with DoF OFF the pass still runs for bloom, sky bloom and shafts. The HD-2D
+    // composite leaves them out of 3D battles (its backdrop is blurred whole); the fixed-function
+    // path draws them there too, as before.
+    const bool dofSetting = !f->fly.active && (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
+    const bool dofEnabled = dofSetting && !f->inBattle3D;
+    // The wider blur (step 2) feeds only the DoF bands and the 3D battle backdrop.
+    const bool useBlurFbo = f->inBattle3D || (dofSetting && (!hd2dOn || hd2dHigh));
     const bool bloomReady = hd2dOn && (pt->bloomFboA != 0 && pt->bloomFboB != 0);
     static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 
@@ -8033,7 +8057,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
-    // 2. Wider blur -> pt->blurTex (480x272). Skipped in HD-2D LOW (60 FPS) or when menu is open.
+    // 2. Wider blur -> pt->blurTex (480x272): only for the DoF bands (not in HD-2D LOW) and the 3D battle backdrop.
     if (useBlurFbo)
     {
         const float blurStep = hd2dHigh ? 1.55f : 1.0f;
@@ -8291,7 +8315,6 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         }
         const float baseCurve = (kLutCurve[0] * day + kLutCurve[1] * dusk + kLutCurve[2] * night) / sum;
 
-        const bool dofEnabled = !f->inBattle3D && !f->fly.active && (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
         float yTop = f->playerScreenY - (hd2dHigh ? 0.11f : 0.16f);
         float yBot = f->playerScreenY + (hd2dHigh ? 0.15f : 0.16f);
         if (yTop < 0.16f) yTop = 0.16f;
@@ -8376,8 +8399,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
             glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
         }
 
-        const bool dofEnabled = !f->fly.active && (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
-        if (dofEnabled)
+        if (dofSetting)
         {
             float yTop = hd2dOn ? (f->playerScreenY - 0.16f) : (VOXEL_DOF_TOP_ROWS / 544.0f);
             float yBot = hd2dOn ? (f->playerScreenY + 0.16f) : (1.0f - VOXEL_DOF_BOTTOM_ROWS / 544.0f);
