@@ -40,14 +40,23 @@
 
 // ---------- Pockets ----------
 
+// The PYRAMID BAG is the bag on the Pyramid's floors, and in the lobby while its items are tossed
+// (UiGame_UsePyramidBag, ChooseItemsToTossFromPyramidBag; the UI's close and reset end it)
+static bool sPyramidBagForced;
+
 static bool InPyramid(void)
 {
-    return CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE;
+    return sPyramidBagForced || CurrentBattlePyramidLocation() != PYRAMID_LOCATION_NONE;
 }
 
 bool UiGame_InPyramid(void)
 {
     return InPyramid();
+}
+
+void UiGame_UsePyramidBag(bool on)
+{
+    sPyramidBagForced = on;
 }
 
 // Inside the Battle Pyramid every item goes to and comes from its own bag (battle_pyramid_bag.c)
@@ -59,6 +68,11 @@ static bool8 BagAdd(u16 item, u16 n)
 static bool8 BagRemove(u16 item, u16 n)
 {
     return InPyramid() ? RemovePyramidBagItem(item, n) : RemoveBagItem(item, n);
+}
+
+bool UiGame_BagRemove(uint16_t item, uint16_t n)
+{
+    return BagRemove(item, n);
 }
 
 int32_t UiGame_PocketItems(int32_t pocket, UiBagRow *rows, int32_t max)

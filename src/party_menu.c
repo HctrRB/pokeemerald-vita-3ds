@@ -6363,6 +6363,11 @@ void DoBattlePyramidMonsHaveHeldItem(void)
 // The player can then select to toss items from the bag or take/toss held items from the party
 void BattlePyramidChooseMonHeldItems(void)
 {
+#ifdef PLATFORM_VITA
+    // Port: the new UI's party with TAKE / TOSS over the field (the script waits)
+    if (Ui_OpenChooseMon(UI_CHOOSE_PYRAMID_ITEMS))
+        return;
+#endif
     LockPlayerFieldControls();
     FadeScreen(FADE_TO_BLACK, 0);
     CreateTask(Task_BattlePyramidChooseMonHeldItems, 10);
@@ -6540,3 +6545,142 @@ u8 PartyMenu_TutorStatusForUi(u8 slot, u8 tutor)
 {
     return CanMonLearnTMTutor(&gPlayerParty[slot], ITEM_NONE, tutor);
 }
+
+#ifdef PLATFORM_VITA
+// ---------- New UI (ui_scr_choose.c): the Battle Pyramid's held items ----------
+// PARTY_MENU_TYPE_STORE_PYRAMID_HELD_ITEMS: TAKE ITEM (CursorCb_TakeItem) and TOSS
+// (CursorCb_Toss, Task_TossHeldItem). Each returns the game's message in gStringVar4.
+
+// TAKE: 0 not holding, 1 no room, 2 taken (TryTakeMonItem)
+u8 PartyMenu_TakeHeldItemForUi(u8 slot)
+{
+    struct Pokemon *mon = &gPlayerParty[slot];
+    u16 item = GetMonData(mon, MON_DATA_HELD_ITEM);
+    u8 result = TryTakeMonItem(mon);
+
+    GetMonNickname(mon, gStringVar1);
+    CopyItemName(item, gStringVar2);
+    if (result == 0)
+        StringExpandPlaceholders(gStringVar4, gText_PkmnNotHolding);
+    else if (result == 1)
+        BufferBagFullCantTakeItemMessage(item);
+    else
+        StringExpandPlaceholders(gStringVar4, gText_ReceivedItemFromPkmn);
+    return result;
+}
+
+// TOSS, asked first: FALSE (nothing held, gStringVar4 says so) or TRUE (gStringVar4 asks)
+bool8 PartyMenu_AskTossHeldItemForUi(u8 slot)
+{
+    struct Pokemon *mon = &gPlayerParty[slot];
+    u16 item = GetMonData(mon, MON_DATA_HELD_ITEM);
+
+    if (item == ITEM_NONE)
+    {
+        GetMonNickname(mon, gStringVar1);
+        StringExpandPlaceholders(gStringVar4, gText_PkmnNotHolding);
+        return FALSE;
+    }
+    CopyItemName(item, gStringVar1);
+    StringExpandPlaceholders(gStringVar4, gText_ThrowAwayItem);
+    return TRUE;
+}
+
+// YES to the toss: the item is gone (gStringVar4: "... was thrown away.")
+void PartyMenu_TossHeldItemForUi(u8 slot)
+{
+    struct Pokemon *mon = &gPlayerParty[slot];
+    u16 item = ITEM_NONE;
+
+    CopyItemName(GetMonData(mon, MON_DATA_HELD_ITEM), gStringVar1);
+    StringExpandPlaceholders(gStringVar4, gText_ItemThrownAway);
+    SetMonData(mon, MON_DATA_HELD_ITEM, &item);
+}
+
+// ---------- New UI (ui_scr_choose.c): the Battle Frontier's half party ----------
+// PARTY_MENU_TYPE_CHOOSE_HALF (InitChooseHalfPartyForBattle): the order goes to
+// gSelectedOrderFromParty as ENTER / NO ENTRY put it there, CONFIRM checks it as
+// Task_ValidateChosenHalfParty does.
+
+void PartyMenu_BeginHalfPartyForUi(void)
+{
+    ClearSelectedPartyOrder();
+}
+
+u8 PartyMenu_HalfPartyMaxForUi(void)
+{
+    return GetMaxBattleEntries();
+}
+
+// 0 able, 1 entered, 2 not able (GetPartySlotEntryStatus)
+u8 PartyMenu_HalfPartyStatusForUi(u8 slot)
+{
+    return GetPartySlotEntryStatus((s8)slot);
+}
+
+// Its place in the order (1..), 0 if not entered
+u8 PartyMenu_HalfPartyPlaceForUi(u8 slot)
+{
+    u8 i;
+
+    for (i = 0; i < ARRAY_COUNT(gSelectedOrderFromParty); i++)
+        if (gSelectedOrderFromParty[i] == slot + 1)
+            return i + 1;
+    return 0;
+}
+
+// The order's place names (PARTYBOX_DESC_FIRST..): "FIRST"...
+const u8 *PartyMenu_HalfPartyPlaceNameForUi(u8 place)
+{
+    if (place < 1 || place > 4)
+        return gText_EmptyString2;
+    return sDescriptionStringTable[PARTYBOX_DESC_FIRST + place - 1];
+}
+
+// ENTER (CursorCb_Enter) or NO ENTRY (CursorCb_NoEntry) for an able POKéMON. FALSE: the
+// order is full, gStringVar4 says how many may enter
+bool8 PartyMenu_HalfPartyToggleForUi(u8 slot)
+{
+    u8 maxBattlers = GetMaxBattleEntries();
+    u8 i, j;
+
+    for (i = 0; i < maxBattlers && i < ARRAY_COUNT(gSelectedOrderFromParty); i++)
+    {
+        if (gSelectedOrderFromParty[i] == slot + 1)
+        {
+            for (j = i; j < maxBattlers - 1 && j + 1 < ARRAY_COUNT(gSelectedOrderFromParty); j++)
+                gSelectedOrderFromParty[j] = gSelectedOrderFromParty[j + 1];
+            gSelectedOrderFromParty[j] = 0;
+            return TRUE;
+        }
+    }
+    for (i = 0; i < maxBattlers && i < ARRAY_COUNT(gSelectedOrderFromParty); i++)
+    {
+        if (gSelectedOrderFromParty[i] == 0)
+        {
+            gSelectedOrderFromParty[i] = slot + 1;
+            return TRUE;
+        }
+    }
+    ConvertIntToDecimalStringN(gStringVar1, maxBattlers, STR_CONV_MODE_LEFT_ALIGN, 1);
+    StringExpandPlaceholders(gStringVar4, gText_NoMoreThanVar1Pkmn);
+    return FALSE;
+}
+
+// CONFIRM: NULL when the order can go, else the game's reason (expanded)
+const u8 *PartyMenu_HalfPartyCheckForUi(void)
+{
+    u8 msgId = CheckBattleEntriesAndGetMessage();
+
+    if (msgId == 0xFF)
+        return NULL;
+    StringExpandPlaceholders(gStringVar4, sActionStringTable[msgId]);
+    return gStringVar4;
+}
+
+// CANCEL asks this (GetFacilityCancelString); YES clears the order
+const u8 *PartyMenu_HalfPartyCancelTextForUi(void)
+{
+    return GetFacilityCancelString();
+}
+#endif

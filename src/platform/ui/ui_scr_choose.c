@@ -1,7 +1,10 @@
 // "Choose a POKéMON" opened by game scripts (party_menu.c specials) instead of the GBA party
 // screen. Each kind is a row of sKinds: what it shows (header, help, tags, which POKéMON can be
 // chosen) and what choosing sets for the script that waits after `waitstate`. A new kind is a new
-// row, not another branch.
+// row, not another branch. Optional parts of a row: an action menu on the chosen POKéMON (the
+// Battle Pyramid's TAKE / TOSS), a CONFIRM for a choice of several (the Battle Frontier's half
+// party) and a question before leaving (its "Cancel the challenge?"); their rules and texts are
+// party_menu.c's own (PartyMenu_*ForUi).
 
 #include <stdio.h>
 #include "ui_internal.h"
@@ -17,12 +20,25 @@
 #include "pokemon.h"
 #include "script.h"
 #include "sound.h"
+#include "string_util.h"
+#include "constants/items.h"
 #include "constants/moves.h"
 #include "constants/party_menu.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
 
 extern u8 PartyMenu_TutorStatusForUi(u8 slot, u8 tutor);
+extern u8 PartyMenu_TakeHeldItemForUi(u8 slot);
+extern bool8 PartyMenu_AskTossHeldItemForUi(u8 slot);
+extern void PartyMenu_TossHeldItemForUi(u8 slot);
+extern void PartyMenu_BeginHalfPartyForUi(void);
+extern u8 PartyMenu_HalfPartyMaxForUi(void);
+extern u8 PartyMenu_HalfPartyStatusForUi(u8 slot);
+extern u8 PartyMenu_HalfPartyPlaceForUi(u8 slot);
+extern const u8 *PartyMenu_HalfPartyPlaceNameForUi(u8 place);
+extern bool8 PartyMenu_HalfPartyToggleForUi(u8 slot);
+extern const u8 *PartyMenu_HalfPartyCheckForUi(void);
+extern const u8 *PartyMenu_HalfPartyCancelTextForUi(void);
 
 #define CARD_X 22
 #define CARD_Y 66
@@ -37,15 +53,42 @@ typedef struct
     const char *foot;                            // its footer guide
     bool eggOk;                                  // an EGG can be chosen (the script answers it)
     const char *(*tag)(int32_t slot, bool *ok);  // chip by the POKéMON and whether it can be chosen
+    const char *refused;                         // said when a POKéMON can't be chosen
     void (*prepare)(void);                       // once when the screen opens (NULL: nothing)
     void (*defaults)(void);                      // the results if nothing is chosen
     bool (*chosen)(int32_t slot);                // sets the results; true: the screen closes
+    void (*action)(int32_t slot, int32_t id);    // a choice of the action menu chosen() opened
+    bool (*confirm)(void);                       // the button confirms a choice of several (true: closes)
+    const u8 *(*cancelAsk)(void);                // asked before leaving with nothing (YES: defaults again)
 } ChooseKind;
+
+enum { ASK_NONE, ASK_TOSS, ASK_CANCEL };
 
 static int sKind;
 static UiList sList;
-static UiMenu sForget;
+static UiMenu sForget, sAction, sYesNo;
+static int32_t sAsk;
+static char sAskText[128];
 static uint32_t sFrame;
+
+// The game's text (gStringVar4 and the like) as a toast
+static void SayGame(const u8 *text, bool ok)
+{
+    char buf[128];
+    UiGame_Text(text, buf, sizeof(buf));
+    PlaySE(ok ? SE_SELECT : SE_FAILURE);
+    UiKit_Toast("%s", buf);
+}
+
+static void Ask(int32_t kind, const u8 *text)
+{
+    UiGame_Text(text, sAskText, sizeof(sAskText));
+    sAsk = kind;
+    UiMenu_Open(&sYesNo, "POKéMON", 700, 330, 220);
+    UiMenu_Add(&sYesNo, "YES", 1);
+    UiMenu_Add(&sYesNo, "NO", UI_MENU_CANCEL);
+    sYesNo.list.sel = 0;                             // YES first, as PartyMenuDisplayYesNoMenu
+}
 
 static void Resume(void)
 {
@@ -174,18 +217,116 @@ static bool RelearnerChosen(int32_t slot)
     return SlotChosen(slot);
 }
 
+// Battle Pyramid, a full bag on leaving (BattlePyramidChooseMonHeldItems): the held items, TAKE
+// ITEM or TOSS each (PARTY_MENU_TYPE_STORE_PYRAMID_HELD_ITEMS); nothing is chosen for the script
+enum { PYR_TAKE = 1, PYR_TOSS };
+
+static const char *HeldItemTag(int32_t slot, bool *ok)
+{
+    static char sBuf[24];
+    UiMon m;
+    UiGame_Mon(slot, &m);
+    *ok = !m.egg;
+    if (m.egg || m.item == ITEM_NONE)
+        return m.egg ? NULL : "NO ITEM";
+    UiGame_ItemName(m.item, sBuf, sizeof(sBuf));
+    return sBuf;
+}
+
+static bool HeldItemChosen(int32_t slot)
+{
+    UiMon m;
+    UiGame_Mon(slot, &m);
+    UiMenu_Open(&sAction, m.name, 348, 150, 300);
+    UiMenu_Add(&sAction, "TAKE ITEM", PYR_TAKE);
+    UiMenu_Add(&sAction, "TOSS", PYR_TOSS);
+    UiMenu_Add(&sAction, "CANCEL", UI_MENU_CANCEL);
+    return false;
+}
+
+static void HeldItemAction(int32_t slot, int32_t id)
+{
+    if (id == PYR_TAKE)
+        SayGame(gStringVar4, PartyMenu_TakeHeldItemForUi((u8)slot) == 2);
+    else if (id == PYR_TOSS)
+    {
+        if (PartyMenu_AskTossHeldItemForUi((u8)slot))
+            Ask(ASK_TOSS, gStringVar4);
+        else
+            SayGame(gStringVar4, false);
+    }
+}
+
+// Battle Frontier and Tents (ChoosePartyForBattleFrontier): the POKéMON that enter, in order;
+// VAR_RESULT TRUE once CONFIRM passes the game's checks (CB2_ReturnFromChooseBattleFrontierParty)
+static void HalfPartyDefaults(void)
+{
+    PartyMenu_BeginHalfPartyForUi();
+    gSpecialVar_Result = FALSE;
+}
+
+static const char *HalfPartyTag(int32_t slot, bool *ok)
+{
+    static char sBuf[16];
+    const u8 status = PartyMenu_HalfPartyStatusForUi((u8)slot);
+    *ok = status != 2;
+    if (status == 2)
+        return "NOT ABLE";
+    const u8 place = PartyMenu_HalfPartyPlaceForUi((u8)slot);
+    if (place == 0)
+        return "ABLE";
+    UiGame_Text(PartyMenu_HalfPartyPlaceNameForUi(place), sBuf, sizeof(sBuf));
+    return sBuf;
+}
+
+static bool HalfPartyChosen(int32_t slot)
+{
+    if (!PartyMenu_HalfPartyToggleForUi((u8)slot))
+        SayGame(gStringVar4, false);                 // "No more than N POKéMON may enter."
+    return false;
+}
+
+static bool HalfPartyConfirm(void)
+{
+    const u8 *why = PartyMenu_HalfPartyCheckForUi();
+    if (why != NULL)
+    {
+        SayGame(why, false);
+        return false;
+    }
+    gSpecialVar_Result = TRUE;
+    return true;
+}
+
 static const ChooseKind sKinds[UI_CHOOSE_COUNT] = {
-    [UI_CHOOSE_TUTOR]     = { NULL, "Choose who will learn the move. Those marked ABLE can learn it.", "TEACH", "Teach",
-                              false, TutorTag, NULL, TutorDefaults, TutorChosen },
-    [UI_CHOOSE_DAYCARE]   = { "DAY CARE", "Choose the POKéMON to leave at the DAY CARE.", "CHOOSE", "Choose",
-                              false, DaycareTag, NULL, SlotDefaults, SlotChosen },
+    [UI_CHOOSE_TUTOR] = {
+        .help = "Choose who will learn the move. Those marked ABLE can learn it.", .button = "TEACH", .foot = "Teach",
+        .tag = TutorTag, .refused = "It can't learn that move.", .defaults = TutorDefaults, .chosen = TutorChosen },
+    [UI_CHOOSE_DAYCARE] = {
+        .header = "DAY CARE", .help = "Choose the POKéMON to leave at the DAY CARE.", .button = "CHOOSE", .foot = "Choose",
+        .tag = DaycareTag, .refused = "An EGG can't be chosen.", .defaults = SlotDefaults, .chosen = SlotChosen },
     // ChoosePartyMon (PARTY_ACTION_CHOOSE_AND_CLOSE) takes an EGG: the scripts (Name Rater, Move
     // Deleter, trades) answer it themselves
-    [UI_CHOOSE_ANY]       = { NULL, "Choose a POKéMON.", "CHOOSE", "Choose", true, NULL, NULL, SlotDefaults, SlotChosen },
-    [UI_CHOOSE_CONTEST]   = { "CONTEST", "Choose the POKéMON that will enter the CONTEST.", "ENTER", "Enter",
-                              true, NULL, NULL, ContestDefaults, ContestChosen },
-    [UI_CHOOSE_RELEARNER] = { "MOVE RELEARNER", "Choose the POKéMON that will remember a move.", "CHOOSE", "Choose",
-                              true, RelearnerTag, RelearnerPrepare, SlotDefaults, RelearnerChosen },
+    [UI_CHOOSE_ANY] = {
+        .help = "Choose a POKéMON.", .button = "CHOOSE", .foot = "Choose", .eggOk = true,
+        .defaults = SlotDefaults, .chosen = SlotChosen },
+    [UI_CHOOSE_CONTEST] = {
+        .header = "CONTEST", .help = "Choose the POKéMON that will enter the CONTEST.", .button = "ENTER", .foot = "Enter",
+        .eggOk = true, .defaults = ContestDefaults, .chosen = ContestChosen },
+    [UI_CHOOSE_RELEARNER] = {
+        .header = "MOVE RELEARNER", .help = "Choose the POKéMON that will remember a move.", .button = "CHOOSE", .foot = "Choose",
+        .eggOk = true, .tag = RelearnerTag, .prepare = RelearnerPrepare, .defaults = SlotDefaults, .chosen = RelearnerChosen },
+    [UI_CHOOSE_PYRAMID_ITEMS] = {
+        .header = "BATTLE PYRAMID",
+        .help = "The PYRAMID BAG is full. Choose a POKéMON to take or toss the item it holds.",
+        .button = "CHOOSE", .foot = "Choose", .tag = HeldItemTag, .refused = "An EGG holds no item.",
+        .defaults = SlotDefaults, .chosen = HeldItemChosen, .action = HeldItemAction },
+    [UI_CHOOSE_FRONTIER_PARTY] = {
+        .header = "BATTLE FRONTIER",
+        .help = "Choose the POKéMON that will enter, in order: choose one again to take it out. Then CONFIRM.",
+        .button = "CONFIRM", .foot = "Enter / out", .tag = HalfPartyTag, .refused = "That POKéMON can't enter.",
+        .defaults = HalfPartyDefaults, .chosen = HalfPartyChosen, .confirm = HalfPartyConfirm,
+        .cancelAsk = PartyMenu_HalfPartyCancelTextForUi },
 };
 
 bool Ui_OpenChooseMon(int kind)
@@ -214,14 +355,59 @@ static void Enter(void)
 {
     sList.sel = sList.first = 0;
     sForget.open = false;
+    sAction.open = false;
+    sYesNo.open = false;
+    sAsk = ASK_NONE;
     UiList_Reset(&sList, UiGame_PartyCount(), 6);
     if (sKinds[sKind].prepare != NULL)
         sKinds[sKind].prepare();
 }
 
+// The YES / NO of a question (TOSS, leaving); false: the screen closes
+static bool UpdateAsk(const UiInput *in)
+{
+    const int32_t id = UiMenu_Update(&sYesNo, in);
+    if (id == UI_MENU_NONE)
+        return true;
+    const int32_t kind = sAsk;
+    sAsk = ASK_NONE;
+    if (id != 1)
+        return true;
+    if (kind == ASK_TOSS)
+    {
+        PartyMenu_TossHeldItemForUi((u8)sList.sel);
+        SayGame(gStringVar4, true);
+        return true;
+    }
+    sKinds[sKind].defaults();                         // ASK_CANCEL: nothing chosen
+    return false;
+}
+
+static bool Leave(void)
+{
+    const ChooseKind *k = &sKinds[sKind];
+    PlaySE(SE_SELECT);
+    if (k->cancelAsk != NULL)
+    {
+        Ask(ASK_CANCEL, k->cancelAsk());
+        return true;
+    }
+    return false;                                     // nothing chosen: the defaults stay
+}
+
 static bool Update(const UiInput *in)
 {
     sFrame++;
+    const ChooseKind *k = &sKinds[sKind];
+    if (sAsk != ASK_NONE)
+        return UpdateAsk(in);
+    if (sAction.open)
+    {
+        const int32_t id = UiMenu_Update(&sAction, in);
+        if (id != UI_MENU_NONE && id != UI_MENU_CANCEL && k->action != NULL)
+            k->action(sList.sel, id);
+        return true;
+    }
     if (sForget.open)
     {
         const int32_t id = UiMenu_Update(&sForget, in);
@@ -245,12 +431,17 @@ static bool Update(const UiInput *in)
         return true;
     }
     if ((in->pressed & VITA_BTN_CIRCLE) || UiHit(in, 364, 436, 200, 40))
+        return Leave();
+    // A choice of several: the button (or START, the GBA's way to CONFIRM) checks it
+    if (k->confirm != NULL && ((in->pressed & VITA_BTN_START) || UiHit(in, 580, 436, 200, 40)))
     {
+        if (!k->confirm())
+            return true;
         PlaySE(SE_SELECT);
-        return false;                                   // nothing chosen: the defaults stay
+        return false;
     }
     const int32_t a = UiList_Update(&sList, in, CARD_X, CARD_Y, CARD_W, CARD_H, true);
-    if (a < 0 && !UiHit(in, 580, 436, 200, 40))
+    if (a < 0 && (k->confirm != NULL || !UiHit(in, 580, 436, 200, 40)))
         return true;
     const int32_t slot = a >= 0 ? a : sList.sel;
     bool ok;
@@ -258,11 +449,11 @@ static bool Update(const UiInput *in)
     if (!ok)
     {
         PlaySE(SE_FAILURE);
-        UiKit_Toast(sKind == UI_CHOOSE_TUTOR ? "It can't learn that move." : "An EGG can't be chosen.");
+        UiKit_Toast("%s", k->refused != NULL ? k->refused : "That POKéMON can't be chosen.");
         return true;
     }
     PlaySE(SE_SELECT);
-    return !sKinds[sKind].chosen(slot);
+    return !k->chosen(slot);
 }
 
 static void Build(void)
@@ -308,9 +499,20 @@ static void Build(void)
     int32_t fx = 16;
     UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, k->foot);
     UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Cancel");
+    if (k->confirm != NULL)
+        UiW_FooterKey(&fx, "START", k->button);
     UiKit_FooterClock();
     if (sForget.open)
         UiMenu_Draw(&sForget);
+    if (sAction.open)
+        UiMenu_Draw(&sAction);
+    if (sAsk != ASK_NONE)
+    {
+        UiDraw_Darken(1, 3);
+        UiW_DialogBox(48, UI_SCREEN_H - 24 - 124, UI_SCREEN_W - 96, 124);
+        UiW_TextWrapped(76, UI_SCREEN_H - 24 - 112, UI_SCREEN_W - 152, 40, sAskText, UI_COL_INK, 2);
+        UiMenu_Draw(&sYesNo);
+    }
 }
 
 const UiScreen gUiChooseScreen = { Enter, Update, Build, NULL };

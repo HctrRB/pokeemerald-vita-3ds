@@ -2,6 +2,9 @@
 #include "battle.h"
 #include "battle_controllers.h"
 #include "battle_pyramid_bag.h"
+#ifdef PLATFORM_VITA
+#include "platform/ui.h"
+#endif
 #include "bg.h"
 #include "decompress.h"
 #include "event_data.h"
@@ -393,6 +396,11 @@ static void UNUSED OpenBattlePyramidBagInBattle(void)
 // make room.
 void ChooseItemsToTossFromPyramidBag(void)
 {
+#ifdef PLATFORM_VITA
+    // Port: the new UI's bag on the PYRAMID BAG, TOSS only, over the field (the script waits)
+    if (Ui_OpenPyramidBagToss())
+        return;
+#endif
     LockPlayerFieldControls();
     FadeScreen(FADE_TO_BLACK, 0);
     CreateTask(Task_ChooseItemsToTossFromPyramidBag, 10);

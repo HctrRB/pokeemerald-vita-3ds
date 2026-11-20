@@ -48,8 +48,9 @@ bool UiGame_OpenBattleMenu(const void *screen)
 
 static bool CanOpenInBattle(void)
 {
-    // The PYRAMID bag keeps the old screen; multi battles use the party in multi mode (2026-11-13)
-    return Ui_IsEnabled() && !Ui_IsOpen() && CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE;
+    // Inside the Battle Pyramid it is the PYRAMID BAG (UiGame_PocketItems, UiGame_BagRemove);
+    // multi battles use the party in multi mode (2026-11-13)
+    return Ui_IsEnabled() && !Ui_IsOpen();
 }
 
 bool Ui_OpenBattleBag(void)
@@ -146,7 +147,7 @@ UiBattleUse UiGame_BattleUse(uint16_t item, char *msg, size_t cap)
             snprintf(msg, cap, "The BOX is full! You can't throw it.");
             return UI_BUSE_FAIL;
         }
-        RemoveBagItem(item, 1);
+        UiGame_BagRemove(item, 1);
     }
     else if (fn == ItemUseInBattle_StatIncrease)
     {
@@ -156,7 +157,7 @@ UiBattleUse UiGame_BattleUse(uint16_t item, char *msg, size_t cap)
             snprintf(msg, cap, "It won't have any effect.");
             return UI_BUSE_FAIL;
         }
-        RemoveBagItem(item, 1);
+        UiGame_BagRemove(item, 1);
     }
     else if (fn == ItemUseInBattle_Escape)
     {
@@ -165,7 +166,7 @@ UiBattleUse UiGame_BattleUse(uint16_t item, char *msg, size_t cap)
             snprintf(msg, cap, "This isn't the time to use that!");
             return UI_BUSE_FAIL;
         }
-        RemoveBagItem(item, 1);
+        UiGame_BagRemove(item, 1);
     }
     else
         return UI_BUSE_TARGET;                         // medicine, PP, berries: on which POKÃ©MON
@@ -190,7 +191,7 @@ UiItemResult UiGame_BattleItemOnMon(int32_t slot, uint16_t item, int32_t moveIdx
         return UI_ITEM_FAIL;
     }
     if (item != ITEM_BLUE_FLUTE && item != ITEM_RED_FLUTE && item != ITEM_YELLOW_FLUTE)
-        RemoveBagItem(item, 1);
+        UiGame_BagRemove(item, 1);
     gSpecialVar_ItemId = item;
     return UI_ITEM_CLOSE;
 }

@@ -1,4 +1,7 @@
 #include "global.h"
+#ifdef PLATFORM_VITA
+#include "platform/ui.h"
+#endif
 #include "battle.h"
 #include "battle_gfx_sfx_util.h"
 #include "berry.h"
@@ -187,6 +190,11 @@ static void CB2_ReturnFromChooseHalfParty(void)
 
 void ChoosePartyForBattleFrontier(void)
 {
+#ifdef PLATFORM_VITA
+    // Port: the new UI's half-party choice over the field (the script waits, VAR_RESULT set)
+    if (Ui_OpenChooseMon(UI_CHOOSE_FRONTIER_PARTY))
+        return;
+#endif
     gMain.savedCallback = CB2_ReturnFromChooseBattleFrontierParty;
     InitChooseHalfPartyForBattle(gSpecialVar_0x8004 + 1);
 }

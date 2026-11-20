@@ -76,8 +76,11 @@ void Ui_HideZoneSign(void);
 // Core 1, from the script specials of party_menu.c: the new "choose a POKéMON" screen. Sets the
 // same results as the GBA screen (VAR_RESULT for the tutor, VAR_0x8004 for the others) and
 // resumes the script. False if the new UI is off (the GBA screen opens).
-enum { UI_CHOOSE_TUTOR, UI_CHOOSE_DAYCARE, UI_CHOOSE_ANY, UI_CHOOSE_CONTEST, UI_CHOOSE_RELEARNER, UI_CHOOSE_COUNT };
+enum { UI_CHOOSE_TUTOR, UI_CHOOSE_DAYCARE, UI_CHOOSE_ANY, UI_CHOOSE_CONTEST, UI_CHOOSE_RELEARNER, UI_CHOOSE_PYRAMID_ITEMS,
+       UI_CHOOSE_FRONTIER_PARTY, UI_CHOOSE_COUNT };
 bool Ui_OpenChooseMon(int kind);
+// The Battle Pyramid lobby's full bag (ChooseItemsToTossFromPyramidBag): the PYRAMID BAG, TOSS only
+bool Ui_OpenPyramidBagToss(void);
 
 // Battle controller: the new BAG / POKEMON instead of the old Vita UI (false: not taken)
 // Naming screen (naming_screen.c DoNamingScreen): true when the new UI took it; it writes the name

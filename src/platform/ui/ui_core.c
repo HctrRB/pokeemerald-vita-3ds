@@ -156,12 +156,11 @@ static void ReadInput(void)
     sPrevTouch = touch;
 }
 
-// Places whose START menu is the game's own (link and Union rooms, the Battle Pike and Pyramid):
-// their entries (REST, RETIRE, link cards...) and rules are not the hub's
+// Places whose START menu is the game's own (link and Union rooms, the Battle Pike): their entries
+// (link cards...) and rules are not the hub's. The Battle Pyramid's (REST, RETIRE) are the hub's.
 bool Ui_OwnsFieldStart(void)
 {
-    return Ui_IsEnabled() && !IsOverworldLinkActive() && !InUnionRoom() && !InMultiPartnerRoom() && !InBattlePike()
-        && CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE;
+    return Ui_IsEnabled() && !IsOverworldLinkActive() && !InUnionRoom() && !InMultiPartnerRoom() && !InBattlePike();
 }
 
 static bool CanOpenFromField(void)
@@ -445,6 +444,7 @@ static void Close(void)
     sHosted = false;
     UiGame_BattleMenuEnd();
     UiGame_ViewParty();
+    UiGame_UsePyramidBag(false);
     UiStall_Closed();
     UiDraw_Begin();
     UiDraw_Publish(0.0f);
@@ -454,6 +454,7 @@ void Ui_OnReset(void)
 {
     __atomic_store_n(&sOpen, false, __ATOMIC_RELAXED);
     UiGame_ViewParty();
+    UiGame_UsePyramidBag(false);
     sDepth = 0;
     sCloseRequested = false;
     sFromScript = false;

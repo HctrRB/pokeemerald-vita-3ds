@@ -15,6 +15,9 @@
 #include "global.h"
 #include "item_menu.h"
 #include "berry_tag_screen.h"
+#include "main.h"
+#include "overworld.h"
+#include "script.h"
 #include "mail.h"
 #include "sound.h"
 #include "constants/item.h"
@@ -46,6 +49,7 @@ static UiBagRow sRows[MAX_ROWS];
 static int32_t sCount;
 static int32_t sGiveTo = -1;
 static bool sChoose;                       // CHOOSE mode (Ui_OpenBagChoice)
+static bool sTossOnly, sTossOnlyNext;      // TOSS only: the PYRAMID BAG's full-bag step, set once by Ui_OpenPyramidBagToss
 static int32_t sChoosePocket = POCKETS_COUNT;   // < POCKETS_COUNT: that pocket only
 static char sChooseName[16];               // the location's action (SHOW, GIVE...), "" for none
 static int32_t sSort;
@@ -98,6 +102,11 @@ static void BuildActs(uint16_t item)
         if (ItemMenu_CanChooseForUi(item)) AddAct(ACT_CHOOSE);
         return;
     }
+    if (sTossOnly)
+    {
+        AddAct(ACT_TOSS);                                            // sMenuActionIds_ChooseToss
+        return;
+    }
     if (sGiveTo >= 0)
     {
         if (UiGame_CanGive(item)) AddAct(ACT_GIVE);
@@ -124,6 +133,8 @@ static void Enter(void)
 {
     if (!UiCore_IsHostCallback())
         sChoose = false;                // CHOOSE mode is only ever hosted (Ui_OpenBagChoice)
+    sTossOnly = sTossOnlyNext;          // only the screen Ui_OpenPyramidBagToss opened
+    sTossOnlyNext = false;
     sPocket = FixedPocket() ? sChoosePocket : ITEMS_POCKET;   // menus always open on their first tab
     sMenu.open = false;
     sQty.open = false;
@@ -781,5 +792,23 @@ bool Ui_OpenBagChoice(uint8_t pocket)
     if (action != NULL)
         UiGame_Text(action, sChooseName, sizeof(sChooseName));
     UiCore_OpenHosted(&gUiBagScreen, NULL);
+    return true;
+}
+
+// The Battle Pyramid lobby with a full PYRAMID BAG (ChooseItemsToTossFromPyramidBag): the
+// PYRAMID BAG with TOSS only, over the field; closing it lets the script go on
+static void AfterPyramidToss(void)
+{
+    ScriptContext_Enable();
+}
+
+bool Ui_OpenPyramidBagToss(void)
+{
+    if (!Ui_IsEnabled() || Ui_IsOpen() || gMain.callback2 != CB2_Overworld)
+        return false;
+    sGiveTo = -1;
+    sTossOnlyNext = true;
+    UiGame_UsePyramidBag(true);
+    UiCore_OpenFromScript(&gUiBagScreen, AfterPyramidToss);
     return true;
 }

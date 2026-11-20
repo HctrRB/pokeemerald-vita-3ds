@@ -8,10 +8,12 @@ The port's menus, dialogue boxes, battle HUD and the scenes it replaces are the 
 menu system: the old 3DS-style Vita menu (`vita_ui*.c`) was removed on 2026-11-13. Where the new UI
 has no screen, or cannot open one, the game's own GBA screen is used:
 
-- START in link and Union rooms, the Battle Pike and the Battle Pyramid opens the game's START
-  menu (`Ui_OwnsFieldStart`): its entries there (REST, RETIRE, link cards) are not the hub's.
-- The battle bag in the Battle Pyramid, and any battle bag or party screen the UI cannot open,
-  fall back to the game's (`battle_controller_player.c`).
+- START in link and Union rooms and the Battle Pike opens the game's START menu
+  (`Ui_OwnsFieldStart`): its entries there (link cards...) are not the hub's. In the Battle Pyramid
+  the hub is the START menu, with the Pyramid's entries (see "Battle Pyramid").
+- Any battle bag or party screen the UI cannot open falls back to the game's
+  (`battle_controller_player.c`).
+- The link half-party choice (Cable Club, Union Room) stays the game's.
 - Decoration shops (`MART_TYPE_DECOR` / `MART_TYPE_DECOR2`) are BUY-only in the new UI, as in the game.
 - OPTION on the title menu opens the new options screen hosted (`Ui_OpenOptionsHosted`).
 - If the UI atlas cannot be loaded, every menu is the game's.
@@ -43,10 +45,10 @@ it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture (fixed atlas `as
 ### Opening modes (`ui_core.c`)
 
 - **Field overlay (`Open`)**: opened from the overworld with START / Square (`LockPlayerFieldControls`).
-- **Script-driven (`UiCore_OpenFromScript`)**: opened by field script tasks (Poké Mart and decoration shops, PC boxes, player's PC, the "choose a POKéMON" kinds of `ui_scr_choose.c` — tutor, Day Care, generic, contest entry, Move Relearner — each a row of its `sKinds` table, and Mr. Stone's PokéNav tutorial, `Ui_OpenPokenavTutorial` from `OpenPokenavForTutorial`, on MATCH CALL until a call is made); the game task waits for `!Ui_IsOpen()`.
+- **Script-driven (`UiCore_OpenFromScript`)**: opened by field script tasks (Poké Mart and decoration shops, PC boxes, player's PC, the "choose a POKéMON" kinds of `ui_scr_choose.c` — tutor, Day Care, generic, contest entry, Move Relearner, the Battle Pyramid's held items, the Battle Frontier's half party — each a row of its `sKinds` table, the Battle Pyramid lobby's full bag, `Ui_OpenPyramidBagToss`, and Mr. Stone's PokéNav tutorial, `Ui_OpenPokenavTutorial` from `OpenPokenavForTutorial`, on MATCH CALL until a call is made); the game task waits for `!Ui_IsOpen()`.
 - **Hosted full-screen (`UiCore_OpenHosted` / `CB2_UiHost`)**: replaces a GBA scene run from `gMain.callback2` (naming screen, Easy Chat — every type; the rules of the Bard's song and the Quiz Lady's screens come from `easy_chat.c`'s `EasyChat_Ui*` —, the wall maps of Hoenn, `Ui_OpenTownMap` from `FieldShowRegionMap`, as the PokéNav's map only, Berry Blender / Berry Crush choice, title-menu options, the Pokéblock case of the Safari feeder and the Contest Lady, forget a move — also with no new move for the Move Deleter —, the Move Relearner, and the bag's CHOOSE mode for the bags scripts open, `Ui_OpenBagChoice` from `GoToBagMenu`, whose rules stay in `item_menu.c`'s `ItemMenu_*ForUi`) while keeping GBA sprites and tasks alive and running scene resets before opening.
 - **To a GBA scene and back (`UiCore_CloseToScene`, `UiCore_CloseToSceneInWindow`, `UiCore_ReopenAfterField`)**: screens on the field hand over to a GBA scene (the Pokéblock eating scene, the berry tag of the bag's CHECK TAG, the recorded battle of the trainer card's RECORD page); the whole stack of screens is kept and opens again as it was when the field comes back (each screen's `resume` refreshes its data). In a window (feeding from the PokéNav CONDITION tab) the scene is drawn in `UI_SCENE_WIN_*` (`GameFrameOverlay.gbaWindow`, `RenderGameTexture`) inside the theme's frame.
-- **Battle menu (`UiGame_OpenBattleMenu`)**: opened over the battle (bag, party, the Safari battle's Pokéblock case, and the Pokédex page after a catch, `Ui_OpenCaughtDexPage` from `Cmd_displaydexinfo`); the battle waits for `!Ui_IsOpen()`.
+- **Battle menu (`UiGame_OpenBattleMenu`)**: opened over the battle (bag — the PYRAMID BAG in the Battle Pyramid —, party, the Safari battle's Pokéblock case, and the Pokédex page after a catch, `Ui_OpenCaughtDexPage` from `Cmd_displaydexinfo`); the battle waits for `!Ui_IsOpen()`.
 
 ### Themes (`ui_theme.c`)
 
@@ -105,6 +107,25 @@ With `FLAG_SYS_FRONTIER_PASS` the trainer card adds the pass's MAP (the map comp
 pass's own graphics, `UiSpr_FrontierMap`, each facility marked and described from
 `FrontierPass_LandmarkForUi`) and RECORD (the recorded battle, played by
 `FrontierPass_PlayRecordForUi` through `UiCore_CloseToScene`; the card opens again on that page).
+
+### Battle Pyramid (`ui_scr_hub.c`, `ui_scr_bag.c`, `ui_scr_choose.c`)
+
+The hub is the START menu on the Pyramid's floors with the game's entries (`BuildBattlePyramidStartMenu`):
+POKéMON, BAG, the trainer card, REST (the save, then `SoftResetInBattlePyramid` once it is safe),
+RETIRE (`gText_BattlePyramidConfirmRetire`, then the `BattlePyramid_Retire` script) and OPTION; the
+floor (`StartMenu_PyramidFloorForUi`) takes the REPEL capsule. The bag there is the PYRAMID BAG
+(`UiGame_PocketItems`, `UiGame_BagRemove`), in the field and in battle. Leaving with a full bag, the
+lobby's script opens the PYRAMID BAG with TOSS only (`UiGame_UsePyramidBag` off the floors) and the
+party with TAKE ITEM / TOSS for the held items (party_menu.c's `PartyMenu_TakeHeldItemForUi` and the
+toss pair).
+
+### Battle Frontier half party (`ui_scr_choose.c`)
+
+`ChoosePartyForBattleFrontier` (the Frontier facilities and the Battle Tents) opens the choose screen
+in its half-party kind: choosing an able POKéMON enters it or takes it out of the order, CONFIRM (or
+START) runs the game's checks and ○ asks the facility's cancel question. Everything goes through
+party_menu.c (`PartyMenu_HalfParty*ForUi`, `gSelectedOrderFromParty`), so VAR_RESULT and the order
+are what the GBA screen leaves.
 
 ## Game features behind the UI
 

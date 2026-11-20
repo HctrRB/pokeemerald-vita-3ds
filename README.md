@@ -87,7 +87,7 @@ Drawn natively at 960×544 over the 3D world. Every screen works with the button
   (level-up, HM/TM, Move Tutor).
 - **Battle**: HUD with health plates, party balls, commands, moves with PP and type, targets in
   double battles, YES / NO, level-up stats and the Safari Zone; bag and party in battle (multi
-  battles included); the Battle Pyramid bag.
+  battles included); the Battle Pyramid bag, also in the field and its "bag full" steps.
 - **Field**: dialogue box, YES / NO, choice lists (PC menus, NPC questions), money box, item
   obtained, PokéNav calls and zone signs, plus dialogue mirrors in 2D evolution, egg-hatch and
   trade scenes.
@@ -133,6 +133,9 @@ These parts are built, but have not been checked on the console yet:
 - The summary of a boxed POKéMON in the PC, the Bard's song and the Quiz Lady in the new Easy Chat,
   the wall maps and Mr. Stone's PokéNav tutorial in the new PokéNav, and the Frontier Pass's MAP and
   RECORD as pages of the trainer card.
+- The Battle Pyramid in the new UI: its START menu (REST, RETIRE, the floor), the PYRAMID BAG in the
+  field and in battle, and the full-bag steps on leaving (toss from the bag, take or toss held
+  items); the Battle Frontier and Battle Tents half-party choice.
 - The battle fixes for Wally's battle (#8) and Gyms 6 and 7 (Natural Cure, double battle targets).
 - The GRAPHICS tab (each HD-2D level with 30 and 60 FPS) and the night street lamps.
 - The Flash darkness in 3D (Dewford Gym, Battle Pyramid), and the battle HUD in the Battle Palace
@@ -142,10 +145,11 @@ These parts are built, but have not been checked on the console yet:
 
 ### Known issues and gaps
 
+What has and has not been checked on a Vita yet, screen by screen:
+[docs/guides/UI_HARDWARE_TESTS.md](docs/guides/UI_HARDWARE_TESTS.md).
+
 Screens still on the GBA interface:
 
-- Battle Frontier party choice.
-- The Battle Pyramid bag inside battles and its "bag full: choose what to drop" step.
 - Link and recorded battles, Wally's catching tutorial and the Battle Arena judgment keep the
   GBA battle HUD.
 - Other screens may be missing too: give feedback on the ones you find.

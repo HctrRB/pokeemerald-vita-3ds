@@ -17,7 +17,10 @@
 #include "battle_pyramid.h"
 #include "event_data.h"
 #include "pokedex.h"
+#include "event_scripts.h"
 #include "safari_zone.h"
+#include "script.h"
+#include "strings.h"
 #include "sound.h"
 #include "constants/battle_frontier.h"
 #include "constants/flags.h"
@@ -25,7 +28,11 @@
 #include "constants/songs.h"
 #include "constants/species.h"
 
-enum HubEntry { HUB_DEX, HUB_MON, HUB_BAG, HUB_NAV, HUB_CARD, HUB_SAVE, HUB_OPTION, HUB_NUZLOCKE, HUB_RETIRE, HUB_EXIT, HUB_COUNT };
+// HUB_REST and HUB_PYRAMID_RETIRE: the Battle Pyramid's START entries (BuildBattlePyramidStartMenu)
+enum HubEntry { HUB_DEX, HUB_MON, HUB_BAG, HUB_NAV, HUB_CARD, HUB_SAVE, HUB_REST, HUB_PYRAMID_RETIRE, HUB_OPTION, HUB_NUZLOCKE,
+                HUB_RETIRE, HUB_EXIT, HUB_COUNT };
+
+extern const u8 *StartMenu_PyramidFloorForUi(void);
 
 // Informative only: short, at most two lines in the small hint box
 static const char *const sHints[HUB_COUNT] = {
@@ -35,6 +42,8 @@ static const char *const sHints[HUB_COUNT] = {
     "Check the HOENN map, Match Call, and ribbons.",
     "Inspect your Trainer Card, Money, and Badges.",
     "Save your progress to the memory card.",
+    "Save and quit the BATTLE PYRAMID for now.",
+    "Give up the BATTLE PYRAMID challenge.",
     "Configure game settings, controls, and Menu Skin.",
     "Inspect Nuzlocke routes, fallen allies, and cap.",
     "Leave the SAFARI GAME.",
@@ -51,7 +60,9 @@ static const char *const sHints[HUB_COUNT] = {
 static uint8_t sEntries[HUB_COUNT];
 static int32_t sCount, sSel;
 static uint32_t sFrame;
-static int32_t sPopup;                 // 0 none, 1 save confirm, 2 save result
+enum { POP_NONE, POP_SAVE, POP_SAVED, POP_PYRAMID_RETIRE };
+static int32_t sPopup;                 // POP_*
+static bool sRest;                     // the save is the Pyramid's REST: a soft reset follows it
 static int32_t sPopupSel;
 static bool sSaveOk;
 static int32_t sRunX, sRunY, sRunW, sRunH;
@@ -75,7 +86,9 @@ static void BuildEntries(void)
     if (!inPike) sEntries[sCount++] = HUB_BAG;
     if (FlagGet(FLAG_SYS_POKENAV_GET) && !inSafari && !inPike && !inPyr) sEntries[sCount++] = HUB_NAV;
     sEntries[sCount++] = HUB_CARD;
-    if (!inSafari && !inPike) sEntries[sCount++] = HUB_SAVE;
+    if (!inSafari && !inPike && !inPyr) sEntries[sCount++] = HUB_SAVE;
+    if (inPyr) sEntries[sCount++] = HUB_REST;
+    if (inPyr) sEntries[sCount++] = HUB_PYRAMID_RETIRE;
     sEntries[sCount++] = HUB_OPTION;
     if (VitaExtras_GetFast(FAST_EXTRA_NUZLOCKE) != 0) sEntries[sCount++] = HUB_NUZLOCKE;
     if (inSafari) sEntries[sCount++] = HUB_RETIRE;
@@ -85,7 +98,8 @@ static void BuildEntries(void)
 
 static void Enter(void)
 {
-    sPopup = 0;
+    sPopup = POP_NONE;
+    sRest = false;
     sToast = NULL;
     BuildEntries();
 }
@@ -93,6 +107,18 @@ static void Enter(void)
 static void Resume(void)
 {
     BuildEntries();
+}
+
+// The Pyramid's RETIRE after its YES (BattlePyramidRetireCallback): the game's retire script
+static void RetirePyramid(void)
+{
+    ScriptContext_SetupScript(BattlePyramid_Retire);
+}
+
+// The Pyramid's REST once saved (SaveCallback): the game's soft reset in the Pyramid
+static void RestInPyramid(void)
+{
+    SoftResetInBattlePyramid();
 }
 
 static void RetireSafari(void)
@@ -112,7 +138,9 @@ static bool Activate(void)
     case HUB_BAG:      UiBag_SetGiveTo(-1); UiNav_Push(&gUiBagScreen); break;
     case HUB_NAV:      UiNav_Push(&gUiNavScreen); break;
     case HUB_CARD:     UiNav_Push(&gUiCardScreen); break;
-    case HUB_SAVE:     sPopup = 1; sPopupSel = 0; break;
+    case HUB_SAVE:     sPopup = POP_SAVE; sPopupSel = 0; sRest = false; break;
+    case HUB_REST:     sPopup = POP_SAVE; sPopupSel = 0; sRest = true; break;
+    case HUB_PYRAMID_RETIRE: sPopup = POP_PYRAMID_RETIRE; sPopupSel = 1; break;   // NO first, as the game
     case HUB_OPTION:   UiNav_Push(&gUiOptionsScreen); break;
     case HUB_NUZLOCKE: UiNav_Push(&gUiNuzlockeScreen); break;
     case HUB_RETIRE:   UiNav_Close(RetireSafari); break;
@@ -128,7 +156,7 @@ static bool Activate(void)
 static int32_t UpdateYesNo(const UiInput *in)
 {
     if (in->pressed & VITA_BTN_CIRCLE) { PlaySE(SE_SELECT); return 0; }
-    if (gUiTheme->gbaFrame && sPopup == 1)
+    if (gUiTheme->gbaFrame && (sPopup == POP_SAVE || sPopup == POP_PYRAMID_RETIRE))
     {
         if (in->repeat & (VITA_BTN_UP | VITA_BTN_DOWN | VITA_BTN_LEFT | VITA_BTN_RIGHT))
         {
@@ -167,26 +195,38 @@ static bool Update(const UiInput *in)
     if (sToastTicks > 0 && --sToastTicks == 0)
         sToast = NULL;
 
-    if (sPopup == 1)
+    if (sPopup == POP_SAVE)
     {
         const int32_t r = UpdateYesNo(in);
         if (r == 1)
         {
             sSaveOk = UiGame_Save();
             PlaySE(sSaveOk ? SE_SAVE : SE_FAILURE);
-            sPopup = 2;
+            sPopup = POP_SAVED;
         }
         else if (r == 0)
-            sPopup = 0;
+            sPopup = POP_NONE;
         return true;
     }
-    if (sPopup == 2)
+    if (sPopup == POP_SAVED)
     {
         if (in->pressed & (VITA_BTN_CROSS | VITA_BTN_CIRCLE) || in->tap)
         {
             PlaySE(SE_SELECT);
-            sPopup = 0;
+            sPopup = POP_NONE;
+            // REST: saved, then out of the Pyramid by its soft reset (only once the save is safe)
+            if (sRest && sSaveOk)
+                UiNav_Close(RestInPyramid);
         }
+        return true;
+    }
+    if (sPopup == POP_PYRAMID_RETIRE)
+    {
+        const int32_t r = UpdateYesNo(in);
+        if (r >= 0)
+            sPopup = POP_NONE;
+        if (r == 1)
+            UiNav_Close(RetirePyramid);
         return true;
     }
 
@@ -249,7 +289,9 @@ static void EntryIcon(uint8_t e, int32_t x, int32_t y)
     case HUB_BAG:      UiDraw_Sprite(UI_SPR_START_BAG, x, y, 1); break;
     case HUB_NAV:      UiDraw_Sprite(UI_SPR_START_POKENAV, x, y, 1); break;
     case HUB_CARD:     UiDraw_Sprite(UiGame_PlayerIsMale() ? UI_SPR_HEAD_BRENDAN : UI_SPR_HEAD_MAY, x + 4, y + 4, 2); break;
-    case HUB_SAVE:     UiSpr_ItemIcon(ITEM_LETTER, x + 4, y + 4, 1); break;
+    case HUB_SAVE:
+    case HUB_REST:     UiSpr_ItemIcon(ITEM_LETTER, x + 4, y + 4, 1); break;
+    case HUB_PYRAMID_RETIRE: UiSpr_ItemIcon(ITEM_ESCAPE_ROPE, x + 4, y + 4, 1); break;
     case HUB_OPTION:   UiSpr_ItemIcon(ITEM_CARD_KEY, x + 4, y + 4, 1); break;
     case HUB_NUZLOCKE: UiDraw_Sprite(UI_SPR_BALL_PREMIER, x + 4, y + 4, 2); break;
     case HUB_RETIRE:   UiDraw_Sprite(UI_SPR_BALL_SAFARI, x + 4, y + 4, 2); break;
@@ -259,7 +301,8 @@ static void EntryIcon(uint8_t e, int32_t x, int32_t y)
 
 static void EntryLabel(uint8_t e, char *out, size_t cap)
 {
-    static const char *const labels[HUB_COUNT] = { "POKéDEX", "POKéMON", "BAG", "POKéNAV", NULL, "SAVE", "OPTION", "NUZLOCKE", "RETIRE", "EXIT" };
+    static const char *const labels[HUB_COUNT] = { "POKéDEX", "POKéMON", "BAG", "POKéNAV", NULL, "SAVE", "REST", "RETIRE", "OPTION",
+                                                   "NUZLOCKE", "RETIRE", "EXIT" };
     if (e == HUB_CARD)
         UiGame_PlayerName(out, cap);
     else
@@ -317,6 +360,12 @@ static void BuildStatus(void)
         UiDraw_Sprite(UI_SPR_BALL_SAFARI, 24, 119, 1);
         snprintf(buf, sizeof(buf), "%u · %u", (unsigned)UiGame_SafariBalls(), (unsigned)UiGame_SafariSteps());
         UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 46, 110, 34, buf, UI_COL_ON_FRAME);
+    }
+    else if (UiGame_InPyramid())
+    {
+        // The Pyramid's floor, as its START menu shows it (ShowPyramidFloorWindow)
+        UiGame_Text(StartMenu_PyramidFloorForUi(), buf, sizeof(buf));
+        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, buf, UI_COL_GOLD);
     }
     else if (UiGame_RepelSteps() > 0)
     {
@@ -382,11 +431,60 @@ static void BuildMenu(void)
     UiW_TextWrapped(MENU_X + 14, hy + 8, MENU_W - 28, 30, sHints[sEntries[sSel]], UI_COL_ON_FRAME, 2);
 }
 
+// YES / NO of the popups (save, the Pyramid's RETIRE), as UpdateYesNo reads them
+static void DrawYesNoRows(void)
+{
+    static const char *const opt[2] = { "YES", "NO" };
+    for (int32_t i = 0; i < 2; i++)
+    {
+        const int32_t bx = POP_X + 16 + i * 208;
+        UiW_Row(bx, POP_Y + 168, 200, 40, sPopupSel == i, 0);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, bx + 84, POP_Y + 172, opt[i], sPopupSel == i ? UI_COL_SELECT_INK : UI_COL_INK);
+    }
+}
+
+static void DrawGbaYesNo(void)
+{
+    UiW_GbaWin(724, 310, 214, 110, UI_GBA_WIN_DEFAULT);
+    static const char *const kOpt[2] = { "YES", "NO" };
+    for (int32_t i = 0; i < 2; i++)
+    {
+        const int32_t ry = 324 + i * 44;
+        if (sPopupSel == i)
+        {
+            UiW_GbaBox(738, ry, 186, 40, 3, UI_RGBA(230, 148, 65, 255),
+                       UI_RGBA(255, 246, 205, 255), UI_RGBA(255, 246, 205, 255), C_WHITE, 0);
+            UiW_GbaArrowH(749, ry + 15, true, UI_GBA_SHAD_LIGHT);
+            UiW_GbaArrowH(748, ry + 14, true, UI_RGBA(230, 8, 8, 255));
+        }
+        UiW_GbaTextMid(UI_FACE_VT323, 32, 770, ry, 40, kOpt[i], UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+    }
+}
+
+// The Pyramid's RETIRE question (BattlePyramidConfirmRetireCallback), in each theme
+static void BuildRetirePopup(bool gba)
+{
+    char q[96];
+    UiGame_Text(gText_BattlePyramidConfirmRetire, q, sizeof(q));
+    if (gba)
+    {
+        UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_RGBA(16, 28, 28, 175));
+        DrawGbaYesNo();
+        UiW_GbaMsg(14, 438, 932, 94, false, true);
+        UiW_GbaTextWrapped(UI_FACE_VT323, 32, 38, 448, 880, 38, q, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 2);
+        return;
+    }
+    UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
+    UiW_Window(POP_X, POP_Y, POP_W, 224, "RETIRE");
+    UiW_TextWrapped(POP_X + 20, POP_Y + 56, POP_W - 40, 34, q, UI_COL_INK, 3);
+    DrawYesNoRows();
+}
+
 static void BuildPopup(void)
 {
     UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
     char buf[64];
-    if (sPopup == 2)
+    if (sPopup == POP_SAVED)
     {
         UiW_Window(POP_X, POP_Y + 40, POP_W, 136, "SAVE");
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 92, sSaveOk ? "GAME SAVED SAFELY!" : "SAVE FAILED!", UI_COL_INK);
@@ -407,13 +505,7 @@ static void BuildPopup(void)
                     UiGame_SaveOverwritesOtherGame() ? "This overwrites the other game!" : "Would you like to save the game?",
                     UiGame_SaveOverwritesOtherGame() ? UI_COL_HP_LOW : UI_COL_INK);
     }
-    static const char *const opt[2] = { "YES", "NO" };
-    for (int32_t i = 0; i < 2; i++)
-    {
-        const int32_t bx = POP_X + 16 + i * 208;
-        UiW_Row(bx, POP_Y + 168, 200, 40, sPopupSel == i, 0);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, bx + 84, POP_Y + 172, opt[i], sPopupSel == i ? UI_COL_SELECT_INK : UI_COL_INK);
-    }
+    DrawYesNoRows();
 }
 
 static void GbaStatCell(int32_t x, int32_t y)
@@ -460,6 +552,13 @@ static void BuildGbaHub(void)
         // Balls · steps left, as the REPEL cell's value
         snprintf(buf, sizeof(buf), "%u · %u", (unsigned)UiGame_SafariBalls(), (unsigned)UiGame_SafariSteps());
         UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, buf), 106, 40, buf, UI_RGBA(115, 255, 172, 255), UI_GBA_SHAD_DARK);
+    }
+    else if (UiGame_InPyramid())
+    {
+        // The Pyramid's floor (ShowPyramidFloorWindow) where the REPEL goes
+        UiW_GbaTextMid(UI_FACE_VT323, 24, 248, 106, 40, "PYRAMID", UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
+        UiGame_Text(StartMenu_PyramidFloorForUi(), buf, sizeof(buf));
+        UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, buf), 106, 40, buf, UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
     }
     else
     {
@@ -644,28 +743,12 @@ static void BuildGbaSavePopup(void)
     }
 
     // Right Confirm Box (.save-confirm: 724, 310, 214, 110) when confirming
-    if (sPopup == 1)
-    {
-        UiW_GbaWin(724, 310, 214, 110, UI_GBA_WIN_DEFAULT);
-        static const char *const kOpt[2] = { "YES", "NO" };
-        for (int32_t i = 0; i < 2; i++)
-        {
-            const int32_t ry = 324 + i * 44;
-            const bool sel = (sPopupSel == i);
-            if (sel)
-            {
-                UiW_GbaBox(738, ry, 186, 40, 3, UI_RGBA(230, 148, 65, 255),
-                           UI_RGBA(255, 246, 205, 255), UI_RGBA(255, 246, 205, 255), C_WHITE, 0);
-                UiW_GbaArrowH(749, ry + 15, true, UI_GBA_SHAD_LIGHT);
-                UiW_GbaArrowH(748, ry + 14, true, UI_RGBA(230, 8, 8, 255));
-            }
-            UiW_GbaTextMid(UI_FACE_VT323, 32, 770, ry, 40, kOpt[i], UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-        }
-    }
+    if (sPopup == POP_SAVE)
+        DrawGbaYesNo();
 
     // Bottom Dialogue Box (.gba-msg: 14, 438, 932, 94)
     UiW_GbaMsg(14, 438, 932, 94, false, true);
-    if (sPopup == 2)
+    if (sPopup == POP_SAVED)
     {
         UiW_GbaText(UI_FACE_VT323, 36, 38, 448, sSaveOk ? "GAME SAVED SAFELY!" : "SAVE FAILED!",
                     sSaveOk ? UI_RGBA(32, 156, 8, 255) : UI_RGBA(217, 72, 59, 255), UI_GBA_SHAD_LIGHT);
@@ -687,7 +770,9 @@ static void Build(void)
     if (gUiTheme->gbaFrame)
     {
         BuildGbaHub();
-        if (sPopup)
+        if (sPopup == POP_PYRAMID_RETIRE)
+            BuildRetirePopup(true);
+        else if (sPopup != POP_NONE)
             BuildGbaSavePopup();
         if (sToast)
             UiW_Toast(sToast);
@@ -696,7 +781,9 @@ static void Build(void)
     BuildStatus();
     BuildParty();
     BuildMenu();
-    if (sPopup)
+    if (sPopup == POP_PYRAMID_RETIRE)
+        BuildRetirePopup(false);
+    else if (sPopup != POP_NONE)
         BuildPopup();
     if (sToast)
         UiW_Toast(sToast);

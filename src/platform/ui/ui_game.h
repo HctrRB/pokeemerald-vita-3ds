@@ -160,6 +160,10 @@ bool UiGame_InBattleMenu(void);
 void UiGame_BattleMenuEnd(void);       // ui_core.c, when the UI closes
 bool UiGame_MonIsInBattle(int32_t slot);
 bool UiGame_IsMultiPartner(int32_t slot);
+// The PYRAMID BAG also off the Pyramid's floors (its toss step in the lobby); the UI's close ends it
+void UiGame_UsePyramidBag(bool on);
+// An item out of the bag being used (the PYRAMID BAG in the Pyramid), as the game's item uses do
+bool UiGame_BagRemove(uint16_t item, uint16_t n);
 bool UiGame_InPyramid(void);    // Battle Pyramid: the BAG is the 10-slot PYRAMID BAG   // multi battle: the partner's POKéMON (slots 3-5)
 const char *UiGame_BattleSwitch(int32_t slot);
 bool UiGame_BattlePartyCanCancel(void);

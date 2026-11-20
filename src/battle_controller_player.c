@@ -2679,7 +2679,7 @@ static void PlayerHandleChooseItem(void)
 
     if (!Ui_OpenBattleBag())
     {
-        // The game's bag (the Battle Pyramid's): fade out, then OpenBagAndChooseItem
+        // The new UI is off: the game's bag (fade out, then OpenBagAndChooseItem)
         BeginNormalPaletteFade(PALETTES_ALL, 0, 0, 16, RGB_BLACK);
         gBattlerControllerFuncs[gActiveBattler] = OpenBagAndChooseItem;
     }

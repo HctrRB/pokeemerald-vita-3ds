@@ -775,6 +775,17 @@ static bool8 StartMenuLinkModePlayerNameCallback(void)
     return FALSE;
 }
 
+#ifdef PLATFORM_VITA
+// New UI (ui_scr_hub.c): the floor ShowPyramidFloorWindow names ("Floor 1".."Floor 7", "Peak")
+const u8 *StartMenu_PyramidFloorForUi(void)
+{
+    u16 floor = gSaveBlock2Ptr->frontier.curChallengeBattleNum;
+    if (floor >= ARRAY_COUNT(sPyramidFloorNames))
+        floor = ARRAY_COUNT(sPyramidFloorNames) - 1;
+    return sPyramidFloorNames[floor];
+}
+#endif
+
 static bool8 StartMenuBattlePyramidRetireCallback(void)
 {
     gMenuCallback = BattlePyramidRetireStartCallback; // Confirm retire
