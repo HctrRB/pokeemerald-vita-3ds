@@ -2309,15 +2309,3 @@ static void Task_NewGameBirchSpeech_ReturnFromNamingScreenShowTextbox(u8 taskId)
 }
 
 #undef tTimer
-
-#ifdef PLATFORM_VITA
-// Port: shown in the GBA's own format, 816x544 with black bars (vita_game_frame.c GbaFormatScene):
-// the title's main menu and Birch's speech, which runs under CB2_MainMenu
-bool8 MainMenu_IsGbaFormatForUi(void)
-{
-    return gMain.callback2 == CB2_InitMainMenu
-        || gMain.callback2 == CB2_ReinitMainMenu
-        || gMain.callback2 == CB2_MainMenu
-        || gMain.callback2 == CB2_NewGameBirchSpeech_ReturnFromNamingScreen;
-}
-#endif

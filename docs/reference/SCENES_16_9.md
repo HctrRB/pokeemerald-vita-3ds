@@ -43,8 +43,7 @@ format, 816×544 with black side bars (decided 2026-11-19): Berry Blender, Berry
 Jump, Dodrio Berry Picking, slot machine, roulette, the contest, its results and painting, the
 Pokéblock eating scene, the Battle Dome tree, the Battle Factory screens, the berry tag, the Union
 Room chat, the system screens (save failed, clock reset, clear save, berry fix), and the other
-full-screen GBA screens: the title's main menu and Birch's speech, the Hall of Fame (also from the
-PC), the diploma, the wall clock, the starter choice, Mystery Gift, Mystery Event and the e-Reader,
+full-screen GBA screens: the Hall of Fame (also from the PC), the diploma, the wall clock, the starter choice, Mystery Gift, Mystery Event and the e-Reader,
 the GBA trainer card of the link rooms and the link trade menu. Each scene's
 file answers for its own callbacks (`*_IsGbaFormatForUi`); Core 1 publishes the result in the game
 frame (`GameFrameOverlay.gbaFormat`, `vita_game_frame.c`), and Core 0 turns widescreen off for that
@@ -52,7 +51,8 @@ frame in `Widescreen_PrepareDraw`, so `RenderGameTexture` draws the centred quad
 The flag is latched (`GbaFormatLatched`): it stays on from the scene's start until a 16:9 context is
 back (field, battle, stage scenes, evolution / egg / trade), so loading and closing steps between
 them never switch the format for a frame.
-Stage scenes, evolution, egg hatch, trade, the field and battles keep 16:9.
+Stage scenes, evolution, egg hatch, trade, the field and battles keep 16:9, and so do the title's
+main menu and Birch's speech (decided 2026-11-20: as the intro).
 
 **`vita_stage.c` (GPU, from Emerald 3DS).** Records the VBlank callback of stage scenes; Core 1
 puts whether a stage (and the leaves scene) is on screen in the game frame

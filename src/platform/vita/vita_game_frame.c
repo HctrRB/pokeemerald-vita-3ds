@@ -70,7 +70,6 @@ bool8 HallOfFame_IsGbaFormatForUi(void);
 bool8 Diploma_IsGbaFormatForUi(void);
 bool8 WallClock_IsGbaFormatForUi(void);
 bool8 StarterChoose_IsGbaFormatForUi(void);
-bool8 MainMenu_IsGbaFormatForUi(void);
 bool8 MysteryGift_IsGbaFormatForUi(void);
 bool8 MysteryEvent_IsGbaFormatForUi(void);
 bool8 TrainerCard_IsGbaFormatForUi(void);
@@ -100,7 +99,6 @@ static bool8 GbaFormatScene(void)
         || Diploma_IsGbaFormatForUi()
         || WallClock_IsGbaFormatForUi()
         || StarterChoose_IsGbaFormatForUi()
-        || MainMenu_IsGbaFormatForUi()
         || MysteryGift_IsGbaFormatForUi()
         || MysteryEvent_IsGbaFormatForUi()
         || TrainerCard_IsGbaFormatForUi()
