@@ -56,6 +56,14 @@ Each theme also names the GBA text window frame (`UiTheme.gbaWindowFrame`) that 
 scenes use with it: `text_window.c` reads `TextWindow_PlayerFrameType`, which returns
 `Ui_GbaWindowFrame` while the UI is enabled, so the save's OPTIONS frame is never rewritten.
 
+In the GBA theme every screen is a GBA page. The screens with their own GBA layout draw it
+(`UiW_GbaTopBar`, `UiW_GbaHelpBadge`...); the others get it from the kit: `UiKit_HeaderAs` draws the
+GBA top bar with the screen's section (backdrop and icon), its tab in the pager (L / R on the
+pager take the neighbouring tabs through `UiKit_TabHit`; one tab is the page's title) and turns
+the footer guides and the header value into the bar's help badges (`UiW_GbaPageStart`,
+`UiW_GbaPageFlush`, reset and flushed by the core around each build). Badges and value always fit
+the bar: their labels shrink, then only the keys show; titles that do not fit in PS2P use VT323.
+
 Selected in `OPTIONS > GENERAL > DISPLAY > MENU COLOR` (extra `"ui_theme"`):
 
 | Theme | Characteristics | Fonts |

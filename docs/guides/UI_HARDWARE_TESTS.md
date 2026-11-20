@@ -27,6 +27,7 @@ again** (fixed after a failure on hardware).
 | Check | Status |
 |---|---|
 | From the bag and with SELECT: USE, TOSS, moving blocks, with the case empty and full | checked |
+| Moving a block with SELECT, then TOSS (touch button) while it is held: the move is dropped, nothing breaks | to check |
 | In a Safari battle: throw a block and cancel | checked |
 | At a Safari feeder and with the Contest Lady: the script goes on afterwards | checked |
 | FEED plays the GBA eating scene and the result shows on return | checked |
@@ -87,6 +88,15 @@ again** (fixed after a failure on hardware).
 | Giving and taking items in the party inside the Pyramid uses the PYRAMID BAG | to check |
 | Leaving with a full PYRAMID BAG: "toss from the bag" opens it with TOSS only; "take from the party" lists the held items with TAKE ITEM / TOSS; the lobby's choices come back after each | to check |
 | The half-party choice of the Frontier facilities and the Battle Tents: enter and take out in order (FIRST, SECOND...), NOT ABLE refused, CONFIRM with the game's checks (same species, same held item, how many), ○ asks "Cancel the challenge?" | to check |
+
+## The GBA theme on every screen
+
+| Check | Status |
+|---|---|
+| In the GBA theme, every screen has the GBA top bar with its section, the help badges top right and nothing at the bottom: choose a POKéMON, marts, forget a move, Move Relearner, naming keyboard, Easy Chat, player's PC, berry choice, Nuzlocke, like the bag, party, Pokédex, PokéNav, PC, card and Pokéblock case | to check |
+| Tabs of those screens: L / R and a tap on the pager's L / R change the tab | to check |
+| No badge, value or title runs over another or out of the bar (Easy Chat and marts have the most) | to check |
+| The field's scrolling lists stay on screen with long rows | to check |
 
 ## Every GBA scene once (the hardware pass)
 

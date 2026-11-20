@@ -528,35 +528,67 @@ static void QueueGbaBadge(const char *key, const char *label, bool gold)
     b->gold = gold;
 }
 
+// A help badge with its label at labelPx (0: the key alone); returns its width with the gap after it
+static int32_t PageBadge(int32_t *rx, const GbaPageBadge *b, uint8_t labelPx, bool draw)
+{
+    const int32_t capW = UiW_GbaKeyCapWidth(b->key, 24);
+    const int32_t actW = (labelPx && b->label[0]) ? UiText_Width(UI_FACE_VT323, labelPx, b->label) : 0;
+    const int32_t totalW = capW + (actW > 0 ? 5 + actW : 0);
+    if (draw)
+    {
+        const int32_t x = *rx - totalW;
+        UiW_GbaKeyCap(x, 14, 24, b->key, b->gold);
+        if (actW > 0)
+        {
+            UiText_DrawMid(UI_FACE_VT323, labelPx, x + capW + 6, 15, 24, b->label, UI_RGBA(16, 20, 22, 220));
+            UiText_DrawMid(UI_FACE_VT323, labelPx, x + capW + 5, 14, 24, b->label, C_WHITE);
+        }
+        *rx = x - 12;
+    }
+    return totalW + 12;
+}
+
+// The badges in their order: the back guide first (rightmost), then the others right to left
+static int32_t PageBadges(uint8_t labelPx, bool draw)
+{
+    int32_t rx = UI_SCREEN_W - 14, total = 0;
+    for (int32_t pass = 0; pass < 2; pass++)
+        for (int32_t i = sGbaBadgeCount - 1; i >= 0; i--)
+            if ((strcmp(sGbaBadges[i].key, "O") == 0) == (pass == 0))
+                total += PageBadge(&rx, &sGbaBadges[i], labelPx, draw);
+    return total;
+}
+
 void UiW_GbaPageFlush(void)
 {
     if (!sGbaPage)
         return;
     sGbaPage = false;
-    int32_t rx = UI_SCREEN_W - 14;
-    for (int32_t pass = 0; pass < 2; pass++)       // the back guide first (rightmost), then the others
-        for (int32_t i = sGbaBadgeCount - 1; i >= 0; i--)
-        {
-            const bool back = strcmp(sGbaBadges[i].key, "O") == 0;
-            if (back == (pass == 0))
-                UiW_GbaHelpBadge(&rx, sGbaBadges[i].key, sGbaBadges[i].label, sGbaBadges[i].gold);
-        }
+    // Everything fits between the bar's left part and its right edge: labels at 24, then at 20, then
+    // the keys alone, so nothing runs over the pager or the title
+    const int32_t avail = UI_SCREEN_W - 14 - sGbaPageValueX;
+    const int32_t valueW = sGbaValue[0] ? UiText_Width(UI_FACE_VT323, 22, sGbaValue) + 24 + 10 : 0;
+    static const uint8_t kLevels[3] = { 24, 20, 0 };
+    uint8_t labelPx = 0;
+    for (int32_t l = 0; l < 3; l++)
+    {
+        labelPx = kLevels[l];
+        if (PageBadges(labelPx, false) + valueW <= avail)
+            break;
+    }
+    const int32_t used = PageBadges(labelPx, true);
     if (sGbaValue[0])
     {
-        // Between the pager and the badges, in the narrower face if it must
-        const int32_t room = rx - 10 - sGbaPageValueX;
-        uint8_t face = UI_FACE_VT323, px = 28;
-        if (UiText_Width(face, px, sGbaValue) + 24 > room)
-            px = 22;
-        const int32_t w = UiText_Width(face, px, sGbaValue) + 24;
-        if (room >= 48)
+        // The value between the left part and the badges, at 28 if it has the room
+        const int32_t right = UI_SCREEN_W - 14 - used - 10, room = right - sGbaPageValueX;
+        const uint8_t px = UiText_Width(UI_FACE_VT323, 28, sGbaValue) + 24 <= room ? 28 : 22;
+        const int32_t w = UiText_Width(UI_FACE_VT323, px, sGbaValue) + 24;
+        if (w <= room)
         {
-            const int32_t bw = w < room ? w : room, bx = rx - 10 - bw;
-            BevelBoxR(bx, 8, bw, 34, 5, false, 2, UI_RGBA(15, 20, 22, 255), UI_RGBA(23, 30, 33, 255), UI_RGBA(23, 30, 33, 255),
+            const int32_t bx = right - w;
+            BevelBoxR(bx, 8, w, 34, 5, false, 2, UI_RGBA(15, 20, 22, 255), UI_RGBA(23, 30, 33, 255), UI_RGBA(23, 30, 33, 255),
                       1, UI_RGBA(62, 77, 82, 255), UI_RGBA(8, 12, 14, 200), 0, 0, 0, false);
-            UiDraw_PushClip(bx + 4, 8, bw - 8, 34);
-            UiText_DrawMid(face, px, bx + 12, 8, 34, sGbaValue, sGbaValueColour);
-            UiDraw_PopClip();
+            UiText_DrawMid(UI_FACE_VT323, px, bx + 12, 8, 34, sGbaValue, sGbaValueColour);
         }
     }
     sGbaBadgeCount = 0;

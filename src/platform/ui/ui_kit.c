@@ -241,9 +241,11 @@ int32_t UiKit_HeaderAs(uint8_t gbaBg, uint16_t gbaIcon, const char *title, const
 {
     if (!gUiTheme->gbaFrame)
         return UiKit_Header(title, tabs, n, cur, tabX, tabW, pad);
-    const char *page = (tabs != NULL && cur >= 0 && cur < n) ? tabs[cur] : NULL;
-    const bool pager = page != NULL || n > 1;
-    UiW_GbaTopBar(gbaBg, gbaIcon, title, n > 1 ? n : 0, cur, false, page);
+    // Tabs: the pager with the tab's name and its dots. One tab: its name is the page's title and
+    // there is no pager, as the GBA screens without pages (the room goes to the badges and value)
+    const bool pager = tabs != NULL && n > 1 && cur >= 0 && cur < n;
+    const char *pill = (tabs != NULL && n == 1) ? tabs[0] : title;
+    UiW_GbaTopBar(gbaBg, gbaIcon, pill, pager ? n : 0, cur, false, pager ? tabs[cur] : NULL);
     UiW_GbaPageStart(pager ? GBA_PAGER_X + GBA_PAGER_W + 12 : GBA_PAGER_X);
     // Touch: the pager's L and R are the tabs either side of the current one
     for (int32_t i = 0; tabX != NULL && tabW != NULL && i < n; i++)
