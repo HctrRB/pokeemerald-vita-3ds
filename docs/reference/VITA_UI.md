@@ -15,7 +15,9 @@ has no screen, or cannot open one, the game's own GBA screen is used:
   (`battle_controller_player.c`).
 - The link half-party choice (Cable Club, Union Room) stays the game's.
 - Decoration shops (`MART_TYPE_DECOR` / `MART_TYPE_DECOR2`) are BUY-only in the new UI, as in the game.
-- OPTION on the title menu opens the new options screen hosted (`Ui_OpenOptionsHosted`).
+- The title's main menu (CONTINUE, NEW GAME, OPTION, MYSTERY GIFT, `main_menu.c`) stays the
+  game's, with the start-up scenes; its OPTION opens the new options screen hosted
+  (`Ui_OpenOptionsHosted`).
 - If the UI atlas cannot be loaded, every menu is the game's.
 
 Button mapping, fast forward, always-run and the save path are in
