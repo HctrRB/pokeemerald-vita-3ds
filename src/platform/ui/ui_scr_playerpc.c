@@ -790,7 +790,7 @@ static void BuildDecor(void)
 static void Build(void)
 {
     char buf[96], name[24];
-    UiKit_Header("PC", sTabs, sTabCount, TabSlot(sTab), sTabX, sTabW, 12);
+    UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, "PC", sTabs, sTabCount, TabSlot(sTab), sTabX, sTabW, 12);
     const uint16_t item = CurItem();
 
     if (sTab == TAB_DECOR)
@@ -984,9 +984,9 @@ static bool ReadUpdate(const UiInput *in)
 static void ReadBuild(void)
 {
     if (sReadHeader != NULL)
-        UiKit_Header(sReadHeader, NULL, 0, 0, NULL, NULL, 12);
+        UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, sReadHeader, NULL, 0, 0, NULL, NULL, 12);
     else
-        UiKit_Header("PC", sTabs, sTabCount, TabSlot(TAB_MAIL), NULL, NULL, 12);
+        UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, "PC", sTabs, sTabCount, TabSlot(TAB_MAIL), NULL, NULL, 12);
     char name[24];
     if (sReading != NULL)
     {

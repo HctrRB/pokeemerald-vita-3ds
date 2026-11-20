@@ -231,6 +231,12 @@ void UiW_FooterGlyph(int32_t *x, uint8_t glyph, const char *label);   // PlaySta
 void UiW_FooterKey(int32_t *x, const char *key, const char *label);   // L / R / SELECT / START guide
 // Right end of every menu footer: the clock (HH:MM). The money goes in the header (UiW_HeaderValue).
 void UiW_FooterClock(const char *clock);
+// The GBA page (UiKit_HeaderAs in the GBA theme): footer guides and the header value become the top
+// bar's help badges; Start opens a page (valueX: where the value box may start), Flush draws them,
+// Reset forgets an unfinished one (the core resets before and flushes after every screen's build)
+void UiW_GbaPageStart(int32_t valueX);
+void UiW_GbaPageFlush(void);
+void UiW_GbaPageReset(void);
 void UiW_Glyph(int32_t x, int32_t y, uint8_t glyph);        // 24 px button circle
 void UiW_Panel(int32_t x, int32_t y, int32_t w, int32_t h);
 void UiW_DialogBox(int32_t x, int32_t y, int32_t w, int32_t h);   // dialogue and choice boxes
@@ -348,6 +354,11 @@ int32_t UiQty_Update(UiQty *q, const UiInput *in);     // quantity, 0 cancel, -1
 void UiQty_Draw(UiQty *q, uint16_t itemId);
 // Full frame + title capsule + tab rail; returns the rail's right edge
 int32_t UiKit_Header(const char *title, const char *const *tabs, int32_t n, int32_t cur, int32_t *tabX, int32_t *tabW, int32_t pad);
+// The same with the screen's section for the GBA theme, where it is a GBA page: the top bar with
+// the section's backdrop (UI_GBA_BG_*) and icon, the title, the tab's name and dots in the pager
+// (L / R on it take the neighbouring tabs through UiKit_TabHit), the guides as help badges
+int32_t UiKit_HeaderAs(uint8_t gbaBg, uint16_t gbaIcon, const char *title, const char *const *tabs, int32_t n, int32_t cur,
+                       int32_t *tabX, int32_t *tabW, int32_t pad);
 int32_t UiKit_TabHit(const UiInput *in, const int32_t *tabX, const int32_t *tabW, int32_t n);
 void UiKit_FooterClock(void);
 int32_t UiKit_GenderShiny(int32_t x, int32_t y, uint8_t gender, bool shiny);   // ♂ / ♀ and the shiny star

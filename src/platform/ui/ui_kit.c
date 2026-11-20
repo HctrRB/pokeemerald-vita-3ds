@@ -231,6 +231,39 @@ void UiQty_Draw(UiQty *q, uint16_t itemId)
 }
 
 // ---------- Full-screen header ----------
+// The GBA top bar's pager (UiW_GbaTopBar): where it is with a section title, and its L / R buttons
+#define GBA_PAGER_X 268
+#define GBA_PAGER_W 304
+#define GBA_PAGER_BTN 24
+
+int32_t UiKit_HeaderAs(uint8_t gbaBg, uint16_t gbaIcon, const char *title, const char *const *tabs, int32_t n, int32_t cur,
+                       int32_t *tabX, int32_t *tabW, int32_t pad)
+{
+    if (!gUiTheme->gbaFrame)
+        return UiKit_Header(title, tabs, n, cur, tabX, tabW, pad);
+    const char *page = (tabs != NULL && cur >= 0 && cur < n) ? tabs[cur] : NULL;
+    const bool pager = page != NULL || n > 1;
+    UiW_GbaTopBar(gbaBg, gbaIcon, title, n > 1 ? n : 0, cur, false, page);
+    UiW_GbaPageStart(pager ? GBA_PAGER_X + GBA_PAGER_W + 12 : GBA_PAGER_X);
+    // Touch: the pager's L and R are the tabs either side of the current one
+    for (int32_t i = 0; tabX != NULL && tabW != NULL && i < n; i++)
+    {
+        tabX[i] = 0;
+        tabW[i] = 0;
+        if (i == cur - 1)
+        {
+            tabX[i] = GBA_PAGER_X + 6;
+            tabW[i] = GBA_PAGER_BTN;
+        }
+        else if (i == cur + 1)
+        {
+            tabX[i] = GBA_PAGER_X + GBA_PAGER_W - 6 - GBA_PAGER_BTN;
+            tabW[i] = GBA_PAGER_BTN;
+        }
+    }
+    return UI_SCREEN_W;
+}
+
 int32_t UiKit_Header(const char *title, const char *const *tabs, int32_t n, int32_t cur, int32_t *tabX, int32_t *tabW, int32_t pad)
 {
     UiW_FullFrame();

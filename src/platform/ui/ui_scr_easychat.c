@@ -560,9 +560,9 @@ static void Build(void)
     char title[48];
     Text(EasyChat_UiTitle(), title, sizeof(title));
     if (sReadOnly)
-        UiKit_Header("EASY CHAT", NULL, 0, 0, NULL, NULL, 12);
+        UiKit_HeaderAs(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, "EASY CHAT", NULL, 0, 0, NULL, NULL, 12);
     else
-        UiKit_Header("EASY CHAT", tabs, 2, sAlpha ? 1 : 0, sTabX, sTabW, 12);
+        UiKit_HeaderAs(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, "EASY CHAT", tabs, 2, sAlpha ? 1 : 0, sTabX, sTabW, 12);
     if (title[0])
         UiW_HeaderValue(title, UI_COL_ON_FRAME);
 

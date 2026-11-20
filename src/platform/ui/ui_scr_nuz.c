@@ -130,7 +130,7 @@ static void Build(void)
     char buf[64];
     const char *leader = "";
     const uint8_t cap = VitaNuzlocke_GetLevelCap(VitaNuzlocke_CountBadges(), &leader);
-    UiKit_Header("NUZLOCKE", sTabs, 4, sTab, sTabX, sTabW, 12);
+    UiKit_HeaderAs(UI_GBA_BG_CARD, UI_SPR_BALL_PREMIER, "NUZLOCKE", sTabs, 4, sTab, sTabX, sTabW, 12);
     snprintf(buf, sizeof(buf), "NEXT: %s (CAP LV.%u)", leader ? leader : "-", (unsigned)cap);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     UiW_Panel(16, 60, 584, 432);

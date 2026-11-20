@@ -253,7 +253,7 @@ static void DrawMonPanel(const char *name)
 static void Build(void)
 {
     char buf[96], name[24];
-    UiKit_Header(Learning() ? "LEARN A MOVE" : "FORGET A MOVE", NULL, 0, 0, NULL, NULL, 0);
+    UiKit_HeaderAs(UI_GBA_BG_SUMMARY, UI_SPR_BALL_POKE, Learning() ? "LEARN A MOVE" : "FORGET A MOVE", NULL, 0, 0, NULL, NULL, 0);
     {
         u8 nick[POKEMON_NAME_LENGTH + 1];
         GetMonData(sMon, MON_DATA_NICKNAME, nick);
@@ -508,7 +508,7 @@ static void RlBuild(void)
         GetMonData(sMon, MON_DATA_NICKNAME, nick);
         UiGame_Text(nick, name, sizeof(name));
     }
-    UiKit_Header("MOVE RELEARNER", NULL, 0, 0, NULL, NULL, 0);
+    UiKit_HeaderAs(UI_GBA_BG_SUMMARY, UI_SPR_BALL_POKE, "MOVE RELEARNER", NULL, 0, 0, NULL, NULL, 0);
     UiW_HeaderValue(name, UI_COL_ON_FRAME);
     DrawMonPanel(name);
     UiW_TextWrapped(30, 352, 272, 30, sRlText, UI_COL_INK, 4);

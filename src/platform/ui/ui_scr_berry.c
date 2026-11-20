@@ -78,7 +78,7 @@ static void Build(void)
     static const char *const tab[1] = { "CHOOSE A BERRY" };
     int32_t tx[1], tw[1];
     char buf[64];
-    UiKit_Header("BERRIES", tab, 1, 0, tx, tw, 12);
+    UiKit_HeaderAs(UI_GBA_BG_BAG, UI_SPR_START_BAG, "BERRIES", tab, 1, 0, tx, tw, 12);
     snprintf(buf, sizeof(buf), "%d kinds", (int)sCount);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
 

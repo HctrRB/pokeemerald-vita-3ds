@@ -423,6 +423,17 @@ int32_t UiW_Capsule(int32_t x, int32_t y, int32_t w, int32_t h)
     return w;
 }
 
+// The GBA bars' face for a text in maxW: PS2P 16 when it fits, else VT323 (narrower), never clipped
+static void FitBarFace(const char *text, int32_t maxW, uint8_t *face, uint8_t *px)
+{
+    *face = UI_FACE_PS2P;
+    *px = 16;
+    if (text == NULL || UiText_Width(UI_FACE_PS2P, 16, text) <= maxW)
+        return;
+    *face = UI_FACE_VT323;
+    *px = UiText_Width(UI_FACE_VT323, 28, text) <= maxW ? 28 : 22;
+}
+
 static void DrawGbaSectionPill(int32_t x, int32_t y, int32_t w, int32_t h, bool lens, uint16_t iconSpr,
                                const char *title, uint32_t border, uint32_t bgTop, uint32_t bgBot,
                                uint32_t ink, bool textShadow, bool barAccent)
@@ -450,10 +461,12 @@ static void DrawGbaSectionPill(int32_t x, int32_t y, int32_t w, int32_t h, bool 
         }
     }
     const int32_t tx = x + 42;
+    uint8_t face, px;
+    FitBarFace(title, w - 50, &face, &px);
     UiDraw_PushClip(tx, y, w - 50, h);
     if (textShadow)
-        UiText_DrawMid(UI_FACE_PS2P, 16, tx + 1, y + 1, h, title, UI_RGBA(24, 32, 32, 200));
-    UiText_DrawMid(UI_FACE_PS2P, 16, tx, y, h, title, ink);
+        UiText_DrawMid(face, px, tx + 1, y + 1, h, title, UI_RGBA(24, 32, 32, 200));
+    UiText_DrawMid(face, px, tx, y, h, title, ink);
     UiDraw_PopClip();
 }
 
@@ -471,8 +484,93 @@ void UiW_HeaderTitle(const char *title)
     UiText_DrawMid(UI_FACE_PS2P, 16, 48, 8, 32, title, T->title);
 }
 
+// ---------- The GBA page (UiKit_HeaderAs in the GBA theme) ----------
+// A screen without a GBA layout of its own gets the GBA top bar; its footer guides become the bar's
+// help badges (right to left, BACK first, as the GBA screens put them) and its header value a box
+// between the pager and the badges. They are queued while the screen draws and drawn by
+// UiW_GbaPageFlush (UiKit_FooterClock, or the end of the frame).
+#define GBA_PAGE_BADGES 8
+typedef struct
+{
+    char key[8];
+    char label[24];
+    bool gold;
+} GbaPageBadge;
+
+static bool sGbaPage;
+static int32_t sGbaPageValueX;                 // where the value box may start (right of the pager)
+static GbaPageBadge sGbaBadges[GBA_PAGE_BADGES];
+static int32_t sGbaBadgeCount;
+static char sGbaValue[40];
+static uint32_t sGbaValueColour;
+
+void UiW_GbaPageReset(void)
+{
+    sGbaPage = false;
+    sGbaBadgeCount = 0;
+    sGbaValue[0] = 0;
+}
+
+void UiW_GbaPageStart(int32_t valueX)
+{
+    UiW_GbaPageReset();
+    sGbaPage = true;
+    sGbaPageValueX = valueX;
+}
+
+static void QueueGbaBadge(const char *key, const char *label, bool gold)
+{
+    if (sGbaBadgeCount >= GBA_PAGE_BADGES)
+        return;
+    GbaPageBadge *b = &sGbaBadges[sGbaBadgeCount++];
+    snprintf(b->key, sizeof(b->key), "%s", key);
+    snprintf(b->label, sizeof(b->label), "%s", label ? label : "");
+    b->gold = gold;
+}
+
+void UiW_GbaPageFlush(void)
+{
+    if (!sGbaPage)
+        return;
+    sGbaPage = false;
+    int32_t rx = UI_SCREEN_W - 14;
+    for (int32_t pass = 0; pass < 2; pass++)       // the back guide first (rightmost), then the others
+        for (int32_t i = sGbaBadgeCount - 1; i >= 0; i--)
+        {
+            const bool back = strcmp(sGbaBadges[i].key, "O") == 0;
+            if (back == (pass == 0))
+                UiW_GbaHelpBadge(&rx, sGbaBadges[i].key, sGbaBadges[i].label, sGbaBadges[i].gold);
+        }
+    if (sGbaValue[0])
+    {
+        // Between the pager and the badges, in the narrower face if it must
+        const int32_t room = rx - 10 - sGbaPageValueX;
+        uint8_t face = UI_FACE_VT323, px = 28;
+        if (UiText_Width(face, px, sGbaValue) + 24 > room)
+            px = 22;
+        const int32_t w = UiText_Width(face, px, sGbaValue) + 24;
+        if (room >= 48)
+        {
+            const int32_t bw = w < room ? w : room, bx = rx - 10 - bw;
+            BevelBoxR(bx, 8, bw, 34, 5, false, 2, UI_RGBA(15, 20, 22, 255), UI_RGBA(23, 30, 33, 255), UI_RGBA(23, 30, 33, 255),
+                      1, UI_RGBA(62, 77, 82, 255), UI_RGBA(8, 12, 14, 200), 0, 0, 0, false);
+            UiDraw_PushClip(bx + 4, 8, bw - 8, 34);
+            UiText_DrawMid(face, px, bx + 12, 8, 34, sGbaValue, sGbaValueColour);
+            UiDraw_PopClip();
+        }
+    }
+    sGbaBadgeCount = 0;
+    sGbaValue[0] = 0;
+}
+
 void UiW_HeaderValue(const char *text, uint32_t colour)
 {
+    if (sGbaPage)
+    {
+        snprintf(sGbaValue, sizeof(sGbaValue), "%s", text);
+        sGbaValueColour = colour == UI_COL_ON_FRAME ? C_WHITE : colour;
+        return;
+    }
     const int32_t w = UiText_Width(UI_FACE_VT323, UI_BODY_PX, text) + 24;
     UiW_Capsule(UI_SCREEN_W - 16 - w, 8, w, 32);
     UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, UI_SCREEN_W - 16 - w + 12, 8, 32, text, colour);
@@ -587,7 +685,10 @@ void UiW_FooterGlyph(int32_t *x, uint8_t glyph, const char *label)
     if (T->gbaFrame)
     {
         static const char *const kGlyphKeys[4] = { "X", "O", "TRI", "SQ" };
-        DrawGbaFooterItem(x, y, kGlyphKeys[glyph & 3u], label, (glyph & 3u) == UI_GLYPH_CIRCLE);
+        if (sGbaPage)
+            QueueGbaBadge(kGlyphKeys[glyph & 3u], label, (glyph & 3u) == UI_GLYPH_CIRCLE);
+        else
+            DrawGbaFooterItem(x, y, kGlyphKeys[glyph & 3u], label, (glyph & 3u) == UI_GLYPH_CIRCLE);
         return;
     }
     UiW_Glyph(*x, y, glyph);
@@ -597,6 +698,11 @@ void UiW_FooterGlyph(int32_t *x, uint8_t glyph, const char *label)
 
 void UiW_FooterClock(const char *clock)
 {
+    if (sGbaPage)
+    {
+        UiW_GbaPageFlush();                         // a GBA page has no footer and no clock
+        return;
+    }
     const int32_t y = UI_SCREEN_H - FOOTER_H + 5;
     const int32_t w = UiText_InkWidth(UI_FACE_PS2P, UI_FOOT_PX, clock) + 26;
     const int32_t x = UI_SCREEN_W - 8 - w;
@@ -610,7 +716,10 @@ void UiW_FooterKey(int32_t *x, const char *key, const char *label)
     if (T->gbaFrame)
     {
         const bool gold = strcmp(key, "SELECT") == 0 || strcmp(key, "START") == 0;
-        DrawGbaFooterItem(x, y, key, label, gold);
+        if (sGbaPage)
+            QueueGbaBadge(key, label, gold);
+        else
+            DrawGbaFooterItem(x, y, key, label, gold);
         return;
     }
     *x += KeyEx(*x, y, key, true) + 6;
@@ -1084,9 +1193,11 @@ void UiW_GbaTopBar(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, int32
         UiText_DrawCentred(UI_FACE_PS2P, 16, rxBtn, 13, rW, 24, "R", GBA_YELLOW);
 
         const int32_t dotsW = dotCount > 0 ? dotCount * 15 - 3 : 0;
-        const int32_t txtW = (pagerText && pagerText[0]) ? UiText_Width(UI_FACE_PS2P, 16, pagerText) : 0;
-        const int32_t gap = (dotsW > 0 && txtW > 0) ? 8 : 0;
         const int32_t innerW = pagerW - 68;
+        uint8_t pagerFace, pagerPx;
+        FitBarFace(pagerText, innerW - (dotsW > 0 ? dotsW + 8 : 0), &pagerFace, &pagerPx);
+        const int32_t txtW = (pagerText && pagerText[0]) ? UiText_Width(pagerFace, pagerPx, pagerText) : 0;
+        const int32_t gap = (dotsW > 0 && txtW > 0) ? 8 : 0;
         int32_t contentW = dotsW + gap + txtW;
         if (contentW > innerW) contentW = innerW;
         int32_t cx = px + 34 + (innerW - contentW) / 2;
@@ -1115,7 +1226,7 @@ void UiW_GbaTopBar(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, int32
         if (dotCount > 0)
             cx += 5;
         if (pagerText && pagerText[0])
-            UiText_DrawMid(UI_FACE_PS2P, 16, cx, 8, 34, pagerText, GBA_YELLOW);
+            UiText_DrawMid(pagerFace, pagerPx, cx, 8, 34, pagerText, GBA_YELLOW);
         UiDraw_PopClip();
     }
 }

@@ -462,7 +462,7 @@ static void Build(void)
     const ChooseKind *k = &sKinds[sKind];
     int32_t tx[1], tw[1];
     char buf[64], mv[16];
-    UiKit_Header("POKéMON", tab, 1, 0, tx, tw, 12);
+    UiKit_HeaderAs(UI_GBA_BG_PARTY, UI_SPR_BALL_POKE, "POKéMON", tab, 1, 0, tx, tw, 12);
     if (sKind == UI_CHOOSE_TUTOR)
     {
         UiGame_MoveName(TutorMove(), mv, sizeof(mv));

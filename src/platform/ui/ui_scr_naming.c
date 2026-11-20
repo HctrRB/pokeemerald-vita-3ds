@@ -294,7 +294,7 @@ static void DrawCode(uint8_t code, const char *label, int32_t cx, int32_t y, uin
 static void Build(void)
 {
     char buf[64];
-    UiKit_Header("NAME", sTabs, PAGE_COUNT, sPage, sTabX, sTabW, 12);
+    UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, "NAME", sTabs, PAGE_COUNT, sPage, sTabX, sTabW, 12);
     snprintf(buf, sizeof(buf), "%d / %d", (int)sLen, (int)sMax);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
 

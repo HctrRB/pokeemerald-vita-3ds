@@ -276,9 +276,9 @@ static void Build(void)
     char buf[96], name[24];
     static const char *const sDecorTab[1] = { "BUY" };
     if (Decor())
-        UiKit_Header("SHOP", sDecorTab, 1, 0, sTabX, sTabW, 12);
+        UiKit_HeaderAs(UI_GBA_BG_BAG, UI_SPR_START_BAG, "SHOP", sDecorTab, 1, 0, sTabX, sTabW, 12);
     else
-        UiKit_Header("POKé MART", sTabs, 2, sTab, sTabX, sTabW, 12);
+        UiKit_HeaderAs(UI_GBA_BG_BAG, UI_SPR_START_BAG, "POKé MART", sTabs, 2, sTab, sTabX, sTabW, 12);
     UiKit_HeaderMoney();
     const uint16_t item = CurItem();
     // Item card

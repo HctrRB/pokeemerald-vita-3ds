@@ -536,7 +536,9 @@ void Ui_Tick(void)
     }
     UiDraw_Begin();
     UiSpr_BeginTick();
+    UiW_GbaPageReset();
     sStack[sDepth - 1]->build();
+    UiW_GbaPageFlush();                // a GBA page whose screen drew no footer clock
     UiKit_DrawToast();
     const float ms = (float)(VitaPerf_NowMs() - t0);
     sAvgTickMs = sAvgTickMs * 0.9f + ms * 0.1f;
