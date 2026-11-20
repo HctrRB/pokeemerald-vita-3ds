@@ -93,6 +93,12 @@ screen's pieces (`UiCond_*` in `ui_scr_nav.c`) plus what the block would add
 (`UiGame_PokeblockGains`); YES closes the UI and plays the GBA eating scene (`pokeblock_feed.c`),
 then the field comes back and the FEED step reopens with the result (`CB2_AfterFeedScene`).
 
+### PC boxes: QUICK (`ui_scr_pc.c`)
+
+SELECT switches the cursor to QUICK (green; the GBA's auto action, `sAutoActionOn`) in every mode:
+✕ then does at once the first entry of the menu `OpenActions` builds (`QuickAction`): WITHDRAW,
+STORE, MOVE / put down, or TAKE / GIVE in MOVE ITEMS.
+
 ### Box summary (`ui_scr_pc.c`, `ui_scr_party.c`)
 
 The PC's SUMMARY pushes the party screen as the summary only (`UiParty_PushSummary`): ↑ / ↓ go

@@ -113,26 +113,29 @@ for a steady frame time; HD-2D **LOW** holds **60 FPS**; HD-2D **MED** is experi
 
 ### Not yet tested on a PS Vita
 
-These parts are built, but have not been checked on the console yet:
+These parts are built, but have not been checked on the console yet (screen by screen, with what
+is already checked: [docs/guides/UI_HARDWARE_TESTS.md](docs/guides/UI_HARDWARE_TESTS.md)):
 
 - The Pokécenter healing machine's balls drawn on the machine in the 3D world.
-- Safari Zone: the player's battle box (SAFARI BALLS and the balls left), RETIRE asking once, and
-  the balls and steps left in the START menu.
-- Mini-games and the contest in the GBA's own format (816×544, black side bars); the contest
-  without the new UI's touch buttons; the GBA window frame following the menu theme.
-- The new boxes for the Game Corner coins and the scrolling lists of the field (Game Corner prizes,
-  Lilycove Dept. Store, Battle Frontier exchange and tutors).
-- The new screens for the bags scripts open (planting a berry, the Favor and Quiz Ladies, the
-  Apprentice), the CONTEST entry choice, the Move Deleter, the Move Relearner and CHECK TAG for
-  berries in the bag.
-- The POKéDEX page after catching a new species, now the new UI's page over the battle (with its
-  cry; A or B closes it).
-- The new POKéBLOCK CASE: from the bag and SELECT (USE, TOSS, moving blocks), in a Safari battle,
-  at a Safari feeder and with the Contest Lady; feeding a POKéMON plays the GBA eating scene and
-  comes back to the new screen.
-- The summary of a boxed POKéMON in the PC, the Bard's song and the Quiz Lady in the new Easy Chat,
-  the wall maps and Mr. Stone's PokéNav tutorial in the new PokéNav, and the Frontier Pass's MAP and
-  RECORD as pages of the trainer card.
+- The other full-screen GBA scenes in the GBA's own format (816×544, black side bars; the Berry
+  Blender is checked): slots, roulette, contest, Pokéblock eating, Battle Dome and Factory, the
+  berry tag, the Hall of Fame, the diploma, the wall clock, the starter choice, Mystery Gift and
+  the link card and trade menu; the GBA window frame following the menu theme. The title's main
+  menu stays 16:9, as the intro.
+- The other new boxes and scrolling lists of the field (Lilycove Dept. Store, Battle Frontier
+  exchange and tutors; the Game Corner's are checked).
+- The new screens for the Favor and Quiz Ladies and the Apprentice, the Move Deleter, the whole Move
+  Relearner (its result now waits for the fanfare) and CHECK TAG for berries in the bag.
+- FEED from the PokéNav CONDITION tab in a window, and every open menu coming back after a GBA
+  scene.
+- The PC boxes' QUICK cursor (SELECT) in every mode: ✕ withdraws, stores, moves or takes / gives at
+  once, as on the GBA.
+- Reading and writing mail, the Bard's song and the Quiz Lady in the new Easy Chat, the wall maps
+  and Mr. Stone's PokéNav tutorial in the new PokéNav, and the Frontier Pass's MAP and RECORD as
+  pages of the trainer card.
+- The GBA theme on every screen: choose a POKéMON, marts, forget a move, the Move Relearner, the
+  naming keyboard, Easy Chat, the player's PC, the berry choice and Nuzlocke now have the GBA top
+  bar and help badges, like the others.
 - The Battle Pyramid in the new UI: its START menu (REST, RETIRE, the floor), the PYRAMID BAG in the
   field and in battle, and the full-bag steps on leaving (toss from the bag, take or toss held
   items); the Battle Frontier and Battle Tents half-party choice.
