@@ -368,11 +368,12 @@ void UiNav_Replace(const UiScreen *screen);
 void UiNav_Pop(void);
 void UiNav_Close(void (*afterClose)(void));   // closes the UI, then runs afterClose (may be NULL) in the field
 void UiCore_OpenScreen(const UiScreen *screen);
-// From a screen on the field: close the UI, fade the field out and stop it, then `start` a GBA
-// scene; and from that scene's exit callback: back to the field, then `screen` opens again
-// (`prepare`, may be NULL, runs just before)
+// From a screen on the field: keep the stack of screens, close the UI, fade the field out and
+// stop it, then `start` a GBA scene (full screen, or in a window under `title`); from that scene's
+// exit callback: back to the field, then the same stack opens again (`prepare`, may be NULL, first)
 void UiCore_CloseToScene(void (*start)(void));
-void UiCore_ReopenAfterField(const UiScreen *screen, void (*prepare)(void));
+void UiCore_CloseToSceneInWindow(void (*start)(void), const char *title);
+void UiCore_ReopenAfterField(void (*prepare)(void));
 bool UiSign_Draw(void);                         // ui_sign.c: zone sign overlay while no screen is open
 void UiSign_Reset(void);
 bool UiMirror_Draw(void);                       // ui_mirror.c: field windows (dialogue, YES / NO)
@@ -413,7 +414,9 @@ void UiCond_PartyListGba(int32_t sel);
 void UiCond_Radar(int32_t sel, float cx, float cy, float R, bool gba, const int16_t *gain);
 void UiCond_Attrs(int32_t sel, bool gba, const int16_t *gain, int16_t sheenGain, const char *button, bool buttonOn);
 extern const UiScreen gUiPokeblockScreen;
-void UiPokeblock_PushFromBag(void);   // the BAG's USE on the POKéBLOCK CASE
+void UiPokeblock_PushFromBag(void);
+// The PokéNav CONDITION tab feeds a block: the GBA eating scene in a window, then the PokéNav again
+void UiPokeblock_FeedFromCondition(uint8_t partySlot, uint8_t pkblSlot);   // the BAG's USE on the POKéBLOCK CASE
 
 // Arguments of the screens opened from others (set before UiNav_Push)
 enum { UI_TARGET_USE, UI_TARGET_GIVE, UI_TARGET_TM, UI_TARGET_BATTLE };

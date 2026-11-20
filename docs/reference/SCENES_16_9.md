@@ -46,6 +46,9 @@ Room chat and the system screens (save failed, clock reset, clear save, berry fi
 file answers for its own callbacks (`*_IsGbaFormatForUi`); Core 1 publishes the result in the game
 frame (`GameFrameOverlay.gbaFormat`, `vita_game_frame.c`), and Core 0 turns widescreen off for that
 frame in `Widescreen_PrepareDraw`, so `RenderGameTexture` draws the centred quad over a black clear.
+The flag is latched (`GbaFormatLatched`): it stays on from the scene's start until a 16:9 context is
+back (field, battle, stage scenes, evolution / egg / trade), so loading and closing steps between
+them never switch the format for a frame.
 Stage scenes, evolution, egg hatch, trade, the field and battles keep 16:9.
 
 **`vita_stage.c` (GPU, from Emerald 3DS).** Records the VBlank callback of stage scenes; Core 1

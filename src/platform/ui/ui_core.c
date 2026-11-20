@@ -273,12 +273,18 @@ void UiCore_OpenHosted(const UiScreen *screen, void (*afterClose)(void))
     sAfterClose = afterClose;
 }
 
-// ---------- A GBA scene started from a screen on the field, and a screen again afterwards ----------
-// (the Pokéblock eating scene, the berry tag...). The UI closes, the field fades to black and is
-// stopped as the GBA menus that open those scenes stop it, then `start` runs the scene.
+// ---------- A GBA scene started from screens on the field, and the same screens afterwards ----------
+// (the Pokéblock eating scene, the berry tag...). The whole stack of screens is kept, the UI closes,
+// the field fades to black and is stopped as the GBA menus that open those scenes stop it, then
+// `start` runs the scene. Its exit callback calls UiCore_ReopenAfterField: back on the field the
+// same stack opens again (each screen keeps its state; `resume` refreshes its data). In a window:
+// the scene is drawn in UI_SCENE_WIN_* inside the theme's frame instead of full screen.
 static void (*sSceneStart)(void);
-static const UiScreen *sReopen;
 static void (*sReopenPrepare)(void);
+static const UiScreen *sSavedStack[UI_NAV_DEPTH];
+static int32_t sSavedDepth;
+static bool sSceneWindow;
+static const char *sSceneTitle;
 
 static void Task_FadeToScene(u8 taskId)
 {
@@ -308,10 +314,58 @@ static void FadeToScene(void)
     CreateTask(Task_FadeToScene, 80);
 }
 
+static void CloseToScene(void (*start)(void), bool window, const char *title)
+{
+    // Only screens over the field come back on the field (a hosted screen belongs to its scene)
+    for (int32_t i = 0; i < sDepth && i < UI_NAV_DEPTH; i++)
+        sSavedStack[i] = sStack[i];
+    sSavedDepth = (sHosted || gMain.callback2 != CB2_Overworld) ? 0 : sDepth;
+    sSceneStart = start;
+    sSceneWindow = window;
+    sSceneTitle = title;
+    UiNav_Close(FadeToScene);
+}
+
 void UiCore_CloseToScene(void (*start)(void))
 {
-    sSceneStart = start;
-    UiNav_Close(FadeToScene);
+    CloseToScene(start, false, NULL);
+}
+
+void UiCore_CloseToSceneInWindow(void (*start)(void), const char *title)
+{
+    CloseToScene(start, true, title);
+}
+
+// The scene runs in its window: from the start of the scene until the field is back
+bool UiCore_SceneInWindow(void)
+{
+    return sSceneWindow && gMain.callback2 != CB2_Overworld;
+}
+
+// The kept stack, open again as the START menu opens (it unfreezes the field when it closes)
+static void RestoreStack(void)
+{
+    FreezeObjectEvents();
+    PlayerFreeze();
+    StopPlayerAvatar();
+    LockPlayerFieldControls();
+    sFromScript = false;
+    sHosted = false;
+    sCloseRequested = false;
+    sAfterClose = NULL;
+    UiKit_ClearToast();
+    for (int32_t i = 0; i < sSavedDepth; i++)
+        sStack[i] = sSavedStack[i];
+    sDepth = sSavedDepth;
+    sSavedDepth = 0;
+    sPrevHeld = ~0u;
+    sPrevTouch = true;
+    sIgnoreTouch = true;
+    // Bottom to top: the data under each screen may have changed during the scene
+    for (int32_t i = 0; i < sDepth; i++)
+        if (sStack[i]->resume)
+            sStack[i]->resume();
+    __atomic_store_n(&sOpen, true, __ATOMIC_RELAXED);
 }
 
 static void Task_ReopenAfterField(u8 taskId)
@@ -319,19 +373,20 @@ static void Task_ReopenAfterField(u8 taskId)
     if (gPaletteFade.active)
         return;
     DestroyTask(taskId);
-    const UiScreen *screen = sReopen;
-    sReopen = NULL;
-    if (screen != NULL && Ui_IsEnabled() && !Ui_IsOpen())
+    sSceneWindow = false;
+    if (sSavedDepth > 0 && Ui_IsEnabled() && !Ui_IsOpen())
     {
+        RestoreStack();
         if (sReopenPrepare != NULL)
-            sReopenPrepare();
-        UiCore_OpenScreen(screen);     // as the START menu: it unfreezes the field when it closes
+            sReopenPrepare();               // after: the screens' state is back (a toast survives)
     }
     else
     {
+        sSavedDepth = 0;
         ScriptUnfreezeObjectEvents();
         UnlockPlayerFieldControls();
     }
+    sReopenPrepare = NULL;
 }
 
 static void FieldCB_ReopenAfterField(void)
@@ -341,12 +396,33 @@ static void FieldCB_ReopenAfterField(void)
     CreateTask(Task_ReopenAfterField, 80);
 }
 
-void UiCore_ReopenAfterField(const UiScreen *screen, void (*prepare)(void))
+void UiCore_ReopenAfterField(void (*prepare)(void))
 {
-    sReopen = screen;
     sReopenPrepare = prepare;
     gFieldCallback = FieldCB_ReopenAfterField;
     SetMainCallback2(CB2_ReturnToField);
+}
+
+// While a scene runs in its window and no screen is open: the theme's frame around it (the scene
+// itself is drawn by Core 0 in UI_SCENE_WIN_*, under this list; nothing here covers it)
+static bool DrawSceneWindow(void)
+{
+    if (!UiCore_SceneInWindow())
+        return false;
+    const int32_t x = UI_SCENE_WIN_X, y = UI_SCENE_WIN_Y, w = UI_SCENE_WIN_W, h = UI_SCENE_WIN_H, e = 6;
+    UiDraw_Rect(0, 0, UI_SCREEN_W, y - e, UI_COL_FRAME1);
+    UiDraw_Rect(0, y + h + e, UI_SCREEN_W, UI_SCREEN_H - y - h - e, UI_COL_FRAME1);
+    UiDraw_Rect(0, y - e, x - e, h + 2 * e, UI_COL_FRAME1);
+    UiDraw_Rect(x + w + e, y - e, UI_SCREEN_W - x - w - e, h + 2 * e, UI_COL_FRAME1);
+    UiDraw_Frame(x - e, y - e, w + 2 * e, h + 2 * e, e, gUiTheme->paperEdge);
+    UiDraw_Frame(x - 2, y - 2, w + 4, h + 4, 2, gUiTheme->selEdge);
+    if (sSceneTitle != NULL)
+    {
+        const int32_t tw = UiText_Width(UI_FACE_PS2P, 16, sSceneTitle) + 32;
+        UiW_Capsule((UI_SCREEN_W - tw) / 2, y - e - 44, tw, 34);
+        UiText_DrawMid(UI_FACE_PS2P, 16, (UI_SCREEN_W - tw) / 2 + 16, y - e - 44, 34, sSceneTitle, UI_COL_TITLE);
+    }
+    return true;
 }
 
 void UiCore_OpenScreen(const UiScreen *screen)
@@ -381,6 +457,11 @@ void Ui_OnReset(void)
     sFromScript = false;
     sHosted = false;
     sAfterClose = NULL;
+    // A GBA scene started from the UI and its way back: forgotten (the scene is gone)
+    sSceneStart = NULL;
+    sReopenPrepare = NULL;
+    sSavedDepth = 0;
+    sSceneWindow = false;
     sPrevHeld = ~0u;
     (void)Ui_TakeInjectedKeys();
     UiKit_ClearToast();
@@ -401,7 +482,8 @@ void Ui_Tick(void)
         static bool sOverlayShown;
         UiDraw_Begin();
         UiSpr_BeginTick();
-        bool any = UiSign_Draw();
+        bool any = DrawSceneWindow();
+        any |= UiSign_Draw();
         any |= UiBattle_Active() ? UiBattle_Draw() : UiMirror_Draw();
         if (any || sOverlayShown)
             UiDraw_Publish(0.0f);

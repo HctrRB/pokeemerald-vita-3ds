@@ -338,28 +338,11 @@ static void UpdateFeed(const UiInput *in)
     { sFeedOpen = false; return; }
     const int32_t a = UiList_Update(&sFeedList, in, FEED_X + 8, FEED_Y + 44, FEED_W - 16, 40, true);
     if (a < 0) return;
-    UiMon m;
-    UiGame_Mon(sMonList.sel, &m);
-    char name[24];
-    snprintf(name, sizeof(name), "%s", sBlocks[a].name);
-    const int32_t r = UiGame_FeedPokeblock(sMonList.sel, sBlocks[a].slot);
-    if (r == -3) { sFeedOpen = false; PlaySE(SE_FAILURE); UiKit_Toast("An EGG can't eat POKéBLOCKS."); return; }
-    if (r == -2) { sFeedOpen = false; PlaySE(SE_FAILURE); UiKit_Toast("%s won't eat any more...", m.name); return; }
-    PlaySE(SE_USE_ITEM);
-    UiKit_Toast(r > 0 ? "%s happily ate the %s!" : r < 0 ? "%s disdainfully ate the %s." : "%s ate the %s.", m.name, name);
-    sBlockN = UiGame_Pokeblocks(sBlocks, 40);
-    uint8_t c[6];
-    UiGame_Condition(sMonList.sel, c);
-    if (sBlockN <= 0 || c[5] >= 255)
-    {
-        sFeedOpen = false;
-        return;
-    }
-    sFeedList.count = sBlockN;
-    if (sFeedList.sel >= sBlockN) sFeedList.sel = sBlockN - 1;
-    if (sFeedList.first > sFeedList.sel) sFeedList.first = sFeedList.sel;
-    if (sFeedList.first + FEED_ROWS > sBlockN)
-        sFeedList.first = sBlockN > FEED_ROWS ? sBlockN - FEED_ROWS : 0;
+    // OpenFeed refused an EGG and a full sheen. The game's eating scene in a window over the
+    // PokéNav, then the PokéNav again as it was (the block's effect is applied on return)
+    PlaySE(SE_SELECT);
+    sFeedOpen = false;
+    UiPokeblock_FeedFromCondition((uint8_t)sMonList.sel, sBlocks[a].slot);
 }
 
 static void DrawFeed(void)

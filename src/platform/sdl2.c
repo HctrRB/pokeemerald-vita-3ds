@@ -295,6 +295,15 @@ static void RenderGameTexture(void)
 #endif
     }
 
+    // A scene in the UI's window (UiCore_CloseToSceneInWindow): the centred picture in its rect
+    if (GameFrame_Get()->overlay.gbaWindow)
+    {
+        vx0 = (float)UI_SCENE_WIN_X;
+        vx1 = (float)(UI_SCENE_WIN_X + UI_SCENE_WIN_W);
+        vy0 = (float)UI_SCENE_WIN_Y;
+        vy1 = (float)(UI_SCENE_WIN_Y + UI_SCENE_WIN_H);
+    }
+
     const bool inFieldMove = GameFrame_Get()->overlay.fieldMoveShowMon;
     if (inFieldMove)
     {

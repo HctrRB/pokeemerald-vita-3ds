@@ -7,6 +7,8 @@
 #include "window.h"
 #include "constants/field_effects.h"
 #include "platform/game_frame.h"
+#include "platform/ui.h"
+#include "overworld.h"
 #include "platform.h"
 
 // The game's own answers (Core 1 only).
@@ -87,9 +89,32 @@ static bool8 GbaFormatScene(void)
         || BerryFix_IsGbaFormatForUi();
 }
 
+// The 16:9 contexts: the field, the battle, the stage scenes and the 2D scenes with mirrors
+extern bool8 EvolutionScene_IsActiveForUi(void);
+extern bool8 EggHatch_IsActiveForUi(void);
+extern bool8 Trade_IsAnimActiveForUi(void);
+extern void BattleMainCB2(void);
+static bool8 WideContext(bool8 stageActive)
+{
+    return gMain.callback2 == CB2_Overworld || gMain.callback2 == CB2_OverworldBasic
+        || (gMain.inBattle && gMain.callback2 == BattleMainCB2) || stageActive
+        || EvolutionScene_IsActiveForUi() || EggHatch_IsActiveForUi() || Trade_IsAnimActiveForUi();
+}
+
+// Latched: once a GBA-format scene starts, the format stays until a 16:9 context is back, so the
+// loading and closing steps between them never switch it for a frame (smooth transitions)
+static bool8 sGbaFormatLatched;
+static bool8 GbaFormatLatched(bool8 stageActive)
+{
+    if (GbaFormatScene())
+        sGbaFormatLatched = TRUE;
+    else if (WideContext(stageActive))
+        sGbaFormatLatched = FALSE;
+    return sGbaFormatLatched;
+}
+
 static void CaptureOverlay(GameFrameOverlay *o, bool8 voxel)
 {
-    o->gbaFormat = GbaFormatScene();
     o->battleTransition = BattleTransition_IsActiveForUi();
     o->buyMenu = Shop_IsBuyMenuActive();
     o->decorationMode = Decoration_IsFieldModeActive();
@@ -111,6 +136,8 @@ static void CaptureOverlay(GameFrameOverlay *o, bool8 voxel)
         }
     }
     VitaStage_CaptureFrame(&o->stageActive, &o->leavesScene);
+    o->gbaWindow = UiCore_SceneInWindow();
+    o->gbaFormat = o->gbaWindow || GbaFormatLatched(o->stageActive);
     if (o->stageActive)
         memcpy(o->bgPaletteFaded, gPlttBufferFaded, sizeof(o->bgPaletteFaded));
     if (voxel)

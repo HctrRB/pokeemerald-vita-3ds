@@ -74,6 +74,7 @@ typedef struct
     bool8 stageActive;           // a Vita stage (the intro's scenes) owns the VBlank callback
     bool8 leavesScene;           // that stage is the intro's falling leaves
     bool8 gbaFormat;             // a full-screen GBA scene shown 816x544 with black bars (*_IsGbaFormatForUi)
+    bool8 gbaWindow;             // that scene in the UI's window (UiCore_SceneInWindow, UI_SCENE_WIN_*)
     u16 bgPaletteFaded[256];     // gPlttBufferFaded's BG half (the leaves scene's colours)
     u16 objPaletteUnfaded[256];  // gPlttBufferUnfaded's OBJ half (sprite cards keep their colours)
     u16 objPaletteExtUnfaded[PLTT_EXT_COUNT * 16];  // the extended sprite palettes, unfaded

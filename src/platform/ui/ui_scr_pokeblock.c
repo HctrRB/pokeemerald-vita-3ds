@@ -144,6 +144,7 @@ static char sResultText[5][48];
 static int32_t sResultN;
 static int16_t sResultGain[5];
 static uint8_t sFedMon;
+static bool sFeedFromCondition;           // fed from the PokéNav CONDITION tab (the scene in a window)
 static void LaunchFeedScene(void);
 
 static int16_t sGain[5], sSheenGain;
@@ -192,12 +193,12 @@ static bool FeedUpdate(const UiInput *in)
     const bool gba = gUiTheme->gbaFrame;
     if (sResult)
     {
-        // use_pokeblock.c's result lines, then the case (as the game goes back to it)
+        // use_pokeblock.c's result lines, then the case under it (as the game goes back to it)
         if ((in->pressed & (VITA_BTN_CROSS | VITA_BTN_CIRCLE)) || in->tap)
         {
             PlaySE(SE_SELECT);
             sResult = false;
-            UiNav_Replace(&gUiPokeblockScreen);
+            return false;
         }
         return true;
     }
@@ -207,6 +208,7 @@ static bool FeedUpdate(const UiInput *in)
         if (id == ACT_YES)
         {
             sFedMon = (uint8_t)sMons.sel;
+            sFeedFromCondition = false;
             UiCore_CloseToScene(LaunchFeedScene);
         }
         return true;
@@ -328,6 +330,21 @@ static void PrepareReopenFeed(void)
     Refresh();
 }
 
+// Back on the PokéNav CONDITION tab: the result line as a toast (its radar shows the new values)
+static void PrepareReopenCondition(void)
+{
+    sResult = false;
+    UiKit_Toast("%s", sResultText[0]);
+}
+
+void UiPokeblock_FeedFromCondition(uint8_t partySlot, uint8_t pkblSlot)
+{
+    sFedMon = partySlot;
+    sFeedBlock = pkblSlot;
+    sFeedFromCondition = true;
+    UiCore_CloseToSceneInWindow(LaunchFeedScene, "POKéBLOCK");
+}
+
 // Back from the scene: the block's effect (AddPokeblockToConditions), the result lines, the field
 static void CB2_AfterFeedScene(void)
 {
@@ -349,8 +366,8 @@ static void CB2_AfterFeedScene(void)
         }
     if (sResultN == 0)
         UiGame_Text(gText_NothingChanged, sResultText[sResultN++], sizeof(sResultText[0]));
-    sResult = true;
-    UiCore_ReopenAfterField(&sFeedScreen, PrepareReopenFeed);
+    sResult = !sFeedFromCondition;
+    UiCore_ReopenAfterField(sFeedFromCondition ? PrepareReopenCondition : PrepareReopenFeed);
 }
 
 // ---------- CASE ----------

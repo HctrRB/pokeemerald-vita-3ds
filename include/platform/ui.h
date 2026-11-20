@@ -20,6 +20,14 @@ bool Ui_IsEnabled(void);
 // GBA window frame (0-19) that goes with the menu theme (ui_theme.c), for text_window.c
 uint8_t Ui_GbaWindowFrame(void);
 
+// A GBA scene shown in a window over the theme's frame (UiCore_CloseToSceneInWindow): Core 1
+// publishes it in the game frame (GameFrameOverlay.gbaWindow), Core 0 draws the picture here (3:2)
+#define UI_SCENE_WIN_X 180
+#define UI_SCENE_WIN_Y 104
+#define UI_SCENE_WIN_W 600
+#define UI_SCENE_WIN_H 400
+bool UiCore_SceneInWindow(void);
+
 // Core 1, once per game frame from VBlankIntrWait: input, screens, actions, publishes the list.
 void Ui_Tick(void);
 

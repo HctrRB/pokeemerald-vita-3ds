@@ -46,7 +46,6 @@ static UiBagRow sRows[MAX_ROWS];
 static int32_t sCount;
 static int32_t sGiveTo = -1;
 static bool sChoose;                       // CHOOSE mode (Ui_OpenBagChoice)
-static int32_t sReopenPocket = -1;         // the pocket to open on, once (after the berry tag)
 static int32_t sChoosePocket = POCKETS_COUNT;   // < POCKETS_COUNT: that pocket only
 static char sChooseName[16];               // the location's action (SHOW, GIVE...), "" for none
 static int32_t sSort;
@@ -119,8 +118,7 @@ static void Enter(void)
 {
     if (!UiCore_IsHostCallback())
         sChoose = false;                // CHOOSE mode is only ever hosted (Ui_OpenBagChoice)
-    sPocket = FixedPocket() ? sChoosePocket : sReopenPocket >= 0 ? sReopenPocket : ITEMS_POCKET;   // menus open on their first tab
-    sReopenPocket = -1;
+    sPocket = FixedPocket() ? sChoosePocket : ITEMS_POCKET;   // menus always open on their first tab
     sMenu.open = false;
     sQty.open = false;
     Refresh();
@@ -149,14 +147,10 @@ static void CloseChoose(bool chosen)
 // CHECK TAG: the GBA berry tag (a scene, shown in the GBA's format), then this BAG again
 static uint16_t sTagItem, sTagPos;
 
-static void PrepareReopenBerries(void)
-{
-    sReopenPocket = BERRIES_POCKET;
-}
-
+// Back on the field the BAG and the screens under it open again as they were (its Resume refreshes)
 static void CB2_BackFromBerryTag(void)
 {
-    UiCore_ReopenAfterField(&gUiBagScreen, PrepareReopenBerries);
+    UiCore_ReopenAfterField(NULL);
 }
 
 static void LaunchBerryTag(void)
