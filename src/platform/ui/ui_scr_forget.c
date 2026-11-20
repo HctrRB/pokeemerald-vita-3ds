@@ -384,12 +384,21 @@ static void RlEnter(void)
     }
 }
 
+// The result waits for the level-up fanfare, as MENU_STATE_WAIT_FOR_FANFARE does before A
+static bool RlResultReady(void)
+{
+    return IsFanfareTaskInactive();
+}
+
 static bool RlUpdate(const UiInput *in)
 {
     if (sRlState == RL_RESULT)
     {
-        if ((in->pressed & (VITA_BTN_CROSS | VITA_BTN_CIRCLE)) || in->tap)
+        if (RlResultReady() && ((in->pressed & (VITA_BTN_CROSS | VITA_BTN_CIRCLE)) || in->tap))
+        {
+            PlaySE(SE_SELECT);
             UiNav_Close(RlExit);
+        }
         return true;
     }
     if (sRlAsk.open)
@@ -529,8 +538,13 @@ static void RlBuild(void)
     RlDrawContest(644, RlMove());
 
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sRlState == RL_RESULT ? "OK" : "Teach");
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, sRlState == RL_RESULT ? "OK" : "Give up");
+    if (sRlState != RL_RESULT)
+    {
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Teach");
+        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Give up");
+    }
+    else if (RlResultReady())
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "OK");      // only once the fanfare is over
     UiKit_FooterClock();
     if (sRlAsk.open)
         UiMenu_Draw(&sRlAsk);

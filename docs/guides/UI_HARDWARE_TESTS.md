@@ -59,6 +59,7 @@ again** (fixed after a failure on hardware).
 | The Favor Lady (GIVE takes one), the Quiz Lady (CONFIRM), the Apprentice (SHOW); important items refused | to check |
 | Move Deleter: no new-move row | to check |
 | Move Relearner: teach, delete an older move through FORGET and back, give up | to check |
+| Move Relearner: the result can't be closed until the level-up fanfare ends (OK shows then) | to check |
 | CHECK TAG from the bag, back to the BERRIES pocket | to check |
 | The bag's actions on berries (CHECK TAG, USE, GIVE, TOSS) | to check |
 
@@ -96,6 +97,5 @@ screen's GBA parts.
 
 ## Known problems
 
-- The Move Relearner can be closed before its fanfare ends.
 - Link and recorded battles, Wally's catching tutorial and the Battle Arena judgment keep the GBA
   battle HUD.
