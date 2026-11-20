@@ -39,11 +39,13 @@ again** (fixed after a failure on hardware).
 | Check | Status |
 |---|---|
 | The contest shows nothing of the new UI over it | checked |
-| Berry Blender, slots, roulette, contest, Pokéblock eating, Battle Dome and Battle Factory show at 816×544 with black bars | to check |
+| The Berry Blender shows at 816×544 with black bars | checked |
+| Slots, roulette, contest, Pokéblock eating, Battle Dome and Battle Factory show at 816×544 with black bars | to check |
 | No flicker of the format when those scenes start or end | to check |
 | The GBA window frame in those scenes follows the menu theme | to check |
 | A soft reset during one of those scenes leaves nothing behind | to check |
-| The Game Corner coins box and the field's scrolling lists (Game Corner prizes, Lilycove Dept. Store and its elevator, Battle Frontier exchange and tutors) are the new UI's, and their rows answer touch | to check |
+| The Game Corner: its coins box and prize lists are the new UI's | checked |
+| The other scrolling lists of the field (Lilycove Dept. Store and its elevator, Battle Frontier exchange and tutors) are the new UI's, and their rows answer touch | to check |
 
 ## Battle
 
@@ -68,6 +70,7 @@ again** (fixed after a failure on hardware).
 
 | Check | Status |
 |---|---|
+| PC boxes, SELECT (QUICK, green cursor) in each mode: ✕ withdraws (WITHDRAW), stores (DEPOSIT), picks up and puts down (MOVE POKéMON), takes or gives the item (MOVE ITEMS) without the menu; SELECT again goes back to the menu | to check again |
 | PC SUMMARY from a box and from the party: ↑ / ↓ through them (empty slots skipped), move order kept in the box, back on the last one looked at | checked |
 | Reading a mail from the bag, from a party POKéMON and from the PC mailbox | to check again |
 | Writing a mail: 9 words, the word lists not covered | to check |

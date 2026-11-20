@@ -9,6 +9,8 @@
 // - releasing the last POKéMON that knows a needed field move (SURF, DIVE; STRENGTH and ROCK SMASH
 //   inside the POKéMON LEAGUE) makes it come back (RunCanReleaseMon);
 // - ○ asks "Continue BOX operations?" and is refused while holding a POKéMON or an item.
+// - SELECT switches the cursor to QUICK (the GBA's auto action, the green hand) in every mode: ✕
+//   then does at once what the menu would offer first (WITHDRAW, STORE, MOVE, TAKE / GIVE).
 // SUMMARY is the party screen's summary on the box's POKéMON (UiGame_ViewBox) or the party's, as
 // the GBA's; the cursor then stays on the POKéMON looked at last.
 
@@ -627,6 +629,19 @@ static void Act(int32_t id)
     }
 }
 
+// QUICK: the first entry of the menu OpenActions builds, done at once (HandleInput_InBox with
+// sAutoActionOn: GetMenuItemTextId(0)); nothing when the menu would be refused or empty
+static void QuickAction(void)
+{
+    OpenActions();
+    if (sPop != POP_ACTIONS)
+        return;
+    sPop = POP_NONE;
+    sMenu.open = false;
+    if (sMenu.count > 0 && sMenu.ids[0] != UI_MENU_CANCEL)
+        Act(sMenu.ids[0]);
+}
+
 static bool UpdatePopup(const UiInput *in)
 {
     switch (sPop)
@@ -769,7 +784,7 @@ static bool Update(const UiInput *in)
     }
     if (in->pressed & VITA_BTN_L) { ChangeBox(-1); return true; }
     if (in->pressed & VITA_BTN_R) { ChangeBox(1); return true; }
-    if (in->pressed & VITA_BTN_SELECT && sMode != MODE_ITEMS) { sQuick = !sQuick; PlaySE(SE_SELECT); return true; }
+    if (in->pressed & VITA_BTN_SELECT) { sQuick = !sQuick; PlaySE(SE_SELECT); return true; }   // ToggleCursorAutoAction
     const bool partyOk = sMode != MODE_WITHDRAW;
 
     // D-pad: the box grid (6 x 5), the plate above it, the party on the left
@@ -836,7 +851,7 @@ static bool Update(const UiInput *in)
         }
         if (sMode == MODE_ITEMS && sHeldItem != ITEM_NONE) { PlaceItem(); return true; }
         if (sHolding) { PutDown(); return true; }
-        if (sQuick && sMode == MODE_MOVE) { PickUp(); return true; }
+        if (sQuick) { QuickAction(); return true; }
         OpenActions();
     }
     return true;
@@ -937,8 +952,8 @@ static void DrawDetail(void)
     else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 756, 334, buf, ink);
 
     const char *hint = sHolding ? "✕: put it down (swaps with the one there)." :
-                       sMode == MODE_ITEMS ? (sHeldItem ? "✕ on a POKéMON: give or swap the item." : "✕: item options.") :
-                       sQuick ? "Quick grab: ✕ picks it up at once." : "✕: options. SELECT: quick grab.";
+                       sMode == MODE_ITEMS && sHeldItem ? "✕ on a POKéMON: give or swap the item." :
+                       sQuick ? "Quick: ✕ does the first option at once." : "✕: options. SELECT: quick.";
     if (gba)
     {
         UiW_GbaBox(564, 386, 364, 92, 4, UI_RGBA(150, 172, 156, 255),
@@ -962,15 +977,14 @@ static void Build(void)
         UiW_GbaTopBar(UI_GBA_BG_OPTIONS, UI_SPR_BALL, tabs[sMode][0], 0, 0, false, NULL);
         int32_t rx = UI_SCREEN_W - 14;
         UiW_GbaHelpBadge(&rx, "O", "EXIT", true);
-        if (sMode != MODE_ITEMS)
-            UiW_GbaHelpBadge(&rx, "SELECT", sQuick ? "MENU" : "QUICK", true);
+        UiW_GbaHelpBadge(&rx, "SELECT", sQuick ? "MENU" : "QUICK", true);
         UiW_GbaHelpBadge(&rx, "X", sHolding ? "PLACE" : "OPTIONS", false);
     }
     else
     {
         int32_t tx[1], tw[1];
         UiKit_Header("PC", tabs[sMode], 1, 0, tx, tw, 12);
-        UiW_HeaderValue(sMode == MODE_ITEMS ? "ITEMS" : sQuick ? "CURSOR: QUICK GRAB" : "CURSOR: MENU", UI_COL_ON_FRAME);
+        UiW_HeaderValue(sQuick ? "CURSOR: QUICK" : "CURSOR: MENU", UI_COL_ON_FRAME);
     }
 
     // Party
@@ -1119,8 +1133,7 @@ static void Build(void)
         int32_t fx = 16;
         UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sHolding ? "Put down" : "Options");
         UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Exit");
-        if (sMode != MODE_ITEMS)
-            UiW_FooterKey(&fx, "SELECT", "Quick grab");
+        UiW_FooterKey(&fx, "SELECT", sQuick ? "Menu" : "Quick");
         UiKit_FooterClock();
     }
 
