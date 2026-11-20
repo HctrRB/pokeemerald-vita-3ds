@@ -13,6 +13,7 @@ area you are changing. Contribution rules are in [../CONTRIBUTING.md](../CONTRIB
 | [guides/BUILD_YOUR_OWN.md](guides/BUILD_YOUR_OWN.md) | Players | Make your own VPK from your Pokémon Emerald cartridge ([español](guides/BUILD_YOUR_OWN.es.md)) |
 | [guides/BUILD.md](guides/BUILD.md) | Developers | Toolchain, build steps, CMake options, the build-time checks, installing and testing |
 | [guides/DEBUGGING.md](guides/DEBUGGING.md) | Developers | Logs, per-frame telemetry, thread violations, crash dumps |
+| [guides/UI_HARDWARE_TESTS.md](guides/UI_HARDWARE_TESTS.md) | Testers | What to check on a Vita for each screen of the new UI, what is already checked and what is not |
 
 ## Reference: how the port works today
 
