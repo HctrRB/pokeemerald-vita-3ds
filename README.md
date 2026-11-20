@@ -74,14 +74,15 @@ Drawn natively at 960×544 over the 3D world. Every screen works with the button
 
 - **START menu**: Pokédex (list, entry, cry, size, area), party (summary pages, switch, held
   items, field moves, move reorder), bag (pockets, sort, use / give / toss / register), PokéNav
-  (map, Match Call, condition, ribbons), Fly map, trainer card, Nuzlocke tracker, options, save.
-- **PC boxes**: withdraw, deposit, move POKéMON and items, release, marks, jump to a box,
+  (map, Match Call, condition, ribbons), Fly map, trainer card (with the Frontier Pass's map and
+  recorded battle), Nuzlocke tracker, options, save.
+- **PC boxes**: withdraw, deposit, move POKéMON and items, summary, release, marks, jump to a box,
   wallpapers (the game's own, Walda's included) and box names.
 - **Player's PC**: item storage (withdraw, deposit, toss), mailbox and mail reading on the game's
   stationery, and room / Secret Base decoration.
 - **Scenes the scripts open**: Poké Mart buy / sell and decoration shops, naming keyboard (player,
-  rival, POKéMON, boxes), Easy Chat (mail, profile, battle messages, interviews, trendy saying,
-  survey…), berry choice for the Berry Blender and Berry Crush, contest appeal choice, "choose a
+  rival, POKéMON, boxes), Easy Chat (every kind, the Bard's song and the Quiz Lady included), the
+  wall maps of Hoenn and the PokéNav tutorial, berry choice for the Berry Blender and Berry Crush, contest appeal choice, "choose a
   POKéMON" for the move tutor, the Day Care and other scripts, and the forget-move screen
   (level-up, HM/TM, Move Tutor).
 - **Battle**: HUD with health plates, party balls, commands, moves with PP and type, targets in
@@ -129,6 +130,9 @@ These parts are built, but have not been checked on the console yet:
 - The new POKéBLOCK CASE: from the bag and SELECT (USE, TOSS, moving blocks), in a Safari battle,
   at a Safari feeder and with the Contest Lady; feeding a POKéMON plays the GBA eating scene and
   comes back to the new screen.
+- The summary of a boxed POKéMON in the PC, the Bard's song and the Quiz Lady in the new Easy Chat,
+  the wall maps and Mr. Stone's PokéNav tutorial in the new PokéNav, and the Frontier Pass's MAP and
+  RECORD as pages of the trainer card.
 - The battle fixes for Wally's battle (#8) and Gyms 6 and 7 (Natural Cure, double battle targets).
 - The GRAPHICS tab (each HD-2D level with 30 and 60 FPS) and the night street lamps.
 - The Flash darkness in 3D (Dewford Gym, Battle Pyramid), and the battle HUD in the Battle Palace
@@ -140,10 +144,8 @@ These parts are built, but have not been checked on the console yet:
 
 Screens still on the GBA interface:
 
-- The summary of a boxed POKéMON in the PC.
 - Battle Frontier party choice.
 - The Battle Pyramid bag inside battles and its "bag full: choose what to drop" step.
-- Easy Chat's Bard song and quiz screens.
 - Link and recorded battles, Wally's catching tutorial and the Battle Arena judgment keep the
   GBA battle HUD.
 - Other screens may be missing too: give feedback on the ones you find.

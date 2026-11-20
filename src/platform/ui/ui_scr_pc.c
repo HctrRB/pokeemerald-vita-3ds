@@ -9,7 +9,8 @@
 // - releasing the last POKéMON that knows a needed field move (SURF, DIVE; STRENGTH and ROCK SMASH
 //   inside the POKéMON LEAGUE) makes it come back (RunCanReleaseMon);
 // - ○ asks "Continue BOX operations?" and is refused while holding a POKéMON or an item.
-// Not here yet: SUMMARY (the summary screen of a boxed POKéMON).
+// SUMMARY is the party screen's summary on the box's POKéMON (UiGame_ViewBox) or the party's, as
+// the GBA's; the cursor then stays on the POKéMON looked at last.
 
 #include <stdio.h>
 #include <string.h>
@@ -89,6 +90,7 @@ static void (*sMsgDone)(void);
 static uint16_t sGiveItems[64];
 static int32_t sGiveCount;
 static uint32_t sFrame;
+static bool sInSummary;          // the summary is open over the boxes
 
 // ---------- Data ----------
 
@@ -404,6 +406,13 @@ static void BuildGiveList(void)
 
 // ---------- Popups ----------
 
+// WITHDRAW from a box, STORE from the party, as the mode allows
+static void AddTransferAction(void)
+{
+    if (sArea == AREA_BOX && sMode != MODE_DEPOSIT) UiMenu_Add(&sMenu, "WITHDRAW", ACT_WITHDRAW);
+    if (sArea == AREA_PARTY && sMode != MODE_WITHDRAW) UiMenu_Add(&sMenu, "STORE", ACT_STORE);
+}
+
 static void OpenActions(void)
 {
     struct BoxPokemon *bm = CursorMon();
@@ -432,9 +441,15 @@ static void OpenActions(void)
     }
     else
     {
-        if (sMode == MODE_MOVE) UiMenu_Add(&sMenu, "MOVE", ACT_MOVE);
-        if (sArea == AREA_BOX && sMode != MODE_DEPOSIT) UiMenu_Add(&sMenu, "WITHDRAW", ACT_WITHDRAW);
-        if (sArea == AREA_PARTY && sMode != MODE_WITHDRAW) UiMenu_Add(&sMenu, "STORE", ACT_STORE);
+        // The GBA's order (SetMenuText): MOVE or the mode's action, SUMMARY, then WITHDRAW / STORE
+        // in MOVE POKéMON
+        if (sMode == MODE_MOVE)
+            UiMenu_Add(&sMenu, "MOVE", ACT_MOVE);
+        else
+            AddTransferAction();
+        UiMenu_Add(&sMenu, "SUMMARY", ACT_SUMMARY);
+        if (sMode == MODE_MOVE)
+            AddTransferAction();
         UiMenu_Add(&sMenu, "MARK", ACT_MARK);
         UiMenu_Add(&sMenu, "RELEASE", ACT_RELEASE);
     }
@@ -522,6 +537,20 @@ static void Enter(void)
     sHeldItem = ITEM_NONE;
     sPop = POP_NONE;
     sMenu.open = false;
+    sInSummary = false;
+}
+
+// Back from the summary: on the POKéMON looked at last (SetSelectionAfterSummaryScreen)
+static void Resume(void)
+{
+    if (!sInSummary)
+        return;
+    sInSummary = false;
+    const int32_t last = UiParty_LastViewed();
+    if (sArea == AREA_BOX && last >= 0 && last < IN_BOX_COUNT)
+        sPos = last;
+    else if (sArea == AREA_PARTY && last >= 0 && last < PartyCount())
+        sPartyPos = last;
 }
 
 static void ChangeBox(int32_t d)
@@ -546,6 +575,14 @@ static void Act(int32_t id)
             PickUp();
         break;
     case ACT_WITHDRAW: Withdraw(); break;
+    case ACT_SUMMARY:
+        PlaySE(SE_SELECT);
+        sInSummary = true;
+        if (sArea == AREA_BOX)
+            UiParty_PushSummary(UiGame_ViewBox(Box(), sPos));
+        else
+            UiParty_PushSummary(sPartyPos);
+        break;
     case ACT_STORE:
         if (CountPartyAliveNonEggMonsExcept((u8)sPartyPos) == 0) { Fail("That's your last POKéMON!"); break; }
         if (ItemIsMail(HeldItemOf(bm))) { Fail("MAIL can't be stored!"); break; }
@@ -1192,4 +1229,4 @@ static void Build(void)
     }
 }
 
-const UiScreen gUiPcScreen = { Enter, Update, Build, NULL };
+const UiScreen gUiPcScreen = { Enter, Update, Build, Resume };

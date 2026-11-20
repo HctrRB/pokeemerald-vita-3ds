@@ -106,6 +106,12 @@ static int32_t sTabX[TAB_COUNT], sTabW[TAB_COUNT];
 static uint8_t sFmSlot;
 static uint16_t sFmMove;
 
+// Summary only (UiParty_PushSummary, the PC's SUMMARY): the summary of the POKéMON UiGame_View*
+// reads, ↑ / ↓ through them, ○ back to the screen under it. No party actions.
+static bool sViewOnly;
+static int32_t sViewStart = -1;     // the slot to open on, once (-1: the normal party screen)
+static int32_t sLastViewed;
+
 static void PartyEnter(void)
 {
     sParty.sel = sParty.first = 0;
@@ -114,12 +120,39 @@ static void PartyEnter(void)
     sSummaryOpen = false;
     sMoveSwap = -1;
     sPop.open = false;
-    UiList_Reset(&sParty, UiGame_PartyCount(), 6);
+    sViewOnly = sViewStart >= 0;
+    if (sViewOnly)
+    {
+        sParty.sel = sViewStart;
+        sSummaryOpen = true;
+    }
+    sViewStart = -1;
+    UiList_Reset(&sParty, UiGame_ViewCount(), 6);
 }
 
 static void PartyResume(void)
 {
-    UiList_Reset(&sParty, UiGame_PartyCount(), 6);
+    UiList_Reset(&sParty, UiGame_ViewCount(), 6);
+}
+
+// Leaving the summary only: what was looked at last (as gLastViewedMonIndex), and the party again
+static bool LeaveViewOnly(void)
+{
+    sLastViewed = UiGame_ViewPosition(sParty.sel);
+    UiGame_ViewParty();
+    sViewOnly = false;
+    return false;
+}
+
+void UiParty_PushSummary(int32_t slot)
+{
+    sViewStart = slot < 0 ? 0 : slot;
+    UiNav_Push(&gUiPartyScreen);
+}
+
+int32_t UiParty_LastViewed(void)
+{
+    return sLastViewed;
 }
 
 // Field move once the UI is closed (the move's own field effect runs in the overworld)
@@ -321,6 +354,8 @@ static bool PartyGbaUpdate(const UiInput *in)
                 sMode = MODE_BROWSE;
                 sMoveSwap = -1;
             }
+            else if (sViewOnly)
+                return LeaveViewOnly();
             else
                 sSummaryOpen = false;
             return true;
@@ -398,7 +433,7 @@ static bool PartyGbaUpdate(const UiInput *in)
             }
         }
         // Up / Down switches POKéMON while staying in Summary View (04_summary)
-        const int32_t pCount = UiGame_PartyCount();
+        const int32_t pCount = UiGame_ViewCount();
         if (pCount > 1)
         {
             const int32_t before = sParty.sel;
@@ -546,6 +581,8 @@ static bool PartyUpdate(const UiInput *in)
     {
         PlaySE(SE_SELECT);
         if (sMode != MODE_BROWSE) { sMode = MODE_BROWSE; UiKit_ClearToast(); return true; }
+        if (sViewOnly)
+            return LeaveViewOnly();
         if (UiGame_InBattleMenu() && !UiGame_BattlePartyCanCancel())
         {
             PlaySE(SE_FAILURE);
@@ -557,6 +594,8 @@ static bool PartyUpdate(const UiInput *in)
     const int32_t a = UiList_Update(&sParty, in, CARD_X, CARD_Y, CARD_W, CARD_H, true);
     if (a < 0)
         return true;
+    if (sViewOnly && sTab < TAB_MOVES)
+        return true;                                  // the summary only: no party actions
     PlaySE(SE_SELECT);
     if (sMode == MODE_SWITCH)
     {
@@ -1229,19 +1268,21 @@ static void PartyBuild(void)
         PartyBuildGba();
         return;
     }
-    UiKit_Header("POKéMON", sTabs, TAB_COUNT, sTab, sTabX, sTabW, 12);
+    UiKit_Header(sViewOnly ? "SUMMARY" : "POKéMON", sTabs, TAB_COUNT, sTab, sTabX, sTabW, 12);
     UiW_Panel(16, 60, 320, 432);
-    const int32_t n = UiGame_PartyCount();
-    for (int32_t i = 0; i < n; i++)
+    // Six cards: the party, or a window of the box being looked at (the list scrolls)
+    const int32_t n = UiGame_ViewCount();
+    for (int32_t i = sParty.first; i < n && i < sParty.first + 6; i++)
     {
+        const int32_t y = CARD_Y + (i - sParty.first) * CARD_H;
         const bool on = i == sParty.sel;
         const bool inBattle = UiGame_InBattleMenu() && UiGame_MonIsInBattle(i);
         const bool partner = UiGame_InBattleMenu() && UiGame_IsMultiPartner(i);
-        DrawCard(i, CARD_Y + i * CARD_H, on && sMode != MODE_MOVES, inBattle ? "IN BATTLE" : partner ? "PARTNER" : NULL, !partner);
+        DrawCard(i, y, on && sMode != MODE_MOVES, inBattle ? "IN BATTLE" : partner ? "PARTNER" : NULL, !partner);
         if (partner)
-            UiDraw_Rect(CARD_X, CARD_Y + i * CARD_H, CARD_W, CARD_H - 2, UI_RGBA(0, 0, 0, 70));   // the partner's: greyed
+            UiDraw_Rect(CARD_X, y, CARD_W, CARD_H - 2, UI_RGBA(0, 0, 0, 70));   // the partner's: greyed
         if ((sMode == MODE_SWITCH || sMode == MODE_SHARE) && i == sFrom)
-            UiDraw_Frame(CARD_X, CARD_Y + i * CARD_H, CARD_W, CARD_H - 2, 3, UI_COL_SELECT);
+            UiDraw_Frame(CARD_X, y, CARD_W, CARD_H - 2, 3, UI_COL_SELECT);
     }
     UiW_Panel(348, 60, 596, 432);
     UiMon m;
@@ -1260,7 +1301,8 @@ static void PartyBuild(void)
     }
     else
     {
-        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sTab >= TAB_MOVES ? "Moves" : sMode == MODE_BROWSE ? "Options" : "Choose");
+        if (sTab >= TAB_MOVES || !sViewOnly)
+            UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sTab >= TAB_MOVES ? "Moves" : sMode == MODE_BROWSE ? "Options" : "Choose");
         UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, sMode == MODE_BROWSE ? "Back" : "Cancel");
     }
     UiKit_FooterClock();

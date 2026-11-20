@@ -917,12 +917,8 @@ void CB2_ReshowFrontierPass(void)
     SetMainCallback2(CB2_FrontierPass);
 }
 
-static void CB2_ReturnFromRecord(void)
+static void PlayMusicAfterRecord(void)
 {
-    AllocateFrontierPassData(sSavedPassData.callback);
-    sPassData->cursorX = sSavedPassData.cursorX;
-    sPassData->cursorY = sSavedPassData.cursorY;
-    memset(&sSavedPassData, 0, sizeof(sSavedPassData));
     switch (CurrentBattlePyramidLocation())
     {
     case PYRAMID_LOCATION_FLOOR:
@@ -935,9 +931,64 @@ static void CB2_ReturnFromRecord(void)
         Overworld_PlaySpecialMapMusic();
         break;
     }
+}
 
+static void CB2_ReturnFromRecord(void)
+{
+    AllocateFrontierPassData(sSavedPassData.callback);
+    sPassData->cursorX = sSavedPassData.cursorX;
+    sPassData->cursorY = sSavedPassData.cursorY;
+    memset(&sSavedPassData, 0, sizeof(sSavedPassData));
+    PlayMusicAfterRecord();
     SetMainCallback2(CB2_ReshowFrontierPass);
 }
+
+#ifdef PLATFORM_VITA
+// Port: the pass's MAP and RECORD as pages of the new UI's trainer card (ui_scr_card.c)
+
+// The frontier map (ShowFrontierMap: BG2, gFrontierPassBg_Pal)
+void FrontierPass_MapGfxForUi(const u32 **tiles, const u32 **tilemap, const u16 **palettes)
+{
+    *tiles = sMapScreen_Gfx;
+    *tilemap = sMapScreen_Tilemap;
+    *palettes = gFrontierPassBg_Pal[0];
+}
+
+// A facility on the map: its name, its description and where its marker goes (240 x 160)
+void FrontierPass_LandmarkForUi(u8 facility, const u8 **name, const u8 **desc, s16 *x, s16 *y, bool8 *wide)
+{
+    if (facility >= NUM_FRONTIER_FACILITIES)
+        facility = 0;
+    *name = sMapLandmarks[facility].name;
+    *desc = sMapLandmarks[facility].description;
+    *x = sMapLandmarks[facility].x;
+    *y = sMapLandmarks[facility].y;
+    *wide = sMapLandmarks[facility].animNum == MAP_INDICATOR_RECTANGLE;
+}
+
+bool8 FrontierPass_HasRecordForUi(void)
+{
+    return CanCopyRecordedBattleSaveData();
+}
+
+// The recorded battle (CB2_ShowFrontierPassFeature), then `back` with the map's music again
+static void (*sRecordBackForUi)(void);
+
+static void CB2_ReturnFromRecordForUi(void)
+{
+    PlayMusicAfterRecord();
+    SetMainCallback2(sRecordBackForUi);
+}
+
+void FrontierPass_PlayRecordForUi(void (*back)(void))
+{
+    void (*before)(void) = gMain.callback2;
+    sRecordBackForUi = back;
+    PlayRecordedBattle(CB2_ReturnFromRecordForUi);
+    if (gMain.callback2 == before)
+        CB2_ReturnFromRecordForUi();           // the record could not be read after all: straight back
+}
+#endif
 
 static void CB2_ShowFrontierPassFeature(void)
 {

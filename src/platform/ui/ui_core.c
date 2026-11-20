@@ -444,6 +444,7 @@ static void Close(void)
     sFromScript = false;
     sHosted = false;
     UiGame_BattleMenuEnd();
+    UiGame_ViewParty();
     UiStall_Closed();
     UiDraw_Begin();
     UiDraw_Publish(0.0f);
@@ -452,6 +453,7 @@ static void Close(void)
 void Ui_OnReset(void)
 {
     __atomic_store_n(&sOpen, false, __ATOMIC_RELAXED);
+    UiGame_ViewParty();
     sDepth = 0;
     sCloseRequested = false;
     sFromScript = false;

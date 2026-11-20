@@ -108,6 +108,10 @@ bool Ui_OpenPokeblockCaseBattle(void);
 // After a catch (battle_script_commands.c Cmd_displaydexinfo): the new species' POKéDEX page over
 // the battle; the command waits for !Ui_IsOpen(). False: the GBA caught page.
 bool Ui_OpenCaughtDexPage(uint16_t nationalNum);
+// A wall map of Hoenn (field_specials.c FieldShowRegionMap): the PokéNav map only, hosted
+bool Ui_OpenTownMap(void);
+// Mr. Stone's PokéNav tutorial (pokenav.c OpenPokenavForTutorial): MATCH CALL until a call
+bool Ui_OpenPokenavTutorial(void);
 
 // Battle HUD of the new UI: GBA layers to leave out of the frame (Core 0; DISPCNT_BG*_ON bits)
 uint16_t Ui_BattleDispcntClear(void);

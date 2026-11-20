@@ -42,6 +42,7 @@
 #include "contest_effect.h"
 #include "data.h"
 #include "pokemon_summary_screen.h"
+#include "pokemon_storage_system.h"
 
 // ---------- Text ----------
 
@@ -241,12 +242,63 @@ int32_t UiGame_PartyCount(void)
     return (int32_t)CalculatePlayerPartyCount();
 }
 
+// ---------- The POKéMON the summary reads ----------
+// The party, or one PC box while its summary is open (UiGame_ViewBox): copies of the box's
+// POKéMON, empty slots left out, made as the GBA summary of a box makes them (BoxMonToMon). The
+// summary readers below take a slot of this view; only a move reorder writes, and it goes back
+// to the box (as SwapBoxMonMoves).
+static struct Pokemon sBoxView[IN_BOX_COUNT];
+static uint8_t sBoxViewPos[IN_BOX_COUNT];
+static int32_t sBoxViewCount;
+static int32_t sBoxViewBox = -1;                  // -1: the party
+
+static struct Pokemon *ViewMon(int32_t slot)
+{
+    return sBoxViewBox >= 0 ? &sBoxView[slot] : &gPlayerParty[slot];
+}
+
+int32_t UiGame_ViewCount(void)
+{
+    return sBoxViewBox >= 0 ? sBoxViewCount : UiGame_PartyCount();
+}
+
+int32_t UiGame_ViewBox(uint8_t box, int32_t pos)
+{
+    int32_t start = 0;
+    sBoxViewCount = 0;
+    for (int32_t i = 0; i < IN_BOX_COUNT; i++)
+    {
+        struct BoxPokemon *bm = GetBoxedMonPtr(box, (u8)i);
+        if (GetBoxMonData(bm, MON_DATA_SPECIES) == SPECIES_NONE)
+            continue;
+        if (i == pos)
+            start = sBoxViewCount;
+        BoxMonToMon(bm, &sBoxView[sBoxViewCount]);
+        sBoxViewPos[sBoxViewCount++] = (uint8_t)i;
+    }
+    sBoxViewBox = sBoxViewCount > 0 ? box : -1;
+    return start;
+}
+
+int32_t UiGame_ViewPosition(int32_t slot)
+{
+    if (sBoxViewBox < 0 || slot < 0 || slot >= sBoxViewCount)
+        return slot;
+    return sBoxViewPos[slot];
+}
+
+void UiGame_ViewParty(void)
+{
+    sBoxViewBox = -1;
+    sBoxViewCount = 0;
+}
+
 bool UiGame_Mon(int32_t slot, UiMon *out)
 {
     memset(out, 0, sizeof(*out));
-    if (slot < 0 || slot >= UiGame_PartyCount())
+    if (slot < 0 || slot >= UiGame_ViewCount())
         return false;
-    struct Pokemon *mon = &gPlayerParty[slot];
+    struct Pokemon *mon = ViewMon(slot);
     out->species = (uint16_t)GetMonData(mon, MON_DATA_SPECIES_OR_EGG);
     out->egg = GetMonData(mon, MON_DATA_IS_EGG) != 0;
     out->level = (uint8_t)GetMonData(mon, MON_DATA_LEVEL);
@@ -313,7 +365,7 @@ void UiGame_PlayTime(char *out, size_t cap)
 
 int32_t UiGame_MonStatusIcon(int32_t slot)
 {
-    struct Pokemon *mon = &gPlayerParty[slot];
+    struct Pokemon *mon = ViewMon(slot);
     if (GetMonData(mon, MON_DATA_IS_EGG))
         return -1;
     if (GetMonData(mon, MON_DATA_HP) == 0)
@@ -330,7 +382,7 @@ int32_t UiGame_MonStatusIcon(int32_t slot)
 
 void UiGame_Summary(int32_t slot, UiSummary *s)
 {
-    struct Pokemon *mon = &gPlayerParty[slot];
+    struct Pokemon *mon = ViewMon(slot);
     memset(s, 0, sizeof(*s));
     const uint16_t sp = UiGame_SafeSpecies(GetMonData(mon, MON_DATA_SPECIES));
     u8 buf[64];
@@ -385,7 +437,7 @@ void UiGame_Summary(int32_t slot, UiSummary *s)
 
 void UiGame_Move(int32_t slot, int32_t idx, UiMove *m)
 {
-    struct Pokemon *mon = &gPlayerParty[slot];
+    struct Pokemon *mon = ViewMon(slot);
     memset(m, 0, sizeof(*m));
     // A Bad Egg's moves are what is left of its scrambled data: it knows none
     if (GetMonData(mon, MON_DATA_SANITY_IS_BAD_EGG))
@@ -412,7 +464,7 @@ void UiGame_Move(int32_t slot, int32_t idx, UiMove *m)
 // Swaps two moves with their PP and PP Ups (as the summary screen's reorder)
 void UiGame_SwapMoves(int32_t slot, int32_t a, int32_t b)
 {
-    struct Pokemon *mon = &gPlayerParty[slot];
+    struct Pokemon *mon = ViewMon(slot);
     const uint16_t ma = (uint16_t)GetMonData(mon, MON_DATA_MOVE1 + a), mb = (uint16_t)GetMonData(mon, MON_DATA_MOVE1 + b);
     const uint8_t pa = (uint8_t)GetMonData(mon, MON_DATA_PP1 + a), pb = (uint8_t)GetMonData(mon, MON_DATA_PP1 + b);
     uint8_t bonuses = (uint8_t)GetMonData(mon, MON_DATA_PP_BONUSES);
@@ -423,6 +475,8 @@ void UiGame_SwapMoves(int32_t slot, int32_t a, int32_t b)
     SetMonData(mon, MON_DATA_PP1 + a, &pb);
     SetMonData(mon, MON_DATA_PP1 + b, &pa);
     SetMonData(mon, MON_DATA_PP_BONUSES, &bonuses);
+    if (sBoxViewBox >= 0)
+        *GetBoxedMonPtr((u8)sBoxViewBox, sBoxViewPos[slot]) = mon->box;
 }
 
 void UiGame_SwapPartyMons(int32_t a, int32_t b)

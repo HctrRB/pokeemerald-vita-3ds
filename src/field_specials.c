@@ -1,4 +1,5 @@
 #include "global.h"
+#include "platform/ui.h"
 #include "malloc.h"
 #include "battle.h"
 #include "battle_tower.h"
@@ -972,6 +973,16 @@ static void CB2_FieldShowRegionMap(void)
 
 void FieldShowRegionMap(void)
 {
+#ifdef PLATFORM_VITA
+    // Port: the new UI's Hoenn map; FieldInitRegionMap's resets (the field's tasks keep running)
+    if (Ui_OpenTownMap())
+    {
+        SetVBlankCallback(NULL);
+        ResetSpriteData();
+        FreeAllSpritePalettes();
+        return;
+    }
+#endif
     SetMainCallback2(CB2_FieldShowRegionMap);
 }
 

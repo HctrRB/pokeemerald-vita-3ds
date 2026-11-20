@@ -5890,12 +5890,6 @@ bool32 IsEasyChatAnswerUnlocked(int easyChatWord)
 // The new screen only edits the words; the game's own checks and effects run here, on the same
 // sEasyChatScreen / sWordData the GBA screen uses (TryConfirmWords, StartConfirmExitPrompt,
 // SetSpecialEasyChatResult, SaveCurrentPhrase).
-bool8 EasyChat_UiSupported(u8 type)
-{
-    return type != EASY_CHAT_TYPE_BARD_SONG && type != EASY_CHAT_TYPE_QUIZ_ANSWER && type != EASY_CHAT_TYPE_QUIZ_QUESTION
-        && type != EASY_CHAT_TYPE_QUIZ_SET_QUESTION && type != EASY_CHAT_TYPE_QUIZ_SET_ANSWER;
-}
-
 // As InitEasyChatScreen: the word data first (InitEasyChatScreenStruct reads it through
 // GetNumUnlockedEasyChatGroups), then the screen struct
 bool8 EasyChat_UiBegin(u8 type, u16 *words, u8 displayedPersonType)
@@ -5916,12 +5910,87 @@ bool8 EasyChat_UiBegin(u8 type, u16 *words, u8 displayedPersonType)
 }
 
 u8 EasyChat_UiColumns(void) { return sEasyChatScreen->numColumns; }
-u8 EasyChat_UiMaxWords(void) { return sEasyChatScreen->maxWords; }
+// The words shown: a 2x5 frame (mail, the quiz question) ends on its 9th word (PrintCurrentPhrase)
+u8 EasyChat_UiMaxWords(void) { return IsCurrentFrame2x5() ? sEasyChatScreen->maxWords - 1 : sEasyChatScreen->maxWords; }
 u8 EasyChat_UiType(void) { return sEasyChatScreen->type; }
 u16 *EasyChat_UiPhrase(void) { return sEasyChatScreen->currentPhrase; }
 const u8 *EasyChat_UiTitle(void) { return sEasyChatScreen->titleText; }
 void EasyChat_UiInstructions(const u8 **a, const u8 **b) { GetEasyChatInstructionsText(a, b); }
-void EasyChat_UiDeleteAllText(const u8 **a, const u8 **b) { GetEasyChatConfirmDeletionText(a, b); }
+void EasyChat_UiConfirmText(const u8 **a, const u8 **b) { GetEasyChatConfirmText(a, b); }
+
+// DEL ALL (DoDeleteAllButton): 1 = ask to delete, 2 = a message only (the BARD's lyrics stay)
+u8 EasyChat_UiTryDeleteAll(const u8 **t1, const u8 **t2)
+{
+    *t1 = *t2 = NULL;
+    if (sEasyChatScreen->type == EASY_CHAT_TYPE_BARD_SONG)
+    {
+        *t1 = gText_LyricsCantBeDeleted;
+        return 2;
+    }
+    GetEasyChatConfirmDeletionText(t1, t2);
+    return 1;
+}
+
+// The BARD's song: a word can't be deleted (DeleteSelectedWord), and each new word asks at once
+// whether the song is as shown (SelectNewWord)
+bool8 EasyChat_UiCanDeleteWord(void) { return sEasyChatScreen->type != EASY_CHAT_TYPE_BARD_SONG; }
+bool8 EasyChat_UiConfirmsEachWord(void) { return sEasyChatScreen->type == EASY_CHAT_TYPE_BARD_SONG; }
+
+// NO to the song (HandleEasyChatInput_ConfirmLyricsYesNo): the old song comes back
+void EasyChat_UiRevertLyrics(const u8 **t1, const u8 **t2)
+{
+    ResetCurrentPhraseToSaved();
+    *t1 = gText_OnlyOnePhrase;
+    *t2 = gText_OriginalSongWillBeUsed;
+}
+
+#define EC_UI_NO_QUIZ 0xFF        // EasyChat_UiQuizTarget: not a quiz screen
+
+// The quiz lady's screens (sQuizLadyEasyChatScreens): the fourth button (and A on the question,
+// which can only be read) goes to the other screen of the pair, as DoQuizButton
+static u16 *QuizWords(u8 type)
+{
+    switch (type)
+    {
+    case EASY_CHAT_TYPE_QUIZ_ANSWER: return &gSaveBlock1Ptr->lilycoveLady.quiz.playerAnswer;
+    case EASY_CHAT_TYPE_QUIZ_QUESTION:
+    case EASY_CHAT_TYPE_QUIZ_SET_QUESTION: return gSaveBlock1Ptr->lilycoveLady.quiz.question;
+    case EASY_CHAT_TYPE_QUIZ_SET_ANSWER: return &gSaveBlock1Ptr->lilycoveLady.quiz.correctAnswer;
+    default: return NULL;
+    }
+}
+
+u8 EasyChat_UiQuizTarget(void)
+{
+    switch (sEasyChatScreen->type)
+    {
+    case EASY_CHAT_TYPE_QUIZ_ANSWER: return EASY_CHAT_TYPE_QUIZ_QUESTION;
+    case EASY_CHAT_TYPE_QUIZ_QUESTION: return EASY_CHAT_TYPE_QUIZ_ANSWER;
+    case EASY_CHAT_TYPE_QUIZ_SET_QUESTION: return EASY_CHAT_TYPE_QUIZ_SET_ANSWER;
+    case EASY_CHAT_TYPE_QUIZ_SET_ANSWER: return EASY_CHAT_TYPE_QUIZ_SET_QUESTION;
+    default: return EC_UI_NO_QUIZ;
+    }
+}
+
+// The quiz question being answered: only read (INPUTSTATE_QUIZ_QUESTION)
+bool8 EasyChat_UiReadOnly(void) { return sEasyChatScreen->type == EASY_CHAT_TYPE_QUIZ_QUESTION; }
+
+// FALSE: no memory for the other screen; the data is freed and the screen must end (result 0)
+bool8 EasyChat_UiQuizSwitch(void)
+{
+    const u8 to = EasyChat_UiQuizTarget();
+    if (to == EC_UI_NO_QUIZ)
+        return TRUE;
+    if (sEasyChatScreen->type == EASY_CHAT_TYPE_QUIZ_SET_QUESTION || sEasyChatScreen->type == EASY_CHAT_TYPE_QUIZ_SET_ANSWER)
+        SaveCurrentPhrase();
+    FreeEasyChatScreenStruct();
+    if (InitEasyChatScreenStruct(to, QuizWords(to), EASY_CHAT_PERSON_DISPLAY_NONE))
+        return TRUE;
+    FreeEasyChatScreenStruct();
+    FreeEasyChatScreenWordData();
+    gSpecialVar_Result = 0;
+    return FALSE;
+}
 u8 EasyChat_UiGroupCount(void) { return GetNumUnlockedEasyChatGroups(); }
 u8 EasyChat_UiGroupId(u8 index) { return GetUnlockedEasyChatGroupId(index); }
 const u8 *EasyChat_UiGroupName(u8 groupId) { return GetEasyChatWordGroupName(groupId); }
@@ -5967,7 +6036,12 @@ void EasyChat_UiFinish(bool8 confirmed)
         SaveCurrentPhrase();
     }
     else
+    {
+        // Quitting the making of a quiz keeps what was made (HandleEasyChatInput_ExitPrompt)
         gSpecialVar_Result = 0;
+        if (sEasyChatScreen->type == EASY_CHAT_TYPE_QUIZ_SET_QUESTION || sEasyChatScreen->type == EASY_CHAT_TYPE_QUIZ_SET_ANSWER)
+            SaveCurrentPhrase();
+    }
     FreeEasyChatScreenWordData();
     FreeEasyChatScreenStruct();
 }

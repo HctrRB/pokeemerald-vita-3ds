@@ -1,5 +1,8 @@
 // TRAINER CARD of the new UI (design/stitch/ficha): CARD (trainer, money, Pokédex, time, badges)
-// and PASSPORT (records, Battle Frontier symbols). Only data the game has.
+// and PASSPORT (records, Battle Frontier symbols). With the FRONTIER PASS (FLAG_SYS_FRONTIER_PASS),
+// the pass's own pages too, so the GBA pass is not needed: MAP (the frontier map, each facility
+// marked and described as ShowFrontierMap does) and RECORD (the recorded battle, played as the
+// pass plays it, then back to this page). Only data the game has.
 
 #include <stdio.h>
 #include "ui_internal.h"
@@ -10,16 +13,46 @@
 #include "event_data.h"
 #include "overworld.h"
 #include "sound.h"
+#include "strings.h"
+#include "constants/battle_frontier.h"
 #include "constants/flags.h"
 #include "constants/game_stat.h"
 #include "constants/songs.h"
 #include "constants/trainers.h"
 
-static const char *const sTabs[2] = { "CARD", "PASSPORT" };
+extern void FrontierPass_LandmarkForUi(u8 facility, const u8 **name, const u8 **desc, s16 *x, s16 *y, bool8 *wide);
+extern bool8 FrontierPass_HasRecordForUi(void);
+extern void FrontierPass_PlayRecordForUi(void (*back)(void));
+
+enum { TAB_CARD, TAB_PASSPORT, TAB_MAP, TAB_RECORD, TAB_COUNT };
+static const char *const sTabs[TAB_COUNT] = { "CARD", "PASSPORT", "MAP", "RECORD" };
+static const char *const sGbaPages[TAB_COUNT] = { "GOLD CARD", "PASSPORT", "FRONTIER MAP", "BATTLE RECORD" };
 static const char *const sBadgeNames[8] = { "STONE", "KNUCKLE", "DYNAMO", "HEAT", "BALANCE", "FEATHER", "MIND", "RAIN" };
 static const char *const sLeaderNames[8] = { "ROXANNE", "BRAWLY", "WATTSON", "FLANNERY", "NORMAN", "WINONA", "TATE/LIZA", "WALLACE" };
 static const char *const sGymTowns[8] = { "RUSTBORO", "DEWFORD", "MAUVILLE", "LAVARIDGE", "PETALBURG", "FORTREE", "MOSSDEEP", "SOOTOPOLIS" };
-static int32_t sTab, sBadge, sTabX[2], sTabW[2];
+static int32_t sTab, sBadge, sTabX[TAB_COUNT], sTabW[TAB_COUNT];
+static int32_t sTabCount;        // CARD and PASSPORT; MAP and RECORD with the FRONTIER PASS
+static int32_t sFacility;        // MAP: the facility marked
+static bool sHasRecord;          // RECORD: a recorded battle can be played
+static uint32_t sFrame;
+
+// MAP: the map at x2 and the facility list, per theme (touch and drawing share them)
+#define GBA_MAP_X 46
+#define GBA_MAP_Y 108
+#define GBA_FAC_X 614
+#define GBA_FAC_Y 108
+#define GBA_FAC_W 316
+#define GBA_FAC_PITCH 58
+#define MAP_X 24
+#define MAP_Y 68
+#define FAC_X 540
+#define FAC_Y 108
+#define FAC_W 388
+#define FAC_PITCH 50
+// RECORD: its button
+#define REC_BTN_X 380
+#define REC_BTN_Y 330
+#define REC_BTN_W 200
 
 static const char *const sBadgeDescs[8] = {
     "Boosts ATTACK and enables CUT outside battle.",
@@ -34,29 +67,81 @@ static const char *const sBadgeDescs[8] = {
 
 static void Enter(void)
 {
-    sTab = 0;
+    sTab = TAB_CARD;
     sBadge = 0;
+    sFacility = 0;
+    sTabCount = FlagGet(FLAG_SYS_FRONTIER_PASS) ? TAB_COUNT : TAB_MAP;
+    sHasRecord = sTabCount == TAB_COUNT && FrontierPass_HasRecordForUi();   // reads the record's sector, once
+}
+
+// The recorded battle (the pass's RECORD), from the field stopped as for the GBA scenes; back on
+// the field the card opens again on this page
+static void CB2_BackFromRecord(void)
+{
+    UiCore_ReopenAfterField(NULL);
+}
+
+static void StartRecord(void)
+{
+    FrontierPass_PlayRecordForUi(CB2_BackFromRecord);
+}
+
+static void PlayRecord(void)
+{
+    if (!sHasRecord)
+    {
+        PlaySE(SE_FAILURE);
+        return;
+    }
+    PlaySE(SE_SELECT);
+    UiCore_CloseToScene(StartRecord);
+}
+
+static void UpdateMap(const UiInput *in, bool gba)
+{
+    const int32_t before = sFacility;
+    if (in->repeat & (VITA_BTN_UP | VITA_BTN_LEFT)) sFacility = (sFacility + NUM_FRONTIER_FACILITIES - 1) % NUM_FRONTIER_FACILITIES;
+    if (in->repeat & (VITA_BTN_DOWN | VITA_BTN_RIGHT)) sFacility = (sFacility + 1) % NUM_FRONTIER_FACILITIES;
+    for (int32_t f = 0; f < NUM_FRONTIER_FACILITIES; f++)
+        if (gba ? UiHit(in, GBA_FAC_X, GBA_FAC_Y + f * GBA_FAC_PITCH, GBA_FAC_W, GBA_FAC_PITCH - 6)
+                : UiHit(in, FAC_X, FAC_Y + f * FAC_PITCH, FAC_W, FAC_PITCH - 4))
+            sFacility = f;
+    if (sFacility != before) PlaySE(SE_SELECT);
 }
 
 static bool Update(const UiInput *in)
 {
     const bool gba = gUiTheme->gbaFrame;
+    sFrame++;
     if (in->pressed & VITA_BTN_CIRCLE) { PlaySE(SE_SELECT); return false; }
     int32_t t = -1;
     if (gba)
     {
-        const int32_t ph = UiW_GbaPagerHit(in, true, 2);
+        const int32_t ph = UiW_GbaPagerHit(in, true, sTabCount);
         if (ph != 0)
-            t = sTab ^ 1;
+            t = (sTab + sTabCount + (ph < 0 ? -1 : 1)) % sTabCount;
     }
     else
-        t = UiKit_TabHit(in, sTabX, sTabW, 2);
-    if (in->pressed & (VITA_BTN_L | VITA_BTN_R | VITA_BTN_CROSS)) t = sTab ^ 1;
-    if (t >= 0 && t != sTab) { sTab = t; PlaySE(SE_SELECT); }
+        t = UiKit_TabHit(in, sTabX, sTabW, sTabCount);
+    if (in->pressed & VITA_BTN_L) t = (sTab + sTabCount - 1) % sTabCount;
+    if (in->pressed & VITA_BTN_R) t = (sTab + 1) % sTabCount;
+    if ((in->pressed & VITA_BTN_CROSS) && sTab <= TAB_PASSPORT) t = sTab ^ 1;   // the card's two sides
+    if (t >= 0 && t != sTab) { sTab = t; PlaySE(SE_SELECT); return true; }
+    if (sTab == TAB_MAP)
+    {
+        UpdateMap(in, gba);
+        return true;
+    }
+    if (sTab == TAB_RECORD)
+    {
+        if ((in->pressed & VITA_BTN_CROSS) || UiHit(in, REC_BTN_X, REC_BTN_Y, REC_BTN_W, 48))
+            PlayRecord();
+        return true;
+    }
     const int32_t before = sBadge;
-    if (in->repeat & VITA_BTN_LEFT) sBadge = (sBadge + 7) % 8;
-    if (in->repeat & VITA_BTN_RIGHT) sBadge = (sBadge + 1) % 8;
-    if (sTab == 0)
+    if (sTab == TAB_CARD && (in->repeat & VITA_BTN_LEFT)) sBadge = (sBadge + 7) % 8;
+    if (sTab == TAB_CARD && (in->repeat & VITA_BTN_RIGHT)) sBadge = (sBadge + 1) % 8;
+    if (sTab == TAB_CARD)
     {
         if (gba)
         {
@@ -89,21 +174,158 @@ static void CardRowGba(int32_t x, int32_t y, int32_t w, const char *k, const cha
     UiDraw_PopClip();
 }
 
+// ---------- MAP and RECORD (the FRONTIER PASS's pages) ----------
+
+typedef struct
+{
+    char name[24];
+    char desc[96];
+    s16 x, y;            // the marker's centre on the 240 x 160 map
+    bool8 wide;          // a rectangle (MAP_INDICATOR_RECTANGLE), else a square
+} Landmark;
+
+static void GetLandmark(int32_t f, Landmark *l)
+{
+    const u8 *name, *desc;
+    FrontierPass_LandmarkForUi((u8)f, &name, &desc, &l->x, &l->y, &l->wide);
+    UiGame_Text(name, l->name, sizeof(l->name));
+    UiGame_Text(desc, l->desc, sizeof(l->desc));
+}
+
+// The map at x2 with the facility's marker blinking on it (the pass's map cursor)
+static void DrawMap(int32_t mx, int32_t my, const Landmark *l, uint32_t edge)
+{
+    UiSpr_FrontierMap(mx, my, 2);
+    if ((sFrame >> 4) & 1)
+        return;
+    const int32_t w = (l->wide ? 32 : 16) * 2, h = 16 * 2;
+    UiDraw_Frame(mx + l->x * 2 - w / 2, my + l->y * 2 - h / 2, w, h, 4, edge);
+}
+
+static bool HasSymbol(int32_t f, bool *gold)
+{
+    *gold = FlagGet(FLAG_SYS_TOWER_SILVER + f * 2 + 1);
+    return *gold || FlagGet(FLAG_SYS_TOWER_SILVER + f * 2);
+}
+
+static void BuildMapGba(void)
+{
+    Landmark sel;
+    GetLandmark(sFacility, &sel);
+    UiW_GbaWin(14, 60, 572, 472, UI_GBA_WIN_GOLD);
+    UiW_GbaSectionStrip(30, 74, 540, 26, UI_GBA_TAG_GOLD, "BATTLE FRONTIER", NULL);
+    UiW_GbaBox(GBA_MAP_X - 6, GBA_MAP_Y - 6, 492, 332, 4, UI_RGBA(150, 132, 72, 255), UI_RGBA(41, 49, 49, 255),
+               UI_RGBA(41, 49, 49, 255), 0, 0);
+    DrawMap(GBA_MAP_X, GBA_MAP_Y, &sel, UI_RGBA(255, 90, 32, 255));
+    UiW_GbaBox(30, 440, 540, 80, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+    UiDraw_PushClip(34, 444, 532, 72);
+    UiW_GbaTextWrapped(UI_FACE_VT323, 24, 44, 448, 516, 30, sel.desc, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 2);
+    UiDraw_PopClip();
+
+    // The facilities, as the passport's rows; the marked one in the badge case's ring
+    UiW_GbaWin(598, 60, 348, 472, UI_GBA_WIN_DEFAULT);
+    UiW_GbaSectionStrip(GBA_FAC_X, 74, GBA_FAC_W, 26, UI_GBA_TAG_GOLD, "FACILITIES", NULL);
+    for (int32_t f = 0; f < NUM_FRONTIER_FACILITIES; f++)
+    {
+        Landmark l;
+        GetLandmark(f, &l);
+        const int32_t fy = GBA_FAC_Y + f * GBA_FAC_PITCH;
+        bool gold;
+        const bool got = HasSymbol(f, &gold);
+        if (f == sFacility)
+            UiW_GbaRingBox(GBA_FAC_X, fy, GBA_FAC_W, GBA_FAC_PITCH - 6, 4, UI_RGBA(255, 90, 32, 255), UI_RGBA(230, 148, 65, 255),
+                           UI_RGBA(255, 246, 205, 255), UI_RGBA(255, 246, 205, 255), C_WHITE, 0);
+        else
+            UiW_GbaBox(GBA_FAC_X, fy, GBA_FAC_W, GBA_FAC_PITCH - 6, 4, UI_RGBA(184, 190, 176, 255), UI_RGBA(244, 245, 236, 255),
+                       UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+        UiDraw_SpriteTint((uint16_t)((gold ? UI_SPR_FRONTIER_GOLD_1 : UI_SPR_FRONTIER_SILVER_1) + f), GBA_FAC_X + 10, fy + 10, 2,
+                          got ? 0xFFFFFFFFu : UI_RGBA(180, 175, 160, 110));
+        UiW_GbaTextMid(UI_FACE_VT323, 24, GBA_FAC_X + 52, fy, GBA_FAC_PITCH - 6, l.name, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+    }
+}
+
+static void BuildRecordGba(void)
+{
+    UiW_GbaWin(14, 60, 932, 472, UI_GBA_WIN_GOLD);
+    UiW_GbaSectionStrip(30, 74, 900, 26, UI_GBA_TAG_GOLD, "BATTLE RECORD", NULL);
+    UiW_GbaBox(130, 170, 700, 120, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+    char buf[64];
+    UiGame_Text(sHasRecord ? gText_ViewRecordedBattle : gText_ThereIsNoBattleRecord, buf, sizeof(buf));
+    UiW_GbaTextCentred(UI_FACE_VT323, 32, 130, 170, 700, 120, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+    if (sHasRecord)
+    {
+        UiW_GbaBox(REC_BTN_X, REC_BTN_Y, REC_BTN_W, 48, 4, UI_RGBA(192, 136, 16, 255), UI_RGBA(255, 238, 168, 255),
+                   UI_RGBA(232, 200, 96, 255), C_WHITE, 0);
+        UiW_GbaTextCentred(UI_FACE_PS2P, 16, REC_BTN_X, REC_BTN_Y, REC_BTN_W, 48, "VIEW", UI_RGBA(92, 70, 18, 255), C_WHITE);
+    }
+}
+
+static void BuildMap(void)
+{
+    Landmark sel;
+    GetLandmark(sFacility, &sel);
+    UiW_Panel(16, 60, 504, 432);
+    UiW_Inset(MAP_X - 4, MAP_Y - 4, 488, 328);
+    DrawMap(MAP_X, MAP_Y, &sel, UI_COL_SELECT);
+    UiW_TextWrapped(MAP_X, MAP_Y + 332, 480, 34, sel.desc, UI_COL_INK, 2);
+
+    UiW_Panel(532, 60, 412, 432);
+    UiW_PanelHead(532, 60, 412, "FACILITIES", NULL);
+    for (int32_t f = 0; f < NUM_FRONTIER_FACILITIES; f++)
+    {
+        Landmark l;
+        GetLandmark(f, &l);
+        const int32_t y = FAC_Y + f * FAC_PITCH;
+        const bool on = f == sFacility;
+        bool gold;
+        const bool got = HasSymbol(f, &gold);
+        UiW_Row(FAC_X, y, FAC_W, FAC_PITCH - 4, on, f);
+        UiDraw_SpriteTint((uint16_t)((gold ? UI_SPR_FRONTIER_GOLD_1 : UI_SPR_FRONTIER_SILVER_1) + f), FAC_X + 8, y + 7, 2,
+                          got ? 0xFFFFFFFFu : UI_RGBA(200, 192, 170, 120));
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, FAC_X + 52, y + 4, l.name, on ? UI_COL_SELECT_INK : UI_COL_INK);
+    }
+}
+
+static void BuildRecord(void)
+{
+    char buf[64];
+    UiW_Panel(16, 60, 928, 432);
+    UiW_PanelHead(16, 60, 928, "BATTLE RECORD", NULL);
+    UiGame_Text(sHasRecord ? gText_ViewRecordedBattle : gText_ThereIsNoBattleRecord, buf, sizeof(buf));
+    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, (UI_SCREEN_W - UiText_Width(UI_FACE_VT323, UI_DIALOG_PX, buf)) / 2, 210, buf, UI_COL_INK);
+    if (sHasRecord)
+        UiW_Button(REC_BTN_X, REC_BTN_Y, REC_BTN_W, "VIEW", UI_BTN_GREEN, false);
+}
+
 static void BuildGba(void)
 {
     char buf[96], name[16];
     const uint16_t tid = (uint16_t)(gSaveBlock2Ptr->playerTrainerId[0] | (gSaveBlock2Ptr->playerTrainerId[1] << 8));
     UiGame_PlayerName(name, sizeof(name));
     UiW_GbaTopBar(UI_GBA_BG_CARD, UiGame_PlayerIsMale() ? UI_SPR_HEAD_BRENDAN : UI_SPR_HEAD_MAY,
-                  "TRAINER CARD", 2, sTab, false, sTab == 0 ? "GOLD CARD" : "PASSPORT");
+                  "TRAINER CARD", sTabCount, sTab, false, sGbaPages[sTab]);
 
     int32_t rx = UI_SCREEN_W - 14;
     UiW_GbaHelpBadge(&rx, "O", "BACK", true);
-    if (sTab == 0)
+    if (sTab == TAB_CARD)
         UiW_GbaHelpBadge(&rx, "<>", "BADGE", false);
-    UiW_GbaHelpBadge(&rx, "X", "FLIP CARD", false);
+    if (sTab <= TAB_PASSPORT)
+        UiW_GbaHelpBadge(&rx, "X", "FLIP CARD", false);
+    if (sTab == TAB_MAP)
+    {
+        UiW_GbaHelpBadge(&rx, "<>", "FACILITY", false);
+        BuildMapGba();
+        return;
+    }
+    if (sTab == TAB_RECORD)
+    {
+        if (sHasRecord)
+            UiW_GbaHelpBadge(&rx, "X", "VIEW", false);
+        BuildRecordGba();
+        return;
+    }
 
-    if (sTab == 0)
+    if (sTab == TAB_CARD)
     {
         // Left Gold Trainer Card (14, 60, 572, 472)
         UiW_GbaWin(14, 60, 572, 472, UI_GBA_WIN_GOLD);
@@ -253,11 +475,24 @@ static void Build(void)
         return;
     }
     char buf[48], name[16];
-    UiKit_Header("TRAINER CARD", sTabs, 2, sTab, sTabX, sTabW, 12);
+    UiKit_Header("TRAINER CARD", sTabs, sTabCount, sTab, sTabX, sTabW, 12);
     snprintf(buf, sizeof(buf), "IDNo. %05u", (unsigned)(gSaveBlock2Ptr->playerTrainerId[0] | (gSaveBlock2Ptr->playerTrainerId[1] << 8)));
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     UiGame_PlayerName(name, sizeof(name));
-    if (sTab == 0)
+    int32_t fx = 16;
+    if (sTab == TAB_MAP || sTab == TAB_RECORD)
+    {
+        if (sTab == TAB_MAP)
+            BuildMap();
+        else
+            BuildRecord();
+        if (sTab == TAB_RECORD && sHasRecord)
+            UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "View");
+        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
+        UiKit_FooterClock();
+        return;
+    }
+    if (sTab == TAB_CARD)
     {
         UiW_Panel(16, 60, 440, 432);
         UiW_Inset(32, 76, 152, 152);
@@ -321,7 +556,6 @@ static void Build(void)
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 40, y + 46, gold ? "GOLD" : silver ? "SILVER" : "-", UI_COL_INK);
         }
     }
-    int32_t fx = 16;
     UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Flip card");
     UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
     UiKit_FooterClock();

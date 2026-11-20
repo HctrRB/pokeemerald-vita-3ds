@@ -1,4 +1,5 @@
 #include "global.h"
+#include "platform/ui.h"
 #include "malloc.h"
 #include "task.h"
 #include "main.h"
@@ -332,6 +333,11 @@ void CB2_InitPokeNav(void)
 
 void OpenPokenavForTutorial(void)
 {
+#ifdef PLATFORM_VITA
+    // Port: the new UI's PokéNav over the field, on MATCH CALL until Mr. Stone is called
+    if (Ui_OpenPokenavTutorial())
+        return;
+#endif
     SetMainCallback2(CB2_InitPokenavForTutorial);
     FadeScreen(FADE_TO_BLACK, 0);
 }

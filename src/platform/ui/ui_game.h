@@ -40,6 +40,15 @@ typedef struct
 } UiMon;
 
 int32_t UiGame_PartyCount(void);
+// What UiGame_Mon, UiGame_Summary, UiGame_Move, UiGame_MonStatusIcon and UiGame_SwapMoves read:
+// the party, or the POKéMON of a PC box (empty slots left out) while its summary is open.
+// UiGame_ViewBox returns the slot of box position `pos`; UiGame_ViewPosition gives a slot's box
+// position back (a party slot as it is); UiGame_ViewParty goes back to the party (the UI's close
+// and reset do it too).
+int32_t UiGame_ViewCount(void);
+int32_t UiGame_ViewBox(uint8_t box, int32_t pos);
+int32_t UiGame_ViewPosition(int32_t slot);
+void UiGame_ViewParty(void);
 bool UiGame_Mon(int32_t slot, UiMon *out);
 
 bool UiGame_Save(void);

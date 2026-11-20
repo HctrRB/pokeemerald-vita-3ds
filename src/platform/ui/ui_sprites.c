@@ -33,6 +33,7 @@ extern void PokeStorage_WallpaperForUi(u8 wallpaperId, const u32 **tiles, const 
 extern void Mail_StationeryForUi(u8 mailType, const u32 **tiles, const u32 **tilemap, u16 *palette);
 extern bool8 Decoration_PictureForUi(u8 decor, u8 *tiles, u16 *palette, u8 *w, u8 *h);
 extern void MapNamePopUp_GfxForUi(u8 theme, bool8 underwater, const u8 **inner, const u8 **outline, const u16 **palette);
+extern void FrontierPass_MapGfxForUi(const u32 **tiles, const u32 **tilemap, const u16 **palettes);
 static inline uint16_t To5551(uint16_t bgr);
 
 #define LZ77_MAGIC 0x10u
@@ -100,18 +101,21 @@ static void ComposeWallpaper(int32_t id)
     sWallId = id;
 }
 
-// Mail stationery (240 x 160), composed as ReadMail draws it: BG2 is tile 1 everywhere, BG1 the
-// mail's tilemap over it (32 entries a row), palette 0 with the player's colours (Mail_StationeryForUi)
-#define MAIL_W 240
-#define MAIL_H 160
-static uint16_t sMail[MAIL_W * MAIL_H];
-static int32_t sMailKey = -1;
+// A full-screen GBA picture (240 x 160) composed from a BG's tiles and tilemap (32 entries a row),
+// one at a time (sPicKey, the KEY of what it holds): a mail's stationery, the Frontier Pass map.
+// The tilemap's palette numbers pick among `banks` palettes (a number past them: the first).
+#define PIC_W 240
+#define PIC_H 160
+static uint16_t sPic[PIC_W * PIC_H];
+static uint32_t sPicKey;
 
-static void PutMailTile(const uint8_t *tiles, uint16_t tileCount, uint16_t entry, int32_t tx, int32_t ty, const uint16_t *pal)
+static void PutPicTile(const uint8_t *tiles, uint16_t tileCount, uint16_t entry, int32_t tx, int32_t ty,
+                       const uint16_t (*pals)[16], int32_t banks)
 {
     const uint16_t t = entry & 0x3FF;
     if (t >= tileCount)
         return;
+    const int32_t bank = (entry >> 12) < banks ? (entry >> 12) : 0;
     const bool hf = (entry >> 10) & 1, vf = (entry >> 11) & 1;
     const uint8_t *tile = &tiles[t * 32];
     for (int32_t y = 0; y < 8; y++)
@@ -120,33 +124,53 @@ static void PutMailTile(const uint8_t *tiles, uint16_t tileCount, uint16_t entry
             const int32_t sx = hf ? 7 - x : x, sy = vf ? 7 - y : y;
             const uint8_t b = tile[sy * 4 + sx / 2], v = (sx & 1) ? (b >> 4) : (b & 15);
             if (v)
-                sMail[(ty * 8 + y) * MAIL_W + tx * 8 + x] = pal[v];
+                sPic[(ty * 8 + y) * PIC_W + tx * 8 + x] = pals[bank][v];
         }
 }
 
-static void ComposeMail(int32_t mailType)
+// The backdrop (colour 0 of the first palette), then `fill` (>= 0: that one tile everywhere, the
+// first layer), then the tilemap
+static bool ComposePicture(uint32_t key, const u32 *tilesLz, const u32 *mapLz, int32_t fill, const uint16_t *bgr, int32_t banks)
 {
     static uint8_t tiles[0x2000];
     static uint16_t tmap[32 * 32];
+    static uint16_t pals[16][16];
+    if (banks < 1 || banks > 16 || !UnpackLz(tilesLz, tiles, sizeof(tiles)) || !UnpackLz(mapLz, tmap, sizeof(tmap)))
+        return false;
+    for (int32_t p = 0; p < banks; p++)
+        for (int32_t i = 0; i < 16; i++)
+            pals[p][i] = To5551(bgr[p * 16 + i]);
+    const uint16_t count = (uint16_t)((tilesLz[0] >> 8) / 32);
+    for (int32_t i = 0; i < PIC_W * PIC_H; i++)
+        sPic[i] = pals[0][0];
+    if (fill >= 0)
+        for (int32_t ty = 0; ty < PIC_H / 8; ty++)
+            for (int32_t tx = 0; tx < PIC_W / 8; tx++)
+                PutPicTile(tiles, count, (uint16_t)fill, tx, ty, pals, banks);
+    for (int32_t ty = 0; ty < PIC_H / 8; ty++)
+        for (int32_t tx = 0; tx < PIC_W / 8; tx++)
+            PutPicTile(tiles, count, tmap[ty * 32 + tx], tx, ty, pals, banks);
+    sPicKey = key;
+    return true;
+}
+
+// Mail stationery, as ReadMail draws it: BG2 is tile 1 everywhere, BG1 the mail's tilemap over it,
+// palette 0 with the player's colours (Mail_StationeryForUi)
+static void ComposeMail(uint32_t key, int32_t mailType)
+{
     const u32 *tilesLz = NULL, *mapLz = NULL;
-    uint16_t bgr[16], pal[16];
+    uint16_t bgr[16];
     Mail_StationeryForUi((u8)mailType, &tilesLz, &mapLz, bgr);
-    if (!UnpackLz(tilesLz, tiles, sizeof(tiles)) || !UnpackLz(mapLz, tmap, sizeof(tmap)))
-        return;
-    const uint32_t tilesSize = tilesLz[0] >> 8;
-    for (int32_t i = 0; i < 16; i++)
-        pal[i] = To5551(bgr[i]);
-    const uint16_t backdrop = pal[0];
-    for (int32_t i = 0; i < MAIL_W * MAIL_H; i++)
-        sMail[i] = backdrop;
-    const uint16_t count = (uint16_t)(tilesSize / 32);
-    for (int32_t ty = 0; ty < MAIL_H / 8; ty++)
-        for (int32_t tx = 0; tx < MAIL_W / 8; tx++)
-            PutMailTile(tiles, count, 1, tx, ty, pal);                 // BG2
-    for (int32_t ty = 0; ty < MAIL_H / 8; ty++)
-        for (int32_t tx = 0; tx < MAIL_W / 8; tx++)
-            PutMailTile(tiles, count, tmap[ty * 32 + tx], tx, ty, pal);   // BG1
-    sMailKey = mailType;
+    ComposePicture(key, tilesLz, mapLz, 1, bgr, 1);
+}
+
+// The Frontier Pass map, as ShowFrontierMap draws its BG2 (gFrontierPassBg_Pal's 8 palettes)
+static void ComposeFrontierMap(uint32_t key)
+{
+    const u32 *tilesLz = NULL, *mapLz = NULL;
+    const u16 *bgr = NULL;
+    FrontierPass_MapGfxForUi(&tilesLz, &mapLz, &bgr);
+    ComposePicture(key, tilesLz, mapLz, -1, bgr, 8);
 }
 
 // Decoration pictures: their size, known once decoded (Core 1)
@@ -205,7 +229,8 @@ static void ComposePopup(int32_t key)
 #define UI_SPR_IDLE_TICKS 4        // a cell is reusable after this many ticks without being drawn (triple-buffered draw lists)
 
 enum { KIND_MON_ICON = 1, KIND_MON_FRONT, KIND_MON_FRONT_SHINY, KIND_ITEM, KIND_FOOTPRINT, KIND_TRAINER, KIND_WALLPAPER, KIND_POPUP, KIND_DECOR, KIND_MAIL,
-       KIND_POKEBLOCK, KIND_POKEBLOCK_CASE };
+       KIND_POKEBLOCK, KIND_POKEBLOCK_CASE, KIND_FRONTIER_MAP };
+#define PIC_PARTS_X 4              // a 240 x 160 picture in 4 x 3 cells of 64 x 64
 
 // POKéBLOCK colours (PBLOCK_CLR_RED..GOLD = 1..14): pokeblock_feed.c's sPokeblocksPals
 static const u32 *const sPokeblockPals[14] = {
@@ -363,17 +388,24 @@ static bool Decode(uint32_t key, uint16_t *dst)
         return true;
     }
     case KIND_MAIL:
+    case KIND_FRONTIER_MAP:
     {
-        // id = mail type * 16 + part (4 x 3 parts of 64 x 64)
-        const int32_t mt = id >> 4, part = id & 15;
-        if (mt != sMailKey)
-            ComposeMail(mt);
-        if (mt != sMailKey)
+        // id = picture * 16 + part (4 x 3 parts of 64 x 64); the picture is composed once
+        const int32_t pic = id >> 4, part = id & 15;
+        const uint32_t picKey = KEY(kind, pic);
+        if (sPicKey != picKey)
+        {
+            if (kind == KIND_MAIL)
+                ComposeMail(picKey, pic);
+            else
+                ComposeFrontierMap(picKey);
+        }
+        if (sPicKey != picKey)
             return false;
-        const int32_t x0 = (part % 4) * UI_CELL, y0 = (part / 4) * UI_CELL;
-        for (int32_t y = 0; y < UI_CELL && y0 + y < MAIL_H; y++)
-            for (int32_t x = 0; x < UI_CELL && x0 + x < MAIL_W; x++)
-                dst[y * UI_CELL + x] = sMail[(y0 + y) * MAIL_W + x0 + x];
+        const int32_t x0 = (part % PIC_PARTS_X) * UI_CELL, y0 = (part / PIC_PARTS_X) * UI_CELL;
+        for (int32_t y = 0; y < UI_CELL && y0 + y < PIC_H; y++)
+            for (int32_t x = 0; x < UI_CELL && x0 + x < PIC_W; x++)
+                dst[y * UI_CELL + x] = sPic[(y0 + y) * PIC_W + x0 + x];
         return true;
     }
     case KIND_POKEBLOCK:
@@ -596,17 +628,29 @@ bool UiSpr_Decoration(uint16_t decor, int32_t bx, int32_t by, int32_t box)
     return true;
 }
 
-// A mail's stationery at (x, y), 240 x 160 times scale; false while a part is on its way
-bool UiSpr_MailStationery(uint8_t mailType, int32_t x, int32_t y, int32_t scale)
+// A 240 x 160 picture at (x, y) times scale, from its 12 cells; false while a part is on its way
+static bool DrawPicture(uint32_t kind, uint32_t pic, int32_t x, int32_t y, int32_t scale)
 {
     bool all = true;
-    for (int32_t part = 0; part < 12; part++)
+    for (int32_t part = 0; part < PIC_PARTS_X * 3; part++)
     {
-        const int32_t px = (part % 4) * UI_CELL, py = (part / 4) * UI_CELL;
-        const int32_t w = MAIL_W - px < UI_CELL ? MAIL_W - px : UI_CELL, h = MAIL_H - py < UI_CELL ? MAIL_H - py : UI_CELL;
-        all &= DrawCell(KEY(KIND_MAIL, ((uint32_t)mailType << 4) | (uint32_t)part), 0, 0, w, h, x + px * scale, y + py * scale, scale, 0xFFFFFFFFu);
+        const int32_t px = (part % PIC_PARTS_X) * UI_CELL, py = (part / PIC_PARTS_X) * UI_CELL;
+        const int32_t w = PIC_W - px < UI_CELL ? PIC_W - px : UI_CELL, h = PIC_H - py < UI_CELL ? PIC_H - py : UI_CELL;
+        all &= DrawCell(KEY(kind, (pic << 4) | (uint32_t)part), 0, 0, w, h, x + px * scale, y + py * scale, scale, 0xFFFFFFFFu);
     }
     return all;
+}
+
+// A mail's stationery
+bool UiSpr_MailStationery(uint8_t mailType, int32_t x, int32_t y, int32_t scale)
+{
+    return DrawPicture(KIND_MAIL, mailType, x, y, scale);
+}
+
+// The Frontier Pass map (the pass's MAP page)
+bool UiSpr_FrontierMap(int32_t x, int32_t y, int32_t scale)
+{
+    return DrawPicture(KIND_FRONTIER_MAP, 0, x, y, scale);
 }
 
 bool UiSpr_Footprint(uint16_t species, int32_t x, int32_t y, int32_t scale, uint32_t rgba)

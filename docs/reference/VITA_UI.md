@@ -43,9 +43,9 @@ it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture (fixed atlas `as
 ### Opening modes (`ui_core.c`)
 
 - **Field overlay (`Open`)**: opened from the overworld with START / Square (`LockPlayerFieldControls`).
-- **Script-driven (`UiCore_OpenFromScript`)**: opened by field script tasks (Poké Mart and decoration shops, PC boxes, player's PC, the "choose a POKéMON" kinds of `ui_scr_choose.c` — tutor, Day Care, generic, contest entry, Move Relearner — each a row of its `sKinds` table); the game task waits for `!Ui_IsOpen()`.
-- **Hosted full-screen (`UiCore_OpenHosted` / `CB2_UiHost`)**: replaces a GBA scene run from `gMain.callback2` (naming screen, Easy Chat, Berry Blender / Berry Crush choice, title-menu options, the Pokéblock case of the Safari feeder and the Contest Lady, forget a move — also with no new move for the Move Deleter —, the Move Relearner, and the bag's CHOOSE mode for the bags scripts open, `Ui_OpenBagChoice` from `GoToBagMenu`, whose rules stay in `item_menu.c`'s `ItemMenu_*ForUi`) while keeping GBA sprites and tasks alive and running scene resets before opening.
-- **To a GBA scene and back (`UiCore_CloseToScene`, `UiCore_CloseToSceneInWindow`, `UiCore_ReopenAfterField`)**: screens on the field hand over to a GBA scene (the Pokéblock eating scene, the berry tag of the bag's CHECK TAG); the whole stack of screens is kept and opens again as it was when the field comes back (each screen's `resume` refreshes its data). In a window (feeding from the PokéNav CONDITION tab) the scene is drawn in `UI_SCENE_WIN_*` (`GameFrameOverlay.gbaWindow`, `RenderGameTexture`) inside the theme's frame.
+- **Script-driven (`UiCore_OpenFromScript`)**: opened by field script tasks (Poké Mart and decoration shops, PC boxes, player's PC, the "choose a POKéMON" kinds of `ui_scr_choose.c` — tutor, Day Care, generic, contest entry, Move Relearner — each a row of its `sKinds` table, and Mr. Stone's PokéNav tutorial, `Ui_OpenPokenavTutorial` from `OpenPokenavForTutorial`, on MATCH CALL until a call is made); the game task waits for `!Ui_IsOpen()`.
+- **Hosted full-screen (`UiCore_OpenHosted` / `CB2_UiHost`)**: replaces a GBA scene run from `gMain.callback2` (naming screen, Easy Chat — every type; the rules of the Bard's song and the Quiz Lady's screens come from `easy_chat.c`'s `EasyChat_Ui*` —, the wall maps of Hoenn, `Ui_OpenTownMap` from `FieldShowRegionMap`, as the PokéNav's map only, Berry Blender / Berry Crush choice, title-menu options, the Pokéblock case of the Safari feeder and the Contest Lady, forget a move — also with no new move for the Move Deleter —, the Move Relearner, and the bag's CHOOSE mode for the bags scripts open, `Ui_OpenBagChoice` from `GoToBagMenu`, whose rules stay in `item_menu.c`'s `ItemMenu_*ForUi`) while keeping GBA sprites and tasks alive and running scene resets before opening.
+- **To a GBA scene and back (`UiCore_CloseToScene`, `UiCore_CloseToSceneInWindow`, `UiCore_ReopenAfterField`)**: screens on the field hand over to a GBA scene (the Pokéblock eating scene, the berry tag of the bag's CHECK TAG, the recorded battle of the trainer card's RECORD page); the whole stack of screens is kept and opens again as it was when the field comes back (each screen's `resume` refreshes its data). In a window (feeding from the PokéNav CONDITION tab) the scene is drawn in `UI_SCENE_WIN_*` (`GameFrameOverlay.gbaWindow`, `RenderGameTexture`) inside the theme's frame.
 - **Battle menu (`UiGame_OpenBattleMenu`)**: opened over the battle (bag, party, the Safari battle's Pokéblock case, and the Pokédex page after a catch, `Ui_OpenCaughtDexPage` from `Cmd_displaydexinfo`); the battle waits for `!Ui_IsOpen()`.
 
 ### Themes (`ui_theme.c`)
@@ -80,6 +80,31 @@ from the game's graphics at run time (`UiSpr_Pokeblock` with each colour's palet
 screen's pieces (`UiCond_*` in `ui_scr_nav.c`) plus what the block would add
 (`UiGame_PokeblockGains`); YES closes the UI and plays the GBA eating scene (`pokeblock_feed.c`),
 then the field comes back and the FEED step reopens with the result (`CB2_AfterFeedScene`).
+
+### Box summary (`ui_scr_pc.c`, `ui_scr_party.c`)
+
+The PC's SUMMARY pushes the party screen as the summary only (`UiParty_PushSummary`): ↑ / ↓ go
+through the POKéMON, ○ goes back to the boxes on the one looked at last (`UiParty_LastViewed`). The
+summary readers of `ui_game.c` (`UiGame_Mon`, `UiGame_Summary`, `UiGame_Move`,
+`UiGame_MonStatusIcon`, `UiGame_SwapMoves`) read a view: the party, or the current box's POKéMON
+(`UiGame_ViewBox`, copies made with `BoxMonToMon` as the GBA summary of a box, empty slots left
+out); a move reorder is written back to the box. The UI's close and reset return the view to the
+party (`UiGame_ViewParty`).
+
+### Easy Chat (`ui_scr_easychat.c`)
+
+Every type of `easy_chat.c`, laid out from the type's columns and rows (a 2x5 message, the mail and
+the quiz question, shows 9 words, as `PrintCurrentPhrase`) with the buttons in a table. The rules of
+each type are the game's (`EasyChat_Ui*`): the Bard's song deletes no word and asks at once whether
+the song is right; the Quiz Lady's screens get a fourth button to the other screen of the pair
+(`EasyChat_UiQuizSwitch`), and the quiz question being answered can only be read.
+
+### Frontier Pass pages (`ui_scr_card.c`)
+
+With `FLAG_SYS_FRONTIER_PASS` the trainer card adds the pass's MAP (the map composed from the
+pass's own graphics, `UiSpr_FrontierMap`, each facility marked and described from
+`FrontierPass_LandmarkForUi`) and RECORD (the recorded battle, played by
+`FrontierPass_PlayRecordForUi` through `UiCore_CloseToScene`; the card opens again on that page).
 
 ## Game features behind the UI
 

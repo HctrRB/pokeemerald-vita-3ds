@@ -184,6 +184,7 @@ bool UiSpr_Wallpaper(uint8_t wallpaperId, int32_t x, int32_t y, int32_t scale); 
 bool UiSpr_ZonePlate(uint8_t theme, bool underwater, int32_t x, int32_t y, int32_t w);   // zone sign plate, 80 tall
 bool UiSpr_Decoration(uint16_t decor, int32_t bx, int32_t by, int32_t box);               // decoration picture, centred in a box
 bool UiSpr_MailStationery(uint8_t mailType, int32_t x, int32_t y, int32_t scale);   // 240x160 mail paper
+bool UiSpr_FrontierMap(int32_t x, int32_t y, int32_t scale);                        // 240x160 Frontier Pass map
 bool UiSpr_Trainer(uint16_t trainerPic, int32_t x, int32_t y, int32_t scale);                // 64x64
 bool UiSpr_Pokeblock(uint8_t color, int32_t x, int32_t y, int32_t scale);                    // 8x8, PBLOCK_CLR_*
 bool UiSpr_PokeblockTint(uint8_t color, int32_t x, int32_t y, int32_t scale, uint32_t rgba);
@@ -388,6 +389,10 @@ extern const UiScreen gUiBerryScreen;
 extern const UiScreen gUiEasyChatScreen;
 extern const UiScreen gUiBagScreen;
 extern const UiScreen gUiPartyScreen;
+// The party screen as the summary only, on `slot` of what UiGame_View* reads (the PC's SUMMARY);
+// UiParty_LastViewed: the box position (or party slot) looked at last, once it is closed
+void UiParty_PushSummary(int32_t slot);
+int32_t UiParty_LastViewed(void);
 extern const UiScreen gUiTargetScreen;
 extern const UiScreen gUiCardScreen;
 extern const UiScreen gUiOptionsScreen;

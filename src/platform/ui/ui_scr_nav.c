@@ -13,6 +13,10 @@
 
 #include "global.h"
 #include "sound.h"
+#include "main.h"
+#include "overworld.h"
+#include "script.h"
+#include "platform/ui.h"
 #include "constants/region_map_sections.h"
 #include "constants/songs.h"
 
@@ -192,9 +196,24 @@ static void RefreshWild(void)
     UiList_Reset(&sEncList, sWildN, POP_ROWS);
 }
 
+// Modes: the START menu's PokéNav; a wall map of Hoenn (FieldShowRegionMap: the map only, to look
+// at); Mr. Stone's tutorial in Rustboro (OpenPokenavForTutorial: MATCH CALL only, no way out before
+// a call, as POKENAV_MODE_FORCE_CALL_READY). The tab of a fixed mode can't change.
+enum { NAV_MODE_NORMAL, NAV_MODE_TOWN_MAP, NAV_MODE_TUTORIAL };
+static uint8_t sNavMode, sNavModeNext;
+static bool sTutorialCalled;
+
+static bool Locked(void)
+{
+    return sNavMode != NAV_MODE_NORMAL;
+}
+
 static void NavEnter(void)
 {
-    sTab = NAV_MAP;
+    sNavMode = sNavModeNext;           // set by the entry point that opened it, once
+    sNavModeNext = NAV_MODE_NORMAL;
+    sTutorialCalled = false;
+    sTab = sNavMode == NAV_MODE_TUTORIAL ? NAV_CALL : NAV_MAP;
     MapEnter(false);
     sPhase = UiGame_CurrentTimePhase();
     sEncOpen = sCallOpen = sFeedOpen = false;
@@ -313,6 +332,7 @@ static void Call(void)
     if (sCallerN == 0) return;
     UiGame_CallMessage(&sCallers[sCallList.sel], sCallText, sizeof(sCallText));
     sCallOpen = true;
+    sTutorialCalled = true;            // POKENAV_MODE_FORCE_CALL_EXIT: the tutorial can end
     PlaySE(SE_POKENAV_CALL);
 }
 
@@ -376,9 +396,20 @@ static bool NavUpdate(const UiInput *in)
         if (in->pressed & (VITA_BTN_CROSS | VITA_BTN_CIRCLE) || in->tap) { PlaySE(SE_SELECT); sCallOpen = false; }
         return true;
     }
-    if (in->pressed & VITA_BTN_CIRCLE) { PlaySE(SE_SELECT); return false; }
+    if (in->pressed & VITA_BTN_CIRCLE)
+    {
+        if (sNavMode == NAV_MODE_TUTORIAL && !sTutorialCalled)
+        {
+            PlaySE(SE_FAILURE);                       // call Mr. Stone first
+            return true;
+        }
+        PlaySE(SE_SELECT);
+        return false;
+    }
     int32_t t = -1;
-    if (gba)
+    if (Locked())
+        ;                                             // a fixed tab
+    else if (gba)
     {
         const int32_t ph = UiW_GbaPagerHit(in, true, NAV_COUNT);
         if (ph != 0)
@@ -386,14 +417,16 @@ static bool NavUpdate(const UiInput *in)
     }
     else
         t = UiKit_TabHit(in, sTabX, sTabW, NAV_COUNT);
-    if (in->pressed & VITA_BTN_L) t = (sTab + NAV_COUNT - 1) % NAV_COUNT;
-    if (in->pressed & VITA_BTN_R) t = (sTab + 1) % NAV_COUNT;
+    if (!Locked() && (in->pressed & VITA_BTN_L)) t = (sTab + NAV_COUNT - 1) % NAV_COUNT;
+    if (!Locked() && (in->pressed & VITA_BTN_R)) t = (sTab + 1) % NAV_COUNT;
     if (t >= 0 && t != sTab) { sTab = t; PlaySE(SE_SELECT); return true; }
     switch (sTab)
     {
     case NAV_MAP:
         if (MapUpdate(in)) RefreshWild();
         if (in->pressed & VITA_BTN_CROSS) { sZoom = !sZoom; PlaySE(SE_SELECT); }
+        if (Locked())
+            break;                                    // a wall map: only the map
         if (in->pressed & VITA_BTN_TRIANGLE) { sMethod = (sMethod + 1) % UI_WILD_COUNT; PlaySE(SE_SELECT); RefreshWild(); }
         if ((in->pressed & VITA_BTN_SQUARE) || (gba ? UiHit(in, 616, 178, 330, 296) : UiHit(in, 704, 128, 240, 364)))
         {
@@ -416,7 +449,7 @@ static bool NavUpdate(const UiInput *in)
         if (UiList_Update(&sCallList, in, 28, gba ? 108 : 106, gba ? 412 : 416, gba ? 39 : 40, false) >= 0
             || UiHit(in, gba ? 492 : 496, gba ? 420 : 424, 208, 44))
             Call();
-        if (((in->pressed & VITA_BTN_TRIANGLE) || UiHit(in, gba ? 720 : 720, gba ? 420 : 424, 208, 44)) && sCallerN)
+        if (!Locked() && ((in->pressed & VITA_BTN_TRIANGLE) || UiHit(in, gba ? 720 : 720, gba ? 420 : 424, 208, 44)) && sCallerN)
         {
             int32_t x, y;
             if (UiGame_MapSecPos(sCallers[sCallList.sel].mapSec, &x, &y)) { sCurX = x; sCurY = y; sTab = NAV_MAP; RefreshWild(); PlaySE(SE_SELECT); }
@@ -818,19 +851,27 @@ static void BuildRibTabGba(void)
 
 static void NavBuildGba(void)
 {
-    UiW_GbaTopBar(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, "POKéNAV", NAV_COUNT, sTab, false, sTabs[sTab]);
+    if (Locked())
+        UiW_GbaTopBar(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, sNavMode == NAV_MODE_TOWN_MAP ? "HOENN MAP" : "POKéNAV", 0, 0, false, NULL);
+    else
+        UiW_GbaTopBar(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, "POKéNAV", NAV_COUNT, sTab, false, sTabs[sTab]);
     int32_t rx = UI_SCREEN_W - 14;
-    UiW_GbaHelpBadge(&rx, "O", "BACK", true);
+    if (sNavMode != NAV_MODE_TUTORIAL || sTutorialCalled)
+        UiW_GbaHelpBadge(&rx, "O", "BACK", true);
     switch (sTab)
     {
     case NAV_MAP:
-        UiW_GbaHelpBadge(&rx, "SQ", "LIST", false);
-        UiW_GbaHelpBadge(&rx, "TRI", "METHOD", false);
+        if (!Locked())
+        {
+            UiW_GbaHelpBadge(&rx, "SQ", "LIST", false);
+            UiW_GbaHelpBadge(&rx, "TRI", "METHOD", false);
+        }
         UiW_GbaHelpBadge(&rx, "X", "ZOOM", false);
         BuildMapTabGba();
         break;
     case NAV_CALL:
-        UiW_GbaHelpBadge(&rx, "TRI", "MAP", false);
+        if (!Locked())
+            UiW_GbaHelpBadge(&rx, "TRI", "MAP", false);
         UiW_GbaHelpBadge(&rx, "X", "CALL", false);
         BuildCallTabGba();
         break;
@@ -987,7 +1028,10 @@ static void NavBuild(void)
         NavBuildGba();
         return;
     }
-    UiKit_Header("POKéNAV", sTabs, NAV_COUNT, sTab, sTabX, sTabW, 10);
+    if (Locked())
+        UiKit_Header(sNavMode == NAV_MODE_TOWN_MAP ? "HOENN MAP" : "POKéNAV", &sTabs[sTab], 1, 0, sTabX, sTabW, 10);
+    else
+        UiKit_Header("POKéNAV", sTabs, NAV_COUNT, sTab, sTabX, sTabW, 10);
     int32_t fx = 16;
     switch (sTab)
     {
@@ -995,14 +1039,19 @@ static void NavBuild(void)
         BuildMapTab();
         UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Zoom");
         UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
-        UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, "Method");
-        UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, "Encounters");
+        if (!Locked())
+        {
+            UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, "Method");
+            UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, "Encounters");
+        }
         break;
     case NAV_CALL:
         BuildCallTab();
         UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Call");
-        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
-        UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, "Show on map");
+        if (sNavMode != NAV_MODE_TUTORIAL || sTutorialCalled)
+            UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
+        if (!Locked())
+            UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, "Show on map");
         break;
     case NAV_COND:
         BuildCondTab();
@@ -1027,6 +1076,37 @@ static void NavBuild(void)
 }
 
 const UiScreen gUiNavScreen = { NavEnter, NavUpdate, NavBuild, NULL };
+
+// A wall map (field_specials.c FieldShowRegionMap): hosted over the black the script faded to; on
+// leaving, the field comes back and the script goes on (as the GBA region map's callback)
+static void ExitTownMap(void)
+{
+    SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
+}
+
+bool Ui_OpenTownMap(void)
+{
+    if (!Ui_IsEnabled() || Ui_IsOpen())
+        return false;
+    sNavModeNext = NAV_MODE_TOWN_MAP;
+    UiCore_OpenHosted(&gUiNavScreen, ExitTownMap);
+    return true;
+}
+
+// Mr. Stone's tutorial (pokenav.c OpenPokenavForTutorial): over the field, the script waits
+static void AfterTutorial(void)
+{
+    ScriptContext_Enable();
+}
+
+bool Ui_OpenPokenavTutorial(void)
+{
+    if (!Ui_IsEnabled() || Ui_IsOpen() || gMain.callback2 != CB2_Overworld)
+        return false;
+    sNavModeNext = NAV_MODE_TUTORIAL;
+    UiCore_OpenFromScript(&gUiNavScreen, AfterTutorial);
+    return true;
+}
 
 // =====================================================================================
 // FLY
