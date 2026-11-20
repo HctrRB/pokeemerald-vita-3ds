@@ -1531,3 +1531,15 @@ static void Task_DoDomeConfetti(u8 taskId)
         break;
     }
 }
+
+#ifdef PLATFORM_VITA
+// Port: shown in the GBA's own format, 816x544 with black bars (vita_game_frame.c GbaFormatScene):
+// the Hall of Fame, after the League and from the PC (the credits that follow are a stage scene)
+bool8 HallOfFame_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_DoHallOfFameScreen
+        || gMain.callback2 == CB2_DoHallOfFameScreenDontSaveData
+        || gMain.callback2 == CB2_DoHallOfFamePC
+        || gMain.callback2 == CB2_HallOfFame;
+}
+#endif

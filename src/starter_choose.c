@@ -672,3 +672,13 @@ static void SpriteCB_StarterPokemon(struct Sprite *sprite)
     if (sprite->y < STARTER_PKMN_POS_Y)
         sprite->y += 2;
 }
+
+#ifdef PLATFORM_VITA
+// Port: shown in the GBA's own format, 816x544 with black bars (vita_game_frame.c GbaFormatScene):
+// the starter choice
+bool8 StarterChoose_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_ChooseStarter
+        || gMain.callback2 == CB2_StarterChoose;
+}
+#endif

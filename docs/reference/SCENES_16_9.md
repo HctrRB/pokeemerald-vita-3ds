@@ -42,7 +42,10 @@ sit at screen x 72–888.
 format, 816×544 with black side bars (decided 2026-11-19): Berry Blender, Berry Crush, Pokémon
 Jump, Dodrio Berry Picking, slot machine, roulette, the contest, its results and painting, the
 Pokéblock eating scene, the Battle Dome tree, the Battle Factory screens, the berry tag, the Union
-Room chat and the system screens (save failed, clock reset, clear save, berry fix). Each scene's
+Room chat, the system screens (save failed, clock reset, clear save, berry fix), and the other
+full-screen GBA screens: the title's main menu and Birch's speech, the Hall of Fame (also from the
+PC), the diploma, the wall clock, the starter choice, Mystery Gift, Mystery Event and the e-Reader,
+the GBA trainer card of the link rooms and the link trade menu. Each scene's
 file answers for its own callbacks (`*_IsGbaFormatForUi`); Core 1 publishes the result in the game
 frame (`GameFrameOverlay.gbaFormat`, `vita_game_frame.c`), and Core 0 turns widescreen off for that
 frame in `Widescreen_PrepareDraw`, so `RenderGameTexture` draws the centred quad over a black clear.

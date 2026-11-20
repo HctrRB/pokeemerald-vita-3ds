@@ -207,3 +207,13 @@ static void PrintDiplomaText(u8 *text, u8 var1, u8 var2)
 
     AddTextPrinterParameterized4(0, FONT_NORMAL, var1, var2, 0, 0, color, TEXT_SKIP_DRAW, text);
 }
+
+#ifdef PLATFORM_VITA
+// Port: shown in the GBA's own format, 816x544 with black bars (vita_game_frame.c GbaFormatScene):
+// the diploma
+bool8 Diploma_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_ShowDiploma
+        || gMain.callback2 == MainCB2;
+}
+#endif

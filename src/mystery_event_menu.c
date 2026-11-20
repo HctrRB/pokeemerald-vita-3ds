@@ -319,3 +319,13 @@ static void PrintMysteryMenuText(u8 windowId, const u8 *text, u8 x, u8 y, s32 sp
     FillWindowPixelBuffer(windowId, PIXEL_FILL(textColor[0]));
     AddTextPrinterParameterized4(windowId, FONT_NORMAL, x, y, letterSpacing, lineSpacing, textColor, speed, text);
 }
+
+#ifdef PLATFORM_VITA
+// Port: shown in the GBA's own format, 816x544 with black bars (vita_game_frame.c GbaFormatScene):
+// Mystery Event
+bool8 MysteryEvent_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_InitMysteryEventMenu
+        || gMain.callback2 == CB2_MysteryEventMenu;
+}
+#endif

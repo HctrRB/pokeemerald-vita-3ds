@@ -1099,3 +1099,14 @@ static void SpriteCB_AMIndicator(struct Sprite *sprite)
     sprite->x2 = Cos2(sprite->sAngle) * 30 / 0x1000;
     sprite->y2 = Sin2(sprite->sAngle) * 30 / 0x1000;
 }
+
+#ifdef PLATFORM_VITA
+// Port: shown in the GBA's own format, 816x544 with black bars (vita_game_frame.c GbaFormatScene):
+// the wall clock (setting and looking at it)
+bool8 WallClock_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_StartWallClock
+        || gMain.callback2 == CB2_ViewWallClock
+        || gMain.callback2 == CB2_WallClock;
+}
+#endif

@@ -66,6 +66,15 @@ bool8 SaveFailed_IsGbaFormatForUi(void);
 bool8 ResetRtc_IsGbaFormatForUi(void);
 bool8 ClearSaveData_IsGbaFormatForUi(void);
 bool8 BerryFix_IsGbaFormatForUi(void);
+bool8 HallOfFame_IsGbaFormatForUi(void);
+bool8 Diploma_IsGbaFormatForUi(void);
+bool8 WallClock_IsGbaFormatForUi(void);
+bool8 StarterChoose_IsGbaFormatForUi(void);
+bool8 MainMenu_IsGbaFormatForUi(void);
+bool8 MysteryGift_IsGbaFormatForUi(void);
+bool8 MysteryEvent_IsGbaFormatForUi(void);
+bool8 TrainerCard_IsGbaFormatForUi(void);
+bool8 TradeMenu_IsGbaFormatForUi(void);
 
 static bool8 GbaFormatScene(void)
 {
@@ -86,7 +95,16 @@ static bool8 GbaFormatScene(void)
         || SaveFailed_IsGbaFormatForUi()
         || ResetRtc_IsGbaFormatForUi()
         || ClearSaveData_IsGbaFormatForUi()
-        || BerryFix_IsGbaFormatForUi();
+        || BerryFix_IsGbaFormatForUi()
+        || HallOfFame_IsGbaFormatForUi()
+        || Diploma_IsGbaFormatForUi()
+        || WallClock_IsGbaFormatForUi()
+        || StarterChoose_IsGbaFormatForUi()
+        || MainMenu_IsGbaFormatForUi()
+        || MysteryGift_IsGbaFormatForUi()
+        || MysteryEvent_IsGbaFormatForUi()
+        || TrainerCard_IsGbaFormatForUi()
+        || TradeMenu_IsGbaFormatForUi();
 }
 
 // The 16:9 contexts: the field, the battle, the stage scenes and the 2D scenes with mirrors

@@ -1624,3 +1624,15 @@ static void LoadMysteryGiftTextboxBorder(u8 bgId)
 {
     DecompressAndLoadBgGfxUsingHeap(bgId, sTextboxBorder_Gfx, 0x100, 0, 0);
 }
+
+#ifdef PLATFORM_VITA
+// Port: shown in the GBA's own format, 816x544 with black bars (vita_game_frame.c GbaFormatScene):
+// Mystery Gift and the e-Reader
+bool8 MysteryGift_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_InitMysteryGift
+        || gMain.callback2 == CB2_InitEReader
+        || gMain.callback2 == CB2_MysteryGiftEReader
+        || gMain.callback2 == MainCB_FreeAllBuffersAndReturnToInitTitleScreen;
+}
+#endif

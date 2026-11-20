@@ -103,6 +103,13 @@ again** (fixed after a failure on hardware).
 
 ## Every GBA scene once (the hardware pass)
 
+Declared in the GBA format on 2026-11-20 (F7), to check: the title's main menu and Birch's speech,
+the Hall of Fame (after the League and from the PC), the diploma, the wall clock, the starter
+choice, Mystery Gift / Mystery Event, the link trainer card and the link trade menu. Each at
+816×544 with black bars, no flicker when it starts or ends (the title and the credits around them
+stay 16:9), the theme's window frame.
+
+
 Each mini-game and full-screen GBA scene once: black bars, the frame of the theme, nothing of the new
 UI inside, the fades in and out. This includes the scenes not listed above: Pokémon Jump and Dodrio
 Berry Picking (link), the Battle Arena judgment, the Hall of Fame, the berry tag and the naming

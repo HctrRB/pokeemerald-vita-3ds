@@ -5104,3 +5104,15 @@ bool8 Trade_IsAnimActiveForUi(void)
 {
     return gMain.callback2 == CB2_InGameTrade || gMain.callback2 == CB2_UpdateLinkTrade;
 }
+
+#ifdef PLATFORM_VITA
+// Port: shown in the GBA's own format, 816x544 with black bars (vita_game_frame.c GbaFormatScene):
+// the link trade menu (the trade animation keeps 16:9: Trade_IsAnimActiveForUi)
+bool8 TradeMenu_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_StartCreateTradeMenu
+        || gMain.callback2 == CB2_CreateTradeMenu
+        || gMain.callback2 == CB2_TradeMenu
+        || gMain.callback2 == CB2_ReturnToTradeMenu;
+}
+#endif

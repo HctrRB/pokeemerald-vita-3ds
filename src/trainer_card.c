@@ -1907,3 +1907,13 @@ static void CreateTrainerCardTrainerPic(void)
                     WIN_TRAINER_PIC);
     }
 }
+
+#ifdef PLATFORM_VITA
+// Port: shown in the GBA's own format, 816x544 with black bars (vita_game_frame.c GbaFormatScene):
+// the GBA trainer card (link rooms; the START menu's card is the new UI's)
+bool8 TrainerCard_IsGbaFormatForUi(void)
+{
+    return gMain.callback2 == CB2_InitTrainerCard
+        || gMain.callback2 == CB2_TrainerCard;
+}
+#endif
