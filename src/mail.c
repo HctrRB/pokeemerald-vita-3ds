@@ -795,8 +795,11 @@ void Mail_LayoutForUi(const struct Mail *mail, struct MailUiLayout *out)
     }
     if (hasText)
     {
+        // The sender's name at most PLAYER_NAME_LENGTH characters, always ended: a name without
+        // its EOS must not run past the mail into the memory after it
         ptr = StringCopy(out->signature, gText_FromSpace);
-        StringCopy(ptr, mail->playerName);
+        StringCopyN(ptr, mail->playerName, PLAYER_NAME_LENGTH);
+        ptr[PLAYER_NAME_LENGTH] = EOS;
         ConvertInternationalPlayerName(ptr);
         out->signatureWidth = layout->signatureWidth;
         out->signatureY = layout->signatureYPos + 88;

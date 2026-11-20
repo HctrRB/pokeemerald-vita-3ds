@@ -224,8 +224,10 @@ static void DoAction(int32_t act)
     }
     case ACT_CHECK:
     {
+        // An unwritten mail as the game makes one (ClearMail: empty words, the name all EOS), so it
+        // reads as blank stationery
         static struct Mail sBlankMail;
-        memset(&sBlankMail, 0, sizeof(sBlankMail));
+        ClearMail(&sBlankMail);
         sBlankMail.itemId = item;
         PlaySE(SE_SELECT);
         UiMailRead_Open(&sBlankMail, "BAG");
