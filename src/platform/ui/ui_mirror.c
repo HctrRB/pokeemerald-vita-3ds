@@ -376,6 +376,8 @@ bool UiMirror_Draw(void)
             const int32_t tw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, opt) + 72;
             if (tw > w) w = tw;
         }
+        if (w > UI_SCREEN_W / 2)
+            w = UI_SCREEN_W / 2;                    // never off the screen (a longer row is clipped)
         const int32_t h = 16 + shown * 42, x = UI_SCREEN_W - 48 - w, y = UI_SCREEN_H - 24 - 124 - 12 - h;
         if (tap && tapX >= x + 8 && tapX < x + w - 8 && tapY >= y + 8 && tapY < y + 8 + shown * 42)
         {
@@ -392,7 +394,9 @@ bool UiMirror_Draw(void)
             UiGame_Text(list->template.items[first + r].name, opt, sizeof(opt));
             const bool on = first + r == cur;
             UiW_Row(x + 8, y + 8 + r * 42, w - 28, 42, on, r);
+            UiDraw_PushClip(x + 36, y + 8 + r * 42, w - 64, 42);
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 36, y + 12 + r * 42, opt, on ? UI_COL_SELECT_INK : UI_COL_INK);
+            UiDraw_PopClip();
         }
         UiW_ScrollBar(x + w - 18, y + 8, shown * 42, first, shown, total);
         drew = true;

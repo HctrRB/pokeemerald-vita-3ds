@@ -77,6 +77,7 @@ static void Refresh(void)
 {
     PokeblockCase_CompactForUi();
     sCount = UiGame_Pokeblocks(sBlocks, POKEBLOCKS_COUNT);
+    sMoveFrom = -1;                                    // a block being moved is put down (the list changed)
     const int32_t sel = sList.sel;
     const int32_t first = sList.first;
     UiList_Reset(&sList, sCount + 1, VisRows());       // + STOW CASE
@@ -445,7 +446,7 @@ static void AskToss(void)
 
 static void ToggleMove(void)
 {
-    if (sMode != PBLOCK_CASE_FIELD)
+    if (sMode != PBLOCK_CASE_FIELD || sCount == 0)
         return;
     if (sMoveFrom < 0)
     {
