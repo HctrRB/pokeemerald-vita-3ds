@@ -103,6 +103,8 @@ another checkout path; for a clean rebuild delete `build-vita/`.
    get warnings (`build-vita/doc_check_report.txt`). Names that are not in the repository (files
    on the console, build outputs, SDK fields, external generators) are listed in
    `tools/doc_check/allow.txt`.
+   Symbols are looked up only in files git tracks, so private or ignored files cannot hide a
+   symbol that a public clone lacks.
 9. `vita_create_self(... UNSAFE)` (the app writes `ux0:data/`), then `vita-mksfoex` and
    `vita-pack-vpk` called directly (`vita_create_vpk` breaks on paths with spaces).
 10. Packs `vita/sce_sys/` (LiveArea), `assets/voxel/` → `voxel/`, `assets/ui/` → `ui/`,

@@ -136,7 +136,7 @@ this pass is not being optimised.
 - Chunk geometry lives in one GL buffer per chunk slot, filled once with `glBufferData(NULL)` +
   `glBufferSubData` when the chunk is built (`UploadChunkVbo`). Per-frame dynamic
   geometry (weather, billboards, overlays) streams from client arrays (`sBatchGlVerts`).
-  An earlier per-frame `vglBufferData` path crashed the GPU.
+  An earlier path that re-uploaded a vitaGL buffer every frame crashed the GPU.
 - Never upload into a texture the GPU drew in the last frames through `glTexSubImage2D`: vitaGL
   copies all of it first. Use rings or spares, or write in place on purpose (see below).
 

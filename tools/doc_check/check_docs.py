@@ -23,6 +23,7 @@ import fnmatch
 import os
 import posixpath
 import re
+import subprocess
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -53,7 +54,20 @@ def load_allow():
     return names
 
 
+def tracked_files():
+    """The files git tracks, or None outside a git checkout (e.g. a source archive)."""
+    try:
+        out = subprocess.run(['git', 'ls-files', '-z'], cwd=ROOT, capture_output=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return {f for f in out.decode('utf-8', 'replace').split('\0') if f}
+
+
 def scan_repo():
+    # Paths come from the whole tree, so files the build generates before this check count.
+    # Symbols come only from tracked files: private, ignored files (memory.yaml, docs/history/)
+    # must not hide a symbol that a public clone lacks.
+    tracked = tracked_files()
     paths, idents = set(), set()
     for dp, dns, fns in os.walk(ROOT):
         dns[:] = [d for d in dns if d not in SKIP_DIRS]
@@ -61,6 +75,8 @@ def scan_repo():
             full = os.path.join(dp, fn)
             r = rel(full)
             paths.add(r)
+            if tracked is not None and r not in tracked:
+                continue
             if fn.endswith(CODE_EXTS) or fn == 'CMakeLists.txt':
                 try:
                     idents.update(re.findall(r'[A-Za-z_][A-Za-z0-9_]*', open(full, encoding='utf-8', errors='replace').read()))
