@@ -52,7 +52,7 @@ static int32_t sSort;
 static UiMenu sMenu;
 static UiQty sQty;
 static int32_t sTabX[POCKETS_COUNT], sTabW[POCKETS_COUNT];
-static int32_t sActs[4], sActCount, sActX[4], sActW;
+static int32_t sActs[ACT_COUNT], sActCount, sActX[ACT_COUNT], sActW;   // room for every action
 
 static int32_t BagVisRows(void)
 {
@@ -76,6 +76,12 @@ static uint16_t CurItem(void)
     return i < sCount ? sRows[i].item : ITEM_NONE;
 }
 
+static void AddAct(int32_t act)
+{
+    if (sActCount < ACT_COUNT)
+        sActs[sActCount++] = act;
+}
+
 // Actions of an item, in the order of the card buttons and the popup
 static void BuildActs(uint16_t item)
 {
@@ -84,24 +90,24 @@ static void BuildActs(uint16_t item)
         return;
     if (UiGame_InBattleMenu())
     {
-        if (UiGame_BattleItemUsable(item)) sActs[sActCount++] = ACT_USE;
+        if (UiGame_BattleItemUsable(item)) AddAct(ACT_USE);
         return;
     }
     if (sChoose)
     {
-        if (ItemMenu_CanChooseForUi(item)) sActs[sActCount++] = ACT_CHOOSE;
+        if (ItemMenu_CanChooseForUi(item)) AddAct(ACT_CHOOSE);
         return;
     }
     if (sGiveTo >= 0)
     {
-        if (UiGame_CanGive(item)) sActs[sActCount++] = ACT_GIVE;
+        if (UiGame_CanGive(item)) AddAct(ACT_GIVE);
         return;
     }
-    if (sPocket == BERRIES_POCKET) sActs[sActCount++] = ACT_TAG;     // the GBA bag's CHECK TAG
-    if (sPocket != BALLS_POCKET) sActs[sActCount++] = ItemIsMail(item) ? ACT_CHECK : ACT_USE;
-    if (UiGame_CanGive(item)) sActs[sActCount++] = ACT_GIVE;
-    if (UiGame_CanToss(item) && sPocket != TMHM_POCKET) sActs[sActCount++] = ACT_TOSS;
-    if (UiGame_CanRegister(item)) sActs[sActCount++] = ACT_REGISTER;
+    if (sPocket == BERRIES_POCKET) AddAct(ACT_TAG);                  // the GBA bag's CHECK TAG
+    if (sPocket != BALLS_POCKET) AddAct(ItemIsMail(item) ? ACT_CHECK : ACT_USE);
+    if (UiGame_CanGive(item)) AddAct(ACT_GIVE);
+    if (UiGame_CanToss(item) && sPocket != TMHM_POCKET) AddAct(ACT_TOSS);
+    if (UiGame_CanRegister(item)) AddAct(ACT_REGISTER);
 }
 
 static bool FixedPocket(void)

@@ -148,6 +148,12 @@ void UiParty_PushSummary(int32_t slot)
 {
     sViewStart = slot < 0 ? 0 : slot;
     UiNav_Push(&gUiPartyScreen);
+    if (sViewStart >= 0)                          // not entered (the stack was full)
+    {
+        sViewStart = -1;
+        sLastViewed = UiGame_ViewPosition(slot);
+        UiGame_ViewParty();
+    }
 }
 
 int32_t UiParty_LastViewed(void)

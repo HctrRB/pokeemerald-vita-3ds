@@ -254,6 +254,8 @@ static int32_t sBoxViewBox = -1;                  // -1: the party
 
 static struct Pokemon *ViewMon(int32_t slot)
 {
+    if (slot < 0 || slot >= (sBoxViewBox >= 0 ? sBoxViewCount : PARTY_SIZE))
+        slot = 0;                                 // never past the view
     return sBoxViewBox >= 0 ? &sBoxView[slot] : &gPlayerParty[slot];
 }
 
