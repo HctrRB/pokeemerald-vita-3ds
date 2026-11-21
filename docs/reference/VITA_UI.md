@@ -64,6 +64,20 @@ its fallback (`FoldCodepoint`: the same letter without its accent, `…` as `.`,
 the GBA charmap into UTF-8 (`GbaToCodepoint`, the European letters included; `PutCodepoint` never
 cuts a letter at the end of the buffer). `UiW_TextWrappedF` breaks lines between whole letters only.
 
+### Languages (`ui_locale.c`)
+
+A build has one language, `VITA_LOCALE` (a code of `tools/locales/languages.json`, the only list of
+languages; [../guides/BUILD.md](../guides/BUILD.md)). Every string a screen shows is English in the
+code and goes through `UI_TR` (a literal; the answer is kept per call site) or the catalog lookup of
+`ui_locale.h` (a string kept in a table, marked `UI_N`). The English text is the key: in a non-English
+build `UiLocale_Load` reads `ui2/locale.bin` once in `Ui_Init`, before the game
+thread starts, and a string with no entry stays English; the English build has no catalog and both
+return their argument. `tools/locales/extract_ui.py` lists every `UI_TR` / `UI_N` string in
+`tools/locales/en/ui.json`; `tools/locales/compile_ui.py` turns a language's
+`tools/locales/<code>/ui.json` into `locale.bin`, refusing printf conversions that differ from the
+English ones and letters the language does not list, and reports missing and much wider strings
+in `locale.bin.txt` next to it.
+
 ### Build version on the main menu (`ui_core.c`)
 
 While the title main menu list is up (`MainMenu_IsShown` in `main_menu.c`, which tells it apart from the Birch speech that also runs under `CB2_MainMenu`), the overlay draws `gVitaBuildVersion` right-aligned at the bottom right (`DrawMainMenuVersion`). The string is `git describe --tags --always` (no `--dirty`: the build runs MSYS2's git, which would count Windows line endings as changes), written each build into a generated source file in the build folder by `tools/version/game_version.cmake` (the `game_version` target); without git history it reads `unknown`.

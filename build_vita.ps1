@@ -1,7 +1,8 @@
 # Builds build-vita/pokeemerald.vpk from PowerShell by running build_vita.sh in MSYS2.
 # Needs the game files and the converted assets (build_all.ps1 does everything in one step).
 # -Probe builds the measuring build (GPU probes + automatic bench) into build-vita-probe\.
-param([switch]$Probe)
+# -Locale <code> builds in that language (tools/locales/languages.json) into build-vita-<code>\.
+param([switch]$Probe, [string]$Locale = "en")
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -24,11 +25,17 @@ if ($Probe) {
     $env:BUILD_DIR = "build-vita-probe"
     $env:EXTRA_CMAKE_ARGS = "-DVITA_GPU_PROBE=ON"
 }
-$outDir = if ($env:BUILD_DIR) { $env:BUILD_DIR } else { "build-vita" }
+if ($Locale -ne "en") {
+    $env:VITA_LOCALE = $Locale
+}
+$outDir = if ($env:BUILD_DIR) { $env:BUILD_DIR } elseif ($Locale -ne "en") { "build-vita-$Locale" } else { "build-vita" }
 & $bashExe -lc 'set -f; IFS=; cd $(cygpath -u $BUILD_VITA_DIR) && ./build_vita.sh'
 $buildExit = $LASTEXITCODE
 if ($Probe) {
     Remove-Item Env:BUILD_DIR, Env:EXTRA_CMAKE_ARGS -ErrorAction SilentlyContinue
+}
+if ($Locale -ne "en") {
+    Remove-Item Env:VITA_LOCALE -ErrorAction SilentlyContinue
 }
 if ($buildExit -eq 0) {
     Write-Host "=== Done: $outDir\pokeemerald.vpk ===" -ForegroundColor Green

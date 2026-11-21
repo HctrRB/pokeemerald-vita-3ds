@@ -74,6 +74,7 @@ another checkout path; for a clean rebuild delete `build-vita/`.
 | `VITA_TELEMETRY` | OFF | Write `perf_frames.csv`, `perf_summary.txt` and `ui_stall.log` to `ux0:data/POKEVITA/` |
 | `VITA_GPU_PROBE` | OFF | Measuring build: telemetry plus GPU time per render target and the automatic bench ([DEBUGGING.md](DEBUGGING.md)). `build_vita.ps1 -Probe` builds it in `build-vita-probe/` |
 | `VITA_DRAW_SELFCHECK` | OFF | Testing: compare parallel and sequential drawing periodically |
+| `VITA_LOCALE` | `en` | Language of the build, a code of `tools/locales/languages.json`: sets `GAME_LANGUAGE` and, for any other language, packs its UI catalog (`ui2/locale.bin`) and an atlas with its letters. `build_vita.ps1 -Locale <code>` builds it in `build-vita-<code>/` ([../reference/VITA_UI.md](../reference/VITA_UI.md), Languages) |
 
 ## What CMakeLists.txt does
 

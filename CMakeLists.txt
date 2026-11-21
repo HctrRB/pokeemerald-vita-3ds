@@ -7,7 +7,7 @@
 #   cmake -S . -B build-vita -DCMAKE_BUILD_TYPE=Release
 #   cmake --build build-vita -j8
 
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.19)   # string(JSON) reads tools/locales/languages.json
 
 if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
     if(NOT DEFINED ENV{VITASDK})
@@ -63,6 +63,30 @@ option(VITA_DRAW_SELFCHECK "Periodically compare parallel drawing against sequen
 if(VITA_DRAW_SELFCHECK)
     list(APPEND GAME_DEFINES -DVITA_DRAW_SELFCHECK)
 endif()
+# Language of the build (docs/reference/VITA_UI.md, "Languages"): one code of
+# tools/locales/languages.json, the only list of languages. It sets the game's GAME_LANGUAGE and,
+# for any language but English, the native UI's catalog (ui2/locale.bin) and its atlas.
+set(VITA_LOCALE "en" CACHE STRING "Language of the build: a code in tools/locales/languages.json")
+set(LANGUAGES_JSON_FILE "${ROOT}/tools/locales/languages.json")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${LANGUAGES_JSON_FILE}")
+file(READ "${LANGUAGES_JSON_FILE}" LANGUAGES_JSON)
+string(JSON LANGUAGE_COUNT LENGTH "${LANGUAGES_JSON}" languages)
+math(EXPR LANGUAGE_LAST "${LANGUAGE_COUNT} - 1")
+set(LOCALE_GAME_LANGUAGE "")
+foreach(LANGUAGE_INDEX RANGE ${LANGUAGE_LAST})
+    string(JSON LANGUAGE_CODE GET "${LANGUAGES_JSON}" languages ${LANGUAGE_INDEX} code)
+    if(LANGUAGE_CODE STREQUAL VITA_LOCALE)
+        string(JSON LOCALE_GAME_LANGUAGE GET "${LANGUAGES_JSON}" languages ${LANGUAGE_INDEX} gameLanguage)
+    endif()
+endforeach()
+if(NOT LOCALE_GAME_LANGUAGE)
+    message(FATAL_ERROR "VITA_LOCALE '${VITA_LOCALE}' is not in ${LANGUAGES_JSON_FILE}")
+endif()
+list(APPEND GAME_DEFINES -DGAME_LANGUAGE=${LOCALE_GAME_LANGUAGE})
+if(NOT VITA_LOCALE STREQUAL "en")
+    list(APPEND GAME_DEFINES -DUI_LOCALE_CATALOG)
+endif()
+message(STATUS "Build language: ${VITA_LOCALE} (${LOCALE_GAME_LANGUAGE})")
 string(REPLACE ";" " " GAME_DEFINES_STR "${GAME_DEFINES}")
 
 # --- C sources: cpp -> preproc (charmap strings, INCBIN) -> compiled below ---
@@ -319,6 +343,21 @@ add_custom_command(
     VERBATIM)
 add_custom_target(doc_check ALL DEPENDS "${DOC_CHECK_STAMP}")
 add_dependencies(eboot.bin-self doc_check)
+
+# The list of the UI's strings (tools/locales/en/ui.json, the keys of every catalog) must match the
+# UI_TR / UI_N strings of the code, or a new string would never reach the translators.
+file(GLOB_RECURSE UI_TEXT_SOURCES CONFIGURE_DEPENDS "${ROOT}/src/platform/*.c" "${ROOT}/src/platform/*.h")
+set(UI_STRINGS_STAMP "${CMAKE_BINARY_DIR}/ui_strings.ok")
+add_custom_command(
+    OUTPUT "${UI_STRINGS_STAMP}"
+    COMMAND "${Python3_EXECUTABLE}" "${ROOT}/tools/locales/extract_ui.py" --check
+    COMMAND "${CMAKE_COMMAND}" -E touch "${UI_STRINGS_STAMP}"
+    DEPENDS ${UI_TEXT_SOURCES} "${ROOT}/src/title_screen.c" "${ROOT}/tools/locales/extract_ui.py"
+            "${ROOT}/tools/locales/en/ui.json"
+    COMMENT "Checking the UI string list (tools/locales/extract_ui.py)"
+    VERBATIM)
+add_custom_target(ui_strings ALL DEPENDS "${UI_STRINGS_STAMP}")
+add_dependencies(eboot.bin-self ui_strings)
 # Equivalent of vita_create_vpk, which joins its -a arguments into one string and splits it
 # on spaces, so it breaks when the checkout path has one (e.g. "Pokemon Esmeralda").
 # LiveArea images are 8-bit indexed PNGs made by vita/make_livearea.sh.
@@ -375,13 +414,33 @@ foreach(UA IN LISTS UI_ASSETS)
     list(APPEND VPK_FILE_DEPS "${UA}")
 endforeach()
 
-# New UI atlas read from app0:ui2/ (built by tools/ui2/build_atlas.py)
+# New UI atlas read from app0:ui2/ (built by tools/ui2/build_atlas.py). A non-English build packs
+# the atlas with its language's letters, which build_vita.sh writes into the build folder (it needs
+# Pillow, which the Python CMake finds may not have), and the UI catalog compiled from
+# tools/locales/<code>/ui.json.
 file(GLOB UI2_ASSETS CONFIGURE_DEPENDS "${ROOT}/assets/ui2/*.bin")
 foreach(UA IN LISTS UI2_ASSETS)
     get_filename_component(UA_NAME "${UA}" NAME)
+    if(NOT VITA_LOCALE STREQUAL "en" AND UA_NAME STREQUAL "ui_atlas.bin")
+        set(UA "${CMAKE_BINARY_DIR}/ui2/ui_atlas.bin")
+        if(NOT EXISTS "${UA}")
+            message(FATAL_ERROR "${UA} is missing: build a non-English VPK with build_vita.sh (VITA_LOCALE=${VITA_LOCALE})")
+        endif()
+    endif()
     list(APPEND VPK_FILE_ARGS -a "${UA}=ui2/${UA_NAME}")
     list(APPEND VPK_FILE_DEPS "${UA}")
 endforeach()
+if(NOT VITA_LOCALE STREQUAL "en")
+    set(LOCALE_BIN "${CMAKE_BINARY_DIR}/ui2/locale.bin")
+    add_custom_command(OUTPUT "${LOCALE_BIN}"
+        COMMAND "${Python3_EXECUTABLE}" "${ROOT}/tools/locales/compile_ui.py" --locale "${VITA_LOCALE}" --out "${LOCALE_BIN}"
+        DEPENDS "${ROOT}/tools/locales/compile_ui.py" "${LANGUAGES_JSON_FILE}"
+                "${ROOT}/tools/locales/en/ui.json" "${ROOT}/tools/locales/${VITA_LOCALE}/ui.json"
+        COMMENT "Compiling the ${VITA_LOCALE} UI catalog"
+        VERBATIM)
+    list(APPEND VPK_FILE_ARGS -a "${LOCALE_BIN}=ui2/locale.bin")
+    list(APPEND VPK_FILE_DEPS "${LOCALE_BIN}")
+endif()
 
 set(PARAM_SFO "${CMAKE_BINARY_DIR}/param.sfo")
 add_custom_command(

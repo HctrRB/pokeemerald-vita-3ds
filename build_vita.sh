@@ -9,7 +9,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # BUILD_DIR and EXTRA_CMAKE_ARGS from the environment: a second build next to the normal one,
 # so its CMake options never leak into it (build_vita.ps1 -Probe builds build-vita-probe with
 # -DVITA_GPU_PROBE=ON, docs/guides/DEBUGGING.md)
-BUILD_DIR="${BUILD_DIR:-build-vita}"
+# VITA_LOCALE from the environment: the build's language, a code of tools/locales/languages.json
+# (build_vita.ps1 -Locale). Each language builds in its own folder, build-vita-<code>: the game's
+# sources are preprocessed with the language's defines, which a folder never mixes.
+VITA_LOCALE="${VITA_LOCALE:-en}"
+if [ "$VITA_LOCALE" = "en" ]; then
+    BUILD_DIR="${BUILD_DIR:-build-vita}"
+else
+    BUILD_DIR="${BUILD_DIR:-build-vita-$VITA_LOCALE}"
+fi
 CACHE_FILE="$BUILD_DIR/CMakeCache.txt"
 cd "$SCRIPT_DIR"
 
@@ -41,8 +49,22 @@ if [ -f "$CACHE_FILE" ]; then
     fi
 fi
 
+# A non-English build's UI atlas carries its language's letters (tools/ui2/build_atlas.py --locale)
+if [ "$VITA_LOCALE" != "en" ]; then
+    PYPIL=""
+    for c in $(type -ap python3 python 2>/dev/null) /mingw64/bin/python3; do
+        if [ -x "$c" ] && "$c" -c "import PIL" 2>/dev/null; then PYPIL="$c"; break; fi
+    done
+    if [ -z "$PYPIL" ]; then
+        echo "ERROR: a non-English build needs Python 3 with Pillow (MSYS2: pacman -S mingw-w64-x86_64-python-pillow)"
+        exit 1
+    fi
+    mkdir -p "$BUILD_DIR/ui2"
+    "$PYPIL" tools/ui2/build_atlas.py --locale "$VITA_LOCALE" --out "$BUILD_DIR/ui2/ui_atlas.bin"
+fi
+
 echo "=== Configuring CMake in $SCRIPT_DIR/$BUILD_DIR ==="
-cmake -S . -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Release ${EXTRA_CMAKE_ARGS:-}
+cmake -S . -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Release -DVITA_LOCALE="$VITA_LOCALE" ${EXTRA_CMAKE_ARGS:-}
 
 echo "=== Building pokeemerald.vpk ==="
 cmake --build "$BUILD_DIR" -j4

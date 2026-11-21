@@ -60,6 +60,7 @@ static uint32_t sRenderMsBits;        // float bits, written by Core 0
 void Ui_Init(void)
 {
     UiAssets_Load();
+    UiLocale_Load();
     // Publish one empty list so Core 0 always has a valid one to read
     UiDraw_Begin();
     UiDraw_Publish(0.0f);

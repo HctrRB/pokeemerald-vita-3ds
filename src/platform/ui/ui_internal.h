@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "ui_locale.h"     // UI_TR / UI_N: every string a screen shows
 
 #define UI_SCREEN_W 960
 #define UI_SCREEN_H 544

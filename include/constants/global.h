@@ -27,7 +27,10 @@
 #define NUM_LANGUAGES     7
 
 #define GAME_VERSION (VERSION_EMERALD)
+// Vita port: set by CMake from the build's language (VITA_LOCALE, tools/locales/languages.json)
+#ifndef GAME_LANGUAGE
 #define GAME_LANGUAGE (LANGUAGE_ENGLISH)
+#endif
 
 // party sizes
 #define PARTY_SIZE 6

@@ -52,6 +52,7 @@ cmake-build-*/
 build-vita/
 build-vita-probe/
 build-vita-telemetry/
+build-vita-*/
 *.vpk
 *.velf
 *.self
