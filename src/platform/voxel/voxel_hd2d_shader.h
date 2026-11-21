@@ -19,6 +19,10 @@ bool VoxelHd2dShader_ShaftsReady(void);
 // Runs the 2x2 box-filtered 480x272 downsample into sScratchFbo (eliminates roof/wall banding).
 void VoxelHd2dShader_CopyBox2x2(GLuint sceneTex, float uMax, float vMax, float texelX, float texelY);
 
+// One tap per pixel with the texture's own filter: with GL_LINEAR at half size, the exact 2x2
+// average of the 4-tap box above for one fetch.
+void VoxelHd2dShader_CopyTap(GLuint sceneTex, float uMax, float vMax);
+
 // Runs the 240x136 luminance bright-pass into the currently bound bloom FBO.
 void VoxelHd2dShader_BrightPass(GLuint sceneTex, float uMax, float vMax, float threshold, float gain);
 

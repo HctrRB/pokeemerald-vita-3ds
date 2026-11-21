@@ -1,143 +1,245 @@
 #include "voxel_hd2d_shader.h"
 #include "../vita/vita_platform.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
+
+/*
+ * Texture coordinates are worked out in the vertex shaders and read in the fragment shaders as
+ * the varyings themselves: the SGX fetches such a texel before the fragment shader runs, while a
+ * coordinate computed per pixel (a scale or a tap offset) makes the read dependent and stalls it.
+ * Everything here is linear in the quad's coordinates, so moving it to the vertices changes no
+ * pixel. The translator ignores precision qualifiers and runs every shader in half precision
+ * (vglUseLowPrecision in MainThread_Boot), so the qualifiers below are only GLSL ES syntax.
+ */
 
 static bool sTriedInit = false;
 static bool sShaderReady = false;
 
+// 4-tap box: downsample fallback, wide blur and the Kawase passes.
 static GLuint sCopyProg = 0;
 static GLint sCopyScene = -1, sCopyUvScale = -1, sCopyTexel = -1;
+
+// One bilinear tap: the 2x2 downsample.
+static GLuint sTapProg = 0;
+static GLint sTapScene = -1, sTapUvScale = -1;
 
 static GLuint sBrightProg = 0;
 static GLint sBUScene = -1, sBUThresh = -1, sBUUvScale = -1, sBUGain = -1;
 
-static GLuint sShaftProg = 0;
-static GLint sSUDir = -1, sSULen = -1, sSUTime = -1, sSUAsp = -1;
-static GLint sSUCount = -1, sSUMotion = -1, sSUCol = -1;
+// Light shafts, one program per layer count (a constant loop instead of one bounded by a uniform).
+#define SHAFT_PROGRAMS 2
+typedef struct
+{
+    GLuint prog;
+    GLint perp, shift, t, len, col;
+} ShaftProgram;
+static ShaftProgram sShaft[SHAFT_PROGRAMS];
 static bool sShaftReady = false;
 
-static GLuint sCompProg = 0;
-static GLint sCUScene = -1, sCUBlur = -1, sCUBloom = -1;
-static GLint sCUSceneUv = -1, sCUBlurUv = -1, sCUBloomUv = -1;
-static GLint sCUDof = -1, sCUPost = -1, sCUGrade = -1, sCUBump = -1;
-static GLint sCUShadowTint = -1, sCUHighTint = -1;
+// The composite: the field program leaves out the 3D battle terms.
+typedef struct
+{
+    GLuint prog;
+    GLint scene, blur, bloom;
+    GLint sceneUv, blurUv, bloomUv, dofRamp;
+    GLint post, grade, battle;
+    GLint shadowTint, highTint;
+} CompositeProgram;
+static CompositeProgram sCompField, sCompBattle;
 
-static const char kFullVs[] =
+static const char kCopyVs[] =
     "attribute vec2 aPos;\n"
     "attribute vec2 aUv;\n"
-    "varying vec2 vUv;\n"
+    "uniform vec2 uUvScale;\n"
+    "uniform vec2 uTexel;\n"
+    "varying vec2 vT0;\n"
+    "varying vec2 vT1;\n"
+    "varying vec2 vT2;\n"
+    "varying vec2 vT3;\n"
     "void main() {\n"
-    "    vUv = aUv;\n"
+    "    vec2 uv = aUv * uUvScale;\n"
+    "    vT0 = uv + vec2(-uTexel.x, -uTexel.y);\n"
+    "    vT1 = uv + vec2(uTexel.x, -uTexel.y);\n"
+    "    vT2 = uv + vec2(-uTexel.x, uTexel.y);\n"
+    "    vT3 = uv + vec2(uTexel.x, uTexel.y);\n"
     "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
     "}\n";
 
 static const char kCopyFs[] =
     "precision mediump float;\n"
     "uniform sampler2D uScene;\n"
-    "uniform vec2 uUvScale;\n"
-    "uniform vec2 uTexel;\n"
-    "varying vec2 vUv;\n"
+    "varying vec2 vT0;\n"
+    "varying vec2 vT1;\n"
+    "varying vec2 vT2;\n"
+    "varying vec2 vT3;\n"
     "void main() {\n"
-    "    vec2 uv = vUv * uUvScale;\n"
-    "    vec3 c = texture2D(uScene, uv + vec2(-uTexel.x, -uTexel.y)).rgb;\n"
-    "    c += texture2D(uScene, uv + vec2(uTexel.x, -uTexel.y)).rgb;\n"
-    "    c += texture2D(uScene, uv + vec2(-uTexel.x, uTexel.y)).rgb;\n"
-    "    c += texture2D(uScene, uv + vec2(uTexel.x, uTexel.y)).rgb;\n"
+    "    vec3 c = texture2D(uScene, vT0).rgb;\n"
+    "    c += texture2D(uScene, vT1).rgb;\n"
+    "    c += texture2D(uScene, vT2).rgb;\n"
+    "    c += texture2D(uScene, vT3).rgb;\n"
     "    gl_FragColor = vec4(c * 0.25, 1.0);\n"
+    "}\n";
+
+static const char kTapVs[] =
+    "attribute vec2 aPos;\n"
+    "attribute vec2 aUv;\n"
+    "uniform vec2 uUvScale;\n"
+    "varying vec2 vT0;\n"
+    "void main() {\n"
+    "    vT0 = aUv * uUvScale;\n"
+    "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
+    "}\n";
+
+static const char kTapFs[] =
+    "precision mediump float;\n"
+    "uniform sampler2D uScene;\n"
+    "varying vec2 vT0;\n"
+    "void main() {\n"
+    "    gl_FragColor = vec4(texture2D(uScene, vT0).rgb, 1.0);\n"
     "}\n";
 
 static const char kBrightFs[] =
     "precision mediump float;\n"
     "uniform sampler2D uScene;\n"
     "uniform float uThreshold;\n"
-    "uniform vec2 uUvScale;\n"
     "uniform float uGain;\n"
-    "varying vec2 vUv;\n"
+    "varying vec2 vT0;\n"
     "void main() {\n"
-    "    vec3 c = texture2D(uScene, vUv * uUvScale).rgb;\n"
+    "    vec3 c = texture2D(uScene, vT0).rgb;\n"
     "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n"
     "    float k = clamp((l - uThreshold) / max(1.0 - uThreshold, 0.05), 0.0, 1.0);\n"
     "    gl_FragColor = vec4(c * (k * (0.75 + 0.25 * k) * uGain), 1.0);\n"
     "}\n";
 
 // Procedural HD-2D light shafts at quarter-res (adapted from bravely-emerald kShaftFs).
-// Uses highp + small offsets + safe hash multiplier to avoid fp16 quantization stutter on SGX543.
-static const char kShaftFs[] =
-    "precision highp float;\n"
-    "uniform vec2 uDir;\n"
-    "uniform float uLen;\n"
-    "uniform float uTime;\n"
-    "uniform float uAsp;\n"
-    "uniform float uCount;\n"
-    "uniform float uMotion;\n"
-    "uniform vec3 uCol;\n"
+// Each layer's position along the beams is linear in screen position, so the vertex shader
+// gives it per layer (vPos); the time terms are folded into uShift and uT on the CPU.
+static const char kShaftVs[] =
+    "attribute vec2 aPos;\n"
+    "attribute vec2 aUv;\n"
+    "uniform vec2 uPerp;\n"
+    "uniform vec2 uShift;\n"
     "varying vec2 vUv;\n"
-    "float hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 437.5453); }\n"
+    "varying vec2 vPos;\n"
     "void main() {\n"
-    "    vec2 d = normalize(uDir);\n"
-    "    float a = dot(vec2(vUv.x * uAsp, vUv.y), vec2(d.y, -d.x));\n"
-    "    float t = uTime * uMotion;\n"
-    "    float acc = 0.0;\n"
-    "    for (int i = 0; i < 5; i++) {\n"
-    "        float fi = float(i);\n"
-    "        if (fi >= uCount) break;\n"
-    "        float sgn = mod(fi, 2.0) < 0.5 ? 1.0 : -1.0;\n"
-    "        float pos = a * (1.1 + fi * 0.55) + fi * 1.73 + t * sgn * (0.035 + 0.016 * fi);\n"
-    "        float cell = floor(pos);\n"
-    "        float fr = pos - cell;\n"
-    "        float h1 = hh(vec2(cell, fi));\n"
-    "        float h2 = hh(vec2(cell + 7.0, fi * 3.0));\n"
-    "        float width = 0.06 + 0.14 * h2;\n"
-    "        float prof = step(0.40, h1) * (1.0 - smoothstep(0.0, width, abs(fr - (0.25 + 0.5 * h1))));\n"
-    "        float breath = 0.55 + 0.45 * sin(t * (0.40 + 0.21 * fi) + h1 * 6.2831);\n"
-    "        acc += prof * breath * (1.0 - 0.07 * fi);\n"
-    "    }\n"
-    "    float fall = pow(clamp(vUv.y, 0.0, 1.0), uLen);\n"
-    "    float beam = clamp(acc * 0.78, 0.0, 1.0) * fall;\n"
-    "    float mote = 0.5 + 0.5 * sin(t * 2.8 + hh(floor(vUv * vec2(120.0, 68.0))) * 6.2831);\n"
-    "    float dust = step(0.96, hh(floor(vUv * vec2(120.0, 68.0)))) * mote * beam * 1.1;\n"
-    "    gl_FragColor = vec4(uCol * (beam + dust), 1.0);\n"
+    "    float a = aUv.x * uPerp.x + aUv.y * uPerp.y;\n"
+    "    vPos = vec2(a * 1.1 + uShift.x, a * 1.65 + uShift.y);\n"
+    "    vUv = aUv;\n"
+    "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
     "}\n";
 
-// 30 FPS HD-2D composite: DoF tilt-shift + Battle dim + Bloom + Split-Tone + S-Curve + Vignette in 1 pass
-// so 100% of the image (including blurred bands) receives full HD-2D grading and vignette.
-static const char kCompFs[] =
-    "precision mediump float;\n"
-    "uniform sampler2D uScene;\n"
-    "uniform sampler2D uBlur;\n"
-    "uniform sampler2D uBloom;\n"
+#define SHAFT_FS_HEAD \
+    "precision mediump float;\n" \
+    "uniform float uT;\n" \
+    "uniform float uLen;\n" \
+    "uniform vec3 uCol;\n" \
+    "varying vec2 vUv;\n" \
+    "varying vec2 vPos;\n" \
+    "float hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 437.5453); }\n" \
+    "float Layer(float pos, float fi, float speed, float weight) {\n" \
+    "    float cell = floor(pos);\n" \
+    "    float fr = pos - cell;\n" \
+    "    float h1 = hh(vec2(cell, fi));\n" \
+    "    float h2 = hh(vec2(cell + 7.0, fi * 3.0));\n" \
+    "    float width = 0.06 + 0.14 * h2;\n" \
+    "    float prof = step(0.40, h1) * (1.0 - smoothstep(0.0, width, abs(fr - (0.25 + 0.5 * h1))));\n" \
+    "    float breath = 0.55 + 0.45 * sin(uT * speed + h1 * 6.2831);\n" \
+    "    return prof * breath * weight;\n" \
+    "}\n" \
+    "void main() {\n"
+
+#define SHAFT_FS_TAIL \
+    "    float fall = pow(clamp(vUv.y, 0.0, 1.0), uLen);\n" \
+    "    float beam = clamp(acc * 0.78, 0.0, 1.0) * fall;\n" \
+    "    float cellHash = hh(floor(vUv * vec2(120.0, 68.0)));\n" \
+    "    float mote = 0.5 + 0.5 * sin(uT * 2.8 + cellHash * 6.2831);\n" \
+    "    float dust = step(0.96, cellHash) * mote * beam * 1.1;\n" \
+    "    gl_FragColor = vec4(uCol * (beam + dust), 1.0);\n" \
+    "}\n"
+
+// Layer i: speed 0.40 + 0.21 i, weight 1 - 0.07 i (the original loop's constants).
+static const char kShaftFs1[] = SHAFT_FS_HEAD
+    "    float acc = Layer(vPos.x, 0.0, 0.40, 1.0);\n"
+    SHAFT_FS_TAIL;
+static const char kShaftFs2[] = SHAFT_FS_HEAD
+    "    float acc = Layer(vPos.x, 0.0, 0.40, 1.0) + Layer(vPos.y, 1.0, 0.61, 0.93);\n"
+    SHAFT_FS_TAIL;
+
+// The composite's vertex shader: the three texture coordinates, the two DoF ramps before their
+// clamp (linear in y) and the vignette vector (linear in x and y).
+static const char kCompVs[] =
+    "attribute vec2 aPos;\n"
+    "attribute vec2 aUv;\n"
     "uniform vec2 uSceneUv;\n"
     "uniform vec2 uBlurUv;\n"
     "uniform vec2 uBloomUv;\n"
-    "uniform vec4 uDof;\n"
-    "uniform vec4 uPost;\n"
-    "uniform vec4 uGrade;\n"
-    "uniform vec3 uBump;\n"
-    "uniform vec3 uShadowTint;\n"
-    "uniform vec3 uHighTint;\n"
-    "varying vec2 vUv;\n"
+    "uniform vec3 uDofRamp;\n"
+    "varying vec2 vScene;\n"
+    "varying vec2 vBlur;\n"
+    "varying vec2 vBloom;\n"
+    "varying vec2 vDof;\n"
+    "varying vec2 vVig;\n"
     "void main() {\n"
-    "    vec3 c = texture2D(uScene, vUv * uSceneUv).rgb;\n"
-    "    vec3 b = texture2D(uBlur, vUv * uBlurUv).rgb;\n"
-    "    float tTop = clamp((vUv.y - uDof.x) * uDof.z, 0.0, 1.0);\n"
-    "    float tBot = clamp((uDof.y - vUv.y) * uDof.z, 0.0, 1.0);\n"
-    "    float wTop = smoothstep(0.0, 1.0, tTop) * uDof.w;\n"
-    "    float wBot = smoothstep(0.0, 1.0, tBot) * uGrade.w;\n"
-    "    float dofW = max(max(wTop, wBot), uGrade.y);\n"
-    "    c = mix(c, b, dofW) * uGrade.z;\n"
-    "    c += texture2D(uBloom, vUv * uBloomUv).rgb * uPost.x;\n"
-    "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n"
-    "    float t = clamp((l - 0.15) * 1.6667, 0.0, 1.0);\n"
-    "    vec3 tint = mix(uShadowTint, uHighTint, t);\n"
-    "    vec3 g = mix(vec3(l), c * tint, uGrade.x);\n"
-    "    c = clamp(mix(c, g, uPost.y), 0.0, 1.0);\n"
-    "    vec3 sc = c * c * (3.0 - 2.0 * c);\n"
-    "    c += uPost.z * (sc - c);\n"
-    "    vec2 d = (vUv - 0.5) * vec2(1.7647, 1.0);\n"
-    "    float vig = 1.0 - clamp(dot(d, d) - 0.12, 0.0, 0.80) * uPost.w;\n"
-    "    c *= vig;\n"
-    "    float edge = clamp(dot(d, d) - 0.16, 0.0, 0.85) * uBump.z;\n"
+    "    vScene = aUv * uSceneUv;\n"
+    "    vBlur = aUv * uBlurUv;\n"
+    "    vBloom = aUv * uBloomUv;\n"
+    "    vDof = vec2((aUv.y - uDofRamp.x) * uDofRamp.z, (uDofRamp.y - aUv.y) * uDofRamp.z);\n"
+    "    vVig = (aUv - 0.5) * vec2(1.7647, 1.0);\n"
+    "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
+    "}\n";
+
+// DoF tilt-shift + Bloom + Split-Tone + S-Curve + Vignette in one pass, so the whole image
+// (blurred bands included) gets the grade and the vignette. uGrade: saturation, top and bottom
+// band alpha. The battle variant adds uBattle: back blur, 1 - back dim, low-HP edge.
+#define COMP_FS_HEAD \
+    "precision mediump float;\n" \
+    "uniform sampler2D uScene;\n" \
+    "uniform sampler2D uBlur;\n" \
+    "uniform sampler2D uBloom;\n" \
+    "uniform vec4 uPost;\n" \
+    "uniform vec3 uGrade;\n" \
+    "uniform vec3 uShadowTint;\n" \
+    "uniform vec3 uHighTint;\n" \
+    "varying vec2 vScene;\n" \
+    "varying vec2 vBlur;\n" \
+    "varying vec2 vBloom;\n" \
+    "varying vec2 vDof;\n" \
+    "varying vec2 vVig;\n"
+
+#define COMP_FS_DOF \
+    "    vec3 c = texture2D(uScene, vScene).rgb;\n" \
+    "    vec3 b = texture2D(uBlur, vBlur).rgb;\n" \
+    "    vec2 t = clamp(vDof, 0.0, 1.0);\n" \
+    "    float dofW = max(smoothstep(0.0, 1.0, t.x) * uGrade.y, smoothstep(0.0, 1.0, t.y) * uGrade.z);\n"
+
+#define COMP_FS_GRADE \
+    "    c += texture2D(uBloom, vBloom).rgb * uPost.x;\n" \
+    "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n" \
+    "    float tl = clamp((l - 0.15) * 1.6667, 0.0, 1.0);\n" \
+    "    vec3 tint = mix(uShadowTint, uHighTint, tl);\n" \
+    "    vec3 g = mix(vec3(l), c * tint, uGrade.x);\n" \
+    "    c = clamp(mix(c, g, uPost.y), 0.0, 1.0);\n" \
+    "    vec3 sc = c * c * (3.0 - 2.0 * c);\n" \
+    "    c += uPost.z * (sc - c);\n" \
+    "    float vd = dot(vVig, vVig);\n" \
+    "    c *= 1.0 - clamp(vd - 0.12, 0.0, 0.80) * uPost.w;\n"
+
+static const char kCompFieldFs[] = COMP_FS_HEAD
+    "void main() {\n"
+    COMP_FS_DOF
+    "    c = mix(c, b, dofW);\n"
+    COMP_FS_GRADE
+    "    gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);\n"
+    "}\n";
+
+static const char kCompBattleFs[] = COMP_FS_HEAD
+    "uniform vec3 uBattle;\n"
+    "void main() {\n"
+    COMP_FS_DOF
+    "    c = mix(c, b, max(dofW, uBattle.x)) * uBattle.y;\n"
+    COMP_FS_GRADE
+    "    float edge = clamp(vd - 0.16, 0.0, 0.85) * uBattle.z;\n"
     "    c = mix(c, c * vec3(1.0, 0.35, 0.30) + vec3(0.24, 0.0, 0.02), edge);\n"
     "    gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);\n"
     "}\n";
@@ -194,6 +296,39 @@ static GLuint LinkProgram(const char *vsSrc, const char *fsSrc)
     return prog;
 }
 
+static bool InitComposite(CompositeProgram *const p, const char *const fsSrc)
+{
+    p->prog = LinkProgram(kCompVs, fsSrc);
+    if (p->prog == 0)
+        return false;
+    p->scene      = glGetUniformLocation(p->prog, "uScene");
+    p->blur       = glGetUniformLocation(p->prog, "uBlur");
+    p->bloom      = glGetUniformLocation(p->prog, "uBloom");
+    p->sceneUv    = glGetUniformLocation(p->prog, "uSceneUv");
+    p->blurUv     = glGetUniformLocation(p->prog, "uBlurUv");
+    p->bloomUv    = glGetUniformLocation(p->prog, "uBloomUv");
+    p->dofRamp    = glGetUniformLocation(p->prog, "uDofRamp");
+    p->post       = glGetUniformLocation(p->prog, "uPost");
+    p->grade      = glGetUniformLocation(p->prog, "uGrade");
+    p->battle     = glGetUniformLocation(p->prog, "uBattle");   // -1 in the field program
+    p->shadowTint = glGetUniformLocation(p->prog, "uShadowTint");
+    p->highTint   = glGetUniformLocation(p->prog, "uHighTint");
+    return true;
+}
+
+static bool InitShafts(ShaftProgram *const p, const char *const fsSrc)
+{
+    p->prog = LinkProgram(kShaftVs, fsSrc);
+    if (p->prog == 0)
+        return false;
+    p->perp  = glGetUniformLocation(p->prog, "uPerp");
+    p->shift = glGetUniformLocation(p->prog, "uShift");
+    p->t     = glGetUniformLocation(p->prog, "uT");
+    p->len   = glGetUniformLocation(p->prog, "uLen");
+    p->col   = glGetUniformLocation(p->prog, "uCol");
+    return true;
+}
+
 bool VoxelHd2dShader_Init(void)
 {
     if (sTriedInit)
@@ -201,45 +336,28 @@ bool VoxelHd2dShader_Init(void)
     sTriedInit = true;
 
 #ifdef PLATFORM_VITA
-    sCopyProg   = LinkProgram(kFullVs, kCopyFs);
-    sBrightProg = LinkProgram(kFullVs, kBrightFs);
-    sCompProg   = LinkProgram(kFullVs, kCompFs);
-    if (sCopyProg && sBrightProg && sCompProg)
+    sCopyProg   = LinkProgram(kCopyVs, kCopyFs);
+    sTapProg    = LinkProgram(kTapVs, kTapFs);
+    sBrightProg = LinkProgram(kTapVs, kBrightFs);
+    const bool compOk = InitComposite(&sCompField, kCompFieldFs) && InitComposite(&sCompBattle, kCompBattleFs);
+    if (sCopyProg && sTapProg && sBrightProg && compOk)
     {
         sCopyScene   = glGetUniformLocation(sCopyProg, "uScene");
         sCopyUvScale = glGetUniformLocation(sCopyProg, "uUvScale");
         sCopyTexel   = glGetUniformLocation(sCopyProg, "uTexel");
 
+        sTapScene    = glGetUniformLocation(sTapProg, "uScene");
+        sTapUvScale  = glGetUniformLocation(sTapProg, "uUvScale");
+
         sBUScene   = glGetUniformLocation(sBrightProg, "uScene");
         sBUThresh  = glGetUniformLocation(sBrightProg, "uThreshold");
         sBUUvScale = glGetUniformLocation(sBrightProg, "uUvScale");
         sBUGain    = glGetUniformLocation(sBrightProg, "uGain");
-
-        sCUScene      = glGetUniformLocation(sCompProg, "uScene");
-        sCUBlur       = glGetUniformLocation(sCompProg, "uBlur");
-        sCUBloom      = glGetUniformLocation(sCompProg, "uBloom");
-        sCUSceneUv    = glGetUniformLocation(sCompProg, "uSceneUv");
-        sCUBlurUv     = glGetUniformLocation(sCompProg, "uBlurUv");
-        sCUBloomUv    = glGetUniformLocation(sCompProg, "uBloomUv");
-        sCUDof        = glGetUniformLocation(sCompProg, "uDof");
-        sCUPost       = glGetUniformLocation(sCompProg, "uPost");
-        sCUGrade      = glGetUniformLocation(sCompProg, "uGrade");
-        sCUBump       = glGetUniformLocation(sCompProg, "uBump");
-        sCUShadowTint = glGetUniformLocation(sCompProg, "uShadowTint");
-        sCUHighTint   = glGetUniformLocation(sCompProg, "uHighTint");
         sShaderReady = true;
         VITA_LOG("[HD2D SHADER] Bright-Pass + Uber-Composite compiled successfully.\n");
     }
-    sShaftProg = LinkProgram(kFullVs, kShaftFs);
-    if (sShaftProg)
+    if (InitShafts(&sShaft[0], kShaftFs1) && InitShafts(&sShaft[1], kShaftFs2))
     {
-        sSUDir    = glGetUniformLocation(sShaftProg, "uDir");
-        sSULen    = glGetUniformLocation(sShaftProg, "uLen");
-        sSUTime   = glGetUniformLocation(sShaftProg, "uTime");
-        sSUAsp    = glGetUniformLocation(sShaftProg, "uAsp");
-        sSUCount  = glGetUniformLocation(sShaftProg, "uCount");
-        sSUMotion = glGetUniformLocation(sShaftProg, "uMotion");
-        sSUCol    = glGetUniformLocation(sShaftProg, "uCol");
         sShaftReady = true;
         VITA_LOG("[HD2D SHADER] Procedural light shafts compiled successfully.\n");
     }
@@ -257,18 +375,10 @@ bool VoxelHd2dShader_ShaftsReady(void)
     return sShaftReady;
 }
 
-void VoxelHd2dShader_CopyBox2x2(const GLuint sceneTex, const float uMax, const float vMax,
-                                const float texelX, const float texelY)
+// One full-screen quad with the current program; attribute 0 = position, 1 = texture coordinate.
+static void DrawQuad(void)
 {
-    if (!sShaderReady) return;
     static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
-
-    glUseProgram(sCopyProg);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, sceneTex);
-    glUniform1i(sCopyScene, 0);
-    glUniform2f(sCopyUvScale, uMax, vMax);
-    glUniform2f(sCopyTexel, texelX, texelY);
 
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
@@ -277,13 +387,39 @@ void VoxelHd2dShader_CopyBox2x2(const GLuint sceneTex, const float uMax, const f
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
+}
+
+void VoxelHd2dShader_CopyBox2x2(const GLuint sceneTex, const float uMax, const float vMax,
+                                const float texelX, const float texelY)
+{
+    if (!sShaderReady) return;
+
+    glUseProgram(sCopyProg);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sceneTex);
+    glUniform1i(sCopyScene, 0);
+    glUniform2f(sCopyUvScale, uMax, vMax);
+    glUniform2f(sCopyTexel, texelX, texelY);
+    DrawQuad();
+    glUseProgram(0);
+}
+
+void VoxelHd2dShader_CopyTap(const GLuint sceneTex, const float uMax, const float vMax)
+{
+    if (!sShaderReady) return;
+
+    glUseProgram(sTapProg);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sceneTex);
+    glUniform1i(sTapScene, 0);
+    glUniform2f(sTapUvScale, uMax, vMax);
+    DrawQuad();
     glUseProgram(0);
 }
 
 void VoxelHd2dShader_BrightPass(const GLuint sceneTex, const float uMax, const float vMax, const float threshold, const float gain)
 {
     if (!sShaderReady) return;
-    static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 
     glUseProgram(sBrightProg);
     glActiveTexture(GL_TEXTURE0);
@@ -292,14 +428,7 @@ void VoxelHd2dShader_BrightPass(const GLuint sceneTex, const float uMax, const f
     glUniform1f(sBUThresh, threshold);
     glUniform2f(sBUUvScale, uMax, vMax);
     glUniform1f(sBUGain, gain);
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, quad);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, quad);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(0);
+    DrawQuad();
     glUseProgram(0);
 }
 
@@ -314,40 +443,37 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
                                 const float shadowTint[3], const float highTint[3])
 {
     if (!sShaderReady) return;
-    static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+    (void)bumpOffsetX; (void)bumpOffsetY;
 
-    glUseProgram(sCompProg);
+    // The field never has the battle terms: they would cost every pixel for a no-op.
+    const bool battle = (backBlur > 0.0f || backDim > 0.0f || bumpStrength > 0.0f);
+    const CompositeProgram *const p = battle ? &sCompBattle : &sCompField;
+    const float invSlope = (yTop < 0.98f) ? 2.8f : 0.0f;
+
+    glUseProgram(p->prog);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sceneTex);
-    glUniform1i(sCUScene, 0);
+    glUniform1i(p->scene, 0);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, blurTex);
-    glUniform1i(sCUBlur, 1);
+    glUniform1i(p->blur, 1);
 
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, bloomTex);
-    glUniform1i(sCUBloom, 2);
+    glUniform1i(p->bloom, 2);
 
-    (void)bumpOffsetX; (void)bumpOffsetY;
-    const float invSlope = (yTop < 0.98f) ? 2.8f : 0.0f;
-    glUniform2f(sCUSceneUv, uSceneMax, vSceneMax);
-    glUniform2f(sCUBlurUv,  uBlurMax,  vBlurMax);
-    glUniform2f(sCUBloomUv, uBloomMax, vBloomMax);
-    glUniform4f(sCUDof,     yTop, yBot, invSlope, topAlpha);
-    glUniform4f(sCUPost,    bloomAmt, gradeAmt, curveAmt, vignetteAmt);
-    glUniform4f(sCUGrade,   saturation, backBlur, 1.0f - backDim, botAlpha);
-    glUniform3f(sCUBump,    0.0f, 0.0f, bumpStrength);
-    glUniform3fv(sCUShadowTint, 1, shadowTint);
-    glUniform3fv(sCUHighTint,   1, highTint);
-
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, quad);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, quad);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(0);
+    glUniform2f(p->sceneUv, uSceneMax, vSceneMax);
+    glUniform2f(p->blurUv,  uBlurMax,  vBlurMax);
+    glUniform2f(p->bloomUv, uBloomMax, vBloomMax);
+    glUniform3f(p->dofRamp, yTop, yBot, invSlope);
+    glUniform4f(p->post,    bloomAmt, gradeAmt, curveAmt, vignetteAmt);
+    glUniform3f(p->grade,   saturation, topAlpha, botAlpha);
+    if (battle)
+        glUniform3f(p->battle, backBlur, 1.0f - backDim, bumpStrength);
+    glUniform3fv(p->shadowTint, 1, shadowTint);
+    glUniform3fv(p->highTint,   1, highTint);
+    DrawQuad();
 
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -362,23 +488,25 @@ void VoxelHd2dShader_Shafts(const float dirX, const float dirY, const float lenE
                             const float colR, const float colG, const float colB)
 {
     if (!sShaftReady) return;
-    static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 
-    glUseProgram(sShaftProg);
-    glUniform2f(sSUDir, dirX, dirY);
-    glUniform1f(sSULen, lenExp);
-    glUniform1f(sSUTime, timeSec);
-    glUniform1f(sSUAsp, aspect);
-    glUniform1f(sSUCount, layers);
-    glUniform1f(sSUMotion, motion);
-    glUniform3f(sSUCol, colR, colG, colB);
+    // normalize(uDir) of the original shader, once; a zero direction has no beams to draw.
+    const float dirLen = sqrtf(dirX * dirX + dirY * dirY);
+    if (dirLen < 1e-6f)
+        return;
+    const float dx = dirX / dirLen;
+    const float dy = dirY / dirLen;
+    const float t = timeSec * motion;
+    // Layer i: pos = a * (1.1 + 0.55 i) + 1.73 i + t * sign_i * (0.035 + 0.016 i), sign +1 then -1.
+    const float shift0 = t * 0.035f;
+    const float shift1 = 1.73f - t * 0.051f;
+    const ShaftProgram *const p = &sShaft[(layers >= 1.5f) ? 1 : 0];
 
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, quad);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, quad);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glDisableVertexAttribArray(1);
-    glDisableVertexAttribArray(0);
+    glUseProgram(p->prog);
+    glUniform2f(p->perp, aspect * dy, -dx);
+    glUniform2f(p->shift, shift0, shift1);
+    glUniform1f(p->t, t);
+    glUniform1f(p->len, lenExp);
+    glUniform3f(p->col, colR, colG, colB);
+    DrawQuad();
     glUseProgram(0);
 }

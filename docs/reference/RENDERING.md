@@ -139,6 +139,12 @@ this pass is not being optimised.
   An earlier path that re-uploaded a vitaGL buffer every frame crashed the GPU.
 - Never upload into a texture the GPU drew in the last frames through `glTexSubImage2D`: vitaGL
   copies all of it first. Use rings or spares, or write in place on purpose (see below).
+- GLSL: work out texture coordinates in the vertex shader and sample the varyings as they are
+  (`voxel_hd2d_shader.c`); a coordinate computed in the fragment shader makes the read dependent.
+  Loops get constant bounds (one program per variant), and values that only depend on uniforms are
+  computed on the CPU.
+- GLSL precision qualifiers are ignored: vitaGL's translator defines `highp`/`mediump`/`lowp` as
+  nothing and, with `vglUseLowPrecision` on (`MainThread_Boot`), turns every `float` into `half`.
 
 ## Textures rewritten at run time
 

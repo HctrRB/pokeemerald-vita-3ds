@@ -8259,7 +8259,10 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     glLoadIdentity();
 
     VitaPerf_SubBegin(VITA_PERF_T_POST_DOF);
-    // 1. Downsample: 2x2 box filter in HD-2D to eliminate roof/wall horizontal stripe aliasing
+    // 1. Downsample: 2x2 box filter in HD-2D to eliminate roof/wall horizontal stripe aliasing.
+    // At half size each pixel's centre falls on the shared corner of its 2x2 block, so one
+    // bilinear tap is that block's average: the filter is switched to linear for this draw only
+    // (the composite reads the scene texture unfiltered).
     glBindFramebuffer(GL_FRAMEBUFFER, pt->scratchFbo);
     VitaPerf_GpuScene(VITA_PERF_GPU_DOWN);
     glViewport(0, 0, scratchW, scratchH);
@@ -8268,9 +8271,12 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
-        VoxelHd2dShader_CopyBox2x2(pt->dioramaActiveTex, uMax, vMax,
-                                   0.5f / (float)VOXEL_DIORAMA_FBO_W,
-                                   0.5f / (float)VOXEL_DIORAMA_FBO_H);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        VoxelHd2dShader_CopyTap(pt->dioramaActiveTex, uMax, vMax);
+        glBindTexture(GL_TEXTURE_2D, pt->dioramaActiveTex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         sFrameDrawCalls++;
         sFrameVertCount += 4u;
         glEnableClientState(GL_VERTEX_ARRAY);
@@ -8330,12 +8336,17 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
         VitaPerf_GpuScene(VITA_PERF_GPU_BLOOM);
         glViewport(0, 0, bloomW, bloomH);
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
 
         // Bright-pass at 240x136 (bravely-emerald style: extract real 3D bright pixels with depth occlusion)
         const int32_t bloomLevel = VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLOOM);
         const float brightGain = Voxel_ClampF((float)bloomLevel * 0.1f, 0.0f, 1.0f);
+        // The shader bright pass writes every pixel opaque with blending off; a vitaGL clear is a
+        // full-target draw of its own, so it is only needed when that pass does not run.
+        if (brightGain <= 0.0f || !VoxelHd2dShader_Ready())
+        {
+            glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+        }
         if (brightGain <= 0.0f)
         {
             // 0 = OFF: keep bloomFboA cleared so sky bloom & light shafts still run without world bright-pass bloom
