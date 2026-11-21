@@ -108,8 +108,10 @@ multiplier, Nuzlocke rules, field HM shortcuts, button remapping.
 > that are missing or feel wrong is very welcome.
 
 Performance: the game sets the Vita's clocks itself (CPU 444 MHz, GPU 222 MHz; disable overclock
-plugins for it). The 3D world runs at 30 FPS by default. Recommended: HD-2D **HIGH** at **30 FPS**
-for a steady frame time; HD-2D **LOW** holds **60 FPS**; HD-2D **MED** is experimental.
+plugins for it, the game needs these clocks). At those clocks HD-2D **HIGH** holds an almost steady
+**60 FPS** in most places (OPTIONS > GRAPHICS > FRAMERATE 60); the 3D world runs at 30 FPS by
+default, which leaves the most headroom. HD-2D **LOW** holds **60 FPS**; HD-2D **MED** is
+experimental.
 
 ### Not yet tested on a PS Vita
 
@@ -141,6 +143,13 @@ is already checked: [docs/guides/UI_HARDWARE_TESTS.md](docs/guides/UI_HARDWARE_T
   items); the Battle Frontier and Battle Tents half-party choice.
 - The battle fixes for Wally's battle (#8) and Gyms 6 and 7 (Natural Cure, double battle targets).
 - The GRAPHICS tab (each HD-2D level with 30 and 60 FPS) and the night street lamps.
+- The day/night cycle on its new schedule (sunrise 07:00, the sun highest 12:00-14:00, evening from
+  18:00, night at 21:00): light and tint, shadows, sun and moon shafts, sky bloom, windows, street
+  lamps and fireflies changing together, and the wild encounter phases following it (morning
+  07:00-12:00, day 12:00-21:00, night 21:00-07:00).
+- The HD-2D post-processing after the performance work: light shafts at every hour (sun high and
+  low, and the moon), the bloom halos (now one blur pass), the night moonlight and screen fades
+  with HD-2D on, water and flower animations, and walking characters.
 - The Flash darkness in 3D (Dewford Gym, Battle Pyramid), and the battle HUD in the Battle Palace
   and Battle Arena.
 - The menu themes on every screen, and the mirrored dialogue boxes in 2D evolution, egg-hatch and
