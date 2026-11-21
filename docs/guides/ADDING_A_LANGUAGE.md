@@ -32,7 +32,10 @@ Everything a language brings lives in one row of `tools/locales/languages.json` 
    the language's own order. A missing entry is shown in English.
 3. **Game text.** For a `rom` language, make its manifest: `python tools/locales/remap_manifest.py
    --locale <code> --source <manifest> --reference <folder> --symbols <symbols>` imports one made
-   for another tree (this is how the Spanish one came from Emerald 3DS, see `NOTICE.md`).
+   for another tree (this is how the Spanish one came from Emerald 3DS, see `NOTICE.md`). See
+   "Importing a manifest" below. A `catalog` language (no official cartridge: its game text kept in
+   its folder, over a ROM of its `base` language) is not staged yet: `tools/locales/localize.py`
+   only handles `rom` languages.
 4. **Build it.** `.\build_vita.ps1 -Locale <code> -Rom <your ROM of that language>` builds in
    `build-vita-<code>\`. `tools/locales/compile_ui.py` stops the build on a translation whose
    `printf` conversions differ from the English ones or that uses a letter not listed for it, and
@@ -43,6 +46,29 @@ Everything a language brings lives in one row of `tools/locales/languages.json` 
    shorten the translation.
 6. **Test on the console** with the checklist of [UI_HARDWARE_TESTS.md](UI_HARDWARE_TESTS.md),
    plus the first gyms, a contest, a berry tag and the credits.
+
+## Importing a manifest
+
+Another project's manifest counts its spans in *its* sources, so `remap_manifest.py` needs those
+sources (`--reference`) to read the text of each span, then finds that same text in ours. Only the
+files whose text differs from ours are needed: for the others the tool uses our own file. For
+Emerald 3DS (how the Spanish manifest was made):
+
+1. List the files its manifest covers whose text differs from ours (compare each file's `sha256`
+   in the manifest with our file read with LF line endings).
+2. Fetch those files from pret/pokeemerald at the commit its `upstream.lock` pins.
+3. Apply its `patches/pokeemerald/*.patch` in order, only to those files
+   (`git apply --include=<file>`), after converting the patches to LF line endings.
+4. Put the language's own layout patches in `tools/locales/<code>/patches/` first (the manifest is
+   remapped onto our sources *with* them applied), then run the import with that folder as
+   `--reference`, the project's manifest as `--source` and its ROM symbol list (`*-symbols.s.gz`)
+   as `--symbols`, which gives the offsets of the Easy Chat ID lists.
+
+The rebuilt files do not need to match the other project's sources byte for byte (Emerald 3DS's
+did not): a span is only placed where its exact text and its surroundings are found once in our
+file, and the tool lists any span it could not place. Line endings must be LF everywhere: the spans
+count characters. Commit the code the manifest is made from first, then the manifest, so its
+`sourceCommit` holds the language's patches (the later remaps read them from git).
 
 ## When the English sources change
 
