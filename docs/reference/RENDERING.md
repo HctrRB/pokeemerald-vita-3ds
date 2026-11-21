@@ -143,6 +143,10 @@ this pass is not being optimised.
   (`voxel_hd2d_shader.c`); a coordinate computed in the fragment shader makes the read dependent.
   Loops get constant bounds (one program per variant), and values that only depend on uniforms are
   computed on the CPU.
+- A procedural effect that only varies along one screen axis is evaluated in the vertex shader of
+  a strip laid across that axis, with the same code, and interpolated: the light shafts
+  (`VoxelHd2dShader_Shafts`) depend only on the distance across the beams, so ~1000 vertices
+  replace one evaluation per pixel of the bloom target; per pixel only the fall and the dust remain.
 - GLSL precision qualifiers are ignored: vitaGL's translator defines `highp`/`mediump`/`lowp` as
   nothing and, with `vglUseLowPrecision` on (`MainThread_Boot`), turns every `float` into `half`.
 

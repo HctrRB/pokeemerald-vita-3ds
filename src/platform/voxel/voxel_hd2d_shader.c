@@ -32,10 +32,20 @@ static GLint sBUScene = -1, sBUThresh = -1, sBUUvScale = -1, sBUGain = -1;
 typedef struct
 {
     GLuint prog;
-    GLint perp, shift, t, len, col;
+    GLint aRange, aCenter, axis, along, shift, tv;   // vertex shader
+    GLint t, len, col;                               // fragment shader
 } ShaftProgram;
 static ShaftProgram sShaft[SHAFT_PROGRAMS];
 static bool sShaftReady = false;
+
+// The beams vary only across their direction (VoxelHd2dShader_Shafts): the strip that carries them
+// has SHAFT_SEGMENTS parallelograms side by side across the screen, ~2 per bloom pixel along that
+// axis, so the profile is sampled finer than the smallest edge of a beam (5+ samples).
+#define SHAFT_SEGMENTS 512u
+#define SHAFT_STRIP_VERTS (2u * (SHAFT_SEGMENTS + 1u))
+// Half the strip's length along the beams, in screen units: past the screen's half diagonal (0.71).
+#define SHAFT_HALF_LENGTH 1.5f
+static GLuint sShaftStripVbo = 0;
 
 // The composite: the field program leaves out the 3D battle terms.
 typedef struct
@@ -114,29 +124,24 @@ static const char kBrightFs[] =
     "}\n";
 
 // Procedural HD-2D light shafts at quarter-res (adapted from bravely-emerald kShaftFs).
-// Each layer's position along the beams is linear in screen position, so the vertex shader
-// gives it per layer (vPos); the time terms are folded into uShift and uT on the CPU.
-static const char kShaftVs[] =
-    "attribute vec2 aPos;\n"
-    "attribute vec2 aUv;\n"
-    "uniform vec2 uPerp;\n"
-    "uniform vec2 uShift;\n"
-    "varying vec2 vUv;\n"
-    "varying vec2 vPos;\n"
-    "void main() {\n"
-    "    float a = aUv.x * uPerp.x + aUv.y * uPerp.y;\n"
-    "    vPos = vec2(a * 1.1 + uShift.x, a * 1.65 + uShift.y);\n"
-    "    vUv = aUv;\n"
-    "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
-    "}\n";
-
-#define SHAFT_FS_HEAD \
-    "precision mediump float;\n" \
-    "uniform float uT;\n" \
-    "uniform float uLen;\n" \
-    "uniform vec3 uCol;\n" \
+// Everything costly in them - the two hashed layers of beams, their profile and their breathing -
+// depends on one screen coordinate only: a, the distance across the beams (a = uv . perp). It is
+// evaluated in the vertex shader of a strip of thin parallelograms laid across the screen, one
+// boundary every 1/SHAFT_SEGMENTS of a's range, with the same code and the same GPU arithmetic as
+// the per-pixel shader it replaces, and interpolated between them. Per pixel only the fall along
+// the screen and, where there is a beam, the dust are left. aPos: (s, side), s in 0..1 across the
+// beams, side -1 or +1 along them. Same function, same beams, every frame; ~1000 evaluations
+// instead of one per pixel of the bloom target.
+#define SHAFT_VS_HEAD \
+    "attribute vec2 aPos;\n" \
+    "uniform vec2 uARange;\n" \
+    "uniform float uACenter;\n" \
+    "uniform vec2 uAxis;\n" \
+    "uniform vec2 uAlong;\n" \
+    "uniform vec2 uShift;\n" \
+    "uniform float uTv;\n" \
     "varying vec2 vUv;\n" \
-    "varying vec2 vPos;\n" \
+    "varying float vAcc;\n" \
     "float hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 437.5453); }\n" \
     "float Layer(float pos, float fi, float speed, float weight) {\n" \
     "    float cell = floor(pos);\n" \
@@ -145,27 +150,47 @@ static const char kShaftVs[] =
     "    float h2 = hh(vec2(cell + 7.0, fi * 3.0));\n" \
     "    float width = 0.06 + 0.14 * h2;\n" \
     "    float prof = step(0.40, h1) * (1.0 - smoothstep(0.0, width, abs(fr - (0.25 + 0.5 * h1))));\n" \
-    "    float breath = 0.55 + 0.45 * sin(uT * speed + h1 * 6.2831);\n" \
+    "    float breath = 0.55 + 0.45 * sin(uTv * speed + h1 * 6.2831);\n" \
     "    return prof * breath * weight;\n" \
     "}\n" \
-    "void main() {\n"
+    "void main() {\n" \
+    "    float a = mix(uARange.x, uARange.y, aPos.x);\n" \
+    "    vec2 uv = vec2(0.5) + (a - uACenter) * uAxis + aPos.y * uAlong;\n"
 
-#define SHAFT_FS_TAIL \
-    "    float fall = pow(clamp(vUv.y, 0.0, 1.0), uLen);\n" \
-    "    float beam = clamp(acc * 0.78, 0.0, 1.0) * fall;\n" \
-    "    float cellHash = hh(floor(vUv * vec2(120.0, 68.0)));\n" \
-    "    float mote = 0.5 + 0.5 * sin(uT * 2.8 + cellHash * 6.2831);\n" \
-    "    float dust = step(0.96, cellHash) * mote * beam * 1.1;\n" \
-    "    gl_FragColor = vec4(uCol * (beam + dust), 1.0);\n" \
+#define SHAFT_VS_TAIL \
+    "    vAcc = clamp(acc * 0.78, 0.0, 1.0);\n" \
+    "    vUv = uv;\n" \
+    "    gl_Position = vec4(uv * 2.0 - 1.0, 0.0, 1.0);\n" \
     "}\n"
 
-// Layer i: speed 0.40 + 0.21 i, weight 1 - 0.07 i (the original loop's constants).
-static const char kShaftFs1[] = SHAFT_FS_HEAD
-    "    float acc = Layer(vPos.x, 0.0, 0.40, 1.0);\n"
-    SHAFT_FS_TAIL;
-static const char kShaftFs2[] = SHAFT_FS_HEAD
-    "    float acc = Layer(vPos.x, 0.0, 0.40, 1.0) + Layer(vPos.y, 1.0, 0.61, 0.93);\n"
-    SHAFT_FS_TAIL;
+// Layer i: pos = a * (1.1 + 0.55 i) + shift_i, speed 0.40 + 0.21 i, weight 1 - 0.07 i.
+static const char kShaftVs1[] = SHAFT_VS_HEAD
+    "    float acc = Layer(a * 1.1 + uShift.x, 0.0, 0.40, 1.0);\n"
+    SHAFT_VS_TAIL;
+static const char kShaftVs2[] = SHAFT_VS_HEAD
+    "    float acc = Layer(a * 1.1 + uShift.x, 0.0, 0.40, 1.0) + Layer(a * 1.65 + uShift.y, 1.0, 0.61, 0.93);\n"
+    SHAFT_VS_TAIL;
+
+// The fall towards the bottom of the screen, then the dust motes, only where there is a beam
+// (they are multiplied by it: zero elsewhere).
+static const char kShaftFs[] =
+    "precision mediump float;\n"
+    "uniform float uT;\n"
+    "uniform float uLen;\n"
+    "uniform vec3 uCol;\n"
+    "varying vec2 vUv;\n"
+    "varying float vAcc;\n"
+    "float hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 437.5453); }\n"
+    "void main() {\n"
+    "    float beam = vAcc * pow(clamp(vUv.y, 0.0, 1.0), uLen);\n"
+    "    float dust = 0.0;\n"
+    "    if (beam > 0.0) {\n"
+    "        float cellHash = hh(floor(vUv * vec2(120.0, 68.0)));\n"
+    "        float mote = 0.5 + 0.5 * sin(uT * 2.8 + cellHash * 6.2831);\n"
+    "        dust = step(0.96, cellHash) * mote * beam * 1.1;\n"
+    "    }\n"
+    "    gl_FragColor = vec4(uCol * (beam + dust), 1.0);\n"
+    "}\n";
 
 // The composite's vertex shader: the three texture coordinates, the two DoF ramps before their
 // clamp (linear in y) and the vignette vector (linear in x and y).
@@ -323,17 +348,43 @@ static bool InitComposite(CompositeProgram *const p, const char *const fsSrc)
     return true;
 }
 
-static bool InitShafts(ShaftProgram *const p, const char *const fsSrc)
+static bool InitShafts(ShaftProgram *const p, const char *const vsSrc)
 {
-    p->prog = LinkProgram(kShaftVs, fsSrc);
+    p->prog = LinkProgram(vsSrc, kShaftFs);
     if (p->prog == 0)
         return false;
-    p->perp  = glGetUniformLocation(p->prog, "uPerp");
-    p->shift = glGetUniformLocation(p->prog, "uShift");
-    p->t     = glGetUniformLocation(p->prog, "uT");
-    p->len   = glGetUniformLocation(p->prog, "uLen");
-    p->col   = glGetUniformLocation(p->prog, "uCol");
+    p->aRange  = glGetUniformLocation(p->prog, "uARange");
+    p->aCenter = glGetUniformLocation(p->prog, "uACenter");
+    p->axis    = glGetUniformLocation(p->prog, "uAxis");
+    p->along   = glGetUniformLocation(p->prog, "uAlong");
+    p->shift   = glGetUniformLocation(p->prog, "uShift");
+    p->tv      = glGetUniformLocation(p->prog, "uTv");
+    p->t       = glGetUniformLocation(p->prog, "uT");
+    p->len     = glGetUniformLocation(p->prog, "uLen");
+    p->col     = glGetUniformLocation(p->prog, "uCol");
     return true;
+}
+
+// The shafts' strip, once: (s, side) per vertex, a triangle strip of SHAFT_SEGMENTS quads.
+static bool InitShaftStrip(void)
+{
+    static float verts[SHAFT_STRIP_VERTS * 2u];   // static: 8 KB, kept off the stack
+    for (uint32_t i = 0; i <= SHAFT_SEGMENTS; ++i)
+    {
+        const float sCoord = (float)i / (float)SHAFT_SEGMENTS;
+        verts[i * 4u + 0u] = sCoord;
+        verts[i * 4u + 1u] = -1.0f;
+        verts[i * 4u + 2u] = sCoord;
+        verts[i * 4u + 3u] = 1.0f;
+    }
+    (void)glGetError();   // only this upload's error below, not an earlier one
+    glGenBuffers(1, &sShaftStripVbo);
+    if (sShaftStripVbo == 0)
+        return false;
+    glBindBuffer(GL_ARRAY_BUFFER, sShaftStripVbo);
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)sizeof(verts), verts, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    return glGetError() == GL_NO_ERROR;
 }
 
 bool VoxelHd2dShader_Init(void)
@@ -364,7 +415,7 @@ bool VoxelHd2dShader_Init(void)
         sShaderReady = true;
         VITA_LOG("[HD2D SHADER] Bright-Pass + Uber-Composite compiled successfully.\n");
     }
-    if (InitShafts(&sShaft[0], kShaftFs1) && InitShafts(&sShaft[1], kShaftFs2))
+    if (InitShafts(&sShaft[0], kShaftVs1) && InitShafts(&sShaft[1], kShaftVs2) && InitShaftStrip())
     {
         sShaftReady = true;
         VITA_LOG("[HD2D SHADER] Procedural light shafts compiled successfully.\n");
@@ -522,12 +573,41 @@ void VoxelHd2dShader_Shafts(const float dirX, const float dirY, const float lenE
     const float shift1 = 1.73f - t * 0.051f;
     const ShaftProgram *const p = &sShaft[(layers >= 1.5f) ? 1 : 0];
 
+    // a = uv . perp over the screen (uv in 0..1): its range from the corners, and the strip's
+    // frame: uv = 0.5 + (a - a(centre)) * perp / |perp|^2 + side * along, along perpendicular to perp.
+    const float perpX = aspect * dy;
+    const float perpY = -dx;
+    const float perpLen2 = perpX * perpX + perpY * perpY;
+    if (perpLen2 < 1e-12f)
+        return;
+    const float corners[4] = { 0.0f, perpX, perpY, perpX + perpY };
+    float aMin = corners[0], aMax = corners[0];
+    for (int32_t k = 1; k < 4; ++k)
+    {
+        aMin = fminf(aMin, corners[k]);
+        aMax = fmaxf(aMax, corners[k]);
+    }
+    const float perpLen = sqrtf(perpLen2);
+    const float alongX = -perpY / perpLen * SHAFT_HALF_LENGTH;
+    const float alongY = perpX / perpLen * SHAFT_HALF_LENGTH;
+
     glUseProgram(p->prog);
-    glUniform2f(p->perp, aspect * dy, -dx);
+    glUniform2f(p->aRange, aMin, aMax);
+    glUniform1f(p->aCenter, 0.5f * (perpX + perpY));
+    glUniform2f(p->axis, perpX / perpLen2, perpY / perpLen2);
+    glUniform2f(p->along, alongX, alongY);
     glUniform2f(p->shift, shift0, shift1);
+    glUniform1f(p->tv, t);
     glUniform1f(p->t, t);
     glUniform1f(p->len, lenExp);
     glUniform3f(p->col, colR, colG, colB);
-    DrawQuad();
+
+    glBindBuffer(GL_ARRAY_BUFFER, sShaftStripVbo);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (const void *)0);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, (GLsizei)SHAFT_STRIP_VERTS);
+    glDisableVertexAttribArray(0);
+    // The rest of the post pass draws from client arrays.
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glUseProgram(0);
 }
