@@ -343,7 +343,7 @@ static void BuildStatus(void)
         sRunY = 70;
         sRunW = 162;
         sRunH = 34;
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, on ? UI_TR("RUN: AUTO") : UI_TR("RUN: B BTN"),
+        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, on ? UI_TR("AUTO-RUN: ON") : UI_TR("AUTO-RUN: OFF"),
                        on ? UI_RGBA(115, 205, 164, 255) : UI_COL_ON_SOFT);
     }
     else
@@ -599,7 +599,7 @@ static void BuildGbaHub(void)
         sRunY = 150;
         sRunW = 204;
         sRunH = 40;
-        const char *rt = on ? UI_TR("ON") : UI_TR("B BTN");
+        const char *rt = on ? UI_TR("ON") : UI_TR("OFF");
         UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, rt), 150, 40, rt,
                        on ? UI_RGBA(115, 255, 172, 255) : UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
     }

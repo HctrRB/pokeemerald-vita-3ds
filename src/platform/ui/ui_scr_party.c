@@ -815,12 +815,15 @@ static void DrawGbaPartySlot(int32_t slot, bool sel, bool mark, const char *tag,
         UiSpr_MonIcon(m.species, frame, x + 32, y + 12 - (frame ? 2 : 0), 1);
 
     const int32_t textX = lead ? x + 102 : x + 74;
-    const int32_t maxNameW = (x + 324) - textX - (m.egg ? 0 : (m.shiny ? 38 : 22));
+    // Room for the gender sign and the shiny star after the name: 6 px of gap, 28 px each (14 px at x2)
+    const int32_t maxNameW = (x + 324) - textX - (m.egg ? 0 : (m.shiny ? 66 : 34));
+    const int32_t nameY = y + (lead ? 14 : 9);
     UiDraw_PushClip(textX, y + (lead ? 8 : 4), maxNameW, 30);
-    const int32_t nameW = UiW_GbaText(UI_FACE_PS2P, 16, textX, y + (lead ? 14 : 9), m.name, C_WHITE, UI_GBA_SHAD_DARK);
+    const int32_t nameW = UiW_GbaText(UI_FACE_PS2P, 16, textX, nameY, m.name, C_WHITE, UI_GBA_SHAD_DARK);
     UiDraw_PopClip();
-    if (!m.egg)
-        UiKit_GenderShiny(textX + (nameW > maxNameW ? maxNameW : nameW) + 6, y + (lead ? 8 : 3), m.gender, m.shiny);
+    if (!m.egg)   // centred on the name's capitals
+        UiKit_GenderShiny(textX + (nameW > maxNameW ? maxNameW : nameW) + 6, nameY + UiText_CapMid(UI_FACE_PS2P, 16) - 14,
+                          m.gender, m.shiny);
 
     if (m.egg)
     {
@@ -954,7 +957,7 @@ static void BuildGbaInspectPanel(int32_t slot)
 static void BuildGbaSummary(void)
 {
     static const char *const kPageNames[TAB_COUNT] = { UI_N("POKéMON INFO"), UI_N("POKéMON SKILLS"), UI_N("BATTLE MOVES"), UI_N("CONTEST MOVES") };
-    UiW_GbaTopBar(UI_GBA_BG_SUMMARY, UI_SPR_BALL_POKE, UI_TR("POKéMON SUMMARY"), TAB_COUNT, sTab, false, UiLocale_Lookup(kPageNames[sTab]));
+    UiW_GbaTopBarPages(UI_GBA_BG_SUMMARY, UI_SPR_BALL_POKE, UI_TR("POKéMON SUMMARY"), kPageNames, TAB_COUNT, sTab);
     int32_t rx = UI_SCREEN_W - 14;
     UiW_GbaHelpBadge(&rx, "O", UI_TR("BACK"), false);
     if (sMode == MODE_MOVES)

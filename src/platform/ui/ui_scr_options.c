@@ -377,7 +377,7 @@ static void DrawModalsGba(void)
 static void BuildGba(void)
 {
     char buf[64];
-    UiW_GbaTopBar(UI_GBA_BG_OPTIONS, 0, UI_TR("OPTIONS"), VITA_TAB_COUNT, sTab, false, UiLocale_Lookup(sTabs[sTab]));
+    UiW_GbaTopBarPages(UI_GBA_BG_OPTIONS, 0, UI_TR("OPTIONS"), sTabs, VITA_TAB_COUNT, sTab);
     UiSpr_ItemIcon(ITEM_CARD_KEY, 28, 13, 1);
 
     int32_t rx = UI_SCREEN_W - 14;

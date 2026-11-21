@@ -1187,9 +1187,16 @@ void UiW_GbaBgPattern(uint8_t bgKind, uint32_t *out16x16)
     }
 }
 
-void UiW_GbaTopBar(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, int32_t dotCount, int32_t dotActive, bool dotAllGreen, const char *pagerText)
+// The pager's width: UI_GBA_PAGER_W_MAX, or fitted to the longest page name a screen can show
+// (UiW_GbaTopBarPages). Kept for the screen's touch test (UiW_GbaPagerHit, UiKit_HeaderAs): both
+// run on Core 1, the hit test on the frame after the bar was built.
+static int32_t sPagerW = UI_GBA_PAGER_W_MAX;
+
+static void GbaTopBar(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, int32_t dotCount, int32_t dotActive, bool dotAllGreen,
+                      const char *pagerText, int32_t pagerW)
 {
     const GbaBgSpec sp = BgSpecFor(bgKind);
+    sPagerW = pagerW;
 
     // Translucent GBA backdrop below the 52 px top bar over the 3D world (1 tiled 16x16 quad in Ui_Render)
     UiDraw_SetBackdrop(bgKind);
@@ -1209,10 +1216,9 @@ void UiW_GbaTopBar(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, int32
                            sp.pillBorder, sp.pillBg, sp.pillBg, sp.pillInk, !sp.stripes, !sp.stripes);
     }
 
-    // Fixed-width pager (.gba-pager) with [L], centered dots + label, [R]
+    // Pager (.gba-pager) with [L], centered dots + label, [R]
     if (dotCount > 0 || (pagerText && pagerText[0]))
     {
-        const int32_t pagerW = 304;
         const int32_t lW = 24, rW = 24;
         const int32_t px = hasSec ? 268 : 14;
         BevelBoxR(px, 8, pagerW, 34, 5, false, 2, UI_RGBA(15, 20, 22, 255), UI_RGBA(23, 30, 33, 255), UI_RGBA(23, 30, 33, 255),
@@ -1342,14 +1348,45 @@ int32_t UiW_GbaTextWrapped(uint8_t face, uint8_t px, int32_t x, int32_t y, int32
     return UiW_TextWrappedF(face, px, x, y, w, lineH, text, ink, maxLines);
 }
 
+void UiW_GbaTopBar(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, int32_t dotCount, int32_t dotActive, bool dotAllGreen, const char *pagerText)
+{
+    GbaTopBar(bgKind, iconSpr, secTitle, dotCount, dotActive, dotAllGreen, pagerText, UI_GBA_PAGER_W_MAX);
+}
+
+int32_t UiW_GbaPagerWidth(const char *const *pages, int32_t count, int32_t dotCount)
+{
+    // As the bar lays it out: the L and R buttons and margins (68), the dots, a gap, the longest name
+    int32_t text = 0;
+    for (int32_t i = 0; pages != NULL && i < count; i++)
+    {
+        const int32_t w = UiText_Width(UI_FACE_PS2P, 16, UiLocale_Lookup(pages[i]));
+        if (w > text)
+            text = w;
+    }
+    const int32_t dots = dotCount > 0 ? dotCount * 15 - 3 : 0;
+    const int32_t w = 68 + dots + (dots > 0 && text > 0 ? 8 : 0) + text + 16;
+    return w < UI_GBA_PAGER_W_MIN ? UI_GBA_PAGER_W_MIN : w > UI_GBA_PAGER_W_MAX ? UI_GBA_PAGER_W_MAX : w;
+}
+
+void UiW_GbaTopBarPages(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, const char *const *pages, int32_t count, int32_t cur)
+{
+    GbaTopBar(bgKind, iconSpr, secTitle, count, cur, false, (cur >= 0 && cur < count) ? UiLocale_Lookup(pages[cur]) : NULL,
+              UiW_GbaPagerWidth(pages, count, count));
+}
+
+int32_t UiW_GbaPagerLastWidth(void)
+{
+    return sPagerW;
+}
+
 int32_t UiW_GbaPagerHit(const UiInput *in, bool hasSecPill, int32_t dotCount)
 {
     const int32_t px = hasSecPill ? 268 : 14;
     if (UiHit(in, px, 6, 44, 38))
         return -1;
-    if (UiHit(in, px + 260, 6, 44, 38))
+    if (UiHit(in, px + sPagerW - 44, 6, 44, 38))
         return 1;
-    if (dotCount > 0 && UiHit(in, px + 44, 6, 216, 38))
+    if (dotCount > 0 && UiHit(in, px + 44, 6, sPagerW - 88, 38))
         return 1;
     return 0;
 }

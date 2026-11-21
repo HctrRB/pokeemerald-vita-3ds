@@ -328,8 +328,8 @@ static void BuildGba(void)
     char buf[96], name[16];
     const uint16_t tid = (uint16_t)(gSaveBlock2Ptr->playerTrainerId[0] | (gSaveBlock2Ptr->playerTrainerId[1] << 8));
     UiGame_PlayerName(name, sizeof(name));
-    UiW_GbaTopBar(UI_GBA_BG_CARD, UiGame_PlayerIsMale() ? UI_SPR_HEAD_BRENDAN : UI_SPR_HEAD_MAY,
-                  UI_TR("TRAINER CARD"), sTabCount, sTab, false, UiLocale_Lookup(sGbaPages[sTab]));
+    UiW_GbaTopBarPages(UI_GBA_BG_CARD, UiGame_PlayerIsMale() ? UI_SPR_HEAD_BRENDAN : UI_SPR_HEAD_MAY,
+                       UI_TR("TRAINER CARD"), sGbaPages, sTabCount, sTab);
 
     int32_t rx = UI_SCREEN_W - 14;
     UiW_GbaHelpBadge(&rx, "O", UI_TR("BACK"), true);

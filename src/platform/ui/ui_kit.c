@@ -233,7 +233,6 @@ void UiQty_Draw(UiQty *q, uint16_t itemId)
 // ---------- Full-screen header ----------
 // The GBA top bar's pager (UiW_GbaTopBar): where it is with a section title, and its L / R buttons
 #define GBA_PAGER_X 268
-#define GBA_PAGER_W 304
 #define GBA_PAGER_BTN 24
 
 int32_t UiKit_HeaderAs(uint8_t gbaBg, uint16_t gbaIcon, const char *title, const char *const *tabs, int32_t n, int32_t cur,
@@ -245,8 +244,12 @@ int32_t UiKit_HeaderAs(uint8_t gbaBg, uint16_t gbaIcon, const char *title, const
     // there is no pager, as the GBA screens without pages (the room goes to the badges and value)
     const bool pager = tabs != NULL && n > 1 && cur >= 0 && cur < n;
     const char *pill = (tabs != NULL && n == 1) ? UiLocale_Lookup(tabs[0]) : title;
-    UiW_GbaTopBar(gbaBg, gbaIcon, pill, pager ? n : 0, cur, false, pager ? UiLocale_Lookup(tabs[cur]) : NULL);
-    UiW_GbaPageStart(pager ? GBA_PAGER_X + GBA_PAGER_W + 12 : GBA_PAGER_X);
+    if (pager)
+        UiW_GbaTopBarPages(gbaBg, gbaIcon, pill, tabs, n, cur);
+    else
+        UiW_GbaTopBar(gbaBg, gbaIcon, pill, 0, cur, false, NULL);
+    const int32_t pagerW = UiW_GbaPagerLastWidth();
+    UiW_GbaPageStart(pager ? GBA_PAGER_X + pagerW + 12 : GBA_PAGER_X);
     // Touch: the pager's L and R are the tabs either side of the current one
     for (int32_t i = 0; tabX != NULL && tabW != NULL && i < n; i++)
     {
@@ -259,7 +262,7 @@ int32_t UiKit_HeaderAs(uint8_t gbaBg, uint16_t gbaIcon, const char *title, const
         }
         else if (i == cur + 1)
         {
-            tabX[i] = GBA_PAGER_X + GBA_PAGER_W - 6 - GBA_PAGER_BTN;
+            tabX[i] = GBA_PAGER_X + pagerW - 6 - GBA_PAGER_BTN;
             tabW[i] = GBA_PAGER_BTN;
         }
     }

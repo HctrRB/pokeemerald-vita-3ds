@@ -291,7 +291,8 @@ static void BuildGba(void)
     snprintf(seenBuf, sizeof(seenBuf), UI_TR("SEEN %03u · OWN %03u"), (unsigned)seenTotal, (unsigned)ownTotal);
 
     const int32_t modes = IsNationalPokedexEnabled() ? 2 : 1;
-    UiW_GbaTopBar(UI_GBA_BG_POKEDEX, 0, UI_TR("POKéDEX"), modes, sMode, false, sMode == 0 ? UI_TR("HOENN DEX") : UI_TR("NATIONAL DEX"));
+    static const char *const kModeNames[2] = { UI_N("HOENN DEX"), UI_N("NATIONAL DEX") };
+    UiW_GbaTopBarPages(UI_GBA_BG_POKEDEX, 0, UI_TR("POKéDEX"), kModeNames, modes, sMode);
 
     int32_t rx = UI_SCREEN_W - 14;
     UiW_GbaHelpBadge(&rx, "O", UI_TR("BACK"), true);
@@ -553,7 +554,7 @@ static void DetBuildGba(void)
     const uint16_t nat = sDetailNat, species = NationalPokedexNumToSpecies(nat);
     char buf[220], name[16];
     Name(nat, name, sizeof(name));
-    UiW_GbaTopBar(UI_GBA_BG_POKEDEX, 0, UI_TR("POKéDEX"), 4, sDetTab, false, UiLocale_Lookup(sDetTabs[sDetTab]));
+    UiW_GbaTopBarPages(UI_GBA_BG_POKEDEX, 0, UI_TR("POKéDEX"), sDetTabs, 4, sDetTab);
 
     int32_t rx = UI_SCREEN_W - 14;
     UiW_GbaHelpBadge(&rx, "O", sCaughtPage ? UI_TR("CLOSE") : UI_TR("BACK"), true);

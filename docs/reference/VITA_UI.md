@@ -95,7 +95,10 @@ GBA top bar with the screen's section (backdrop and icon), its tab in the pager 
 pager take the neighbouring tabs through `UiKit_TabHit`; one tab is the page's title) and turns
 the footer guides and the header value into the bar's help badges (`UiW_GbaPageStart`,
 `UiW_GbaPageFlush`, reset and flushed by the core around each build). Badges and value always fit
-the bar: their labels shrink, then only the keys show; titles that do not fit in PS2P use VT323.
+the bar: their labels shrink, then only the keys show; titles that do not fit in PS2P use VT323. A
+paged screen's pager (`UiW_GbaTopBarPages`) is as wide as its longest page name in the build's
+language (`UiW_GbaPagerWidth`, between `UI_GBA_PAGER_W_MIN` and `UI_GBA_PAGER_W_MAX`), so it keeps one
+width while the pages change.
 
 Selected in `OPTIONS > GENERAL > DISPLAY > MENU COLOR` (extra `"ui_theme"`):
 

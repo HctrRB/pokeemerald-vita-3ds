@@ -347,6 +347,12 @@
   "AUTO-RUN": [
    "src/platform/ui/ui_scr_hub.c"
   ],
+  "AUTO-RUN: OFF": [
+   "src/platform/ui/ui_scr_hub.c"
+  ],
+  "AUTO-RUN: ON": [
+   "src/platform/ui/ui_scr_hub.c"
+  ],
   "AVAILABLE": [
    "src/platform/ui/ui_scr_nuz.c"
   ],
@@ -395,9 +401,6 @@
   ],
   "Ask to use another REPEL when one wears off.": [
    "src/platform/ui/ui_scr_options.c"
-  ],
-  "B BTN": [
-   "src/platform/ui/ui_scr_hub.c"
   ],
   "B BUTTON": [
    "src/platform/ui/ui_scr_options.c"
@@ -2615,12 +2618,6 @@
   ],
   "RUN INDOORS": [
    "src/platform/vita/vita_extras.c"
-  ],
-  "RUN: AUTO": [
-   "src/platform/ui/ui_scr_hub.c"
-  ],
-  "RUN: B BTN": [
-   "src/platform/ui/ui_scr_hub.c"
   ],
   "RUN: WALK": [
    "src/platform/ui/ui_scr_hub.c"

@@ -312,6 +312,13 @@ enum UiGbaTagColor
 #define UI_GBA_SHAD_DARK  UI_RGBA(20, 26, 28, 255)
 
 void UiW_GbaTopBar(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, int32_t dotCount, int32_t dotActive, bool dotAllGreen, const char *pagerText);
+// The pager fitted to the longest of a screen's page names (UI_N), in the build's language: its width stays the
+// same while the screen shows them, so it never jumps from page to page
+#define UI_GBA_PAGER_W_MIN 160
+#define UI_GBA_PAGER_W_MAX 304
+void UiW_GbaTopBarPages(uint8_t bgKind, uint16_t iconSpr, const char *secTitle, const char *const *pages, int32_t count, int32_t cur);
+int32_t UiW_GbaPagerWidth(const char *const *pages, int32_t count, int32_t dotCount);
+int32_t UiW_GbaPagerLastWidth(void);                                                  // of the last bar built
 int32_t UiW_GbaPagerHit(const UiInput *in, bool hasSecPill, int32_t dotCount);
 void UiW_GbaHelpBadge(int32_t *rx, const char *key, const char *action, bool gold);
 void UiW_GbaHelpBadgeY(int32_t *rx, int32_t y, const char *key, const char *action, bool gold);

@@ -854,7 +854,7 @@ static void NavBuildGba(void)
     if (Locked())
         UiW_GbaTopBar(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, sNavMode == NAV_MODE_TOWN_MAP ? UI_TR("HOENN MAP") : UI_TR("POKéNAV"), 0, 0, false, NULL);
     else
-        UiW_GbaTopBar(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, UI_TR("POKéNAV"), NAV_COUNT, sTab, false, UiLocale_Lookup(sTabs[sTab]));
+        UiW_GbaTopBarPages(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, UI_TR("POKéNAV"), sTabs, NAV_COUNT, sTab);
     int32_t rx = UI_SCREEN_W - 14;
     if (sNavMode != NAV_MODE_TUTORIAL || sTutorialCalled)
         UiW_GbaHelpBadge(&rx, "O", UI_TR("BACK"), true);
