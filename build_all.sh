@@ -155,8 +155,19 @@ make -f vita/assets.mk -j"$JOBS"
 
 # ---------------------------------------------------------------- 6. the VPK
 step "Building the VPK"
-./build_vita.sh
-cp build-vita/pokeemerald.vpk EmeraldVita.vpk
+# The cartridge's language (4th letter of its game code) picks the build's language when that
+# language is made from its ROM and its text manifest exists (tools/locales/languages.json)
+LOCALE="$("$PY" -c "import json,os,sys; c=sys.argv[1][3:4]; l=[x for x in json.load(open('tools/locales/languages.json',encoding='utf-8'))['languages'] if x['romCode']==c and x['source']=='rom' and os.path.exists('tools/locales/'+x['code']+'/manifest.json.gz')]; print(l[0]['code'] if l else 'en')" "$(cat .assets_ok)")"
+if [ "$LOCALE" != "en" ]; then
+    [ -n "$ROM" ] || ROM="$(cat .assets_rom 2>/dev/null)"
+    [ -f "$ROM" ] || die "this build is in your cartridge's language and needs the dump again: give its path"
+    echo "Language of the cartridge: $LOCALE"
+    VITA_LOCALE="$LOCALE" VITA_ROM="$ROM" ./build_vita.sh
+    cp "build-vita-$LOCALE/pokeemerald.vpk" EmeraldVita.vpk
+else
+    ./build_vita.sh
+    cp build-vita/pokeemerald.vpk EmeraldVita.vpk
+fi
 echo
 echo "=== Done: $ROOT/EmeraldVita.vpk ==="
 echo "Install it with VitaShell. This is a work in progress: please report the bugs you find"

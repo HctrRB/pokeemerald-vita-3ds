@@ -62,7 +62,9 @@ python tools/ui_gen/gen_intro_margins.py --output assets/ui/intro_margins.bin
 it also adds that language's extra letters to every font: the languages and their letters are listed
 in `tools/locales/languages.json`, and `tools/ui2/bake_locale_glyphs.py` bakes all of them from the
 real fonts (headless browser, Google Fonts) into the committed `tools/ui2/fonts/locale_glyphs.*`; the
-base sheets are never rebaked, so the English atlas does not change. The fixed part may take up to
+base sheets are never rebaked, so the English atlas does not change. A translated game's text and
+text graphics come from the player's ROM of that language at build time (`tools/locales/localize.py`,
+through `tools/locales/<code>/manifest.json.gz`), into the build folder's staging tree only. The fixed part may take up to
 `MAX_FIXED_H` rows (`UI_FIXED_MAX_H` at run time). `build_all` runs
 both `export_assets.py` and `build_atlas.py` on every build, because `ui_sprite_ids.h` is
 committed and the atlas must always match it. `gen_intro_margins.py` reads

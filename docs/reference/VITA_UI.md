@@ -76,7 +76,8 @@ return their argument. `tools/locales/extract_ui.py` lists every `UI_TR` / `UI_N
 `tools/locales/en/ui.json`; `tools/locales/compile_ui.py` turns a language's
 `tools/locales/<code>/ui.json` into `locale.bin`, refusing printf conversions that differ from the
 English ones and letters the language does not list, and reports missing and much wider strings
-in `locale.bin.txt` next to it.
+in `locale.bin.txt` next to it. Heights and weights follow the language's `units` (metres and kilograms in a metric build). The game's own text comes from the same language: see
+[../guides/ADDING_A_LANGUAGE.md](../guides/ADDING_A_LANGUAGE.md).
 
 ### Build version on the main menu (`ui_core.c`)
 

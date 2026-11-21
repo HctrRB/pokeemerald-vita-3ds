@@ -9,8 +9,10 @@ Este repositorio no incluye los gráficos, sonidos ni datos binarios del juego, 
 distribuyen VPK compiladas. Tú haces tu propia VPK a partir de tu copia del juego:
 
 1. Necesitas un volcado de **tu cartucho de Pokémon Esmeralda** (`.gba`, cualquier idioma). El
-   script solo lo lee para comprobar que es Pokémon Esmeralda; no copia nada de él, ni lo guarda
-   ni lo sube a ningún sitio.
+   script lo lee para comprobar que es Pokémon Esmeralda. Si tu cartucho es el español, el juego
+   se compila en español: su texto y los gráficos con texto se copian de tu volcado a la carpeta
+   de compilación de tu PC (`build-vita-es/`), nunca al repositorio, y no se sube nada. Los demás
+   idiomas se compilan en inglés por ahora.
 2. Después descarga los archivos del juego de la decompilación
    [pret/pokeemerald](https://github.com/pret/pokeemerald) (a través de
    [pokeemerald-multiplatform](https://github.com/gradenGnostic/pokeemerald-multiplatform), la

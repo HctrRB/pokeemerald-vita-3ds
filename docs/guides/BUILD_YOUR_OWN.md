@@ -8,8 +8,11 @@ Verified against: `55868979` · En español: [BUILD_YOUR_OWN.es.md](BUILD_YOUR_O
 This repository does not contain the game's graphics, sounds or binary data, and it does not
 distribute builds. You make your own VPK from your own copy of the game:
 
-1. You need a dump of **your Pokémon Emerald cartridge** (`.gba`, any language). The script only
-   reads it to check that it is Pokémon Emerald; nothing is copied from it, stored or uploaded.
+1. You need a dump of **your Pokémon Emerald cartridge** (`.gba`, any language). The script reads
+   it to check that it is Pokémon Emerald. If your cartridge is the Spanish one, the game is built
+   in Spanish: its text and the graphics with text are copied from your dump into the build folder
+   on your PC (`build-vita-es/`), never into the repository, and nothing is uploaded. Other
+   languages build in English for now.
 2. The script then downloads the game files of the
    [pret/pokeemerald](https://github.com/pret/pokeemerald) decompilation (through
    [pokeemerald-multiplatform](https://github.com/gradenGnostic/pokeemerald-multiplatform), the

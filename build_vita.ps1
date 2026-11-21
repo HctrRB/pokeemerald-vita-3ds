@@ -1,8 +1,9 @@
 # Builds build-vita/pokeemerald.vpk from PowerShell by running build_vita.sh in MSYS2.
 # Needs the game files and the converted assets (build_all.ps1 does everything in one step).
 # -Probe builds the measuring build (GPU probes + automatic bench) into build-vita-probe\.
-# -Locale <code> builds in that language (tools/locales/languages.json) into build-vita-<code>\.
-param([switch]$Probe, [string]$Locale = "en")
+# -Locale <code> builds in that language (tools/locales/languages.json) into build-vita-<code>\;
+# a language made from its official ROM also needs -Rom <your ROM of that language>.
+param([switch]$Probe, [string]$Locale = "en", [string]$Rom = "")
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -28,6 +29,10 @@ if ($Probe) {
 if ($Locale -ne "en") {
     $env:VITA_LOCALE = $Locale
 }
+if ($Rom -ne "") {
+    # MSYS2 path of the ROM, passed through the environment (no quotes in the command)
+    $env:VITA_ROM = (& "C:\msys64\usr\bin\cygpath.exe" -u (Resolve-Path -LiteralPath $Rom).Path)
+}
 $outDir = if ($env:BUILD_DIR) { $env:BUILD_DIR } elseif ($Locale -ne "en") { "build-vita-$Locale" } else { "build-vita" }
 & $bashExe -lc 'set -f; IFS=; cd $(cygpath -u $BUILD_VITA_DIR) && ./build_vita.sh'
 $buildExit = $LASTEXITCODE
@@ -36,6 +41,9 @@ if ($Probe) {
 }
 if ($Locale -ne "en") {
     Remove-Item Env:VITA_LOCALE -ErrorAction SilentlyContinue
+}
+if ($Rom -ne "") {
+    Remove-Item Env:VITA_ROM -ErrorAction SilentlyContinue
 }
 if ($buildExit -eq 0) {
     Write-Host "=== Done: $outDir\pokeemerald.vpk ===" -ForegroundColor Green

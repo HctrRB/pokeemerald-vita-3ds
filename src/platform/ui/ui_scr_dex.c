@@ -109,12 +109,20 @@ static int32_t ListNumber(int32_t i)
 // ---------- Entry card ----------
 static void HeightWeight(uint16_t nat, char *h, size_t hc, char *w, size_t wc)
 {
+#ifdef UI_METRIC_UNITS
+    // Metric, as the European releases: the game stores decimetres and hectograms. The catalog
+    // writes the decimal separator ("%u,%u m" in Spanish).
+    const uint16_t dm = gPokedexEntries[nat].height, hg = gPokedexEntries[nat].weight;
+    snprintf(h, hc, UI_TR("%u.%u m"), (unsigned)(dm / 10), (unsigned)(dm % 10));
+    snprintf(w, wc, UI_TR("%u.%u kg"), (unsigned)(hg / 10), (unsigned)(hg % 10));
+#else
     // Imperial units as the English game: decimetres -> feet / inches, hectograms -> lbs
     const uint32_t inches = (uint32_t)gPokedexEntries[nat].height * 10000 / 254;
     const uint32_t in = (inches + 5) / 10;
     snprintf(h, hc, "%u'%02u\"", (unsigned)(in / 12), (unsigned)(in % 12));
     const uint32_t lbs10 = (uint32_t)gPokedexEntries[nat].weight * 100000 / 4536;
     snprintf(w, wc, UI_TR("%u.%u lbs"), (unsigned)((lbs10 + 5) / 100), (unsigned)(((lbs10 + 5) / 10) % 10));
+#endif
 }
 
 static void Types(uint16_t species, int32_t x, int32_t y)

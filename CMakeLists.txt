@@ -77,6 +77,7 @@ foreach(LANGUAGE_INDEX RANGE ${LANGUAGE_LAST})
     string(JSON LANGUAGE_CODE GET "${LANGUAGES_JSON}" languages ${LANGUAGE_INDEX} code)
     if(LANGUAGE_CODE STREQUAL VITA_LOCALE)
         string(JSON LOCALE_GAME_LANGUAGE GET "${LANGUAGES_JSON}" languages ${LANGUAGE_INDEX} gameLanguage)
+        string(JSON LOCALE_UNITS GET "${LANGUAGES_JSON}" languages ${LANGUAGE_INDEX} units)
     endif()
 endforeach()
 if(NOT LOCALE_GAME_LANGUAGE)
@@ -85,6 +86,9 @@ endif()
 list(APPEND GAME_DEFINES -DGAME_LANGUAGE=${LOCALE_GAME_LANGUAGE})
 if(NOT VITA_LOCALE STREQUAL "en")
     list(APPEND GAME_DEFINES -DUI_LOCALE_CATALOG)
+endif()
+if(LOCALE_UNITS STREQUAL "metric")
+    list(APPEND GAME_DEFINES -DUI_METRIC_UNITS)
 endif()
 message(STATUS "Build language: ${VITA_LOCALE} (${LOCALE_GAME_LANGUAGE})")
 string(REPLACE ";" " " GAME_DEFINES_STR "${GAME_DEFINES}")
@@ -328,7 +332,11 @@ add_dependencies(eboot.bin-self core_boundary)
 # The documentation check (docs/README.md, "Rules for documentation"): every file, symbol and link
 # a reference document or guide cites exists, none cites a line number, and a guide and its
 # translation stay in step. Errors there fail the build; plans and reports only get warnings.
-# It runs again when a document, the code (through the ELF) or the checker changes.
+# It runs again when a document, the code (through the ELF) or the checker changes. A translated
+# build compiles a staging tree (tools/locales/localize.py), not a git checkout: VITA_DOC_CHECK=OFF
+# there, since the checker reads the repository and the English build already checks the documents.
+option(VITA_DOC_CHECK "Check the documentation against the code (needs the git checkout)" ON)
+if(VITA_DOC_CHECK)
 file(GLOB_RECURSE DOC_FILES CONFIGURE_DEPENDS "${ROOT}/docs/*.md")
 set(DOC_CHECK_STAMP "${CMAKE_BINARY_DIR}/doc_check.ok")
 add_custom_command(
@@ -343,6 +351,7 @@ add_custom_command(
     VERBATIM)
 add_custom_target(doc_check ALL DEPENDS "${DOC_CHECK_STAMP}")
 add_dependencies(eboot.bin-self doc_check)
+endif()
 
 # The list of the UI's strings (tools/locales/en/ui.json, the keys of every catalog) must match the
 # UI_TR / UI_N strings of the code, or a new string would never reach the translators.

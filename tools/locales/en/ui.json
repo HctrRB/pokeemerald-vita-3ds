@@ -146,7 +146,13 @@
   "%u ST": [
    "src/platform/ui/ui_scr_hub.c"
   ],
+  "%u.%u kg": [
+   "src/platform/ui/ui_scr_dex.c"
+  ],
   "%u.%u lbs": [
+   "src/platform/ui/ui_scr_dex.c"
+  ],
+  "%u.%u m": [
    "src/platform/ui/ui_scr_dex.c"
   ],
   "0 (OFF)": [
