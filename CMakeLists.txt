@@ -235,6 +235,20 @@ set_source_files_properties("${GAME_COMBINED_OBJECT}" PROPERTIES GENERATED TRUE 
 add_executable(pokeemerald ${PLATFORM_SIDE_C} "${GAME_COMBINED_OBJECT}" "${GAME_DATA_OBJECT}")
 target_include_directories(pokeemerald PRIVATE "${ROOT}" "${ROOT}/sound")
 target_compile_options(pokeemerald PRIVATE ${PLATFORM_COMPILE_OPTIONS})
+
+# The version shown on the main menu (gVitaBuildVersion). The target always runs so a new commit or tag
+# is picked up without reconfiguring; the source only changes, and recompiles, when the text does.
+# It is compiled as is, not through the game's preproc rule above (it has no game text).
+find_package(Git QUIET)
+set(GAME_VERSION_C "${CMAKE_BINARY_DIR}/version/game_version.c")
+add_custom_target(game_version
+    COMMAND "${CMAKE_COMMAND}" -DROOT=${ROOT} -DGIT=${GIT_EXECUTABLE} -DOUT=${GAME_VERSION_C}
+            -P "${ROOT}/tools/version/game_version.cmake"
+    BYPRODUCTS "${GAME_VERSION_C}"
+    COMMENT "Reading the game version (git describe)"
+    VERBATIM)
+add_dependencies(pokeemerald game_version)
+target_sources(pokeemerald PRIVATE "${GAME_VERSION_C}")
 # SDL2's own config carries its stub libraries, which differ between VitaSDK builds
 # (e.g. SDL2 built with the vitaGL backend also needs vitaGL and its dependencies).
 # vitaGL renders the 3D world, GBA stage and native UI; SDL2 is kept for audio, timers, semaphores and threads.

@@ -33,6 +33,7 @@
 #include "scanline_effect.h"
 #include "constants/rgb.h"
 #include "constants/songs.h"
+#include "main_menu.h"
 
 #define REPEAT_DELAY 18
 #define REPEAT_RATE 5
@@ -424,6 +425,22 @@ static bool DrawSceneWindow(void)
     return true;
 }
 
+// The build version in the free strip at the bottom right of the main menu, so a player can tell
+// which build they run. Right-aligned from its measured width, so any length of version fits.
+static bool DrawMainMenuVersion(void)
+{
+    if (!MainMenu_IsShown())
+        return false;
+    const int32_t margin = 12;
+    const int32_t w = UiText_Width(UI_FACE_PS2P, UI_FOOT_PX, gVitaBuildVersion);
+    int32_t x = UI_SCREEN_W - margin - w;
+    if (x < margin)
+        x = margin;
+    const int32_t y = UI_SCREEN_H - margin - UiText_LineHeight(UI_FACE_PS2P, UI_FOOT_PX);
+    UiW_GbaText(UI_FACE_PS2P, UI_FOOT_PX, x, y, gVitaBuildVersion, UI_RGBA(232, 232, 240, 255), UI_RGBA(0, 0, 0, 160));
+    return true;
+}
+
 void UiCore_OpenScreen(const UiScreen *screen)
 {
     if (!Ui_IsOpen())
@@ -487,6 +504,7 @@ void Ui_Tick(void)
         UiSpr_BeginTick();
         bool any = DrawSceneWindow();
         any |= UiSign_Draw();
+        any |= DrawMainMenuVersion();
         any |= UiBattle_Active() ? UiBattle_Draw() : UiMirror_Draw();
         if (any || sOverlayShown)
             UiDraw_Publish(0.0f);

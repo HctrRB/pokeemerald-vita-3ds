@@ -162,6 +162,8 @@ const uint16_t *UiAssets_Pixels(uint16_t *outW, uint16_t *outH);   // RGBA5551, 
 void UiAssets_TexSize(uint16_t *outW, uint16_t *outH);              // whole texture: UI_TEX_W x UI_TEX_H
 void UiAssets_White(uint16_t *x, uint16_t *y);
 bool UiAssets_Sprite(uint16_t id, uint16_t *x, uint16_t *y, uint16_t *w, uint16_t *h);
+// The build version (git describe), generated each build by tools/version/game_version.cmake
+extern const char gVitaBuildVersion[];
 // Text in UTF-8 (Latin-1 subset of the atlas). Returns the advance width in pixels.
 int32_t UiText_Width(uint8_t face, uint8_t px, const char *s);
 int32_t UiText_Draw(uint8_t face, uint8_t px, int32_t x, int32_t y, const char *s, uint32_t rgba);   // y = top of the line

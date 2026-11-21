@@ -2309,3 +2309,17 @@ static void Task_NewGameBirchSpeech_ReturnFromNamingScreenShowTextbox(u8 taskId)
 }
 
 #undef tTimer
+
+// Vita port: the new UI draws the build version while the CONTINUE / NEW GAME list is up. The
+// Birch speech also runs under CB2_MainMenu, so the menu's own tasks tell the two apart.
+bool8 MainMenu_IsShown(void)
+{
+    if (gMain.callback2 != CB2_MainMenu)
+        return FALSE;
+    return FuncIsActiveTask(Task_DisplayMainMenu)
+        || FuncIsActiveTask(Task_HighlightSelectedMainMenuItem)
+        || FuncIsActiveTask(Task_HandleMainMenuInput)
+        || FuncIsActiveTask(Task_HandleMainMenuAPressed)
+        || FuncIsActiveTask(Task_HandleMainMenuBPressed)
+        || FuncIsActiveTask(Task_DisplayMainMenuInvalidActionError);
+}
