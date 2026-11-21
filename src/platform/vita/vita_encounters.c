@@ -77,15 +77,18 @@ static const VitaTimedEncounterRule sRules[] = {
     ENCOUNTER_RULE(ROUTE123, 9, WINGULL,   WINGULL,   WINGULL,   DUSKULL),
 };
 
+// The encounter phases follow the day/night schedule the world shows: morning from sunrise until
+// the sun is at its highest, day until nightfall, night until the next sunrise.
 uint32_t VitaEncounters_Phase(const uint32_t seconds)
 {
-    const uint32_t hour = (seconds % 86400u) / 3600u;
+    const uint32_t minute = (seconds % 86400u) / 60u;
 
-    if (hour >= 4 && hour < 10)
+    if (minute >= VITA_DAYNIGHT_SUNRISE_MIN && minute < VITA_DAYNIGHT_NOON_START_MIN)
     {
         return VITA_TIME_MORNING;
     }
-    return (hour >= 10 && hour < 20) ? VITA_TIME_DAY : VITA_TIME_NIGHT;
+    return (minute >= VITA_DAYNIGHT_NOON_START_MIN && minute < VITA_DAYNIGHT_NIGHT_MIN)
+        ? VITA_TIME_DAY : VITA_TIME_NIGHT;
 }
 
 uint16_t VitaEncounters_Resolve(const VitaTimedEncounterRule *const rules, const size_t count,

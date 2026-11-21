@@ -112,7 +112,9 @@ the HD-2D grade's day / dusk / night weights. The sun follows one arc (`SunAngle
 the screen: up at sunrise, flat at its highest between the noon marks, down at nightfall, when the
 moon rises; the moon sets at sunrise. Windows, street lamps, lit characters and fireflies follow the
 glow; the shafts, sky bloom and motes the daylight and the paths. No pass works out the time on its
-own. With the option off or indoors the state is a fixed early afternoon.
+own. With the option off or indoors the state is a fixed early afternoon. The wild encounter phases
+(`VitaEncounters_Phase`) use the same marks: morning from sunrise to the noon start, day until
+nightfall, night until sunrise.
 
 ## Pass 6: the GBA overlay over 3D
 
