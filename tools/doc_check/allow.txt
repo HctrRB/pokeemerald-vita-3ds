@@ -21,6 +21,10 @@ pokeemerald.vpk
 core_boundary.ok
 core_boundary_report.txt
 doc_check_report.txt
+# A translated build's UI catalog and its report (tools/locales/compile_ui.py, build-vita-<code>/ui2/)
+ui2/locale.bin
+locale.bin
+locale.bin.txt
 
 # PS Vita SDK: fields of a core dump, read by vita-parse-core
 MODULE_INFO
