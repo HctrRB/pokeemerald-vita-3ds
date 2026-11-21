@@ -8244,6 +8244,30 @@ static void DofBand(float y0, float y1, float uMax, float vMax, float peak, floa
 //   3. Over the sharp scene, each band gets the light blur fading in from the focus edge and the
 //      wider one fading in near the screen edge (smoothstep ramps, 12 rows per band).
 // Fixed function only: 5 draws of 480x272 pixels, then the two bands twice.
+// The sun (0) and moon (1) passes of the sky bloom and shafts this frame: their screen paths
+// and strengths, from the frame's day/night state.
+typedef struct
+{
+    bool on;
+    float amt;
+    VitaDayNightPath path;
+} ShaftPass;
+
+static void ShaftPasses(const VoxelFrame *const f, ShaftPass out[2])
+{
+    const VitaDayNightState *const dn = VitaDayNight_State();
+    out[0].path = dn->sunPath;
+    out[0].amt = f->light.rays * dn->sunPath.strength;
+    out[1].path = dn->moonPath;
+    out[1].amt = (f->weatherAmount < 0.25f) ? (dn->moonPath.strength * 0.48f * dn->moonShafts) : 0.0f;
+    for (int32_t k = 0; k < 2; ++k)
+        out[k].on = out[k].amt > 0.005f;
+}
+
+// The shafts' animation clock and motion per pass (VoxelHd2dShader_ShaftLut / _Shafts).
+#define SHAFT_TIME(f) fmodf((f)->seconds, 62.83185f)
+#define SHAFT_MOTION(isDay) ((isDay) ? 1.0f : 0.45f)
+
 static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
 {
     const int32_t renderW = f->renderW;
@@ -8360,6 +8384,36 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         const int32_t bloomH = renderH / 4;
         const float uB = (float)bloomW / (float)VOXEL_BLOOM_FBO_W;
         const float vB = (float)bloomH / (float)VOXEL_BLOOM_FBO_H;
+        const float aspect = (float)renderW / (float)renderH;
+
+        // Sky bloom and shafts: which passes run. The shafts' beam profiles are evaluated first, in
+        // their own small targets, because the bloom scene below reads them.
+        const float skyBloomScale = Voxel_ClampF((float)VitaExtras_GetFast(FAST_EXTRA_VOXEL_SKY_BLOOM) * 0.2f, 0.0f, 2.0f);
+        const float shaftsScale   = Voxel_ClampF((float)VitaExtras_GetFast(FAST_EXTRA_VOXEL_SHAFTS) * 0.2f, 0.0f, 2.0f);
+        const bool skyOrShafts = !f->indoor && !f->inBattle3D && !f->underground
+                              && (skyBloomScale > 0.0f || shaftsScale > 0.0f);
+        const bool shaderShafts = skyOrShafts && hd2dOn && shaftsScale > 0.0f && VoxelHd2dShader_ShaftsReady()
+                               && !VitaPerf_PassSkipped(VITA_PERF_PASS_SHAFTS);
+        ShaftPass shaftPasses[2];
+        ShaftPasses(f, shaftPasses);
+        if (shaderShafts)
+        {
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            for (int32_t pass = 0; pass < 2; ++pass)
+            {
+                if (!shaftPasses[pass].on)
+                    continue;
+                VoxelHd2dShader_BeginShaftLut((uint32_t)pass);
+                VitaPerf_GpuScene(VITA_PERF_GPU_BLOOM);
+                VoxelHd2dShader_ShaftLut((uint32_t)pass, shaftPasses[pass].path.dx, shaftPasses[pass].path.dy,
+                                         SHAFT_TIME(f), aspect, hd2dHigh ? 2.0f : 1.0f, SHAFT_MOTION(pass == 0));
+                sFrameDrawCalls++;
+                sFrameVertCount += 4u;
+            }
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        }
 
         glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
         VitaPerf_GpuScene(VITA_PERF_GPU_BLOOM);
@@ -8418,28 +8472,21 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         }
 
         // Directional sky bloom + procedural light shafts added BEFORE 2-pass Kawase blur so sky & beams bloom at all hours
-        const float skyBloomScale = Voxel_ClampF((float)VitaExtras_GetFast(FAST_EXTRA_VOXEL_SKY_BLOOM) * 0.2f, 0.0f, 2.0f);
-        const float shaftsScale   = Voxel_ClampF((float)VitaExtras_GetFast(FAST_EXTRA_VOXEL_SHAFTS) * 0.2f, 0.0f, 2.0f);
-        if (!f->indoor && !f->inBattle3D && !f->underground && (skyBloomScale > 0.0f || shaftsScale > 0.0f))
+        if (skyOrShafts)
         {
-            const VitaDayNightState *const dn = VitaDayNight_State();
-            const float glow = Voxel_ClampF(dn->light.glow, 0.0f, 1.0f);
-            const VitaDayNightPath sunP = dn->sunPath;
-            const VitaDayNightPath moonP = dn->moonPath;
-            const float dayAmt = f->light.rays * sunP.strength;
-            const float moonAmt = (f->weatherAmount < 0.25f) ? (moonP.strength * 0.48f * dn->moonShafts) : 0.0f;
+            const float glow = Voxel_ClampF(VitaDayNight_State()->light.glow, 0.0f, 1.0f);
 
             for (int32_t pass = 0; pass < 2; ++pass)
             {
                 const bool isDay = (pass == 0);
-                const float amt = isDay ? dayAmt : moonAmt;
-                if (amt <= 0.005f)
+                const float amt = shaftPasses[pass].amt;
+                if (!shaftPasses[pass].on)
                     continue;
 
                 static const float kShaftDay[3]  = { 1.00f, 0.92f, 0.74f };
                 static const float kShaftGold[3] = { 1.00f, 0.72f, 0.38f };
                 static const float kShaftMoon[3] = { 0.52f, 0.66f, 1.00f };
-                const VitaDayNightPath p = isDay ? sunP : moonP;
+                const VitaDayNightPath p = shaftPasses[pass].path;
                 const float goldK = isDay ? Voxel_ClampF(glow * 4.0f, 0.0f, 1.0f) : 0.0f;
                 float col[3];
                 for (int32_t k = 0; k < 3; ++k)
@@ -8477,8 +8524,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                     glDisableClientState(GL_COLOR_ARRAY);
                 }
 
-                if (hd2dOn && shaftsScale > 0.0f && VoxelHd2dShader_ShaftsReady()
-                    && !VitaPerf_PassSkipped(VITA_PERF_PASS_SHAFTS))
+                if (shaderShafts)
                 {
                     const float gain = (isDay
                         ? (amt * (hd2dHigh ? 1.55f : 1.15f))
@@ -8489,11 +8535,8 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                     glBlendFunc(GL_ONE, GL_ONE);
                     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                     glDisableClientState(GL_VERTEX_ARRAY);
-                    VoxelHd2dShader_Shafts(p.dx, p.dy, lenExp, fmodf(f->seconds, 62.83185f),
-                                           (float)renderW / (float)renderH,
-                                           hd2dHigh ? 2.0f : 1.0f,
-                                           isDay ? 1.0f : 0.45f,
-                                           col[0] * gain, col[1] * gain, col[2] * gain);
+                    VoxelHd2dShader_Shafts((uint32_t)pass, p.dx, p.dy, lenExp, SHAFT_TIME(f), aspect,
+                                           SHAFT_MOTION(isDay), col[0] * gain, col[1] * gain, col[2] * gain);
                     glEnableClientState(GL_VERTEX_ARRAY);
                     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                     sFrameDrawCalls++;

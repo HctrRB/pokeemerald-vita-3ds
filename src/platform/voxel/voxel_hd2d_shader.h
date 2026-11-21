@@ -27,9 +27,16 @@ void VoxelHd2dShader_Downsample(GLuint sceneTex, float uMax, float vMax, const f
 // Runs the 240x136 luminance bright-pass into the currently bound bloom FBO.
 void VoxelHd2dShader_BrightPass(GLuint sceneTex, float uMax, float vMax, float threshold, float gain);
 
-// Renders bravely-emerald style procedural light shafts into the currently bound 240x136 FBO.
-void VoxelHd2dShader_Shafts(float dirX, float dirY, float lenExp, float timeSec,
-                            float aspect, float layers, float motion,
+// Procedural light shafts, in two steps per frame and pass (0: sun, 1: moon). First, before the
+// bloom target is bound: VoxelHd2dShader_BeginShaftLut binds the pass's own small target and
+// VoxelHd2dShader_ShaftLut evaluates its beam profile into it. Then, in the 240x136 bloom target,
+// VoxelHd2dShader_Shafts draws the pass over the screen (additive blending is the caller's). The
+// direction, time, aspect and motion must be the same in both calls.
+void VoxelHd2dShader_BeginShaftLut(uint32_t pass);
+void VoxelHd2dShader_ShaftLut(uint32_t pass, float dirX, float dirY, float timeSec,
+                              float aspect, float layers, float motion);
+void VoxelHd2dShader_Shafts(uint32_t pass, float dirX, float dirY, float lenExp, float timeSec,
+                            float aspect, float motion,
                             float colR, float colG, float colB);
 
 // Runs the single-pass 960x544 Uber-Composite (DoF + Battle Dim + Bloom + Reference Split-Tone/S-Curve + Vignette).
