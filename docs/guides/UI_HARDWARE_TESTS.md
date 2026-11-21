@@ -78,7 +78,7 @@ again** (fixed after a failure on hardware).
 | The Quiz Lady in Lilycove: answering (the question can only be read, QUIZ shows it again) and making a quiz (QUIZ / ANSWER switch, quitting keeps it) | to check |
 | A wall map: only the Hoenn map, ○ closes it and the script goes on | to check |
 | Mr. Stone's PokéNav tutorial in Rustboro (needs a save from before it): MATCH CALL only, ○ refused until the call | to check |
-| Trainer card with the Frontier Pass: MAP (map, blinking marker, descriptions) and RECORD (with and without a recorded battle; the battle plays and the card comes back on RECORD with the right music) | to check |
+| Trainer card with the Frontier Pass: MAP (only the map, larger, no GBA frame or empty boxes; blinking marker on each facility, chosen from the list, the D-pad or a tap on the map; descriptions up to three lines; every theme) and RECORD (with and without a recorded battle; the battle plays and the card comes back on RECORD with the right music) | to check |
 
 ## Battle Pyramid and Battle Frontier
 

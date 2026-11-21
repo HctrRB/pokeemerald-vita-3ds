@@ -657,10 +657,30 @@ bool UiSpr_MailStationery(uint8_t mailType, int32_t x, int32_t y, int32_t scale)
     return DrawPicture(KIND_MAIL, mailType, x, y, scale);
 }
 
-// The Frontier Pass map (the pass's MAP page)
+// The part (sx, sy, sw, sh) of a 240 x 160 picture at (x, y): only the cells it overlaps
+static bool DrawPictureRect(uint32_t kind, uint32_t pic, int32_t sx, int32_t sy, int32_t sw, int32_t sh,
+                            int32_t x, int32_t y, int32_t scale)
+{
+    bool all = true;
+    for (int32_t part = 0; part < PIC_PARTS_X * 3; part++)
+    {
+        const int32_t px = (part % PIC_PARTS_X) * UI_CELL, py = (part / PIC_PARTS_X) * UI_CELL;
+        const int32_t x0 = sx > px ? sx : px, y0 = sy > py ? sy : py;
+        const int32_t x1 = (sx + sw < px + UI_CELL ? sx + sw : px + UI_CELL), y1 = (sy + sh < py + UI_CELL ? sy + sh : py + UI_CELL);
+        if (x1 <= x0 || y1 <= y0)
+            continue;
+        all &= DrawCell(KEY(kind, (pic << 4) | (uint32_t)part), x0 - px, y0 - py, x1 - x0, y1 - y0,
+                        x + (x0 - sx) * scale, y + (y0 - sy) * scale, scale, 0xFFFFFFFFu);
+    }
+    return all;
+}
+
+// The Frontier Pass map (the pass's MAP page): only the map itself, without the GBA screen's frame
+// and text boxes round it (UI_FRONTIER_MAP_*)
 bool UiSpr_FrontierMap(int32_t x, int32_t y, int32_t scale)
 {
-    return DrawPicture(KIND_FRONTIER_MAP, 0, x, y, scale);
+    return DrawPictureRect(KIND_FRONTIER_MAP, 0, UI_FRONTIER_MAP_X0, UI_FRONTIER_MAP_Y0, UI_FRONTIER_MAP_W, UI_FRONTIER_MAP_H,
+                           x, y, scale);
 }
 
 bool UiSpr_Footprint(uint16_t species, int32_t x, int32_t y, int32_t scale, uint32_t rgba)

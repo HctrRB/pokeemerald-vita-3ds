@@ -36,18 +36,22 @@ static int32_t sFacility;        // MAP: the facility marked
 static bool sHasRecord;          // RECORD: a recorded battle can be played
 static uint32_t sFrame;
 
-// MAP: the map at x2 and the facility list, per theme (touch and drawing share them)
-#define GBA_MAP_X 46
-#define GBA_MAP_Y 108
+// MAP: the map (only its own area, UI_FRONTIER_MAP_*) at x4 and the facility list, per theme
+// (touch and drawing share them)
+#define MAP_SCALE 4
+#define MAP_PX_W (UI_FRONTIER_MAP_W * MAP_SCALE)
+#define MAP_PX_H (UI_FRONTIER_MAP_H * MAP_SCALE)
+#define GBA_MAP_X 44
+#define GBA_MAP_Y 112
 #define GBA_FAC_X 614
 #define GBA_FAC_Y 108
 #define GBA_FAC_W 316
 #define GBA_FAC_PITCH 58
 #define MAP_X 24
-#define MAP_Y 68
-#define FAC_X 540
+#define MAP_Y 72
+#define FAC_X 560
 #define FAC_Y 108
-#define FAC_W 388
+#define FAC_W 376
 #define FAC_PITCH 50
 // RECORD: its button
 #define REC_BTN_X 380
@@ -97,9 +101,30 @@ static void PlayRecord(void)
     UiCore_CloseToScene(StartRecord);
 }
 
+// Where a facility's marker is on screen (the map drawn at (mx, my)): its box, as DrawMap draws it
+static void MarkerBox(int32_t f, int32_t mx, int32_t my, int32_t *x, int32_t *y, int32_t *w, int32_t *h)
+{
+    const u8 *name, *desc;
+    s16 lx, ly;
+    bool8 wide;
+    FrontierPass_LandmarkForUi((u8)f, &name, &desc, &lx, &ly, &wide);
+    *w = (wide ? 32 : 16) * MAP_SCALE;
+    *h = 16 * MAP_SCALE;
+    *x = mx + (lx - UI_FRONTIER_MAP_X0) * MAP_SCALE - *w / 2;
+    *y = my + (ly - UI_FRONTIER_MAP_Y0) * MAP_SCALE - *h / 2;
+}
+
 static void UpdateMap(const UiInput *in, bool gba)
 {
     const int32_t before = sFacility;
+    // A tap on a facility on the map marks it, as a tap on its row does
+    for (int32_t f = 0; f < NUM_FRONTIER_FACILITIES; f++)
+    {
+        int32_t x, y, w, h;
+        MarkerBox(f, gba ? GBA_MAP_X : MAP_X, gba ? GBA_MAP_Y : MAP_Y, &x, &y, &w, &h);
+        if (UiHit(in, x, y, w, h))
+            sFacility = f;
+    }
     if (in->repeat & (VITA_BTN_UP | VITA_BTN_LEFT)) sFacility = (sFacility + NUM_FRONTIER_FACILITIES - 1) % NUM_FRONTIER_FACILITIES;
     if (in->repeat & (VITA_BTN_DOWN | VITA_BTN_RIGHT)) sFacility = (sFacility + 1) % NUM_FRONTIER_FACILITIES;
     for (int32_t f = 0; f < NUM_FRONTIER_FACILITIES; f++)
@@ -192,14 +217,15 @@ static void GetLandmark(int32_t f, Landmark *l)
     UiGame_Text(desc, l->desc, sizeof(l->desc));
 }
 
-// The map at x2 with the facility's marker blinking on it (the pass's map cursor)
-static void DrawMap(int32_t mx, int32_t my, const Landmark *l, uint32_t edge)
+// The map with the marked facility's marker blinking on it (the pass's map cursor)
+static void DrawMap(int32_t mx, int32_t my, uint32_t edge)
 {
-    UiSpr_FrontierMap(mx, my, 2);
+    UiSpr_FrontierMap(mx, my, MAP_SCALE);
     if ((sFrame >> 4) & 1)
         return;
-    const int32_t w = (l->wide ? 32 : 16) * 2, h = 16 * 2;
-    UiDraw_Frame(mx + l->x * 2 - w / 2, my + l->y * 2 - h / 2, w, h, 4, edge);
+    int32_t x, y, w, h;
+    MarkerBox(sFacility, mx, my, &x, &y, &w, &h);
+    UiDraw_Frame(x, y, w, h, 4, edge);
 }
 
 static bool HasSymbol(int32_t f, bool *gold)
@@ -214,12 +240,12 @@ static void BuildMapGba(void)
     GetLandmark(sFacility, &sel);
     UiW_GbaWin(14, 60, 572, 472, UI_GBA_WIN_GOLD);
     UiW_GbaSectionStrip(30, 74, 540, 26, UI_GBA_TAG_GOLD, UI_TR("BATTLE FRONTIER"), NULL);
-    UiW_GbaBox(GBA_MAP_X - 6, GBA_MAP_Y - 6, 492, 332, 4, UI_RGBA(150, 132, 72, 255), UI_RGBA(41, 49, 49, 255),
+    UiW_GbaBox(GBA_MAP_X - 6, GBA_MAP_Y - 6, MAP_PX_W + 12, MAP_PX_H + 12, 4, UI_RGBA(150, 132, 72, 255), UI_RGBA(41, 49, 49, 255),
                UI_RGBA(41, 49, 49, 255), 0, 0);
-    DrawMap(GBA_MAP_X, GBA_MAP_Y, &sel, UI_RGBA(255, 90, 32, 255));
-    UiW_GbaBox(30, 440, 540, 80, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
-    UiDraw_PushClip(34, 444, 532, 72);
-    UiW_GbaTextWrapped(UI_FACE_VT323, 24, 44, 448, 516, 30, sel.desc, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 2);
+    DrawMap(GBA_MAP_X, GBA_MAP_Y, UI_RGBA(255, 90, 32, 255));
+    UiW_GbaBox(30, 414, 540, 106, 4, UI_RGBA(150, 172, 156, 255), UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
+    UiDraw_PushClip(34, 418, 532, 98);
+    UiW_GbaTextWrapped(UI_FACE_VT323, 24, 44, 424, 516, 30, sel.desc, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 3);
     UiDraw_PopClip();
 
     // The facilities, as the passport's rows; the marked one in the badge case's ring
@@ -264,13 +290,13 @@ static void BuildMap(void)
 {
     Landmark sel;
     GetLandmark(sFacility, &sel);
-    UiW_Panel(16, 60, 504, 432);
-    UiW_Inset(MAP_X - 4, MAP_Y - 4, 488, 328);
-    DrawMap(MAP_X, MAP_Y, &sel, UI_COL_SELECT);
-    UiW_TextWrapped(MAP_X, MAP_Y + 332, 480, 34, sel.desc, UI_COL_INK, 2);
+    UiW_Panel(16, 60, 528, 432);
+    UiW_Inset(MAP_X - 4, MAP_Y - 4, MAP_PX_W + 8, MAP_PX_H + 8);
+    DrawMap(MAP_X, MAP_Y, UI_COL_SELECT);
+    UiW_TextWrapped(MAP_X, MAP_Y + MAP_PX_H + 12, MAP_PX_W, 34, sel.desc, UI_COL_INK, 3);
 
-    UiW_Panel(532, 60, 412, 432);
-    UiW_PanelHead(532, 60, 412, UI_TR("FACILITIES"), NULL);
+    UiW_Panel(552, 60, 392, 432);
+    UiW_PanelHead(552, 60, 392, UI_TR("FACILITIES"), NULL);
     for (int32_t f = 0; f < NUM_FRONTIER_FACILITIES; f++)
     {
         Landmark l;

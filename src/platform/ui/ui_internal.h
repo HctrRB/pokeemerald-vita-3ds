@@ -192,7 +192,13 @@ bool UiSpr_Wallpaper(uint8_t wallpaperId, int32_t x, int32_t y, int32_t scale); 
 bool UiSpr_ZonePlate(uint8_t theme, bool underwater, int32_t x, int32_t y, int32_t w);   // zone sign plate, 80 tall
 bool UiSpr_Decoration(uint16_t decor, int32_t bx, int32_t by, int32_t box);               // decoration picture, centred in a box
 bool UiSpr_MailStationery(uint8_t mailType, int32_t x, int32_t y, int32_t scale);   // 240x160 mail paper
-bool UiSpr_FrontierMap(int32_t x, int32_t y, int32_t scale);                        // 240x160 Frontier Pass map
+// The Frontier Pass map: the map area of ShowFrontierMap's 240x160 screen (the rest is its frame and
+// text boxes), in GBA pixels; its markers' positions are in the whole screen's coordinates
+#define UI_FRONTIER_MAP_X0 16
+#define UI_FRONTIER_MAP_Y0 32
+#define UI_FRONTIER_MAP_W 128
+#define UI_FRONTIER_MAP_H 72
+bool UiSpr_FrontierMap(int32_t x, int32_t y, int32_t scale);                        // that area at (x, y)
 bool UiSpr_Trainer(uint16_t trainerPic, int32_t x, int32_t y, int32_t scale);                // 64x64
 bool UiSpr_Pokeblock(uint8_t color, int32_t x, int32_t y, int32_t scale);                    // 8x8, PBLOCK_CLR_*
 bool UiSpr_PokeblockTint(uint8_t color, int32_t x, int32_t y, int32_t scale, uint32_t rgba);

@@ -151,8 +151,9 @@ the song is right; the Quiz Lady's screens get a fourth button to the other scre
 ### Frontier Pass pages (`ui_scr_card.c`)
 
 With `FLAG_SYS_FRONTIER_PASS` the trainer card adds the pass's MAP (the map composed from the
-pass's own graphics, `UiSpr_FrontierMap`, each facility marked and described from
-`FrontierPass_LandmarkForUi`) and RECORD (the recorded battle, played by
+pass's own graphics, `UiSpr_FrontierMap`: only the map area of the GBA screen, `UI_FRONTIER_MAP_X0`
+to `UI_FRONTIER_MAP_H`, without its frame and text boxes, at x4; each facility marked and described
+from `FrontierPass_LandmarkForUi`, chosen from the list or by a tap on its marker) and RECORD (the recorded battle, played by
 `FrontierPass_PlayRecordForUi` through `UiCore_CloseToScene`; the card opens again on that page).
 
 ### Battle Pyramid (`ui_scr_hub.c`, `ui_scr_bag.c`, `ui_scr_choose.c`)
