@@ -84,6 +84,9 @@
   "%s learned %s!": [
    "src/platform/ui/ui_scr_choose.c"
   ],
+  "%s nature.": [
+   "src/platform/ui/ui_scr_party.c"
+  ],
   "%s registered to SELECT.": [
    "src/platform/ui/ui_scr_bag.c"
   ],

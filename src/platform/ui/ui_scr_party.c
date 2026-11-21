@@ -1023,8 +1023,19 @@ static void BuildGbaSummary(void)
     }
     else
     {
-        const int32_t nw = UiW_GbaText(UI_FACE_VT323, 28, 34, 356, s.nature, UI_RGBA(208, 40, 40, 255), UI_GBA_SHAD_LIGHT);
-        UiW_GbaText(UI_FACE_VT323, 28, 34 + nw + 6, 356, "nature.", UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        // One translatable sentence, the nature in red where the language puts it ("%s de carácter.")
+        const char *const line = UI_TR("%s nature.");
+        const char *const slot = strstr(line, "%s");
+        if (slot != NULL)
+        {
+            char before[48];
+            snprintf(before, sizeof(before), "%.*s", (int)(slot - line), line);
+            int32_t nx = 34;
+            if (before[0] != '\0')
+                nx += UiW_GbaText(UI_FACE_VT323, 28, nx, 356, before, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+            nx += UiW_GbaText(UI_FACE_VT323, 28, nx, 356, s.nature, UI_RGBA(208, 40, 40, 255), UI_GBA_SHAD_LIGHT);
+            UiW_GbaText(UI_FACE_VT323, 28, nx, 356, slot + 2, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        }
         snprintf(buf, sizeof(buf), UI_TR("Met at %s at Lv.%u."), s.metAt, (unsigned)s.metLevel);
         UiW_GbaTextWrapped(UI_FACE_VT323, 28, 34, 388, 286, 26, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT, 3);
         snprintf(buf, sizeof(buf), UI_TR("OT: %s   IDNo. %05u"), s.ot, (unsigned)s.otId);
