@@ -3554,8 +3554,8 @@ static VoxelLight LightFor(bool indoor, VoxelWeatherClass weather, float weather
     VoxelLight light = BaseLightFor(indoor, weather, weatherAmount, bolt);
     if (!indoor)
     {
-        const VitaDayNightLight *cycle = VitaDayNight_Get();
-        VitaDayNightBlend moon = VitaDayNight_Moonlight(cycle, 0.0f, cycle->rgb);
+        const VitaDayNightLight *const cycle = VitaDayNight_Get();
+        const VitaDayNightBlend moon = VitaDayNight_State()->moonlight;
 
         for (uint32_t channel = 0; channel < 3; ++channel)
         {
@@ -3848,8 +3848,8 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
     }
     float acrossX = kind->width * (useHd2dAtlas ? 1.85f : 1.0f);
 
-    const VitaDayNightLight *cycle = VitaDayNight_Get();
-    VitaDayNightBlend moon = VitaDayNight_Moonlight(cycle, 0.0f, cycle->rgb);
+    const VitaDayNightLight *const cycle = VitaDayNight_Get();
+    const VitaDayNightBlend moon = VitaDayNight_State()->moonlight;
     uint8_t baseR = (uint8_t)((kind->colour & 0xFFu) * (cycle->rgb[0] * (1.0f - moon.amount) + moon.rgb[0] * moon.amount));
     uint8_t baseG = (uint8_t)(((kind->colour >> 8) & 0xFFu) * (cycle->rgb[1] * (1.0f - moon.amount) + moon.rgb[1] * moon.amount));
     uint8_t baseB = (uint8_t)(((kind->colour >> 16) & 0xFFu) * (cycle->rgb[2] * (1.0f - moon.amount) + moon.rgb[2] * moon.amount));
@@ -4965,7 +4965,8 @@ static bool Frame_Begin(VoxelFrame *const f)
     const double frameStartMs = VitaPerf_NowMs();
     sFrameDrawCalls = 0;
     sFrameVertCount = 0;
-    VitaDayNight_Update();
+    // The day/night state every pass of this frame reads (one schedule, one clock read).
+    VitaDayNight_UpdateFrame();
     sFrameCounter++;
 
     const bool inBattle3D = VoxelWorld_IsBattleMapAvailable()
@@ -8010,17 +8011,19 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
         if (!underground && (!Hd2dPost(f->hd2dPreset) || !VoxelHd2dShader_ShaftsReady()
                              || !f->dioramaActive))
         {
-            const uint32_t timeMs = VitaDayNight_GetTimeMs();
-            const VitaDayNightPath sunP = VitaDayNight_SunPathAt(timeMs);
-            if (f->light.rays * sunP.strength > 0.005f)
+            const VitaDayNightState *const dn = VitaDayNight_State();
+            const VitaDayNightPath *const sunP = &dn->sunPath;
+            const VitaDayNightPath *const moonP = &dn->moonPath;
+            if (f->light.rays * sunP->strength > 0.005f)
             {
-                DrawWorldRays(f->light.rays * sunP.strength, seconds, false, &sunP);
+                DrawWorldRays(f->light.rays * sunP->strength, seconds, false, sunP);
             }
             else
             {
-                const VitaDayNightPath moonP = VitaDayNight_MoonPathAt(timeMs);
-                if (moonP.strength > 0.10f && f->weatherAmount < 0.25f)
-                    DrawWorldRays(moonP.strength * 0.48f, seconds, true, &moonP);
+                // The same moon as the shader shafts: on its arc, and only in the dark.
+                const float moonAmt = moonP->strength * 0.48f * dn->moonShafts;
+                if (moonAmt > 0.048f && f->weatherAmount < 0.25f)
+                    DrawWorldRays(moonAmt, seconds, true, moonP);
             }
         }
 
@@ -8419,15 +8422,12 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         const float shaftsScale   = Voxel_ClampF((float)VitaExtras_GetFast(FAST_EXTRA_VOXEL_SHAFTS) * 0.2f, 0.0f, 2.0f);
         if (!f->indoor && !f->inBattle3D && !f->underground && (skyBloomScale > 0.0f || shaftsScale > 0.0f))
         {
-            const uint32_t timeMs = VitaDayNight_GetTimeMs();
-            const VitaDayNightLight *const sdn = VitaDayNight_Get();
-            const float daylight = (sdn != NULL) ? Voxel_ClampF(sdn->daylight, 0.0f, 1.0f) : 1.0f;
-            const float glow = (sdn != NULL) ? Voxel_ClampF(sdn->glow, 0.0f, 1.0f) : 0.0f;
-            const VitaDayNightPath sunP = VitaDayNight_SunPathAt(timeMs);
-            const VitaDayNightPath moonP = VitaDayNight_MoonPathAt(timeMs);
-            const float moonFade = Voxel_ClampF(1.0f - daylight * 2.5f, 0.0f, 1.0f);
+            const VitaDayNightState *const dn = VitaDayNight_State();
+            const float glow = Voxel_ClampF(dn->light.glow, 0.0f, 1.0f);
+            const VitaDayNightPath sunP = dn->sunPath;
+            const VitaDayNightPath moonP = dn->moonPath;
             const float dayAmt = f->light.rays * sunP.strength;
-            const float moonAmt = (f->weatherAmount < 0.25f) ? (moonP.strength * 0.48f * moonFade) : 0.0f;
+            const float moonAmt = (f->weatherAmount < 0.25f) ? (moonP.strength * 0.48f * dn->moonShafts) : 0.0f;
 
             for (int32_t pass = 0; pass < 2; ++pass)
             {
@@ -8576,13 +8576,13 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         };
         static const float kLutCurve[3] = { 0.16f, 0.24f, 0.12f };
 
-        const VitaDayNightLight *const dn = (!f->indoor) ? VitaDayNight_Get() : NULL;
-        const float daylight = (dn != NULL) ? dn->daylight : 1.0f;
-        const float glow     = (dn != NULL) ? dn->glow     : 0.0f;
-        const float dusk     = Voxel_ClampF(glow * 4.0f, 0.0f, 1.0f) * Voxel_ClampF(daylight / 0.35f, 0.0f, 1.0f);
-        const float night    = Voxel_ClampF(1.0f - daylight / 0.35f, 0.0f, 1.0f);
-        const float day      = Voxel_ClampF(1.0f - dusk - night, 0.0f, 1.0f);
-        const float sum      = day + dusk + night;
+        // The day/night grade weights of the frame's state (indoors: day).
+        const VitaDayNightState *const dnState = VitaDayNight_State();
+        const float glow  = f->indoor ? 0.0f : dnState->light.glow;
+        const float dusk  = f->indoor ? 0.0f : dnState->dusk;
+        const float night = f->indoor ? 0.0f : dnState->night;
+        const float day   = f->indoor ? 1.0f : dnState->day;
+        const float sum   = 1.0f;
 
         float shadowTint[3], highTint[3];
         for (int32_t k = 0; k < 3; ++k)

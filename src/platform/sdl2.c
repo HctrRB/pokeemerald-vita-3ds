@@ -374,10 +374,12 @@ static void RenderGameTexture(void)
     float moonR = 0.0f, moonG = 0.0f, moonB = 0.0f;
     bool hasMoon = false;
 
+    // The same day/night state as the 3D world (built here too: 2D frames do not run the renderer).
+    VitaDayNight_UpdateFrame();
     if (VitaExtras_GetFast(FAST_EXTRA_DAY_NIGHT) == 1 && VitaGame_IsOutdoor() && VitaGame_IsOverworld())
     {
         const VitaDayNightLight *const light = VitaDayNight_Get();
-        const VitaDayNightBlend moon = VitaDayNight_Moonlight(light, 0.0f, light->rgb);
+        const VitaDayNightBlend moon = VitaDayNight_State()->moonlight;
 
         if (light->daylight < 0.98f)
         {

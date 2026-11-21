@@ -12,8 +12,16 @@
 
 static const uint32_t sSpeeds[VITA_DAYNIGHT_SPEED_COUNT] = {1, 6, 12, 24, 60, 120, 1000};
 static VitaDayNightClock sClock;
-static VitaDayNightLight sLight = {{1.0f, 1.0f, 1.0f}, 1.0f, 0.0f};
-static VitaDayNightSun sSun = {0.85f, 0.55f, 1.0f, 0};
+// Built on Core 0 only (VitaDayNight_UpdateFrame); the clock above is also advanced from Core 1.
+static VitaDayNightState sState = {
+    .timeMs = 13u * 3600u * 1000u,
+    .light = {{1.0f, 1.0f, 1.0f}, 1.0f, 0.0f},
+    .sun = {0.85f, 0.55f, 1.0f, 0},
+    .day = 1.0f,
+};
+// Without the cycle (option off, indoors): early afternoon, the sun past its highest.
+#define VITA_DAYNIGHT_FIXED_MS (13u * 3600u * 1000u)
+#define PI_F 3.141592654f
 static uint32_t sLocalSeconds;
 static uint64_t sSampleMs;
 static bool sSampled;
@@ -77,21 +85,22 @@ void VitaDayNight_Sync(VitaDayNightClock *const clock, const uint64_t nowMs,
 
 VitaDayNightLight VitaDayNight_At(const uint32_t timeMs)
 {
+    // rgb tint, daylight, glow (windows and lamps) at each point of the schedule; Hermite between.
     static const struct
     {
         uint32_t minute;
         VitaDayNightLight light;
     } keys[] = {
-        {0,    {{0.66f, 0.74f, 0.92f}, 0.0f,  1.00f}}, // 00:00 Midnight Blue
-        {120,  {{0.66f, 0.74f, 0.92f}, 0.0f,  1.00f}}, // 02:00 Deep Night
-        {240,  {{0.96f, 0.94f, 0.88f}, 0.75f, 0.00f}}, // 04:00 Dawn Gold
-        {480,  {{0.96f, 0.94f, 0.88f}, 0.75f, 0.00f}}, // 08:00 Early Morning
-        {600,  {{1.00f, 1.00f, 1.00f}, 1.00f, 0.00f}}, // 10:00 Pure Noon
-        {900,  {{1.00f, 1.00f, 1.00f}, 1.00f, 0.00f}}, // 15:00 Bright Afternoon
-        {1020, {{1.00f, 0.80f, 0.65f}, 0.35f, 0.25f}}, // 17:00 Sunset Orange
-        {1080, {{1.00f, 0.80f, 0.65f}, 0.35f, 0.25f}}, // 18:00 Dusk
-        {1200, {{0.66f, 0.74f, 0.92f}, 0.0f,  1.00f}}, // 20:00 Nightfall
-        {1440, {{0.66f, 0.74f, 0.92f}, 0.0f,  1.00f}}, // 24:00 Cycle End
+        {0,                            {{0.66f, 0.74f, 0.92f}, 0.00f, 1.00f}}, // midnight blue
+        {VITA_DAYNIGHT_DAWN_MIN,       {{0.66f, 0.74f, 0.92f}, 0.00f, 1.00f}}, // night until dawn
+        {VITA_DAYNIGHT_SUNRISE_MIN,    {{0.96f, 0.86f, 0.80f}, 0.40f, 0.30f}}, // sunrise: rose gold
+        {VITA_DAYNIGHT_MORNING_MIN,    {{0.96f, 0.94f, 0.88f}, 0.75f, 0.00f}}, // morning; lamps out
+        {VITA_DAYNIGHT_NOON_START_MIN, {{1.00f, 1.00f, 1.00f}, 1.00f, 0.00f}}, // noon
+        {VITA_DAYNIGHT_NOON_END_MIN,   {{1.00f, 1.00f, 1.00f}, 1.00f, 0.00f}}, // early afternoon
+        {VITA_DAYNIGHT_DUSK_MIN,       {{1.00f, 0.93f, 0.84f}, 0.85f, 0.00f}}, // evening begins
+        {VITA_DAYNIGHT_SUNSET_MIN,     {{1.00f, 0.80f, 0.65f}, 0.35f, 0.30f}}, // sunset orange
+        {VITA_DAYNIGHT_NIGHT_MIN,      {{0.66f, 0.74f, 0.92f}, 0.00f, 1.00f}}, // night
+        {24u * 60u,                    {{0.66f, 0.74f, 0.92f}, 0.00f, 1.00f}}, // midnight
     };
     const uint32_t current = timeMs % VITA_DAYNIGHT_DAY_MS;
 
@@ -136,10 +145,30 @@ VitaDayNightBlend VitaDayNight_Moonlight(const VitaDayNightLight *const light, c
     return blend;
 }
 
+// The sun's angle along its arc, 0 at sunrise, pi at nightfall, or a negative value when it is
+// down. It climbs to its highest by NOON_START, stays there (a flat top around pi / 2) until
+// NOON_END and sets by NIGHT: one arc for the shadows (SunAt) and the screen (SunPathAt).
+static float SunAngle(const float minute)
+{
+    const float rise = (float)VITA_DAYNIGHT_SUNRISE_MIN;
+    const float noonStart = (float)VITA_DAYNIGHT_NOON_START_MIN;
+    const float noonEnd = (float)VITA_DAYNIGHT_NOON_END_MIN;
+    const float set = (float)VITA_DAYNIGHT_NIGHT_MIN;
+
+    if (minute < rise || minute > set)
+        return -1.0f;
+    if (minute < noonStart)
+        return PI_F * 0.45f * (minute - rise) / (noonStart - rise);
+    if (minute < noonEnd)
+        return PI_F * (0.45f + 0.10f * (minute - noonStart) / (noonEnd - noonStart));
+    return PI_F * (0.55f + 0.45f * (minute - noonEnd) / (set - noonEnd));
+}
+
+// Shadows change in 15-minute steps: each step relights the visible chunks.
 static uint32_t SunKey(const uint32_t timeMs)
 {
     const uint32_t minute = (timeMs % VITA_DAYNIGHT_DAY_MS) / 60000u;
-    return (minute >= 240u && minute < 1200u) ? (minute / 15u + 2u) : 1u;
+    return (minute >= VITA_DAYNIGHT_SUNRISE_MIN && minute < VITA_DAYNIGHT_NIGHT_MIN) ? (minute / 15u + 2u) : 1u;
 }
 
 VitaDayNightSun VitaDayNight_SunAt(const uint32_t timeMs)
@@ -149,10 +178,10 @@ VitaDayNightSun VitaDayNight_SunAt(const uint32_t timeMs)
 
     if (key != 1u)
     {
-        const float progress = ((float)((key - 2u) * 15u) - 240.0f) / 960.0f;
-        const float altitude = sinf(progress * 3.141592654f);
+        const float angle = SunAngle((float)((key - 2u) * 15u));
+        const float altitude = (angle >= 0.0f) ? sinf(angle) : 0.0f;
 
-        sun.dx = -1.35f * cosf(progress * 3.141592654f);
+        sun.dx = -1.35f * cosf(angle);
         sun.dz = 0.35f + 0.20f * altitude;
         sun.strength = fminf(1.0f, altitude * 2.0f);
     }
@@ -161,14 +190,13 @@ VitaDayNightSun VitaDayNight_SunAt(const uint32_t timeMs)
 
 VitaDayNightPath VitaDayNight_SunPathAt(const uint32_t timeMs)
 {
-    // Continuous daytime arc from 05:30 (330m) to 19:30 (1170m) for screen-space shafts & water glints.
-    // Never fed to VoxelLighting_SetSun, so chunks never rebuild from smooth sun motion.
+    // The same arc as the shadows, continuous: shafts, sky bloom and water glints. Never fed to
+    // VoxelLighting_SetSun, so chunks never rebuild from smooth sun motion.
     const float minF = (float)(timeMs % VITA_DAYNIGHT_DAY_MS) / 60000.0f;
     VitaDayNightPath path = {0.0f, 0.0f, 0.45f, 0.0f, 0.0f};
-    if (minF >= 330.0f && minF <= 1170.0f)
+    const float angle = SunAngle(minF);
+    if (angle >= 0.0f)
     {
-        const float progress = (minF - 330.0f) / (1170.0f - 330.0f);
-        const float angle = progress * 3.141592654f;
         const float altitude = sinf(angle);
         path.dx = -1.25f * cosf(angle);
         path.dy = 0.22f + 0.78f * altitude;
@@ -181,14 +209,16 @@ VitaDayNightPath VitaDayNight_SunPathAt(const uint32_t timeMs)
 
 VitaDayNightPath VitaDayNight_MoonPathAt(const uint32_t timeMs)
 {
-    // Continuous nighttime arc from 19:30 (1170m) to 05:30 (330m).
+    // The moon's arc: it rises at nightfall and sets at sunrise.
+    const float night = (float)VITA_DAYNIGHT_NIGHT_MIN;
+    const float rise = (float)VITA_DAYNIGHT_SUNRISE_MIN;
     float minF = (float)(timeMs % VITA_DAYNIGHT_DAY_MS) / 60000.0f;
     VitaDayNightPath path = {0.0f, 0.0f, 0.45f, 0.0f, 0.0f};
-    if (minF >= 1170.0f || minF <= 330.0f)
+    if (minF >= night || minF <= rise)
     {
-        if (minF < 330.0f)
+        if (minF < night)
             minF += 1440.0f;
-        const float progress = (minF - 1170.0f) / (1440.0f - 1170.0f + 330.0f);
+        const float progress = (minF - night) / (1440.0f - night + rise);
         const float angle = progress * 3.141592654f;
         const float altitude = sinf(angle);
         path.dx = -1.10f * cosf(angle);
@@ -214,11 +244,7 @@ void VitaDayNight_Resume(void)
 void VitaDayNight_Update(void)
 {
     const uint64_t now = VitaPlatform_GetMilliseconds();
-    const bool enabled = (VitaExtras_GetFast(FAST_EXTRA_DAY_NIGHT) == 1);
     const int32_t speed = VitaExtras_GetFast(FAST_EXTRA_CLOCK_SPEED);
-
-    sLight = (VitaDayNightLight){{1.0f, 1.0f, 1.0f}, 1.0f, 0.0f};
-    sSun = (VitaDayNightSun){0.85f, 0.55f, 1.0f, 0};
 
     if (!sSampled || !sEnabled || now < sSampleMs || (now - sSampleMs) >= 1000)
     {
@@ -250,12 +276,54 @@ void VitaDayNight_Update(void)
     VitaDayNight_Advance(&sClock, now, sLocalSeconds, speed);
     sEnabled = true;
     sValid = true;
+}
 
-    if (enabled && VitaGame_IsOutdoor())
+static float Clamp01(const float v)
+{
+    return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
+}
+
+void VitaDayNight_UpdateFrame(void)
+{
+    VitaDayNight_Update();
+    const bool active = sValid && VitaExtras_GetFast(FAST_EXTRA_DAY_NIGHT) == 1 && VitaGame_IsOutdoor();
+    // One read of the clock, which Core 1 may also be advancing.
+    const uint32_t timeMs = active ? __atomic_load_n(&sClock.timeMs, __ATOMIC_RELAXED) : VITA_DAYNIGHT_FIXED_MS;
+    VitaDayNightState st;
+
+    st.timeMs = timeMs;
+    st.active = active;
+    if (active)
     {
-        sLight = VitaDayNight_At(sClock.timeMs);
-        sSun = VitaDayNight_SunAt(sClock.timeMs);
+        st.light = VitaDayNight_At(timeMs);
+        st.sun = VitaDayNight_SunAt(timeMs);
     }
+    else
+    {
+        st.light = (VitaDayNightLight){{1.0f, 1.0f, 1.0f}, 1.0f, 0.0f};
+        st.sun = (VitaDayNightSun){0.85f, 0.55f, 1.0f, 0};
+    }
+    st.moonlight = VitaDayNight_Moonlight(&st.light, 0.0f, st.light.rgb);
+    st.sunPath = VitaDayNight_SunPathAt(timeMs);
+    st.moonPath = VitaDayNight_MoonPathAt(timeMs);
+    // The moon's shafts need the dark: none until the daylight has nearly gone.
+    st.moonShafts = Clamp01(1.0f - st.light.daylight * 2.5f);
+
+    // The grade's weights: dusk while the lamps come on and some daylight is left, night as it goes.
+    const float dusk = Clamp01(st.light.glow * 4.0f) * Clamp01(st.light.daylight / 0.35f);
+    const float night = Clamp01(1.0f - st.light.daylight / 0.35f);
+    const float day = Clamp01(1.0f - dusk - night);
+    const float sum = day + dusk + night;
+    st.day = day / sum;
+    st.dusk = dusk / sum;
+    st.night = night / sum;
+
+    sState = st;
+}
+
+const VitaDayNightState *VitaDayNight_State(void)
+{
+    return &sState;
 }
 
 bool VitaDayNight_Time(uint32_t *const seconds, uint32_t *const rate)
@@ -283,12 +351,12 @@ bool VitaDayNight_Active(void)
 
 const VitaDayNightLight *VitaDayNight_Get(void)
 {
-    return &sLight;
+    return &sState.light;
 }
 
 const VitaDayNightSun *VitaDayNight_GetSun(void)
 {
-    return &sSun;
+    return &sState.sun;
 }
 
 bool VitaDayNight_BerryDue(void)
@@ -314,8 +382,7 @@ void VitaDayNight_Reset(void)
     sClock = (VitaDayNightClock){0};
     sSampled = sEnabled = sResume = sValid = false;
     sWallSeconds = 0;
-    sLight = (VitaDayNightLight){{1.0f, 1.0f, 1.0f}, 1.0f, 0.0f};
-    sSun = (VitaDayNightSun){0.85f, 0.55f, 1.0f, 0};
+    // The frame state is Core 0's: it follows the reset clock on its next frame.
 }
 
 bool VitaDayNight_SyncToConsole(void)

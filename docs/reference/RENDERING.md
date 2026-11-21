@@ -98,6 +98,22 @@ They share the frame state through a `VoxelFrame`; `VoxelRenderer_RenderFrame` o
 in order. The builds left after the visibility loop go through a `VoxelBuildQueue`
 (`BuildQueue_SendToWorker`, `BuildQueue_BuildStale`, `BuildQueue_Prewarm`).
 
+## The day/night cycle
+
+One schedule drives every day/night effect: `VITA_DAYNIGHT_DAWN_MIN`, `VITA_DAYNIGHT_SUNRISE_MIN`,
+`VITA_DAYNIGHT_MORNING_MIN`, `VITA_DAYNIGHT_NOON_START_MIN`, `VITA_DAYNIGHT_NOON_END_MIN`,
+`VITA_DAYNIGHT_DUSK_MIN`, `VITA_DAYNIGHT_SUNSET_MIN` and `VITA_DAYNIGHT_NIGHT_MIN`
+(`include/platform/vita_daynight.h`). Once per presented frame, `VitaDayNight_UpdateFrame` (Core 0;
+`Frame_Begin` in 3D, `RenderGameTexture` in 2D) reads the clock once and builds a
+`VitaDayNightState`: the tint, daylight and glow (`VitaDayNight_At`, keyed on the schedule), the
+night layer (`moonlight`), the shadow sun (`sun`, in 15-minute steps, since each step relights the
+visible chunks), the sun and moon on screen (`sunPath`, `moonPath`), the moon shafts' visibility and
+the HD-2D grade's day / dusk / night weights. The sun follows one arc (`SunAngle`) for the shadows and
+the screen: up at sunrise, flat at its highest between the noon marks, down at nightfall, when the
+moon rises; the moon sets at sunrise. Windows, street lamps, lit characters and fireflies follow the
+glow; the shafts, sky bloom and motes the daylight and the paths. No pass works out the time on its
+own. With the option off or indoors the state is a fixed early afternoon.
+
 ## Pass 6: the GBA overlay over 3D
 
 Field dialogues, YES/NO, multichoice, the money box, zone signs, the menus and the battle HUD
