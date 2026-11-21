@@ -46,8 +46,10 @@
 
 // ---------- Text ----------
 
-// GBA character -> Latin-1 code point (0 = skip). Covers the Western character set of the game.
-static uint16_t GbaToLatin1(uint8_t c)
+// GBA character -> Unicode code point (0 = skip). Covers the Western character set of the game
+// (the European releases' letters included); letters the UI fonts lack are drawn by ui_assets.c
+// as the same letter without its accent.
+static uint16_t GbaToCodepoint(uint8_t c)
 {
     if (c >= CHAR_A && c <= CHAR_Z) return (uint16_t)('A' + c - CHAR_A);
     if (c >= CHAR_a && c <= CHAR_z) return (uint16_t)('a' + c - CHAR_a);
@@ -62,6 +64,7 @@ static uint16_t GbaToLatin1(uint8_t c)
     case CHAR_O_GRAVE: return 0xD2; case CHAR_O_ACUTE: return 0xD3; case CHAR_O_CIRCUMFLEX: return 0xD4;
     case CHAR_U_GRAVE: return 0xD9; case CHAR_U_ACUTE: return 0xDA; case CHAR_U_CIRCUMFLEX: return 0xDB;
     case CHAR_N_TILDE: return 0xD1; case CHAR_ESZETT: return 0xDF;
+    case CHAR_OE: return 0x152; case CHAR_oe: return 0x153;
     case CHAR_a_GRAVE: return 0xE0; case CHAR_a_ACUTE: return 0xE1; case CHAR_a_CIRCUMFLEX: return 0xE2;
     case CHAR_c_CEDILLA: return 0xE7; case CHAR_e_GRAVE: return 0xE8; case CHAR_e_ACUTE: return 0xE9;
     case CHAR_e_CIRCUMFLEX: return 0xEA; case CHAR_e_DIAERESIS: return 0xEB; case CHAR_i_GRAVE: return 0xEC;
@@ -77,7 +80,7 @@ static uint16_t GbaToLatin1(uint8_t c)
     case CHAR_PERCENT: return '%'; case CHAR_LEFT_PAREN: return '('; case CHAR_RIGHT_PAREN: return ')';
     case CHAR_LESS_THAN: return '<'; case CHAR_GREATER_THAN: return '>';
     case CHAR_EXCL_MARK: return '!'; case CHAR_QUESTION_MARK: return '?'; case CHAR_PERIOD: return '.';
-    case CHAR_HYPHEN: return '-'; case CHAR_ELLIPSIS: return '.';
+    case CHAR_HYPHEN: return '-'; case CHAR_ELLIPSIS: return 0x2026; case CHAR_BULLET: return 0xB7;
     case CHAR_DBL_QUOTE_LEFT: case CHAR_DBL_QUOTE_RIGHT: return '"';
     case CHAR_SGL_QUOTE_LEFT: case CHAR_SGL_QUOTE_RIGHT: return '\'';
     case CHAR_MALE: return '?'; case CHAR_FEMALE: return '?';       // not in the fonts: drawn as icons
@@ -87,17 +90,34 @@ static uint16_t GbaToLatin1(uint8_t c)
     }
 }
 
-static size_t PutLatin1(char *dst, size_t at, size_t cap, uint16_t cp)
+// Appends one code point as UTF-8; a letter that does not fit whole is dropped, never cut
+static size_t PutCodepoint(char *dst, size_t at, size_t cap, uint16_t cp)
 {
     if (cp < 0x80)
     {
         if (at + 1 < cap) dst[at++] = (char)cp;
     }
-    else if (at + 2 < cap)
+    else if (cp < 0x800)
     {
-        dst[at++] = (char)(0xC0 | (cp >> 6));
+        if (at + 2 < cap)
+        {
+            dst[at++] = (char)(0xC0 | (cp >> 6));
+            dst[at++] = (char)(0x80 | (cp & 0x3F));
+        }
+    }
+    else if (at + 3 < cap)
+    {
+        dst[at++] = (char)(0xE0 | (cp >> 12));
+        dst[at++] = (char)(0x80 | ((cp >> 6) & 0x3F));
         dst[at++] = (char)(0x80 | (cp & 0x3F));
     }
+    return at;
+}
+
+static size_t PutAscii(char *dst, size_t at, size_t cap, const char *s)
+{
+    while (*s)
+        at = PutCodepoint(dst, at, cap, (uint8_t)*s++);
     return at;
 }
 
@@ -111,7 +131,7 @@ size_t UiGame_Text(const uint8_t *src, char *dst, size_t cap)
         const uint8_t c = *src;
         if (c == CHAR_NEWLINE || c == CHAR_PROMPT_SCROLL || c == CHAR_PROMPT_CLEAR)
         {
-            at = PutLatin1(dst, at, cap, ' ');
+            at = PutCodepoint(dst, at, cap, ' ');
             continue;
         }
         if (c == EXT_CTRL_CODE_BEGIN)
@@ -121,11 +141,15 @@ size_t UiGame_Text(const uint8_t *src, char *dst, size_t cap)
             src += GetExtCtrlCodeLength(*src) - 1;
             continue;
         }
-        if (c == CHAR_PK) { at = PutLatin1(dst, at, cap, 'P'); at = PutLatin1(dst, at, cap, 'K'); continue; }
-        if (c == CHAR_MN) { at = PutLatin1(dst, at, cap, 'M'); at = PutLatin1(dst, at, cap, 'N'); continue; }
-        const uint16_t cp = GbaToLatin1(c);
+        if (c == CHAR_PK) { at = PutAscii(dst, at, cap, "PK"); continue; }
+        if (c == CHAR_MN) { at = PutAscii(dst, at, cap, "MN"); continue; }
+        // French ordinal suffixes (1er, 2e, 1re): plain letters, the UI fonts have no superscripts
+        if (c == CHAR_SUPER_ER) { at = PutAscii(dst, at, cap, "er"); continue; }
+        if (c == CHAR_SUPER_E) { at = PutAscii(dst, at, cap, "e"); continue; }
+        if (c == CHAR_SUPER_RE) { at = PutAscii(dst, at, cap, "re"); continue; }
+        const uint16_t cp = GbaToCodepoint(c);
         if (cp != 0)
-            at = PutLatin1(dst, at, cap, cp);
+            at = PutCodepoint(dst, at, cap, cp);
     }
     dst[at] = 0;
     return at;

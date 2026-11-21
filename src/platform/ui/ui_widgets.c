@@ -677,13 +677,17 @@ int32_t UiW_TextWrappedF(uint8_t face, uint8_t px, int32_t x, int32_t y, int32_t
         size_t len = 0, lastSpace = 0;
         while (p[len] && len < sizeof(line) - 1)
         {
-            memcpy(line, p, len + 1);
-            line[len + 1] = 0;
+            // Whole UTF-8 letters only: a line never ends between a letter's bytes
+            size_t step = 1;
+            while (len + step < sizeof(line) - 1 && (p[len + step] & 0xC0) == 0x80)
+                step++;
+            memcpy(line, p, len + step);
+            line[len + step] = 0;
             if (UiText_Width(face, px, line) > w)
                 break;
             if (p[len] == ' ')
                 lastSpace = len;
-            len++;
+            len += step;
         }
         if (p[len] && lastSpace > 0)
             len = lastSpace;

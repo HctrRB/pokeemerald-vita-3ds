@@ -52,6 +52,16 @@ it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture (fixed atlas `as
 - **To a GBA scene and back (`UiCore_CloseToScene`, `UiCore_CloseToSceneInWindow`, `UiCore_ReopenAfterField`)**: screens on the field hand over to a GBA scene (the Pokéblock eating scene, the berry tag of the bag's CHECK TAG, the recorded battle of the trainer card's RECORD page); the whole stack of screens is kept and opens again as it was when the field comes back (each screen's `resume` refreshes its data). In a window (feeding from the PokéNav CONDITION tab) the scene is drawn in `UI_SCENE_WIN_*` (`GameFrameOverlay.gbaWindow`, `RenderGameTexture`) inside the theme's frame.
 - **Battle menu (`UiGame_OpenBattleMenu`)**: opened over the battle (bag — the PYRAMID BAG in the Battle Pyramid —, party, the Safari battle's Pokéblock case, and the Pokédex page after a catch, `Ui_OpenCaughtDexPage` from `Cmd_displaydexinfo`); the battle waits for `!Ui_IsOpen()`.
 
+### Text (`ui_assets.c`, `ui_game.c`)
+
+UI strings are UTF-8. `NextCodepoint` decodes any sequence (a malformed or cut one draws `?`).
+Each font maps Latin-1 through `UiFont.map` and code points above it through a sorted slice of
+`sExtGlyphs`, both built once in `UiAssets_Load`. A letter the font lacks is drawn by `GlyphOf` as
+its fallback (`FoldCodepoint`: the same letter without its accent, `…` as `.`, `✕` as `X`), else
+`?`; missing control codes leave a gap. Game text reaches the UI through `UiGame_Text`, which turns
+the GBA charmap into UTF-8 (`GbaToCodepoint`, the European letters included; `PutCodepoint` never
+cuts a letter at the end of the buffer). `UiW_TextWrappedF` breaks lines between whole letters only.
+
 ### Build version on the main menu (`ui_core.c`)
 
 While the title main menu list is up (`MainMenu_IsShown` in `main_menu.c`, which tells it apart from the Birch speech that also runs under `CB2_MainMenu`), the overlay draws `gVitaBuildVersion` right-aligned at the bottom right (`DrawMainMenuVersion`). The string is `git describe --tags --always` (no `--dirty`: the build runs MSYS2's git, which would count Windows line endings as changes), written each build into a generated source file in the build folder by `tools/version/game_version.cmake` (the `game_version` target); without git history it reads `unknown`.
