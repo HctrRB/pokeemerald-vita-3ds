@@ -20,9 +20,9 @@ static bool sShaderReady = false;
 static GLuint sCopyProg = 0;
 static GLint sCopyScene = -1, sCopyUvScale = -1, sCopyTexel = -1;
 
-// One bilinear tap: the 2x2 downsample.
+// One bilinear tap: the 2x2 downsample, with the night / fade overlay (uOverlay) applied.
 static GLuint sTapProg = 0;
-static GLint sTapScene = -1, sTapUvScale = -1;
+static GLint sTapScene = -1, sTapUvScale = -1, sTapOverlay = -1;
 
 static GLuint sBrightProg = 0;
 static GLint sBUScene = -1, sBUThresh = -1, sBUUvScale = -1, sBUGain = -1;
@@ -43,8 +43,8 @@ typedef struct
     GLuint prog;
     GLint scene, blur, bloom;
     GLint sceneUv, blurUv, bloomUv, dofRamp;
-    GLint post, grade, battle;
-    GLint shadowTint, highTint;
+    GLint post, dofAlpha, battle, overlay;
+    GLint tint0, tint1;
 } CompositeProgram;
 static CompositeProgram sCompField, sCompBattle;
 
@@ -94,9 +94,10 @@ static const char kTapVs[] =
 static const char kTapFs[] =
     "precision mediump float;\n"
     "uniform sampler2D uScene;\n"
+    "uniform vec4 uOverlay;\n"
     "varying vec2 vT0;\n"
     "void main() {\n"
-    "    gl_FragColor = vec4(texture2D(uScene, vT0).rgb, 1.0);\n"
+    "    gl_FragColor = vec4(mix(texture2D(uScene, vT0).rgb, uOverlay.rgb, uOverlay.a), 1.0);\n"
     "}\n";
 
 static const char kBrightFs[] =
@@ -190,17 +191,24 @@ static const char kCompVs[] =
     "}\n";
 
 // DoF tilt-shift + Bloom + Split-Tone + S-Curve + Vignette in one pass, so the whole image
-// (blurred bands included) gets the grade and the vignette. uGrade: saturation, top and bottom
-// band alpha. The battle variant adds uBattle: back blur, 1 - back dim, low-HP edge.
+// (blurred bands included) gets the grade and the vignette. The split-tone and saturation
+//   mix(c, mix(vec3(l), c * mix(shadowTint, highTint, tl), saturation), grade)
+// reduce to c * (uTint0 + tl * uTint1) + uPost.y * l, every factor fixed for the frame
+// (VoxelHd2dShader_Composite). uPost: bloom, that luma factor, S-curve, vignette. uDofAlpha:
+// top and bottom band alpha. uOverlay: the night / fade layer the world scene leaves to this
+// pass. The field program needs no final clamp: after the clamped grade, the S-curve and the
+// vignette keep every channel in [0, 1]. The battle variant adds uBattle: back blur,
+// 1 - back dim, low-HP edge (which can push past 1, so it keeps its clamp).
 #define COMP_FS_HEAD \
     "precision mediump float;\n" \
     "uniform sampler2D uScene;\n" \
     "uniform sampler2D uBlur;\n" \
     "uniform sampler2D uBloom;\n" \
     "uniform vec4 uPost;\n" \
-    "uniform vec3 uGrade;\n" \
-    "uniform vec3 uShadowTint;\n" \
-    "uniform vec3 uHighTint;\n" \
+    "uniform vec2 uDofAlpha;\n" \
+    "uniform vec4 uOverlay;\n" \
+    "uniform vec3 uTint0;\n" \
+    "uniform vec3 uTint1;\n" \
     "varying vec2 vScene;\n" \
     "varying vec2 vBlur;\n" \
     "varying vec2 vBloom;\n" \
@@ -208,18 +216,16 @@ static const char kCompVs[] =
     "varying vec2 vVig;\n"
 
 #define COMP_FS_DOF \
-    "    vec3 c = texture2D(uScene, vScene).rgb;\n" \
+    "    vec3 c = mix(texture2D(uScene, vScene).rgb, uOverlay.rgb, uOverlay.a);\n" \
     "    vec3 b = texture2D(uBlur, vBlur).rgb;\n" \
     "    vec2 t = clamp(vDof, 0.0, 1.0);\n" \
-    "    float dofW = max(smoothstep(0.0, 1.0, t.x) * uGrade.y, smoothstep(0.0, 1.0, t.y) * uGrade.z);\n"
+    "    float dofW = max(smoothstep(0.0, 1.0, t.x) * uDofAlpha.x, smoothstep(0.0, 1.0, t.y) * uDofAlpha.y);\n"
 
 #define COMP_FS_GRADE \
     "    c += texture2D(uBloom, vBloom).rgb * uPost.x;\n" \
     "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n" \
     "    float tl = clamp((l - 0.15) * 1.6667, 0.0, 1.0);\n" \
-    "    vec3 tint = mix(uShadowTint, uHighTint, tl);\n" \
-    "    vec3 g = mix(vec3(l), c * tint, uGrade.x);\n" \
-    "    c = clamp(mix(c, g, uPost.y), 0.0, 1.0);\n" \
+    "    c = clamp(c * (uTint0 + tl * uTint1) + uPost.y * l, 0.0, 1.0);\n" \
     "    vec3 sc = c * c * (3.0 - 2.0 * c);\n" \
     "    c += uPost.z * (sc - c);\n" \
     "    float vd = dot(vVig, vVig);\n" \
@@ -230,7 +236,7 @@ static const char kCompFieldFs[] = COMP_FS_HEAD
     COMP_FS_DOF
     "    c = mix(c, b, dofW);\n"
     COMP_FS_GRADE
-    "    gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);\n"
+    "    gl_FragColor = vec4(c, 1.0);\n"
     "}\n";
 
 static const char kCompBattleFs[] = COMP_FS_HEAD
@@ -309,10 +315,11 @@ static bool InitComposite(CompositeProgram *const p, const char *const fsSrc)
     p->bloomUv    = glGetUniformLocation(p->prog, "uBloomUv");
     p->dofRamp    = glGetUniformLocation(p->prog, "uDofRamp");
     p->post       = glGetUniformLocation(p->prog, "uPost");
-    p->grade      = glGetUniformLocation(p->prog, "uGrade");
+    p->dofAlpha   = glGetUniformLocation(p->prog, "uDofAlpha");
     p->battle     = glGetUniformLocation(p->prog, "uBattle");   // -1 in the field program
-    p->shadowTint = glGetUniformLocation(p->prog, "uShadowTint");
-    p->highTint   = glGetUniformLocation(p->prog, "uHighTint");
+    p->overlay    = glGetUniformLocation(p->prog, "uOverlay");
+    p->tint0      = glGetUniformLocation(p->prog, "uTint0");
+    p->tint1      = glGetUniformLocation(p->prog, "uTint1");
     return true;
 }
 
@@ -348,6 +355,7 @@ bool VoxelHd2dShader_Init(void)
 
         sTapScene    = glGetUniformLocation(sTapProg, "uScene");
         sTapUvScale  = glGetUniformLocation(sTapProg, "uUvScale");
+        sTapOverlay  = glGetUniformLocation(sTapProg, "uOverlay");
 
         sBUScene   = glGetUniformLocation(sBrightProg, "uScene");
         sBUThresh  = glGetUniformLocation(sBrightProg, "uThreshold");
@@ -404,7 +412,7 @@ void VoxelHd2dShader_CopyBox2x2(const GLuint sceneTex, const float uMax, const f
     glUseProgram(0);
 }
 
-void VoxelHd2dShader_CopyTap(const GLuint sceneTex, const float uMax, const float vMax)
+void VoxelHd2dShader_Downsample(const GLuint sceneTex, const float uMax, const float vMax, const float overlay[4])
 {
     if (!sShaderReady) return;
 
@@ -413,6 +421,7 @@ void VoxelHd2dShader_CopyTap(const GLuint sceneTex, const float uMax, const floa
     glBindTexture(GL_TEXTURE_2D, sceneTex);
     glUniform1i(sTapScene, 0);
     glUniform2f(sTapUvScale, uMax, vMax);
+    glUniform4fv(sTapOverlay, 1, overlay);
     DrawQuad();
     glUseProgram(0);
 }
@@ -440,10 +449,21 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
                                 const float bloomAmt, const float gradeAmt, const float curveAmt, const float vignetteAmt,
                                 const float saturation, const float backBlur, const float backDim,
                                 const float bumpOffsetX, const float bumpOffsetY, const float bumpStrength,
-                                const float shadowTint[3], const float highTint[3])
+                                const float shadowTint[3], const float highTint[3], const float overlay[4])
 {
     if (!sShaderReady) return;
     (void)bumpOffsetX; (void)bumpOffsetY;
+
+    // The grade's per-frame factors (COMP_FS_HEAD).
+    const float keep = 1.0f - gradeAmt;
+    const float chroma = gradeAmt * saturation;
+    float tint0[3], tint1[3];
+    for (int32_t k = 0; k < 3; ++k)
+    {
+        tint0[k] = keep + chroma * shadowTint[k];
+        tint1[k] = chroma * (highTint[k] - shadowTint[k]);
+    }
+    const float lumaAmt = gradeAmt * (1.0f - saturation);
 
     // The field never has the battle terms: they would cost every pixel for a no-op.
     const bool battle = (backBlur > 0.0f || backDim > 0.0f || bumpStrength > 0.0f);
@@ -467,12 +487,13 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
     glUniform2f(p->blurUv,  uBlurMax,  vBlurMax);
     glUniform2f(p->bloomUv, uBloomMax, vBloomMax);
     glUniform3f(p->dofRamp, yTop, yBot, invSlope);
-    glUniform4f(p->post,    bloomAmt, gradeAmt, curveAmt, vignetteAmt);
-    glUniform3f(p->grade,   saturation, topAlpha, botAlpha);
+    glUniform4f(p->post,     bloomAmt, lumaAmt, curveAmt, vignetteAmt);
+    glUniform2f(p->dofAlpha, topAlpha, botAlpha);
+    glUniform4fv(p->overlay, 1, overlay);
     if (battle)
         glUniform3f(p->battle, backBlur, 1.0f - backDim, bumpStrength);
-    glUniform3fv(p->shadowTint, 1, shadowTint);
-    glUniform3fv(p->highTint,   1, highTint);
+    glUniform3fv(p->tint0, 1, tint0);
+    glUniform3fv(p->tint1, 1, tint1);
     DrawQuad();
 
     glActiveTexture(GL_TEXTURE2);

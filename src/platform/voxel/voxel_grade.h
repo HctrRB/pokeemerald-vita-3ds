@@ -19,6 +19,8 @@ void VoxelGrade_Texels(uint16_t *texels, uint32_t count);
 void VoxelGrade_Brighten(uint16_t *texels, uint32_t count, float factor);
 /* Enables or disables CPU-baked tile relief during atlas composition. */
 void VoxelGrade_SetReliefEnabled(bool enabled);
+/* Whether atlas composition bakes the tile relief (VoxelGrade_SetReliefEnabled). */
+bool VoxelGrade_ReliefEnabled(void);
 /* Bakes subtle NW directional relief & cavity contrast into a 16x16 atlas slot in place. */
 void VoxelGrade_ApplyTileRelief16x16(uint16_t *dest, uint32_t stride, uint32_t height,
                                      uint32_t baseX, uint32_t baseY);

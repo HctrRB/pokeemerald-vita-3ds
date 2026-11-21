@@ -97,6 +97,40 @@ static inline void Voxel_UnswizzleMortonToLinearRows(const uint16_t *src, uint16
     }
 }
 
+// Fast unswizzle of one rectangle [x0, x0 + w) x [y0, y0 + h); x0 and w are multiples of 8.
+// Used for single sprite slots, so a changed frame does not unswizzle its whole row of slots.
+static inline void Voxel_UnswizzleMortonToLinearRect(const uint16_t *src, uint16_t *dst,
+                                                    uint32_t width, uint32_t height,
+                                                    uint32_t x0, uint32_t y0, uint32_t w, uint32_t h)
+{
+    const uint32_t tilesPerRow = width >> 3;
+    const uint32_t firstTile = x0 >> 3;
+    const uint32_t endTile = (x0 + w) >> 3;
+
+    for (uint32_t y = y0; y < y0 + h; y++)
+    {
+        const uint32_t glY = height - 1 - y;
+        const uint32_t tileY = y >> 3;
+        const uint32_t mortonY = ((y & 1) << 1) | ((y & 2) << 2) | ((y & 4) << 3);
+        const uint32_t rowBase = (tileY * tilesPerRow) << 6;
+        uint16_t *const dstRow = &dst[glY * width];
+
+        for (uint32_t tileX = firstTile; tileX < endTile; tileX++)
+        {
+            const uint16_t *const tileSrc = &src[rowBase + (tileX << 6) + mortonY];
+            uint16_t *const tileDst = &dstRow[tileX << 3];
+            tileDst[0] = tileSrc[0];
+            tileDst[1] = tileSrc[1];
+            tileDst[2] = tileSrc[4];
+            tileDst[3] = tileSrc[5];
+            tileDst[4] = tileSrc[16];
+            tileDst[5] = tileSrc[17];
+            tileDst[6] = tileSrc[20];
+            tileDst[7] = tileSrc[21];
+        }
+    }
+}
+
 // Unswizzle with explicit source height and target power-of-two height for OpenGL textures.
 // Fills unused rows at the bottom with zeros and aligns row 0 to top (V = 1.0).
 static inline void Voxel_UnswizzleMortonToLinearEx(const uint16_t *src, uint16_t *dst,

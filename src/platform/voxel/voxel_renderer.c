@@ -1909,17 +1909,13 @@ static void WriteAtlasRowsDirect(GLuint tex, const uint16_t *linear, uint32_t ro
 // worst a billboard shows its new frame one frame early.
 static bool sSpriteAtlasNeedsAll = true;
 //
-// Only the 64-px bands holding re-decoded slots are unswizzled and copied (the whole 512x256
-// atlas took ~3 ms per walking frame in SESION 22).
+// Only the 64x64 slots re-decoded this frame are unswizzled, given their relief and copied (the
+// whole 512x256 atlas took ~3 ms per walking frame in SESION 22; a whole row of 8 slots per
+// changed slot still cost up to 6-10 ms in logs/sesion 51). The relief stops at each slot's edge,
+// as it already did at the top and bottom of each row: slots are different sprites.
 static void WriteSpriteAtlasSlots(const uint16_t *morton, uint16_t *linear, uint32_t dirtySlots)
 {
-    uint32_t bands = 0;
-    for (uint32_t s = 0; s < VOXEL_SPRITE_SLOTS; s++)
-    {
-        if (dirtySlots & (1u << s))
-            bands |= 1u << (s / VOXEL_SPRITE_COLUMNS);
-    }
-    if (bands == 0)
+    if (dirtySlots == 0)
         return;
 
     glBindTexture(GL_TEXTURE_2D, sSpriteTex);
@@ -1928,23 +1924,31 @@ static void WriteSpriteAtlasSlots(const uint16_t *morton, uint16_t *linear, uint
 #else
     uint16_t *const texels = NULL;
 #endif
-    for (uint32_t band = 0; band < VOXEL_SPRITE_ATLAS_H / VOXEL_SPRITE_SLOT_DIM; band++)
+    for (uint32_t s = 0; s < VOXEL_SPRITE_SLOTS; s++)
     {
-        if (!(bands & (1u << band)))
+        if (!(dirtySlots & (1u << s)))
             continue;
-        const uint32_t startY = band * VOXEL_SPRITE_SLOT_DIM;
-        Voxel_UnswizzleMortonToLinearRows(morton, linear, VOXEL_SPRITE_ATLAS_W, VOXEL_SPRITE_ATLAS_H,
-                                          startY, VOXEL_SPRITE_SLOT_DIM);
-        // The linear copy is bottom-up: atlas rows startY.. land on texture rows glY0..
-        const uint32_t glY0 = VOXEL_SPRITE_ATLAS_H - (startY + VOXEL_SPRITE_SLOT_DIM);
-        uint16_t *const src = &linear[glY0 * VOXEL_SPRITE_ATLAS_W];
-        VoxelGrade_ApplyRectRelief(src, VOXEL_SPRITE_ATLAS_W, VOXEL_SPRITE_ATLAS_W, VOXEL_SPRITE_SLOT_DIM);
+        const uint32_t x0 = (s % VOXEL_SPRITE_COLUMNS) * VOXEL_SPRITE_SLOT_DIM;
+        const uint32_t y0 = (s / VOXEL_SPRITE_COLUMNS) * VOXEL_SPRITE_SLOT_DIM;
+        Voxel_UnswizzleMortonToLinearRect(morton, linear, VOXEL_SPRITE_ATLAS_W, VOXEL_SPRITE_ATLAS_H,
+                                          x0, y0, VOXEL_SPRITE_SLOT_DIM, VOXEL_SPRITE_SLOT_DIM);
+        // The linear copy is bottom-up: atlas rows y0.. land on texture rows glY0..
+        const uint32_t glY0 = VOXEL_SPRITE_ATLAS_H - (y0 + VOXEL_SPRITE_SLOT_DIM);
+        uint16_t *const src = &linear[glY0 * VOXEL_SPRITE_ATLAS_W + x0];
+        VoxelGrade_ApplyRectRelief(src, VOXEL_SPRITE_ATLAS_W, VOXEL_SPRITE_SLOT_DIM, VOXEL_SPRITE_SLOT_DIM);
         if (texels != NULL)
-            memcpy(&texels[glY0 * VOXEL_SPRITE_ATLAS_W], src,
-                   (size_t)VOXEL_SPRITE_SLOT_DIM * VOXEL_SPRITE_ATLAS_W * sizeof(uint16_t));
+        {
+            for (uint32_t row = 0; row < VOXEL_SPRITE_SLOT_DIM; row++)
+                memcpy(&texels[(glY0 + row) * VOXEL_SPRITE_ATLAS_W + x0], &src[row * VOXEL_SPRITE_ATLAS_W],
+                       (size_t)VOXEL_SPRITE_SLOT_DIM * sizeof(uint16_t));
+        }
         else
+        {
+            // Without direct access: the slot's whole row of slots, which the linear copy holds
+            // up to date (no reliance on GL_UNPACK_ROW_LENGTH).
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, (GLint)glY0, VOXEL_SPRITE_ATLAS_W, VOXEL_SPRITE_SLOT_DIM,
-                            GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, src);
+                            GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, &linear[glY0 * VOXEL_SPRITE_ATLAS_W]);
+        }
     }
 }
 
@@ -8040,6 +8044,36 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
 // Pass 5.9: 2D atmosphere: sun rays, lightning, cave gloom, and moonlight merged with the
 // screen fade. Weather and day/night tint and haze are already baked per vertex, so a clear
 // day draws no fullscreen quad here.
+// Whether the night / fade overlay of Pass_Atmosphere2D is left to the post pass: its downsample
+// and composite apply it (mix(c, overlay.rgb, overlay.a)) instead of a full-screen blended quad.
+// Same image: it is the world scene's last layer, and the downsample feeds the blur and bloom.
+static bool OverlayInPost(const VoxelFrame *const f)
+{
+    return f->dioramaActive && Hd2dPost(f->hd2dPreset) && VoxelHd2dShader_Ready();
+}
+
+// The night / fade overlay of this frame: rgb and alpha (0 when nothing is drawn).
+static void AtmosphereOverlay(const VoxelFrame *const f, float overlay[4])
+{
+    const float fadeAmount = f->drawFade;
+    const float *const fadeRgb = f->fadeRgb;
+    overlay[0] = fadeRgb[0];
+    overlay[1] = fadeRgb[1];
+    overlay[2] = fadeRgb[2];
+    overlay[3] = fadeAmount;
+    if (!f->indoor)
+    {
+        const VitaDayNightLight *const dn = VitaDayNight_Get();
+        const VitaDayNightBlend moon = VitaDayNight_Moonlight(dn, fadeAmount, fadeRgb);
+        overlay[0] = moon.rgb[0];
+        overlay[1] = moon.rgb[1];
+        overlay[2] = moon.rgb[2];
+        overlay[3] = moon.amount;
+    }
+    if (overlay[3] <= 0.005f || VitaPerf_PassSkipped(VITA_PERF_PASS_ATMOS2D))
+        overlay[3] = 0.0f;
+}
+
 static void Pass_Atmosphere2D(const VoxelFrame *const f)
 {
     if (VitaPerf_PassSkipped(VITA_PERF_PASS_ATMOS2D))
@@ -8047,8 +8081,6 @@ static void Pass_Atmosphere2D(const VoxelFrame *const f)
     const bool indoor = f->indoor;
     const float bolt = f->bolt;
     const bool underground = f->underground;
-    const float fadeAmount = f->drawFade;
-    const float *const fadeRgb = f->fadeRgb;
     static const float sUnitQuad[8] = {
         0.0f, 0.0f,
         1.0f, 0.0f,
@@ -8108,25 +8140,16 @@ static void Pass_Atmosphere2D(const VoxelFrame *const f)
         glDisableClientState(GL_VERTEX_ARRAY);
     }
 
-    // 4. Single Merged Moonlight + Screen Fade Overlay (VitaDayNight_Moonlight merges both in one pass)
+    // 4. Single Merged Moonlight + Screen Fade Overlay (VitaDayNight_Moonlight merges both in one pass);
+    // with the HD-2D post pass it is applied there (OverlayInPost).
+    if (!OverlayInPost(f))
     {
-        float overlayR = fadeRgb[0];
-        float overlayG = fadeRgb[1];
-        float overlayB = fadeRgb[2];
-        float overlayA = fadeAmount;
-        if (!indoor)
-        {
-            const VitaDayNightLight *const dn = VitaDayNight_Get();
-            const VitaDayNightBlend moon = VitaDayNight_Moonlight(dn, fadeAmount, fadeRgb);
-            overlayR = moon.rgb[0];
-            overlayG = moon.rgb[1];
-            overlayB = moon.rgb[2];
-            overlayA = moon.amount;
-        }
-        if (overlayA > 0.005f)
+        float overlay[4];
+        AtmosphereOverlay(f, overlay);
+        if (overlay[3] > 0.0f)
         {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glColor4f(overlayR, overlayG, overlayB, overlayA);
+            glColor4f(overlay[0], overlay[1], overlay[2], overlay[3]);
             glEnableClientState(GL_VERTEX_ARRAY);
             glVertexPointer(2, GL_FLOAT, 0, sUnitQuad);
             glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
@@ -8273,7 +8296,9 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         glDisableClientState(GL_VERTEX_ARRAY);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        VoxelHd2dShader_CopyTap(pt->dioramaActiveTex, uMax, vMax);
+        float overlay[4];
+        AtmosphereOverlay(f, overlay);
+        VoxelHd2dShader_Downsample(pt->dioramaActiveTex, uMax, vMax, overlay);
         glBindTexture(GL_TEXTURE_2D, pt->dioramaActiveTex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -8605,6 +8630,13 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisable(GL_BLEND);
 
+        // The overlay is the scene's last layer: the composite applies it to the full-res scene.
+        // In a 3D battle the backdrop comes from the blur, which the downsample already covered.
+        float compOverlay[4];
+        AtmosphereOverlay(f, compOverlay);
+        if (f->inBattle3D)
+            compOverlay[3] = 0.0f;
+
         float lowHpPulse = 0.0f;
         const GameFrameBattle *const battle = &GameFrame_Get()->battle;
         if (f->inBattle3D && battle->maxHp[0] > 0u && battle->hp[0] > 0u)
@@ -8622,7 +8654,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                                   bloomAmt, gradeAmt, curveAmt, vignetteAmt,
                                   saturation, backBlur, backDim,
                                   0.0f, 0.0f, lowHpPulse,
-                                  shadowTint, highTint);
+                                  shadowTint, highTint, compOverlay);
 
         sFrameDrawCalls++;
         sFrameVertCount += 4u;
@@ -9155,6 +9187,43 @@ static void Pass_Overlay2D(const VoxelFrame *const f)
     }
 }
 
+// Measuring builds: a thin bar across the top while the automatic bench runs, so the tester
+// knows to stand still and when it is over. Nothing in other builds.
+static void DrawBenchProgress(void)
+{
+    const float progress = VitaPerf_BenchProgress();
+    if (progress < 0.0f)
+        return;
+    static const float kBarHeight = 6.0f / 544.0f;
+    const float fill = Voxel_ClampF(progress, 0.0f, 1.0f);
+    const float back[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, kBarHeight, 0.0f, kBarHeight };
+    const float bar[8] = { 0.0f, 0.0f, fill, 0.0f, fill, kBarHeight, 0.0f, kBarHeight };
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, VitaPlatform_GetRenderWidth(), VitaPlatform_GetRenderHeight());
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(0.0, 1.0, 1.0, 0.0, -1.0, 1.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_TEXTURE_2D);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+    glVertexPointer(2, GL_FLOAT, 0, back);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glColor4f(1.0f, 0.75f, 0.1f, 1.0f);
+    glVertexPointer(2, GL_FLOAT, 0, bar);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glEnable(GL_TEXTURE_2D);
+}
+
 static void DrawMenuFrozenBackdrop(void)
 {
     const int32_t renderW = VitaPlatform_GetRenderWidth();
@@ -9429,6 +9498,7 @@ bool VoxelRenderer_RenderFrame(void)
 
     // New UI over everything (Core 1 list, one draw call)
     Ui_Render(VitaPlatform_GetRenderWidth(), VitaPlatform_GetRenderHeight());
+    DrawBenchProgress();
 
     glDepthMask(GL_FALSE);
     glDisable(GL_BLEND);

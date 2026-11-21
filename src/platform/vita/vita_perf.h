@@ -191,10 +191,13 @@ void VitaPerf_GpuScene(VitaPerfGpuScene next);
 bool VitaPerf_PassSkipped(VitaPerfPass pass);
 // The HD-2D level the bench imposes this frame, or -1 to use the player's option.
 int32_t VitaPerf_BenchLevel(void);
+// How far the run under way is, 0..1, or a negative value with no run (the on-screen bar).
+float VitaPerf_BenchProgress(void);
 #else
 static inline void VitaPerf_GpuScene(const VitaPerfGpuScene next) { (void)next; }
 static inline bool VitaPerf_PassSkipped(const VitaPerfPass pass) { (void)pass; return false; }
 static inline int32_t VitaPerf_BenchLevel(void) { return -1; }
+static inline float VitaPerf_BenchProgress(void) { return -1.0f; }
 #endif
 
 // Core 1 (AgbMain GBA Simulation) Stage Markers

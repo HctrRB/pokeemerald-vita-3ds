@@ -87,7 +87,7 @@ Per frame (`VoxelRenderer_RenderFrame`):
 | 5.1 | Day/night modulation | Skipped when it would be a no-op |
 | 5.2 | Night lamps: pools, glass, halos | Built with each chunk on Core 2 (`voxel_lamps.c`, `EmitChunkLamps`): static glass and pool spans in the chunk VBO plus each light's centre in the slot. Drawn from the VBOs with the frame's `nightGlow` as a constant colour (two draws per lamp chunk, one for all halos). The same lights tint the characters (`UpdatePointLights`, `LightCards`): their lit cards are drawn again after the night veil, additive (`Pass_EntityLamps`), since a card's own colour is already near white. Cheaper at lower HD-2D levels (`kLampLevels`) |
 | 5.4–5.8 | Fog / sand banks, dust motes / fireflies, surface FX & weather particles | Fog/sand banks conform to a cached world-snapped terrain grid (`SmoothedFogWorldY`), motes/fireflies and surface FX (`DrawSurfaceFx`) anchor to `SurfaceWorldY(wx, wz)` |
-| 5.9 | 2D atmosphere: sun rays, moonlight, fades, lightning, cave gloom | |
+| 5.9 | 2D atmosphere: sun rays, moonlight, fades, lightning, cave gloom | With the HD-2D post pass the moonlight / fade layer is applied by its downsample and composite instead of a full-screen blended quad (`OverlayInPost`) |
 | DoF / Bloom | HD-2D post-processing (DoF, Kawase Bloom, Composite) | Scene rendered to a 960×544 RGBA8 FBO, downscaled to 1/4 (240×136) for `smoothstep` tilt-shift DoF + 2-pass Kawase bloom (`voxel_hd2d_shader.c`), split-tone & vignette. Runs with OPTIONS > GRAPHICS > HD-2D at MED or HIGH (bloom, sky bloom, shafts, grade) or with DEPTH OF FIELD on (bands only); off during fades. LOW keeps the world effects (relief, sway, particles) without this pass |
 | 6 | GBA overlay | See below |
 
@@ -158,11 +158,14 @@ avoid `glTexSubImage2D` via direct `vglGetTexDataPointer` writes or use double-b
   tileset): written straight into texture memory (`WriteAtlasRowsDirect`, `vglGetTexDataPointer`)
   on the same frame so sea/flower animations stay lock-stepped across zone borders without
   `glTexSubImage2D` GC copies. Neighbouring slots accumulate primary dirty masks in
-  `sSlotPendingPrimary` so they catch up immediately when re-entering view.
+  `sSlotPendingPrimary` so they catch up immediately when re-entering view. The sea, shores and
+  flowers cycle through a fixed set of frames, so each animated metatile is composed once per
+  frame of the cycle and then copied from a cache keyed by the content of its tiles
+  (`ComposeAnimated` in `voxel_atlas.c`; metatiles with a cut plan are always composed).
 - Sprite atlas of the billboards: **not** a spare. `VoxelEntities_Emit` gives billboards the
   texture coordinates of the frames it decoded that same frame, so a spare swapped in later showed
-  late or wrong frames. Only the 64-px bands of the slots re-decoded this frame
-  (`VoxelEntities_TakeDirtySlots`) are unswizzled and written straight into the texture memory
+  late or wrong frames. Only the 64×64 slots re-decoded this frame
+  (`VoxelEntities_TakeDirtySlots`) are unswizzled, given their relief and written straight into the texture memory
   (`WriteSpriteAtlasSlots`, `vglGetTexDataPointer`), as vitaGL's own direct path does; the GPU
   may still read it for the previous frame, so a billboard can show its new frame one frame early.
 - GBA overlay (pass 6): not converted nor uploaded when its image hash is unchanged.

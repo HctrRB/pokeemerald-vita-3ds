@@ -23,6 +23,11 @@ void VoxelGrade_SetReliefEnabled(const bool enabled)
     sReliefEnabled = enabled;
 }
 
+bool VoxelGrade_ReliefEnabled(void)
+{
+    return sReliefEnabled;
+}
+
 static uint32_t Channel(float value)
 {
     int32_t c = (int32_t)(value + 0.5f);

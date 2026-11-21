@@ -95,16 +95,22 @@ so its frame rate is lower.
   changes: vitaGL's `glFinish` ends the GXM scene, so a probe in mid-scene would split it and lose its
   depth. Without the post pass the whole frame is `gpu_world_ms`.
 - **Automatic bench.** Standing still in the 3D field for `BENCH_STILL_FRAMES` frames starts a run
-  (`[BENCH]` lines in `perf_summary.txt`): every HD-2D level (OFF, LOW, MED, HIGH), then HIGH with one
-  `VitaPerfPass` switched off at a time (`VitaPerf_PassSkipped`). The level is imposed through
-  `VitaPerf_BenchLevel`; the saved option is not touched and comes back at the end. Each step waits
-  for `BENCH_SETTLE_FRAMES` calm frames and keeps `BENCH_MEASURE_FRAMES` frames with
-  `bench_measured = 1`. Moving, a menu, a fade, a battle, Fly (any frame without the field passes) or fast forward aborts the run; the player
-  has to move before another one starts. The picture changes during a run (levels, effects missing):
+  (`[BENCH]` lines in `perf_summary.txt`): HIGH, then HIGH with one `VitaPerfPass` switched off at a
+  time (`VitaPerf_PassSkipped`), then MED, LOW and OFF. OFF comes last because switching between OFF
+  and LOW turns the relief on or off, which rebuilds the atlas and the chunks (a ~0.7 s freeze). The
+  level is imposed through `VitaPerf_BenchLevel`; the saved option is not touched and comes back at
+  the end. Each step waits for `BENCH_SETTLE_FRAMES` calm frames and keeps `BENCH_MEASURE_FRAMES`
+  frames with `bench_measured = 1`. A thin bar across the top of the screen shows the run's
+  progress (`VitaPerf_BenchProgress`); when it disappears the run is over. Moving, a menu, a fade, a
+  battle, Fly (any frame without the field passes) or fast forward aborts the run; the player has
+  to move before another one starts. The picture changes during a run (levels, effects missing):
   that is the bench at work.
 - **Session.** Play one session through the spots to measure (town at night with lamps, rain, midday,
-  fog, desert, an interior), stand still at each until the picture is back to normal, and copy
+  fog, desert, an interior), stand still at each until the bar is gone, and copy
   `perf_frames.csv` and `perf_summary.txt` to `logs/<session>/`. The scene columns split it by zone.
+  Keep the clock at normal speed: an accelerated day/night cycle changes the light within a run, and
+  moves the sun constantly, which relights the visible chunks (`S` events) and re-tints the sprite
+  palettes.
 
 Cost of one pass at one spot: the median of `gpu_total_ms` (or `gpu_world_ms`) over the measured
 frames of step "HIGH without X", minus the same at step HIGH of the same run:

@@ -751,6 +751,115 @@ bool VoxelAtlas_JobNextPage(VoxelAtlasJob *job)
 }
 
 /*
+ * Animated metatiles already composed (RefreshAnimated). The sea, the shores and the flowers go
+ * round a fixed set of frames, so after one cycle every frame of a metatile is found here by the
+ * content of the tiles it is drawn from and copied, instead of composed again (1.9 ms per page
+ * update when composed, logs/sesion 49; p95 7.5 ms per frame, logs/sesion 51). The key holds
+ * everything ComposeAt reads that can change: the tileset pair and the metatile (its entries,
+ * palettes and hidden layers), the bytes of its 8 tiles (two hashes) and the relief setting.
+ * Metatiles with a cut plan are not cached. Core 0 only: RefreshAnimated runs in the frame's
+ * atlas animation stage. 4-way set-associative, the least recently used way replaced.
+ */
+#define ANIM_CACHE_SETS 256u
+#define ANIM_CACHE_WAYS 4u
+#define ANIM_CACHE_PX (VOXEL_ATLAS_SLOT * VOXEL_ATLAS_SLOT)
+#define TILE_BYTES 32u
+#define METATILE_TILES 8u
+
+typedef struct
+{
+    const void *primary, *secondary;
+    uint32_t hashA, hashB;
+    uint32_t stamp;
+    uint16_t metatile;
+    bool valid;
+    bool relief;
+    bool black;
+    uint16_t px[ANIM_CACHE_PX];
+} AnimCacheEntry;
+
+static AnimCacheEntry *sAnimCache;   // ANIM_CACHE_SETS * ANIM_CACHE_WAYS, allocated on first use
+static bool sAnimCacheFailed;
+static uint32_t sAnimCacheStamp;
+
+static void AnimTileHash(const uint8_t *liveTiles, const uint16_t *entries, uint32_t *hashA, uint32_t *hashB)
+{
+    uint32_t a = 2166136261u, b = 0x9E3779B9u;
+
+    for (uint32_t t = 0; t < METATILE_TILES; ++t)
+    {
+        uint32_t words[TILE_BYTES / 4u];
+
+        memcpy(words, liveTiles + (entries[t] & 0x3FFu) * TILE_BYTES, sizeof(words));
+        for (uint32_t w = 0; w < TILE_BYTES / 4u; ++w)
+        {
+            a = (a ^ words[w]) * 16777619u;
+            b = (b + words[w]) * 2654435761u ^ (b >> 15);
+        }
+    }
+    *hashA = a;
+    *hashB = b;
+}
+
+// The slot's 16 rows in the page's bottom-up linear layout (ComposeAt's LINEAR_TEXEL).
+static uint16_t *SlotRow(uint16_t *dest, uint32_t slot, uint32_t y)
+{
+    const uint32_t baseX = (slot % VOXEL_ATLAS_COLUMNS) * VOXEL_ATLAS_SLOT;
+    const uint32_t baseY = (slot / VOXEL_ATLAS_COLUMNS) * VOXEL_ATLAS_SLOT;
+
+    return &dest[(VOXEL_ATLAS_H - 1u - (baseY + y)) * VOXEL_ATLAS_W + baseX];
+}
+
+// ComposeMetatile through the cache; returns whether everything it drew is black.
+static bool ComposeAnimated(const struct AtlasSource *src, const void *primaryTileset,
+                            const void *secondaryTileset, uint32_t metatile, const uint16_t *entries,
+                            const uint8_t *liveTiles, uint16_t *dest, uint32_t slot, uint32_t hidden)
+{
+    if (sAnimCache == NULL && !sAnimCacheFailed)
+    {
+        sAnimCache = calloc((size_t)ANIM_CACHE_SETS * ANIM_CACHE_WAYS, sizeof(AnimCacheEntry));
+        sAnimCacheFailed = (sAnimCache == NULL);
+    }
+    if (sAnimCache == NULL)
+        return ComposeMetatile(src, entries, dest, slot, hidden, NULL);
+
+    uint32_t hashA, hashB;
+    AnimTileHash(liveTiles, entries, &hashA, &hashB);
+    const bool relief = VoxelGrade_ReliefEnabled();
+    AnimCacheEntry *const set = &sAnimCache[((hashA ^ (metatile * 2654435761u)) >> 24) * ANIM_CACHE_WAYS];
+    AnimCacheEntry *victim = &set[0];
+
+    for (uint32_t w = 0; w < ANIM_CACHE_WAYS; ++w)
+    {
+        AnimCacheEntry *const e = &set[w];
+        if (e->valid && e->hashA == hashA && e->hashB == hashB && e->metatile == metatile
+         && e->primary == primaryTileset && e->secondary == secondaryTileset && e->relief == relief)
+        {
+            for (uint32_t y = 0; y < VOXEL_ATLAS_SLOT; ++y)
+                memcpy(SlotRow(dest, slot, y), &e->px[y * VOXEL_ATLAS_SLOT], VOXEL_ATLAS_SLOT * sizeof(uint16_t));
+            e->stamp = ++sAnimCacheStamp;
+            return e->black;
+        }
+        if (!e->valid || (victim->valid && e->stamp < victim->stamp))
+            victim = e;
+    }
+
+    const bool black = ComposeMetatile(src, entries, dest, slot, hidden, NULL);
+    for (uint32_t y = 0; y < VOXEL_ATLAS_SLOT; ++y)
+        memcpy(&victim->px[y * VOXEL_ATLAS_SLOT], SlotRow(dest, slot, y), VOXEL_ATLAS_SLOT * sizeof(uint16_t));
+    victim->primary = primaryTileset;
+    victim->secondary = secondaryTileset;
+    victim->hashA = hashA;
+    victim->hashB = hashB;
+    victim->metatile = (uint16_t)metatile;
+    victim->relief = relief;
+    victim->black = black;
+    victim->valid = true;
+    victim->stamp = ++sAnimCacheStamp;
+    return black;
+}
+
+/*
  * The animated metatiles of one page, recomposed from the live GBA tiles. primaryOnly: the
  * slot belongs to a neighbouring map that shares the current map's primary tileset (every
  * outdoor map: the sea, the flowers). Only its metatiles drawn wholly from primary tiles are
@@ -821,7 +930,11 @@ static uint32_t RefreshAnimated(const void *primaryTileset, const void *secondar
             continue;
         if (voidBits != NULL)
             voidBits[m >> 3] &= (uint8_t)~(1u << (m & 7));
-        if (ComposeMetatile(&src, entries, dest, (slot - 1u) % VOXEL_ATLAS_MAX_SLOTS, hidden, cut) && voidBits != NULL)
+        const uint32_t slotInPage = (slot - 1u) % VOXEL_ATLAS_MAX_SLOTS;
+        const bool black = (cut == NULL)
+            ? ComposeAnimated(&src, primaryTileset, secondaryTileset, m, entries, liveTiles, dest, slotInPage, hidden)
+            : ComposeMetatile(&src, entries, dest, slotInPage, hidden, cut);
+        if (black && voidBits != NULL)
             voidBits[m >> 3] |= (uint8_t)(1u << (m & 7));
         if (rows != NULL)
             *rows |= 1u << (((slot - 1u) % VOXEL_ATLAS_MAX_SLOTS) / VOXEL_ATLAS_COLUMNS);

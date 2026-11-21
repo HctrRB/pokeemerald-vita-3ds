@@ -19,9 +19,10 @@ bool VoxelHd2dShader_ShaftsReady(void);
 // Runs the 2x2 box-filtered 480x272 downsample into sScratchFbo (eliminates roof/wall banding).
 void VoxelHd2dShader_CopyBox2x2(GLuint sceneTex, float uMax, float vMax, float texelX, float texelY);
 
-// One tap per pixel with the texture's own filter: with GL_LINEAR at half size, the exact 2x2
-// average of the 4-tap box above for one fetch.
-void VoxelHd2dShader_CopyTap(GLuint sceneTex, float uMax, float vMax);
+// The half-size downsample: one tap per pixel with the texture's own filter (with GL_LINEAR, the
+// exact 2x2 average of the 4-tap box above for one fetch), then the night / fade overlay
+// (rgb, alpha) the world scene left to the post pass.
+void VoxelHd2dShader_Downsample(GLuint sceneTex, float uMax, float vMax, const float overlay[4]);
 
 // Runs the 240x136 luminance bright-pass into the currently bound bloom FBO.
 void VoxelHd2dShader_BrightPass(GLuint sceneTex, float uMax, float vMax, float threshold, float gain);
@@ -40,6 +41,6 @@ void VoxelHd2dShader_Composite(GLuint sceneTex, GLuint blurTex, GLuint bloomTex,
                                 float bloomAmt, float gradeAmt, float curveAmt, float vignetteAmt,
                                 float saturation, float backBlur, float backDim,
                                 float bumpOffsetX, float bumpOffsetY, float bumpStrength,
-                                const float shadowTint[3], const float highTint[3]);
+                                const float shadowTint[3], const float highTint[3], const float overlay[4]);
 
 #endif // VOXEL_HD2D_SHADER_H

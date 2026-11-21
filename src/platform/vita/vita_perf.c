@@ -167,16 +167,19 @@ static bool sSceneFresh = false;
 
 #ifdef VITA_GPU_PROBE
 // The automatic bench: when the player stands still in the 3D field for BENCH_STILL_FRAMES, it
-// steps through every HD-2D level, then through HIGH with one pass switched off at a time. Each
-// step waits for BENCH_SETTLE_FRAMES calm frames (no events, no holes), then keeps
+// measures HIGH, then HIGH with one pass switched off at a time, then MED, LOW and OFF. HIGH
+// comes first because it is what is being optimised, and OFF last because switching between OFF
+// and LOW turns the relief on or off, which rebuilds the atlas and the chunks (a ~0.7 s freeze).
+// Each step waits for BENCH_SETTLE_FRAMES calm frames (no events, no holes), then keeps
 // BENCH_MEASURE_FRAMES frames marked bench_measured. Moving, a menu, a fade, a battle, Fly or fast
 // forward aborts the run; the player has to move before the next one starts.
-#define BENCH_STILL_FRAMES 150u
-#define BENCH_SETTLE_FRAMES 30u
-#define BENCH_MEASURE_FRAMES 90u
-#define BENCH_STEP_MAX_FRAMES 600u
-#define BENCH_LEVEL_STEPS ((uint32_t)VOXEL_HD2D_COUNT)
-#define BENCH_STEPS (BENCH_LEVEL_STEPS + (uint32_t)VITA_PERF_PASS_COUNT)
+#define BENCH_STILL_FRAMES 120u
+#define BENCH_SETTLE_FRAMES 20u
+#define BENCH_MEASURE_FRAMES 60u
+#define BENCH_STEP_MAX_FRAMES 400u
+// Step 0: HIGH. Steps 1..VITA_PERF_PASS_COUNT: HIGH without one pass. Then MED, LOW, OFF.
+#define BENCH_LOWER_FIRST (1u + (uint32_t)VITA_PERF_PASS_COUNT)
+#define BENCH_STEPS (BENCH_LOWER_FIRST + (uint32_t)VOXEL_HD2D_HIGH)
 // Below this, in tiles, the player has not moved.
 #define BENCH_STILL_EPSILON 0.01f
 
@@ -220,18 +223,32 @@ static const char *const kPassNames[VITA_PERF_PASS_COUNT] = {
     [VITA_PERF_PASS_BLUR] = "blur",
 };
 
+static bool BenchMaskStep(const int32_t step)
+{
+    return step >= 1 && step < (int32_t)BENCH_LOWER_FIRST;
+}
+
 static uint32_t BenchMask(void)
 {
-    if (sBenchStep < (int32_t)BENCH_LEVEL_STEPS)
-        return 0u;
-    return 1u << ((uint32_t)sBenchStep - BENCH_LEVEL_STEPS);
+    return BenchMaskStep(sBenchStep) ? (1u << (uint32_t)(sBenchStep - 1)) : 0u;
 }
 
 int32_t VitaPerf_BenchLevel(void)
 {
     if (sBenchStep < 0)
         return -1;
-    return (sBenchStep < (int32_t)BENCH_LEVEL_STEPS) ? sBenchStep : (int32_t)VOXEL_HD2D_HIGH;
+    if (sBenchStep < (int32_t)BENCH_LOWER_FIRST)
+        return (int32_t)VOXEL_HD2D_HIGH;
+    return (int32_t)VOXEL_HD2D_HIGH - 1 - (sBenchStep - (int32_t)BENCH_LOWER_FIRST);
+}
+
+float VitaPerf_BenchProgress(void)
+{
+    if (sBenchStep < 0)
+        return -1.0f;
+    const float stepDone = (sBenchMeasured >= BENCH_MEASURE_FRAMES)
+        ? 1.0f : (float)sBenchMeasured / (float)BENCH_MEASURE_FRAMES;
+    return ((float)sBenchStep + stepDone) / (float)BENCH_STEPS;
 }
 
 bool VitaPerf_PassSkipped(const VitaPerfPass pass)
@@ -617,9 +634,12 @@ static void BenchAdvance(const bool measured)
             return;
         }
         BenchStartStep(sBenchStep + 1);
-        if (sSummaryFile != NULL && sBenchStep >= (int32_t)BENCH_LEVEL_STEPS)
+        if (sSummaryFile != NULL && BenchMaskStep(sBenchStep))
             fprintf(sSummaryFile, "[BENCH] run %u step %d: HIGH without %s\n", sBenchRun, sBenchStep,
-                    kPassNames[(uint32_t)sBenchStep - BENCH_LEVEL_STEPS]);
+                    kPassNames[sBenchStep - 1]);
+        else if (sSummaryFile != NULL)
+            fprintf(sSummaryFile, "[BENCH] run %u step %d: level %d\n", sBenchRun, sBenchStep,
+                    (int)VitaPerf_BenchLevel());
         return;
     }
 
