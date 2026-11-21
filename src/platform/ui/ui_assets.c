@@ -30,6 +30,7 @@ typedef struct { uint16_t id, x, y, w, h; } UiSprite;
 static UiSprite sSprites[UI_MAX_SPRITES];
 static uint32_t sSpriteCount;
 static uint16_t sTexW, sTexH, sWhiteX, sWhiteY;
+static uint32_t sCellsY = UI_TEX_H, sCellCount;   // no cells until the atlas is loaded
 static bool sReady;
 
 static uint16_t Rd16(const uint8_t *p) { return (uint16_t)(p[0] | (p[1] << 8)); }
@@ -55,7 +56,7 @@ bool UiAssets_Load(void)
     const uint16_t spriteCount = Rd16(data + 22);
     const size_t fontsAt = 24, glyphsAt = fontsAt + (size_t)fontCount * 8;
     const size_t spritesAt = glyphsAt + (size_t)glyphCount * 12, pixelsAt = spritesAt + (size_t)spriteCount * 10;
-    if (fontCount > UI_MAX_FONTS || spriteCount > UI_MAX_SPRITES || sTexW != UI_TEX_W || sTexH > UI_DYN_Y
+    if (fontCount > UI_MAX_FONTS || spriteCount > UI_MAX_SPRITES || sTexW != UI_TEX_W || sTexH > UI_FIXED_MAX_H
         || pixelsAt + (size_t)sTexW * sTexH * 2 > size)
     {
         VITA_LOG("[UI2] ui_atlas.bin truncated or does not fit the texture\n");
@@ -131,6 +132,8 @@ bool UiAssets_Load(void)
     for (uint32_t i = 0; i < (uint32_t)sTexW * sTexH; i++)
         sPixels[i] = Rd16(data + pixelsAt + i * 2);
     free(data);
+    sCellsY = ((uint32_t)sTexH + UI_CELL - 1) / UI_CELL * UI_CELL;
+    sCellCount = UI_CELL_COLS * ((UI_TEX_H - sCellsY) / UI_CELL);
     sReady = true;
     VITA_LOG("[UI2] atlas %ux%u, %u fonts, %u glyphs, %u sprites\n", sTexW, sTexH, (unsigned)fontCount, (unsigned)glyphCount, (unsigned)spriteCount);
     return true;
@@ -146,6 +149,16 @@ const uint16_t *UiAssets_Pixels(uint16_t *outW, uint16_t *outH)
     *outW = sTexW;
     *outH = sTexH;
     return sPixels;
+}
+
+uint32_t UiAssets_CellsY(void)
+{
+    return sCellsY;
+}
+
+uint32_t UiAssets_CellCount(void)
+{
+    return sCellCount;
 }
 
 void UiAssets_TexSize(uint16_t *outW, uint16_t *outH)

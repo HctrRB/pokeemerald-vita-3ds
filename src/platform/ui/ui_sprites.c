@@ -1,6 +1,6 @@
 // Run-time sprites of the new UI: the original GBA sprites that depend on the species or the item
 // (Pokémon icons and front sprites, item icons, footprints), decoded from the game's own tables
-// into 64x64 cells of the UI texture (below the fixed atlas, UI_DYN_Y).
+// into 64x64 cells of the UI texture (below the fixed atlas, from UiAssets_CellsY).
 //
 // Threads (docs/reference/THREADS.md):
 // - Core 1 owns the cache (which key is in which cell, when each cell was last drawn). On a miss
@@ -13,6 +13,7 @@
 
 #include <string.h>
 #include "ui_internal.h"
+#include "../vita/vita_perf.h"
 #include "global.h"
 #include "data.h"
 #include "decompress.h"
@@ -240,11 +241,15 @@ static const u32 *const sPokeblockPals[14] = {
 #define KEY(kind, id) (((uint32_t)(kind) << 16) | (uint32_t)(id))
 
 // ---------- Core 1: cache ----------
-static uint32_t sCellKey[UI_CELL_COUNT];       // 0 = free
-static uint32_t sCellUsed[UI_CELL_COUNT];      // tick of the last list that drew it
-static uint32_t sCellUpload[UI_CELL_COUNT];    // ring head index (sHead + 1) of the cell's latest upload
+// Sized for the smallest fixed atlas; only the first UiAssets_CellCount() are used
+static uint32_t sCellKey[UI_CELL_COUNT_MAX];       // 0 = free
+static uint32_t sCellUsed[UI_CELL_COUNT_MAX];      // tick of the last list that drew it
+static uint32_t sCellUpload[UI_CELL_COUNT_MAX];    // ring head index (sHead + 1) of the cell's latest upload
 static uint32_t sTick;
 static uint32_t sDecodes, sDecodesLast;
+#ifdef VITA_TELEMETRY
+static uint32_t sStarved, sPeakLive;              // since boot: lookups with no cell to give, most cells drawn at once
+#endif
 
 // ---------- Ring (Core 1 writes head, Core 0 writes tail) ----------
 typedef struct
@@ -450,7 +455,8 @@ static int32_t Lookup(uint32_t key)
 {
     const uint32_t tail = __atomic_load_n(&sTail, __ATOMIC_ACQUIRE);
     int32_t freeCell = -1, oldest = -1;
-    for (int32_t c = 0; c < UI_CELL_COUNT; c++)
+    const int32_t cellCount = (int32_t)UiAssets_CellCount();
+    for (int32_t c = 0; c < cellCount; c++)
     {
         if (sCellKey[c] == key)
         {
@@ -469,6 +475,10 @@ static int32_t Lookup(uint32_t key)
     // A free cell, else the least recently drawn one once Core 0 has flushed it and no recent list uses it
     const int32_t victim = freeCell >= 0 ? freeCell
                          : (oldest >= 0 && sTick - sCellUsed[oldest] >= UI_SPR_IDLE_TICKS) ? oldest : -1;
+#ifdef VITA_TELEMETRY
+    if (victim < 0)
+        sStarved++;                                  // every cell drawn in the last ticks: the sprite is skipped
+#endif
     if (victim < 0 || sDecodes >= UI_SPR_DECODES_PER_TICK)
         return -1;
     if (sHead - tail >= UI_SPR_RING)
@@ -493,7 +503,7 @@ static bool DrawCell(uint32_t key, int32_t sx, int32_t sy, int32_t sw, int32_t s
         return false;
     if (scale < 1)
         scale = 1;
-    const uint32_t u = (uint32_t)(c % UI_CELL_COLS) * UI_CELL + sx, v = UI_DYN_Y + (uint32_t)(c / UI_CELL_COLS) * UI_CELL + sy;
+    const uint32_t u = (uint32_t)(c % UI_CELL_COLS) * UI_CELL + sx, v = UiAssets_CellsY() + (uint32_t)(c / UI_CELL_COLS) * UI_CELL + sy;
     UiDraw_Quad(x, y, sw * scale, sh * scale, u, v, u + sw, v + sh, rgba);
     return true;
 }
@@ -558,7 +568,7 @@ bool UiSpr_MonFrontSized(uint16_t species, int32_t x, int32_t y, int32_t w, int3
     const int32_t c = Lookup(KEY(KIND_MON_FRONT, species));
     if (c < 0)
         return false;
-    const uint32_t u = (uint32_t)(c % UI_CELL_COLS) * UI_CELL, v = UI_DYN_Y + (uint32_t)(c / UI_CELL_COLS) * UI_CELL;
+    const uint32_t u = (uint32_t)(c % UI_CELL_COLS) * UI_CELL, v = UiAssets_CellsY() + (uint32_t)(c / UI_CELL_COLS) * UI_CELL;
     UiDraw_Quad(x, y, w, h, u, v, u + 64, v + 64, 0xFFFFFFFFu);
     return true;
 }
@@ -568,7 +578,7 @@ bool UiSpr_TrainerSized(uint16_t pic, int32_t x, int32_t y, int32_t w, int32_t h
     const int32_t c = Lookup(KEY(KIND_TRAINER, pic));
     if (c < 0)
         return false;
-    const uint32_t u = (uint32_t)(c % UI_CELL_COLS) * UI_CELL, v = UI_DYN_Y + (uint32_t)(c / UI_CELL_COLS) * UI_CELL;
+    const uint32_t u = (uint32_t)(c % UI_CELL_COLS) * UI_CELL, v = UiAssets_CellsY() + (uint32_t)(c / UI_CELL_COLS) * UI_CELL;
     UiDraw_Quad(x, y, w, h, u, v, u + 64, v + 64, 0xFFFFFFFFu);
     return true;
 }
@@ -623,7 +633,7 @@ bool UiSpr_Decoration(uint16_t decor, int32_t bx, int32_t by, int32_t box)
     int32_t dw = w, dh = h;
     if (big * 2 <= box) { dw = w * 2; dh = h * 2; }
     else if (big > box) { dw = w / 2; dh = h / 2; }
-    const uint32_t u = (uint32_t)(c % UI_CELL_COLS) * UI_CELL, v = UI_DYN_Y + (uint32_t)(c / UI_CELL_COLS) * UI_CELL;
+    const uint32_t u = (uint32_t)(c % UI_CELL_COLS) * UI_CELL, v = UiAssets_CellsY() + (uint32_t)(c / UI_CELL_COLS) * UI_CELL;
     UiDraw_Quad(bx + (box - dw) / 2, by + (box - dh) / 2, dw, dh, u, v, u + w, v + h, 0xFFFFFFFFu);
     return true;
 }
@@ -662,6 +672,17 @@ bool UiSpr_Footprint(uint16_t species, int32_t x, int32_t y, int32_t scale, uint
 
 void UiSpr_BeginTick(void)
 {
+#ifdef VITA_TELEMETRY
+    // Cells drawn in the last UI_SPR_IDLE_TICKS ticks cannot be reused: how close the cache came to full
+    const uint32_t cellCount = UiAssets_CellCount();
+    uint32_t live = 0;
+    for (uint32_t c = 0; c < cellCount; c++)
+        if (sCellKey[c] != 0 && sTick - sCellUsed[c] < UI_SPR_IDLE_TICKS)
+            live++;
+    if (live > sPeakLive)
+        sPeakLive = live;
+    VitaPerf_Core1UiCells(sPeakLive, cellCount, sStarved);
+#endif
     sTick++;
     sDecodesLast = sDecodes;
     sDecodes = 0;
@@ -687,10 +708,10 @@ void UiSpr_FlushUploads(void)
     for (; tail != head; tail++)
     {
         const UiSprUpload *up = &sRing[tail % UI_SPR_RING];
-        if (up->cell >= UI_CELL_COUNT)
+        if (up->cell >= UiAssets_CellCount())
             continue;
         const uint32_t cx = (uint32_t)(up->cell % UI_CELL_COLS) * UI_CELL;
-        const uint32_t cy = UI_DYN_Y + (uint32_t)(up->cell / UI_CELL_COLS) * UI_CELL;
+        const uint32_t cy = UiAssets_CellsY() + (uint32_t)(up->cell / UI_CELL_COLS) * UI_CELL;
         if (texels != NULL)
         {
             for (uint32_t r = 0; r < UI_CELL; r++)

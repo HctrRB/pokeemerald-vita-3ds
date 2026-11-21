@@ -58,7 +58,12 @@ python tools/ui_gen/gen_intro_margins.py --output assets/ui/intro_margins.bin
 `build_atlas.py` reads the base pixel fonts baked by `design/stitch/_tools/font_bake.html`
 (`tools/ui2/fonts/ui_fonts.*`), the theme fonts baked by `tools/ui2/bake_theme_fonts.py`
 (`tools/ui2/fonts/theme_fonts.*` for `RED`, `CRYSTAL`, `TROPICAL` and `ROYAL`), and the images
-`design/stitch/_tools/export_assets.py` exports to `design/stitch/_assets/`. `build_all` runs
+`design/stitch/_tools/export_assets.py` exports to `design/stitch/_assets/`. With `--locale <code>`
+it also adds that language's extra letters to every font: the languages and their letters are listed
+in `tools/locales/languages.json`, and `tools/ui2/bake_locale_glyphs.py` bakes all of them from the
+real fonts (headless browser, Google Fonts) into the committed `tools/ui2/fonts/locale_glyphs.*`; the
+base sheets are never rebaked, so the English atlas does not change. The fixed part may take up to
+`MAX_FIXED_H` rows (`UI_FIXED_MAX_H` at run time). `build_all` runs
 both `export_assets.py` and `build_atlas.py` on every build, because `ui_sprite_ids.h` is
 committed and the atlas must always match it. `gen_intro_margins.py` reads
 `graphics/intro/scene_1`; run the asset step first.

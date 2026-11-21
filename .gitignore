@@ -51,6 +51,7 @@ prefabs.json
 cmake-build-*/
 build-vita/
 build-vita-probe/
+build-vita-telemetry/
 *.vpk
 *.velf
 *.self

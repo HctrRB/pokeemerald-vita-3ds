@@ -81,6 +81,7 @@ static volatile double sCore1LogicLatest = 0.0;
 static volatile double sCore1VBlankLatest = 0.0;
 static volatile double sCore1WaitLatest = 0.0;
 static volatile uint32_t sCore1TickCount = 0;
+static uint32_t sUiCellsPeak, sUiCellsCount, sUiCellsStarved;   // Core 1 stores, Core 0 loads (relaxed atomics)
 
 // Overall and Window Statistics
 static uint32_t sTotalFrameIndex = 0;
@@ -410,6 +411,13 @@ void VitaPerf_Core1WaitDone(const double waitMs)
     sCore1WaitLatest = waitMs;
 }
 
+void VitaPerf_Core1UiCells(const uint32_t peakLive, const uint32_t count, const uint32_t starved)
+{
+    __atomic_store_n(&sUiCellsPeak, peakLive, __ATOMIC_RELAXED);
+    __atomic_store_n(&sUiCellsCount, count, __ATOMIC_RELAXED);
+    __atomic_store_n(&sUiCellsStarved, starved, __ATOMIC_RELAXED);
+}
+
 // Core 0 Stage Markers
 void VitaPerf_BeginFrame(void)
 {
@@ -736,6 +744,9 @@ static void WriteSummaryBlock(void)
             mSub[VITA_PERF_T_WORKER_WAIT].sum, mSub[VITA_PERF_T_WORKER_WAIT].max);
     fprintf(sSummaryFile, "  PACING: %u frames repeated a game frame, %u frames skipped game frames\n",
             sWindowTickRepeats, sWindowTickSkips);
+    fprintf(sSummaryFile, "  UI SPRITE CELLS (since boot): peak %u of %u drawn at once, %u sprites skipped for lack of a cell\n",
+            __atomic_load_n(&sUiCellsPeak, __ATOMIC_RELAXED), __atomic_load_n(&sUiCellsCount, __ATOMIC_RELAXED),
+            __atomic_load_n(&sUiCellsStarved, __ATOMIC_RELAXED));
     fprintf(sSummaryFile, "  EVENTS:");
     for (uint32_t i = 0; i < sizeof(sEventLetters) - 1; i++)
         fprintf(sSummaryFile, " %c=%u", sEventLetters[i], sWindowEventCount[i]);
@@ -998,6 +1009,7 @@ void VitaPerf_Core1LogicTick(void) {}
 void VitaPerf_Core1LogicDone(const double logicMs) { (void)logicMs; }
 void VitaPerf_Core1VBlankDone(const double vblankMs) { (void)vblankMs; }
 void VitaPerf_Core1WaitDone(const double waitMs) { (void)waitMs; }
+void VitaPerf_Core1UiCells(const uint32_t peakLive, const uint32_t count, const uint32_t starved) { (void)peakLive; (void)count; (void)starved; }
 void VitaPerf_BeginFrame(void) {}
 void VitaPerf_MarkAtlasAnimStart(void) {}
 void VitaPerf_MarkAtlasAnimEnd(const uint32_t rowsUpdated) { (void)rowsUpdated; }

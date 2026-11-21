@@ -30,7 +30,7 @@ in RAM and written with 32 KB buffers.
 
 | File | Content |
 |---|---|
-| `ux0:data/POKEVITA/perf_summary.txt` | Every 120 3D frames (or 5 s): render FPS against the real target, logic Hz, Core 0 / Core 1 load, frame-time p50/p95/p99 and frames over budget, `HOLES`, `WORKER` (chunks built on Core 2, dropped, frames that overlapped a job, Core 0 wait), `PACING`, events, average/min/max per stage, sub-timers, `PER CHUNK` and `LIGHT PER CHUNK` costs, atlas cost per upload, free memory, session totals. `[MEMORY …]` lines at boot and after each map warm-up |
+| `ux0:data/POKEVITA/perf_summary.txt` | Every 120 3D frames (or 5 s): render FPS against the real target, logic Hz, Core 0 / Core 1 load, frame-time p50/p95/p99 and frames over budget, `HOLES`, `WORKER` (chunks built on Core 2, dropped, frames that overlapped a job, Core 0 wait), `PACING`, `UI SPRITE CELLS` (since boot: most run-time sprite cells drawn at once, how many there are, sprites skipped because none was free), events, average/min/max per stage, sub-timers, `PER CHUNK` and `LIGHT PER CHUNK` costs, atlas cost per upload, free memory, session totals. `[MEMORY …]` lines at boot and after each map warm-up |
 | `ux0:data/POKEVITA/perf_frames.csv` | One row per Core 0 frame |
 
 CSV columns:

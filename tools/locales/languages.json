@@ -1,0 +1,25 @@
+{
+  "_comment": [
+    "The only list of the languages a build can be made in (docs/plan/I18N_PLAN.md, private).",
+    "code: VITA_LOCALE value and tools/locales/<code>/ folder. gameLanguage: LANGUAGE_* the game is",
+    "built with. romCode: 4th letter of the cartridge's game code (BPE?), null when the language has",
+    "no official cartridge. base: language of the ROM a catalog language is built on. letters: the",
+    "letters beyond ASCII and the base set (tools/ui2/build_atlas.py BASE_LETTERS) that this",
+    "language's UI fonts need; every one is baked once by tools/ui2/bake_locale_glyphs.py and only",
+    "the build's own go into its atlas."
+  ],
+  "languages": [
+    { "code": "en",    "name": "English",              "gameLanguage": "LANGUAGE_ENGLISH", "romCode": "E", "base": null,
+      "letters": "" },
+    { "code": "es",    "name": "Español",              "gameLanguage": "LANGUAGE_SPANISH", "romCode": "S", "base": null,
+      "letters": "ÁÍÓÚÜÑáíóúüñ¡¿ªº" },
+    { "code": "pt_br", "name": "Português (Brasil)",   "gameLanguage": "LANGUAGE_ENGLISH", "romCode": null, "base": "en",
+      "letters": "ÀÁÂÃÇÊÍÓÔÕÚàáâãçêíóôõúªº" },
+    { "code": "fr",    "name": "Français",             "gameLanguage": "LANGUAGE_FRENCH",  "romCode": "F", "base": null,
+      "letters": "ÀÂÇÈÊËÎÏÔÙÛÜŸŒàâçèêëîïôùûüÿœ«»" },
+    { "code": "it",    "name": "Italiano",             "gameLanguage": "LANGUAGE_ITALIAN", "romCode": "I", "base": null,
+      "letters": "ÀÈÌÍÎÒÓÙÚàèìíîòóùú" },
+    { "code": "de",    "name": "Deutsch",              "gameLanguage": "LANGUAGE_GERMAN",  "romCode": "D", "base": null,
+      "letters": "ÄÖÜäöüß„“" }
+  ]
+}
