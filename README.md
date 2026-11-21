@@ -143,13 +143,6 @@ is already checked: [docs/guides/UI_HARDWARE_TESTS.md](docs/guides/UI_HARDWARE_T
   items); the Battle Frontier and Battle Tents half-party choice.
 - The battle fixes for Wally's battle (#8) and Gyms 6 and 7 (Natural Cure, double battle targets).
 - The GRAPHICS tab (each HD-2D level with 30 and 60 FPS) and the night street lamps.
-- The day/night cycle on its new schedule (sunrise 07:00, the sun highest 12:00-14:00, evening from
-  18:00, night at 21:00): light and tint, shadows, sun and moon shafts, sky bloom, windows, street
-  lamps and fireflies changing together, and the wild encounter phases following it (morning
-  07:00-12:00, day 12:00-21:00, night 21:00-07:00).
-- The HD-2D post-processing after the performance work: light shafts at every hour (sun high and
-  low, and the moon), the bloom halos (now one blur pass), the night moonlight and screen fades
-  with HD-2D on, water and flower animations, and walking characters.
 - The Flash darkness in 3D (Dewford Gym, Battle Pyramid), and the battle HUD in the Battle Palace
   and Battle Arena.
 - The menu themes on every screen, and the mirrored dialogue boxes in 2D evolution, egg-hatch and
