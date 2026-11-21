@@ -60,7 +60,7 @@ static bool Update(const UiInput *in)
     if (in->pressed & VITA_BTN_CIRCLE)
     {
         PlaySE(SE_FAILURE);                        // the machine is waiting: a berry has to go in
-        UiKit_Toast("Choose a BERRY to put in.");
+        UiKit_Toast(UI_TR("Choose a BERRY to put in."));
         return true;
     }
     const int32_t a = UiList_Update(&sList, in, LIST_X, LIST_Y, LIST_W, ROW_H, true);
@@ -75,15 +75,15 @@ static bool Update(const UiInput *in)
 
 static void Build(void)
 {
-    static const char *const tab[1] = { "CHOOSE A BERRY" };
+    static const char *const tab[1] = { UI_N("CHOOSE A BERRY") };
     int32_t tx[1], tw[1];
     char buf[64];
-    UiKit_HeaderAs(UI_GBA_BG_BAG, UI_SPR_START_BAG, "BERRIES", tab, 1, 0, tx, tw, 12);
-    snprintf(buf, sizeof(buf), "%d kinds", (int)sCount);
+    UiKit_HeaderAs(UI_GBA_BG_BAG, UI_SPR_START_BAG, UI_TR("BERRIES"), tab, 1, 0, tx, tw, 12);
+    snprintf(buf, sizeof(buf), UI_TR("%d kinds"), (int)sCount);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
 
     UiW_Panel(16, 60, 380, 432);
-    UiW_PanelHead(16, 60, 380, "BERRIES", NULL);
+    UiW_PanelHead(16, 60, 380, UI_TR("BERRIES"), NULL);
     for (int32_t r = 0; r < ROWS && sList.first + r < sCount; r++)
     {
         const int32_t i = sList.first + r, y = LIST_Y + r * ROW_H;
@@ -105,18 +105,18 @@ static void Build(void)
     UiSpr_ItemIcon(item, 448, 100, 3);
     UiGame_ItemName(item, buf, sizeof(buf));
     UiText_Draw(UI_FACE_PS2P, 16, 560, 96, buf, UI_COL_INK);
-    snprintf(buf, sizeof(buf), "In bag: x%u", (unsigned)sRows[sList.sel].qty);
+    snprintf(buf, sizeof(buf), UI_TR("In bag: x%u"), (unsigned)sRows[sList.sel].qty);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 560, 124, buf, UI_COL_INK_SOFT);
     char desc[160];
     UiGame_ItemDescription(item, desc, sizeof(desc));
     UiW_Inset(428, 208, 496, 140);
     UiW_TextWrapped(444, 216, 468, 30, desc, UI_COL_INK, 4);
-    UiW_TextWrapped(428, 364, 496, 30, "The BERRY goes into the machine; it is taken from the BAG when the blending starts.",
+    UiW_TextWrapped(428, 364, 496, 30, UI_TR("The BERRY goes into the machine; it is taken from the BAG when the blending starts."),
                     UI_COL_INK_SOFT, 2);
-    UiW_Button(420, 436, 240, "PUT IN", UI_BTN_GREEN, false);
+    UiW_Button(420, 436, 240, UI_TR("PUT IN"), UI_BTN_GREEN, false);
 
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Put in");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Put in"));
     UiKit_FooterClock();
 }
 

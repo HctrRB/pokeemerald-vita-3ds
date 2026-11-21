@@ -141,8 +141,8 @@ size_t UiGame_Text(const uint8_t *src, char *dst, size_t cap)
             src += GetExtCtrlCodeLength(*src) - 1;
             continue;
         }
-        if (c == CHAR_PK) { at = PutAscii(dst, at, cap, "PK"); continue; }
-        if (c == CHAR_MN) { at = PutAscii(dst, at, cap, "MN"); continue; }
+        if (c == CHAR_PK) { at = PutAscii(dst, at, cap, UI_TR("PK")); continue; }
+        if (c == CHAR_MN) { at = PutAscii(dst, at, cap, UI_TR("MN")); continue; }
         // French ordinal suffixes (1er, 2e, 1re): plain letters, the UI fonts have no superscripts
         if (c == CHAR_SUPER_ER) { at = PutAscii(dst, at, cap, "er"); continue; }
         if (c == CHAR_SUPER_E) { at = PutAscii(dst, at, cap, "e"); continue; }
@@ -338,7 +338,7 @@ bool UiGame_Mon(int32_t slot, UiMon *out)
     GetMonData(mon, MON_DATA_NICKNAME, nick);
     nick[POKEMON_NAME_LENGTH] = EOS;
     if (out->egg)
-        snprintf(out->name, sizeof(out->name), "EGG");
+        snprintf(out->name, sizeof(out->name), UI_TR("EGG"));
     else
         UiGame_Text(nick, out->name, sizeof(out->name));
     return true;
@@ -538,14 +538,14 @@ bool UiGame_ShareHp(int32_t from, int32_t to, char *msg, size_t cap)
     const uint16_t maxB = (uint16_t)GetMonData(b, MON_DATA_MAX_HP);
     if (from == to || GetMonData(b, MON_DATA_IS_EGG) || hpB == 0 || hpB >= maxB)
     {
-        snprintf(msg, cap, "It can't be used on that POKéMON.");
+        snprintf(msg, cap, UI_TR("It can't be used on that POKéMON."));
         return false;
     }
-    if (hpA <= cost) { snprintf(msg, cap, "Not enough HP left."); return false; }
+    if (hpA <= cost) { snprintf(msg, cap, UI_TR("Not enough HP left.")); return false; }
     const uint16_t give = (uint16_t)((maxB - hpB) < cost ? (maxB - hpB) : cost);
     const uint16_t na = (uint16_t)(hpA - cost), nb = (uint16_t)(hpB + give);
     SetMonData(a, MON_DATA_HP, &na);
     SetMonData(b, MON_DATA_HP, &nb);
-    snprintf(msg, cap, "HP was restored by %u point(s).", (unsigned)give);
+    snprintf(msg, cap, UI_TR("HP was restored by %u point(s)."), (unsigned)give);
     return true;
 }

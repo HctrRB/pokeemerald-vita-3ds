@@ -218,7 +218,7 @@ void UiQty_Draw(UiQty *q, uint16_t itemId)
         q->stepY = y + 76;
         UiW_Stepper(x + 80, q->stepY, q->value, &q->minusX, &q->plusX);
         q->okX = x + w - 136;
-        UiW_Button(q->okX, q->stepY, 120, "OK", UI_BTN_GREEN, false);
+        UiW_Button(q->okX, q->stepY, 120, UI_TR("OK"), UI_BTN_GREEN, false);
         return;
     }
     UiW_Window(x, y, w, h, q->title);
@@ -227,7 +227,7 @@ void UiQty_Draw(UiQty *q, uint16_t itemId)
     q->stepY = y + 76;
     UiW_Stepper(x + 80, q->stepY, q->value, &q->minusX, &q->plusX);
     q->okX = x + w - 136;
-    UiW_Button(q->okX, q->stepY, 120, "OK", UI_BTN_GREEN, false);
+    UiW_Button(q->okX, q->stepY, 120, UI_TR("OK"), UI_BTN_GREEN, false);
 }
 
 // ---------- Full-screen header ----------
@@ -244,8 +244,8 @@ int32_t UiKit_HeaderAs(uint8_t gbaBg, uint16_t gbaIcon, const char *title, const
     // Tabs: the pager with the tab's name and its dots. One tab: its name is the page's title and
     // there is no pager, as the GBA screens without pages (the room goes to the badges and value)
     const bool pager = tabs != NULL && n > 1 && cur >= 0 && cur < n;
-    const char *pill = (tabs != NULL && n == 1) ? tabs[0] : title;
-    UiW_GbaTopBar(gbaBg, gbaIcon, pill, pager ? n : 0, cur, false, pager ? tabs[cur] : NULL);
+    const char *pill = (tabs != NULL && n == 1) ? UiLocale_Lookup(tabs[0]) : title;
+    UiW_GbaTopBar(gbaBg, gbaIcon, pill, pager ? n : 0, cur, false, pager ? UiLocale_Lookup(tabs[cur]) : NULL);
     UiW_GbaPageStart(pager ? GBA_PAGER_X + GBA_PAGER_W + 12 : GBA_PAGER_X);
     // Touch: the pager's L and R are the tabs either side of the current one
     for (int32_t i = 0; tabX != NULL && tabW != NULL && i < n; i++)

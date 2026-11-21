@@ -162,7 +162,7 @@ static bool PickUp(void)
             return false;
         if (CountPartyAliveNonEggMonsExcept((u8)sPartyPos) == 0)
         {
-            Fail("That's your last POKéMON!");
+            Fail(UI_TR("That's your last POKéMON!"));
             return false;
         }
         sHeld = gPlayerParty[sPartyPos];
@@ -204,7 +204,7 @@ static void PutDown(void)
     {
         if (ItemIsMail((u16)GetMonData(&sHeld, MON_DATA_HELD_ITEM)))
         {
-            Fail("MAIL can't be stored!");
+            Fail(UI_TR("MAIL can't be stored!"));
             return;
         }
         if (BoxHas(sPos))
@@ -228,7 +228,7 @@ static void Withdraw(void)
 {
     if (PartyCount() >= PARTY_SIZE)
     {
-        Fail("Your party's full!");
+        Fail(UI_TR("Your party's full!"));
         return;
     }
     char name[16];
@@ -238,7 +238,7 @@ static void Withdraw(void)
     CalculatePlayerPartyCount();
     PlaySE(SE_SELECT);
     char buf[64];
-    snprintf(buf, sizeof(buf), "%s was taken out of the BOX.", name);
+    snprintf(buf, sizeof(buf), UI_TR("%s was taken out of the BOX."), name);
     Msg(NULL, buf, NULL, NULL, NULL);
 }
 
@@ -248,7 +248,7 @@ static void Store(uint8_t box)
     const s16 spot = GetFirstFreeBoxSpot(box);
     if (spot < 0)
     {
-        Fail("The BOX is full.");
+        Fail(UI_TR("The BOX is full."));
         return;
     }
     char name[16], buf[64];
@@ -260,7 +260,7 @@ static void Store(uint8_t box)
     if (sPartyPos >= PartyCount())
         sPartyPos = PartyCount() - 1;
     PlaySE(SE_SELECT);
-    snprintf(buf, sizeof(buf), "%s was deposited.", name);
+    snprintf(buf, sizeof(buf), UI_TR("%s was deposited."), name);
     Msg(NULL, buf, NULL, NULL, NULL);
 }
 
@@ -323,9 +323,9 @@ static bool ReleaseAllowed(void)
     struct BoxPokemon *bm = CursorMon();
     if (bm == NULL)
         return false;
-    if (GetBoxMonData(bm, MON_DATA_IS_EGG)) { Fail("You can't release an EGG."); return false; }
-    if (ItemIsMail((u16)GetBoxMonData(bm, MON_DATA_HELD_ITEM))) { Fail("Please remove the MAIL."); return false; }
-    if (sArea == AREA_PARTY && CountPartyAliveNonEggMonsExcept((u8)sPartyPos) == 0) { Fail("That's your last POKéMON!"); return false; }
+    if (GetBoxMonData(bm, MON_DATA_IS_EGG)) { Fail(UI_TR("You can't release an EGG.")); return false; }
+    if (ItemIsMail((u16)GetBoxMonData(bm, MON_DATA_HELD_ITEM))) { Fail(UI_TR("Please remove the MAIL.")); return false; }
+    if (sArea == AREA_PARTY && CountPartyAliveNonEggMonsExcept((u8)sPartyPos) == 0) { Fail(UI_TR("That's your last POKéMON!")); return false; }
     return true;
 }
 
@@ -334,12 +334,12 @@ static void Release(void)
     struct BoxPokemon *bm = CursorMon();
     char name[16], a[64], b[64];
     MonName(bm, name, sizeof(name));
-    snprintf(a, sizeof(a), "%s was released.", name);
+    snprintf(a, sizeof(a), UI_TR("%s was released."), name);
     if (!CanRelease(bm))
     {
         // It comes back: the GBA's "… … … … !" sequence
-        snprintf(b, sizeof(b), "%s came back!", name);
-        Msg(NULL, a, "… … … … !", b, "Was it worried about you?");
+        snprintf(b, sizeof(b), UI_TR("%s came back!"), name);
+        Msg(NULL, a, "… … … … !", b, UI_TR("Was it worried about you?"));
         return;
     }
     if (sArea == AREA_PARTY)
@@ -353,7 +353,7 @@ static void Release(void)
     else
         ZeroBoxMonAt(Box(), (u8)sPos);
     PlaySE(SE_SELECT);
-    snprintf(b, sizeof(b), "Bye-bye, %s!", name);
+    snprintf(b, sizeof(b), UI_TR("Bye-bye, %s!"), name);
     Msg(NULL, a, b, NULL, NULL);
 }
 
@@ -383,7 +383,7 @@ static void PlaceItem(void)
     const uint16_t had = HeldItemOf(bm);
     if (ItemIsMail(had))
     {
-        Fail("Please remove the MAIL.");
+        Fail(UI_TR("Please remove the MAIL."));
         return;
     }
     SetHeldItem(bm, sHeldItem);
@@ -411,8 +411,8 @@ static void BuildGiveList(void)
 // WITHDRAW from a box, STORE from the party, as the mode allows
 static void AddTransferAction(void)
 {
-    if (sArea == AREA_BOX && sMode != MODE_DEPOSIT) UiMenu_Add(&sMenu, "WITHDRAW", ACT_WITHDRAW);
-    if (sArea == AREA_PARTY && sMode != MODE_WITHDRAW) UiMenu_Add(&sMenu, "STORE", ACT_STORE);
+    if (sArea == AREA_BOX && sMode != MODE_DEPOSIT) UiMenu_Add(&sMenu, UI_TR("WITHDRAW"), ACT_WITHDRAW);
+    if (sArea == AREA_PARTY && sMode != MODE_WITHDRAW) UiMenu_Add(&sMenu, UI_TR("STORE"), ACT_STORE);
 }
 
 static void OpenActions(void)
@@ -422,7 +422,7 @@ static void OpenActions(void)
         return;
     if (sMode == MODE_ITEMS && GetBoxMonData(bm, MON_DATA_IS_EGG))
     {
-        Fail("EGGs can't hold items.");
+        Fail(UI_TR("EGGs can't hold items."));
         return;
     }
     char name[16];
@@ -434,28 +434,28 @@ static void OpenActions(void)
         const uint16_t it = HeldItemOf(bm);
         if (it != ITEM_NONE)
         {
-            if (!ItemIsMail(it)) UiMenu_Add(&sMenu, "MOVE", ACT_MOVE);
-            if (!ItemIsMail(it)) UiMenu_Add(&sMenu, "BAG", ACT_BAG);
-            UiMenu_Add(&sMenu, "INFO", ACT_INFO);
+            if (!ItemIsMail(it)) UiMenu_Add(&sMenu, UI_TR("MOVE"), ACT_MOVE);
+            if (!ItemIsMail(it)) UiMenu_Add(&sMenu, UI_TR("BAG"), ACT_BAG);
+            UiMenu_Add(&sMenu, UI_TR("INFO"), ACT_INFO);
         }
         else
-            UiMenu_Add(&sMenu, "GIVE", ACT_GIVE);
+            UiMenu_Add(&sMenu, UI_TR("GIVE"), ACT_GIVE);
     }
     else
     {
         // The GBA's order (SetMenuText): MOVE or the mode's action, SUMMARY, then WITHDRAW / STORE
         // in MOVE POKéMON
         if (sMode == MODE_MOVE)
-            UiMenu_Add(&sMenu, "MOVE", ACT_MOVE);
+            UiMenu_Add(&sMenu, UI_TR("MOVE"), ACT_MOVE);
         else
             AddTransferAction();
-        UiMenu_Add(&sMenu, "SUMMARY", ACT_SUMMARY);
+        UiMenu_Add(&sMenu, UI_TR("SUMMARY"), ACT_SUMMARY);
         if (sMode == MODE_MOVE)
             AddTransferAction();
-        UiMenu_Add(&sMenu, "MARK", ACT_MARK);
-        UiMenu_Add(&sMenu, "RELEASE", ACT_RELEASE);
+        UiMenu_Add(&sMenu, UI_TR("MARK"), ACT_MARK);
+        UiMenu_Add(&sMenu, UI_TR("RELEASE"), ACT_RELEASE);
     }
-    UiMenu_Add(&sMenu, "CANCEL", UI_MENU_CANCEL);
+    UiMenu_Add(&sMenu, UI_TR("CANCEL"), UI_MENU_CANCEL);
     sPop = POP_ACTIONS;
     PlaySE(SE_SELECT);
 }
@@ -470,19 +470,19 @@ static void OpenBoxList(bool store)
 
 static void OpenSets(void)
 {
-    UiMenu_Open(&sMenu, "WALLPAPER", 236, 120, 300);
-    UiMenu_Add(&sMenu, "SCENERY 1", 0);
-    UiMenu_Add(&sMenu, "SCENERY 2", 1);
-    UiMenu_Add(&sMenu, "SCENERY 3", 2);
-    UiMenu_Add(&sMenu, "ETCETERA", 3);
+    UiMenu_Open(&sMenu, UI_TR("WALLPAPER"), 236, 120, 300);
+    UiMenu_Add(&sMenu, UI_TR("SCENERY 1"), 0);
+    UiMenu_Add(&sMenu, UI_TR("SCENERY 2"), 1);
+    UiMenu_Add(&sMenu, UI_TR("SCENERY 3"), 2);
+    UiMenu_Add(&sMenu, UI_TR("ETCETERA"), 3);
     if (IsWaldaWallpaperUnlocked())
-        UiMenu_Add(&sMenu, "FRIENDS", 4);
-    UiMenu_Add(&sMenu, "CANCEL", UI_MENU_CANCEL);
+        UiMenu_Add(&sMenu, UI_TR("FRIENDS"), 4);
+    UiMenu_Add(&sMenu, UI_TR("CANCEL"), UI_MENU_CANCEL);
     sPop = POP_SETS;
 }
 
-static const char *const sWallNames[] = { "FOREST", "CITY", "DESERT", "SAVANNA", "CRAG", "VOLCANO", "SNOW", "CAVE",
-    "BEACH", "SEAFLOOR", "RIVER", "SKY", "POLKA-DOT", "POKéCENTER", "MACHINE", "PLAIN", "FRIENDS" };
+static const char *const sWallNames[] = { UI_N("FOREST"), UI_N("CITY"), UI_N("DESERT"), UI_N("SAVANNA"), UI_N("CRAG"), UI_N("VOLCANO"), UI_N("SNOW"), UI_N("CAVE"),
+    UI_N("BEACH"), UI_N("SEAFLOOR"), UI_N("RIVER"), UI_N("SKY"), UI_N("POLKA-DOT"), UI_N("POKéCENTER"), UI_N("MACHINE"), UI_N("PLAIN"), UI_N("FRIENDS") };
 
 static void OpenWalls(int32_t set)
 {
@@ -494,10 +494,10 @@ static void OpenWalls(int32_t set)
         PlaySE(SE_SELECT);
         return;
     }
-    UiMenu_Open(&sMenu, "WALLPAPER", 236, 120, 300);
+    UiMenu_Open(&sMenu, UI_TR("WALLPAPER"), 236, 120, 300);
     for (int32_t i = 0; i < 4; i++)
-        UiMenu_Add(&sMenu, sWallNames[set * 4 + i], set * 4 + i);
-    UiMenu_Add(&sMenu, "CANCEL", UI_MENU_CANCEL);
+        UiMenu_Add(&sMenu, UiLocale_Lookup(sWallNames[set * 4 + i]), set * 4 + i);
+    UiMenu_Add(&sMenu, UI_TR("CANCEL"), UI_MENU_CANCEL);
     sWallPreview = set * 4;
     sPop = POP_WALLS;
 }
@@ -586,8 +586,8 @@ static void Act(int32_t id)
             UiParty_PushSummary(sPartyPos);
         break;
     case ACT_STORE:
-        if (CountPartyAliveNonEggMonsExcept((u8)sPartyPos) == 0) { Fail("That's your last POKéMON!"); break; }
-        if (ItemIsMail(HeldItemOf(bm))) { Fail("MAIL can't be stored!"); break; }
+        if (CountPartyAliveNonEggMonsExcept((u8)sPartyPos) == 0) { Fail(UI_TR("That's your last POKéMON!")); break; }
+        if (ItemIsMail(HeldItemOf(bm))) { Fail(UI_TR("MAIL can't be stored!")); break; }
         OpenBoxList(true);
         break;
     case ACT_MARK:
@@ -598,9 +598,9 @@ static void Act(int32_t id)
     case ACT_RELEASE:
         if (ReleaseAllowed())
         {
-            UiMenu_Open(&sMenu, "RELEASE", 330, 200, 300);
-            UiMenu_Add(&sMenu, "YES", 1);
-            UiMenu_Add(&sMenu, "NO", UI_MENU_CANCEL);
+            UiMenu_Open(&sMenu, UI_TR("RELEASE"), 330, 200, 300);
+            UiMenu_Add(&sMenu, UI_TR("YES"), 1);
+            UiMenu_Add(&sMenu, UI_TR("NO"), UI_MENU_CANCEL);
             sMenu.list.sel = 1;
             sPop = POP_RELEASE;
         }
@@ -608,10 +608,10 @@ static void Act(int32_t id)
     case ACT_BAG:
     {
         const uint16_t it = HeldItemOf(bm);
-        if (!AddBagItem(it, 1)) { Fail("The BAG is full."); break; }
+        if (!AddBagItem(it, 1)) { Fail(UI_TR("The BAG is full.")); break; }
         SetHeldItem(bm, ITEM_NONE);
         PlaySE(SE_SELECT);
-        Msg(NULL, "Placed item in the BAG.", NULL, NULL, NULL);
+        Msg(NULL, UI_TR("Placed item in the BAG."), NULL, NULL, NULL);
         break;
     }
     case ACT_INFO:
@@ -623,7 +623,7 @@ static void Act(int32_t id)
     }
     case ACT_GIVE:
         BuildGiveList();
-        if (sGiveCount == 0) { Fail("There are no items to give."); break; }
+        if (sGiveCount == 0) { Fail(UI_TR("There are no items to give.")); break; }
         sPop = POP_GIVE;
         break;
     }
@@ -772,12 +772,12 @@ static bool Update(const UiInput *in)
 
     if (in->pressed & VITA_BTN_CIRCLE)
     {
-        if (sHolding) { Fail("You're holding a POKéMON!"); return true; }
-        if (sHeldItem != ITEM_NONE) { Fail("You're holding an item!"); return true; }
-        if (sHeldItem != ITEM_NONE) { Fail("Put the item down first."); return true; }
-        UiMenu_Open(&sMenu, "PC", 330, 200, 300);
-        UiMenu_Add(&sMenu, "YES", 1);
-        UiMenu_Add(&sMenu, "NO", 2);
+        if (sHolding) { Fail(UI_TR("You're holding a POKéMON!")); return true; }
+        if (sHeldItem != ITEM_NONE) { Fail(UI_TR("You're holding an item!")); return true; }
+        if (sHeldItem != ITEM_NONE) { Fail(UI_TR("Put the item down first.")); return true; }
+        UiMenu_Open(&sMenu, UI_TR("PC"), 330, 200, 300);
+        UiMenu_Add(&sMenu, UI_TR("YES"), 1);
+        UiMenu_Add(&sMenu, UI_TR("NO"), 2);
         sPop = POP_EXIT;
         PlaySE(SE_SELECT);
         return true;
@@ -840,11 +840,11 @@ static bool Update(const UiInput *in)
     {
         if (sArea == AREA_PLATE)
         {
-            UiMenu_Open(&sMenu, "BOX", 236, 120, 260);
-            UiMenu_Add(&sMenu, "JUMP", BOXM_JUMP);
-            UiMenu_Add(&sMenu, "WALLPAPER", BOXM_WALLPAPER);
-            UiMenu_Add(&sMenu, "NAME", BOXM_NAME);
-            UiMenu_Add(&sMenu, "CANCEL", UI_MENU_CANCEL);
+            UiMenu_Open(&sMenu, UI_TR("BOX"), 236, 120, 260);
+            UiMenu_Add(&sMenu, UI_TR("JUMP"), BOXM_JUMP);
+            UiMenu_Add(&sMenu, UI_TR("WALLPAPER"), BOXM_WALLPAPER);
+            UiMenu_Add(&sMenu, UI_TR("NAME"), BOXM_NAME);
+            UiMenu_Add(&sMenu, UI_TR("CANCEL"), UI_MENU_CANCEL);
             sPop = POP_BOXMENU;
             PlaySE(SE_SELECT);
             return true;
@@ -889,9 +889,9 @@ static void DrawDetail(void)
     {
         if (gba)
             UiW_GbaTextWrapped(UI_FACE_VT323, UI_BODY_PX, 716, 84, 210, 30,
-                               sArea == AREA_PLATE ? "✕: BOX menu (JUMP, WALLPAPER, NAME)." : "Empty.", soft, sh, 4);
+                               sArea == AREA_PLATE ? UI_TR("✕: BOX menu (JUMP, WALLPAPER, NAME).") : UI_TR("Empty."), soft, sh, 4);
         else
-            UiW_TextWrapped(716, 84, 210, 30, sArea == AREA_PLATE ? "✕: BOX menu (JUMP, WALLPAPER, NAME)." : "Empty.", soft, 4);
+            UiW_TextWrapped(716, 84, 210, 30, sArea == AREA_PLATE ? UI_TR("✕: BOX menu (JUMP, WALLPAPER, NAME).") : UI_TR("Empty."), soft, 4);
         return;
     }
     const bool egg = GetBoxMonData(bm, MON_DATA_IS_EGG);
@@ -904,15 +904,15 @@ static void DrawDetail(void)
     if (!egg)
     {
         UiKit_GenderShiny(722 + nw, 82, GetBoxMonGender(bm), false);
-        snprintf(buf, sizeof(buf), "Lv%u", (unsigned)GetLevelFromBoxMonExp(bm));
+        snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)GetLevelFromBoxMonExp(bm));
         if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 716, 108, buf, ink, sh);
         else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 716, 108, buf, ink);
     }
     const uint16_t it = HeldItemOf(bm);
-    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 716, 156, "ITEM", soft, sh);
-    else     UiText_Draw(UI_FACE_PS2P, 16, 716, 156, "ITEM", soft);
+    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 716, 156, UI_TR("ITEM"), soft, sh);
+    else     UiText_Draw(UI_FACE_PS2P, 16, 716, 156, UI_TR("ITEM"), soft);
     if (it != ITEM_NONE) { UiSpr_ItemIcon(it, 716, 176, 1); UiGame_ItemName(it, buf, sizeof(buf)); }
-    else snprintf(buf, sizeof(buf), "NONE");
+    else snprintf(buf, sizeof(buf), UI_TR("NONE"));
     if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, it ? 746 : 716, 172, buf, it ? ink : soft, sh);
     else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, it ? 746 : 716, 172, buf, it ? ink : soft);
     if (egg)
@@ -923,13 +923,13 @@ static void DrawDetail(void)
                    UI_RGBA(240, 243, 230, 255), UI_RGBA(228, 234, 218, 255), C_WHITE, 0);
     else
         UiW_Inset(564, 228, 364, 70);
-    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 576, 236, "NATURE", soft, sh);
-    else     UiText_Draw(UI_FACE_PS2P, 16, 576, 236, "NATURE", soft);
+    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 576, 236, UI_TR("NATURE"), soft, sh);
+    else     UiText_Draw(UI_FACE_PS2P, 16, 576, 236, UI_TR("NATURE"), soft);
     UiGame_Text(gNatureNamePointers[GetNatureFromPersonality(pid)], buf, sizeof(buf));
     if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 576, 256, buf, ink, sh);
     else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 576, 256, buf, ink);
-    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 756, 236, "MARKS", soft, sh);
-    else     UiText_Draw(UI_FACE_PS2P, 16, 756, 236, "MARKS", soft);
+    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 756, 236, UI_TR("MARKS"), soft, sh);
+    else     UiText_Draw(UI_FACE_PS2P, 16, 756, 236, UI_TR("MARKS"), soft);
     DrawMarks(756, 256, (uint8_t)GetBoxMonData(bm, MON_DATA_MARKINGS), gba ? UI_RGBA(216, 32, 24, 255) : UI_COL_SELECT_INK, soft);
 
     if (gba)
@@ -937,13 +937,13 @@ static void DrawDetail(void)
                    UI_RGBA(240, 243, 230, 255), UI_RGBA(228, 234, 218, 255), C_WHITE, 0);
     else
         UiW_Inset(564, 306, 364, 70);
-    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 576, 314, "ABILITY", soft, sh);
-    else     UiText_Draw(UI_FACE_PS2P, 16, 576, 314, "ABILITY", soft);
+    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 576, 314, UI_TR("ABILITY"), soft, sh);
+    else     UiText_Draw(UI_FACE_PS2P, 16, 576, 314, UI_TR("ABILITY"), soft);
     UiGame_Text(gAbilityNames[UiGame_SafeAbility(GetAbilityBySpecies(species, (u8)GetBoxMonData(bm, MON_DATA_ABILITY_NUM)))], buf, sizeof(buf));
     if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 576, 334, buf, ink, sh);
     else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 576, 334, buf, ink);
-    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 756, 314, "OT", soft, sh);
-    else     UiText_Draw(UI_FACE_PS2P, 16, 756, 314, "OT", soft);
+    if (gba) UiW_GbaText(UI_FACE_PS2P, 16, 756, 314, UI_TR("OT"), soft, sh);
+    else     UiText_Draw(UI_FACE_PS2P, 16, 756, 314, UI_TR("OT"), soft);
     u8 ot[PLAYER_NAME_LENGTH + 1];
     GetBoxMonData(bm, MON_DATA_OT_NAME, ot);
     ot[PLAYER_NAME_LENGTH] = EOS;
@@ -951,9 +951,9 @@ static void DrawDetail(void)
     if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 756, 334, buf, ink, sh);
     else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 756, 334, buf, ink);
 
-    const char *hint = sHolding ? "✕: put it down (swaps with the one there)." :
-                       sMode == MODE_ITEMS && sHeldItem ? "✕ on a POKéMON: give or swap the item." :
-                       sQuick ? "Quick: ✕ does the first option at once." : "✕: options. SELECT: quick.";
+    const char *hint = sHolding ? UI_TR("✕: put it down (swaps with the one there).") :
+                       sMode == MODE_ITEMS && sHeldItem ? UI_TR("✕ on a POKéMON: give or swap the item.") :
+                       sQuick ? UI_TR("Quick: ✕ does the first option at once.") : UI_TR("✕: options. SELECT: quick.");
     if (gba)
     {
         UiW_GbaBox(564, 386, 364, 92, 4, UI_RGBA(150, 172, 156, 255),
@@ -966,7 +966,7 @@ static void DrawDetail(void)
 
 static void Build(void)
 {
-    static const char *const tabs[4][1] = { { "WITHDRAW" }, { "DEPOSIT" }, { "MOVE POKéMON" }, { "MOVE ITEMS" } };
+    static const char *const tabs[4][1] = { { UI_N("WITHDRAW") }, { UI_N("DEPOSIT") }, { UI_N("MOVE POKéMON") }, { UI_N("MOVE ITEMS") } };
     const bool gba = gUiTheme->gbaFrame;
     const uint32_t ink = gba ? UI_RGBA(49, 49, 49, 255) : UI_COL_INK;
     const uint32_t soft = gba ? UI_RGBA(110, 120, 114, 255) : UI_COL_INK_SOFT;
@@ -974,17 +974,17 @@ static void Build(void)
 
     if (gba)
     {
-        UiW_GbaTopBar(UI_GBA_BG_OPTIONS, UI_SPR_BALL, tabs[sMode][0], 0, 0, false, NULL);
+        UiW_GbaTopBar(UI_GBA_BG_OPTIONS, UI_SPR_BALL, UiLocale_Lookup(tabs[sMode][0]), 0, 0, false, NULL);
         int32_t rx = UI_SCREEN_W - 14;
-        UiW_GbaHelpBadge(&rx, "O", "EXIT", true);
-        UiW_GbaHelpBadge(&rx, "SELECT", sQuick ? "MENU" : "QUICK", true);
-        UiW_GbaHelpBadge(&rx, "X", sHolding ? "PLACE" : "OPTIONS", false);
+        UiW_GbaHelpBadge(&rx, "O", UI_TR("EXIT"), true);
+        UiW_GbaHelpBadge(&rx, "SELECT", sQuick ? UI_TR("MENU") : UI_TR("QUICK"), true);
+        UiW_GbaHelpBadge(&rx, "X", sHolding ? UI_TR("PLACE") : UI_TR("OPTIONS"), false);
     }
     else
     {
         int32_t tx[1], tw[1];
-        UiKit_Header("PC", tabs[sMode], 1, 0, tx, tw, 12);
-        UiW_HeaderValue(sQuick ? "CURSOR: QUICK" : "CURSOR: MENU", UI_COL_ON_FRAME);
+        UiKit_Header(UI_TR("PC"), tabs[sMode], 1, 0, tx, tw, 12);
+        UiW_HeaderValue(sQuick ? UI_TR("CURSOR: QUICK") : UI_TR("CURSOR: MENU"), UI_COL_ON_FRAME);
     }
 
     // Party
@@ -993,7 +993,7 @@ static void Build(void)
         UiW_GbaWin(16, 60, 180, 432, UI_GBA_WIN_DEFAULT);
     else
         UiW_Panel(16, 60, 180, 432);
-    snprintf(buf, sizeof(buf), "PARTY %d/6", (int)PartyCount());
+    snprintf(buf, sizeof(buf), UI_TR("PARTY %d/6"), (int)PartyCount());
     if (gba)
         UiW_GbaSectionStrip(24, 68, 164, 24, UI_GBA_TAG_SLATE, buf, NULL);
     else
@@ -1024,7 +1024,7 @@ static void Build(void)
                 UiSpr_ItemIcon((uint16_t)GetMonData(mon, MON_DATA_HELD_ITEM), PARTY_X + 62, y + 22, 1);
             if (!GetMonData(mon, MON_DATA_IS_EGG))
             {
-                snprintf(buf, sizeof(buf), "Lv%u", (unsigned)GetMonData(mon, MON_DATA_LEVEL));
+                snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)GetMonData(mon, MON_DATA_LEVEL));
                 if (gba) UiW_GbaTextMid(UI_FACE_VT323, UI_BODY_PX, PARTY_X + 92, y, SLOT_H - 4, buf, on ? UI_RGBA(168, 84, 8, 255) : ink, sh);
                 else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, PARTY_X + 92, y + 6, buf, on ? UI_COL_SELECT_INK : ink);
             }
@@ -1102,14 +1102,14 @@ static void Build(void)
         UiW_GbaTextCentred(UI_FACE_VT323, UI_BODY_PX, WALL_X + 40, WALL_Y + 296, 100, 32, buf, ink, sh);
         UiW_GbaBox(WALL_X + 148, WALL_Y + 296, 172, 32, 5, UI_RGBA(40, 48, 48, 255),
                    UI_RGBA(248, 249, 244, 255), UI_RGBA(232, 236, 224, 255), C_WHITE, 2);
-        UiW_GbaTextCentred(UI_FACE_VT323, UI_BODY_PX, WALL_X + 148, WALL_Y + 296, 172, 32, sWallNames[wall < 17 ? wall : 0], ink, sh);
+        UiW_GbaTextCentred(UI_FACE_VT323, UI_BODY_PX, WALL_X + 148, WALL_Y + 296, 172, 32, UiLocale_Lookup(sWallNames[wall < 17 ? wall : 0]), ink, sh);
     }
     else
     {
         UiW_Capsule(WALL_X + 40, WALL_Y + 296, 100, 32);
         UiText_DrawCentred(UI_FACE_VT323, UI_BODY_PX, WALL_X + 40, WALL_Y + 296, 100, 32, buf, UI_COL_ON_FRAME);
         UiW_Capsule(WALL_X + 148, WALL_Y + 296, 172, 32);
-        UiText_DrawCentred(UI_FACE_VT323, UI_BODY_PX, WALL_X + 148, WALL_Y + 296, 172, 32, sWallNames[wall < 17 ? wall : 0], UI_COL_ON_FRAME);
+        UiText_DrawCentred(UI_FACE_VT323, UI_BODY_PX, WALL_X + 148, WALL_Y + 296, 172, 32, UiLocale_Lookup(sWallNames[wall < 17 ? wall : 0]), UI_COL_ON_FRAME);
     }
 
     // What the cursor holds
@@ -1131,9 +1131,9 @@ static void Build(void)
     if (!gba)
     {
         int32_t fx = 16;
-        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sHolding ? "Put down" : "Options");
-        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Exit");
-        UiW_FooterKey(&fx, "SELECT", sQuick ? "Menu" : "Quick");
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sHolding ? UI_TR("Put down") : UI_TR("Options"));
+        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Exit"));
+        UiW_FooterKey(&fx, "SELECT", sQuick ? UI_TR("Menu") : UI_TR("Quick"));
         UiKit_FooterClock();
     }
 
@@ -1147,12 +1147,12 @@ static void Build(void)
             {
                 UiW_GbaMsg(48, UI_SCREEN_H - 24 - 124 - 40, UI_SCREEN_W - 96, 90, false, false);
                 UiW_GbaText(UI_FACE_VT323, UI_DIALOG_PX, 76, UI_SCREEN_H - 24 - 124 - 22,
-                            sPop == POP_RELEASE ? "Release this POKéMON?" : "Continue BOX operations?", ink, sh);
+                            sPop == POP_RELEASE ? UI_TR("Release this POKéMON?") : UI_TR("Continue BOX operations?"), ink, sh);
             }
             else
             {
                 UiW_DialogBox(48, UI_SCREEN_H - 24 - 124 - 40, UI_SCREEN_W - 96, 90);
-                UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 76, UI_SCREEN_H - 24 - 124 - 22, sPop == POP_RELEASE ? "Release this POKéMON?" : "Continue BOX operations?", UI_COL_INK);
+                UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 76, UI_SCREEN_H - 24 - 124 - 22, sPop == POP_RELEASE ? UI_TR("Release this POKéMON?") : UI_TR("Continue BOX operations?"), UI_COL_INK);
             }
         }
         UiMenu_Draw(&sMenu);
@@ -1163,10 +1163,10 @@ static void Build(void)
         if (gba)
         {
             UiW_GbaWin(264, 70, 432, 360, UI_GBA_WIN_DEFAULT);
-            UiW_GbaSectionStrip(276, 78, 408, 28, UI_GBA_TAG_SLATE, sBoxListStore ? "DEPOSIT IN WHICH BOX?" : "JUMP TO WHICH BOX?", NULL);
+            UiW_GbaSectionStrip(276, 78, 408, 28, UI_GBA_TAG_SLATE, sBoxListStore ? UI_TR("DEPOSIT IN WHICH BOX?") : UI_TR("JUMP TO WHICH BOX?"), NULL);
         }
         else
-            UiW_Window(264, 70, 432, 360, sBoxListStore ? "DEPOSIT IN WHICH BOX?" : "JUMP TO WHICH BOX?");
+            UiW_Window(264, 70, 432, 360, sBoxListStore ? UI_TR("DEPOSIT IN WHICH BOX?") : UI_TR("JUMP TO WHICH BOX?"));
         for (int32_t r = 0; r < 7 && sBoxList.first + r < BOXES; r++)
         {
             const int32_t b = sBoxList.first + r, y = 120 + r * 40;
@@ -1188,10 +1188,10 @@ static void Build(void)
         if (gba)
         {
             UiW_GbaWin(284, 80, 392, 310, UI_GBA_WIN_DEFAULT);
-            UiW_GbaSectionStrip(296, 88, 368, 28, UI_GBA_TAG_SLATE, "GIVE WHICH ITEM?", NULL);
+            UiW_GbaSectionStrip(296, 88, 368, 28, UI_GBA_TAG_SLATE, UI_TR("GIVE WHICH ITEM?"), NULL);
         }
         else
-            UiW_Window(284, 80, 392, 310, "GIVE WHICH ITEM?");
+            UiW_Window(284, 80, 392, 310, UI_TR("GIVE WHICH ITEM?"));
         for (int32_t r = 0; r < 6 && sGiveList.first + r < sGiveCount; r++)
         {
             const int32_t i = sGiveList.first + r, y = 130 + r * 40;
@@ -1206,22 +1206,22 @@ static void Build(void)
     }
     else if (sPop == POP_MARKS)
     {
-        static const char *const labels[6] = { "o  CIRCLE", "^  TRIANGLE", "#  SQUARE", "<3 HEART", "OK", "CANCEL" };
+        static const char *const labels[6] = { UI_N("o  CIRCLE"), UI_N("^  TRIANGLE"), UI_N("#  SQUARE"), UI_N("<3 HEART"), UI_N("OK"), UI_N("CANCEL") };
         UiDraw_Darken(1, 3);
         if (gba)
         {
             UiW_GbaWin(344, 100, 272, 330, UI_GBA_WIN_DEFAULT);
-            UiW_GbaSectionStrip(356, 108, 248, 28, UI_GBA_TAG_SLATE, "MARK", NULL);
+            UiW_GbaSectionStrip(356, 108, 248, 28, UI_GBA_TAG_SLATE, UI_TR("MARK"), NULL);
         }
         else
-            UiW_Window(344, 100, 272, 330, "MARK");
+            UiW_Window(344, 100, 272, 330, UI_TR("MARK"));
         for (int32_t i = 0; i < 6; i++)
         {
             const int32_t y = 150 + i * 44;
             const bool on = i == sMarkSel;
             UiW_Row(360, y, 240, 42, on, i);
-            if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 388, y + 4, labels[i], on ? UI_RGBA(168, 84, 8, 255) : ink, sh);
-            else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 388, y + 4, labels[i], on ? UI_COL_SELECT_INK : ink);
+            if (gba) UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 388, y + 4, UiLocale_Lookup(labels[i]), on ? UI_RGBA(168, 84, 8, 255) : ink, sh);
+            else     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 388, y + 4, UiLocale_Lookup(labels[i]), on ? UI_COL_SELECT_INK : ink);
             if (i < 4 && ((sMarks >> i) & 1))
                 UiText_Draw(UI_FACE_PS2P, 16, 568, y + 12, "*", on ? UI_COL_SELECT_INK : gUiTheme->selEdge);
         }

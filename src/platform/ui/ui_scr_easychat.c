@@ -152,9 +152,9 @@ static void Ask(int32_t kind, const u8 *t1, const u8 *t2)
     sAsk = kind;
     if (kind != ASK_MSG)
     {
-        UiMenu_Open(&sYesNo, "EASY CHAT", 700, 330, 220);
-        UiMenu_Add(&sYesNo, "YES", 1);
-        UiMenu_Add(&sYesNo, "NO", UI_MENU_CANCEL);
+        UiMenu_Open(&sYesNo, UI_TR("EASY CHAT"), 700, 330, 220);
+        UiMenu_Add(&sYesNo, UI_TR("YES"), 1);
+        UiMenu_Add(&sYesNo, UI_TR("NO"), UI_MENU_CANCEL);
         sYesNo.list.sel = kind == ASK_CONFIRM || kind == ASK_LYRICS ? 0 : 1;
     }
 }
@@ -196,14 +196,14 @@ static void BuildButtons(void)
     sBtnCount = 0;
     if (sReadOnly)
         return;                                       // the quiz question: ✕ / ○ only
-    sBtns[sBtnCount++] = (EcButton){ "DEL ALL", UI_BTN_RED, TryDeleteAll };
-    sBtns[sBtnCount++] = (EcButton){ "CANCEL", UI_BTN_AMBER, TryQuit };
-    sBtns[sBtnCount++] = (EcButton){ "OK", UI_BTN_GREEN, TryOk };
+    sBtns[sBtnCount++] = (EcButton){ UI_TR("DEL ALL"), UI_BTN_RED, TryDeleteAll };
+    sBtns[sBtnCount++] = (EcButton){ UI_TR("CANCEL"), UI_BTN_AMBER, TryQuit };
+    sBtns[sBtnCount++] = (EcButton){ UI_TR("OK"), UI_BTN_GREEN, TryOk };
     const u8 quiz = EasyChat_UiQuizTarget();
     if (quiz == EASY_CHAT_TYPE_QUIZ_QUESTION || quiz == EASY_CHAT_TYPE_QUIZ_SET_QUESTION)
-        sBtns[sBtnCount++] = (EcButton){ "QUIZ", UI_BTN_AMBER, QuizSwitch };
+        sBtns[sBtnCount++] = (EcButton){ UI_TR("QUIZ"), UI_BTN_AMBER, QuizSwitch };
     else if (quiz == EASY_CHAT_TYPE_QUIZ_SET_ANSWER)
-        sBtns[sBtnCount++] = (EcButton){ "ANSWER", UI_BTN_AMBER, QuizSwitch };
+        sBtns[sBtnCount++] = (EcButton){ UI_TR("ANSWER"), UI_BTN_AMBER, QuizSwitch };
 }
 
 static void BuildGroups(void)
@@ -233,7 +233,7 @@ static void GroupLabel(int32_t index, char *out, size_t cap)
     if (sAlpha)
     {
         const int32_t g = sGroupIds[index];
-        if (g == 0) snprintf(out, cap, "OTHERS");
+        if (g == 0) snprintf(out, cap, UI_TR("OTHERS"));
         else snprintf(out, cap, "%c", 'A' + g - 1);
     }
     else
@@ -511,7 +511,7 @@ static void BuildLists(void)
     char buf[96];
     const int32_t lowH = LOW_BOTTOM - sLowY, visWords = WORD_COLS * sListRows;
     UiW_Panel(16, sLowY, GROUP_W, lowH);
-    UiW_PanelHead(16, sLowY, GROUP_W, sAlpha ? "A-Z" : "GROUPS", NULL);
+    UiW_PanelHead(16, sLowY, GROUP_W, sAlpha ? UI_TR("A-Z") : UI_TR("GROUPS"), NULL);
     for (int32_t r = 0; r < sListRows && sGroups.first + r < sGroupCount; r++)
     {
         const int32_t g = sGroups.first + r, y = sLowY + LIST_TOP + r * ROW_H;
@@ -531,7 +531,7 @@ static void BuildLists(void)
     else
         buf[0] = 0;
     char right[24];
-    snprintf(right, sizeof(right), "%d words", (int)sWordCount);
+    snprintf(right, sizeof(right), UI_TR("%d words"), (int)sWordCount);
     UiW_PanelHead(wx, sLowY, MSG_W - GROUP_W - 12, buf, right);
     for (int32_t k = 0; k < visWords; k++)
     {
@@ -556,13 +556,13 @@ static void BuildDialog(const char *a, const char *b)
 
 static void Build(void)
 {
-    static const char *const tabs[2] = { "GROUPS", "A-Z" };
+    static const char *const tabs[2] = { UI_N("GROUPS"), UI_N("A-Z") };
     char title[48];
     Text(EasyChat_UiTitle(), title, sizeof(title));
     if (sReadOnly)
-        UiKit_HeaderAs(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, "EASY CHAT", NULL, 0, 0, NULL, NULL, 12);
+        UiKit_HeaderAs(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, UI_TR("EASY CHAT"), NULL, 0, 0, NULL, NULL, 12);
     else
-        UiKit_HeaderAs(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, "EASY CHAT", tabs, 2, sAlpha ? 1 : 0, sTabX, sTabW, 12);
+        UiKit_HeaderAs(UI_GBA_BG_POKENAV, UI_SPR_START_POKENAV, UI_TR("EASY CHAT"), tabs, 2, sAlpha ? 1 : 0, sTabX, sTabW, 12);
     if (title[0])
         UiW_HeaderValue(title, UI_COL_ON_FRAME);
 
@@ -578,17 +578,17 @@ static void Build(void)
         Text(b, l2, sizeof(l2));
         if (sAsk == ASK_NONE)
             BuildDialog(l1, l2);
-        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Answer");
-        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Quit");
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Answer"));
+        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Quit"));
     }
     else
     {
         BuildLists();
-        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Choose");
-        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Choose"));
+        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Back"));
         if (EasyChat_UiCanDeleteWord())
-            UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, "Delete word");
-        UiW_FooterKey(&fx, "START", "OK");
+            UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, UI_TR("Delete word"));
+        UiW_FooterKey(&fx, "START", UI_TR("OK"));
     }
     UiKit_FooterClock();
 

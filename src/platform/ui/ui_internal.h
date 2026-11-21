@@ -231,6 +231,7 @@ int32_t UiW_Capsule(int32_t x, int32_t y, int32_t w, int32_t h);
 void UiW_HeaderTitle(const char *title);                    // Poké Ball + title in a bevelled capsule
 void UiW_HeaderValue(const char *text, uint32_t colour);    // right-aligned capsule (money, name)
 // Tab rail "L [tabs] R" starting at x; fills tabX/tabW for hit testing; returns its right edge.
+// Tab labels are tables of UI_N strings: the tab widgets (and UiKit_Header / UiKit_HeaderAs) translate them
 int32_t UiW_Tabs(int32_t x, const char *const *labels, int32_t count, int32_t current, int32_t *tabX, int32_t *tabW);
 int32_t UiW_TabsPad(int32_t x, const char *const *labels, int32_t count, int32_t current, int32_t *tabX, int32_t *tabW, int32_t pad);
 int32_t UiW_TextWrapped(int32_t x, int32_t y, int32_t w, int32_t lineH, const char *text, uint32_t colour, int32_t maxLines);

@@ -208,7 +208,7 @@ static void DrawMoveRow(const ForgetMove *m, int32_t y, bool on, int32_t i, bool
     UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + m->type), ROW_X + 28, y + 6, 2);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, ROW_X + 104, y + 4, m->name, ink);
     if (known && IsMoveHm(m->move))
-        UiW_Chip(ROW_X + ROW_W - 200, y + 7, "HM", false);
+        UiW_Chip(ROW_X + ROW_W - 200, y + 7, UI_TR("HM"), false);
     snprintf(buf, sizeof(buf), "%u/%u", (unsigned)m->pp, (unsigned)m->maxPp);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, ROW_X + ROW_W - 16 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), y + 4, buf, ink);
 }
@@ -220,7 +220,7 @@ static void DrawRow(int32_t i)
 
 static void DrawCompare(int32_t x, const char *tag, uint32_t tagCol, const ForgetMove *m)
 {
-    char buf[32];
+    char buf[64];
     UiW_Inset(x, 356, 300, 136);
     UiText_Draw(UI_FACE_PS2P, 16, x + 14, 368, tag, tagCol);
     if (m->move == MOVE_NONE)
@@ -237,12 +237,12 @@ static void DrawCompare(int32_t x, const char *tag, uint32_t tagCol, const Forge
 // The POKéMON (shared by FORGET and the MOVE RELEARNER): picture, name, level, types, help box
 static void DrawMonPanel(const char *name)
 {
-    char buf[48];
+    char buf[64];
     const uint16_t species = UiGame_SafeSpecies(GetMonData(sMon, MON_DATA_SPECIES));
     UiW_Panel(16, 60, 300, 272);
     UiW_Inset(30, 74, 272, 176);
     UiSpr_MonFront(species, IsMonShiny(sMon), 30 + (272 - 128) / 2, 74 + (176 - 128) / 2, 2);
-    snprintf(buf, sizeof(buf), "%s Lv%u", name, (unsigned)GetMonData(sMon, MON_DATA_LEVEL));
+    snprintf(buf, sizeof(buf), UI_TR("%s Lv%u"), name, (unsigned)GetMonData(sMon, MON_DATA_LEVEL));
     UiText_Draw(UI_FACE_PS2P, 16, 30, 262, buf, UI_COL_INK);
     UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + gSpeciesInfo[species].types[0]), 30, 290, 2);
     if (gSpeciesInfo[species].types[1] != gSpeciesInfo[species].types[0])
@@ -253,48 +253,48 @@ static void DrawMonPanel(const char *name)
 static void Build(void)
 {
     char buf[96], name[24];
-    UiKit_HeaderAs(UI_GBA_BG_SUMMARY, UI_SPR_BALL_POKE, Learning() ? "LEARN A MOVE" : "FORGET A MOVE", NULL, 0, 0, NULL, NULL, 0);
+    UiKit_HeaderAs(UI_GBA_BG_SUMMARY, UI_SPR_BALL_POKE, Learning() ? UI_TR("LEARN A MOVE") : UI_TR("FORGET A MOVE"), NULL, 0, 0, NULL, NULL, 0);
     {
         u8 nick[POKEMON_NAME_LENGTH + 1];
         GetMonData(sMon, MON_DATA_NICKNAME, nick);
         UiGame_Text(nick, name, sizeof(name));
     }
     if (Learning())
-        snprintf(buf, sizeof(buf), "%s wants to learn %s", name, sMoves[MAX_MON_MOVES].name);
+        snprintf(buf, sizeof(buf), UI_TR("%s wants to learn %s"), name, sMoves[MAX_MON_MOVES].name);
     else
         snprintf(buf, sizeof(buf), "%s", name);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
 
     DrawMonPanel(name);
-    UiW_TextWrapped(30, 352, 272, 30, Learning() ? "Choose a move to forget, or the new one to stop learning it."
-                                                 : "Choose the move to forget.", UI_COL_INK, 4);
+    UiW_TextWrapped(30, 352, 272, 30, Learning() ? UI_TR("Choose a move to forget, or the new one to stop learning it.")
+                                                 : UI_TR("Choose the move to forget."), UI_COL_INK, 4);
 
     // The moves and the new one
     UiW_Panel(332, 60, 612, 284);
-    UiW_PanelHead(332, 60, 612, "MOVES", "PP");
+    UiW_PanelHead(332, 60, 612, UI_TR("MOVES"), UI_TR("PP"));
     for (int32_t i = 0; i < MAX_MON_MOVES; i++)
         DrawRow(i);
     if (Learning())
     {
-        UiText_Draw(UI_FACE_PS2P, 16, ROW_X + 12, NEW_Y - 24, "NEW MOVE", UI_RGBA(180, 83, 9, 255));
+        UiText_Draw(UI_FACE_PS2P, 16, ROW_X + 12, NEW_Y - 24, UI_TR("NEW MOVE"), UI_RGBA(180, 83, 9, 255));
         DrawRow(MAX_MON_MOVES);
     }
 
     // The chosen move against the new one
     if (sSel < MAX_MON_MOVES)
-        DrawCompare(332, "FORGET", UI_RGBA(181, 53, 43, 255), &sMoves[sSel]);
+        DrawCompare(332, UI_TR("FORGET"), UI_RGBA(181, 53, 43, 255), &sMoves[sSel]);
     else
     {
         UiW_Inset(332, 356, 300, 136);
-        UiText_Draw(UI_FACE_PS2P, 16, 346, 368, "DON'T LEARN", UI_COL_INK_SOFT);
-        UiW_TextWrapped(346, 396, 272, 30, "It keeps the four moves it knows.", UI_COL_INK, 3);
+        UiText_Draw(UI_FACE_PS2P, 16, 346, 368, UI_TR("DON'T LEARN"), UI_COL_INK_SOFT);
+        UiW_TextWrapped(346, 396, 272, 30, UI_TR("It keeps the four moves it knows."), UI_COL_INK, 3);
     }
     if (Learning())
-        DrawCompare(644, "LEARN", UI_RGBA(47, 158, 88, 255), &sMoves[MAX_MON_MOVES]);
+        DrawCompare(644, UI_TR("LEARN"), UI_RGBA(47, 158, 88, 255), &sMoves[MAX_MON_MOVES]);
 
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sSel < MAX_MON_MOVES ? "Forget" : "Don't learn");
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, Learning() ? "Don't learn" : "Cancel");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sSel < MAX_MON_MOVES ? UI_TR("Forget") : UI_TR("Don't learn"));
+    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, Learning() ? UI_TR("Don't learn") : UI_TR("Cancel"));
     UiKit_FooterClock();
 }
 
@@ -338,8 +338,8 @@ static void RlAsk(int32_t state, const char *title)
 {
     sRlState = state;
     UiMenu_Open(&sRlAsk, title, 676, 150, 252);
-    UiMenu_Add(&sRlAsk, "YES", 1);
-    UiMenu_Add(&sRlAsk, "NO", 0);
+    UiMenu_Add(&sRlAsk, UI_TR("YES"), 1);
+    UiMenu_Add(&sRlAsk, UI_TR("NO"), 0);
 }
 
 static void RlExit(void)
@@ -379,7 +379,7 @@ static void RlEnter(void)
         {
             // FORGET left with the new move or circle: "Stop trying to teach X?" (MENU_STATE_PRINT_STOP_TEACHING)
             RlExpand(gText_MoveRelearnerStopTryingToTeachMove, move, MOVE_NONE);
-            RlAsk(RL_ASK_STOP, "STOP TEACHING?");
+            RlAsk(RL_ASK_STOP, UI_TR("STOP TEACHING?"));
         }
     }
 }
@@ -418,7 +418,7 @@ static bool RlUpdate(const UiInput *in)
                 return true;
             }
             RlExpand(gText_MoveRelearnerPkmnTryingToLearnMove, move, MOVE_NONE);
-            RlAsk(RL_ASK_DELETE, "DELETE A MOVE?");
+            RlAsk(RL_ASK_DELETE, UI_TR("DELETE A MOVE?"));
             return true;
         }
         if (sRlState == RL_ASK_DELETE && yes)
@@ -432,13 +432,13 @@ static bool RlUpdate(const UiInput *in)
         if (sRlState == RL_ASK_DELETE && !yes)
         {
             RlExpand(gText_MoveRelearnerStopTryingToTeachMove, move, MOVE_NONE);
-            RlAsk(RL_ASK_STOP, "STOP TEACHING?");
+            RlAsk(RL_ASK_STOP, UI_TR("STOP TEACHING?"));
             return true;
         }
         if (sRlState == RL_ASK_STOP && !yes)
         {
             RlExpand(gText_MoveRelearnerPkmnTryingToLearnMove, move, MOVE_NONE);
-            RlAsk(RL_ASK_DELETE, "DELETE A MOVE?");
+            RlAsk(RL_ASK_DELETE, UI_TR("DELETE A MOVE?"));
             return true;
         }
         if (sRlState == RL_ASK_GIVE_UP && yes)
@@ -455,7 +455,7 @@ static bool RlUpdate(const UiInput *in)
     {
         PlaySE(SE_SELECT);
         RlExpand(gText_MoveRelearnerGiveUp, MOVE_NONE, MOVE_NONE);
-        RlAsk(RL_ASK_GIVE_UP, "GIVE UP?");
+        RlAsk(RL_ASK_GIVE_UP, UI_TR("GIVE UP?"));
         return true;
     }
     const int32_t before = sRlList.sel;
@@ -468,12 +468,12 @@ static bool RlUpdate(const UiInput *in)
     if (a >= sRlCount)
     {
         RlExpand(gText_MoveRelearnerGiveUp, MOVE_NONE, MOVE_NONE);
-        RlAsk(RL_ASK_GIVE_UP, "GIVE UP?");
+        RlAsk(RL_ASK_GIVE_UP, UI_TR("GIVE UP?"));
         return true;
     }
     char title[24], mv[16];
     UiGame_Text(gMoveNames[UiGame_SafeMove(RlMove())], mv, sizeof(mv));
-    snprintf(title, sizeof(title), "TEACH %s?", mv);
+    snprintf(title, sizeof(title), UI_TR("TEACH %s?"), mv);
     RlExpand(gText_MoveRelearnerTeachMoveConfirm, RlMove(), MOVE_NONE);
     RlAsk(RL_ASK_TEACH, title);
     return true;
@@ -482,17 +482,17 @@ static bool RlUpdate(const UiInput *in)
 // The move's contest side (the GBA screen's CONTEST MOVES page): category, appeal and jam hearts
 static void RlDrawContest(int32_t x, uint16_t move)
 {
-    static const char *const cats[5] = { "COOL", "BEAUTY", "CUTE", "SMART", "TOUGH" };
+    static const char *const cats[5] = { UI_N("COOL"), UI_N("BEAUTY"), UI_N("CUTE"), UI_N("SMART"), UI_N("TOUGH") };
     UiW_Inset(x, 356, 300, 136);
-    UiText_Draw(UI_FACE_PS2P, 16, x + 14, 368, "CONTEST", UI_RGBA(47, 158, 88, 255));
+    UiText_Draw(UI_FACE_PS2P, 16, x + 14, 368, UI_TR("CONTEST"), UI_RGBA(47, 158, 88, 255));
     if (move == MOVE_NONE)
         return;
     const struct ContestMove *cm = &gContestMoves[move];
     const struct ContestEffect *ce = &gContestEffects[cm->effect];
-    const char *cat = cm->contestCategory < 5 ? cats[cm->contestCategory] : "";
+    const char *cat = cm->contestCategory < 5 ? UiLocale_Lookup(cats[cm->contestCategory]) : "";
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 300 - 14 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, cat), 358, cat, UI_COL_INK);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 14, 392, "APPEAL", UI_COL_INK_SOFT);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 14, 432, "JAM", UI_COL_INK_SOFT);
+    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 14, 392, UI_TR("APPEAL"), UI_COL_INK_SOFT);
+    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 14, 432, UI_TR("JAM"), UI_COL_INK_SOFT);
     for (int32_t i = 0; i < 8; i++)
     {
         UiDraw_Rect(x + 120 + i * 20, 404, 14, 14, i < ce->appeal / 10 ? UI_COL_HP_LOW : gUiTheme->paperShade);
@@ -508,13 +508,13 @@ static void RlBuild(void)
         GetMonData(sMon, MON_DATA_NICKNAME, nick);
         UiGame_Text(nick, name, sizeof(name));
     }
-    UiKit_HeaderAs(UI_GBA_BG_SUMMARY, UI_SPR_BALL_POKE, "MOVE RELEARNER", NULL, 0, 0, NULL, NULL, 0);
+    UiKit_HeaderAs(UI_GBA_BG_SUMMARY, UI_SPR_BALL_POKE, UI_TR("MOVE RELEARNER"), NULL, 0, 0, NULL, NULL, 0);
     UiW_HeaderValue(name, UI_COL_ON_FRAME);
     DrawMonPanel(name);
     UiW_TextWrapped(30, 352, 272, 30, sRlText, UI_COL_INK, 4);
 
     UiW_Panel(332, 60, 612, 284);
-    UiW_PanelHead(332, 60, 612, "MOVES", "PP");
+    UiW_PanelHead(332, 60, 612, UI_TR("MOVES"), UI_TR("PP"));
     UiDraw_PushClip(ROW_X, ROW_Y, ROW_W, RL_ROWS * ROW_H);
     for (int32_t r = 0; r < RL_ROWS && sRlList.first + r < sRlCount + 1; r++)
     {
@@ -523,7 +523,7 @@ static void RlBuild(void)
         if (i == sRlCount)
         {
             UiW_Row(ROW_X, y, ROW_W, ROW_H, on, i);
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, ROW_X + 104, y + 4, "CANCEL", on ? UI_COL_SELECT_INK : UI_COL_INK_SOFT);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, ROW_X + 104, y + 4, UI_TR("CANCEL"), on ? UI_COL_SELECT_INK : UI_COL_INK_SOFT);
             continue;
         }
         ForgetMove m;
@@ -534,24 +534,24 @@ static void RlBuild(void)
     UiW_ScrollBar(ROW_X + ROW_W - 9, ROW_Y, RL_ROWS * ROW_H, sRlList.first, RL_ROWS, sRlCount + 1);
 
     Fill(&sRlInfo, RlMove(), -1);
-    DrawCompare(332, "BATTLE", UI_RGBA(181, 53, 43, 255), &sRlInfo);
+    DrawCompare(332, UI_TR("BATTLE"), UI_RGBA(181, 53, 43, 255), &sRlInfo);
     RlDrawContest(644, RlMove());
 
     int32_t fx = 16;
     if (sRlState != RL_RESULT)
     {
-        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Teach");
-        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Give up");
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Teach"));
+        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Give up"));
     }
     else if (RlResultReady())
-        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "OK");      // only once the fanfare is over
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("OK"));      // only once the fanfare is over
     UiKit_FooterClock();
     if (sRlAsk.open)
         UiMenu_Draw(&sRlAsk);
     if (sRlState == RL_RESULT)
     {
         UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
-        UiW_Window(200, 200, 560, 144, "MOVE RELEARNER");
+        UiW_Window(200, 200, 560, 144, UI_TR("MOVE RELEARNER"));
         UiW_TextWrapped(224, 250, 512, 30, sRlText, UI_COL_INK, 3);
     }
 }

@@ -6,6 +6,7 @@
 #include "platform/vita_daynight.h"
 #include "platform/vita_nuzlocke.h"
 #include "vita_platform.h"
+#include "../ui/ui_locale.h"   // UI_N: the option rows' text, translated where it is drawn
 #include "platform.h"
 #include "global.h"
 #include "pokedex.h"
@@ -130,27 +131,27 @@ int32_t VitaExtras_GetFast(FastExtraId id)
     return 0;
 }
 
-const char *const gVitaExtrasOffOn[2] = { "OFF", "ON" };
-static const char *const sSpeedValues[] = { "2X", "3X", "4X", "5X", NULL };
-static const char *const sFFButtonValues[] = { "HOLD", "TOGGLE", NULL };
-static const char *const sFilterValues[] = { "NEAREST", "BILINEAR", "SHARP", NULL };
+const char *const gVitaExtrasOffOn[2] = { UI_N("OFF"), UI_N("ON") };
+static const char *const sSpeedValues[] = { UI_N("2X"), UI_N("3X"), UI_N("4X"), UI_N("5X"), NULL };
+static const char *const sFFButtonValues[] = { UI_N("HOLD"), UI_N("TOGGLE"), NULL };
+static const char *const sFilterValues[] = { UI_N("NEAREST"), UI_N("BILINEAR"), UI_N("SHARP"), NULL };
 // Order = UI_THEME_* (src/platform/ui/ui_internal.h); GBA is the default
-static const char *const sUiThemeValues[] = { "GBA", "RED", "EMERALD", "CRYSTAL", "TROPICAL", "ROYAL", NULL };
-static const char *const sVoxelFpsValues[] = { "30 FPS", "60 FPS", NULL };
+static const char *const sUiThemeValues[] = { UI_N("GBA"), UI_N("RED"), UI_N("EMERALD"), UI_N("CRYSTAL"), UI_N("TROPICAL"), UI_N("ROYAL"), NULL };
+static const char *const sVoxelFpsValues[] = { UI_N("30 FPS"), UI_N("60 FPS"), NULL };
 // Order = VOXEL_HD2D_* (include/platform/vita_extras.h)
-static const char *const sVoxelHd2dValues[] = { "OFF", "LOW", "MED", "HIGH", NULL };
-static const char *const sVoxelFovValues[] = { "35 DEG", "25 DEG", NULL };
-static const char *const sLevel0To10Values[] = { "0 (OFF)", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", NULL };
-static const char *const sSaveSlotValues[] = { "SLOT 1", "SLOT 2", "SLOT 3", NULL };
-static const char *const sDayNightValues[] = { "OFF", "AUTO", NULL };
-static const char *const sClockSpeedValues[] = { "1X", "6X", "12X", "24X", "60X", "120X", "1000X", NULL };
-static const char *const sBattleSpeedValues[] = { "1X", "1.5X", "2X", "3X", "4X", NULL };
-static const char *const sLevelCapValues[] = { "OFF", "GYM CAP", "STRICT", NULL };
-static const char *const sShinyOddsValues[] = { "1/8192", "1/4096", "1/1024", "1/256", "1/64", "ALWAYS", NULL };
-static const char *const sVisibleWildValues[] = { "OFF", "FEW", "SOME", "MANY", NULL };
-static const char *const sEncounterRateValues[] = { "NORMAL", "OFF", "1/4", "1/2", "2X", NULL };
-static const char *const sActionSetValues[] = { "EXECUTE", NULL };
-static const char *const sGivePockets[] = { "ITEMS", "POKE BALLS", "TMS & HMS", "BERRIES", "KEY ITEMS", NULL };
+static const char *const sVoxelHd2dValues[] = { UI_N("OFF"), UI_N("LOW"), UI_N("MED"), UI_N("HIGH"), NULL };
+static const char *const sVoxelFovValues[] = { UI_N("35 DEG"), UI_N("25 DEG"), NULL };
+static const char *const sLevel0To10Values[] = { UI_N("0 (OFF)"), "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", NULL };
+static const char *const sSaveSlotValues[] = { UI_N("SLOT 1"), UI_N("SLOT 2"), UI_N("SLOT 3"), NULL };
+static const char *const sDayNightValues[] = { UI_N("OFF"), UI_N("AUTO"), NULL };
+static const char *const sClockSpeedValues[] = { UI_N("1X"), UI_N("6X"), UI_N("12X"), UI_N("24X"), UI_N("60X"), UI_N("120X"), UI_N("1000X"), NULL };
+static const char *const sBattleSpeedValues[] = { UI_N("1X"), UI_N("1.5X"), UI_N("2X"), UI_N("3X"), UI_N("4X"), NULL };
+static const char *const sLevelCapValues[] = { UI_N("OFF"), UI_N("GYM CAP"), UI_N("STRICT"), NULL };
+static const char *const sShinyOddsValues[] = { "1/8192", "1/4096", "1/1024", "1/256", "1/64", UI_N("ALWAYS"), NULL };
+static const char *const sVisibleWildValues[] = { UI_N("OFF"), UI_N("FEW"), UI_N("SOME"), UI_N("MANY"), NULL };
+static const char *const sEncounterRateValues[] = { UI_N("NORMAL"), UI_N("OFF"), "1/4", "1/2", UI_N("2X"), NULL };
+static const char *const sActionSetValues[] = { UI_N("EXECUTE"), NULL };
+static const char *const sGivePockets[] = { UI_N("ITEMS"), UI_N("POKE BALLS"), UI_N("TMS & HMS"), UI_N("BERRIES"), UI_N("KEY ITEMS"), NULL };
 static const char *const sGiveCounts[] = { "1", "5", "10", "50", "99", NULL };
 static const u8 sGiveCountValues[] = { 1, 5, 10, 50, 99 };
 
@@ -276,60 +277,60 @@ static void ActionMaxContestStats(void)
 
 const VitaExtra gVitaExtras[] = {
     // ---- [GENERAL] ----
-    { VITA_TAB_GENERAL, "PACING",     "FAST FWD SPEED",    "speed",            4, 1, sSpeedValues,       NULL, NULL, NULL },
-    { VITA_TAB_GENERAL, "PACING",     "FF BUTTON MODE",    "ff_button",        2, 0, sFFButtonValues,    NULL, NULL, NULL },
-    { VITA_TAB_GENERAL, "DISPLAY",    "2D SCALER",         "filter",           3, 0, sFilterValues,      NULL, NULL, NULL },
-    { VITA_TAB_GENERAL, "DISPLAY",    "MENU COLOR",        "ui_theme",         6, 0, sUiThemeValues,     NULL, NULL, NULL },
+    { VITA_TAB_GENERAL, UI_N("PACING"),     UI_N("FAST FWD SPEED"),    "speed",            4, 1, sSpeedValues,       NULL, NULL, NULL },
+    { VITA_TAB_GENERAL, UI_N("PACING"),     UI_N("FF BUTTON MODE"),    "ff_button",        2, 0, sFFButtonValues,    NULL, NULL, NULL },
+    { VITA_TAB_GENERAL, UI_N("DISPLAY"),    UI_N("2D SCALER"),         "filter",           3, 0, sFilterValues,      NULL, NULL, NULL },
+    { VITA_TAB_GENERAL, UI_N("DISPLAY"),    UI_N("MENU COLOR"),        "ui_theme",         6, 0, sUiThemeValues,     NULL, NULL, NULL },
 
     // ---- [GRAPHICS] ----
-    { VITA_TAB_GRAPHICS, "RENDERER",  "3D VOXEL DIORAMA",  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_GRAPHICS, "RENDERER",  "FRAMERATE",         "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
-    { VITA_TAB_GRAPHICS, "RENDERER",  "HD-2D",             "voxel_hd2d",       VOXEL_HD2D_COUNT, VOXEL_HD2D_HIGH, sVoxelHd2dValues, NULL, NULL, NULL },
-    { VITA_TAB_GRAPHICS, "RENDERER",  "CAMERA ANGLE",      "voxel_fov",        2, 0, sVoxelFovValues,    NULL, NULL, NULL },
-    { VITA_TAB_GRAPHICS, "HD-2D EFFECTS", "WORLD BLOOM",   "voxel_bloom",     11, 10, sLevel0To10Values,  NULL, NULL, NULL },
-    { VITA_TAB_GRAPHICS, "HD-2D EFFECTS", "LIGHT SHAFTS",  "voxel_shafts",    11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
-    { VITA_TAB_GRAPHICS, "HD-2D EFFECTS", "SKY BLOOM",     "voxel_sky_bloom", 11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
-    { VITA_TAB_GRAPHICS, "HD-2D EFFECTS", "DEPTH OF FIELD","voxel_blur",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, UI_N("RENDERER"),  UI_N("3D VOXEL DIORAMA"),  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, UI_N("RENDERER"),  UI_N("FRAMERATE"),         "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, UI_N("RENDERER"),  UI_N("HD-2D"),             "voxel_hd2d",       VOXEL_HD2D_COUNT, VOXEL_HD2D_HIGH, sVoxelHd2dValues, NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, UI_N("RENDERER"),  UI_N("CAMERA ANGLE"),      "voxel_fov",        2, 0, sVoxelFovValues,    NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, UI_N("HD-2D EFFECTS"), UI_N("WORLD BLOOM"),   "voxel_bloom",     11, 10, sLevel0To10Values,  NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, UI_N("HD-2D EFFECTS"), UI_N("LIGHT SHAFTS"),  "voxel_shafts",    11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, UI_N("HD-2D EFFECTS"), UI_N("SKY BLOOM"),     "voxel_sky_bloom", 11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, UI_N("HD-2D EFFECTS"), UI_N("DEPTH OF FIELD"),"voxel_blur",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
 
     // ---- [WORLD] ----
-    { VITA_TAB_WORLD,   "TIME & SKY", "DAY / NIGHT CYCLE", "day_night",        2, 1, sDayNightValues,    NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "TIME & SKY", "TIMED ENCOUNTERS",  "timed_encounters", 2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "TIME & SKY", "CLOCK SPEED",       "clock_speed",      7, 0, sClockSpeedValues,  NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "ENCOUNTERS", "VISIBLE WILD",      "visible_wild",     4, 1, sVisibleWildValues, NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "COMPANION",  "HGSS FOLLOWER",     "follower",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "EXPLORATION","RUN INDOORS",       "run_indoors",      2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "EXPLORATION","AUTO RUN (NO B)",   "auto_run",         2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "EXPLORATION","BAG HM SHORTCUTS",  "field_hms",        2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_WORLD,   "EXPLORATION","REPEL PROMPT",      "repel_prompt",     2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   UI_N("TIME & SKY"), UI_N("DAY / NIGHT CYCLE"), "day_night",        2, 1, sDayNightValues,    NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   UI_N("TIME & SKY"), UI_N("TIMED ENCOUNTERS"),  "timed_encounters", 2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   UI_N("TIME & SKY"), UI_N("CLOCK SPEED"),       "clock_speed",      7, 0, sClockSpeedValues,  NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   UI_N("ENCOUNTERS"), UI_N("VISIBLE WILD"),      "visible_wild",     4, 1, sVisibleWildValues, NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   UI_N("COMPANION"),  UI_N("HGSS FOLLOWER"),     "follower",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   UI_N("EXPLORATION"),UI_N("RUN INDOORS"),       "run_indoors",      2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   UI_N("EXPLORATION"),UI_N("AUTO RUN (NO B)"),   "auto_run",         2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   UI_N("EXPLORATION"),UI_N("BAG HM SHORTCUTS"),  "field_hms",        2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_WORLD,   UI_N("EXPLORATION"),UI_N("REPEL PROMPT"),      "repel_prompt",     2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
 
     // ---- [BATTLE] ----
-    { VITA_TAB_BATTLE,  "ARENA",      "3D VOXEL BATTLE",   "voxel_battle",     2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_BATTLE,  "ARENA",      "BATTLE SPEED",      "battle_speed",     5, 0, sBattleSpeedValues, NULL, NULL, NULL },
-    { VITA_TAB_BATTLE,  "MECHANICS",  "PHYS/SPEC SPLIT",   "move_split",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_BATTLE,  "MECHANICS",  "PARTY EXP SHARE",   "exp_share",        2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_BATTLE,  "MECHANICS",  "EXP ON CATCH",      "exp_catch",        2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_BATTLE,  "INSPECTION", "IVS & EVS STATS",   "ivs_evs",          2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_BATTLE,  UI_N("ARENA"),      UI_N("3D VOXEL BATTLE"),   "voxel_battle",     2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_BATTLE,  UI_N("ARENA"),      UI_N("BATTLE SPEED"),      "battle_speed",     5, 0, sBattleSpeedValues, NULL, NULL, NULL },
+    { VITA_TAB_BATTLE,  UI_N("MECHANICS"),  UI_N("PHYS/SPEC SPLIT"),   "move_split",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_BATTLE,  UI_N("MECHANICS"),  UI_N("PARTY EXP SHARE"),   "exp_share",        2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_BATTLE,  UI_N("MECHANICS"),  UI_N("EXP ON CATCH"),      "exp_catch",        2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_BATTLE,  UI_N("INSPECTION"), UI_N("IVS & EVS STATS"),   "ivs_evs",          2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
 
     // ---- [MODES] ----
-    { VITA_TAB_MODES,   "CHALLENGE",  "NUZLOCKE MODE",     "nuzlocke",         2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_MODES,   "CHALLENGE",  "LEVEL CAP",         "level_cap",        3, 0, sLevelCapValues,    NULL, NULL, NULL },
-    { VITA_TAB_MODES,   "PROFILES",   "ACTIVE SAVE SLOT",  "save_slot",        3, 0, sSaveSlotValues,    NULL, NULL, NULL },
+    { VITA_TAB_MODES,   UI_N("CHALLENGE"),  UI_N("NUZLOCKE MODE"),     "nuzlocke",         2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_MODES,   UI_N("CHALLENGE"),  UI_N("LEVEL CAP"),         "level_cap",        3, 0, sLevelCapValues,    NULL, NULL, NULL },
+    { VITA_TAB_MODES,   UI_N("PROFILES"),   UI_N("ACTIVE SAVE SLOT"),  "save_slot",        3, 0, sSaveSlotValues,    NULL, NULL, NULL },
 
     // ---- [CHEATS] ----
-    { VITA_TAB_CHEATS,  "CONVENIENCE","INFINITE TMS",      "infinite_tms",     2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_CHEATS,  "CONVENIENCE","TRADE EVO LV40",    "trade_evo",        2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_CHEATS,  "CONVENIENCE","FAST HATCH EGGS",   "fast_eggs",        2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_CHEATS,  "ENCOUNTERS", "SHINY ODDS",        "shiny_odds",       6, 0, sShinyOddsValues,   NULL, NULL, NULL },
-    { VITA_TAB_CHEATS,  "ENCOUNTERS", "ENCOUNTER RATE",    "encounter_rate",   5, 0, sEncounterRateValues, NULL, NULL, NULL },
-    { VITA_TAB_CHEATS,  "ENCOUNTERS", "ALWAYS CATCH",      "always_catch",     2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
-    { VITA_TAB_CHEATS,  "REWARDS",    "MAX MONEY ($999K)", "give_money",       0, 0, sActionSetValues,   ActionInfiniteMoney,     NULL, NULL },
-    { VITA_TAB_CHEATS,  "ITEM SPAWN", "GIVE POCKET",       "give_pocket",      5, 0, sGivePockets,       NULL, NULL, NULL },
-    { VITA_TAB_CHEATS,  "ITEM SPAWN", "GIVE ITEM",         "give_item",        0, 0, NULL,               NULL, GiveItemStep, GiveItemText },
-    { VITA_TAB_CHEATS,  "ITEM SPAWN", "GIVE COUNT",        "give_count",       5, 0, sGiveCounts,        NULL, NULL, NULL },
-    { VITA_TAB_CHEATS,  "ITEM SPAWN", "DELIVER ITEM",      "give_now",         0, 0, sActionSetValues,   GiveItemsNow,            NULL, NULL },
-    { VITA_TAB_CHEATS,  "POKEDEX",    "COMPLETE HOENN DEX","dex_hoenn",        0, 0, sActionSetValues,   ActionCompleteHoennDex,  NULL, NULL },
-    { VITA_TAB_CHEATS,  "POKEDEX",    "UNLOCK NATIONAL",   "dex_national",     0, 0, sActionSetValues,   ActionCompleteNationalDex, NULL, NULL },
-    { VITA_TAB_CHEATS,  "CONTESTS",   "MAX CONTEST STATS", "max_contest",      0, 0, sActionSetValues,   ActionMaxContestStats,     NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("CONVENIENCE"),UI_N("INFINITE TMS"),      "infinite_tms",     2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("CONVENIENCE"),UI_N("TRADE EVO LV40"),    "trade_evo",        2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("CONVENIENCE"),UI_N("FAST HATCH EGGS"),   "fast_eggs",        2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("ENCOUNTERS"), UI_N("SHINY ODDS"),        "shiny_odds",       6, 0, sShinyOddsValues,   NULL, NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("ENCOUNTERS"), UI_N("ENCOUNTER RATE"),    "encounter_rate",   5, 0, sEncounterRateValues, NULL, NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("ENCOUNTERS"), UI_N("ALWAYS CATCH"),      "always_catch",     2, 0, gVitaExtrasOffOn,   NULL, NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("REWARDS"),    UI_N("MAX MONEY ($999K)"), "give_money",       0, 0, sActionSetValues,   ActionInfiniteMoney,     NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("ITEM SPAWN"), UI_N("GIVE POCKET"),       "give_pocket",      5, 0, sGivePockets,       NULL, NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("ITEM SPAWN"), UI_N("GIVE ITEM"),         "give_item",        0, 0, NULL,               NULL, GiveItemStep, GiveItemText },
+    { VITA_TAB_CHEATS,  UI_N("ITEM SPAWN"), UI_N("GIVE COUNT"),        "give_count",       5, 0, sGiveCounts,        NULL, NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("ITEM SPAWN"), UI_N("DELIVER ITEM"),      "give_now",         0, 0, sActionSetValues,   GiveItemsNow,            NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("POKEDEX"),    UI_N("COMPLETE HOENN DEX"),"dex_hoenn",        0, 0, sActionSetValues,   ActionCompleteHoennDex,  NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("POKEDEX"),    UI_N("UNLOCK NATIONAL"),   "dex_national",     0, 0, sActionSetValues,   ActionCompleteNationalDex, NULL, NULL },
+    { VITA_TAB_CHEATS,  UI_N("CONTESTS"),   UI_N("MAX CONTEST STATS"), "max_contest",      0, 0, sActionSetValues,   ActionMaxContestStats,     NULL, NULL },
 };
 
 const uint32_t gVitaExtraCount = sizeof(gVitaExtras) / sizeof(gVitaExtras[0]);

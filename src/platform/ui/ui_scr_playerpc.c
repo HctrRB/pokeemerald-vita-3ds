@@ -57,7 +57,7 @@ enum { AFTER_NONE, AFTER_PLACE, AFTER_PUT_AWAY };
 #define ROW_H 40
 #define ROWS 8
 
-static const char *const sTabNames[TAB_COUNT] = { "ITEMS", "MAILBOX", "DECORATION" };
+static const char *const sTabNames[TAB_COUNT] = { UI_N("ITEMS"), UI_N("MAILBOX"), UI_N("DECORATION") };
 
 // DECORATION: categories on the left, a grid of pictures on the right
 #define DEC_CAT_Y 104
@@ -70,7 +70,7 @@ static const char *const sTabNames[TAB_COUNT] = { "ITEMS", "MAILBOX", "DECORATIO
 #define DEC_CH 74
 #define DEC_GAP 6
 #define DEC_MAX 40
-static const char *const sPocketNames[POCKETS_COUNT] = { "ITEMS", "BALLS", "TMs", "BERRIES", "KEY" };
+static const char *const sPocketNames[POCKETS_COUNT] = { UI_N("ITEMS"), UI_N("BALLS"), UI_N("TMs"), UI_N("BERRIES"), UI_N("KEY") };
 static const uint8_t sPocketIds[POCKETS_COUNT] = { ITEMS_POCKET, BALLS_POCKET, TMHM_POCKET, BERRIES_POCKET, KEYITEMS_POCKET };
 
 static uint8_t sTaskId, sKind;
@@ -191,7 +191,7 @@ bool Ui_OpenPlayerPc(uint8_t taskId, uint8_t tab, uint8_t kind)
     bool found = false;
     for (int32_t i = 0; i < sTabCount; i++)
     {
-        sTabs[i] = sTabNames[sTabIds[i]];
+        sTabs[i] = UiLocale_Lookup(sTabNames[sTabIds[i]]);
         found |= sTabIds[i] == tab;
     }
     if (!found)
@@ -300,9 +300,9 @@ static void TossAsk(int32_t n)
     SetItemVars(CurItem(), n);
     StringExpandPlaceholders(gStringVar4, gText_ConfirmTossItems);
     UiGame_Text(gStringVar4, sQuestion, sizeof(sQuestion));
-    UiMenu_Open(&sMenu, "TOSS?", 380, 200, 200);
-    UiMenu_Add(&sMenu, "YES", 1);
-    UiMenu_Add(&sMenu, "NO", 0);
+    UiMenu_Open(&sMenu, UI_TR("TOSS?"), 380, 200, 200);
+    UiMenu_Add(&sMenu, UI_TR("YES"), 1);
+    UiMenu_Add(&sMenu, UI_TR("NO"), 0);
     sAsk = ASK_TOSS_CONFIRM;
 }
 
@@ -338,19 +338,19 @@ static void ItemAction(bool toss)
     {
         if (have == 1) { Deposit(1); return; }
         sAsk = ASK_DEPOSIT;
-        UiQty_Open(&sQty, "DEPOSIT HOW MANY?", have);
+        UiQty_Open(&sQty, UI_TR("DEPOSIT HOW MANY?"), have);
         return;
     }
     if (toss)
     {
         if (have == 1) { TossAsk(1); return; }
         sAsk = ASK_TOSS;
-        UiQty_Open(&sQty, "TOSS HOW MANY?", have);
+        UiQty_Open(&sQty, UI_TR("TOSS HOW MANY?"), have);
         return;
     }
     if (have == 1) { Withdraw(1); return; }
     sAsk = ASK_WITHDRAW;
-    UiQty_Open(&sQty, "WITHDRAW HOW MANY?", have);
+    UiQty_Open(&sQty, UI_TR("WITHDRAW HOW MANY?"), have);
 }
 
 // ---------------------------------------------------------------- mail
@@ -358,9 +358,9 @@ static void ItemAction(bool toss)
 static void MailToBagAsk(void)
 {
     UiGame_Text(gText_MessageWillBeLost, sQuestion, sizeof(sQuestion));
-    UiMenu_Open(&sMenu, "TO THE BAG?", 380, 200, 240);
-    UiMenu_Add(&sMenu, "YES", 1);
-    UiMenu_Add(&sMenu, "NO", 0);
+    UiMenu_Open(&sMenu, UI_TR("TO THE BAG?"), 380, 200, 240);
+    UiMenu_Add(&sMenu, UI_TR("YES"), 1);
+    UiMenu_Add(&sMenu, UI_TR("NO"), 0);
     // YES first and selected, as DisplayYesNoMenuDefaultYes
     sAsk = ASK_MAIL_TO_BAG;
 }
@@ -389,8 +389,8 @@ static void MailGiveAsk(void)
         ToastText(gText_NoPokemon);
         return;
     }
-    snprintf(sQuestion, sizeof(sQuestion), "Give the MAIL to which POKéMON?");
-    UiMenu_Open(&sMenu, "GIVE TO", 560, 100, 300);
+    snprintf(sQuestion, sizeof(sQuestion), UI_TR("Give the MAIL to which POKéMON?"));
+    UiMenu_Open(&sMenu, UI_TR("GIVE TO"), 560, 100, 300);
     for (int32_t i = 0; i < CalculatePlayerPartyCount(); i++)
     {
         UiMon m;
@@ -459,9 +459,9 @@ static void DecorToss(void)
     if (sDecorCount == 0) return;
     if (!Decoration_CanTossForUi((u8)sDecorCat, sDecorIdx[sDecorSel])) { ToastVar4(); return; }
     UiGame_Text(gStringVar4, sQuestion, sizeof(sQuestion));
-    UiMenu_Open(&sMenu, "TOSS?", 380, 200, 200);
-    UiMenu_Add(&sMenu, "YES", 1);   // YES first and selected, as DisplayYesNoMenuDefaultYes
-    UiMenu_Add(&sMenu, "NO", 0);
+    UiMenu_Open(&sMenu, UI_TR("TOSS?"), 380, 200, 200);
+    UiMenu_Add(&sMenu, UI_TR("YES"), 1);   // YES first and selected, as DisplayYesNoMenuDefaultYes
+    UiMenu_Add(&sMenu, UI_TR("NO"), 0);
     sAsk = ASK_DECOR_TOSS;
 }
 
@@ -708,7 +708,7 @@ static void BuildDecor(void)
 
     // Categories, as the game's list: name and owned / room (DECORATE in the bedroom: DOLL and CUSHION only)
     UiW_Panel(16, 60, 260, 432);
-    UiW_PanelHead(16, 60, 260, "CATEGORY", NULL);
+    UiW_PanelHead(16, 60, 260, UI_TR("CATEGORY"), NULL);
     for (int32_t c = 0; c < DECORCAT_COUNT; c++)
     {
         const int32_t y = DEC_CAT_Y + c * DEC_CAT_H;
@@ -726,12 +726,12 @@ static void BuildDecor(void)
 
     // Actions and the grid
     UiW_Panel(288, 60, 656, 288);
-    static const char *const sChips[3] = { "DECORATE", "PUT AWAY", "TOSS" };
+    static const char *const sChips[3] = { UI_N("DECORATE"), UI_N("PUT AWAY"), UI_N("TOSS") };
     int32_t cx = 300;
     for (int32_t i = 0; i < 3; i++)
     {
         sChipX[i] = cx;
-        sChipW[i] = UiW_Chip(cx, 68, sChips[i], i == 0);
+        sChipW[i] = UiW_Chip(cx, 68, UiLocale_Lookup(sChips[i]), i == 0);
         cx += sChipW[i] + 8;
     }
     for (int32_t r = 0; r < DEC_ROWS; r++)
@@ -753,7 +753,7 @@ static void BuildDecor(void)
             }
         }
     if (sDecorCount == 0)
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, DEC_GX + 8, DEC_GY + 8, "There are no decorations here.", UI_COL_INK_SOFT);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, DEC_GX + 8, DEC_GY + 8, UI_TR("There are no decorations here."), UI_COL_INK_SOFT);
     const int32_t rows = (sDecorCount + DEC_COLS - 1) / DEC_COLS;
     if (rows > DEC_ROWS)
         UiW_ScrollBar(926, DEC_GY, DEC_ROWS * DEC_CH + (DEC_ROWS - 1) * DEC_GAP, sDecorFirst, DEC_ROWS, rows);
@@ -772,32 +772,32 @@ static void BuildDecor(void)
             const int32_t nx = 304 + UiText_Width(UI_FACE_PS2P, 16, name) + 16;
             UiDraw_Rect(nx, 374, 10, 10, UI_COL_LINE_DARK);
             UiDraw_Rect(nx + 1, 375, 8, 8, UI_COL_GOLD);
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, nx + 18, 366, "In use", UI_COL_INK_SOFT);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, nx + 18, 366, UI_TR("In use"), UI_COL_INK_SOFT);
         }
         UiGame_Text(gDecorations[decor].description, buf, sizeof(buf));
         UiW_TextWrapped(304, 398, 624, 30, buf, UI_COL_INK, 3);
     }
     else
-        UiW_TextWrapped(304, 368, 624, 30, "Choose a category. The decorations you buy are sent here.", UI_COL_INK_SOFT, 4);
+        UiW_TextWrapped(304, 368, 624, 30, UI_TR("Choose a category. The decorations you buy are sent here."), UI_COL_INK_SOFT, 4);
 
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Decorate");
-    UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, "Toss");
-    UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, "Put away");
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Decorate"));
+    UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, UI_TR("Toss"));
+    UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, UI_TR("Put away"));
+    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Back"));
 }
 
 static void Build(void)
 {
     char buf[96], name[24];
-    UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, "PC", sTabs, sTabCount, TabSlot(sTab), sTabX, sTabW, 12);
+    UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, UI_TR("PC"), sTabs, sTabCount, TabSlot(sTab), sTabX, sTabW, 12);
     const uint16_t item = CurItem();
 
     if (sTab == TAB_DECOR)
         BuildDecor();
     else if (sTab == TAB_ITEMS)
     {
-        snprintf(buf, sizeof(buf), "STORED %u / %u", (unsigned)CountUsedPCItemSlots(), (unsigned)PC_ITEMS_COUNT);
+        snprintf(buf, sizeof(buf), UI_TR("STORED %u / %u"), (unsigned)CountUsedPCItemSlots(), (unsigned)PC_ITEMS_COUNT);
         UiW_HeaderValue(buf, UI_COL_ON_FRAME);
         // Item card
         UiW_Panel(16, 60, 312, 216);
@@ -810,24 +810,24 @@ static void Build(void)
             uint16_t inPc = 0;
             for (int32_t i = 0; i < PC_ITEMS_COUNT; i++)
                 if (gSaveBlock1Ptr->pcItems[i].itemId == item) inPc += gSaveBlock1Ptr->pcItems[i].quantity;
-            snprintf(buf, sizeof(buf), "PC x%u · BAG x%u", (unsigned)inPc, (unsigned)CountTotalItemQuantityInBag(item));
+            snprintf(buf, sizeof(buf), UI_TR("PC x%u · BAG x%u"), (unsigned)inPc, (unsigned)CountTotalItemQuantityInBag(item));
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 100, 102, buf, UI_COL_INK);
             UiGame_ItemDescription(item, buf, sizeof(buf));
             UiW_TextWrapped(32, 144, 280, 30, buf, UI_COL_INK, 4);
         }
         UiW_Inset(16, 288, 312, 204);
-        UiW_TextWrapped(30, 296, 284, 30, sMenu.open ? sQuestion : sMoveFrom >= 0 ? "Move it where? SELECT or X puts it here."
-                        : sMode == MODE_WITHDRAW ? "X takes items out to the BAG. TRIANGLE throws them away. SELECT moves one."
-                                                 : "Choose an item from the BAG to store in the PC.", UI_COL_INK, 6);
+        UiW_TextWrapped(30, 296, 284, 30, sMenu.open ? sQuestion : sMoveFrom >= 0 ? UI_TR("Move it where? SELECT or X puts it here.")
+                        : sMode == MODE_WITHDRAW ? UI_TR("X takes items out to the BAG. TRIANGLE throws them away. SELECT moves one.")
+                                                 : UI_TR("Choose an item from the BAG to store in the PC."), UI_COL_INK, 6);
         // List panel with integrated header (WITHDRAW / DEPOSIT) and sub-bar (Bag pockets)
         UiW_Panel(332, 60, 612, 432);
-        UiW_PanelHead(332, 60, 612, sMode == MODE_WITHDRAW ? "PC · WITHDRAW" : "BAG · DEPOSIT", NULL);
-        sModeW[0] = UiText_Width(UI_FACE_VT323, UI_BODY_PX, "WITHDRAW") + 28;
-        sModeW[1] = UiText_Width(UI_FACE_VT323, UI_BODY_PX, "DEPOSIT") + 28;
+        UiW_PanelHead(332, 60, 612, sMode == MODE_WITHDRAW ? UI_TR("PC · WITHDRAW") : UI_TR("BAG · DEPOSIT"), NULL);
+        sModeW[0] = UiText_Width(UI_FACE_VT323, UI_BODY_PX, UI_TR("WITHDRAW")) + 28;
+        sModeW[1] = UiText_Width(UI_FACE_VT323, UI_BODY_PX, UI_TR("DEPOSIT")) + 28;
         sModeX[1] = 932 - sModeW[1];
         sModeX[0] = sModeX[1] - 8 - sModeW[0];
-        UiW_Chip(sModeX[0], 66, "WITHDRAW", sMode == MODE_WITHDRAW);
-        UiW_Chip(sModeX[1], 66, "DEPOSIT", sMode == MODE_DEPOSIT);
+        UiW_Chip(sModeX[0], 66, UI_TR("WITHDRAW"), sMode == MODE_WITHDRAW);
+        UiW_Chip(sModeX[1], 66, UI_TR("DEPOSIT"), sMode == MODE_DEPOSIT);
         UiDraw_Rect(335, 102, 606, 42, gUiTheme->paper1);
         UiDraw_Rect(335, 144, 606, 2, gUiTheme->paperShade);
         if (sMode == MODE_DEPOSIT)
@@ -836,13 +836,13 @@ static void Build(void)
             for (int32_t i = 0; i < POCKETS_COUNT; i++)
             {
                 sPocketX[i] = px;
-                sPocketW[i] = UiW_Chip(px, 108, sPocketNames[i], i == sPocket);
+                sPocketW[i] = UiW_Chip(px, 108, UiLocale_Lookup(sPocketNames[i]), i == sPocket);
                 px += sPocketW[i] + 8;
             }
         }
         else
         {
-            UiText_DrawMid(UI_FACE_VT323, 26, 344, 102, 42, "PC STORAGE · SELECT TO REORDER", UI_COL_INK_SOFT);
+            UiText_DrawMid(UI_FACE_VT323, 26, 344, 102, 42, UI_TR("PC STORAGE · SELECT TO REORDER"), UI_COL_INK_SOFT);
         }
         UiDraw_PushClip(LIST_X, LIST_Y, LIST_W, ROWS * ROW_H);
         for (int32_t r = 0; r < ROWS && sList.first + r < sCount; r++)
@@ -863,29 +863,29 @@ static void Build(void)
         }
         UiDraw_PopClip();
         if (sCount == 0)
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, LIST_Y + 4, sMode == MODE_WITHDRAW ? "There are no items." : "No items in this pocket.",
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, LIST_Y + 4, sMode == MODE_WITHDRAW ? UI_TR("There are no items.") : UI_TR("No items in this pocket."),
                         UI_COL_INK_SOFT);
         UiW_ScrollBar(LIST_X + LIST_W - 9, LIST_Y, ROWS * ROW_H, sList.first, ROWS, sCount);
         int32_t fx = 16;
         if (sMode == MODE_WITHDRAW)
         {
-            UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Withdraw");
-            UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, "Toss");
-            UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, "Deposit");
+            UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Withdraw"));
+            UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, UI_TR("Toss"));
+            UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, UI_TR("Deposit"));
         }
         else
         {
-            UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Deposit");
-            UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, "Pocket");
+            UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Deposit"));
+            UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, UI_TR("Pocket"));
         }
-        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
+        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Back"));
     }
     else
     {
-        snprintf(buf, sizeof(buf), "MAIL %u / %u", (unsigned)sCount, (unsigned)(MAIL_COUNT - PARTY_SIZE));
+        snprintf(buf, sizeof(buf), UI_TR("MAIL %u / %u"), (unsigned)sCount, (unsigned)(MAIL_COUNT - PARTY_SIZE));
         UiW_HeaderValue(buf, UI_COL_ON_FRAME);
         UiW_Panel(16, 60, 420, 432);
-        UiW_PanelHead(16, 60, 420, "STORED MAIL", NULL);
+        UiW_PanelHead(16, 60, 420, UI_TR("STORED MAIL"), NULL);
         for (int32_t r = 0; r < ROWS && sList.first + r < sCount; r++)
         {
             const int32_t i = sList.first + r, y = LIST_Y + r * ROW_H;
@@ -900,7 +900,7 @@ static void Build(void)
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 72, y + 4, name, on ? UI_COL_SELECT_INK : UI_COL_INK);
         }
         if (sCount == 0)
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 40, LIST_Y + 4, "There's no MAIL here.", UI_COL_INK_SOFT);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 40, LIST_Y + 4, UI_TR("There's no MAIL here."), UI_COL_INK_SOFT);
         UiW_Panel(448, 60, 496, 432);
         if (sCount > 0)
             UiMail_Draw(&gSaveBlock1Ptr->mail[sMailSlots[sList.sel]], 456, 76, 2);
@@ -910,10 +910,10 @@ static void Build(void)
             UiW_TextWrapped(470, 410, 452, 30, sQuestion, UI_COL_INK, 2);
         }
         int32_t fx = 16;
-        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Read");
-        UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, "To the BAG");
-        UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, "Give");
-        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Read"));
+        UiW_FooterGlyph(&fx, UI_GLYPH_SQUARE, UI_TR("To the BAG"));
+        UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, UI_TR("Give"));
+        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Back"));
     }
     UiKit_FooterClock();
     if (sMenu.open)
@@ -986,7 +986,7 @@ static void ReadBuild(void)
     if (sReadHeader != NULL)
         UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, sReadHeader, NULL, 0, 0, NULL, NULL, 12);
     else
-        UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, "PC", sTabs, sTabCount, TabSlot(TAB_MAIL), NULL, NULL, 12);
+        UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, UI_TR("PC"), sTabs, sTabCount, TabSlot(TAB_MAIL), NULL, NULL, 12);
     char name[24];
     if (sReading != NULL)
     {
@@ -995,7 +995,7 @@ static void ReadBuild(void)
         UiMail_Draw(sReading, (UI_SCREEN_W - 480) / 2, 60 + (432 - 320) / 2, 2);
     }
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Close");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Close"));
     UiKit_FooterClock();
 }
 

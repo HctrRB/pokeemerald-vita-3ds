@@ -158,8 +158,8 @@ typedef struct
     void (*text)(char *out, size_t cap);
 } InfoBox;
 
-static void MoneyText(char *out, size_t cap) { snprintf(out, cap, "MONEY $%u", (unsigned)UiGame_Money()); }
-static void CoinsText(char *out, size_t cap) { snprintf(out, cap, "COINS %u", (unsigned)UiGame_Coins()); }
+static void MoneyText(char *out, size_t cap) { snprintf(out, cap, UI_TR("MONEY $%u"), (unsigned)UiGame_Money()); }
+static void CoinsText(char *out, size_t cap) { snprintf(out, cap, UI_TR("COINS %u"), (unsigned)UiGame_Coins()); }
 
 static const InfoBox sInfoBoxes[] = {
     { GetMoneyBoxWindowForUi, MoneyText },
@@ -259,7 +259,7 @@ bool UiMirror_Draw(void)
         else
             UiDraw_Sprite(UI_SPR_START_POKENAV, x + 34, y - 78, 1);
         UiW_Capsule(x + 112, y - 52, 300, 34);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 124, y - 51, "POKéNAV · MATCH CALL", UI_COL_ON_FRAME);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 124, y - 51, UI_TR("POKéNAV · MATCH CALL"), UI_COL_ON_FRAME);
         memcpy(sHeldLines, lines, sizeof(sHeldLines));
         sHold = HOLD_FRAMES;
         UiW_DialogBox(x, y, w, h);
@@ -312,12 +312,12 @@ bool UiMirror_Draw(void)
         else if (src != gText_PutItemInPocket) sShownItem = 0;
         if (sShownItem != 0)
         {
-            static const char *const pockets[6] = { "", "ITEMS", "POKé BALLS", "TMs & HMs", "BERRIES", "KEY ITEMS" };
+            static const char *const pockets[6] = { "", UI_N("ITEMS"), UI_N("POKé BALLS"), UI_N("TMs & HMs"), UI_N("BERRIES"), UI_N("KEY ITEMS") };
             UiW_DialogBox(x, y - 112, 100, 100);
             UiSpr_ItemIcon(sShownItem, x + 26, y - 86, 2);
-            char buf[48];
+            char buf[96];
             const int32_t pk = UiGame_ItemPocket(sShownItem) + 1;
-            snprintf(buf, sizeof(buf), "Put away in the %s POCKET", pk >= 1 && pk <= 5 ? pockets[pk] : "");
+            snprintf(buf, sizeof(buf), UI_TR("Put away in the %s POCKET"), pk >= 1 && pk <= 5 ? UiLocale_Lookup(pockets[pk]) : "");
             const int32_t cw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf) + 24;
             UiW_Capsule(x + 112, y - 52, cw, 34);
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 124, y - 51, buf, UI_COL_ON_FRAME);
@@ -407,11 +407,11 @@ bool UiMirror_Draw(void)
         const int32_t x = UI_SCREEN_W - 48 - 180, y = UI_SCREEN_H - 24 - 124 - 112, w = 180;
         if (tap) TapMenu(tapX, tapY, x, y, w, 2, yesCursor);
         UiW_DialogBox(x, y, w, 100);
-        static const char *const opt[2] = { "YES", "NO" };
+        static const char *const opt[2] = { UI_N("YES"), UI_N("NO") };
         for (int32_t i = 0; i < 2; i++)
         {
             UiW_Row(x + 8, y + 8 + i * 42, w - 16, 42, yesCursor == i, i);
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 36, y + 12 + i * 42, opt[i], yesCursor == i ? UI_COL_SELECT_INK : UI_COL_INK);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 36, y + 12 + i * 42, UiLocale_Lookup(opt[i]), yesCursor == i ? UI_COL_SELECT_INK : UI_COL_INK);
         }
         drew = true;
     }

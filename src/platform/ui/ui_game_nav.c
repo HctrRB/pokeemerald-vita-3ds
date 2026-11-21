@@ -163,7 +163,7 @@ int32_t UiGame_Callers(const UiCaller **out)
         c->trainerPic = rem < REMATCH_TABLE_ENTRIES ? gTrainers[GetTrainerIdxByRematchIdx(rem)].trainerPic : 0xFFFF;
         const u8 *desc = NULL, *name = NULL;
         MatchCall_GetNameAndDesc(i, &desc, &name);
-        if (name) UiGame_Text(name, c->name, sizeof(c->name)); else snprintf(c->name, sizeof(c->name), "CONTACT");
+        if (name) UiGame_Text(name, c->name, sizeof(c->name)); else snprintf(c->name, sizeof(c->name), UI_TR("CONTACT"));
         if (desc) UiGame_Text(desc, c->desc, sizeof(c->desc));
     }
     for (uint16_t r = 0; r < REMATCH_SPECIAL_TRAINER_START && sCallerCount < 96; r++)
@@ -179,7 +179,7 @@ int32_t UiGame_Callers(const UiCaller **out)
         const uint16_t tr = (uint16_t)GetTrainerIdxByRematchIdx(r);
         c->trainerPic = gTrainers[tr].trainerPic;
         UiGame_Text(gTrainers[tr].trainerName, c->name, sizeof(c->name));
-        snprintf(c->desc, sizeof(c->desc), "TRAINER");
+        snprintf(c->desc, sizeof(c->desc), UI_TR("TRAINER"));
     }
     *out = sCallers;
     return sCallerCount;
@@ -232,26 +232,26 @@ int32_t UiGame_Ribbons(int32_t slot, uint8_t *ids, int32_t max)
 
 void UiGame_RibbonText(uint8_t id, char *name, size_t nc, char *desc, size_t dc)
 {
-    static const char *const cats[5] = { "COOL", "BEAUTY", "CUTE", "SMART", "TOUGH" };
-    static const char *const ranks[4] = { "", " SUPER", " HYPER", " MASTER" };
-    static const char *const rankDesc[4] = { "Normal Rank", "Super Rank", "Hyper Rank", "Master Rank" };
+    static const char *const cats[5] = { UI_N("COOL"), UI_N("BEAUTY"), UI_N("CUTE"), UI_N("SMART"), UI_N("TOUGH") };
+    static const char *const ranks[4] = { "", UI_N(" SUPER"), UI_N(" HYPER"), UI_N(" MASTER") };
+    static const char *const rankDesc[4] = { UI_N("Normal Rank"), UI_N("Super Rank"), UI_N("Hyper Rank"), UI_N("Master Rank") };
     static const char *const other[11][2] = {
-        { "WINNING", "Ribbon for clearing LV50 at the BATTLE TOWER." }, { "VICTORY", "Won for clearing LV100 at the BATTLE TOWER." },
-        { "ARTIST", "Ribbon for being chosen as a super sketch model." }, { "EFFORT", "Ribbon awarded for being an exceptionally hard worker." },
-        { "MARINE", "A special gift ribbon." }, { "LAND", "A special gift ribbon." }, { "SKY", "A special gift ribbon." },
-        { "COUNTRY", "POKéMON LEAGUE Champion Ribbon." }, { "NATIONAL", "Overcoming difficult challenges." },
-        { "EARTH", "Won for clearing the MT. BATTLE challenge." }, { "WORLD", "POKéMON WORLD Champion Ribbon." } };
-    if (id == CHAMPION_RIBBON) { snprintf(name, nc, "CHAMPION RIBBON"); snprintf(desc, dc, "Champion-beating, HALL OF FAME Member Ribbon."); }
+        { UI_N("WINNING"), UI_N("Ribbon for clearing LV50 at the BATTLE TOWER.") }, { UI_N("VICTORY"), UI_N("Won for clearing LV100 at the BATTLE TOWER.") },
+        { UI_N("ARTIST"), UI_N("Ribbon for being chosen as a super sketch model.") }, { UI_N("EFFORT"), UI_N("Ribbon awarded for being an exceptionally hard worker.") },
+        { UI_N("MARINE"), UI_N("A special gift ribbon.") }, { UI_N("LAND"), UI_N("A special gift ribbon.") }, { UI_N("SKY"), UI_N("A special gift ribbon.") },
+        { UI_N("COUNTRY"), UI_N("POKéMON LEAGUE Champion Ribbon.") }, { UI_N("NATIONAL"), UI_N("Overcoming difficult challenges.") },
+        { UI_N("EARTH"), UI_N("Won for clearing the MT. BATTLE challenge.") }, { UI_N("WORLD"), UI_N("POKéMON WORLD Champion Ribbon.") } };
+    if (id == CHAMPION_RIBBON) { snprintf(name, nc, UI_TR("CHAMPION RIBBON")); snprintf(desc, dc, UI_TR("Champion-beating, HALL OF FAME Member Ribbon.")); }
     else if (id <= TOUGH_RIBBON_MASTER)
     {
         const int32_t c = (id - COOL_RIBBON_NORMAL) / 4, r = (id - COOL_RIBBON_NORMAL) % 4;
-        snprintf(name, nc, "%s%s RIBBON", cats[c], ranks[r]);
-        snprintf(desc, dc, "HOENN %s CONTEST %s winner!", cats[c], rankDesc[r]);
+        snprintf(name, nc, UI_TR("%s%s RIBBON"), UiLocale_Lookup(cats[c]), UiLocale_Lookup(ranks[r]));
+        snprintf(desc, dc, UI_TR("HOENN %s CONTEST %s winner!"), UiLocale_Lookup(cats[c]), UiLocale_Lookup(rankDesc[r]));
     }
     else
     {
-        snprintf(name, nc, "%s RIBBON", other[id - WINNING_RIBBON][0]);
-        snprintf(desc, dc, "%s", other[id - WINNING_RIBBON][1]);
+        snprintf(name, nc, UI_TR("%s RIBBON"), UiLocale_Lookup(other[id - WINNING_RIBBON][0]));
+        snprintf(desc, dc, "%s", UiLocale_Lookup(other[id - WINNING_RIBBON][1]));
     }
 }
 

@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "platform/vita_nuzlocke.h"
 #include "vita_platform.h"
+#include "../ui/ui_locale.h"   // gym leader names: UI text
 #include "platform.h"
 #include "global.h"
 #include "event_data.h"
@@ -24,8 +25,8 @@ typedef struct
 
 static const uint8_t sGymLevelCaps[NUZ_GYM_COUNT] = { 15, 19, 24, 29, 31, 33, 42, 46 };
 static const char *const sGymLeaderNames[NUZ_GYM_COUNT + 1] = {
-    "ROXANNE", "BRAWLY", "WATTSON", "FLANNERY",
-    "NORMAN", "WINONA", "TATE & LIZA", "JUAN", "WALLACE"
+    UI_N("ROXANNE"), UI_N("BRAWLY"), UI_N("WATTSON"), UI_N("FLANNERY"),
+    UI_N("NORMAN"), UI_N("WINONA"), UI_N("TATE & LIZA"), UI_N("JUAN"), UI_N("WALLACE")
 };
 
 static VitaNuzState sNuzState;
@@ -190,10 +191,10 @@ uint8_t VitaNuzlocke_GetLevelCap(const uint8_t badgeCount, const char **outLeade
     if (badgeCount < NUZ_GYM_COUNT)
     {
         if (outLeaderName != NULL)
-            *outLeaderName = sGymLeaderNames[badgeCount];
+            *outLeaderName = UiLocale_Lookup(sGymLeaderNames[badgeCount]);
         return sGymLevelCaps[badgeCount];
     }
     if (outLeaderName != NULL)
-        *outLeaderName = sGymLeaderNames[NUZ_GYM_COUNT];
+        *outLeaderName = UiLocale_Lookup(sGymLeaderNames[NUZ_GYM_COUNT]);
     return NUZ_CHAMPION_CAP;
 }

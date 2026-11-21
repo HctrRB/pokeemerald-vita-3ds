@@ -23,12 +23,12 @@
 #define ROW_H 40
 #define ROWS 9
 
-static const char *const sTabs[4] = { "AREAS", "SQUAD", "RULES", "SETTINGS" };
+static const char *const sTabs[4] = { UI_N("AREAS"), UI_N("SQUAD"), UI_N("RULES"), UI_N("SETTINGS") };
 static const char *const sRules[4][2] = {
-    { "One encounter per area", "Only the first wild POKéMON of each area can be caught." },
-    { "Fainted = released", "A POKéMON that faints counts as fallen and can't be used." },
-    { "Level cap", "The next GYM LEADER's highest level (option LEVEL CAP)." },
-    { "Nicknames", "Give every POKéMON a nickname to bond with it." },
+    { UI_N("One encounter per area"), UI_N("Only the first wild POKéMON of each area can be caught.") },
+    { UI_N("Fainted = released"), UI_N("A POKéMON that faints counts as fallen and can't be used.") },
+    { UI_N("Level cap"), UI_N("The next GYM LEADER's highest level (option LEVEL CAP).") },
+    { UI_N("Nicknames"), UI_N("Give every POKéMON a nickname to bond with it.") },
 };
 static int32_t sTab, sTabX[4], sTabW[4];
 static UiList sList[4];
@@ -105,8 +105,8 @@ static bool Update(const UiInput *in)
         else if (a == sSettingCount)
         {
             // Reset of the area / fallen tracker: X twice
-            if (!sResetArmed) { sResetArmed = true; PlaySE(SE_SELECT); UiKit_Toast("Press X again to reset the tracker."); }
-            else { VitaNuzlocke_Reset(); BuildAreas(); sResetArmed = false; PlaySE(SE_SUCCESS); UiKit_Toast("Tracker reset."); }
+            if (!sResetArmed) { sResetArmed = true; PlaySE(SE_SELECT); UiKit_Toast(UI_TR("Press X again to reset the tracker.")); }
+            else { VitaNuzlocke_Reset(); BuildAreas(); sResetArmed = false; PlaySE(SE_SUCCESS); UiKit_Toast(UI_TR("Tracker reset.")); }
         }
         return true;
     }
@@ -130,12 +130,12 @@ static void Build(void)
     char buf[64];
     const char *leader = "";
     const uint8_t cap = VitaNuzlocke_GetLevelCap(VitaNuzlocke_CountBadges(), &leader);
-    UiKit_HeaderAs(UI_GBA_BG_CARD, UI_SPR_BALL_PREMIER, "NUZLOCKE", sTabs, 4, sTab, sTabX, sTabW, 12);
-    snprintf(buf, sizeof(buf), "NEXT: %s (CAP LV.%u)", leader ? leader : "-", (unsigned)cap);
+    UiKit_HeaderAs(UI_GBA_BG_CARD, UI_SPR_BALL_PREMIER, UI_TR("NUZLOCKE"), sTabs, 4, sTab, sTabX, sTabW, 12);
+    snprintf(buf, sizeof(buf), UI_TR("NEXT: %s (CAP LV.%u)"), leader ? leader : "-", (unsigned)cap);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     UiW_Panel(16, 60, 584, 432);
-    UiW_PanelHead(16, 60, 584, sTab == 0 ? "ENCOUNTERS" : sTab == 1 ? "SQUAD VITAL STATUS" : sTab == 2 ? "RULES" : "SETTINGS",
-                  sTab == 0 ? "X: change state" : sTab == 3 ? "< > change" : NULL);
+    UiW_PanelHead(16, 60, 584, sTab == 0 ? UI_TR("ENCOUNTERS") : sTab == 1 ? UI_TR("SQUAD VITAL STATUS") : sTab == 2 ? UI_TR("RULES") : UI_TR("SETTINGS"),
+                  sTab == 0 ? UI_TR("X: change state") : sTab == 3 ? UI_TR("< > change") : NULL);
     const UiList *l = &sList[sTab];
     const uint32_t green[2] = { UI_RGBA(110, 219, 151, 255), UI_COL_HP_HIGH }, red[2] = { UI_RGBA(240, 120, 104, 255), UI_COL_HP_LOW };
     for (int32_t r = 0; r < ROWS && l->first + r < Count(); r++)
@@ -151,9 +151,9 @@ static void Build(void)
             UiGame_Text(name, buf, sizeof(buf));
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, y + 4, buf, ink);
             const enum VitaNuzAreaStatus st = VitaNuzlocke_GetArea(sAreas[i]);
-            if (st == VITA_NUZ_AREA_CAUGHT) State(LIST_X + LIST_W - 160, y, "CAUGHT", green[0], green[1]);
-            else if (st == VITA_NUZ_AREA_MISSED) State(LIST_X + LIST_W - 160, y, "MISSED", red[0], red[1]);
-            else UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + LIST_W - 150, y + 4, st == VITA_NUZ_AREA_AVAILABLE ? "AVAILABLE" : "-", ink);
+            if (st == VITA_NUZ_AREA_CAUGHT) State(LIST_X + LIST_W - 160, y, UI_TR("CAUGHT"), green[0], green[1]);
+            else if (st == VITA_NUZ_AREA_MISSED) State(LIST_X + LIST_W - 160, y, UI_TR("MISSED"), red[0], red[1]);
+            else UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + LIST_W - 150, y + 4, st == VITA_NUZ_AREA_AVAILABLE ? UI_TR("AVAILABLE") : "-", ink);
         }
         else if (sTab == 1)
         {
@@ -163,26 +163,26 @@ static void Build(void)
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 64, y + 4, m.name, ink);
             if (!m.egg)
             {
-                snprintf(buf, sizeof(buf), "Lv%u", (unsigned)m.level);
+                snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)m.level);
                 UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 300, y + 4, buf, ink);
                 const bool dead = Fallen(i);
-                State(LIST_X + LIST_W - 160, y, dead ? "FALLEN" : "ALIVE", dead ? red[0] : green[0], dead ? red[1] : green[1]);
+                State(LIST_X + LIST_W - 160, y, dead ? UI_TR("FALLEN") : UI_TR("ALIVE"), dead ? red[0] : green[0], dead ? red[1] : green[1]);
             }
         }
         else if (sTab == 2)
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, y + 4, sRules[i][0], ink);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, y + 4, UiLocale_Lookup(sRules[i][0]), ink);
         else if (i < sSettingCount)
         {
             const VitaExtra *ex = sSettings[i];
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, y + 4, ex->name, ink);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, y + 4, UiLocale_Lookup(ex->name), ink);
             const int v = VitaExtras_Get(ex->key);
-            const char *val = (ex->values && v >= 0 && v < ex->count) ? ex->values[v] : "?";
+            const char *val = (ex->values && v >= 0 && v < ex->count) ? UiLocale_Lookup(ex->values[v]) : "?";
             const int32_t vw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, val);
             UiW_Capsule(LIST_X + LIST_W - 60 - vw, y + 4, vw + 24, 32);
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + LIST_W - 48 - vw, y + 4, val, UI_COL_TITLE);
         }
         else
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, y + 4, sResetArmed ? "RESET TRACKER? (X)" : "RESET TRACKER", on ? ink : UI_COL_HP_LOW);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, y + 4, sResetArmed ? UI_TR("RESET TRACKER? (X)") : UI_TR("RESET TRACKER"), on ? ink : UI_COL_HP_LOW);
     }
     UiW_ScrollBar(588, LIST_Y, ROWS * ROW_H, l->first, ROWS, Count());
     UiW_Panel(612, 60, 332, 200);
@@ -192,30 +192,30 @@ static void Build(void)
         GetMapNameGeneric(name, sAreas[l->sel]);
         UiGame_Text(name, buf, sizeof(buf));
         UiText_Draw(UI_FACE_PS2P, 16, 628, 76, buf, UI_COL_INK);
-        UiW_TextWrapped(628, 104, 300, 30, l->sel == 0 ? "You are in this area now." : "An area you have visited.", UI_COL_INK_SOFT, 2);
+        UiW_TextWrapped(628, 104, 300, 30, l->sel == 0 ? UI_TR("You are in this area now.") : UI_TR("An area you have visited."), UI_COL_INK_SOFT, 2);
     }
     else if (sTab == 1 && UiGame_PartyCount())
     {
         UiMon m;
         UiGame_Mon(l->sel, &m);
         UiText_Draw(UI_FACE_PS2P, 16, 628, 76, m.name, UI_COL_INK);
-        snprintf(buf, sizeof(buf), Fallen(l->sel) ? "Fainted: it can no longer be used." : "Alive. Level cap: %u", (unsigned)cap);
+        snprintf(buf, sizeof(buf), Fallen(l->sel) ? UI_TR("Fainted: it can no longer be used.") : UI_TR("Alive. Level cap: %u"), (unsigned)cap);
         UiW_TextWrapped(628, 104, 300, 30, buf, UI_COL_INK, 3);
     }
     else if (sTab == 3)
     {
-        UiText_Draw(UI_FACE_PS2P, 16, 628, 76, "SETTINGS", UI_COL_INK);
-        UiW_TextWrapped(628, 104, 300, 30, l->sel < sSettingCount ? "Left / right or X to change. Saved at once." : "Clears the areas and fallen allies of this save slot.", UI_COL_INK, 4);
+        UiText_Draw(UI_FACE_PS2P, 16, 628, 76, UI_TR("SETTINGS"), UI_COL_INK);
+        UiW_TextWrapped(628, 104, 300, 30, l->sel < sSettingCount ? UI_TR("Left / right or X to change. Saved at once.") : UI_TR("Clears the areas and fallen allies of this save slot."), UI_COL_INK, 4);
     }
     else if (sTab == 2)
     {
-        UiText_Draw(UI_FACE_PS2P, 16, 628, 76, "RULE", UI_COL_INK);
-        UiW_TextWrapped(628, 104, 300, 30, sRules[l->sel][1], UI_COL_INK, 4);
+        UiText_Draw(UI_FACE_PS2P, 16, 628, 76, UI_TR("RULE"), UI_COL_INK);
+        UiW_TextWrapped(628, 104, 300, 30, UiLocale_Lookup(sRules[l->sel][1]), UI_COL_INK, 4);
     }
     uint32_t caught = 0, missed = 0, fallen = 0;
     VitaNuzlocke_GetCounts(&caught, &missed, &fallen);
     UiW_Panel(612, 272, 332, 140);
-    const char *k[3] = { "CAUGHT AREAS", "MISSED AREAS", "FALLEN ALLIES" };
+    const char *k[3] = { UI_TR("CAUGHT AREAS"), UI_TR("MISSED AREAS"), UI_TR("FALLEN ALLIES") };
     const uint32_t v[3] = { caught, missed, fallen };
     for (int32_t i = 0; i < 3; i++)
     {
@@ -224,9 +224,9 @@ static void Build(void)
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 924 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), 284 + i * 38, buf, UI_COL_INK);
     }
     int32_t fx = 16;
-    if (sTab == 0) UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Change state");
-    else if (sTab == 3) UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Change");
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
+    if (sTab == 0) UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Change state"));
+    else if (sTab == 3) UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Change"));
+    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Back"));
     UiKit_FooterClock();
 }
 
