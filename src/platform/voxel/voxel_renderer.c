@@ -8548,8 +8548,33 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
         glDisable(GL_BLEND);
 
-        // In HIGH mode, run 2-pass Kawase blur (bloomFboA -> bloomFboB -> bloomFboA) for soft halos on lamps, sky & shafts
-        if (hd2dHigh && !VitaPerf_PassSkipped(VITA_PERF_PASS_KAWASE))
+        // In HIGH mode, blur the bloom for soft halos on lamps, sky & shafts: one 8-tap pass
+        // (bloomFboA -> bloomFboB, VoxelHd2dShader_Kawase8) with the reach of the two 4-tap Kawase
+        // passes it replaced, one render target less. The 2-pass paths remain as fallbacks.
+        bool bloomInB = false;
+        if (hd2dHigh && !VitaPerf_PassSkipped(VITA_PERF_PASS_KAWASE) && VoxelHd2dShader_Ready())
+        {
+            glDisable(GL_BLEND);
+            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+            glDisableClientState(GL_VERTEX_ARRAY);
+            glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboB);
+            VitaPerf_GpuScene(VITA_PERF_GPU_KAWASE);
+            glViewport(0, 0, bloomW, bloomH);
+            bloomInB = VoxelHd2dShader_Kawase8(pt->bloomTexA, uB, vB,
+                                               1.0f / (float)VOXEL_BLOOM_FBO_W, 1.0f / (float)VOXEL_BLOOM_FBO_H);
+            glEnableClientState(GL_VERTEX_ARRAY);
+            glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+            if (bloomInB)
+            {
+                sFrameDrawCalls++;
+                sFrameVertCount += 4u;
+            }
+        }
+        if (bloomInB)
+        {
+            activeBloomTex = pt->bloomTexB;
+        }
+        else if (hd2dHigh && !VitaPerf_PassSkipped(VITA_PERF_PASS_KAWASE))
         {
             if (VoxelHd2dShader_Ready())
             {

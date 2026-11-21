@@ -19,6 +19,10 @@ bool VoxelHd2dShader_ShaftsReady(void);
 // Runs the 2x2 box-filtered 480x272 downsample into sScratchFbo (eliminates roof/wall banding).
 void VoxelHd2dShader_CopyBox2x2(GLuint sceneTex, float uMax, float vMax, float texelX, float texelY);
 
+// The bloom's blur in one pass: 8 taps at +-1.25 and +-4.25 texels (texelX/Y: one texel of
+// sceneTex in texture coordinates). False when the program is not available.
+bool VoxelHd2dShader_Kawase8(GLuint sceneTex, float uMax, float vMax, float texelX, float texelY);
+
 // The half-size downsample: one tap per pixel with the texture's own filter (with GL_LINEAR, the
 // exact 2x2 average of the 4-tap box above for one fetch), then the night / fade overlay
 // (rgb, alpha) the world scene left to the post pass.

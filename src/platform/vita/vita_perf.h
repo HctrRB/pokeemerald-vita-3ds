@@ -78,7 +78,7 @@ typedef enum
     VITA_PERF_T_GPU_DOWN,        // half-res downsample
     VITA_PERF_T_GPU_BLUR,        // wide blur
     VITA_PERF_T_GPU_BLOOM,       // bloom target: clear, bright pass, sky bloom, shafts
-    VITA_PERF_T_GPU_KAWASE,      // both Kawase passes
+    VITA_PERF_T_GPU_KAWASE,      // the bloom blur (one 8-tap pass; two on the fallback paths)
     VITA_PERF_T_GPU_FINAL,       // composite, pass 6 and the new UI
     VITA_PERF_T_COUNT
 } VitaPerfTimer;
@@ -163,7 +163,7 @@ typedef enum
     VITA_PERF_PASS_ENTITIES,    // Pass_Entities (billboards)
     VITA_PERF_PASS_SKYBLOOM,    // sky bloom quads in the bloom target
     VITA_PERF_PASS_SHAFTS,      // shader light shafts
-    VITA_PERF_PASS_KAWASE,      // the two Kawase passes
+    VITA_PERF_PASS_KAWASE,      // the bloom blur (VoxelHd2dShader_Kawase8)
     VITA_PERF_PASS_BLOOM,       // the whole bloom target (bright pass, sky bloom, shafts, Kawase)
     VITA_PERF_PASS_BLUR,        // the wide blur level
     VITA_PERF_PASS_COUNT

@@ -20,6 +20,10 @@ static bool sShaderReady = false;
 static GLuint sCopyProg = 0;
 static GLint sCopyScene = -1, sCopyUvScale = -1, sCopyTexel = -1;
 
+// The bloom's blur in one pass (HIGH): 8 bilinear taps (VoxelHd2dShader_Kawase8).
+static GLuint sKawaseProg = 0;
+static GLint sKawaseScene = -1, sKawaseUvScale = -1, sKawaseInner = -1, sKawaseOuter = -1;
+
 // One bilinear tap: the 2x2 downsample, with the night / fade overlay (uOverlay) applied.
 static GLuint sTapProg = 0;
 static GLint sTapScene = -1, sTapUvScale = -1, sTapOverlay = -1;
@@ -87,6 +91,55 @@ static const char kCopyFs[] =
     "    c += texture2D(uScene, vT2).rgb;\n"
     "    c += texture2D(uScene, vT3).rgb;\n"
     "    gl_FragColor = vec4(c * 0.25, 1.0);\n"
+    "}\n";
+
+// The two Kawase passes the bloom used to take (4 diagonal taps at 1.5 texels, then 4 at 2.75)
+// sample, together, a 4x4 grid at +-1.25 and +-4.25 texels. One pass keeps its 4 inner and 4 outer
+// corners at equal weights: the same reach, one render target less.
+static const char kKawaseVs[] =
+    "attribute vec2 aPos;\n"
+    "attribute vec2 aUv;\n"
+    "uniform vec2 uUvScale;\n"
+    "uniform vec2 uInner;\n"
+    "uniform vec2 uOuter;\n"
+    "varying vec2 vT0;\n"
+    "varying vec2 vT1;\n"
+    "varying vec2 vT2;\n"
+    "varying vec2 vT3;\n"
+    "varying vec2 vT4;\n"
+    "varying vec2 vT5;\n"
+    "varying vec2 vT6;\n"
+    "varying vec2 vT7;\n"
+    "void main() {\n"
+    "    vec2 uv = aUv * uUvScale;\n"
+    "    vT0 = uv + vec2(-uInner.x, -uInner.y);\n"
+    "    vT1 = uv + vec2(uInner.x, -uInner.y);\n"
+    "    vT2 = uv + vec2(-uInner.x, uInner.y);\n"
+    "    vT3 = uv + vec2(uInner.x, uInner.y);\n"
+    "    vT4 = uv + vec2(-uOuter.x, -uOuter.y);\n"
+    "    vT5 = uv + vec2(uOuter.x, -uOuter.y);\n"
+    "    vT6 = uv + vec2(-uOuter.x, uOuter.y);\n"
+    "    vT7 = uv + vec2(uOuter.x, uOuter.y);\n"
+    "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
+    "}\n";
+
+static const char kKawaseFs[] =
+    "precision mediump float;\n"
+    "uniform sampler2D uScene;\n"
+    "varying vec2 vT0;\n"
+    "varying vec2 vT1;\n"
+    "varying vec2 vT2;\n"
+    "varying vec2 vT3;\n"
+    "varying vec2 vT4;\n"
+    "varying vec2 vT5;\n"
+    "varying vec2 vT6;\n"
+    "varying vec2 vT7;\n"
+    "void main() {\n"
+    "    vec3 c = texture2D(uScene, vT0).rgb + texture2D(uScene, vT1).rgb;\n"
+    "    c += texture2D(uScene, vT2).rgb + texture2D(uScene, vT3).rgb;\n"
+    "    c += texture2D(uScene, vT4).rgb + texture2D(uScene, vT5).rgb;\n"
+    "    c += texture2D(uScene, vT6).rgb + texture2D(uScene, vT7).rgb;\n"
+    "    gl_FragColor = vec4(c * 0.125, 1.0);\n"
     "}\n";
 
 static const char kTapVs[] =
@@ -396,6 +449,14 @@ bool VoxelHd2dShader_Init(void)
 
 #ifdef PLATFORM_VITA
     sCopyProg   = LinkProgram(kCopyVs, kCopyFs);
+    sKawaseProg = LinkProgram(kKawaseVs, kKawaseFs);
+    if (sKawaseProg)
+    {
+        sKawaseScene   = glGetUniformLocation(sKawaseProg, "uScene");
+        sKawaseUvScale = glGetUniformLocation(sKawaseProg, "uUvScale");
+        sKawaseInner   = glGetUniformLocation(sKawaseProg, "uInner");
+        sKawaseOuter   = glGetUniformLocation(sKawaseProg, "uOuter");
+    }
     sTapProg    = LinkProgram(kTapVs, kTapFs);
     sBrightProg = LinkProgram(kTapVs, kBrightFs);
     const bool compOk = InitComposite(&sCompField, kCompFieldFs) && InitComposite(&sCompBattle, kCompBattleFs);
@@ -454,6 +515,24 @@ static void DrawQuad(void)
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
+}
+
+bool VoxelHd2dShader_Kawase8(const GLuint sceneTex, const float uMax, const float vMax,
+                             const float texelX, const float texelY)
+{
+    if (!sShaderReady || sKawaseProg == 0)
+        return false;
+
+    glUseProgram(sKawaseProg);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sceneTex);
+    glUniform1i(sKawaseScene, 0);
+    glUniform2f(sKawaseUvScale, uMax, vMax);
+    glUniform2f(sKawaseInner, 1.25f * texelX, 1.25f * texelY);
+    glUniform2f(sKawaseOuter, 4.25f * texelX, 4.25f * texelY);
+    DrawQuad();
+    glUseProgram(0);
+    return true;
 }
 
 void VoxelHd2dShader_CopyBox2x2(const GLuint sceneTex, const float uMax, const float vMax,
