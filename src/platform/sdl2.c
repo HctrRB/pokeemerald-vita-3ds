@@ -590,6 +590,7 @@ static void __attribute__((noinline)) MainThread_Run(void)
             const uint32_t buttons = VitaPlatform_ReadButtons();
             sFastForward = VitaControls_FastForwardActive(buttons);
             timeScale = sFastForward ? Platform_GetSetting(PLATFORM_SETTING_FAST_FORWARD_SPEED) : 1.0;
+            VitaPerf_SetInput(sFastForward || speedUp, Ui_IsOpen());
         }
 
         bool voxelActive = false;

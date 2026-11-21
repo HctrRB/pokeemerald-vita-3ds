@@ -67,6 +67,19 @@ typedef enum
     VITA_PERF_T_POST_DOF,        // HD-2D post: downsample + Kawase blur
     VITA_PERF_T_POST_BLOOM,      // HD-2D post: bright pass + emitters + bloom blur
     VITA_PERF_T_POST_COMPOSITE,  // HD-2D post: final composite + split-tone + vignette
+    VITA_PERF_T_ENT_EMIT,        // inside ENTITIES: VoxelEntities_Emit (includes ENT_DECODE)
+    VITA_PERF_T_ENT_DECODE,      // inside ENT_EMIT: sprite frames decoded into the atlas (RefreshSlot)
+    VITA_PERF_T_ENT_ATLAS,       // inside ENTITIES: WriteSpriteAtlasSlots
+    VITA_PERF_T_ENT_PACK,        // inside ENTITIES: vertex packing, shadow and reflection copies
+    VITA_PERF_T_ENT_LIGHTS,      // inside ENTITIES: LightCards
+    // GPU time per render target, probe builds only (VitaPerf_GpuScene): the time glFinish waited
+    // when the scene ended, i.e. the GPU work CPU submission did not already cover.
+    VITA_PERF_T_GPU_WORLD,       // the 3D scene (passes 1-5.9); without post, also pass 6 and the UI
+    VITA_PERF_T_GPU_DOWN,        // half-res downsample
+    VITA_PERF_T_GPU_BLUR,        // wide blur
+    VITA_PERF_T_GPU_BLOOM,       // bloom target: clear, bright pass, sky bloom, shafts
+    VITA_PERF_T_GPU_KAWASE,      // both Kawase passes
+    VITA_PERF_T_GPU_FINAL,       // composite, pass 6 and the new UI
     VITA_PERF_T_COUNT
 } VitaPerfTimer;
 
@@ -89,6 +102,7 @@ typedef enum
     VITA_PERF_C_WORKER_OVERLAP, // 3D frames that started while the worker was still computing
     VITA_PERF_C_WORKER_HELD,  // frames that handed no chunk to the worker because the atlas was being extended
     VITA_PERF_C_UI2_QUADS,    // new UI: quads drawn this frame
+    VITA_PERF_C_GXM_SCENES,   // render-target scenes this frame (probe builds only)
     VITA_PERF_C_COUNT
 } VitaPerfCounter;
 
@@ -112,6 +126,76 @@ void VitaPerf_MarkEvent(VitaPerfEvent event);
 // Writes one line to perf_summary.txt with the free memory of the newlib heap and of each
 // vitaGL pool, labelled with `stage` (e.g. "after vglInit"). For one-off points, not per frame.
 void VitaPerf_LogMemory(const char *stage);
+
+// What the frame showed, written with each CSV line so one session's log can be split by zone.
+// Filled by the 3D renderer on Core 0 (VitaPerf_SetScene) once per 3D frame.
+typedef struct
+{
+    int32_t hd2dLevel;     // VOXEL_HD2D_* drawn this frame
+    bool dofOn;            // DEPTH OF FIELD option
+    int32_t mapGroup, mapNum;
+    bool indoor;
+    int32_t weather;       // VoxelWeatherClass
+    float daylight;        // 0 night .. 1 day
+    bool lamps;            // night lamps and window glow drawn (nightGlow > 0)
+    bool inBattle;
+    bool faded;            // screen fully faded (no 3D drawn)
+    float playerX, playerZ;
+} VitaPerfScene;
+
+void VitaPerf_SetScene(const VitaPerfScene *scene);
+// Core 0 input state, once per presentation loop iteration (sdl2.c).
+void VitaPerf_SetInput(bool fastForward, bool uiOpen);
+
+// Passes the automatic bench can switch off, one at a time (probe builds only).
+typedef enum
+{
+    VITA_PERF_PASS_FOG,         // DrawFogBanks (fog and sand banks)
+    VITA_PERF_PASS_MOTES,       // DrawMotes (dust motes, fireflies)
+    VITA_PERF_PASS_SURFACEFX,   // DrawSurfaceFx
+    VITA_PERF_PASS_WEATHER,     // DrawWeather
+    VITA_PERF_PASS_WORLDRAYS,   // DrawWorldRays (OFF / LOW)
+    VITA_PERF_PASS_DAYNIGHT,    // Pass_DayNightGrade
+    VITA_PERF_PASS_LAMPS,       // Pass_NightLamps, Pass_EntityLamps, Pass_BuildingGlow
+    VITA_PERF_PASS_ATMOS2D,     // Pass_Atmosphere2D
+    VITA_PERF_PASS_SHADOWS,     // Pass_CastShadows
+    VITA_PERF_PASS_REFLECTIONS, // Pass_Reflections
+    VITA_PERF_PASS_ENTITIES,    // Pass_Entities (billboards)
+    VITA_PERF_PASS_SKYBLOOM,    // sky bloom quads in the bloom target
+    VITA_PERF_PASS_SHAFTS,      // shader light shafts
+    VITA_PERF_PASS_KAWASE,      // the two Kawase passes
+    VITA_PERF_PASS_BLOOM,       // the whole bloom target (bright pass, sky bloom, shafts, Kawase)
+    VITA_PERF_PASS_BLUR,        // the wide blur level
+    VITA_PERF_PASS_COUNT
+} VitaPerfPass;
+
+// The render target a GPU scene draws into, for VitaPerf_GpuScene.
+typedef enum
+{
+    VITA_PERF_GPU_NONE,
+    VITA_PERF_GPU_WORLD,
+    VITA_PERF_GPU_DOWN,
+    VITA_PERF_GPU_BLUR,
+    VITA_PERF_GPU_BLOOM,
+    VITA_PERF_GPU_KAWASE,
+    VITA_PERF_GPU_FINAL,
+} VitaPerfGpuScene;
+
+#ifdef VITA_GPU_PROBE
+// Called right after each glBindFramebuffer of the 3D frame with the scene about to start, and
+// with VITA_PERF_GPU_NONE before the swap: waits for the GPU (glFinish) and charges the wait to the
+// scene that just ended. Only at a render-target change: vitaGL's glFinish ends the GXM scene, so
+// a probe in mid-scene would split it and lose its depth.
+void VitaPerf_GpuScene(VitaPerfGpuScene next);
+// True while the automatic bench has this pass switched off.
+bool VitaPerf_PassSkipped(VitaPerfPass pass);
+// The HD-2D level the bench imposes this frame, or -1 to use the player's option.
+int32_t VitaPerf_BenchLevel(void);
+#else
+static inline void VitaPerf_GpuScene(const VitaPerfGpuScene next) { (void)next; }
+static inline bool VitaPerf_PassSkipped(const VitaPerfPass pass) { (void)pass; return false; }
+static inline int32_t VitaPerf_BenchLevel(void) { return -1; }
+#endif
 
 // Core 1 (AgbMain GBA Simulation) Stage Markers
 void VitaPerf_Core1LogicTick(void);

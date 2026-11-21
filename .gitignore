@@ -50,6 +50,7 @@ prefabs.json
 # PS Vita build output
 cmake-build-*/
 build-vita/
+build-vita-probe/
 *.vpk
 *.velf
 *.self

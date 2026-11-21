@@ -194,7 +194,9 @@ typedef enum
 
 static inline Hd2dPreset GetHd2dPreset(void)
 {
-    const int32_t level = VitaExtras_GetFast(FAST_EXTRA_VOXEL_HD2D);
+    // The measuring build's automatic bench steps through the levels without touching the option.
+    const int32_t benchLevel = VitaPerf_BenchLevel();
+    const int32_t level = (benchLevel >= 0) ? benchLevel : VitaExtras_GetFast(FAST_EXTRA_VOXEL_HD2D);
     return (level >= VOXEL_HD2D_OFF && level < VOXEL_HD2D_COUNT) ? (Hd2dPreset)level : HD2D_PRESET_HIGH;
 }
 
@@ -3664,6 +3666,8 @@ static float SmoothedFogWorldY(const float wx, const float wz)
 
 static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_t g, uint8_t b, float seconds)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_FOG))
+        return;
     if (!sFogTex || amount <= 0.005f)
         return;
 
@@ -3799,6 +3803,8 @@ static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_
 
 static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float seconds, Hd2dPreset hd2d)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_WEATHER))
+        return;
     if (!kind || amount <= 0.005f)
         return;
 
@@ -3967,6 +3973,8 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
 
 static void DrawMotes(float strength, float seconds, bool fireflies, Hd2dPreset hd2d)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_MOTES))
+        return;
     if (strength <= 0.005f)
         return;
 
@@ -6385,8 +6393,10 @@ static void Frame_EmitEntities(const VoxelFrame *const f)
 
         // While the chunk worker owns the lighting caches the billboards keep their last shade.
         VoxelEntities_AllowLighting(!sWorkerBusyThisFrame);
-        uint32_t redecodedSlots = VoxelEntities_Emit(&entityBuilder, sSpriteAtlasMorton,
-                                                     &sCamera, &shadowBuilder, &reflectionBuilder);
+        VitaPerf_SubBegin(VITA_PERF_T_ENT_EMIT);
+        const uint32_t redecodedSlots = VoxelEntities_Emit(&entityBuilder, sSpriteAtlasMorton,
+                                                           &sCamera, &shadowBuilder, &reflectionBuilder);
+        VitaPerf_SubEnd(VITA_PERF_T_ENT_EMIT);
         uint32_t dirtySlots = VoxelEntities_TakeDirtySlots();
         if (sSpriteAtlasNeedsAll)
         {
@@ -6395,15 +6405,26 @@ static void Frame_EmitEntities(const VoxelFrame *const f)
             sSpriteAtlasNeedsAll = false;
         }
         if ((redecodedSlots > 0 || dirtySlots != 0) && sSpriteTex != 0)
+        {
+            VitaPerf_SubBegin(VITA_PERF_T_ENT_ATLAS);
             WriteSpriteAtlasSlots(sSpriteAtlasMorton, sSpriteAtlasLinear, dirtySlots);
+            VitaPerf_SubEnd(VITA_PERF_T_ENT_ATLAS);
+        }
 
+        VitaPerf_SubBegin(VITA_PERF_T_ENT_PACK);
         sEntityGlCount = entityBuilder.count;
         if (sEntityGlCount > 0)
         {
             PackVoxelVertices(sEntityVerts, sEntityGlVerts, sEntityGlCount, !indoor);
             sEntityLitCount = 0;
             if (VoxelPointLights_Count() > 0)
+            {
+                VitaPerf_SubEnd(VITA_PERF_T_ENT_PACK);
+                VitaPerf_SubBegin(VITA_PERF_T_ENT_LIGHTS);
                 LightCards(f, sEntityGlVerts, sEntityGlCount);
+                VitaPerf_SubEnd(VITA_PERF_T_ENT_LIGHTS);
+                VitaPerf_SubBegin(VITA_PERF_T_ENT_PACK);
+            }
         }
 
         sShadowGlCount = shadowBuilder.count;
@@ -6447,6 +6468,7 @@ static void Frame_EmitEntities(const VoxelFrame *const f)
                 sReflectionGlVerts[i].a = (f->hd2dPreset != HD2D_PRESET_OFF && !indoor && f->weather == VOXEL_WEATHER_RAIN) ? 185 : 140;
             }
         }
+        VitaPerf_SubEnd(VITA_PERF_T_ENT_PACK);
         VitaPerf_SubEnd(VITA_PERF_T_ENTITIES);
     }
     else
@@ -6490,6 +6512,25 @@ static void Frame_BeginPasses(VoxelFrame *const f, const GLuint defaultTargetFbo
     else
     {
         glBindFramebuffer(GL_FRAMEBUFFER, defaultTargetFbo);
+    }
+    VitaPerf_GpuScene(VITA_PERF_GPU_WORLD);
+    {
+        const VitaDayNightLight *const dn = VitaDayNight_Get();
+        const VitaPerfScene scene = {
+            .hd2dLevel = (int32_t)f->hd2dPreset,
+            .dofOn = dioramaSetting,
+            .mapGroup = (inst0 != NULL) ? inst0->mapGroup : -1,
+            .mapNum = (inst0 != NULL) ? inst0->mapNum : -1,
+            .indoor = isIndoor,
+            .weather = (int32_t)f->weather,
+            .daylight = (dn != NULL) ? dn->daylight : 1.0f,
+            .lamps = (f->nightGlow > 0.0f),
+            .inBattle = f->inBattle3D,
+            .faded = (fadeAmount >= 0.99f),
+            .playerX = f->playerX,
+            .playerZ = f->playerZ,
+        };
+        VitaPerf_SetScene(&scene);
     }
 
     // 8. OpenGL Setup & Hardware Render Passes
@@ -6841,6 +6882,8 @@ static bool Pass_Buildings(const VoxelFrame *const f)
 // Pass 4: cast and decal silhouette shadows (Emerald 3DS GL_COMBINE, 0xFF281408u).
 static void Pass_CastShadows(void)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_SHADOWS))
+        return;
     if (sShadowGlCount > 0 && sSpriteTex != 0)
     {
         glEnable(GL_TEXTURE_2D);
@@ -6876,6 +6919,8 @@ static void Pass_CastShadows(void)
 // Pass 4.5: character and cloud reflections on water.
 static void Pass_Reflections(void)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_REFLECTIONS))
+        return;
     if (sReflectionGlCount > 0)
     {
         glEnable(GL_ALPHA_TEST);
@@ -6898,6 +6943,8 @@ static void Pass_Reflections(void)
 // Pass 5: entity billboards, with the player's silhouette where it is occluded.
 static void Pass_Entities(void)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_ENTITIES))
+        return;
     if (sEntityGlCount > 0)
     {
         glEnable(GL_ALPHA_TEST);
@@ -6956,6 +7003,8 @@ static void Pass_Entities(void)
 // so GL_LEQUAL lands on the same depth.
 static void Pass_EntityLamps(void)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_LAMPS))
+        return;
     if (sEntityLitCount == 0 || sSpriteTex == 0)
         return;
     glDisable(GL_ALPHA_TEST);
@@ -6985,6 +7034,8 @@ static void Pass_EntityLamps(void)
 // (destination colour blending).
 static void Pass_DayNightGrade(const VoxelFrame *const f)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_DAYNIGHT))
+        return;
     const bool indoor = f->indoor;
     if (!indoor && !f->grade.scaleIdentity)
     {
@@ -7048,6 +7099,8 @@ static void Pass_DayNightGrade(const VoxelFrame *const f)
 // before HD-2D post-processing so bright windows pick up a soft bloom halo.
 static void Pass_BuildingGlow(const VoxelFrame *const f)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_LAMPS))
+        return;
     if (f->nightGlow <= 0.01f)
         return;
 
@@ -7233,6 +7286,8 @@ static void DrawLampHalos(const VoxelFrame *const f, const LampLevel *const leve
 //   halos: one billboard per lamp, sized and weighted by the HD-2D level (LampLevel).
 static void Pass_NightLamps(const VoxelFrame *const f)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_LAMPS))
+        return;
     const float glow = f->nightGlow;
     if (glow <= 0.01f)
         return;
@@ -7312,6 +7367,8 @@ static inline float SurfaceFx_Rand01(void)
 
 static void DrawSurfaceFx(const VoxelFrame *const f)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_SURFACEFX))
+        return;
     if (f->indoor || f->inBattle3D || f->hd2dPreset == HD2D_PRESET_OFF)
         return;
 
@@ -7682,6 +7739,8 @@ static void DrawSurfaceFx(const VoxelFrame *const f)
 
 static void DrawWorldRays(const float strength, const float seconds, const bool isMoon, const VitaDayNightPath *const path)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_WORLDRAYS))
+        return;
     if (strength <= 0.005f || path == NULL)
         return;
 
@@ -7983,6 +8042,8 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
 // day draws no fullscreen quad here.
 static void Pass_Atmosphere2D(const VoxelFrame *const f)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_ATMOS2D))
+        return;
     const bool indoor = f->indoor;
     const float bolt = f->bolt;
     const bool underground = f->underground;
@@ -8176,8 +8237,10 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     const bool dofSetting = !f->fly.active && (VitaExtras_GetFast(FAST_EXTRA_VOXEL_BLUR) != 0);
     const bool dofEnabled = dofSetting && !f->inBattle3D;
     // The wider blur (step 2) feeds only the DoF bands and the 3D battle backdrop.
-    const bool useBlurFbo = f->inBattle3D || (dofSetting && (!hd2dOn || hd2dHigh));
-    const bool bloomReady = hd2dOn && (pt->bloomFboA != 0 && pt->bloomFboB != 0);
+    const bool useBlurFbo = (f->inBattle3D || (dofSetting && (!hd2dOn || hd2dHigh)))
+                         && !VitaPerf_PassSkipped(VITA_PERF_PASS_BLUR);
+    const bool bloomReady = hd2dOn && (pt->bloomFboA != 0 && pt->bloomFboB != 0)
+                         && !VitaPerf_PassSkipped(VITA_PERF_PASS_BLOOM);
     static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 
     glDisable(GL_DEPTH_TEST);
@@ -8198,6 +8261,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     VitaPerf_SubBegin(VITA_PERF_T_POST_DOF);
     // 1. Downsample: 2x2 box filter in HD-2D to eliminate roof/wall horizontal stripe aliasing
     glBindFramebuffer(GL_FRAMEBUFFER, pt->scratchFbo);
+    VitaPerf_GpuScene(VITA_PERF_GPU_DOWN);
     glViewport(0, 0, scratchW, scratchH);
     glBindTexture(GL_TEXTURE_2D, pt->dioramaActiveTex);
     if (hd2dOn && VoxelHd2dShader_Ready())
@@ -8231,6 +8295,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     {
         const float blurStep = hd2dHigh ? 1.55f : 1.0f;
         glBindFramebuffer(GL_FRAMEBUFFER, pt->blurFbo);
+        VitaPerf_GpuScene(VITA_PERF_GPU_BLUR);
         glViewport(0, 0, scratchW, scratchH);
         if (VoxelHd2dShader_Ready())
         {
@@ -8263,6 +8328,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         const float vB = (float)bloomH / (float)VOXEL_BLOOM_FBO_H;
 
         glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
+        VitaPerf_GpuScene(VITA_PERF_GPU_BLOOM);
         glViewport(0, 0, bloomW, bloomH);
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -8343,7 +8409,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                 for (int32_t k = 0; k < 3; ++k)
                     col[k] = isDay ? (kShaftDay[k] + (kShaftGold[k] - kShaftDay[k]) * goldK) : kShaftMoon[k];
 
-                if (sWeatherAtlasTex != 0 && skyBloomScale > 0.0f)
+                if (sWeatherAtlasTex != 0 && skyBloomScale > 0.0f && !VitaPerf_PassSkipped(VITA_PERF_PASS_SKYBLOOM))
                 {
                     static const float qx[6] = {-1.0f,  1.0f,  1.0f, -1.0f,  1.0f, -1.0f};
                     static const float qy[6] = {-1.0f, -1.0f,  1.0f, -1.0f,  1.0f,  1.0f};
@@ -8375,7 +8441,8 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                     glDisableClientState(GL_COLOR_ARRAY);
                 }
 
-                if (hd2dOn && shaftsScale > 0.0f && VoxelHd2dShader_ShaftsReady())
+                if (hd2dOn && shaftsScale > 0.0f && VoxelHd2dShader_ShaftsReady()
+                    && !VitaPerf_PassSkipped(VITA_PERF_PASS_SHAFTS))
                 {
                     const float gain = (isDay
                         ? (amt * (hd2dHigh ? 1.55f : 1.15f))
@@ -8403,7 +8470,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         glDisable(GL_BLEND);
 
         // In HIGH mode, run 2-pass Kawase blur (bloomFboA -> bloomFboB -> bloomFboA) for soft halos on lamps, sky & shafts
-        if (hd2dHigh)
+        if (hd2dHigh && !VitaPerf_PassSkipped(VITA_PERF_PASS_KAWASE))
         {
             if (VoxelHd2dShader_Ready())
             {
@@ -8411,11 +8478,13 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                 glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                 glDisableClientState(GL_VERTEX_ARRAY);
                 glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboB);
+                VitaPerf_GpuScene(VITA_PERF_GPU_KAWASE);
                 glViewport(0, 0, bloomW, bloomH);
                 VoxelHd2dShader_CopyBox2x2(pt->bloomTexA, uB, vB,
                                            1.50f / (float)VOXEL_BLOOM_FBO_W,
                                            1.50f / (float)VOXEL_BLOOM_FBO_H);
                 glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
+                VitaPerf_GpuScene(VITA_PERF_GPU_KAWASE);
                 glViewport(0, 0, bloomW, bloomH);
                 VoxelHd2dShader_CopyBox2x2(pt->bloomTexB, uB, vB,
                                            2.75f / (float)VOXEL_BLOOM_FBO_W,
@@ -8428,9 +8497,11 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
             else
             {
                 glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboB);
+                VitaPerf_GpuScene(VITA_PERF_GPU_KAWASE);
                 glViewport(0, 0, bloomW, bloomH);
                 BlurTaps(pt->bloomTexA, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 1.50f, 1.50f);
                 glBindFramebuffer(GL_FRAMEBUFFER, pt->bloomFboA);
+                VitaPerf_GpuScene(VITA_PERF_GPU_KAWASE);
                 glViewport(0, 0, bloomW, bloomH);
                 BlurTaps(pt->bloomTexB, uB, vB, (float)VOXEL_BLOOM_FBO_W, (float)VOXEL_BLOOM_FBO_H, 2.75f, 2.75f);
             }
@@ -8446,6 +8517,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     VitaPerf_SubBegin(VITA_PERF_T_POST_COMPOSITE);
     // 3. Final composite to targetFbo (0 = screen, sMenuBgFbo = menu freeze capture)
     glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
+    VitaPerf_GpuScene(VITA_PERF_GPU_FINAL);
     glViewport(0, 0, renderW, renderH);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -9080,6 +9152,7 @@ static void DrawMenuFrozenBackdrop(void)
     static const float uvs[8] = { 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f };
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    VitaPerf_GpuScene(VITA_PERF_GPU_FINAL);
     glViewport(0, 0, renderW, renderH);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -9196,6 +9269,7 @@ void VoxelRenderer_DrawFlyCloudCover(void)
 static void RenderFlyCloudFrame(const VoxelFrame *const f)
 {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    VitaPerf_GpuScene(VITA_PERF_GPU_FINAL);
     glClearColor(kFlyCloudBackdropRgb[0], kFlyCloudBackdropRgb[1], kFlyCloudBackdropRgb[2], 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     DrawCloudCover(f->fly.frame.whiteout);
@@ -9355,6 +9429,8 @@ bool VoxelRenderer_RenderFrame(void)
 
 void VoxelRenderer_SwapBuffers(void)
 {
+    // Measuring builds: the frame's last scene ends here, before the swap's own wait.
+    VitaPerf_GpuScene(VITA_PERF_GPU_NONE);
     VitaPerf_MarkSwapStart();
 #ifdef PLATFORM_VITA
     vglSwapBuffers(GL_FALSE);

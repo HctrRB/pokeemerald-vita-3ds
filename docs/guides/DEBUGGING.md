@@ -48,6 +48,10 @@ CSV columns:
 | Chunk worker | `worker_built`, `worker_dropped` (results dropped because the world changed), `worker_compute_ms` (the worker's time for the chunk committed this frame), `worker_wait_ms` (Core 0 blocked waiting for it, at the frame start or in mid-frame). `build_ms` and `chunks_built` count only the builds on Core 0 |
 | `events` | Letters: `M` new map (chunk cache reset), `X` map crossing (chunks shifted), `L` live tile changed, `S` sun moved (visible chunks rebuild), `W` warm-up, `F` faded (synchronous builds), `A` atlas extended in a build, `C` an atlas slot recomposed for another tileset |
 | New UI | `ui2_render_ms` (Core 0 Pass 7 draw and cell uploads), `ui2_tick_ms` (Core 1 `Ui_Tick` draw-list build), `ui2_quads` (quads in the list) |
+| Entities (inside `entities_ms`) | `ent_emit_ms` (`VoxelEntities_Emit`, including `ent_decode_ms`), `ent_decode_ms` (sprite frames decoded into the atlas), `ent_atlas_ms` (`WriteSpriteAtlasSlots`), `ent_pack_ms` (vertex packing, shadow and reflection copies), `ent_lights_ms` (`LightCards`) |
+| Scene | `hd2d_level` (`VOXEL_HD2D_*` drawn), `dof_on`, `fast_forward`, `ui_open`, `map_group`, `map_num`, `indoor`, `weather` (`VoxelWeatherClass`), `daylight` (0 night, 1 day), `lamps` (night lamps drawn), `in_battle`, `faded`: what the last 3D frame showed, so one session's log can be split by zone (`VitaPerf_SetScene`) |
+| GPU (probe builds) | `gpu_world_ms, gpu_down_ms, gpu_blur_ms, gpu_bloom_ms, gpu_kawase_ms, gpu_final_ms, gpu_total_ms, gxm_scenes`; 0 in other builds. See "Measuring build" below |
+| Bench (probe builds) | `bench_run` (0 outside a run), `bench_step`, `bench_level` (level imposed, -1 none), `probe_mask` (bit of the `VitaPerfPass` switched off), `bench_measured` (1 = frame to use) |
 
 | Marker | Where |
 |---|---|
@@ -75,6 +79,42 @@ awk -F, 'NR==1 {for (i=1;i<=NF;i++) c[$i]=i; next}
   $c["worker_built"]>0 {n++; w+=$c["worker_compute_ms"]}
   $c["frame_ms"]>16.7 && $c["render3d"]==1 {slow++}
   END {print "worker chunk:", w/n, "ms;", slow, "frames over 16.7 ms"}' logs/<session>/perf_frames.csv
+```
+
+## Measuring build (GPU time per render target, automatic bench)
+
+`build_vita.ps1 -Probe` (or `VITA_BUILD_PROBE=1 ./build_vita.sh`) builds `build-vita-probe/pokeemerald.vpk`
+with `VITA_GPU_PROBE` (CMake option, implies `VITA_TELEMETRY`). Its numbers are for comparing passes
+and builds with each other, never with a normal build: the probes take away the overlap of CPU and GPU,
+so its frame rate is lower.
+
+- **GPU per render target.** vitaGL has no GPU timers. `VitaPerf_GpuScene` is called right after each
+  `glBindFramebuffer` of the 3D frame and before the swap: it runs `glFinish` and charges the wait to the
+  scene that just ended (`gpu_*_ms`). That is the GPU work the CPU submission did not already cover;
+  the GPU starts each scene idle because the previous probe waited for it. Only at render-target
+  changes: vitaGL's `glFinish` ends the GXM scene, so a probe in mid-scene would split it and lose its
+  depth. Without the post pass the whole frame is `gpu_world_ms`.
+- **Automatic bench.** Standing still in the 3D field for `BENCH_STILL_FRAMES` frames starts a run
+  (`[BENCH]` lines in `perf_summary.txt`): every HD-2D level (OFF, LOW, MED, HIGH), then HIGH with one
+  `VitaPerfPass` switched off at a time (`VitaPerf_PassSkipped`). The level is imposed through
+  `VitaPerf_BenchLevel`; the saved option is not touched and comes back at the end. Each step waits
+  for `BENCH_SETTLE_FRAMES` calm frames and keeps `BENCH_MEASURE_FRAMES` frames with
+  `bench_measured = 1`. Moving, a menu, a fade, a battle or fast forward aborts the run; the player
+  has to move before another one starts. The picture changes during a run (levels, effects missing):
+  that is the bench at work.
+- **Session.** Play one session through the spots to measure (town at night with lamps, rain, midday,
+  fog, desert, an interior), stand still at each until the picture is back to normal, and copy
+  `perf_frames.csv` and `perf_summary.txt` to `logs/<session>/`. The scene columns split it by zone.
+
+Cost of one pass at one spot: the median of `gpu_total_ms` (or `gpu_world_ms`) over the measured
+frames of step "HIGH without X", minus the same at step HIGH of the same run:
+
+```sh
+awk -F, 'NR==1 {for (i=1;i<=NF;i++) c[$i]=i; next} $c["bench_measured"]==1 {
+  k=$c["bench_run"]" step "$c["bench_step"]" lvl "$c["bench_level"]" mask "$c["probe_mask"];
+  n[k]++; g[k]+=$c["gpu_total_ms"]; w[k]+=$c["gpu_world_ms"]}
+  END {for (k in n) printf "%s: gpu %.2f world %.2f ms (n=%d)\n", k, g[k]/n[k], w[k]/n[k], n[k]}' \
+  logs/<session>/perf_frames.csv | sort -n
 ```
 
 ## Thread violations (`thread_violations.log`)

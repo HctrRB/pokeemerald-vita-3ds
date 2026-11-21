@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include "vita_perf.h"
 #include "vita_platform.h"
+#include "platform/vita_extras.h"
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -142,7 +144,112 @@ static const char *const sSubNames[VITA_PERF_T_COUNT] = {
     [VITA_PERF_T_POST_DOF] = "Post: DoF blur",
     [VITA_PERF_T_POST_BLOOM] = "Post: Bloom",
     [VITA_PERF_T_POST_COMPOSITE] = "Post: Composite",
+    [VITA_PERF_T_ENT_EMIT] = "Entities: emit",
+    [VITA_PERF_T_ENT_DECODE] = "Entities: decode",
+    [VITA_PERF_T_ENT_ATLAS] = "Entities: atlas wr",
+    [VITA_PERF_T_ENT_PACK] = "Entities: pack",
+    [VITA_PERF_T_ENT_LIGHTS] = "Entities: lights",
+    [VITA_PERF_T_GPU_WORLD] = "GPU: world",
+    [VITA_PERF_T_GPU_DOWN] = "GPU: downsample",
+    [VITA_PERF_T_GPU_BLUR] = "GPU: wide blur",
+    [VITA_PERF_T_GPU_BLOOM] = "GPU: bloom",
+    [VITA_PERF_T_GPU_KAWASE] = "GPU: Kawase",
+    [VITA_PERF_T_GPU_FINAL] = "GPU: final",
 };
+
+// What the frame showed and the input state (VitaPerf_SetScene, VitaPerf_SetInput), Core 0 only.
+static VitaPerfScene sScene;
+static bool sInputFastForward = false;
+static bool sInputUiOpen = false;
+
+#ifdef VITA_GPU_PROBE
+// The automatic bench: when the player stands still in the 3D field for BENCH_STILL_FRAMES, it
+// steps through every HD-2D level, then through HIGH with one pass switched off at a time. Each
+// step waits for BENCH_SETTLE_FRAMES calm frames (no events, no holes), then keeps
+// BENCH_MEASURE_FRAMES frames marked bench_measured. Moving, a menu, a fade, a battle or fast
+// forward aborts the run; the player has to move before the next one starts.
+#define BENCH_STILL_FRAMES 150u
+#define BENCH_SETTLE_FRAMES 30u
+#define BENCH_MEASURE_FRAMES 90u
+#define BENCH_STEP_MAX_FRAMES 600u
+#define BENCH_LEVEL_STEPS ((uint32_t)VOXEL_HD2D_COUNT)
+#define BENCH_STEPS (BENCH_LEVEL_STEPS + (uint32_t)VITA_PERF_PASS_COUNT)
+// Below this, in tiles, the player has not moved.
+#define BENCH_STILL_EPSILON 0.01f
+
+static uint32_t sBenchRun = 0;        // runs started this session: the CSV's bench_run
+static int32_t sBenchStep = -1;       // -1: no run under way
+static uint32_t sBenchStepFrames = 0; // 3D frames in this step
+static uint32_t sBenchSettle = 0;     // calm frames in a row
+static uint32_t sBenchMeasured = 0;   // measured frames in this step
+static uint32_t sBenchStill = 0;      // frames standing still with nothing blocking a run
+static bool sBenchArmed = true;       // the player moved since the last run
+static VitaPerfScene sBenchLastScene;
+static bool sBenchLastSceneValid = false;
+static VitaPerfGpuScene sGpuScene = VITA_PERF_GPU_NONE;
+
+static const VitaPerfTimer kGpuSceneTimer[] = {
+    [VITA_PERF_GPU_NONE] = VITA_PERF_T_GPU_WORLD, // never charged
+    [VITA_PERF_GPU_WORLD] = VITA_PERF_T_GPU_WORLD,
+    [VITA_PERF_GPU_DOWN] = VITA_PERF_T_GPU_DOWN,
+    [VITA_PERF_GPU_BLUR] = VITA_PERF_T_GPU_BLUR,
+    [VITA_PERF_GPU_BLOOM] = VITA_PERF_T_GPU_BLOOM,
+    [VITA_PERF_GPU_KAWASE] = VITA_PERF_T_GPU_KAWASE,
+    [VITA_PERF_GPU_FINAL] = VITA_PERF_T_GPU_FINAL,
+};
+
+static const char *const kPassNames[VITA_PERF_PASS_COUNT] = {
+    [VITA_PERF_PASS_FOG] = "fog",
+    [VITA_PERF_PASS_MOTES] = "motes",
+    [VITA_PERF_PASS_SURFACEFX] = "surfacefx",
+    [VITA_PERF_PASS_WEATHER] = "weather",
+    [VITA_PERF_PASS_WORLDRAYS] = "worldrays",
+    [VITA_PERF_PASS_DAYNIGHT] = "daynight",
+    [VITA_PERF_PASS_LAMPS] = "lamps",
+    [VITA_PERF_PASS_ATMOS2D] = "atmos2d",
+    [VITA_PERF_PASS_SHADOWS] = "shadows",
+    [VITA_PERF_PASS_REFLECTIONS] = "reflections",
+    [VITA_PERF_PASS_ENTITIES] = "entities",
+    [VITA_PERF_PASS_SKYBLOOM] = "skybloom",
+    [VITA_PERF_PASS_SHAFTS] = "shafts",
+    [VITA_PERF_PASS_KAWASE] = "kawase",
+    [VITA_PERF_PASS_BLOOM] = "bloom",
+    [VITA_PERF_PASS_BLUR] = "blur",
+};
+
+static uint32_t BenchMask(void)
+{
+    if (sBenchStep < (int32_t)BENCH_LEVEL_STEPS)
+        return 0u;
+    return 1u << ((uint32_t)sBenchStep - BENCH_LEVEL_STEPS);
+}
+
+int32_t VitaPerf_BenchLevel(void)
+{
+    if (sBenchStep < 0)
+        return -1;
+    return (sBenchStep < (int32_t)BENCH_LEVEL_STEPS) ? sBenchStep : (int32_t)VOXEL_HD2D_HIGH;
+}
+
+bool VitaPerf_PassSkipped(const VitaPerfPass pass)
+{
+    return sBenchStep >= 0 && (uint32_t)pass < VITA_PERF_PASS_COUNT && (BenchMask() & (1u << pass)) != 0u;
+}
+
+void VitaPerf_GpuScene(const VitaPerfGpuScene next)
+{
+    const double start = VitaPerf_NowMs();
+#ifdef PLATFORM_VITA
+    glFinish();
+#endif
+    const double waited = VitaPerf_NowMs() - start;
+    if (sGpuScene != VITA_PERF_GPU_NONE)
+        sCurSubMs[kGpuSceneTimer[sGpuScene]] += waited;
+    sGpuScene = next;
+    if (next != VITA_PERF_GPU_NONE)
+        sCurCount[VITA_PERF_C_GXM_SCENES]++;
+}
+#endif // VITA_GPU_PROBE
 
 // Letters of the CSV "events" column, by bit
 static const char sEventLetters[] = "MXLSWFAC";
@@ -231,7 +338,12 @@ void VitaPerf_Init(void)
                           "c1_logic_ms,c1_vblank_ms,c1_pacing_ms,chunks_vis,chunks_built,draw_calls,verts,events,holes,"
                           "light_ray_ms,light_contact_ms,light_steps,light_cells,light_blocks,light_api_ms,logic_ticks,world_ms,atlas_slots_ms,"
                           "worker_built,worker_dropped,worker_compute_ms,worker_wait_ms,"
-                          "ui2_render_ms,ui2_tick_ms,ui2_quads\n");
+                          "ui2_render_ms,ui2_tick_ms,ui2_quads,"
+                          "ent_emit_ms,ent_decode_ms,ent_atlas_ms,ent_pack_ms,ent_lights_ms,"
+                          "hd2d_level,dof_on,fast_forward,ui_open,map_group,map_num,indoor,weather,daylight,lamps,"
+                          "in_battle,faded,"
+                          "gpu_world_ms,gpu_down_ms,gpu_blur_ms,gpu_bloom_ms,gpu_kawase_ms,gpu_final_ms,gpu_total_ms,"
+                          "gxm_scenes,bench_run,bench_step,bench_level,probe_mask,bench_measured\n");
         fflush(sCsvFile);
     }
 
@@ -415,6 +527,113 @@ void VitaPerf_MarkEvent(const VitaPerfEvent event)
 {
     sCurEvents |= (uint32_t)event;
 }
+
+void VitaPerf_SetScene(const VitaPerfScene *const scene)
+{
+    if (scene != NULL)
+        sScene = *scene;
+}
+
+void VitaPerf_SetInput(const bool fastForward, const bool uiOpen)
+{
+    sInputFastForward = fastForward;
+    sInputUiOpen = uiOpen;
+}
+
+#ifdef VITA_GPU_PROBE
+static void BenchLog(const char *const what)
+{
+    if (sSummaryFile == NULL)
+        return;
+    fprintf(sSummaryFile, "[BENCH] run %u %s at frame %u: map %d.%d (%.2f, %.2f)%s, weather %d, daylight %.2f%s\n",
+            sBenchRun, what, sTotalFrameIndex, sScene.mapGroup, sScene.mapNum, (double)sScene.playerX,
+            (double)sScene.playerZ, sScene.indoor ? " indoor" : "", sScene.weather, (double)sScene.daylight,
+            sScene.lamps ? ", lamps" : "");
+}
+
+static void BenchStop(const char *const why)
+{
+    BenchLog(why);
+    sBenchStep = -1;
+    sBenchArmed = false;
+    sBenchStill = 0;
+}
+
+static void BenchStartStep(const int32_t step)
+{
+    sBenchStep = step;
+    sBenchStepFrames = 0;
+    sBenchSettle = 0;
+    sBenchMeasured = 0;
+}
+
+// Whether this 3D frame counts as measured: a run under way, and BENCH_SETTLE_FRAMES calm frames
+// before it in the same step. Called before the frame's CSV line.
+static bool BenchFrameMeasured(void)
+{
+    if (sBenchStep < 0)
+        return false;
+    const bool calm = (sCurEvents == 0u) && (sCurCount[VITA_PERF_C_HOLES] == 0u);
+    sBenchSettle = calm ? sBenchSettle + 1u : 0u;
+    return sBenchSettle > BENCH_SETTLE_FRAMES;
+}
+
+// After the frame's CSV line: start, advance or abort the run for the next frame.
+static void BenchAdvance(const bool measured)
+{
+    const bool moved = sBenchLastSceneValid
+        && (fabsf(sScene.playerX - sBenchLastScene.playerX) > BENCH_STILL_EPSILON
+            || fabsf(sScene.playerZ - sBenchLastScene.playerZ) > BENCH_STILL_EPSILON
+            || sScene.mapGroup != sBenchLastScene.mapGroup || sScene.mapNum != sBenchLastScene.mapNum);
+    const bool blocked = sInputFastForward || sInputUiOpen || sScene.faded || sScene.inBattle;
+    sBenchLastScene = sScene;
+    sBenchLastSceneValid = true;
+
+    if (sBenchStep >= 0)
+    {
+        if (moved || blocked)
+        {
+            BenchStop(moved ? "aborted (the player moved)" : "aborted (menu, fade, battle or fast forward)");
+            return;
+        }
+        sBenchStepFrames++;
+        if (measured)
+            sBenchMeasured++;
+        if (sBenchMeasured < BENCH_MEASURE_FRAMES && sBenchStepFrames < BENCH_STEP_MAX_FRAMES)
+            return;
+        if (sBenchMeasured < BENCH_MEASURE_FRAMES && sSummaryFile != NULL)
+            fprintf(sSummaryFile, "[BENCH] run %u step %d never settled (%u measured frames)\n",
+                    sBenchRun, sBenchStep, sBenchMeasured);
+        if ((uint32_t)sBenchStep + 1u >= BENCH_STEPS)
+        {
+            BenchStop("finished");
+            return;
+        }
+        BenchStartStep(sBenchStep + 1);
+        if (sSummaryFile != NULL && sBenchStep >= (int32_t)BENCH_LEVEL_STEPS)
+            fprintf(sSummaryFile, "[BENCH] run %u step %d: HIGH without %s\n", sBenchRun, sBenchStep,
+                    kPassNames[(uint32_t)sBenchStep - BENCH_LEVEL_STEPS]);
+        return;
+    }
+
+    if (moved)
+    {
+        sBenchArmed = true;
+        sBenchStill = 0;
+        return;
+    }
+    if (blocked || !sBenchArmed)
+    {
+        sBenchStill = 0;
+        return;
+    }
+    if (++sBenchStill < BENCH_STILL_FRAMES)
+        return;
+    sBenchRun++;
+    BenchStartStep(0);
+    BenchLog("started");
+}
+#endif // VITA_GPU_PROBE
 
 void VitaPerf_LogMemory(const char *stage)
 {
@@ -651,6 +870,20 @@ void VitaPerf_EndFrame(const bool didRender3D, const uint32_t targetFps)
     AddAccum(&mC1VBlank, c1VBlank);
     AddAccum(&mC1Wait, c1Wait);
 
+#ifdef VITA_GPU_PROBE
+    const bool benchMeasured = didRender3D && BenchFrameMeasured();
+    const int32_t benchStep = sBenchStep;
+    const int32_t benchLevel = VitaPerf_BenchLevel();
+    const uint32_t probeMask = (sBenchStep >= 0) ? BenchMask() : 0u;
+    const uint32_t benchRun = (sBenchStep >= 0) ? sBenchRun : 0u;
+#else
+    const bool benchMeasured = false;
+    const int32_t benchStep = -1;
+    const int32_t benchLevel = -1;
+    const uint32_t probeMask = 0u;
+    const uint32_t benchRun = 0u;
+#endif
+
     // CSV line export (buffered, near zero overhead)
     if (sCsvFile != NULL)
     {
@@ -672,7 +905,7 @@ void VitaPerf_EndFrame(const bool didRender3D, const uint32_t targetFps)
                 "%.2f,%.2f,%.2f,%d,%d,%d,%u,%s,%u,"
                 "%.2f,%.2f,%u,%u,%u,%.2f,%u,%.2f,%.2f,"
                 "%u,%u,%.2f,%.2f,"
-                "%.3f,%.3f,%u\n",
+                "%.3f,%.3f,%u,",
                 sTotalFrameIndex, didRender3D ? 1 : 0, sWindowTargetFps, frameMs, c0Active, otherMs,
                 sCurAtlasMs, sCurSubMs[VITA_PERF_T_ATLAS_COMPOSE], sCurSubMs[VITA_PERF_T_ATLAS_UPLOAD],
                 sCurCount[VITA_PERF_C_ATLAS_UPLOADS],
@@ -691,7 +924,30 @@ void VitaPerf_EndFrame(const bool didRender3D, const uint32_t targetFps)
                 sCurCount[VITA_PERF_C_WORKER_BUILT], sCurCount[VITA_PERF_C_WORKER_DROPPED],
                 sCurSubMs[VITA_PERF_T_WORKER_COMPUTE], sCurSubMs[VITA_PERF_T_WORKER_WAIT],
                 sCurSubMs[VITA_PERF_T_UI2_RENDER], sCurSubMs[VITA_PERF_T_UI2_TICK], sCurCount[VITA_PERF_C_UI2_QUADS]);
+
+        const double gpuTotal = sCurSubMs[VITA_PERF_T_GPU_WORLD] + sCurSubMs[VITA_PERF_T_GPU_DOWN]
+                              + sCurSubMs[VITA_PERF_T_GPU_BLUR] + sCurSubMs[VITA_PERF_T_GPU_BLOOM]
+                              + sCurSubMs[VITA_PERF_T_GPU_KAWASE] + sCurSubMs[VITA_PERF_T_GPU_FINAL];
+        fprintf(sCsvFile,
+                "%.3f,%.3f,%.3f,%.3f,%.3f,"
+                "%d,%d,%d,%d,%d,%d,%d,%d,%.3f,%d,%d,%d,"
+                "%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%u,"
+                "%u,%d,%d,%u,%d\n",
+                sCurSubMs[VITA_PERF_T_ENT_EMIT], sCurSubMs[VITA_PERF_T_ENT_DECODE], sCurSubMs[VITA_PERF_T_ENT_ATLAS],
+                sCurSubMs[VITA_PERF_T_ENT_PACK], sCurSubMs[VITA_PERF_T_ENT_LIGHTS],
+                (int)sScene.hd2dLevel, sScene.dofOn ? 1 : 0, sInputFastForward ? 1 : 0, sInputUiOpen ? 1 : 0,
+                (int)sScene.mapGroup, (int)sScene.mapNum, sScene.indoor ? 1 : 0, (int)sScene.weather,
+                (double)sScene.daylight, sScene.lamps ? 1 : 0, sScene.inBattle ? 1 : 0, sScene.faded ? 1 : 0,
+                sCurSubMs[VITA_PERF_T_GPU_WORLD], sCurSubMs[VITA_PERF_T_GPU_DOWN], sCurSubMs[VITA_PERF_T_GPU_BLUR],
+                sCurSubMs[VITA_PERF_T_GPU_BLOOM], sCurSubMs[VITA_PERF_T_GPU_KAWASE], sCurSubMs[VITA_PERF_T_GPU_FINAL],
+                gpuTotal, sCurCount[VITA_PERF_C_GXM_SCENES],
+                benchRun, (int)benchStep, (int)benchLevel, probeMask, benchMeasured ? 1 : 0);
     }
+
+#ifdef VITA_GPU_PROBE
+    if (didRender3D)
+        BenchAdvance(benchMeasured);
+#endif
 
     // Flush a summary block every SAMPLE_WINDOW_FRAMES 3D frames, or every PERF_WINDOW_MAX_MS
     const bool windowFull = (sWindowRenderCount >= SAMPLE_WINDOW_FRAMES)
@@ -735,6 +991,8 @@ void VitaPerf_SubEnd(const VitaPerfTimer timer) { (void)timer; }
 void VitaPerf_AddTime(const VitaPerfTimer timer, const double ms) { (void)timer; (void)ms; }
 void VitaPerf_AddCount(const VitaPerfCounter counter, const uint32_t amount) { (void)counter; (void)amount; }
 void VitaPerf_MarkEvent(const VitaPerfEvent event) { (void)event; }
+void VitaPerf_SetScene(const VitaPerfScene *const scene) { (void)scene; }
+void VitaPerf_SetInput(const bool fastForward, const bool uiOpen) { (void)fastForward; (void)uiOpen; }
 void VitaPerf_LogMemory(const char *stage) { (void)stage; }
 void VitaPerf_EndFrame(const bool didRender3D, const uint32_t targetFps) { (void)didRender3D; (void)targetFps; }
 

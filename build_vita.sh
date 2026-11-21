@@ -6,7 +6,10 @@ export VITASDK=/usr/local/vitasdk
 export PATH=$VITASDK/bin:/usr/bin:/bin:$PATH
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-BUILD_DIR="build-vita"
+# BUILD_DIR and EXTRA_CMAKE_ARGS from the environment: a second build next to the normal one,
+# so its CMake options never leak into it (build_vita.ps1 -Probe builds build-vita-probe with
+# -DVITA_GPU_PROBE=ON, docs/guides/DEBUGGING.md)
+BUILD_DIR="${BUILD_DIR:-build-vita}"
 CACHE_FILE="$BUILD_DIR/CMakeCache.txt"
 cd "$SCRIPT_DIR"
 
@@ -39,7 +42,7 @@ if [ -f "$CACHE_FILE" ]; then
 fi
 
 echo "=== Configuring CMake in $SCRIPT_DIR/$BUILD_DIR ==="
-cmake -S . -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Release ${EXTRA_CMAKE_ARGS:-}
 
 echo "=== Building pokeemerald.vpk ==="
 cmake --build "$BUILD_DIR" -j4

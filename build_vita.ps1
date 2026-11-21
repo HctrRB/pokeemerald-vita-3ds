@@ -1,5 +1,7 @@
 # Builds build-vita/pokeemerald.vpk from PowerShell by running build_vita.sh in MSYS2.
 # Needs the game files and the converted assets (build_all.ps1 does everything in one step).
+# -Probe builds the measuring build (GPU probes + automatic bench) into build-vita-probe\.
+param([switch]$Probe)
 $ErrorActionPreference = "Stop"
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -17,10 +19,20 @@ Write-Host "=== Building pokeemerald-vita in $scriptDir ===" -ForegroundColor Cy
 # PowerShell 5.1 does not pass them on to programs)
 $env:BUILD_VITA_DIR = $scriptDir
 $env:CHERE_INVOKING = "1"
-& $bashExe -lc 'set -f; IFS=; cd $(cygpath -u $BUILD_VITA_DIR) && ./build_vita.sh'
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "=== Done: build-vita\pokeemerald.vpk ===" -ForegroundColor Green
-} else {
-    Write-Host "The build failed (exit code $LASTEXITCODE)." -ForegroundColor Red
+# BUILD_DIR / EXTRA_CMAKE_ARGS (read by build_vita.sh) pick a second build folder and its options
+if ($Probe) {
+    $env:BUILD_DIR = "build-vita-probe"
+    $env:EXTRA_CMAKE_ARGS = "-DVITA_GPU_PROBE=ON"
 }
-exit $LASTEXITCODE
+$outDir = if ($env:BUILD_DIR) { $env:BUILD_DIR } else { "build-vita" }
+& $bashExe -lc 'set -f; IFS=; cd $(cygpath -u $BUILD_VITA_DIR) && ./build_vita.sh'
+$buildExit = $LASTEXITCODE
+if ($Probe) {
+    Remove-Item Env:BUILD_DIR, Env:EXTRA_CMAKE_ARGS -ErrorAction SilentlyContinue
+}
+if ($buildExit -eq 0) {
+    Write-Host "=== Done: $outDir\pokeemerald.vpk ===" -ForegroundColor Green
+} else {
+    Write-Host "The build failed (exit code $buildExit)." -ForegroundColor Red
+}
+exit $buildExit

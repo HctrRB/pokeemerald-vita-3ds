@@ -35,6 +35,7 @@
 #include "voxel_lighting.h"
 #include "platform/voxel_snapshot.h"
 #include "platform/game_frame.h"
+#include "../vita/vita_perf.h"
 
 /*
  * Threads: VoxelEntities_Capture runs on Core 1 and is the only code here that reads the game
@@ -706,7 +707,9 @@ static bool RefreshSlot(uint32_t index, const struct Sprite *sprite, const struc
     slot->paletteBytes = paletteBytes;
     memcpy(slot->source, source, sourceBytes);
     memcpy(slot->palette, palette, paletteBytes);
+    VitaPerf_SubBegin(VITA_PERF_T_ENT_DECODE);
     DecodeSlot(slot, index, atlas);
+    VitaPerf_SubEnd(VITA_PERF_T_ENT_DECODE);
     return true;
 }
 
