@@ -54,7 +54,7 @@ it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture (fixed atlas `as
 
 ### Build version on the main menu (`ui_core.c`)
 
-While the title main menu list is up (`MainMenu_IsShown` in `main_menu.c`, which tells it apart from the Birch speech that also runs under `CB2_MainMenu`), the overlay draws `gVitaBuildVersion` right-aligned at the bottom right (`DrawMainMenuVersion`). The string is `git describe --tags --always --dirty`, written each build into a generated source file in the build folder by `tools/version/game_version.cmake` (the `game_version` target); without git history it reads `unknown`.
+While the title main menu list is up (`MainMenu_IsShown` in `main_menu.c`, which tells it apart from the Birch speech that also runs under `CB2_MainMenu`), the overlay draws `gVitaBuildVersion` right-aligned at the bottom right (`DrawMainMenuVersion`). The string is `git describe --tags --always` (no `--dirty`: the build runs MSYS2's git, which would count Windows line endings as changes), written each build into a generated source file in the build folder by `tools/version/game_version.cmake` (the `game_version` target); without git history it reads `unknown`.
 
 ### Themes (`ui_theme.c`)
 

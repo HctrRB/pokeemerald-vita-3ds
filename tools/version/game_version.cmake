@@ -1,12 +1,15 @@
-# Writes OUT (game_version.c) with gVitaBuildVersion = `git describe --tags --always --dirty`, so the
-# main menu shows which build is running. Run on every build (cmake -P); the file is only rewritten
-# when the text changes, so an unchanged version does not recompile anything.
+# Writes OUT (game_version.c) with gVitaBuildVersion = `git describe --tags --always`, so the main
+# menu shows which build is running. No --dirty: the build runs MSYS2's git, which has no
+# core.autocrlf, so on a Windows checkout it counts line-ending differences as changes and
+# would mark every build dirty; a build past the tag already shows -<commits>-g<hash>.
+# Run on every build (cmake -P); the file is only rewritten when the text changes, so an
+# unchanged version does not recompile anything.
 # Inputs: -DROOT=<repo> -DGIT=<git executable or empty> -DOUT=<source path>
 
 set(version "")
 if(GIT)
     execute_process(
-        COMMAND "${GIT}" describe --tags --always --dirty
+        COMMAND "${GIT}" describe --tags --always
         WORKING_DIRECTORY "${ROOT}"
         OUTPUT_VARIABLE version
         RESULT_VARIABLE result
