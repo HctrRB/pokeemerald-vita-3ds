@@ -13,7 +13,11 @@ alpha pack their 8-bit alpha in bits 8-1 with bit 0 = 0, unpacked to RGBA8888 on
 Only the type sizes chosen on the console are kept (decision D2): Press Start 2P 16 / 24 and
 VT323 32. Run from the repository root:
 
-    python tools/ui2/build_atlas.py
+    python tools/ui2/build_atlas.py [--locale <code>]
+
+--locale (default en) adds that language's extra letters (tools/locales/languages.json, baked into
+tools/ui2/fonts/locale_glyphs.* by bake_locale_glyphs.py) to every font; English adds none. The
+fixed part may take up to MAX_FIXED_H rows; the runtime puts the sprite cells right below it.
 
 Format v3 (little endian), read by src/platform/ui/ui_assets.c:
     char  magic[4] = "UI2A"
@@ -26,6 +30,7 @@ Format v3 (little endian), read by src/platform/ui/ui_assets.c:
     spriteCount x { u16 id, u16 x, u16 y, u16 w, u16 h }
     texW * texH x u16 packed texel (bit 0 = 1: RGBA5551; bit 0 = 0, != 0: white with 8-bit alpha in bits 8-1)
 """
+import argparse
 import json
 import os
 import struct
@@ -39,11 +44,16 @@ SRC_JSON = os.path.join(HERE, "fonts", "ui_fonts.json")
 # Fonts of the menu themes (faces 2-9), baked by bake_theme_fonts.py; every role is kept
 THEME_PNG = os.path.join(HERE, "fonts", "theme_fonts.png")
 THEME_JSON = os.path.join(HERE, "fonts", "theme_fonts.json")
+# Extra letters of every language (bake_locale_glyphs.py); a build takes only its own language's
+LOCALE_PNG = os.path.join(HERE, "fonts", "locale_glyphs.png")
+LOCALE_JSON = os.path.join(HERE, "fonts", "locale_glyphs.json")
+LANGUAGES = os.path.join(ROOT, "tools", "locales", "languages.json")
 OUT = os.path.join(ROOT, "assets", "ui2", "ui_atlas.bin")
 OUT_H = os.path.join(ROOT, "src", "platform", "ui", "ui_sprite_ids.h")
 KEEP = {(0, 16), (0, 24), (1, 24), (1, 28), (1, 32), (1, 40)}   # (face, px): D2 + compact VT323 sizes
 TEX_W = 1024
-MAX_FIXED_H = 1024                                   # = UI_DYN_Y in ui_internal.h                                    # the dynamic cells start below (ui_sprites.c)
+MAX_FIXED_H = 1280                                   # = UI_FIXED_MAX_H in ui_internal.h: the sprite cells start below the fixed part
+CELL = 64                                            # = UI_CELL: the cells start at the fixed height rounded up to it
 ASSETS = os.path.join(ROOT, "design", "stitch", "_assets")   # GBA art exported by export_assets.py
 GFX = os.path.join(ROOT, "graphics")
 
@@ -190,7 +200,33 @@ def pack_texel(r, g, b, a):
     return ((r >> 3) << 11) | ((g >> 3) << 6) | ((b >> 3) << 1) | 1
 
 
+def locale_letters(code):
+    for lang in json.load(open(LANGUAGES, encoding="utf-8"))["languages"]:
+        if lang["code"] == code:
+            return lang["letters"]
+    raise SystemExit(f"unknown locale '{code}': not in {LANGUAGES}")
+
+
+def locale_glyphs(letters):
+    """(face, px) -> glyphs of `letters` from the locale sheet, and that sheet"""
+    if not letters:
+        return {}, None
+    meta = json.load(open(LOCALE_JSON, encoding="utf-8"))
+    unbaked = set(letters) - set(meta["letters"])
+    if unbaked:
+        raise SystemExit(f"letters not baked yet: {''.join(sorted(unbaked))} (run tools/ui2/bake_locale_glyphs.py)")
+    wanted = {ord(c) for c in letters}
+    by_font = {(f["face"], f["px"]): [g for g in f["glyphs"] if g[0] in wanted] for f in meta["fonts"]}
+    return by_font, Image.open(LOCALE_PNG).convert("RGBA")
+
+
 def main():
+    args = argparse.ArgumentParser(description="Builds the new UI's atlas")
+    args.add_argument("--locale", default="en", help="language code in tools/locales/languages.json")
+    args.add_argument("--out", default=OUT, help="atlas file to write (default assets/ui2/ui_atlas.bin)")
+    opts = args.parse_args()
+    locale, out_path = opts.locale, opts.out
+    extra, extra_src = locale_glyphs(locale_letters(locale))
     meta = json.load(open(SRC_JSON, encoding="utf-8"))
     src = Image.open(SRC_PNG).convert("RGBA")
     atlas = Image.new("RGBA", (TEX_W, 2048), (0, 0, 0, 0))
@@ -216,8 +252,10 @@ def main():
     glyph_sources = []
     for f, f_src in sources:
         first = len(glyphs)
-        for cp, gx, gy, w, h, xoff, yoff, adv in f["glyphs"]:
-            glyph_sources.append((f_src, gx, gy, w, h))
+        own = [(g, f_src) for g in f["glyphs"]]
+        own += [(g, extra_src) for g in extra.get((f["face"], f["px"]), [])]
+        for (cp, gx, gy, w, h, xoff, yoff, adv), g_src in own:
+            glyph_sources.append((g_src, gx, gy, w, h))
             glyphs.append([cp, 0, 0, w, h, max(-128, min(127, xoff)), max(-128, min(127, yoff)), adv])
         fonts.append((f["face"], f["px"], f["ascent"], f["lineH"], first, len(glyphs) - first))
 
@@ -259,8 +297,8 @@ def main():
     for y in range(tex_h):
         for x in range(TEX_W):
             out += struct.pack("<H", pack_texel(*atlas.getpixel((x, y))))
-    os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, "wb") as fh:
+    os.makedirs(os.path.dirname(os.path.abspath(out_path)), exist_ok=True)
+    with open(out_path, "wb") as fh:
         fh.write(out)
 
     lines = ["// Generated by tools/ui2/build_atlas.py: ids of the fixed GBA sprites of assets/ui2/ui_atlas.bin.",
@@ -279,9 +317,15 @@ def main():
               "#define UI_SPR_RIBBON_FIRST UI_SPR_RIBBON_0         // + ribbon id (constants/pokemon.h)",
               "#define UI_SPR_BATTLE_BALL_FIRST UI_SPR_BATTLE_BALL_OK   // + OK, EMPTY, STATUS, FAINTED",
               "", "#endif", ""]
-    with open(OUT_H, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write("\n".join(lines))
-    print(f"{OUT}: {TEX_W}x{tex_h}, {len(fonts)} fonts, {len(glyphs)} glyphs, {len(sprites)} sprites, {len(out)} bytes")
+    # Same for every language: rewritten only when the sprite list changes, so a language build
+    # never makes the other builds recompile
+    header = "\n".join(lines)
+    if not os.path.exists(OUT_H) or open(OUT_H, encoding="utf-8", newline="").read() != header:
+        with open(OUT_H, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(header)
+    cells = (TEX_W // CELL) * ((2048 - ((tex_h + CELL - 1) // CELL) * CELL) // CELL)
+    print(f"{out_path} [{locale}]: {TEX_W}x{tex_h} of {MAX_FIXED_H} rows, {len(fonts)} fonts, {len(glyphs)} glyphs, "
+          f"{len(sprites)} sprites, {len(out)} bytes; {cells} sprite cells below")
 
 
 if __name__ == "__main__":

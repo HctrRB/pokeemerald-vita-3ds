@@ -54,7 +54,7 @@
 #define GBA_ROWS 8
 
 enum { ACT_USE, ACT_TOSS, ACT_CANCEL, ACT_YES, ACT_NO };
-static const char *const sFlavors[5] = { "SPICY", "DRY", "SWEET", "BITTER", "SOUR" };
+static const char *const sFlavors[5] = { UI_N("SPICY"), UI_N("DRY"), UI_N("SWEET"), UI_N("BITTER"), UI_N("SOUR") };
 
 static uint8_t sMode = PBLOCK_CASE_FIELD;
 static void (*sCallback)(void);           // hosted modes: the game's return callback
@@ -105,17 +105,17 @@ static const char *ColorName(const UiBlock *b)
 
 static const char *UseLabel(void)
 {
-    return sMode == PBLOCK_CASE_GIVE ? "GIVE" : "USE";
+    return sMode == PBLOCK_CASE_GIVE ? UI_TR("GIVE") : UI_TR("USE");
 }
 
 static const char *ModeLabel(void)
 {
     switch (sMode)
     {
-    case PBLOCK_CASE_BATTLE: return "SAFARI BATTLE";
-    case PBLOCK_CASE_FEEDER: return "POKéBLOCK FEEDER";
-    case PBLOCK_CASE_GIVE:   return "CONTEST LADY";
-    default:                 return "CHOOSE A POKéBLOCK";
+    case PBLOCK_CASE_BATTLE: return UI_TR("SAFARI BATTLE");
+    case PBLOCK_CASE_FEEDER: return UI_TR("POKéBLOCK FEEDER");
+    case PBLOCK_CASE_GIVE:   return UI_TR("CONTEST LADY");
+    default:                 return UI_TR("CHOOSE A POKéBLOCK");
     }
 }
 
@@ -166,7 +166,7 @@ static void FeedAsk(void)
     if (m.egg)
     {
         PlaySE(SE_FAILURE);
-        UiKit_Toast("An EGG can't eat POKéBLOCKS.");
+        UiKit_Toast(UI_TR("An EGG can't eat POKéBLOCKS."));
         return;
     }
     uint8_t c[6];
@@ -179,12 +179,12 @@ static void FeedAsk(void)
         UiKit_Toast("%s", t);
         return;
     }
-    char title[24];
-    snprintf(title, sizeof(title), "FEED %s?", m.name);
+    char title[48];
+    snprintf(title, sizeof(title), UI_TR("FEED %s?"), m.name);
     const bool gba = gUiTheme->gbaFrame;
     UiMenu_Open(&sAsk, title, 676, gba ? 300 : 304, 252);
-    UiMenu_Add(&sAsk, "YES", ACT_YES);
-    UiMenu_Add(&sAsk, "NO", ACT_NO);
+    UiMenu_Add(&sAsk, UI_TR("YES"), ACT_YES);
+    UiMenu_Add(&sAsk, UI_TR("NO"), ACT_NO);
     PlaySE(SE_SELECT);
 }
 
@@ -254,19 +254,19 @@ static void FeedBuild(void)
     if (gba)
     {
         snprintf(buf, sizeof(buf), "%s", b ? b->name : "");
-        UiW_GbaTopBar(UI_GBA_BG_POKENAV, UI_SPR_START_BAG, "POKéBLOCK CASE", 0, 0, false, NULL);
+        UiW_GbaTopBar(UI_GBA_BG_POKENAV, UI_SPR_START_BAG, UI_TR("POKéBLOCK CASE"), 0, 0, false, NULL);
         int32_t rx = UI_SCREEN_W - 14;
-        UiW_GbaHelpBadge(&rx, "O", "BACK", true);
-        UiW_GbaHelpBadge(&rx, "X", "FEED", false);
+        UiW_GbaHelpBadge(&rx, "O", UI_TR("BACK"), true);
+        UiW_GbaHelpBadge(&rx, "X", UI_TR("FEED"), false);
         UiCond_PartyListGba(sMons.sel);
         if (have)
         {
             UiW_GbaWin(322, 60, 326, 414, UI_GBA_WIN_DEFAULT);
-            UiW_GbaSectionStrip(334, 72, 302, 28, UI_GBA_TAG_TEAL, "CONDITION", m.name);
+            UiW_GbaSectionStrip(334, 72, 302, 28, UI_GBA_TAG_TEAL, UI_TR("CONDITION"), m.name);
             UiCond_Radar(sMons.sel, 485, 290, 92.0f, true, sResult ? NULL : gain);
             UiW_GbaWin(660, 60, 286, 414, UI_GBA_WIN_DEFAULT);
-            UiW_GbaSectionStrip(672, 72, 262, 28, UI_GBA_TAG_GOLD, "ATTRIBUTES", NULL);
-            UiCond_Attrs(sMons.sel, true, gain, sResult ? 0 : sSheenGain, "FEED", can);
+            UiW_GbaSectionStrip(672, 72, 262, 28, UI_GBA_TAG_GOLD, UI_TR("ATTRIBUTES"), NULL);
+            UiCond_Attrs(sMons.sel, true, gain, sResult ? 0 : sSheenGain, UI_TR("FEED"), can);
         }
         // The block being fed, as the GBA FEED screen shows it on the top bar
         if (b != NULL)
@@ -277,28 +277,28 @@ static void FeedBuild(void)
     }
     else
     {
-        static const char *const tabs[1] = { "FEED A POKéMON" };
+        static const char *const tabs[1] = { UI_N("FEED A POKéMON") };
         static int32_t tabX[1], tabW[1];
-        UiKit_Header("POKéBLOCK CASE", tabs, 1, 0, tabX, tabW, 8);
+        UiKit_Header(UI_TR("POKéBLOCK CASE"), tabs, 1, 0, tabX, tabW, 8);
         if (b != NULL)
         {
-            snprintf(buf, sizeof(buf), "%s  Lv%u", b->name, (unsigned)b->level);
+            snprintf(buf, sizeof(buf), UI_TR("%s  Lv%u"), b->name, (unsigned)b->level);
             UiW_HeaderValue(buf, UI_COL_ON_FRAME);
         }
         UiCond_PartyList(sMons.sel);
         if (have)
         {
-            snprintf(buf, sizeof(buf), "%s · CONDITION", m.name);
+            snprintf(buf, sizeof(buf), UI_TR("%s · CONDITION"), m.name);
             UiW_Panel(328, 60, 320, 432);
             UiW_PanelHead(328, 60, 320, buf, NULL);
             UiCond_Radar(sMons.sel, 488, 300, 92.0f, false, sResult ? NULL : gain);
             UiW_Panel(660, 60, 284, 432);
-            UiW_PanelHead(660, 60, 284, "ATTRIBUTES", NULL);
-            UiCond_Attrs(sMons.sel, false, gain, sResult ? 0 : sSheenGain, "FEED", can);
+            UiW_PanelHead(660, 60, 284, UI_TR("ATTRIBUTES"), NULL);
+            UiCond_Attrs(sMons.sel, false, gain, sResult ? 0 : sSheenGain, UI_TR("FEED"), can);
         }
         int32_t fx = 16;
-        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Feed");
-        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
+        UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Feed"));
+        UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Back"));
         UiKit_FooterClock();
     }
     if (sAsk.open)
@@ -307,7 +307,7 @@ static void FeedBuild(void)
     {
         const int32_t h = 76 + sResultN * 34;
         UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
-        UiW_Window(220, (UI_SCREEN_H - h) / 2, 520, h, "POKéBLOCK CASE");
+        UiW_Window(220, (UI_SCREEN_H - h) / 2, 520, h, UI_TR("POKéBLOCK CASE"));
         for (int32_t i = 0; i < sResultN; i++)
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 244, (UI_SCREEN_H - h) / 2 + 52 + i * 34, sResultText[i], UI_COL_INK);
     }
@@ -343,7 +343,7 @@ void UiPokeblock_FeedFromCondition(uint8_t partySlot, uint8_t pkblSlot)
     sFedMon = partySlot;
     sFeedBlock = pkblSlot;
     sFeedFromCondition = true;
-    UiCore_CloseToSceneInWindow(LaunchFeedScene, "POKéBLOCK");
+    UiCore_CloseToSceneInWindow(LaunchFeedScene, UI_TR("POKéBLOCK"));
 }
 
 // Back from the scene: the block's effect (AddPokeblockToConditions), the result lines, the field
@@ -363,7 +363,7 @@ static void CB2_AfterFeedScene(void)
         if (sResultGain[i] > 0)
         {
             UiGame_Text(words[i], word, sizeof(word));             // "Coolness " (trailing space)
-            snprintf(sResultText[sResultN++], sizeof(sResultText[0]), "%s's %s%s", m.name, word, enh);
+            snprintf(sResultText[sResultN++], sizeof(sResultText[0]), UI_TR("%s's %s%s"), m.name, word, enh);
         }
     if (sResultN == 0)
         UiGame_Text(gText_NothingChanged, sResultText[sResultN++], sizeof(sResultText[0]));
@@ -400,8 +400,8 @@ static void OpenActions(void)
         UiMenu_Open(&sMenu, ColorName(b), LIST_X + LIST_W - 280, LIST_Y + row * ROW_H, 260);
     UiMenu_Add(&sMenu, UseLabel(), ACT_USE);
     if (sMode == PBLOCK_CASE_FIELD)
-        UiMenu_Add(&sMenu, "TOSS", ACT_TOSS);
-    UiMenu_Add(&sMenu, "CANCEL", ACT_CANCEL);
+        UiMenu_Add(&sMenu, UI_TR("TOSS"), ACT_TOSS);
+    UiMenu_Add(&sMenu, UI_TR("CANCEL"), ACT_CANCEL);
     sTossAsk = false;
 }
 
@@ -438,9 +438,9 @@ static void AskToss(void)
     if (b == NULL)
         return;
     // gText_ThrowAwayVar1: "Throw away this {block}?"
-    UiMenu_Open(&sMenu, "THROW AWAY?", gUiTheme->gbaFrame ? 724 : LIST_X + LIST_W - 280, 200, gUiTheme->gbaFrame ? 210 : 260);
-    UiMenu_Add(&sMenu, "YES", ACT_YES);
-    UiMenu_Add(&sMenu, "NO", ACT_NO);
+    UiMenu_Open(&sMenu, UI_TR("THROW AWAY?"), gUiTheme->gbaFrame ? 724 : LIST_X + LIST_W - 280, 200, gUiTheme->gbaFrame ? 210 : 260);
+    UiMenu_Add(&sMenu, UI_TR("YES"), ACT_YES);
+    UiMenu_Add(&sMenu, UI_TR("NO"), ACT_NO);
     sTossAsk = true;
 }
 
@@ -484,7 +484,7 @@ static bool Update(const UiInput *in)
                 char name[24];
                 snprintf(name, sizeof(name), "%s", b->name);
                 PokeblockCase_TossForUi(b->slot);
-                UiKit_Toast("The %s was thrown away.", name);         // gText_Var1ThrownAway
+                UiKit_Toast(UI_TR("The %s was thrown away."), name);         // gText_Var1ThrownAway
                 Refresh();
             }
             sTossAsk = false;
@@ -563,7 +563,7 @@ static void FlavorCell(int32_t x, int32_t y, int32_t i, const UiBlock *b, bool g
     const bool on = b != NULL && b->flavor[i] > 0;
     UiSpr_PokeblockTint((uint8_t)(i + 1), x, y + 3, 3, on ? 0xFFFFFFFFu : UI_RGBA(255, 255, 255, 70));
     char v[24];
-    snprintf(v, sizeof(v), "%s %u", sFlavors[i], b != NULL ? (unsigned)b->flavor[i] : 0u);
+    snprintf(v, sizeof(v), "%s %u", UiLocale_Lookup(sFlavors[i]), b != NULL ? (unsigned)b->flavor[i] : 0u);
     UiW_GbaText(UI_FACE_VT323, 24, x + 30, y, v, on ? UI_RGBA(49, 49, 49, 255) : UI_RGBA(144, 150, 140, 255), UI_GBA_SHAD_LIGHT);
     (void)gba;
 }
@@ -574,7 +574,7 @@ static void FlavorRow(int32_t y, int32_t i, const UiBlock *b)
     const bool on = b->flavor[i] > 0;
     UiSpr_PokeblockTint((uint8_t)(i + 1), 34, y + 3, 3, on ? 0xFFFFFFFFu : UI_RGBA(255, 255, 255, 70));
     const uint32_t ink = on ? UI_COL_INK : UI_COL_INK_SOFT;
-    UiText_DrawMid(UI_FACE_VT323, 24, 66, y, 28, sFlavors[i], ink);
+    UiText_DrawMid(UI_FACE_VT323, 24, 66, y, 28, UiLocale_Lookup(sFlavors[i]), ink);
     char v[8];
     snprintf(v, sizeof(v), "%u", (unsigned)b->flavor[i]);
     UiText_DrawMid(UI_FACE_VT323, 24, 304 - UiText_Width(UI_FACE_VT323, 24, v), y, 28, v, ink);
@@ -584,12 +584,12 @@ static void BuildGba(void)
 {
     char buf[96];
     const UiBlock *b = Cur();
-    UiW_GbaTopBar(UI_GBA_BG_BAG, UI_SPR_START_BAG, "POKéBLOCK CASE", 0, 0, false, NULL);
+    UiW_GbaTopBar(UI_GBA_BG_BAG, UI_SPR_START_BAG, UI_TR("POKéBLOCK CASE"), 0, 0, false, NULL);
     int32_t rx = UI_SCREEN_W - 14;
-    UiW_GbaHelpBadge(&rx, "O", sMoveFrom >= 0 ? "CANCEL" : "CLOSE", true);
+    UiW_GbaHelpBadge(&rx, "O", sMoveFrom >= 0 ? UI_TR("CANCEL") : UI_TR("CLOSE"), true);
     if (sMode == PBLOCK_CASE_FIELD)
-        UiW_GbaHelpBadge(&rx, "SELECT", sMoveFrom >= 0 ? "PUT" : "MOVE", false);
-    UiW_GbaHelpBadge(&rx, "X", sMode == PBLOCK_CASE_FIELD ? "OPTIONS" : UseLabel(), false);
+        UiW_GbaHelpBadge(&rx, "SELECT", sMoveFrom >= 0 ? UI_TR("PUT") : UI_TR("MOVE"), false);
+    UiW_GbaHelpBadge(&rx, "X", sMode == PBLOCK_CASE_FIELD ? UI_TR("OPTIONS") : UseLabel(), false);
 
     // Left column, as the BAG's: the mode's sign, then the case on the green mat and three boxes
     UiW_Bevel(14, 60, 316, 52, 4, UI_RGBA(20, 26, 28, 255), UI_RGBA(40, 56, 64, 255), UI_RGBA(32, 46, 54, 255),
@@ -611,24 +611,24 @@ static void BuildGba(void)
 
     const int32_t boxX = 178, boxW = 140, boxH = 74;
     UiW_GbaBox(boxX, matY, boxW, boxH, 3, UI_RGBA(20, 26, 28, 255), C_WHITE, C_WHITE, UI_GBA_SHAD_LIGHT, 2);
-    UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, matY + 8, "LEVEL", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
-    snprintf(buf, sizeof(buf), b ? "Lv%u" : "-", b ? (unsigned)b->level : 0u);
+    UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, matY + 8, UI_TR("LEVEL"), UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+    snprintf(buf, sizeof(buf), b ? UI_TR("Lv%u") : "-", b ? (unsigned)b->level : 0u);
     UiW_GbaText(UI_FACE_VT323, 28, boxX + 10, matY + 34, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
     const int32_t b2Y = matY + 84;
     UiW_GbaBox(boxX, b2Y, boxW, boxH, 3, UI_RGBA(20, 26, 28, 255), C_WHITE, C_WHITE, UI_GBA_SHAD_LIGHT, 2);
-    UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, b2Y + 8, "FEEL", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+    UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, b2Y + 8, UI_TR("FEEL"), UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
     snprintf(buf, sizeof(buf), b ? "%u" : "-", b ? (unsigned)b->feel : 0u);
     UiW_GbaText(UI_FACE_VT323, 28, boxX + 10, b2Y + 34, buf, UI_RGBA(32, 156, 8, 255), UI_GBA_SHAD_LIGHT);
     const int32_t b3Y = b2Y + 84;
     UiW_GbaBox(boxX, b3Y, boxW, boxH, 3, UI_RGBA(20, 26, 28, 255), C_WHITE, C_WHITE, UI_GBA_SHAD_LIGHT, 2);
-    UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, b3Y + 8, "IN CASE", UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+    UiW_GbaText(UI_FACE_VT323, 24, boxX + 10, b3Y + 8, UI_TR("IN CASE"), UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
     snprintf(buf, sizeof(buf), "%d / %d", (int)sCount, POKEBLOCKS_COUNT);
     UiW_GbaText(UI_FACE_VT323, 28, boxX + 10, b3Y + 34, buf, UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
 
     // Right gold ledger, as the BAG's pocket
     UiW_GbaWin(342, 60, 604, 372, UI_GBA_WIN_GOLD);
-    UiW_GbaTextMid(UI_FACE_VT323, 28, 362, 70, 32, "POKéBLOCKS", UI_RGBA(92, 50, 16, 255), UI_RGBA(255, 250, 224, 255));
-    UiW_GbaTextMid(UI_FACE_VT323, 28, 878, 70, 32, "LV", UI_RGBA(92, 50, 16, 255), UI_RGBA(255, 250, 224, 255));
+    UiW_GbaTextMid(UI_FACE_VT323, 28, 362, 70, 32, UI_TR("POKéBLOCKS"), UI_RGBA(92, 50, 16, 255), UI_RGBA(255, 250, 224, 255));
+    UiW_GbaTextMid(UI_FACE_VT323, 28, 878, 70, 32, UI_TR("LV"), UI_RGBA(92, 50, 16, 255), UI_RGBA(255, 250, 224, 255));
     UiDraw_Rect(358, 103, 572, 3, UI_RGBA(200, 160, 56, 255));
     sList.rows = GBA_ROWS;
     UiDraw_PushClip(GBA_LIST_X, GBA_LIST_Y, GBA_LIST_W, GBA_ROWS * GBA_ROW_H);
@@ -650,13 +650,13 @@ static void BuildGba(void)
             UiDraw_Frame(GBA_LIST_X, y + 1, GBA_LIST_W - 6, GBA_ROW_H - 2, 3, gUiTheme->selEdge);
         if (i == sCount)
         {
-            UiW_GbaTextMid(UI_FACE_VT323, 28, GBA_LIST_X + 60, y, GBA_ROW_H, "STOW CASE",
+            UiW_GbaTextMid(UI_FACE_VT323, 28, GBA_LIST_X + 60, y, GBA_ROW_H, UI_TR("STOW CASE"),
                            on ? UI_RGBA(49, 49, 49, 255) : UI_RGBA(106, 100, 84, 255), UI_GBA_SHAD_LIGHT);
             continue;
         }
         UiSpr_Pokeblock(sBlocks[i].color, GBA_LIST_X + 26, y + 7, 3);
         UiW_GbaTextMid(UI_FACE_VT323, 28, GBA_LIST_X + 60, y, GBA_ROW_H, sBlocks[i].name, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-        snprintf(buf, sizeof(buf), "Lv%u", (unsigned)sBlocks[i].level);
+        snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)sBlocks[i].level);
         UiW_GbaTextMid(UI_FACE_VT323, 28, GBA_LIST_X + GBA_LIST_W - 16 - UiText_Width(UI_FACE_VT323, 28, buf),
                        y, GBA_ROW_H, buf, UI_RGBA(74, 74, 82, 255), UI_GBA_SHAD_LIGHT);
     }
@@ -669,7 +669,7 @@ static void BuildGba(void)
     if (b == NULL)
     {
         UiSpr_PokeblockCase(39, 455, 1);
-        UiW_GbaTextMid(UI_FACE_VT323, 28, 118, 444, 86, sCount ? "Put the CASE away." : "The CASE is empty.",
+        UiW_GbaTextMid(UI_FACE_VT323, 28, 118, 444, 86, sCount ? UI_TR("Put the CASE away.") : UI_TR("The CASE is empty."),
                        UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
     }
     else
@@ -694,14 +694,14 @@ static void Build(void)
     const UiBlock *b = Cur();
     static int32_t tabX[1], tabW[1];
     const char *const tabs[1] = { ModeLabel() };
-    UiKit_Header("POKéBLOCK CASE", tabs, 1, 0, tabX, tabW, 8);
+    UiKit_Header(UI_TR("POKéBLOCK CASE"), tabs, 1, 0, tabX, tabW, 8);
     snprintf(buf, sizeof(buf), "%d / %d", (int)sCount, POKEBLOCKS_COUNT);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
 
     // The case, as the BAG's art
     UiW_PanelDark(16, 60, 304, 136);
     UiSpr_PokeblockCase(22 + ShakeDx(), 64, 2);
-    UiText_Draw(UI_FACE_PS2P, 16, 160, 100, "IN CASE", UI_COL_TITLE);
+    UiText_Draw(UI_FACE_PS2P, 16, 160, 100, UI_TR("IN CASE"), UI_COL_TITLE);
     snprintf(buf, sizeof(buf), "%d / %d", (int)sCount, POKEBLOCKS_COUNT);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 160, 122, buf, UI_COL_ON_SOFT);
 
@@ -709,15 +709,15 @@ static void Build(void)
     UiW_Panel(16, 208, 304, 284);
     sActN = 0;
     if (b == NULL)
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 32, 224, sCount ? "Put the CASE away." : "The CASE is empty.", UI_COL_INK_SOFT);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 32, 224, sCount ? UI_TR("Put the CASE away.") : UI_TR("The CASE is empty."), UI_COL_INK_SOFT);
     else
     {
         UiW_Inset(32, 222, 56, 56);
         UiSpr_Pokeblock(b->color, 36, 226, 6);
         UiText_Draw(UI_FACE_PS2P, 16, 100, 228, ColorName(b), UI_COL_INK);
-        snprintf(buf, sizeof(buf), "Lv%u", (unsigned)b->level);
+        snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)b->level);
         const int32_t cw = UiW_Chip(100, 252, buf, false);
-        snprintf(buf, sizeof(buf), "FEEL %u", (unsigned)b->feel);
+        snprintf(buf, sizeof(buf), UI_TR("FEEL %u"), (unsigned)b->feel);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 100 + cw + 10, 248, buf, UI_COL_INK);
         for (int32_t i = 0; i < 5; i++)
             FlavorRow(290 + i * 28, i, b);
@@ -726,13 +726,13 @@ static void Build(void)
         for (int32_t i = 0; i < sActN; i++)
         {
             sActX[i] = 32 + i * (sActW + 6);
-            UiW_Button(sActX[i], 440, sActW, i == 0 ? UseLabel() : "TOSS", i == 0 ? UI_BTN_GREEN : UI_BTN_AMBER, false);
+            UiW_Button(sActX[i], 440, sActW, i == 0 ? UseLabel() : UI_TR("TOSS"), i == 0 ? UI_BTN_GREEN : UI_BTN_AMBER, false);
         }
     }
 
     // List, as the BAG's pocket
     UiW_Panel(332, 60, 612, 432);
-    UiW_PanelHead(332, 60, 612, "POKéBLOCKS", sMode == PBLOCK_CASE_FIELD ? (sMoveFrom >= 0 ? "SELECT: put here" : "SELECT: move") : NULL);
+    UiW_PanelHead(332, 60, 612, UI_TR("POKéBLOCKS"), sMode == PBLOCK_CASE_FIELD ? (sMoveFrom >= 0 ? UI_TR("SELECT: put here") : UI_TR("SELECT: move")) : NULL);
     sList.rows = ROWS;
     UiDraw_PushClip(LIST_X, LIST_Y, LIST_W, ROWS * ROW_H);
     for (int32_t r = 0; r < ROWS && sList.first + r < sCount + 1; r++)
@@ -745,22 +745,22 @@ static void Build(void)
             UiDraw_Frame(LIST_X, y, LIST_W - 12, ROW_H, 3, gUiTheme->selEdge);
         if (i == sCount)
         {
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 60, y + 4, "STOW CASE", on ? ink : UI_COL_INK_SOFT);
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 60, y + 4, UI_TR("STOW CASE"), on ? ink : UI_COL_INK_SOFT);
             continue;
         }
         UiSpr_Pokeblock(sBlocks[i].color, LIST_X + 28, y + 8, 3);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 60, y + 4, sBlocks[i].name, ink);
-        snprintf(buf, sizeof(buf), "Lv%u", (unsigned)sBlocks[i].level);
+        snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)sBlocks[i].level);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + LIST_W - 24 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), y + 4, buf, on ? ink : UI_COL_INK_SOFT);
     }
     UiDraw_PopClip();
     UiW_ScrollBar(LIST_X + LIST_W - 9, LIST_Y, ROWS * ROW_H, sList.first, ROWS, sCount + 1);
 
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sMode == PBLOCK_CASE_FIELD ? "Options" : sMode == PBLOCK_CASE_GIVE ? "Give" : "Use");
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, sMoveFrom >= 0 ? "Cancel" : "Back");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sMode == PBLOCK_CASE_FIELD ? UI_TR("Options") : sMode == PBLOCK_CASE_GIVE ? UI_TR("Give") : UI_TR("Use"));
+    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, sMoveFrom >= 0 ? UI_TR("Cancel") : UI_TR("Back"));
     if (sMode == PBLOCK_CASE_FIELD)
-        UiW_FooterKey(&fx, "SELECT", sMoveFrom >= 0 ? "Put" : "Move");
+        UiW_FooterKey(&fx, "SELECT", sMoveFrom >= 0 ? UI_TR("Put") : UI_TR("Move"));
     UiKit_FooterClock();
     if (sMenu.open)
         UiMenu_Draw(&sMenu);

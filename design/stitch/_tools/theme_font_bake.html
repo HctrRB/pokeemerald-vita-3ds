@@ -35,7 +35,19 @@ const FACES = [
   { id: 14, css: '400 SIZEpx "VT323"',                roles: { 16: 26, 24: 32 } },
   { id: 15, css: '400 SIZEpx "VT323"',                roles: { 20: 20, 24: 24, 28: 28, 32: 32, 40: 40 } },
 ];
-const CHARS = (() => { let s = ''; for (let c = 32; c < 127; c++) s += String.fromCharCode(c); return s + 'éÉ·×'; })();
+// ?chars=... bakes only those letters (tools/ui2/bake_locale_glyphs.py, a language's extra letters)
+const CHARS = new URLSearchParams(location.search).get('chars')
+  || (() => { let s = ''; for (let c = 32; c < 127; c++) s += String.fromCharCode(c); return s + 'éÉ·×'; })();
+
+// True when the face draws `ch` itself: with a missing glyph the browser falls back to another
+// font, so the letter comes out different under two different fallbacks.
+function hasGlyph(ctx, css, ch, n) {
+  const draw = fb => { ctx.font = `${css}, ${fb}`; ctx.clearRect(0, 0, n, n); ctx.fillText(ch, n / 4, n * 2 / 3); return ctx.getImageData(0, 0, n, n).data; };
+  const a = draw('monospace'), b = draw('serif');
+  ctx.font = css;
+  for (let i = 3; i < a.length; i += 4) if (a[i] !== b[i]) return false;
+  return true;
+}
 
 async function bake() {
   for (const f of FACES) for (const size of Object.values(f.roles)) await document.fonts.load(f.css.replace('SIZE', size));
@@ -48,6 +60,7 @@ async function bake() {
     ctx.font = f.css.replace('SIZE', size);
     const glyphs = [];
     for (const ch of CHARS) {
+      if (!hasGlyph(ctx, ctx.font, ch, N)) { glyphs.push({ cp: ch.codePointAt(0), missing: true }); continue; }
       ctx.clearRect(0, 0, N, N);
       ctx.fillStyle = '#fff'; ctx.textBaseline = 'alphabetic';
       const ox = 24, oy = 88;

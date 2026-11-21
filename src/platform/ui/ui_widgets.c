@@ -613,7 +613,7 @@ int32_t UiW_TabsPad(int32_t x, const char *const *labels, int32_t count, int32_t
     int32_t total = 4;
     total += UiText_Width(UI_FACE_VT323, UI_BODY_PX, "L") + 14 + 4;
     for (int32_t i = 0; i < count; i++)
-        total += UiText_Width(UI_FACE_VT323, UI_BODY_PX, labels[i]) + 2 * pad + 2;
+        total += UiText_Width(UI_FACE_VT323, UI_BODY_PX, UiLocale_Lookup(labels[i])) + 2 * pad + 2;
     total += UiText_Width(UI_FACE_VT323, UI_BODY_PX, "R") + 14 + 4;
     // Sunken rail
     if (T->gbaFrame)
@@ -631,7 +631,7 @@ int32_t UiW_TabsPad(int32_t x, const char *const *labels, int32_t count, int32_t
     cx += Key(cx, 12, "L") + 4;
     for (int32_t i = 0; i < count; i++)
     {
-        const int32_t w = UiText_Width(UI_FACE_VT323, UI_BODY_PX, labels[i]) + 2 * pad;
+        const int32_t w = UiText_Width(UI_FACE_VT323, UI_BODY_PX, UiLocale_Lookup(labels[i])) + 2 * pad;
         if (i == current)
         {
             if (T->gbaFrame)
@@ -643,10 +643,10 @@ int32_t UiW_TabsPad(int32_t x, const char *const *labels, int32_t count, int32_t
                 const int32_t r = T->chamfer ? 5 : T->radius >= 10 ? 10 : 3;
                 BevelBoxR(cx, 10, w, 28, r, T->chamfer, 2, T->tabEdge, T->tabTop, T->tabBot, T->bevel ? 1 : 0, T->tabHi, T->tabBot, 0, 0, 0, T->gloss);
             }
-            UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, cx + pad, 10, 28, labels[i], T->gbaFrame ? UI_RGBA(41, 49, 49, 255) : T->tabInk);
+            UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, cx + pad, 10, 28, UiLocale_Lookup(labels[i]), T->gbaFrame ? UI_RGBA(41, 49, 49, 255) : T->tabInk);
         }
         else
-            UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, cx + pad, 10, 28, labels[i], UI_COL_ON_SOFT);
+            UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, cx + pad, 10, 28, UiLocale_Lookup(labels[i]), UI_COL_ON_SOFT);
         if (tabX) tabX[i] = cx;
         if (tabW) tabW[i] = w;
         cx += w + 2;
@@ -677,13 +677,17 @@ int32_t UiW_TextWrappedF(uint8_t face, uint8_t px, int32_t x, int32_t y, int32_t
         size_t len = 0, lastSpace = 0;
         while (p[len] && len < sizeof(line) - 1)
         {
-            memcpy(line, p, len + 1);
-            line[len + 1] = 0;
+            // Whole UTF-8 letters only: a line never ends between a letter's bytes
+            size_t step = 1;
+            while (len + step < sizeof(line) - 1 && (p[len + step] & 0xC0) == 0x80)
+                step++;
+            memcpy(line, p, len + step);
+            line[len + step] = 0;
             if (UiText_Width(face, px, line) > w)
                 break;
             if (p[len] == ' ')
                 lastSpace = len;
-            len++;
+            len += step;
         }
         if (p[len] && lastSpace > 0)
             len = lastSpace;

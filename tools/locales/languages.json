@@ -1,0 +1,83 @@
+{
+  "_comment": [
+    "The only list of the languages a build can be made in (docs/plan/I18N_PLAN.md, private).",
+    "code: VITA_LOCALE value and tools/locales/<code>/ folder. gameLanguage: LANGUAGE_* the game is",
+    "built with. romCode: 4th letter of the cartridge's game code (BPE?), null when the language has",
+    "no official cartridge. base: language of the ROM a catalog language is built on. letters: the",
+    "letters beyond ASCII and the base set (BASE_LETTERS in tools/locales/compile_ui.py) that this",
+    "language's UI fonts need; every one is baked once by tools/ui2/bake_locale_glyphs.py and only",
+    "the build's own go into its atlas. source: where the game's text comes from: none (the",
+    "sources' English), rom (the player's official cartridge, SHA-1 romSha1, through",
+    "tools/locales/<code>/manifest.json.gz and tools/locales/localize.py) or catalog (text kept in",
+    "tools/locales/<code>/, over a ROM of the base language).",
+    "units: imperial or metric, for the heights and weights the native UI shows."
+  ],
+  "languages": [
+    {
+      "code": "en",
+      "name": "English",
+      "gameLanguage": "LANGUAGE_ENGLISH",
+      "romCode": "E",
+      "romSha1": null,
+      "source": "none",
+      "base": null,
+      "letters": "",
+      "units": "imperial"
+    },
+    {
+      "code": "es",
+      "name": "Español",
+      "gameLanguage": "LANGUAGE_SPANISH",
+      "romCode": "S",
+      "romSha1": "fe1558a3dcb0360ab558969e09b690888b846dd9",
+      "source": "rom",
+      "base": null,
+      "letters": "ÁÍÓÚÜÑáíóúüñ¡¿ªº",
+      "units": "metric"
+    },
+    {
+      "code": "pt_br",
+      "name": "Português (Brasil)",
+      "gameLanguage": "LANGUAGE_ENGLISH",
+      "romCode": null,
+      "romSha1": null,
+      "source": "catalog",
+      "base": "en",
+      "letters": "ÀÁÂÃÇÊÍÓÔÕÚàáâãçêíóôõúªº",
+      "units": "metric"
+    },
+    {
+      "code": "fr",
+      "name": "Français",
+      "gameLanguage": "LANGUAGE_FRENCH",
+      "romCode": "F",
+      "romSha1": "ca666651374d89ca439007bed54d839eb7bd14d0",
+      "source": "rom",
+      "base": null,
+      "letters": "ÀÂÇÈÊËÎÏÔÙÛÜŸŒàâçèêëîïôùûüÿœ«»",
+      "units": "metric"
+    },
+    {
+      "code": "it",
+      "name": "Italiano",
+      "gameLanguage": "LANGUAGE_ITALIAN",
+      "romCode": "I",
+      "romSha1": "1692db322400c3141c5de2db38469913ceb1f4d4",
+      "source": "rom",
+      "base": null,
+      "letters": "ÀÈÌÍÎÒÓÙÚàèìíîòóùú",
+      "units": "metric"
+    },
+    {
+      "code": "de",
+      "name": "Deutsch",
+      "gameLanguage": "LANGUAGE_GERMAN",
+      "romCode": "D",
+      "romSha1": "61c2eb2b380b1a75f0c94b767a2d4c26cd7ce4e3",
+      "source": "rom",
+      "base": null,
+      "letters": "ÄÖÜäöüß„“",
+      "units": "metric"
+    }
+  ]
+}

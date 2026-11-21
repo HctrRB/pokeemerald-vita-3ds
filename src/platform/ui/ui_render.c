@@ -61,7 +61,7 @@ static bool EnsureTexture(void)
         return true;
     uint16_t w = 0, h = 0;
     const uint16_t *pixels = UiAssets_Pixels(&w, &h);
-    if (pixels == NULL || w != UI_TEX_W || h == 0 || h > UI_DYN_Y)
+    if (pixels == NULL || w != UI_TEX_W || h == 0 || h > UI_FIXED_MAX_H)
         return false;
     // Whole texture: the fixed atlas on top, the run-time sprite cells below start empty
     uint32_t *full = calloc((size_t)UI_TEX_W * UI_TEX_H, sizeof(uint32_t));

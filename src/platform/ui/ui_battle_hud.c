@@ -232,8 +232,8 @@ static void PlateGba(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool t
     // shows only "SAFARI BALLS" and the balls left (battle_interface.c)
     if (safari)
     {
-        UiW_GbaText(UI_FACE_PS2P, 16, x + 12, y + 10, "SAFARI BALLS", UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
-        snprintf(buf, sizeof(buf), "Left: %u", (unsigned)gNumSafariBalls);
+        UiW_GbaText(UI_FACE_PS2P, 16, x + 12, y + 10, UI_TR("SAFARI BALLS"), UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        snprintf(buf, sizeof(buf), UI_TR("Left: %u"), (unsigned)gNumSafariBalls);
         UiW_GbaText(UI_FACE_VT323, 28, x + 12, y + 42, buf, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
         return;
     }
@@ -250,7 +250,7 @@ static void PlateGba(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool t
         && GetSetPokedexFlag(SpeciesToNationalPokedexNum(species), FLAG_GET_CAUGHT))
         UiDraw_Sprite(UI_SPR_BATTLE_CAUGHT, cx + 4, y + 10, 2);
 
-    snprintf(buf, sizeof(buf), "Lv%u", (unsigned)gBattleMons[b].level);
+    snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)gBattleMons[b].level);
     UiW_GbaText(UI_FACE_PS2P, 16, x + w - 12 - UiText_Width(UI_FACE_PS2P, 16, buf), y + 10, buf, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
 
     const int32_t max = gBattleMons[b].maxHP ? gBattleMons[b].maxHP : 1;
@@ -300,8 +300,8 @@ static void Plate(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool turn
     // Safari: no POKéMON out on the player's side (gBattleMons[b] is all zero), only the balls left
     if (mine && (gBattleTypeFlags & BATTLE_TYPE_SAFARI))
     {
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y + 1, "SAFARI BALLS", UI_COL_INK);
-        snprintf(buf, sizeof(buf), "Left: %u", (unsigned)gNumSafariBalls);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y + 1, UI_TR("SAFARI BALLS"), UI_COL_INK);
+        snprintf(buf, sizeof(buf), UI_TR("Left: %u"), (unsigned)gNumSafariBalls);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, y + 40, buf, UI_COL_INK);
         return;
     }
@@ -324,7 +324,7 @@ static void Plate(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool turn
     snprintf(buf, sizeof(buf), "%u", (unsigned)gBattleMons[b].level);
     const int32_t lvW = UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf);
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 12 - lvW, y + 1, buf, UI_COL_INK);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 14 - lvW - UiText_Width(UI_FACE_VT323, UI_BODY_PX, "Lv"), y + 1, "Lv", TH->lvInk);
+    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + w - 14 - lvW - UiText_Width(UI_FACE_VT323, UI_BODY_PX, UI_TR("Lv")), y + 1, UI_TR("Lv"), TH->lvInk);
 
     const int32_t max = gBattleMons[b].maxHP ? gBattleMons[b].maxHP : 1;
     const int32_t hp = ShownHp(b), pct = hp * 100 / max;
@@ -332,7 +332,7 @@ static void Plate(u8 b, int32_t x, int32_t y, bool mine, bool compact, bool turn
     HpColours(pct, &top, &bottom);
     const int st = StatusIndex(gBattleMons[b].status1);
     const int32_t rowY = y + 34;
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, rowY - 8, "HP", TH->hpInk);
+    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 12, rowY - 8, UI_TR("HP"), TH->hpInk);
     if (compact)
     {
         Bar(x + 46, rowY + 2, 120, 12, pct, top, bottom);
@@ -442,7 +442,7 @@ static bool Hit(int32_t tx, int32_t ty, int32_t x, int32_t y, int32_t w, int32_t
 
 static void CommandsGba(u8 b, int32_t by, int32_t bh, bool safari, bool tap, int32_t tx, int32_t ty)
 {
-    static const char *const kLabels[2][4] = { { "FIGHT", "BAG", "POKéMON", "RUN" }, { "BALL", "POKéBLOCK", "GO NEAR", "RUN" } };
+    static const char *const kLabels[2][4] = { { UI_N("FIGHT"), UI_N("BAG"), UI_N("POKéMON"), UI_N("RUN") }, { UI_N("BALL"), UI_N("POKéBLOCK"), UI_N("GO NEAR"), UI_N("RUN") } };
     static const uint32_t kCols[4] = {
         UI_RGBA(230, 8, 8, 255), UI_RGBA(224, 138, 42, 255), UI_RGBA(32, 156, 8, 255), UI_RGBA(72, 104, 184, 255)
     };
@@ -465,7 +465,7 @@ static void CommandsGba(u8 b, int32_t by, int32_t bh, bool safari, bool tap, int
             UiW_GbaArrowH(bx + 19, bcy + (ch - 12) / 2 + 1, true, UI_GBA_SHAD_LIGHT);
             UiW_GbaArrowH(bx + 18, bcy + (ch - 12) / 2, true, UI_RGBA(230, 8, 8, 255));
         }
-        UiW_GbaTextMid(UI_FACE_VT323, 28, bx + (on ? 32 : 20), bcy, ch, kLabels[safari ? 1 : 0][i], UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        UiW_GbaTextMid(UI_FACE_VT323, 28, bx + (on ? 32 : 20), bcy, ch, UiLocale_Lookup(kLabels[safari ? 1 : 0][i]), UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
         if (!safari && i == 1)
             UiSpr_ItemIcon(ITEM_POTION, bx + cw - 30, bcy + (ch - 24) / 2, 1);
         else if (i == 2 && !safari)
@@ -486,9 +486,9 @@ static void PromptTextGba(u8 b, int32_t by, int32_t bh, bool safari)
     if (safari) UiGame_PlayerName(name, sizeof(name));
     else UiGame_Text(gBattleMons[b].nickname, name, sizeof(name));
     const int32_t ty = by + (bh - 36) / 2;
-    const int32_t w1 = UiW_GbaText(UI_FACE_VT323, 36, 36, ty, "What will ", C_WHITE, UI_GBA_SHAD_DARK);
+    const int32_t w1 = UiW_GbaText(UI_FACE_VT323, 36, 36, ty, UI_TR("What will "), C_WHITE, UI_GBA_SHAD_DARK);
     const int32_t w2 = UiW_GbaText(UI_FACE_VT323, 36, 36 + w1, ty, name, UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
-    UiW_GbaText(UI_FACE_VT323, 36, 36 + w1 + w2, ty, " do?", C_WHITE, UI_GBA_SHAD_DARK);
+    UiW_GbaText(UI_FACE_VT323, 36, 36 + w1 + w2, ty, UI_TR(" do?"), C_WHITE, UI_GBA_SHAD_DARK);
 }
 
 static void TacPill(int32_t *px, int32_t y, const char *txt, bool stab)
@@ -550,21 +550,21 @@ static void MovesGba(u8 b, int32_t by, int32_t bh, int st, bool tap, int32_t tx,
     const u16 move = mi->moves[sel] < MOVES_COUNT ? mi->moves[sel] : MOVE_NONE;
     if (st == ST_TARGET)
     {
-        UiW_GbaSectionStrip(622, by + 12, 320, 28, UI_GBA_TAG_SLATE, "TARGET", NULL);
+        UiW_GbaSectionStrip(622, by + 12, 320, 28, UI_GBA_TAG_SLATE, UI_TR("TARGET"), NULL);
         const u8 t = gMultiUsePlayerCursor;
         if (t < gBattlersCount)
         {
             UiGame_Text(gBattleMons[t].nickname, name, sizeof(name));
             UiW_GbaText(UI_FACE_VT323, 32, 622, by + 48, name, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
             UiW_GbaText(UI_FACE_PS2P, 16, 622, by + 98,
-                        GetBattlerSide(t) == B_SIDE_PLAYER ? (t == b ? "SELF" : "ALLY") : "FOE", UI_RGBA(32, 104, 168, 255), UI_GBA_SHAD_LIGHT);
+                        GetBattlerSide(t) == B_SIDE_PLAYER ? (t == b ? UI_TR("SELF") : UI_TR("ALLY")) : UI_TR("FOE"), UI_RGBA(32, 104, 168, 255), UI_GBA_SHAD_LIGHT);
         }
         return;
     }
     if (move == MOVE_NONE)
         return;
 
-    snprintf(buf, sizeof(buf), "PP %u / %u", (unsigned)mi->currentPp[sel], (unsigned)mi->maxPp[sel]);
+    snprintf(buf, sizeof(buf), UI_TR("PP %u / %u"), (unsigned)mi->currentPp[sel], (unsigned)mi->maxPp[sel]);
     UiW_GbaSectionStrip(622, by + 12, 320, 28, UI_GBA_TAG_SLATE, buf, NULL);
     const u8 mType = gBattleMoves[move].type;
     UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + mType), 622 + 320 - 38, by + 18, 1);
@@ -572,28 +572,28 @@ static void MovesGba(u8 b, int32_t by, int32_t bh, int st, bool tap, int32_t tx,
     int32_t px = 622;
     const int32_t py = by + 50;
     const u8 pwr = gBattleMoves[move].power, acc = gBattleMoves[move].accuracy;
-    if (pwr > 1) snprintf(buf, sizeof(buf), "PWR %u", (unsigned)pwr); else snprintf(buf, sizeof(buf), "PWR -");
+    if (pwr > 1) snprintf(buf, sizeof(buf), UI_TR("PWR %u"), (unsigned)pwr); else snprintf(buf, sizeof(buf), UI_TR("PWR -"));
     TacPill(&px, py, buf, false);
-    if (acc) snprintf(buf, sizeof(buf), "ACC %u", (unsigned)acc); else snprintf(buf, sizeof(buf), "ACC -");
+    if (acc) snprintf(buf, sizeof(buf), UI_TR("ACC %u"), (unsigned)acc); else snprintf(buf, sizeof(buf), UI_TR("ACC -"));
     TacPill(&px, py, buf, false);
-    const char *cat = pwr == 0 ? "STAT" : IS_MOVE_PHYSICAL(move, mType) ? "PHYS" : "SPEC";
+    const char *cat = pwr == 0 ? UI_TR("STAT") : IS_MOVE_PHYSICAL(move, mType) ? UI_TR("PHYS") : UI_TR("SPEC");
     TacPill(&px, py, cat, false);
     if (pwr > 0 && IS_BATTLER_OF_TYPE(b, mType))
-        TacPill(&px, py, "1.5x STAB", true);
+        TacPill(&px, py, UI_TR("1.5x STAB"), true);
 
     const int32_t botY = by + bh - 40;
-    const char *note = st == ST_REORDER ? "MOVE WHERE?" : pwr == 0 ? "STATUS MOVE" : "READY TO USE";
+    const char *note = st == ST_REORDER ? UI_TR("MOVE WHERE?") : pwr == 0 ? UI_TR("STATUS MOVE") : UI_TR("READY TO USE");
     UiW_GbaTextMid(UI_FACE_VT323, 24, 622, botY, 26, note, UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
     int32_t rx = 942;
     const int32_t backRight = rx;
-    UiW_GbaHelpBadgeY(&rx, botY + 1, "O", "BACK", true);
+    UiW_GbaHelpBadgeY(&rx, botY + 1, "O", UI_TR("BACK"), true);
     if (tap && Hit(tx, ty, rx, botY - 2, backRight - rx, 32))
         UiMirror_Inject(B_BUTTON);
 }
 
 static void LevelUpGba(int32_t platesTop)
 {
-    static const char *const kNames[NUM_STATS] = { "HP", "ATK", "DEF", "SPE", "SP.A", "SP.D" };
+    static const char *const kNames[NUM_STATS] = { UI_N("HP"), UI_N("ATK"), UI_N("DEF"), UI_N("SPE"), UI_N("SP.A"), UI_N("SP.D") };
     static const u8 kOrder[NUM_STATS] = { STAT_HP, STAT_ATK, STAT_DEF, STAT_SPATK, STAT_SPDEF, STAT_SPEED };
     u16 curr[NUM_STATS];
     GetMonLevelUpWindowStats(&gPlayerParty[gBattleStruct->expGetterMonId], curr);
@@ -601,14 +601,14 @@ static void LevelUpGba(int32_t platesTop)
     const int32_t w = 316, h = 152, x = UI_SCREEN_W - 16 - w, y = platesTop - 12 - h;
     UiW_GbaWin(x, y, w, h, UI_GBA_WIN_DARK);
     UiW_GbaSectionStrip(x + 12, y + 10, w - 24, 26, UI_GBA_TAG_GREEN,
-                        gUiLevelUpPage == 2 ? "NEW STATS" : "LEVEL UP!", NULL);
+                        gUiLevelUpPage == 2 ? UI_TR("NEW STATS") : UI_TR("LEVEL UP!"), NULL);
     char buf[12];
     for (int32_t k = 0; k < NUM_STATS; k++)
     {
         const u8 s = kOrder[k];
         const int32_t cx = x + 16 + (k & 1) * 146, cy = y + 42 + (k >> 1) * 34;
         UiDraw_Rect(cx, cy + 32, 134, 1, UI_RGBA(64, 92, 82, 255));
-        UiText_Draw(UI_FACE_VT323, 28, cx, cy, kNames[s], UI_RGBA(216, 248, 240, 255));
+        UiText_Draw(UI_FACE_VT323, 28, cx, cy, UiLocale_Lookup(kNames[s]), UI_RGBA(216, 248, 240, 255));
         if (gUiLevelUpPage == 2)
             snprintf(buf, sizeof(buf), "%u", (unsigned)curr[s]);
         else
@@ -620,13 +620,13 @@ static void LevelUpGba(int32_t platesTop)
 
 static void Commands(u8 b, bool safari, bool tap, int32_t tx, int32_t ty)
 {
-    static const char *const kLabels[2][4] = { { "FIGHT", "BAG", "POKéMON", "RUN" }, { "BALL", "POKéBLOCK", "GO NEAR", "RUN" } };
+    static const char *const kLabels[2][4] = { { UI_N("FIGHT"), UI_N("BAG"), UI_N("POKéMON"), UI_N("RUN") }, { UI_N("BALL"), UI_N("POKéBLOCK"), UI_N("GO NEAR"), UI_N("RUN") } };
     const int32_t x0 = UI_SCREEN_W - 16 - 400, y0 = BOX_Y + 18, cw = 195, ch = 56;
     const u8 cursor = gActionSelectionCursor[b] & 3;
     for (int32_t i = 0; i < 4; i++)
     {
         const int32_t x = x0 + (i & 1) * (cw + 10), y = y0 + (i >> 1) * (ch + 10);
-        CommandButton(x, y, cw, ch, kLabels[safari ? 1 : 0][i], i, i == cursor);
+        CommandButton(x, y, cw, ch, UiLocale_Lookup(kLabels[safari ? 1 : 0][i]), i, i == cursor);
         if (tap && Hit(tx, ty, x, y, cw, ch))
         {
             if (i == cursor) UiMirror_Inject(A_BUTTON);
@@ -640,9 +640,9 @@ static void PromptText(u8 b, bool safari)
     char name[24];
     if (safari) UiGame_PlayerName(name, sizeof(name));
     else UiGame_Text(gBattleMons[b].nickname, name, sizeof(name));
-    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 22, "What will", UI_COL_INK);
+    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 22, UI_TR("What will"), UI_COL_INK);
     const int32_t w = UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28, BOX_Y + 72, name, TH->em);
-    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28 + w, BOX_Y + 72, " do?", UI_COL_INK);
+    UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, 28 + w, BOX_Y + 72, UI_TR(" do?"), UI_COL_INK);
 }
 
 static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)
@@ -683,16 +683,16 @@ static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)
     const u16 move = mi->moves[sel] < MOVES_COUNT ? mi->moves[sel] : MOVE_NONE;
     if (st == ST_TARGET)
     {
-        UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 14, "TARGET", UI_COL_ON_SOFT);
+        UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 14, UI_TR("TARGET"), UI_COL_ON_SOFT);
         const u8 t = gMultiUsePlayerCursor;
         if (t < gBattlersCount)
         {
             UiGame_Text(gBattleMons[t].nickname, name, sizeof(name));
             UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, px + 16, py + 40, name, TH->gold);
-            UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 98, GetBattlerSide(t) == B_SIDE_PLAYER ? (t == b ? "SELF" : "ALLY") : "FOE", UI_COL_TITLE);
+            UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 98, GetBattlerSide(t) == B_SIDE_PLAYER ? (t == b ? UI_TR("SELF") : UI_TR("ALLY")) : UI_TR("FOE"), UI_COL_TITLE);
         }
         UiW_Capsule(px + 216, py + 92, 84, 30);
-        UiText_DrawCentred(UI_FACE_PS2P, 12, px + 216, py + 92, 84, 30, "BACK", UI_COL_ON_FRAME);
+        UiText_DrawCentred(UI_FACE_PS2P, 12, px + 216, py + 92, 84, 30, UI_TR("BACK"), UI_COL_ON_FRAME);
         if (tap && Hit(tx, ty, px + 216, py + 92, 84, 30))
             UiMirror_Inject(B_BUTTON);
         return;
@@ -700,26 +700,26 @@ static void Moves(u8 b, int st, bool tap, int32_t tx, int32_t ty)
     if (move == MOVE_NONE)
     {
         UiW_Capsule(px + 216, py + 92, 84, 30);
-        UiText_DrawCentred(UI_FACE_PS2P, 12, px + 216, py + 92, 84, 30, "BACK", UI_COL_ON_FRAME);
+        UiText_DrawCentred(UI_FACE_PS2P, 12, px + 216, py + 92, 84, 30, UI_TR("BACK"), UI_COL_ON_FRAME);
         if (tap && Hit(tx, ty, px + 216, py + 92, 84, 30))
             UiMirror_Inject(B_BUTTON);
         return;
     }
     char buf[16];
-    UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 18, "PP", UI_COL_ON_SOFT);
+    UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 18, UI_TR("PP"), UI_COL_ON_SOFT);
     snprintf(buf, sizeof(buf), "%u/%u", (unsigned)mi->currentPp[sel], (unsigned)mi->maxPp[sel]);
     const u8 pp = mi->currentPp[sel], maxPp = mi->maxPp[sel] ? mi->maxPp[sel] : 1;
     const uint32_t ppc = pp == 0 ? UI_RGBA(240, 122, 110, 255) : pp * 4 <= maxPp ? UI_RGBA(245, 158, 43, 255)
                        : pp * 2 <= maxPp ? UI_RGBA(245, 209, 98, 255) : UI_COL_ON_FRAME;
     UiText_Draw(UI_FACE_VT323, UI_DIALOG_PX, px + 312 - 16 - UiText_Width(UI_FACE_VT323, UI_DIALOG_PX, buf), py + 4, buf, ppc);
-    UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 66, "TYPE", UI_COL_ON_SOFT);
+    UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 66, UI_TR("TYPE"), UI_COL_ON_SOFT);
     UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + gBattleMoves[move].type), px + 312 - 16 - 64, py + 54, 2);
     if (st == ST_REORDER)
-        UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 100, "MOVE WHERE?", UI_COL_TITLE);
+        UiText_Draw(UI_FACE_PS2P, 16, px + 16, py + 100, UI_TR("MOVE WHERE?"), UI_COL_TITLE);
     else
     {
         UiW_Capsule(px + 216, py + 94, 84, 28);
-        UiText_DrawCentred(UI_FACE_PS2P, 12, px + 216, py + 94, 84, 28, "BACK", UI_COL_ON_FRAME);
+        UiText_DrawCentred(UI_FACE_PS2P, 12, px + 216, py + 94, 84, 28, UI_TR("BACK"), UI_COL_ON_FRAME);
         if (tap && Hit(tx, ty, px + 216, py + 94, 84, 28))
             UiMirror_Inject(B_BUTTON);
     }
@@ -750,11 +750,11 @@ static void YesNo(bool tap, int32_t tx, int32_t ty)
     const int32_t w = 180, x = UI_SCREEN_W - 16 - w, y = BOX_Y - 12 - 100;
     const int cursor = gBattleCommunication[CURSOR_POSITION] ? 1 : 0;
     UiW_DialogBox(x, y, w, 100);
-    static const char *const opt[2] = { "YES", "NO" };
+    static const char *const opt[2] = { UI_N("YES"), UI_N("NO") };
     for (int32_t i = 0; i < 2; i++)
     {
         UiW_Row(x + 8, y + 8 + i * 42, w - 16, 42, cursor == i, i);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 36, y + 12 + i * 42, opt[i], cursor == i ? UI_COL_SELECT_INK : UI_COL_INK);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 36, y + 12 + i * 42, UiLocale_Lookup(opt[i]), cursor == i ? UI_COL_SELECT_INK : UI_COL_INK);
         if (tap && Hit(tx, ty, x + 8, y + 8 + i * 42, w - 16, 42))
         {
             if (i == cursor) UiMirror_Inject(A_BUTTON);
@@ -767,21 +767,21 @@ static void YesNo(bool tap, int32_t tx, int32_t ty)
 // the new values
 static void LevelUp(int32_t platesTop)
 {
-    static const char *const kNames[NUM_STATS] = { "HP", "ATK", "DEF", "SPE", "SP.A", "SP.D" };
+    static const char *const kNames[NUM_STATS] = { UI_N("HP"), UI_N("ATK"), UI_N("DEF"), UI_N("SPE"), UI_N("SP.A"), UI_N("SP.D") };
     static const u8 kOrder[NUM_STATS] = { STAT_HP, STAT_ATK, STAT_DEF, STAT_SPATK, STAT_SPDEF, STAT_SPEED };
     u16 curr[NUM_STATS];
     GetMonLevelUpWindowStats(&gPlayerParty[gBattleStruct->expGetterMonId], curr);
     const u16 *before = gBattleResources->beforeLvlUp->stats;
     const int32_t w = 300, h = 140, x = UI_SCREEN_W - 16 - w, y = platesTop - 14 - h;
     UiW_ThemeBox(x, y, w, h, 3, TH->darkEdge, TH->darkTop, TH->darkBot, TH->darkHi, TH->darkBot, 4, false, TH->plateRing);
-    UiText_Draw(UI_FACE_PS2P, 16, x + 14, y + 12, gUiLevelUpPage == 2 ? "NEW STATS" : "LEVEL UP!", UI_COL_TITLE);
+    UiText_Draw(UI_FACE_PS2P, 16, x + 14, y + 12, gUiLevelUpPage == 2 ? UI_TR("NEW STATS") : UI_TR("LEVEL UP!"), UI_COL_TITLE);
     char buf[12];
     for (int32_t k = 0; k < NUM_STATS; k++)
     {
         const u8 s = kOrder[k];
         const int32_t cx = x + 14 + (k & 1) * 142, cy = y + 36 + (k >> 1) * 32;
         UiDraw_Rect(cx, cy + 31, 128, 1, TH->darkHi);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx, cy, kNames[s], UI_COL_ON_SOFT);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, cx, cy, UiLocale_Lookup(kNames[s]), UI_COL_ON_SOFT);
         if (gUiLevelUpPage == 2)
             snprintf(buf, sizeof(buf), "%u", (unsigned)curr[s]);
         else
@@ -893,7 +893,7 @@ bool UiBattle_Draw(void)
                 const int32_t w = 180, x = UI_SCREEN_W - 16 - w, y = BOX_Y - 12 - 108;
                 const int cursor = gBattleCommunication[CURSOR_POSITION] ? 1 : 0;
                 UiW_GbaWin(x, y, w, 108, UI_GBA_WIN_DEFAULT);
-                static const char *const opt[2] = { "YES", "NO" };
+                static const char *const opt[2] = { UI_N("YES"), UI_N("NO") };
                 for (int32_t i = 0; i < 2; i++)
                 {
                     const int32_t ry = y + 12 + i * 42;
@@ -903,7 +903,7 @@ bool UiBattle_Draw(void)
                         UiDraw_Frame(x + 10, ry, w - 20, 40, 2, UI_RGBA(230, 148, 65, 255));
                         UiW_Arrow(x + 18, ry + 14, UI_RGBA(230, 8, 8, 255));
                     }
-                    UiText_DrawMid(UI_FACE_VT323, 32, x + 42, ry, 40, opt[i], UI_RGBA(49, 49, 49, 255));
+                    UiText_DrawMid(UI_FACE_VT323, 32, x + 42, ry, 40, UiLocale_Lookup(opt[i]), UI_RGBA(49, 49, 49, 255));
                     if (tap && Hit(tx, ty, x + 10, ry, w - 20, 40))
                     {
                         if (i == cursor) UiMirror_Inject(A_BUTTON);

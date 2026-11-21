@@ -205,6 +205,8 @@ void VitaPerf_Core1LogicTick(void);
 void VitaPerf_Core1LogicDone(double logicMs);
 void VitaPerf_Core1VBlankDone(double vblankMs);
 void VitaPerf_Core1WaitDone(double waitMs);
+// New UI sprite cells, since boot: most drawn at once, how many there are, lookups left without one
+void VitaPerf_Core1UiCells(uint32_t peakLive, uint32_t count, uint32_t starved);
 
 #ifdef __cplusplus
 }

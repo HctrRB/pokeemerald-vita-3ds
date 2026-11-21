@@ -36,18 +36,18 @@ extern const u8 *StartMenu_PyramidFloorForUi(void);
 
 // Informative only: short, at most two lines in the small hint box
 static const char *const sHints[HUB_COUNT] = {
-    "POKéMON seen and caught in the HOENN POKéDEX.",
-    "Check and organize your party POKéMON.",
-    "Open your BAG pockets and use items.",
-    "Check the HOENN map, Match Call, and ribbons.",
-    "Inspect your Trainer Card, Money, and Badges.",
-    "Save your progress to the memory card.",
-    "Save and quit the BATTLE PYRAMID for now.",
-    "Give up the BATTLE PYRAMID challenge.",
-    "Configure game settings, controls, and Menu Skin.",
-    "Inspect Nuzlocke routes, fallen allies, and cap.",
-    "Leave the SAFARI GAME.",
-    "Close this menu and return to the adventure.",
+    UI_N("POKéMON seen and caught in the HOENN POKéDEX."),
+    UI_N("Check and organize your party POKéMON."),
+    UI_N("Open your BAG pockets and use items."),
+    UI_N("Check the HOENN map, Match Call, and ribbons."),
+    UI_N("Inspect your Trainer Card, Money, and Badges."),
+    UI_N("Save your progress to the memory card."),
+    UI_N("Save and quit the BATTLE PYRAMID for now."),
+    UI_N("Give up the BATTLE PYRAMID challenge."),
+    UI_N("Configure game settings, controls, and Menu Skin."),
+    UI_N("Inspect Nuzlocke routes, fallen allies, and cap."),
+    UI_N("Leave the SAFARI GAME."),
+    UI_N("Close this menu and return to the adventure."),
 };
 
 #define MENU_X 672
@@ -301,12 +301,12 @@ static void EntryIcon(uint8_t e, int32_t x, int32_t y)
 
 static void EntryLabel(uint8_t e, char *out, size_t cap)
 {
-    static const char *const labels[HUB_COUNT] = { "POKéDEX", "POKéMON", "BAG", "POKéNAV", NULL, "SAVE", "REST", "RETIRE", "OPTION",
-                                                   "NUZLOCKE", "RETIRE", "EXIT" };
+    static const char *const labels[HUB_COUNT] = { UI_N("POKéDEX"), UI_N("POKéMON"), UI_N("BAG"), UI_N("POKéNAV"), NULL, UI_N("SAVE"), UI_N("REST"), UI_N("RETIRE"), UI_N("OPTION"),
+                                                   UI_N("NUZLOCKE"), UI_N("RETIRE"), UI_N("EXIT") };
     if (e == HUB_CARD)
         UiGame_PlayerName(out, cap);
     else
-        snprintf(out, cap, "%s", labels[e]);
+        snprintf(out, cap, "%s", UiLocale_Lookup(labels[e]));
 }
 
 static void BuildStatus(void)
@@ -332,7 +332,7 @@ static void BuildStatus(void)
         UiDraw_PopClip();
     }
     else
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 70, 34, "SEL: NONE", UI_COL_ON_SOFT);
+        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 70, 34, UI_TR("SEL: NONE"), UI_COL_ON_SOFT);
 
     // Top-right: auto-run toggle (touch when Running Shoes are unlocked)
     UiW_Capsule(186, 70, 162, 34);
@@ -343,13 +343,13 @@ static void BuildStatus(void)
         sRunY = 70;
         sRunW = 162;
         sRunH = 34;
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, on ? "RUN: AUTO" : "RUN: B BTN",
+        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, on ? UI_TR("RUN: AUTO") : UI_TR("RUN: B BTN"),
                        on ? UI_RGBA(115, 205, 164, 255) : UI_COL_ON_SOFT);
     }
     else
     {
         sRunW = 0;
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, "RUN: WALK", UI_COL_ON_SOFT);
+        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 196, 70, 34, UI_TR("RUN: WALK"), UI_COL_ON_SOFT);
     }
 
     // Bottom-left: Safari balls and steps, or Repel steps
@@ -369,11 +369,11 @@ static void BuildStatus(void)
     }
     else if (UiGame_RepelSteps() > 0)
     {
-        snprintf(buf, sizeof(buf), "REPEL: %u", (unsigned)UiGame_RepelSteps());
+        snprintf(buf, sizeof(buf), UI_TR("REPEL: %u"), (unsigned)UiGame_RepelSteps());
         UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, buf, UI_COL_GOLD);
     }
     else
-        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, "REPEL: OFF", UI_COL_ON_SOFT);
+        UiText_DrawMid(UI_FACE_VT323, UI_BODY_PX, 26, 110, 34, UI_TR("REPEL: OFF"), UI_COL_ON_SOFT);
 
     // Bottom-right: money and clock
     UiW_Capsule(186, 110, 162, 34);
@@ -403,7 +403,7 @@ static void BuildParty(void)
         if (m.egg)
             continue;
         char lv[8];
-        snprintf(lv, sizeof(lv), "Lv%u", (unsigned)m.level);
+        snprintf(lv, sizeof(lv), UI_TR("Lv%u"), (unsigned)m.level);
         // Level right-aligned in its column, ending 6 px before the HP bar
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 270 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, lv), y + 2, lv, i == 0 ? UI_COL_SELECT_INK : UI_COL_INK);
         const int32_t pct = m.maxHp ? (int32_t)m.hp * 100 / m.maxHp : 0;
@@ -428,25 +428,25 @@ static void BuildMenu(void)
     // Description of the selected entry
     const int32_t hy = UI_SCREEN_H - 16 - 76;
     UiW_PanelDark(MENU_X, hy, MENU_W, 76);
-    UiW_TextWrapped(MENU_X + 14, hy + 8, MENU_W - 28, 30, sHints[sEntries[sSel]], UI_COL_ON_FRAME, 2);
+    UiW_TextWrapped(MENU_X + 14, hy + 8, MENU_W - 28, 30, UiLocale_Lookup(sHints[sEntries[sSel]]), UI_COL_ON_FRAME, 2);
 }
 
 // YES / NO of the popups (save, the Pyramid's RETIRE), as UpdateYesNo reads them
 static void DrawYesNoRows(void)
 {
-    static const char *const opt[2] = { "YES", "NO" };
+    static const char *const opt[2] = { UI_N("YES"), UI_N("NO") };
     for (int32_t i = 0; i < 2; i++)
     {
         const int32_t bx = POP_X + 16 + i * 208;
         UiW_Row(bx, POP_Y + 168, 200, 40, sPopupSel == i, 0);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, bx + 84, POP_Y + 172, opt[i], sPopupSel == i ? UI_COL_SELECT_INK : UI_COL_INK);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, bx + 84, POP_Y + 172, UiLocale_Lookup(opt[i]), sPopupSel == i ? UI_COL_SELECT_INK : UI_COL_INK);
     }
 }
 
 static void DrawGbaYesNo(void)
 {
     UiW_GbaWin(724, 310, 214, 110, UI_GBA_WIN_DEFAULT);
-    static const char *const kOpt[2] = { "YES", "NO" };
+    static const char *const kOpt[2] = { UI_N("YES"), UI_N("NO") };
     for (int32_t i = 0; i < 2; i++)
     {
         const int32_t ry = 324 + i * 44;
@@ -457,7 +457,7 @@ static void DrawGbaYesNo(void)
             UiW_GbaArrowH(749, ry + 15, true, UI_GBA_SHAD_LIGHT);
             UiW_GbaArrowH(748, ry + 14, true, UI_RGBA(230, 8, 8, 255));
         }
-        UiW_GbaTextMid(UI_FACE_VT323, 32, 770, ry, 40, kOpt[i], UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+        UiW_GbaTextMid(UI_FACE_VT323, 32, 770, ry, 40, UiLocale_Lookup(kOpt[i]), UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
     }
 }
 
@@ -475,7 +475,7 @@ static void BuildRetirePopup(bool gba)
         return;
     }
     UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
-    UiW_Window(POP_X, POP_Y, POP_W, 224, "RETIRE");
+    UiW_Window(POP_X, POP_Y, POP_W, 224, UI_TR("RETIRE"));
     UiW_TextWrapped(POP_X + 20, POP_Y + 56, POP_W - 40, 34, q, UI_COL_INK, 3);
     DrawYesNoRows();
 }
@@ -486,23 +486,23 @@ static void BuildPopup(void)
     char buf[64];
     if (sPopup == POP_SAVED)
     {
-        UiW_Window(POP_X, POP_Y + 40, POP_W, 136, "SAVE");
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 92, sSaveOk ? "GAME SAVED SAFELY!" : "SAVE FAILED!", UI_COL_INK);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 124, sSaveOk ? "Saved to ux0:data/POKEVITA/" : "Try again.", UI_COL_INK_SOFT);
+        UiW_Window(POP_X, POP_Y + 40, POP_W, 136, UI_TR("SAVE"));
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 92, sSaveOk ? UI_TR("GAME SAVED SAFELY!") : UI_TR("SAVE FAILED!"), UI_COL_INK);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 124, sSaveOk ? "Saved to ux0:data/POKEVITA/" : UI_TR("Try again."), UI_COL_INK_SOFT);
         return;
     }
-    UiW_Window(POP_X, POP_Y, POP_W, 224, "SAVE");
+    UiW_Window(POP_X, POP_Y, POP_W, 224, UI_TR("SAVE"));
     {
         char name[16], zone[32], time[16];
         UiGame_PlayerName(name, sizeof(name));
         UiGame_ZoneName(zone, sizeof(zone));
         UiGame_PlayTime(time, sizeof(time));
-        snprintf(buf, sizeof(buf), "SLOT %u · %s · %s", (unsigned)UiGame_SaveSlot(), name, zone);
+        snprintf(buf, sizeof(buf), UI_TR("SLOT %u · %s · %s"), (unsigned)UiGame_SaveSlot(), name, zone);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 50, buf, UI_COL_INK);
-        snprintf(buf, sizeof(buf), "BADGES %u · POKéDEX %u · TIME %s", (unsigned)UiGame_BadgeCount(), (unsigned)UiGame_DexOwned(), time);
+        snprintf(buf, sizeof(buf), UI_TR("BADGES %u · POKéDEX %u · TIME %s"), (unsigned)UiGame_BadgeCount(), (unsigned)UiGame_DexOwned(), time);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 82, buf, UI_COL_INK_SOFT);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, POP_X + 20, POP_Y + 118,
-                    UiGame_SaveOverwritesOtherGame() ? "This overwrites the other game!" : "Would you like to save the game?",
+                    UiGame_SaveOverwritesOtherGame() ? UI_TR("This overwrites the other game!") : UI_TR("Would you like to save the game?"),
                     UiGame_SaveOverwritesOtherGame() ? UI_COL_HP_LOW : UI_COL_INK);
     }
     DrawYesNoRows();
@@ -532,7 +532,7 @@ static void BuildGbaHub(void)
     UiDraw_PopClip();
     UiW_GbaBox(18, 50, 430, 34, 3, UI_RGBA(24, 32, 32, 255), UI_RGBA(232, 207, 166, 255), UI_RGBA(212, 180, 132, 255),
                UI_RGBA(255, 244, 218, 255), 0);
-    snprintf(buf, sizeof(buf), "HOENN REGION · $%u", (unsigned)UiGame_Money());
+    snprintf(buf, sizeof(buf), UI_TR("HOENN REGION · $%u"), (unsigned)UiGame_Money());
     UiDraw_PushClip(22, 50, 422, 34);
     UiW_GbaTextCentred(UI_FACE_VT323, 24, 18, 50, 430, 34, buf, UI_RGBA(62, 28, 0, 255), UI_RGBA(255, 244, 218, 255));
     UiDraw_PopClip();
@@ -540,15 +540,15 @@ static void BuildGbaHub(void)
     // 2. Dark-Well Status Card (.hub-status-card: 14, 96, 438, 104) -> 2x2 cells
     UiW_GbaWin(14, 96, 438, 104, UI_GBA_WIN_DARK);
     GbaStatCell(24, 106);
-    UiW_GbaTextMid(UI_FACE_VT323, 24, 32, 106, 40, "TIME", UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
-    snprintf(buf, sizeof(buf), "%s %s", clock, UiGame_IsNight() ? "NIGHT" : "DAY");
+    UiW_GbaTextMid(UI_FACE_VT323, 24, 32, 106, 40, UI_TR("TIME"), UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
+    snprintf(buf, sizeof(buf), "%s %s", clock, UiGame_IsNight() ? UI_TR("NIGHT") : UI_TR("DAY"));
     UiW_GbaTextMid(UI_FACE_VT323, 28, 220 - UiText_Width(UI_FACE_VT323, 28, buf), 106, 40, buf, UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
 
     GbaStatCell(236, 106);
     if (UiGame_InSafari())
     {
         UiDraw_Sprite(UI_SPR_BALL_SAFARI, 244, 118, 1);
-        UiW_GbaTextMid(UI_FACE_VT323, 24, 266, 106, 40, "SAFARI", UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
+        UiW_GbaTextMid(UI_FACE_VT323, 24, 266, 106, 40, UI_TR("SAFARI"), UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
         // Balls · steps left, as the REPEL cell's value
         snprintf(buf, sizeof(buf), "%u · %u", (unsigned)UiGame_SafariBalls(), (unsigned)UiGame_SafariSteps());
         UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, buf), 106, 40, buf, UI_RGBA(115, 255, 172, 255), UI_GBA_SHAD_DARK);
@@ -556,7 +556,7 @@ static void BuildGbaHub(void)
     else if (UiGame_InPyramid())
     {
         // The Pyramid's floor (ShowPyramidFloorWindow) where the REPEL goes
-        UiW_GbaTextMid(UI_FACE_VT323, 24, 248, 106, 40, "PYRAMID", UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
+        UiW_GbaTextMid(UI_FACE_VT323, 24, 248, 106, 40, UI_TR("PYRAMID"), UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
         UiGame_Text(StartMenu_PyramidFloorForUi(), buf, sizeof(buf));
         UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, buf), 106, 40, buf, UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
     }
@@ -564,11 +564,11 @@ static void BuildGbaHub(void)
     {
         const uint16_t repel = UiGame_RepelSteps();
         UiSpr_ItemIcon(ITEM_SUPER_REPEL, 242, 114, 1);
-        UiW_GbaTextMid(UI_FACE_VT323, 24, 270, 106, 40, "REPEL", UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
+        UiW_GbaTextMid(UI_FACE_VT323, 24, 270, 106, 40, UI_TR("REPEL"), UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
         if (repel > 0)
-            snprintf(buf, sizeof(buf), "%u ST", (unsigned)repel);
+            snprintf(buf, sizeof(buf), UI_TR("%u ST"), (unsigned)repel);
         else
-            snprintf(buf, sizeof(buf), "OFF");
+            snprintf(buf, sizeof(buf), UI_TR("OFF"));
         UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, buf), 106, 40, buf,
                        repel > 0 ? UI_RGBA(115, 255, 172, 255) : UI_RGBA(144, 164, 174, 255), UI_GBA_SHAD_DARK);
     }
@@ -587,11 +587,11 @@ static void BuildGbaHub(void)
         UiDraw_PopClip();
     }
     else
-        UiW_GbaTextMid(UI_FACE_VT323, 24, 38 + selW, 150, 40, "NONE", UI_RGBA(144, 164, 174, 255), UI_GBA_SHAD_DARK);
+        UiW_GbaTextMid(UI_FACE_VT323, 24, 38 + selW, 150, 40, UI_TR("NONE"), UI_RGBA(144, 164, 174, 255), UI_GBA_SHAD_DARK);
 
     GbaStatCell(236, 150);
     UiW_GbaKeyCap(242, 158, 24, "TRI", false);
-    UiW_GbaTextMid(UI_FACE_VT323, 24, 272, 150, 40, "AUTO-RUN", UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
+    UiW_GbaTextMid(UI_FACE_VT323, 24, 272, 150, 40, UI_TR("AUTO-RUN"), UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
     if (UiGame_HasFlag(FLAG_SYS_B_DASH))
     {
         const bool on = VitaExtras_GetFast(FAST_EXTRA_AUTO_RUN) != 0;
@@ -599,14 +599,14 @@ static void BuildGbaHub(void)
         sRunY = 150;
         sRunW = 204;
         sRunH = 40;
-        const char *rt = on ? "ON" : "B BTN";
+        const char *rt = on ? UI_TR("ON") : UI_TR("B BTN");
         UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, rt), 150, 40, rt,
                        on ? UI_RGBA(115, 255, 172, 255) : UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
     }
     else
     {
         sRunW = 0;
-        UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, "WALK"), 150, 40, "WALK",
+        UiW_GbaTextMid(UI_FACE_VT323, 28, 432 - UiText_Width(UI_FACE_VT323, 28, UI_TR("WALK")), 150, 40, UI_TR("WALK"),
                        UI_RGBA(144, 164, 174, 255), UI_GBA_SHAD_DARK);
     }
 
@@ -637,7 +637,7 @@ static void BuildGbaHub(void)
         UiDraw_PopClip();
         if (!m.egg)
         {
-            snprintf(buf, sizeof(buf), "Lv%u", (unsigned)m.level);
+            snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)m.level);
             UiW_GbaText(UI_FACE_VT323, 24, mx + 196 - UiText_Width(UI_FACE_VT323, 24, buf), my + 3, buf, UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
             const int32_t pct = m.maxHp ? (int32_t)m.hp * 100 / m.maxHp : 0;
             const uint32_t top = pct > 50 ? UI_RGBA(115, 255, 172, 255) : pct > 20 ? UI_RGBA(255, 246, 139, 255) : UI_RGBA(255, 180, 123, 255);
@@ -670,7 +670,7 @@ static void BuildGbaHub(void)
 
     // 5. Full-width Bottom GBA Dialogue Box (.gba-msg: 14, 438, 932, 94)
     UiW_GbaMsg(14, 438, 932, 94, false, true);
-    UiW_GbaTextMid(UI_FACE_VT323, 32, 38, 438, 94, sHints[sEntries[sSel]], UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
+    UiW_GbaTextMid(UI_FACE_VT323, 32, 38, 438, 94, UiLocale_Lookup(sHints[sEntries[sSel]]), UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
 }
 
 static void BuildGbaSavePopup(void)
@@ -683,18 +683,18 @@ static void BuildGbaSavePopup(void)
 
     // Left Save Journal Card (.save-card: 22, 22, 500, 396) matching 10_save
     UiW_GbaWin(22, 22, 500, 396, UI_GBA_WIN_DEFAULT);
-    UiW_GbaSectionStrip(34, 34, 476, 30, UI_GBA_TAG_TEAL, "SAVE JOURNAL", zone);
+    UiW_GbaSectionStrip(34, 34, 476, 30, UI_GBA_TAG_TEAL, UI_TR("SAVE JOURNAL"), zone);
 
     const uint16_t tid = (uint16_t)(gSaveBlock2Ptr->playerTrainerId[0] | (gSaveBlock2Ptr->playerTrainerId[1] << 8));
     const uint16_t dexOwned = IsNationalPokedexEnabled() ? GetNationalPokedexCount(FLAG_GET_CAUGHT) : GetHoennPokedexCount(FLAG_GET_CAUGHT);
     const uint16_t dexSeen = IsNationalPokedexEnabled() ? GetNationalPokedexCount(FLAG_GET_SEEN) : GetHoennPokedexCount(FLAG_GET_SEEN);
     char rowVals[5][48];
-    snprintf(rowVals[0], sizeof(rowVals[0]), "%s · IDNo. %05u", name, (unsigned)tid);
-    snprintf(rowVals[1], sizeof(rowVals[1]), "%u HOENN BADGES", (unsigned)UiGame_BadgeCount());
-    snprintf(rowVals[2], sizeof(rowVals[2]), "%03u CAUGHT / %03u SEEN", (unsigned)dexOwned, (unsigned)dexSeen);
+    snprintf(rowVals[0], sizeof(rowVals[0]), UI_TR("%s · IDNo. %05u"), name, (unsigned)tid);
+    snprintf(rowVals[1], sizeof(rowVals[1]), UI_TR("%u HOENN BADGES"), (unsigned)UiGame_BadgeCount());
+    snprintf(rowVals[2], sizeof(rowVals[2]), UI_TR("%03u CAUGHT / %03u SEEN"), (unsigned)dexOwned, (unsigned)dexSeen);
     snprintf(rowVals[3], sizeof(rowVals[3]), "%s", time);
     snprintf(rowVals[4], sizeof(rowVals[4]), "SLOT %u · ux0:data/POKEVITA/", (unsigned)UiGame_SaveSlot());
-    static const char *const kRowKeys[5] = { "PLAYER", "BADGES", "POKéDEX", "PLAY TIME", "SAVE TARGET" };
+    static const char *const kRowKeys[5] = { UI_N("PLAYER"), UI_N("BADGES"), UI_N("POKéDEX"), UI_N("PLAY TIME"), UI_N("SAVE TARGET") };
     const uint32_t kValCols[5] = {
         UI_RGBA(32, 104, 168, 255),
         UI_RGBA(184, 128, 12, 255),
@@ -710,7 +710,7 @@ static void BuildGbaSavePopup(void)
         UiDraw_Rect(36, ry, 472, 45, (r & 1) ? UI_RGBA(244, 245, 232, 255) : C_WHITE);
         if (r < 4)
             UiDraw_Rect(36, ry + 44, 472, 1, UI_RGBA(213, 213, 205, 255));
-        UiW_GbaTextMid(UI_FACE_VT323, 24, 48, ry, 45, kRowKeys[r], UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
+        UiW_GbaTextMid(UI_FACE_VT323, 24, 48, ry, 45, UiLocale_Lookup(kRowKeys[r]), UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
         UiW_GbaTextMid(UI_FACE_VT323, 28, 496 - UiText_Width(UI_FACE_VT323, 28, rowVals[r]), ry, 45, rowVals[r], kValCols[r], UI_GBA_SHAD_LIGHT);
     }
 
@@ -718,8 +718,8 @@ static void BuildGbaSavePopup(void)
     UiW_Bevel(34, 308, 476, 96, 4, UI_RGBA(24, 32, 32, 255), UI_RGBA(27, 44, 50, 255), UI_RGBA(27, 44, 50, 255),
               2, UI_RGBA(72, 120, 136, 255), UI_RGBA(16, 24, 28, 255), 0);
     const int32_t pCount = UiGame_PartyCount();
-    UiW_GbaText(UI_FACE_VT323, 24, 46, 314, "CURRENT PARTY", UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
-    snprintf(buf, sizeof(buf), "%d / 6 ACTIVE", (int)pCount);
+    UiW_GbaText(UI_FACE_VT323, 24, 46, 314, UI_TR("CURRENT PARTY"), UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
+    snprintf(buf, sizeof(buf), UI_TR("%d / 6 ACTIVE"), (int)pCount);
     UiW_GbaText(UI_FACE_VT323, 24, 498 - UiText_Width(UI_FACE_VT323, 24, buf), 314, buf, UI_RGBA(168, 230, 207, 255), UI_GBA_SHAD_DARK);
     for (int32_t i = 0; i < 6; i++)
     {
@@ -734,7 +734,7 @@ static void BuildGbaSavePopup(void)
             UiSpr_MonIcon(m.species, (uint8_t)((sFrame / 16) & 1), sx + 19, sy + 2, 1);
             if (!m.egg)
             {
-                snprintf(buf, sizeof(buf), "Lv%u", (unsigned)m.level);
+                snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)m.level);
                 UiW_GbaTextCentred(UI_FACE_VT323, 20, sx, sy + 32, 70, 20, buf, UI_RGBA(255, 230, 57, 255), UI_GBA_SHAD_DARK);
             }
         }
@@ -750,15 +750,15 @@ static void BuildGbaSavePopup(void)
     UiW_GbaMsg(14, 438, 932, 94, false, true);
     if (sPopup == POP_SAVED)
     {
-        UiW_GbaText(UI_FACE_VT323, 36, 38, 448, sSaveOk ? "GAME SAVED SAFELY!" : "SAVE FAILED!",
+        UiW_GbaText(UI_FACE_VT323, 36, 38, 448, sSaveOk ? UI_TR("GAME SAVED SAFELY!") : UI_TR("SAVE FAILED!"),
                     sSaveOk ? UI_RGBA(32, 156, 8, 255) : UI_RGBA(217, 72, 59, 255), UI_GBA_SHAD_LIGHT);
-        UiW_GbaText(UI_FACE_VT323, 28, 38, 488, sSaveOk ? "Saved to ux0:data/POKEVITA/" : "Try again.",
+        UiW_GbaText(UI_FACE_VT323, 28, 38, 488, sSaveOk ? "Saved to ux0:data/POKEVITA/" : UI_TR("Try again."),
                     UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);
     }
     else
     {
         UiW_GbaText(UI_FACE_VT323, 32, 38, 450,
-                    UiGame_SaveOverwritesOtherGame() ? "Overwrite existing save file?" : "Would you like to save the game?",
+                    UiGame_SaveOverwritesOtherGame() ? UI_TR("Overwrite existing save file?") : UI_TR("Would you like to save the game?"),
                     UiGame_SaveOverwritesOtherGame() ? UI_RGBA(217, 72, 59, 255) : UI_RGBA(41, 49, 49, 255), UI_GBA_SHAD_LIGHT);
         UiW_GbaText(UI_FACE_VT323, 24, 38, 488, "Existing save data in ux0:data/POKEVITA/ will be updated.",
                     UI_RGBA(82, 88, 100, 255), UI_GBA_SHAD_LIGHT);

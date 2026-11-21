@@ -37,8 +37,8 @@
 extern void Shop_ReturnFromNewUiMart(u8 taskId);
 extern void Shop_RecordPurchase(u16 itemId, u16 count);
 
-static const char *const sTabs[2] = { "BUY", "SELL" };
-static const char *const sPockets[4] = { "ITEMS", "BALLS", "TMs", "BERRIES" };
+static const char *const sTabs[2] = { UI_N("BUY"), UI_N("SELL") };
+static const char *const sPockets[4] = { UI_N("ITEMS"), UI_N("BALLS"), UI_N("TMs"), UI_N("BERRIES") };
 static const uint8_t sPocketIds[4] = { ITEMS_POCKET, BALLS_POCKET, TMHM_POCKET, BERRIES_POCKET };
 
 enum { MART_NORMAL, MART_DECOR, MART_DECOR2 };   // shop.c MART_TYPE_*
@@ -147,24 +147,24 @@ static void Confirm(int32_t n)
     const uint32_t total = Price(item) * (uint32_t)n;
     if (sTab == 0)
     {
-        if (!IsEnoughMoney(&gSaveBlock1Ptr->money, total)) { PlaySE(SE_FAILURE); UiKit_Toast("You don't have enough money."); return; }
-        if (!AddBagItem(item, (u16)n)) { PlaySE(SE_FAILURE); UiKit_Toast("You have no more room for items."); return; }
+        if (!IsEnoughMoney(&gSaveBlock1Ptr->money, total)) { PlaySE(SE_FAILURE); UiKit_Toast(UI_TR("You don't have enough money.")); return; }
+        if (!AddBagItem(item, (u16)n)) { PlaySE(SE_FAILURE); UiKit_Toast(UI_TR("You have no more room for items.")); return; }
         RemoveMoney(&gSaveBlock1Ptr->money, total);
         IncrementGameStat(GAME_STAT_SHOPPED);
         Shop_RecordPurchase(item, (u16)n);
         PlaySE(SE_SHOP);
         // 10 or more POKé BALLS: a PREMIER BALL as a bonus, as the game
         if (item == ITEM_POKE_BALL && n >= 10 && AddBagItem(ITEM_PREMIER_BALL, 1))
-            UiKit_Toast("Here you go! You also get a PREMIER BALL as an added bonus.");
+            UiKit_Toast(UI_TR("Here you go! You also get a PREMIER BALL as an added bonus."));
         else
-            UiKit_Toast("Here you go! Thank you very much.");
+            UiKit_Toast(UI_TR("Here you go! Thank you very much."));
     }
     else
     {
         RemoveBagItem(item, (u16)n);
         AddMoney(&gSaveBlock1Ptr->money, total);
         PlaySE(SE_SHOP);
-        UiKit_Toast("Turned over the %s and received $%u.", name, (unsigned)total);
+        UiKit_Toast(UI_TR("Turned over the %s and received $%u."), name, (unsigned)total);
         Refresh();
     }
 }
@@ -236,9 +236,9 @@ static bool Update(const UiInput *in)
         StringExpandPlaceholders(gStringVar4, sMartType == MART_DECOR ? gText_Var1IsItThatllBeVar2 : gText_YouWantedVar1ThatllBeVar2);
         UiGame_Text(gStringVar4, sQuestion, sizeof(sQuestion));
         PlaySE(SE_SELECT);
-        UiMenu_Open(&sConfirm, "BUY IT?", 380, 200, 220);
-        UiMenu_Add(&sConfirm, "YES", 1);
-        UiMenu_Add(&sConfirm, "NO", 0);
+        UiMenu_Open(&sConfirm, UI_TR("BUY IT?"), 380, 200, 220);
+        UiMenu_Add(&sConfirm, UI_TR("YES"), 1);
+        UiMenu_Add(&sConfirm, UI_TR("NO"), 0);
         return true;
     }
     int32_t t = UiKit_TabHit(in, sTabX, sTabW, 2);
@@ -260,25 +260,25 @@ static bool Update(const UiInput *in)
     if (sTab == 1 && (price == 0 || GetItemImportance(item)))
     {
         PlaySE(SE_FAILURE);
-        UiKit_Toast("Oh, no, I can't buy that.");
+        UiKit_Toast(UI_TR("Oh, no, I can't buy that."));
         return true;
     }
     int32_t max = sTab == 0 ? (price ? (int32_t)(UiGame_Money() / price) : 99) : sRows[a].qty;
     if (max > 99) max = 99;
-    if (max < 1) { PlaySE(SE_FAILURE); UiKit_Toast("You don't have enough money."); return true; }
+    if (max < 1) { PlaySE(SE_FAILURE); UiKit_Toast(UI_TR("You don't have enough money.")); return true; }
     PlaySE(SE_SELECT);
-    UiQty_Open(&sQty, sTab == 0 ? "HOW MANY?" : "SELL HOW MANY?", max);
+    UiQty_Open(&sQty, sTab == 0 ? UI_TR("HOW MANY?") : UI_TR("SELL HOW MANY?"), max);
     return true;
 }
 
 static void Build(void)
 {
     char buf[96], name[24];
-    static const char *const sDecorTab[1] = { "BUY" };
+    static const char *const sDecorTab[1] = { UI_N("BUY") };
     if (Decor())
-        UiKit_HeaderAs(UI_GBA_BG_BAG, UI_SPR_START_BAG, "SHOP", sDecorTab, 1, 0, sTabX, sTabW, 12);
+        UiKit_HeaderAs(UI_GBA_BG_BAG, UI_SPR_START_BAG, UI_TR("SHOP"), sDecorTab, 1, 0, sTabX, sTabW, 12);
     else
-        UiKit_HeaderAs(UI_GBA_BG_BAG, UI_SPR_START_BAG, "POKé MART", sTabs, 2, sTab, sTabX, sTabW, 12);
+        UiKit_HeaderAs(UI_GBA_BG_BAG, UI_SPR_START_BAG, UI_TR("POKé MART"), sTabs, 2, sTab, sTabX, sTabW, 12);
     UiKit_HeaderMoney();
     const uint16_t item = CurItem();
     // Item card
@@ -291,7 +291,7 @@ static void Build(void)
             UiSpr_Decoration(item, 36, 80, 48);
             DecorName(item, name, sizeof(name));
             UiText_Draw(UI_FACE_PS2P, 16, 100, 82, name, UI_COL_INK);
-            snprintf(buf, sizeof(buf), "In PC: x%u", (unsigned)OwnedDecor(item));
+            snprintf(buf, sizeof(buf), UI_TR("In PC: x%u"), (unsigned)OwnedDecor(item));
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 100, 104, buf, UI_COL_INK);
             UiGame_Text(gDecorations[item].description, buf, sizeof(buf));
             UiW_TextWrapped(32, 140, 280, 30, buf, UI_COL_INK, 4);
@@ -303,30 +303,30 @@ static void Build(void)
         UiSpr_ItemIcon(item, 36, 80, 2);
         UiGame_ItemName(item, name, sizeof(name));
         UiText_Draw(UI_FACE_PS2P, 16, 100, 82, name, UI_COL_INK);
-        snprintf(buf, sizeof(buf), "In bag: x%u", (unsigned)Owned(item));
+        snprintf(buf, sizeof(buf), UI_TR("In bag: x%u"), (unsigned)Owned(item));
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 100, 104, buf, UI_COL_INK);
         UiGame_ItemDescription(item, buf, sizeof(buf));
         UiW_TextWrapped(32, 140, 280, 30, buf, UI_COL_INK, 4);
     }
     UiW_Panel(16, 272, 312, 220);
-    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 32, 288, sTab == 0 ? "Price" : "You get", UI_COL_INK);
+    UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 32, 288, sTab == 0 ? UI_TR("Price") : UI_TR("You get"), UI_COL_INK);
     snprintf(buf, sizeof(buf), "$%u", (unsigned)(item ? Price(item) : 0));
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 312 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf), 288, buf, UI_COL_MONEY);
     if (Decor())
-        UiW_TextWrapped(32, 330, 280, 30, sConfirm.open ? sQuestion : "One at a time. It is sent to the PC at home.",
+        UiW_TextWrapped(32, 330, 280, 30, sConfirm.open ? sQuestion : UI_TR("One at a time. It is sent to the PC at home."),
                         sConfirm.open ? UI_COL_INK : UI_COL_INK_SOFT, 5);
     else if (sTab == 0 && item == ITEM_POKE_BALL)
-        UiW_TextWrapped(32, 330, 280, 30, "Buy 10 POKé BALLS, get a PREMIER BALL.", UI_COL_INK_SOFT, 3);
+        UiW_TextWrapped(32, 330, 280, 30, UI_TR("Buy 10 POKé BALLS, get a PREMIER BALL."), UI_COL_INK_SOFT, 3);
     if (sTab == 1)
-        UiW_TextWrapped(32, 330, 280, 30, "Items sell for half their price.", UI_COL_INK_SOFT, 3);
+        UiW_TextWrapped(32, 330, 280, 30, UI_TR("Items sell for half their price."), UI_COL_INK_SOFT, 3);
 
     // List
     UiW_Panel(332, 60, 612, 432);
     if (sTab == 0)
-        UiW_PanelHead(332, 60, 612, "FOR SALE", Decor() ? "In PC" : "In bag");
+        UiW_PanelHead(332, 60, 612, UI_TR("FOR SALE"), Decor() ? UI_TR("In PC") : UI_TR("In bag"));
     else
         for (int32_t i = 0; i < 4; i++)
-            UiW_Chip(352 + i * 112, 72, sPockets[i], i == sSellPocket);
+            UiW_Chip(352 + i * 112, 72, UiLocale_Lookup(sPockets[i]), i == sSellPocket);
     UiDraw_PushClip(LIST_X, LIST_Y, LIST_W, ROWS * ROW_H);
     for (int32_t r = 0; r < ROWS && sList.first + r < sCount; r++)
     {
@@ -360,19 +360,19 @@ static void Build(void)
     }
     UiDraw_PopClip();
     if (sCount == 0)
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, LIST_Y + 4, "Nothing to sell here.", UI_COL_INK_SOFT);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 28, LIST_Y + 4, UI_TR("Nothing to sell here."), UI_COL_INK_SOFT);
     UiW_ScrollBar(LIST_X + LIST_W - 9, LIST_Y, ROWS * ROW_H, sList.first, ROWS, sCount);
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sTab == 0 ? "Buy" : "Sell");
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Back");
-    if (sTab == 1) UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, "Pocket");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, sTab == 0 ? UI_TR("Buy") : UI_TR("Sell"));
+    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Back"));
+    if (sTab == 1) UiW_FooterGlyph(&fx, UI_GLYPH_TRIANGLE, UI_TR("Pocket"));
     UiKit_FooterClock();
     if (sConfirm.open)
         UiMenu_Draw(&sConfirm);
     if (sQty.open)
     {
         UiQty_Draw(&sQty, item);
-        snprintf(buf, sizeof(buf), "%s $%u", sTab == 0 ? "Total" : "You get", (unsigned)(Price(item) * (uint32_t)sQty.value));
+        snprintf(buf, sizeof(buf), "%s $%u", sTab == 0 ? UI_TR("Total") : UI_TR("You get"), (unsigned)(Price(item) * (uint32_t)sQty.value));
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 300, 324, buf, UI_COL_MONEY);
     }
 }

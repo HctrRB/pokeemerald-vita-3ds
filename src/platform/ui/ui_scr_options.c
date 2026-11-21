@@ -39,10 +39,10 @@ static int32_t OptVisRows(void)
     return gUiTheme->gbaFrame ? GBA_ROWS : ROWS;
 }
 
-static const char *const sTabs[VITA_TAB_COUNT] = { "GENERAL", "GRAPHICS", "WORLD", "BATTLE", "MODES", "CHEATS" };
-static const char *const sCoreNames[6] = { "TEXT SPEED", "BATTLE SCENE", "BATTLE STYLE", "SOUND OUTPUT", "MASTER VOLUME", "BUTTON MODE" };
-static const char *const sActions[VITA_ACTION_COUNT] = { "A BUTTON", "B BUTTON", "L SHOULDER", "R SHOULDER", "START", "SELECT", "FAST FORWARD", "QUICK OPTIONS" };
-static const char *const sButtons[16] = { "UP", "DOWN", "LEFT", "RIGHT", "CROSS", "CIRCLE", "SQUARE", "TRIANGLE", "L", "R", "START", "SELECT", "R-STICK UP", "R-STICK DOWN", "R-STICK LEFT", "R-STICK RIGHT" };
+static const char *const sTabs[VITA_TAB_COUNT] = { UI_N("GENERAL"), UI_N("GRAPHICS"), UI_N("WORLD"), UI_N("BATTLE"), UI_N("MODES"), UI_N("CHEATS") };
+static const char *const sCoreNames[6] = { UI_N("TEXT SPEED"), UI_N("BATTLE SCENE"), UI_N("BATTLE STYLE"), UI_N("SOUND OUTPUT"), UI_N("MASTER VOLUME"), UI_N("BUTTON MODE") };
+static const char *const sActions[VITA_ACTION_COUNT] = { UI_N("A BUTTON"), UI_N("B BUTTON"), UI_N("L SHOULDER"), UI_N("R SHOULDER"), "START", "SELECT", UI_N("FAST FORWARD"), UI_N("QUICK OPTIONS") };
+static const char *const sButtons[16] = { UI_N("UP"), UI_N("DOWN"), UI_N("LEFT"), UI_N("RIGHT"), UI_N("CROSS"), UI_N("CIRCLE"), UI_N("SQUARE"), UI_N("TRIANGLE"), "L", "R", "START", "SELECT", UI_N("R-STICK UP"), UI_N("R-STICK DOWN"), UI_N("R-STICK LEFT"), UI_N("R-STICK RIGHT") };
 static const uint8_t sDefaultButtons[VITA_ACTION_COUNT] = { 4, 5, 8, 9, 10, 11, 7, 6 };
 
 static int32_t sTab;
@@ -57,69 +57,69 @@ static bool sQuit;
 
 // One line of help per option, shown in the bar under the list
 static const char *const sCoreHelp[6] = {
-    "How fast the dialogue text is printed.",
-    "Show the move animations in battle.",
-    "SHIFT offers a switch when the foe sends out a POKEMON.",
-    "Mono or stereo sound.",
-    "Volume of music and sound effects.",
-    "L and R as page keys, or L working as the A button.",
+    UI_N("How fast the dialogue text is printed."),
+    UI_N("Show the move animations in battle."),
+    UI_N("SHIFT offers a switch when the foe sends out a POKEMON."),
+    UI_N("Mono or stereo sound."),
+    UI_N("Volume of music and sound effects."),
+    UI_N("L and R as page keys, or L working as the A button."),
 };
 static const struct { const char *key, *help; } sExtraHelp[] = {
-    { "speed", "Game speed while fast forward is active." },
-    { "ff_button", "Hold the button, or press it once to toggle." },
-    { "filter", "How the 2D screens are scaled to the Vita display." },
-    { "ui_theme", "Colour and style of the menus." },
-    { "voxel_3d", "Draw the overworld as a 3D voxel diorama." },
-    { "voxel_blur", "Blur the far background. Bloom and light shafts stay on." },
-    { "voxel_bloom", "Glow of bright parts of the world (0 = off). Needs HD-2D MED or HIGH." },
-    { "voxel_sky_bloom", "Sun and moon sky glow (5 = normal). Needs HD-2D MED or HIGH." },
-    { "voxel_shafts", "Sun and moon light shafts (5 = normal). Needs HD-2D MED or HIGH." },
-    { "voxel_fps", "Frame rate of the 3D world. 60 uses more battery." },
-    { "voxel_hd2d", "LOW: sway, relief, particles. MED/HIGH: + bloom, shafts, grade." },
-    { "voxel_fov", "Camera tilt: 35 is the classic view, 25 looks more from the side." },
-    { "day_night", "Light changes with the clock." },
-    { "timed_encounters", "Some POKEMON appear only by day or by night." },
-    { "clock_speed", "How fast the in-game clock runs." },
-    { "visible_wild", "Wild POKEMON roam the grass and water; touch one to battle." },
-    { "follower", "The first POKEMON of the party walks behind you." },
-    { "run_indoors", "Allow running inside buildings." },
-    { "auto_run", "Run without holding B; hold B to walk." },
-    { "field_hms", "Use field moves from the bag without the POKEMON menu." },
-    { "repel_prompt", "Ask to use another REPEL when one wears off." },
-    { "voxel_battle", "Fight on a 3D voxel arena." },
-    { "battle_speed", "Speed of battle animations and text." },
-    { "move_split", "Physical or special by move, as in later games." },
-    { "exp_share", "Every POKEMON in the party gains EXP." },
-    { "exp_catch", "Catching a POKEMON gives EXP." },
-    { "ivs_evs", "Show IVs and EVs in the POKEMON summary." },
-    { "nuzlocke", "One catch per area; fainted POKEMON are lost." },
-    { "level_cap", "Limit levels to the next GYM LEADER's ace." },
-    { "save_slot", "Which save file is used." },
-    { "infinite_tms", "TMs are not used up." },
-    { "trade_evo", "Trade evolutions happen at level 40." },
-    { "fast_eggs", "EGGS hatch much sooner." },
-    { "shiny_odds", "Chance that a wild POKEMON is shiny." },
-    { "encounter_rate", "How often wild POKEMON appear." },
-    { "always_catch", "Every POKE BALL catches." },
-    { "give_money", "Set your money to $999,999." },
-    { "give_pocket", "Pocket of the item to give." },
-    { "give_item", "Item to give." },
-    { "give_count", "How many to give." },
-    { "give_now", "Put the chosen items in the BAG." },
-    { "dex_hoenn", "Mark every HOENN POKEMON as caught." },
-    { "dex_national", "Unlock and complete the NATIONAL POKEDEX." },
-    { "max_contest", "Max the contest stats of the party." },
+    { "speed", UI_N("Game speed while fast forward is active.") },
+    { "ff_button", UI_N("Hold the button, or press it once to toggle.") },
+    { "filter", UI_N("How the 2D screens are scaled to the Vita display.") },
+    { "ui_theme", UI_N("Colour and style of the menus.") },
+    { "voxel_3d", UI_N("Draw the overworld as a 3D voxel diorama.") },
+    { "voxel_blur", UI_N("Blur the far background. Bloom and light shafts stay on.") },
+    { "voxel_bloom", UI_N("Glow of bright parts of the world (0 = off). Needs HD-2D MED or HIGH.") },
+    { "voxel_sky_bloom", UI_N("Sun and moon sky glow (5 = normal). Needs HD-2D MED or HIGH.") },
+    { "voxel_shafts", UI_N("Sun and moon light shafts (5 = normal). Needs HD-2D MED or HIGH.") },
+    { "voxel_fps", UI_N("Frame rate of the 3D world. 60 uses more battery.") },
+    { "voxel_hd2d", UI_N("LOW: sway, relief, particles. MED/HIGH: + bloom, shafts, grade.") },
+    { "voxel_fov", UI_N("Camera tilt: 35 is the classic view, 25 looks more from the side.") },
+    { "day_night", UI_N("Light changes with the clock.") },
+    { "timed_encounters", UI_N("Some POKEMON appear only by day or by night.") },
+    { "clock_speed", UI_N("How fast the in-game clock runs.") },
+    { "visible_wild", UI_N("Wild POKEMON roam the grass and water; touch one to battle.") },
+    { "follower", UI_N("The first POKEMON of the party walks behind you.") },
+    { "run_indoors", UI_N("Allow running inside buildings.") },
+    { "auto_run", UI_N("Run without holding B; hold B to walk.") },
+    { "field_hms", UI_N("Use field moves from the bag without the POKEMON menu.") },
+    { "repel_prompt", UI_N("Ask to use another REPEL when one wears off.") },
+    { "voxel_battle", UI_N("Fight on a 3D voxel arena.") },
+    { "battle_speed", UI_N("Speed of battle animations and text.") },
+    { "move_split", UI_N("Physical or special by move, as in later games.") },
+    { "exp_share", UI_N("Every POKEMON in the party gains EXP.") },
+    { "exp_catch", UI_N("Catching a POKEMON gives EXP.") },
+    { "ivs_evs", UI_N("Show IVs and EVs in the POKEMON summary.") },
+    { "nuzlocke", UI_N("One catch per area; fainted POKEMON are lost.") },
+    { "level_cap", UI_N("Limit levels to the next GYM LEADER's ace.") },
+    { "save_slot", UI_N("Which save file is used.") },
+    { "infinite_tms", UI_N("TMs are not used up.") },
+    { "trade_evo", UI_N("Trade evolutions happen at level 40.") },
+    { "fast_eggs", UI_N("EGGS hatch much sooner.") },
+    { "shiny_odds", UI_N("Chance that a wild POKEMON is shiny.") },
+    { "encounter_rate", UI_N("How often wild POKEMON appear.") },
+    { "always_catch", UI_N("Every POKE BALL catches.") },
+    { "give_money", UI_N("Set your money to $999,999.") },
+    { "give_pocket", UI_N("Pocket of the item to give.") },
+    { "give_item", UI_N("Item to give.") },
+    { "give_count", UI_N("How many to give.") },
+    { "give_now", UI_N("Put the chosen items in the BAG.") },
+    { "dex_hoenn", UI_N("Mark every HOENN POKEMON as caught.") },
+    { "dex_national", UI_N("Unlock and complete the NATIONAL POKEDEX.") },
+    { "max_contest", UI_N("Max the contest stats of the party.") },
 };
 
 static const char *RowHelp(const OptRow *r)
 {
-    if (r->kind == ROW_REMAP) return "Choose the Vita button of each action.";
-    if (r->kind == ROW_QUIT) return "Save the settings and quit to the LiveArea.";
-    if (r->kind == ROW_CORE) return sCoreHelp[r->sub];
+    if (r->kind == ROW_REMAP) return UI_TR("Choose the Vita button of each action.");
+    if (r->kind == ROW_QUIT) return UI_TR("Save the settings and quit to the LiveArea.");
+    if (r->kind == ROW_CORE) return UiLocale_Lookup(sCoreHelp[r->sub]);
     for (size_t i = 0; i < sizeof(sExtraHelp) / sizeof(sExtraHelp[0]); i++)
         if (strcmp(sExtraHelp[i].key, r->ex->key) == 0)
-            return sExtraHelp[i].help;
-    return r->ex->count == 0 ? "Press X to run it." : "Left / right or X to change the value.";
+            return UiLocale_Lookup(sExtraHelp[i].help);
+    return r->ex->count == 0 ? UI_TR("Press X to run it.") : UI_TR("Left / right or X to change the value.");
 }
 
 static void BuildRows(void)
@@ -128,32 +128,32 @@ static void BuildRows(void)
     if (sTab == VITA_TAB_GENERAL)
     {
         for (uint16_t i = 0; i < 6; i++)
-            sRows[sCount++] = (OptRow){ ROW_CORE, i, i < 3 ? "GAMEPLAY" : i < 5 ? "AUDIO" : "INTERFACE", sCoreNames[i], NULL };
-        sRows[sCount++] = (OptRow){ ROW_REMAP, 0, "CONTROLS", "BUTTON REMAPPING", NULL };
+            sRows[sCount++] = (OptRow){ ROW_CORE, i, i < 3 ? UI_TR("GAMEPLAY") : i < 5 ? UI_TR("AUDIO") : UI_TR("INTERFACE"), UiLocale_Lookup(sCoreNames[i]), NULL };
+        sRows[sCount++] = (OptRow){ ROW_REMAP, 0, UI_TR("CONTROLS"), UI_TR("BUTTON REMAPPING"), NULL };
     }
     const unsigned n = VitaExtras_GetTabExtraCount((uint8_t)sTab);
     for (unsigned i = 0; i < n && sCount < MAX_ROWS - 1; i++)
     {
         const VitaExtra *ex = VitaExtras_GetTabExtra((uint8_t)sTab, i);
         if (ex != NULL)
-            sRows[sCount++] = (OptRow){ ROW_EXTRA, (uint16_t)i, ex->group, ex->name, ex };
+            sRows[sCount++] = (OptRow){ ROW_EXTRA, (uint16_t)i, UiLocale_Lookup(ex->group), UiLocale_Lookup(ex->name), ex };
     }
     if (sTab == VITA_TAB_MODES)
-        sRows[sCount++] = (OptRow){ ROW_QUIT, 0, "SYSTEM", "QUIT TO LIVEAREA", NULL };
+        sRows[sCount++] = (OptRow){ ROW_QUIT, 0, UI_TR("SYSTEM"), UI_TR("QUIT TO LIVEAREA"), NULL };
     UiList_Reset(&sList[sTab], sCount, OptVisRows());
 }
 
 static void CoreValue(uint16_t id, char *out, size_t cap)
 {
-    static const char *const spd[3] = { "SLOW", "MID", "FAST" }, *const mode[3] = { "NORMAL", "LR", "L=A" };
+    static const char *const spd[3] = { UI_N("SLOW"), UI_N("MID"), UI_N("FAST") }, *const mode[3] = { UI_N("NORMAL"), "LR", UI_N("L=A") };
     switch (id)
     {
-    case 0: snprintf(out, cap, "%s", spd[gSaveBlock2Ptr->optionsTextSpeed % 3]); break;
-    case 1: snprintf(out, cap, "%s", gSaveBlock2Ptr->optionsBattleSceneOff ? "OFF" : "ON"); break;
-    case 2: snprintf(out, cap, "%s", gSaveBlock2Ptr->optionsBattleStyle ? "SET" : "SHIFT"); break;
-    case 3: snprintf(out, cap, "%s", gSaveBlock2Ptr->optionsSound ? "STEREO" : "MONO"); break;
+    case 0: snprintf(out, cap, "%s", UiLocale_Lookup(spd[gSaveBlock2Ptr->optionsTextSpeed % 3])); break;
+    case 1: snprintf(out, cap, "%s", gSaveBlock2Ptr->optionsBattleSceneOff ? UI_TR("OFF") : UI_TR("ON")); break;
+    case 2: snprintf(out, cap, "%s", gSaveBlock2Ptr->optionsBattleStyle ? UI_TR("SET") : UI_TR("SHIFT")); break;
+    case 3: snprintf(out, cap, "%s", gSaveBlock2Ptr->optionsSound ? UI_TR("STEREO") : UI_TR("MONO")); break;
     case 4: snprintf(out, cap, "%u%%", (unsigned)Platform_GetSetting(PLATFORM_SETTING_VOLUME) * 10); break;
-    default: snprintf(out, cap, "%s", mode[gSaveBlock2Ptr->optionsButtonMode % 3]); break;
+    default: snprintf(out, cap, "%s", UiLocale_Lookup(mode[gSaveBlock2Ptr->optionsButtonMode % 3])); break;
     }
 }
 
@@ -180,11 +180,11 @@ static void ExtraValue(const VitaExtra *ex, char *out, size_t cap)
     if (ex->text != NULL)
         UiGame_Text(ex->text(), out, cap);
     else if (ex->count == 0)
-        snprintf(out, cap, "EXECUTE");
+        snprintf(out, cap, UI_TR("EXECUTE"));
     else
     {
         const int v = VitaExtras_Get(ex->key);
-        snprintf(out, cap, "%s", (v >= 0 && v < ex->count && ex->values) ? ex->values[v] : "?");
+        snprintf(out, cap, "%s", (v >= 0 && v < ex->count && ex->values) ? UiLocale_Lookup(ex->values[v]) : "?");
     }
 }
 
@@ -211,7 +211,7 @@ static void Step(const OptRow *r, int32_t dir)
     {
         const int prevSlot = VitaExtras_Get("save_slot");
         VitaExtras_Step(r->ex, dir);
-        if (r->ex->count == 0) UiKit_Toast("Done.");
+        if (r->ex->count == 0) UiKit_Toast(UI_TR("Done."));
         if (strcmp(r->ex->key, "save_slot") == 0 && VitaExtras_Get("save_slot") != prevSlot)
         {
             VitaExtras_Save();
@@ -223,11 +223,11 @@ static void Step(const OptRow *r, int32_t dir)
 
 static int32_t CoreChoices(uint16_t id, const char *const **out)
 {
-    static const char *const kSpd[3] = { "SLOW", "MID", "FAST" };
-    static const char *const kOnOff[2] = { "ON", "OFF" };
-    static const char *const kStyle[2] = { "SHIFT", "SET" };
-    static const char *const kSound[2] = { "MONO", "STEREO" };
-    static const char *const kMode[3] = { "NORMAL", "LR", "L=A" };
+    static const char *const kSpd[3] = { UI_N("SLOW"), UI_N("MID"), UI_N("FAST") };
+    static const char *const kOnOff[2] = { UI_N("ON"), UI_N("OFF") };
+    static const char *const kStyle[2] = { UI_N("SHIFT"), UI_N("SET") };
+    static const char *const kSound[2] = { UI_N("MONO"), UI_N("STEREO") };
+    static const char *const kMode[3] = { UI_N("NORMAL"), "LR", UI_N("L=A") };
     switch (id)
     {
     case 0: *out = kSpd;   return gSaveBlock2Ptr->optionsTextSpeed % 3;
@@ -293,7 +293,7 @@ static bool Update(const UiInput *in)
         {
             Platform_SetSetting((enum PlatformSetting)(PLATFORM_SETTING_BUTTON_FIRST + sRemapList.sel), VITA_BTN_UNBOUND);
             PlaySE(SE_SELECT);
-            UiKit_Toast("%s has no button now.", sActions[sRemapList.sel]);
+            UiKit_Toast(UI_TR("%s has no button now."), UiLocale_Lookup(sActions[sRemapList.sel]));
             return true;
         }
         const int32_t a = UiList_Update(&sRemapList, in, 220, 150, 520, 36, true);
@@ -302,7 +302,7 @@ static bool Update(const UiInput *in)
             for (int32_t i = 0; i < VITA_ACTION_COUNT; i++)
                 Platform_SetSetting((enum PlatformSetting)(PLATFORM_SETTING_BUTTON_FIRST + i), sDefaultButtons[i]);
             PlaySE(SE_SUCCESS);
-            UiKit_Toast("Buttons reset to the defaults.");
+            UiKit_Toast(UI_TR("Buttons reset to the defaults."));
         }
         else if (a >= 0)
         {
@@ -350,45 +350,45 @@ static void DrawModalsGba(void)
     if (sRemap)
     {
         UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
-        UiW_Window(200, 100, 560, 400, sRemap == 2 ? "PRESS A BUTTON" : "BUTTON REMAPPING");
-        UiText_Draw(UI_FACE_PS2P, 16, 220, 482, "X: change  TRIANGLE: no button", UI_COL_INK_SOFT);
+        UiW_Window(200, 100, 560, 400, sRemap == 2 ? UI_TR("PRESS A BUTTON") : UI_TR("BUTTON REMAPPING"));
+        UiText_Draw(UI_FACE_PS2P, 16, 220, 482, UI_TR("X: change  TRIANGLE: no button"), UI_COL_INK_SOFT);
         for (int32_t i = 0; i <= VITA_ACTION_COUNT; i++)
         {
             const int32_t y = 150 + i * 36;
             const bool on = i == sRemapList.sel;
             UiW_Row(220, y, 520, 36, on, i);
             const uint32_t ink = on ? UI_COL_SELECT_INK : UI_COL_INK;
-            if (i == VITA_ACTION_COUNT) { UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 248, y + 2, "RESET TO DEFAULTS", ink); continue; }
-            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 248, y + 2, sActions[i], ink);
+            if (i == VITA_ACTION_COUNT) { UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 248, y + 2, UI_TR("RESET TO DEFAULTS"), ink); continue; }
+            UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 248, y + 2, UiLocale_Lookup(sActions[i]), ink);
             const uint8_t bit = (uint8_t)Platform_GetSetting((enum PlatformSetting)(PLATFORM_SETTING_BUTTON_FIRST + i));
-            const char *b = (sRemap == 2 && i == sRemapWaitFor) ? "PRESS..." : bit < 16 ? sButtons[bit] : "NONE";
+            const char *b = (sRemap == 2 && i == sRemapWaitFor) ? UI_TR("PRESS...") : bit < 16 ? UiLocale_Lookup(sButtons[bit]) : UI_TR("NONE");
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 720 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, b), y + 2, b, ink);
         }
     }
     if (sQuit)
     {
         UiDraw_Rect(0, 0, UI_SCREEN_W, UI_SCREEN_H, UI_COL_DIM);
-        UiW_Window(280, 200, 400, 140, "QUIT");
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 300, 250, "Quit to the LiveArea?", UI_COL_INK);
-        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 300, 286, "X: quit   O: cancel", UI_COL_INK_SOFT);
+        UiW_Window(280, 200, 400, 140, UI_TR("QUIT"));
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 300, 250, UI_TR("Quit to the LiveArea?"), UI_COL_INK);
+        UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 300, 286, UI_TR("X: quit   O: cancel"), UI_COL_INK_SOFT);
     }
 }
 
 static void BuildGba(void)
 {
     char buf[64];
-    UiW_GbaTopBar(UI_GBA_BG_OPTIONS, 0, "OPTIONS", VITA_TAB_COUNT, sTab, false, sTabs[sTab]);
+    UiW_GbaTopBar(UI_GBA_BG_OPTIONS, 0, UI_TR("OPTIONS"), VITA_TAB_COUNT, sTab, false, UiLocale_Lookup(sTabs[sTab]));
     UiSpr_ItemIcon(ITEM_CARD_KEY, 28, 13, 1);
 
     int32_t rx = UI_SCREEN_W - 14;
-    UiW_GbaHelpBadge(&rx, "O", "BACK", true);
-    UiW_GbaHelpBadge(&rx, "SELECT", "REMAP", true);
-    UiW_GbaHelpBadge(&rx, "X", "CHANGE", false);
+    UiW_GbaHelpBadge(&rx, "O", UI_TR("BACK"), true);
+    UiW_GbaHelpBadge(&rx, "SELECT", UI_TR("REMAP"), true);
+    UiW_GbaHelpBadge(&rx, "X", UI_TR("CHANGE"), false);
 
     // Main options sheet (.gba-win.opt-sheet)
     UiW_GbaWin(14, 60, 932, 384, UI_GBA_WIN_DEFAULT);
-    snprintf(buf, sizeof(buf), "TAB %d / %d · %s", (int)sTab + 1, VITA_TAB_COUNT, sTabs[sTab]);
-    UiW_GbaSectionStrip(26, 70, 908, 28, UI_GBA_TAG_SLATE, "SYSTEM & GAMEPLAY OPTIONS", buf);
+    snprintf(buf, sizeof(buf), UI_TR("TAB %d / %d · %s"), (int)sTab + 1, VITA_TAB_COUNT, UiLocale_Lookup(sTabs[sTab]));
+    UiW_GbaSectionStrip(26, 70, 908, 28, UI_GBA_TAG_SLATE, UI_TR("SYSTEM & GAMEPLAY OPTIONS"), buf);
 
     UiW_GbaBox(GBA_LIST_X, GBA_LIST_Y, GBA_LIST_W, GBA_ROWS * GBA_ROW_H, 6, UI_RGBA(150, 172, 156, 255),
                UI_RGBA(250, 248, 236, 255), UI_RGBA(244, 244, 230, 255), C_WHITE, 0);
@@ -422,16 +422,16 @@ static void BuildGba(void)
             int32_t px = GBA_LIST_X + GBA_LIST_W - 14;
             for (int32_t j = vc - 1; j >= 0; j--)
             {
-                const int32_t pw = UiText_Width(UI_FACE_VT323, 28, vals[j]) + 22;
+                const int32_t pw = UiText_Width(UI_FACE_VT323, 28, UiLocale_Lookup(vals[j])) + 22;
                 px -= pw;
                 if (j == curVal)
                 {
                     UiW_GbaBox(px, y + 5, pw, 30, 4, UI_RGBA(216, 32, 24, 255),
                                UI_RGBA(255, 240, 238, 255), UI_RGBA(252, 224, 220, 255), C_WHITE, 1);
-                    UiW_GbaTextCentred(UI_FACE_VT323, 28, px, y + 5, pw, 30, vals[j], UI_RGBA(216, 32, 24, 255), UI_RGBA(248, 200, 196, 255));
+                    UiW_GbaTextCentred(UI_FACE_VT323, 28, px, y + 5, pw, 30, UiLocale_Lookup(vals[j]), UI_RGBA(216, 32, 24, 255), UI_RGBA(248, 200, 196, 255));
                 }
                 else
-                    UiW_GbaTextCentred(UI_FACE_VT323, 28, px, y + 5, pw, 30, vals[j], UI_RGBA(130, 138, 132, 255), UI_GBA_SHAD_LIGHT);
+                    UiW_GbaTextCentred(UI_FACE_VT323, 28, px, y + 5, pw, 30, UiLocale_Lookup(vals[j]), UI_RGBA(130, 138, 132, 255), UI_GBA_SHAD_LIGHT);
                 px -= 8;
             }
         }
@@ -439,7 +439,7 @@ static void BuildGba(void)
         {
             if (row->kind == ROW_CORE) CoreValue(row->sub, buf, sizeof(buf));
             else if (row->kind == ROW_EXTRA) ExtraValue(row->ex, buf, sizeof(buf));
-            else snprintf(buf, sizeof(buf), row->kind == ROW_REMAP ? "OPEN" : "EXECUTE");
+            else snprintf(buf, sizeof(buf), row->kind == ROW_REMAP ? UI_TR("OPEN") : UI_TR("EXECUTE"));
             const int32_t pw = UiText_Width(UI_FACE_VT323, 28, buf) + 28;
             const int32_t px = GBA_LIST_X + GBA_LIST_W - 18 - pw;
             UiW_GbaBox(px, y + 5, pw, 30, 4, UI_RGBA(216, 32, 24, 255),
@@ -473,7 +473,7 @@ static void Build(void)
         return;
     }
     char buf[48];
-    UiKit_Header("OPTIONS", sTabs, VITA_TAB_COUNT, sTab, sTabX, sTabW, 12);
+    UiKit_Header(UI_TR("OPTIONS"), sTabs, VITA_TAB_COUNT, sTab, sTabX, sTabW, 12);
     UiW_Panel(16, 60, 928, 376);
     const UiList *l = &sList[sTab];
     UiDraw_PushClip(LIST_X, LIST_Y, LIST_W, ROWS * ROW_H);
@@ -492,7 +492,7 @@ static void Build(void)
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 220, y + 4, row->label, ink);
         if (row->kind == ROW_CORE) CoreValue(row->sub, buf, sizeof(buf));
         else if (row->kind == ROW_EXTRA) ExtraValue(row->ex, buf, sizeof(buf));
-        else snprintf(buf, sizeof(buf), row->kind == ROW_REMAP ? "OPEN" : "EXECUTE");
+        else snprintf(buf, sizeof(buf), row->kind == ROW_REMAP ? UI_TR("OPEN") : UI_TR("EXECUTE"));
         const int32_t vw = UiText_Width(UI_FACE_VT323, UI_BODY_PX, buf);
         const int32_t vx = LIST_X + LIST_W - 60 - vw;
         UiW_Capsule(vx - 12, y + 4, vw + 24, 32);
@@ -510,10 +510,10 @@ static void Build(void)
     UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 32, 450, RowHelp(sel), UI_COL_ON_FRAME);
 
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Change");
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Save");
-    UiW_FooterKey(&fx, "SELECT", "Remap");
-    UiW_FooterKey(&fx, "START", "Quit");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Change"));
+    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Save"));
+    UiW_FooterKey(&fx, "SELECT", UI_TR("Remap"));
+    UiW_FooterKey(&fx, "START", UI_TR("Quit"));
     UiKit_FooterClock();
     DrawModalsGba();
 }

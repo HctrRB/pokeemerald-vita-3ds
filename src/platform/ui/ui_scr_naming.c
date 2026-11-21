@@ -51,7 +51,7 @@ static const Key sOthers[] = {
     { CHAR_SLASH, "/" }, { CHAR_HYPHEN, "-" }, { CHAR_ELLIPSIS, "..." }, { CHAR_PERIOD, "." },
     { CHAR_COMMA, "," }, { CHAR_SGL_QUOTE_RIGHT, "'" }, { CHAR_COLON, ":" },
 };
-static const char *const sTabs[PAGE_COUNT] = { "ABC", "abc", "?!:" };
+static const char *const sTabs[PAGE_COUNT] = { UI_N("ABC"), "abc", "?!:" };
 
 static uint8_t sTemplate, sMax;
 static uint8_t *sDest;
@@ -294,14 +294,14 @@ static void DrawCode(uint8_t code, const char *label, int32_t cx, int32_t y, uin
 static void Build(void)
 {
     char buf[64];
-    UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, "NAME", sTabs, PAGE_COUNT, sPage, sTabX, sTabW, 12);
+    UiKit_HeaderAs(UI_GBA_BG_OPTIONS, UI_SPR_BALL, UI_TR("NAME"), sTabs, PAGE_COUNT, sPage, sTabX, sTabW, 12);
     snprintf(buf, sizeof(buf), "%d / %d", (int)sLen, (int)sMax);
     UiW_HeaderValue(buf, UI_COL_ON_FRAME);
 
     // Who is named
     UiW_Panel(16, 60, 244, 432);
-    const char *head = sTemplate == NAMING_SCREEN_PLAYER ? "YOUR NAME" : sTemplate == NAMING_SCREEN_BOX ? "BOX NAME"
-                     : sTemplate == NAMING_SCREEN_WALDA ? "WORDS" : "NICKNAME";
+    const char *head = sTemplate == NAMING_SCREEN_PLAYER ? UI_TR("YOUR NAME") : sTemplate == NAMING_SCREEN_BOX ? UI_TR("BOX NAME")
+                     : sTemplate == NAMING_SCREEN_WALDA ? UI_TR("WORDS") : UI_TR("NICKNAME");
     UiText_Draw(UI_FACE_PS2P, 16, 32, 78, head, UI_COL_INK);
     UiW_Inset(42, 112, 192, 192);
     if (sTemplate == NAMING_SCREEN_CAUGHT_MON || sTemplate == NAMING_SCREEN_NICKNAME)
@@ -314,15 +314,15 @@ static void Build(void)
     if (sTemplate == NAMING_SCREEN_CAUGHT_MON || sTemplate == NAMING_SCREEN_NICKNAME)
     {
         UiGame_SpeciesName(sSpecies, buf, sizeof(buf));
-        snprintf(q, sizeof(q), "%s's nickname?", buf);
+        snprintf(q, sizeof(q), UI_TR("%s's nickname?"), buf);
         if (sGender == MON_MALE || sGender == MON_FEMALE)
             UiKit_GenderShiny(200, 80, sGender == MON_MALE ? 0x00 : 0xFE, false);
     }
     else
-        snprintf(q, sizeof(q), "%s", sTemplate == NAMING_SCREEN_PLAYER ? "Your name?" : sTemplate == NAMING_SCREEN_BOX ? "The BOX's name?" : "Tell him the words.");
+        snprintf(q, sizeof(q), "%s", sTemplate == NAMING_SCREEN_PLAYER ? UI_TR("Your name?") : sTemplate == NAMING_SCREEN_BOX ? UI_TR("The BOX's name?") : UI_TR("Tell him the words."));
     UiW_TextWrapped(32, 318, 212, 30, q, UI_COL_INK, 3);
     if (sTemplate != NAMING_SCREEN_WALDA)
-        UiW_TextWrapped(32, 414, 212, 30, sTemplate == NAMING_SCREEN_PLAYER ? "Empty: the name stays as it was." : "Empty: no change.", UI_COL_INK_SOFT, 2);
+        UiW_TextWrapped(32, 414, 212, 30, sTemplate == NAMING_SCREEN_PLAYER ? UI_TR("Empty: the name stays as it was.") : UI_TR("Empty: no change."), UI_COL_INK_SOFT, 2);
 
     // The name, one slot per character
     UiW_Panel(272, 60, 672, 84);
@@ -351,7 +351,7 @@ static void Build(void)
             DrawCode(k.code, k.label, x + KEY_W / 2, y + (KEY_H - 32) / 2 - 2, UI_BODY_PX, on ? UI_COL_SELECT_INK : UI_COL_INK);
         }
     }
-    static const char *const fn[3] = { "SPACE", "DEL", "OK" };
+    static const char *const fn[3] = { UI_N("SPACE"), UI_N("DEL"), UI_N("OK") };
     static const uint8_t colours[3] = { UI_BTN_GREEN, UI_BTN_RED, UI_BTN_GREEN };
     for (int32_t f = 0; f < 3; f++)
     {
@@ -360,13 +360,13 @@ static void Build(void)
         const bool on = sCx == FN_COL && FnAt(sCy) == f;
         if (on)
             UiDraw_Rect(FN_X - 4, y - 4, FN_W + 8, h + 8, UI_COL_SELECT);
-        UiW_Button(FN_X, y + (h - 40) / 2, FN_W, fn[f], f == FN_SPACE ? UI_BTN_AMBER : colours[f], false);
+        UiW_Button(FN_X, y + (h - 40) / 2, FN_W, UiLocale_Lookup(fn[f]), f == FN_SPACE ? UI_BTN_AMBER : colours[f], false);
     }
 
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, "Type");
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Delete");
-    UiW_FooterKey(&fx, "START", "Go to OK");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UI_TR("Type"));
+    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Delete"));
+    UiW_FooterKey(&fx, "START", UI_TR("Go to OK"));
     UiKit_FooterClock();
 
     if (sMsg[0])

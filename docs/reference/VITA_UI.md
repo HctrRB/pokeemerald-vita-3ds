@@ -29,8 +29,10 @@ chord after a reset until at least one button is released).
 ## New UI (`src/platform/ui/`)
 
 Core 1 (the game thread) runs `Ui_Tick` between game frames and builds a draw list; Core 0 draws
-it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture (fixed atlas `assets/ui2/ui_atlas.bin` in rows
-0–1023 + 256 64×64 cells in rows 1024–2047 for sprites decoded at run time). See
+it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture: the fixed atlas `assets/ui2/ui_atlas.bin`
+on top (at most `UI_FIXED_MAX_H` rows; its height depends on the build's language, whose extra letters it
+holds), then 64×64 cells for sprites decoded at run time from `UiAssets_CellsY` (the atlas height rounded
+up to `UI_CELL`) to the bottom, `UiAssets_CellCount` of them, fixed once the atlas is loaded. See
 [THREADS.md](THREADS.md) and [RENDERING.md](RENDERING.md).
 
 | Files | Role |
@@ -51,6 +53,31 @@ it in one call over one `UI_TEX_W`×`UI_TEX_H` RGBA8888 texture (fixed atlas `as
 - **Hosted full-screen (`UiCore_OpenHosted` / `CB2_UiHost`)**: replaces a GBA scene run from `gMain.callback2` (naming screen, Easy Chat — every type; the rules of the Bard's song and the Quiz Lady's screens come from `easy_chat.c`'s `EasyChat_Ui*` —, the wall maps of Hoenn, `Ui_OpenTownMap` from `FieldShowRegionMap`, as the PokéNav's map only, Berry Blender / Berry Crush choice, title-menu options, the Pokéblock case of the Safari feeder and the Contest Lady, forget a move — also with no new move for the Move Deleter —, the Move Relearner, and the bag's CHOOSE mode for the bags scripts open, `Ui_OpenBagChoice` from `GoToBagMenu`, whose rules stay in `item_menu.c`'s `ItemMenu_*ForUi`) while keeping GBA sprites and tasks alive and running scene resets before opening.
 - **To a GBA scene and back (`UiCore_CloseToScene`, `UiCore_CloseToSceneInWindow`, `UiCore_ReopenAfterField`)**: screens on the field hand over to a GBA scene (the Pokéblock eating scene, the berry tag of the bag's CHECK TAG, the recorded battle of the trainer card's RECORD page); the whole stack of screens is kept and opens again as it was when the field comes back (each screen's `resume` refreshes its data). In a window (feeding from the PokéNav CONDITION tab) the scene is drawn in `UI_SCENE_WIN_*` (`GameFrameOverlay.gbaWindow`, `RenderGameTexture`) inside the theme's frame.
 - **Battle menu (`UiGame_OpenBattleMenu`)**: opened over the battle (bag — the PYRAMID BAG in the Battle Pyramid —, party, the Safari battle's Pokéblock case, and the Pokédex page after a catch, `Ui_OpenCaughtDexPage` from `Cmd_displaydexinfo`); the battle waits for `!Ui_IsOpen()`.
+
+### Text (`ui_assets.c`, `ui_game.c`)
+
+UI strings are UTF-8. `NextCodepoint` decodes any sequence (a malformed or cut one draws `?`).
+Each font maps Latin-1 through `UiFont.map` and code points above it through a sorted slice of
+`sExtGlyphs`, both built once in `UiAssets_Load`. A letter the font lacks is drawn by `GlyphOf` as
+its fallback (`FoldCodepoint`: the same letter without its accent, `…` as `.`, `✕` as `X`), else
+`?`; missing control codes leave a gap. Game text reaches the UI through `UiGame_Text`, which turns
+the GBA charmap into UTF-8 (`GbaToCodepoint`, the European letters included; `PutCodepoint` never
+cuts a letter at the end of the buffer). `UiW_TextWrappedF` breaks lines between whole letters only.
+
+### Languages (`ui_locale.c`)
+
+A build has one language, `VITA_LOCALE` (a code of `tools/locales/languages.json`, the only list of
+languages; [../guides/BUILD.md](../guides/BUILD.md)). Every string a screen shows is English in the
+code and goes through `UI_TR` (a literal; the answer is kept per call site) or the catalog lookup of
+`ui_locale.h` (a string kept in a table, marked `UI_N`). The English text is the key: in a non-English
+build `UiLocale_Load` reads `ui2/locale.bin` once in `Ui_Init`, before the game
+thread starts, and a string with no entry stays English; the English build has no catalog and both
+return their argument. `tools/locales/extract_ui.py` lists every `UI_TR` / `UI_N` string in
+`tools/locales/en/ui.json`; `tools/locales/compile_ui.py` turns a language's
+`tools/locales/<code>/ui.json` into `locale.bin`, refusing printf conversions that differ from the
+English ones and letters the language does not list, and reports missing and much wider strings
+in `locale.bin.txt` next to it. Heights and weights follow the language's `units` (metres and kilograms in a metric build). The game's own text comes from the same language: see
+[../guides/ADDING_A_LANGUAGE.md](../guides/ADDING_A_LANGUAGE.md).
 
 ### Build version on the main menu (`ui_core.c`)
 
@@ -124,8 +151,9 @@ the song is right; the Quiz Lady's screens get a fourth button to the other scre
 ### Frontier Pass pages (`ui_scr_card.c`)
 
 With `FLAG_SYS_FRONTIER_PASS` the trainer card adds the pass's MAP (the map composed from the
-pass's own graphics, `UiSpr_FrontierMap`, each facility marked and described from
-`FrontierPass_LandmarkForUi`) and RECORD (the recorded battle, played by
+pass's own graphics, `UiSpr_FrontierMap`: only the map area of the GBA screen, `UI_FRONTIER_MAP_X0`
+to `UI_FRONTIER_MAP_H`, without its frame and text boxes, at x4; each facility marked and described
+from `FrontierPass_LandmarkForUi`, chosen from the list or by a tap on its marker) and RECORD (the recorded battle, played by
 `FrontierPass_PlayRecordForUi` through `UiCore_CloseToScene`; the card opens again on that page).
 
 ### Battle Pyramid (`ui_scr_hub.c`, `ui_scr_bag.c`, `ui_scr_choose.c`)

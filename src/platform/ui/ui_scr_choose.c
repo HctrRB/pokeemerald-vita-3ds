@@ -84,9 +84,9 @@ static void Ask(int32_t kind, const u8 *text)
 {
     UiGame_Text(text, sAskText, sizeof(sAskText));
     sAsk = kind;
-    UiMenu_Open(&sYesNo, "POKéMON", 700, 330, 220);
-    UiMenu_Add(&sYesNo, "YES", 1);
-    UiMenu_Add(&sYesNo, "NO", UI_MENU_CANCEL);
+    UiMenu_Open(&sYesNo, UI_TR("POKéMON"), 700, 330, 220);
+    UiMenu_Add(&sYesNo, UI_TR("YES"), 1);
+    UiMenu_Add(&sYesNo, UI_TR("NO"), UI_MENU_CANCEL);
     sYesNo.list.sel = 0;                             // YES first, as PartyMenuDisplayYesNoMenu
 }
 
@@ -110,7 +110,7 @@ static const char *TutorTag(int32_t slot, bool *ok)
 {
     const u8 st = PartyMenu_TutorStatusForUi((u8)slot, (u8)gSpecialVar_0x8005);
     *ok = st == 0;
-    return st == 0 ? "ABLE" : st == 2 ? "LEARNED" : "NOT ABLE";
+    return st == 0 ? UI_TR("ABLE") : st == 2 ? UI_TR("LEARNED") : UI_TR("NOT ABLE");
 }
 
 static void TutorDefaults(void)
@@ -125,7 +125,7 @@ static void Learned(int32_t slot)
     UiGame_Mon(slot, &m);
     UiGame_MoveName(TutorMove(), mv, sizeof(mv));
     PlaySE(SE_SUCCESS);
-    UiKit_Toast("%s learned %s!", m.name, mv);
+    UiKit_Toast(UI_TR("%s learned %s!"), m.name, mv);
     gSpecialVar_Result = TRUE;
     UiNav_Pop();
 }
@@ -139,7 +139,7 @@ static bool TutorChosen(int32_t slot)
         return false;                                // Learned pops
     }
     // Four moves already: which one to forget
-    UiMenu_Open(&sForget, "FORGET WHICH MOVE?", 348, 150, 420);
+    UiMenu_Open(&sForget, UI_TR("FORGET WHICH MOVE?"), 348, 150, 420);
     for (int32_t i = 0; i < 4; i++)
     {
         UiMove mv;
@@ -147,7 +147,7 @@ static bool TutorChosen(int32_t slot)
         if (mv.move)
             UiMenu_Add(&sForget, mv.name, i);
     }
-    UiMenu_Add(&sForget, "DON'T LEARN", 9);
+    UiMenu_Add(&sForget, UI_TR("DON'T LEARN"), 9);
     PlaySE(SE_SELECT);
     return false;
 }
@@ -172,7 +172,7 @@ static const char *DaycareTag(int32_t slot, bool *ok)
     UiMon m;
     UiGame_Mon(slot, &m);
     *ok = !m.egg;
-    return m.egg ? "EGG" : NULL;
+    return m.egg ? UI_TR("EGG") : NULL;
 }
 
 // Contest entry (CB2_ChooseContestMon): the entrant too
@@ -207,7 +207,7 @@ static const char *RelearnerTag(int32_t slot, bool *ok)
     if (m.egg)
         return NULL;
     const u8 n = sRelearnable[slot];
-    snprintf(sBuf, sizeof(sBuf), n == 1 ? "1 MOVE" : "%u MOVES", (unsigned)n);
+    snprintf(sBuf, sizeof(sBuf), n == 1 ? UI_TR("1 MOVE") : UI_TR("%u MOVES"), (unsigned)n);
     return sBuf;
 }
 
@@ -228,7 +228,7 @@ static const char *HeldItemTag(int32_t slot, bool *ok)
     UiGame_Mon(slot, &m);
     *ok = !m.egg;
     if (m.egg || m.item == ITEM_NONE)
-        return m.egg ? NULL : "NO ITEM";
+        return m.egg ? NULL : UI_TR("NO ITEM");
     UiGame_ItemName(m.item, sBuf, sizeof(sBuf));
     return sBuf;
 }
@@ -238,9 +238,9 @@ static bool HeldItemChosen(int32_t slot)
     UiMon m;
     UiGame_Mon(slot, &m);
     UiMenu_Open(&sAction, m.name, 348, 150, 300);
-    UiMenu_Add(&sAction, "TAKE ITEM", PYR_TAKE);
-    UiMenu_Add(&sAction, "TOSS", PYR_TOSS);
-    UiMenu_Add(&sAction, "CANCEL", UI_MENU_CANCEL);
+    UiMenu_Add(&sAction, UI_TR("TAKE ITEM"), PYR_TAKE);
+    UiMenu_Add(&sAction, UI_TR("TOSS"), PYR_TOSS);
+    UiMenu_Add(&sAction, UI_TR("CANCEL"), UI_MENU_CANCEL);
     return false;
 }
 
@@ -271,10 +271,10 @@ static const char *HalfPartyTag(int32_t slot, bool *ok)
     const u8 status = PartyMenu_HalfPartyStatusForUi((u8)slot);
     *ok = status != 2;
     if (status == 2)
-        return "NOT ABLE";
+        return UI_TR("NOT ABLE");
     const u8 place = PartyMenu_HalfPartyPlaceForUi((u8)slot);
     if (place == 0)
-        return "ABLE";
+        return UI_TR("ABLE");
     UiGame_Text(PartyMenu_HalfPartyPlaceNameForUi(place), sBuf, sizeof(sBuf));
     return sBuf;
 }
@@ -300,31 +300,31 @@ static bool HalfPartyConfirm(void)
 
 static const ChooseKind sKinds[UI_CHOOSE_COUNT] = {
     [UI_CHOOSE_TUTOR] = {
-        .help = "Choose who will learn the move. Those marked ABLE can learn it.", .button = "TEACH", .foot = "Teach",
-        .tag = TutorTag, .refused = "It can't learn that move.", .defaults = TutorDefaults, .chosen = TutorChosen },
+        .help = UI_N("Choose who will learn the move. Those marked ABLE can learn it."), .button = UI_N("TEACH"), .foot = UI_N("Teach"),
+        .tag = TutorTag, .refused = UI_N("It can't learn that move."), .defaults = TutorDefaults, .chosen = TutorChosen },
     [UI_CHOOSE_DAYCARE] = {
-        .header = "DAY CARE", .help = "Choose the POKéMON to leave at the DAY CARE.", .button = "CHOOSE", .foot = "Choose",
-        .tag = DaycareTag, .refused = "An EGG can't be chosen.", .defaults = SlotDefaults, .chosen = SlotChosen },
+        .header = UI_N("DAY CARE"), .help = UI_N("Choose the POKéMON to leave at the DAY CARE."), .button = UI_N("CHOOSE"), .foot = UI_N("Choose"),
+        .tag = DaycareTag, .refused = UI_N("An EGG can't be chosen."), .defaults = SlotDefaults, .chosen = SlotChosen },
     // ChoosePartyMon (PARTY_ACTION_CHOOSE_AND_CLOSE) takes an EGG: the scripts (Name Rater, Move
     // Deleter, trades) answer it themselves
     [UI_CHOOSE_ANY] = {
-        .help = "Choose a POKéMON.", .button = "CHOOSE", .foot = "Choose", .eggOk = true,
+        .help = UI_N("Choose a POKéMON."), .button = UI_N("CHOOSE"), .foot = UI_N("Choose"), .eggOk = true,
         .defaults = SlotDefaults, .chosen = SlotChosen },
     [UI_CHOOSE_CONTEST] = {
-        .header = "CONTEST", .help = "Choose the POKéMON that will enter the CONTEST.", .button = "ENTER", .foot = "Enter",
+        .header = UI_N("CONTEST"), .help = UI_N("Choose the POKéMON that will enter the CONTEST."), .button = UI_N("ENTER"), .foot = UI_N("Enter"),
         .eggOk = true, .defaults = ContestDefaults, .chosen = ContestChosen },
     [UI_CHOOSE_RELEARNER] = {
-        .header = "MOVE RELEARNER", .help = "Choose the POKéMON that will remember a move.", .button = "CHOOSE", .foot = "Choose",
+        .header = UI_N("MOVE RELEARNER"), .help = UI_N("Choose the POKéMON that will remember a move."), .button = UI_N("CHOOSE"), .foot = UI_N("Choose"),
         .eggOk = true, .tag = RelearnerTag, .prepare = RelearnerPrepare, .defaults = SlotDefaults, .chosen = RelearnerChosen },
     [UI_CHOOSE_PYRAMID_ITEMS] = {
-        .header = "BATTLE PYRAMID",
-        .help = "The PYRAMID BAG is full. Choose a POKéMON to take or toss the item it holds.",
-        .button = "CHOOSE", .foot = "Choose", .tag = HeldItemTag, .refused = "An EGG holds no item.",
+        .header = UI_N("BATTLE PYRAMID"),
+        .help = UI_N("The PYRAMID BAG is full. Choose a POKéMON to take or toss the item it holds."),
+        .button = UI_N("CHOOSE"), .foot = UI_N("Choose"), .tag = HeldItemTag, .refused = UI_N("An EGG holds no item."),
         .defaults = SlotDefaults, .chosen = HeldItemChosen, .action = HeldItemAction },
     [UI_CHOOSE_FRONTIER_PARTY] = {
-        .header = "BATTLE FRONTIER",
-        .help = "Choose the POKéMON that will enter, in order: choose one again to take it out. Then CONFIRM.",
-        .button = "CONFIRM", .foot = "Enter / out", .tag = HalfPartyTag, .refused = "That POKéMON can't enter.",
+        .header = UI_N("BATTLE FRONTIER"),
+        .help = UI_N("Choose the POKéMON that will enter, in order: choose one again to take it out. Then CONFIRM."),
+        .button = UI_N("CONFIRM"), .foot = UI_N("Enter / out"), .tag = HalfPartyTag, .refused = UI_N("That POKéMON can't enter."),
         .defaults = HalfPartyDefaults, .chosen = HalfPartyChosen, .confirm = HalfPartyConfirm,
         .cancelAsk = PartyMenu_HalfPartyCancelTextForUi },
 };
@@ -415,14 +415,14 @@ static bool Update(const UiInput *in)
             return true;
         if (id == UI_MENU_CANCEL || id == 9)
         {
-            UiKit_Toast("It did not learn the move.");
+            UiKit_Toast(UI_TR("It did not learn the move."));
             return true;
         }
         struct Pokemon *mon = &gPlayerParty[sList.sel];
         if (IsMoveHm((u16)GetMonData(mon, MON_DATA_MOVE1 + id)))
         {
             PlaySE(SE_FAILURE);
-            UiKit_Toast("HM moves can't be forgotten now.");
+            UiKit_Toast(UI_TR("HM moves can't be forgotten now."));
             return true;
         }
         RemoveMonPPBonus(mon, (u8)id);
@@ -449,7 +449,7 @@ static bool Update(const UiInput *in)
     if (!ok)
     {
         PlaySE(SE_FAILURE);
-        UiKit_Toast("%s", k->refused != NULL ? k->refused : "That POKéMON can't be chosen.");
+        UiKit_Toast("%s", k->refused != NULL ? UiLocale_Lookup(k->refused) : UI_TR("That POKéMON can't be chosen."));
         return true;
     }
     PlaySE(SE_SELECT);
@@ -458,19 +458,19 @@ static bool Update(const UiInput *in)
 
 static void Build(void)
 {
-    static const char *const tab[1] = { "CHOOSE A POKéMON" };
+    static const char *const tab[1] = { UI_N("CHOOSE A POKéMON") };
     const ChooseKind *k = &sKinds[sKind];
     int32_t tx[1], tw[1];
     char buf[64], mv[16];
-    UiKit_HeaderAs(UI_GBA_BG_PARTY, UI_SPR_BALL_POKE, "POKéMON", tab, 1, 0, tx, tw, 12);
+    UiKit_HeaderAs(UI_GBA_BG_PARTY, UI_SPR_BALL_POKE, UI_TR("POKéMON"), tab, 1, 0, tx, tw, 12);
     if (sKind == UI_CHOOSE_TUTOR)
     {
         UiGame_MoveName(TutorMove(), mv, sizeof(mv));
-        snprintf(buf, sizeof(buf), "TEACH · %s", mv);
+        snprintf(buf, sizeof(buf), UI_TR("TEACH · %s"), mv);
         UiW_HeaderValue(buf, UI_COL_ON_FRAME);
     }
     else if (k->header != NULL)
-        UiW_HeaderValue(k->header, UI_COL_ON_FRAME);
+        UiW_HeaderValue(UiLocale_Lookup(k->header), UI_COL_ON_FRAME);
     UiW_Panel(16, 60, 320, 432);
     for (int32_t i = 0; i < UiGame_PartyCount(); i++)
     {
@@ -484,7 +484,7 @@ static void Build(void)
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, CARD_X + 52, y, m.name, on ? UI_COL_SELECT_INK : UI_COL_INK);
         if (!m.egg)
         {
-            snprintf(buf, sizeof(buf), "Lv%u", (unsigned)m.level);
+            snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)m.level);
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, CARD_X + 52, y + 32, buf, on ? UI_COL_SELECT_INK : UI_COL_INK_SOFT);
         }
         bool ok;
@@ -493,14 +493,14 @@ static void Build(void)
             UiW_Chip(CARD_X + CARD_W - 16 - UiText_Width(UI_FACE_VT323, UI_BODY_PX, tag) - 16, y + 36, tag, ok);
     }
     UiW_Panel(348, 60, 596, 432);
-    UiW_TextWrapped(364, 80, 564, 30, k->help, UI_COL_INK, 4);
-    UiW_Button(364, 436, 200, "BACK", UI_BTN_RED, false);
-    UiW_Button(580, 436, 200, k->button, UI_BTN_GREEN, false);
+    UiW_TextWrapped(364, 80, 564, 30, UiLocale_Lookup(k->help), UI_COL_INK, 4);
+    UiW_Button(364, 436, 200, UI_TR("BACK"), UI_BTN_RED, false);
+    UiW_Button(580, 436, 200, UiLocale_Lookup(k->button), UI_BTN_GREEN, false);
     int32_t fx = 16;
-    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, k->foot);
-    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, "Cancel");
+    UiW_FooterGlyph(&fx, UI_GLYPH_CROSS, UiLocale_Lookup(k->foot));
+    UiW_FooterGlyph(&fx, UI_GLYPH_CIRCLE, UI_TR("Cancel"));
     if (k->confirm != NULL)
-        UiW_FooterKey(&fx, "START", k->button);
+        UiW_FooterKey(&fx, "START", UiLocale_Lookup(k->button));
     UiKit_FooterClock();
     if (sForget.open)
         UiMenu_Draw(&sForget);

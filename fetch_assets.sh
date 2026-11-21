@@ -94,6 +94,11 @@ done
 "$PY" tools/ui2/build_atlas.py
 
 echo "$code" > .assets_ok
+# Where the dump is: a translated game (a Spanish, French... cartridge) takes its text from it at
+# build time, into the build folder only (tools/locales/localize.py)
+if [ "$ROM" != "--update" ]; then
+    echo "$(cd "$(dirname "$ROM")" && pwd)/$(basename "$ROM")" > .assets_rom
+fi
 # Which manifest these files match: build_all.sh fetches again (--update) when it changes
 (sha1sum "$MANIFEST" 2>/dev/null || shasum "$MANIFEST") | cut -d' ' -f1 > .assets_manifest
 echo "=== Done: you can build now (build_vita.ps1 or build_vita.sh) ==="
