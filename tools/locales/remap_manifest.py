@@ -86,7 +86,12 @@ def main():
     def reference(rel):
         if own:
             # the sources and patches the manifest was made from
-            old = git("show", f"{src['sourceCommit']}:{rel}")
+            try:
+                old = git("show", f"{src['sourceCommit']}:{rel}")
+            except subprocess.CalledProcessError:
+                # A file the build generates (not in git, e.g. region_map_entries.h): the current
+                # one; the spans are still only placed where their exact text is
+                old = open(os.path.join(ROOT, rel), encoding="utf-8").read()
             with tempfile.TemporaryDirectory() as tmp:
                 old_patches = []
                 listing = git("ls-tree", "--name-only", f"{src['sourceCommit']}:tools/locales/{opts.locale}/patches")
