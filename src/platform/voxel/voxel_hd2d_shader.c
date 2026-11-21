@@ -37,6 +37,10 @@ static GLint sBUScene = -1, sBUThresh = -1, sBUUvScale = -1, sBUGain = -1;
 // moon pass) by the original per-pixel code, then a full-screen quad reads that row at a.
 #define SHAFT_PROGRAMS 2
 #define SHAFT_LUT_W 512u
+// A full row of 32x32 tiles, not a single texel row: every row holds the same profile (the shader
+// ignores y) and the quad reads the middle one. A 1-pixel-high render target drew nothing on the
+// Vita (the shafts vanished at every hour).
+#define SHAFT_LUT_H 32u
 #define SHAFT_LUTS 2u
 typedef struct
 {
@@ -415,7 +419,8 @@ static bool InitShaftLut(ShaftLutProgram *const p, const char *const fsSrc)
     return true;
 }
 
-// The shafts' profiles: one SHAFT_LUT_W x 1 target per pass, filtered (read between samples of a).
+// The shafts' profiles: one SHAFT_LUT_W x SHAFT_LUT_H target per pass, filtered (read between
+// samples of a). False when vitaGL cannot render into them: the caller then keeps the 3D rays.
 // A target each, not two rows of one, so nothing depends on how vitaGL orients FBO rows.
 static bool InitShaftTarget(void)
 {
@@ -429,13 +434,19 @@ static bool InitShaftTarget(void)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SHAFT_LUT_W, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SHAFT_LUT_W, SHAFT_LUT_H, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         glBindTexture(GL_TEXTURE_2D, 0);
         glGenFramebuffers(1, &sShaftLutFbo[i]);
         if (sShaftLutFbo[i] == 0)
             return false;
         glBindFramebuffer(GL_FRAMEBUFFER, sShaftLutFbo[i]);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sShaftLutTex[i], 0);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            VITA_LOG("[HD2D SHADER] Shaft profile target %u incomplete\n", (unsigned)i);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            return false;
+        }
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     return true;
@@ -685,7 +696,7 @@ void VoxelHd2dShader_BeginShaftLut(const uint32_t pass)
     if (pass >= SHAFT_LUTS)
         return;
     glBindFramebuffer(GL_FRAMEBUFFER, sShaftLutFbo[pass]);
-    glViewport(0, 0, SHAFT_LUT_W, 1);
+    glViewport(0, 0, SHAFT_LUT_W, SHAFT_LUT_H);
 }
 
 void VoxelHd2dShader_ShaftLut(const uint32_t pass, const float dirX, const float dirY, const float timeSec,
