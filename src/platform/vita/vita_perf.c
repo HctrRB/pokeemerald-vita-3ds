@@ -161,12 +161,15 @@ static const char *const sSubNames[VITA_PERF_T_COUNT] = {
 static VitaPerfScene sScene;
 static bool sInputFastForward = false;
 static bool sInputUiOpen = false;
+// Set by VitaPerf_SetScene in this frame: frames that skip the field passes (the Fly cloud
+// frames, a frozen menu backdrop) leave sScene as the last field frame saw it.
+static bool sSceneFresh = false;
 
 #ifdef VITA_GPU_PROBE
 // The automatic bench: when the player stands still in the 3D field for BENCH_STILL_FRAMES, it
 // steps through every HD-2D level, then through HIGH with one pass switched off at a time. Each
 // step waits for BENCH_SETTLE_FRAMES calm frames (no events, no holes), then keeps
-// BENCH_MEASURE_FRAMES frames marked bench_measured. Moving, a menu, a fade, a battle or fast
+// BENCH_MEASURE_FRAMES frames marked bench_measured. Moving, a menu, a fade, a battle, Fly or fast
 // forward aborts the run; the player has to move before the next one starts.
 #define BENCH_STILL_FRAMES 150u
 #define BENCH_SETTLE_FRAMES 30u
@@ -393,6 +396,7 @@ void VitaPerf_Core1WaitDone(const double waitMs)
 // Core 0 Stage Markers
 void VitaPerf_BeginFrame(void)
 {
+    sSceneFresh = false;
     sFrameStartMs = VitaPerf_NowMs();
     sDraw3DStartMs = 0.0;
     sCurAtlasMs = 0.0;
@@ -531,7 +535,10 @@ void VitaPerf_MarkEvent(const VitaPerfEvent event)
 void VitaPerf_SetScene(const VitaPerfScene *const scene)
 {
     if (scene != NULL)
+    {
         sScene = *scene;
+        sSceneFresh = true;
+    }
 }
 
 void VitaPerf_SetInput(const bool fastForward, const bool uiOpen)
@@ -585,7 +592,7 @@ static void BenchAdvance(const bool measured)
         && (fabsf(sScene.playerX - sBenchLastScene.playerX) > BENCH_STILL_EPSILON
             || fabsf(sScene.playerZ - sBenchLastScene.playerZ) > BENCH_STILL_EPSILON
             || sScene.mapGroup != sBenchLastScene.mapGroup || sScene.mapNum != sBenchLastScene.mapNum);
-    const bool blocked = sInputFastForward || sInputUiOpen || sScene.faded || sScene.inBattle;
+    const bool blocked = !sSceneFresh || sInputFastForward || sInputUiOpen || sScene.faded || sScene.inBattle;
     sBenchLastScene = sScene;
     sBenchLastSceneValid = true;
 
@@ -593,7 +600,7 @@ static void BenchAdvance(const bool measured)
     {
         if (moved || blocked)
         {
-            BenchStop(moved ? "aborted (the player moved)" : "aborted (menu, fade, battle or fast forward)");
+            BenchStop(moved ? "aborted (the player moved)" : "aborted (menu, fade, battle, Fly or fast forward)");
             return;
         }
         sBenchStepFrames++;

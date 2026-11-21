@@ -99,7 +99,7 @@ so its frame rate is lower.
   `VitaPerfPass` switched off at a time (`VitaPerf_PassSkipped`). The level is imposed through
   `VitaPerf_BenchLevel`; the saved option is not touched and comes back at the end. Each step waits
   for `BENCH_SETTLE_FRAMES` calm frames and keeps `BENCH_MEASURE_FRAMES` frames with
-  `bench_measured = 1`. Moving, a menu, a fade, a battle or fast forward aborts the run; the player
+  `bench_measured = 1`. Moving, a menu, a fade, a battle, Fly (any frame without the field passes) or fast forward aborts the run; the player
   has to move before another one starts. The picture changes during a run (levels, effects missing):
   that is the bench at work.
 - **Session.** Play one session through the spots to measure (town at night with lamps, rain, midday,
