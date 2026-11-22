@@ -106,13 +106,41 @@ typedef struct
  * with the layouts it points at (VoxelRelief_Shutdown).
  */
 #define FIND_MEMO_SIDE 8u
-typedef struct
+
+/*
+ * A memo entry (sFindMemo, sCutMemo) is one 64-bit word: the cell it names in
+ * the high half (MemoTag: layout id, x, y; a cell's place fits a byte, as in
+ * the data's own keys), the answer in the low half (an index, or -1: none).
+ * Core 1's entity capture, the renderer on Core 0 and the chunk worker on
+ * Core 2 share the memos without a lock. Read and written whole (LDREXD /
+ * STREXD on the Cortex-A9, no barrier), an entry is never seen with one
+ * search's cell and another's answer: a "none" that named the wrong cell made
+ * a cell with relief read as flat, and a caller that does not expect NULL
+ * there crashed. Relaxed order is enough: the tables an answer indexes are
+ * loaded before any thread runs. An all-zero entry (cleared) names cell 0,0
+ * of layout 0 with index 0, which is checked like any index found.
+ */
+typedef uint64_t ReliefMemo;
+
+static inline uint32_t MemoTag(uint32_t layoutId, uint32_t x, uint32_t y)
 {
-    const ReliefLayout *layout;
-    int16_t x, y;
-    int32_t k;
-} FindMemo;
-static FindMemo sFindMemo[FIND_MEMO_SIDE * FIND_MEMO_SIDE];
+    return (layoutId << 16) | (x << 8) | y;
+}
+
+/* The answer an entry holds for the cell `tag`, or -2 when it holds another cell. */
+static inline int32_t MemoAnswer(const ReliefMemo *memo, uint32_t tag)
+{
+    const ReliefMemo entry = __atomic_load_n(memo, __ATOMIC_RELAXED);
+
+    return (uint32_t)(entry >> 32) == tag ? (int32_t)(uint32_t)entry : -2;
+}
+
+static inline void MemoKeep(ReliefMemo *memo, uint32_t tag, int32_t answer)
+{
+    __atomic_store_n(memo, ((uint64_t)tag << 32) | (uint32_t)answer, __ATOMIC_RELAXED);
+}
+
+static ReliefMemo sFindMemo[FIND_MEMO_SIDE * FIND_MEMO_SIDE];
 
 static int32_t Find(const ReliefLayout *l, const VoxelMapInstance *inst, int32_t x, int32_t y);
 
@@ -146,14 +174,7 @@ static uint32_t sEdgeCount;
  * itself and its neighbours several times a build (its walls, its ground,
  * the cells beside it), each a search of every map's cut cells. Exact, and
  * cleared with the table (VoxelRelief_Shutdown). */
-typedef struct
-{
-    bool used;
-    int32_t layoutId;
-    int16_t x, y;
-    int32_t record;            /* index into sCutCells, -1: not cut */
-} CutMemo;
-static CutMemo sCutMemo[FIND_MEMO_SIDE * FIND_MEMO_SIDE];
+static ReliefMemo sCutMemo[FIND_MEMO_SIDE * FIND_MEMO_SIDE];   /* index into sCutCells, -1: not cut */
 
 /* floorf as a conversion and one correction: the library call it replaces was
  * made at every step of every shadow ray over a mountain. */
@@ -584,7 +605,7 @@ int32_t VoxelRelief_Cut(const VoxelMapInstance *inst, int32_t x, int32_t y, floa
 {
     uint32_t lo = 0, hi = sCutCellCount, key;
     const uint8_t *c;
-    CutMemo *memo;
+    ReliefMemo *memo;
 
     if (inst == NULL || sCutCells == NULL)
         return -1;
@@ -594,23 +615,20 @@ int32_t VoxelRelief_Cut(const VoxelMapInstance *inst, int32_t x, int32_t y, floa
         return -1;
     memo = &sCutMemo[((uint32_t)y & (FIND_MEMO_SIDE - 1u)) * FIND_MEMO_SIDE
                      + ((uint32_t)x & (FIND_MEMO_SIDE - 1u))];
-    key = ((uint32_t)inst->layoutId << 16) | ((uint32_t)x << 8) | (uint32_t)y;
-    /* Shared by threads like Find's memo: the record is written before the
-     * key that names it, and a found record is used only if it is in range
-     * and holds the key. */
-    int32_t record = -2;
-    if (memo->used && memo->layoutId == inst->layoutId && memo->x == x && memo->y == y)
+    key = MemoTag((uint32_t)inst->layoutId, (uint32_t)x, (uint32_t)y);
+    /* A found record is used only if it is in range and holds the key: the
+     * cleared entry names a cell too (ReliefMemo). */
+    int32_t record = MemoAnswer(memo, key);
+    if (record >= 0)
     {
-        int32_t r = memo->record;
-
-        if (r < 0)
-            record = -1;
-        else if ((uint32_t)r < sCutCellCount)
+        if ((uint32_t)record < sCutCellCount)
         {
-            c = sCutCells + CUT_CELL_BYTES * (uint32_t)r;
-            if (((U16(c) << 16) | ((uint32_t)c[2] << 8) | c[3]) == key)
-                record = r;
+            c = sCutCells + CUT_CELL_BYTES * (uint32_t)record;
+            if (((U16(c) << 16) | ((uint32_t)c[2] << 8) | c[3]) != key)
+                record = -2;
         }
+        else
+            record = -2;
     }
     if (record == -2)
     {
@@ -632,12 +650,7 @@ int32_t VoxelRelief_Cut(const VoxelMapInstance *inst, int32_t x, int32_t y, floa
             else
                 hi = mid;
         }
-        memo->record = record;
-        __sync_synchronize();
-        memo->used = true;
-        memo->layoutId = inst->layoutId;
-        memo->x = (int16_t)x;
-        memo->y = (int16_t)y;
+        MemoKeep(memo, key, record);
     }
     if (record < 0)
         return -1;
@@ -906,8 +919,8 @@ float VoxelRelief_StretchZ(const VoxelMapInstance *inst, float z)
 
 static int32_t Find(const ReliefLayout *l, const VoxelMapInstance *inst, int32_t x, int32_t y)
 {
-    uint32_t lo = 0, hi, key;
-    FindMemo *memo;
+    uint32_t lo = 0, hi, key, tag;
+    ReliefMemo *memo;
 
     if (l == NULL)
         return -1;
@@ -918,19 +931,15 @@ static int32_t Find(const ReliefLayout *l, const VoxelMapInstance *inst, int32_t
     memo = &sFindMemo[((uint32_t)y & (FIND_MEMO_SIDE - 1u)) * FIND_MEMO_SIDE
                       + ((uint32_t)x & (FIND_MEMO_SIDE - 1u))];
     key = ((uint32_t)y << 8) | (uint32_t)x;
-    /* Read and written by several threads (Core 1's entity snapshot through
-     * VoxelRelief_ShiftAt, the renderer and its chunk worker), without a
-     * lock: an entry can be seen half written. The index is written before
-     * the key that names it, and a found cell is trusted only if it is in
-     * range and holds the key, so a torn entry never reads out of the
-     * layout; at worst a cell is searched again. */
-    if (memo->layout == l && memo->x == x && memo->y == y)
+    tag = MemoTag(l->layoutId, (uint32_t)x, (uint32_t)y);
     {
-        int32_t k = memo->k;
+        /* Shared by threads (ReliefMemo). A found cell is trusted only if it
+         * is in range and holds the key: the cleared entry names a cell too. */
+        const int32_t k = MemoAnswer(memo, tag);
 
-        if (k < 0)
+        if (k == -1)
             return -1;
-        if ((uint32_t)k < l->count)
+        if (k >= 0 && (uint32_t)k < l->count)
         {
             const uint8_t *c = l->cells + (uint32_t)k * l->stride;
 
@@ -947,12 +956,7 @@ static int32_t Find(const ReliefLayout *l, const VoxelMapInstance *inst, int32_t
 
         if (at == key)
         {
-            /* the index before the key that names it */
-            memo->k = (int32_t)mid;
-            __sync_synchronize();
-            memo->layout = l;
-            memo->x = (int16_t)x;
-            memo->y = (int16_t)y;
+            MemoKeep(memo, tag, (int32_t)mid);
             return (int32_t)mid;
         }
         if (at < key)
@@ -960,11 +964,7 @@ static int32_t Find(const ReliefLayout *l, const VoxelMapInstance *inst, int32_t
         else
             hi = mid;
     }
-    memo->k = -1;
-    __sync_synchronize();
-    memo->layout = l;
-    memo->x = (int16_t)x;
-    memo->y = (int16_t)y;
+    MemoKeep(memo, tag, -1);
     return -1;
 }
 
