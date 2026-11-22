@@ -116,6 +116,13 @@ own. With the option off or indoors the state is a fixed early afternoon. The wi
 (`VitaEncounters_Phase`) use the same marks: morning from sunrise to the noon start, day until
 nightfall, night until sunrise.
 
+The animation clock (`VoxelFrame::clock`, seconds, frozen while a menu holds the HD-2D backdrop) is
+a double. `Frame_DeriveClock` turns it, once per frame, into what the passes read: the foliage
+sway phases (`uSwayA`, `uSwayB`) and the shafts' wrapped shifts and phases
+(`VoxelHd2dShader_ShaftClockAt`). Every shader runs in half precision, so no shader gets the raw
+clock. Fog, weather and Fly wisp offsets wrap their clock products in double; slow terms (motes,
+glints, lamps) read the float copy `seconds`.
+
 ## Pass 6: the GBA overlay over 3D
 
 Field dialogues, YES/NO, multichoice, the money box, zone signs, the menus and the battle HUD

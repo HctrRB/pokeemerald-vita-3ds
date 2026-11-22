@@ -82,7 +82,11 @@ and `VoxelWorld_GetInstanceOffset` aligns entities that are still in the old map
 coordinates. Cached chunks are not rebuilt nor re-uploaded: `ShiftChunkCoordinates` moves their
 grid position and their `drawOffsetX/Z`, a translation applied when they are drawn. Chunk
 geometry lives only in the VBOs; a single staging buffer (`sChunkStaging`) holds the chunk being
-built. NPCs of connected maps are spawned ahead of the border
+built. The world-anchored atmosphere (fog and sand banks, motes, weather particles, world rays,
+Fly cloud wisps) wraps its pattern on map coordinates plus `sAtmoAnchorX/Z`, which the crossing
+moves by the opposite of the shift, so the pattern stays put across the border; live surface FX
+are moved with the chunks (`SurfaceFx_ShiftCoordinates`). A warp starts them afresh behind its fade.
+NPCs of connected maps are spawned ahead of the border
 (`event_object_movement.c`, `TrySpawnObjectEvents`). See [THREADS.md](THREADS.md).
 
 ## Data files

@@ -108,7 +108,8 @@ static bool sFlowerFramesReady = false;
 static GLuint sTreeShaderProg = 0;
 static GLint sTreeShaderUMvp = -1;
 static GLint sTreeShaderUChunkDelta = -1;
-static GLint sTreeShaderUTime = -1;
+static GLint sTreeShaderUSwayA = -1;
+static GLint sTreeShaderUSwayB = -1;
 static GLint sTreeShaderUWind = -1;
 static GLint sTreeShaderUPlayerXZ = -1;
 static GLint sTreeShaderUTex = -1;
@@ -541,6 +542,32 @@ static uint8_t sFogNodeEdgeA[VOXEL_FOG_GRID + 1][VOXEL_FOG_GRID + 1];
 static int32_t sFogSnapCellX = 0x7FFFFFFF;
 static int32_t sFogSnapCellZ = 0x7FFFFFFF;
 static bool sFogCacheValid = false;
+
+// World coordinates are relative to the current map, so a walking crossing moves every tile by
+// the new map's origin. The world-anchored atmosphere (fog, motes, weather, rays, wisps) wraps its
+// pattern on coordinates + this anchor, which absorbs every crossing, so nothing re-spawns at the
+// border. Whole tiles; a crossing adds at most a map width, so int32 cannot overflow in play.
+static int32_t sAtmoAnchorX = 0;
+static int32_t sAtmoAnchorZ = 0;
+static void SurfaceFx_ShiftCoordinates(int32_t shiftX, int32_t shiftZ);
+
+#define ATMO_TWO_PI 6.283185307179586
+
+// x reduced to [0, period), in double: a product of a long session's clock keeps its fraction.
+static inline double AtmoWrapD(const double x, const double period)
+{
+    return x - floor(x / period) * period;
+}
+
+// The anchor reduced to [0, period): added to an effect's camera or UV origin once per pass, so
+// particle loops keep their cost and floats keep their precision. `period` is in whole tiles.
+static inline float AtmoAnchorWrap(const int32_t anchor, const int32_t period)
+{
+    int32_t r = anchor % period;
+    if (r < 0)
+        r += period;
+    return (float)r;
+}
 
 
 typedef struct
@@ -3668,7 +3695,7 @@ static float SmoothedFogWorldY(const float wx, const float wz)
     return c * 0.40f + (nx + px + nz + pz) * 0.15f;
 }
 
-static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_t g, uint8_t b, float seconds)
+static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_t g, uint8_t b, double clock)
 {
     if (VitaPerf_PassSkipped(VITA_PERF_PASS_FOG))
         return;
@@ -3758,10 +3785,14 @@ static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_
     static const int32_t cx[6] = {0, 1, 1, 0, 1, 0};
     static const int32_t cz[6] = {0, 0, 1, 0, 1, 1};
 
+    // u = (wx + anchor) / period - drift, with the anchor folded into the per-bank offset.
+    const float anchorU = AtmoAnchorWrap(sAtmoAnchorX, (int32_t)VOXEL_FOG_PERIOD_X) * invPeriodX;
+    const float anchorV = AtmoAnchorWrap(sAtmoAnchorZ, (int32_t)VOXEL_FOG_PERIOD_Z) * invPeriodZ;
+
     for (uint32_t bk = 0; bk < bankCount; ++bk)
     {
-        const float uOff = fmodf(seconds * banks[bk].driftX * invPeriodX + banks[bk].offsetU, 1.0f);
-        const float vOff = fmodf(seconds * banks[bk].driftZ * invPeriodZ + banks[bk].offsetV, 1.0f);
+        const float uOff = (float)AtmoWrapD(clock * banks[bk].driftX * invPeriodX + banks[bk].offsetU, 1.0) - anchorU;
+        const float vOff = (float)AtmoWrapD(clock * banks[bk].driftZ * invPeriodZ + banks[bk].offsetV, 1.0) - anchorV;
         const float alphaScale = (banks == sSandBanks ? 0.24f : banks[bk].alpha) * amount;
         const float hOff = banks[bk].height;
         uint32_t vOut = 0;
@@ -3805,7 +3836,7 @@ static void DrawFogBanks(const FogBank banks[2], float amount, uint8_t r, uint8_
 
 
 
-static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float seconds, Hd2dPreset hd2d)
+static void DrawWeather(const WeatherKind *kind, float amount, float bolt, double clock, Hd2dPreset hd2d)
 {
     if (VitaPerf_PassSkipped(VITA_PERF_PASS_WEATHER))
         return;
@@ -3819,12 +3850,12 @@ static void DrawWeather(const WeatherKind *kind, float amount, float bolt, float
     if (count < kind->minCount) count = kind->minCount;
     if (count > maxDropCap) count = maxDropCap;
 
-    float offX = fmodf((seconds * kind->vx - sCamera.targetX) / VOXEL_WEATHER_SPAN_X, 1.0f);
-    float offY = fmodf((seconds * kind->vy - sCamera.ground) / VOXEL_WEATHER_SPAN_Y, 1.0f);
-    float offZ = fmodf((seconds * kind->vz - sCamera.targetZ) / VOXEL_WEATHER_SPAN_Z, 1.0f);
-    if (offX < 0.0f) offX += 1.0f;
-    if (offY < 0.0f) offY += 1.0f;
-    if (offZ < 0.0f) offZ += 1.0f;
+    const float anchoredX = sCamera.targetX + AtmoAnchorWrap(sAtmoAnchorX, (int32_t)VOXEL_WEATHER_SPAN_X);
+    const float anchoredZ = sCamera.targetZ + AtmoAnchorWrap(sAtmoAnchorZ, (int32_t)VOXEL_WEATHER_SPAN_Z);
+    // Fast drops: the clock product is wrapped in double, so it keeps its fraction all session.
+    const float offX = (float)AtmoWrapD((clock * kind->vx - anchoredX) / VOXEL_WEATHER_SPAN_X, 1.0);
+    const float offY = (float)AtmoWrapD((clock * kind->vy - sCamera.ground) / VOXEL_WEATHER_SPAN_Y, 1.0);
+    const float offZ = (float)AtmoWrapD((clock * kind->vz - anchoredZ) / VOXEL_WEATHER_SPAN_Z, 1.0);
 
     float baseX = sCamera.targetX - 0.5f * VOXEL_WEATHER_SPAN_X;
     float baseY = sCamera.ground + VOXEL_WEATHER_LOW;
@@ -3997,6 +4028,9 @@ static void DrawMotes(float strength, float seconds, bool fireflies, Hd2dPreset 
 
     float ox = sCamera.targetX - 0.5f * VOXEL_MOTE_SPAN_X;
     float oz = sCamera.targetZ - VOXEL_MOTE_SPAN_Z + 4.0f;
+    // The wrap runs on anchored coordinates; ox/oz place the result back in map coordinates.
+    const float anchoredX = sCamera.targetX + AtmoAnchorWrap(sAtmoAnchorX, (int32_t)VOXEL_MOTE_SPAN_X);
+    const float anchoredZ = sCamera.targetZ + AtmoAnchorWrap(sAtmoAnchorZ, (int32_t)VOXEL_MOTE_SPAN_Z);
 
     uint32_t vOut = 0;
     const uint8_t cr = fireflies ? 210u : 255u;
@@ -4012,8 +4046,8 @@ static void DrawMotes(float strength, float seconds, bool fireflies, Hd2dPreset 
         const bool isLeaf = (useHd2dAtlas && !fireflies && (i & 3u) == 3u);
         float glint = 0.5f + 0.5f * sinf(seconds * m->glintSpeed + m->glintPhase + (float)i);
         glint *= glint;
-        const float relX = m->x + jx + seconds * (isLeaf ? m->driftX * 2.2f : m->driftX) - sCamera.targetX;
-        const float relZ = m->z + jz + seconds * (isLeaf ? m->driftZ * 1.8f : m->driftZ) - sCamera.targetZ;
+        const float relX = m->x + jx + seconds * (isLeaf ? m->driftX * 2.2f : m->driftX) - anchoredX;
+        const float relZ = m->z + jz + seconds * (isLeaf ? m->driftZ * 1.8f : m->driftZ) - anchoredZ;
         const float lx = relX - floorf(relX / VOXEL_MOTE_SPAN_X) * VOXEL_MOTE_SPAN_X;
         const float lz = relZ - floorf(relZ / VOXEL_MOTE_SPAN_Z) * VOXEL_MOTE_SPAN_Z;
         const float edgeX = fminf(lx, VOXEL_MOTE_SPAN_X - lx) * 0.4f;
@@ -4292,7 +4326,8 @@ static void InitTreeSwayShader(void)
         "attribute vec4 aCol;\n"
         "uniform mat4 uMvp;\n"
         "uniform vec3 uChunkDelta;\n"
-        "uniform float uTime;\n"
+        "uniform vec4 uSwayA;\n"
+        "uniform float uSwayB;\n"
         "uniform vec2 uWind;\n"
         "uniform vec2 uPlayerXZ;\n"
         "varying vec2 vUv;\n"
@@ -4302,13 +4337,13 @@ static void InitTreeSwayShader(void)
         "    vec3 p = aPos + uChunkDelta;\n"
         "    if (w > 0.001) {\n"
         "        float ph = dot(p.xz, vec2(0.37, 0.61));\n"
-        "        float s = (sin(uTime * 1.7 + ph) + 0.5 * sin(uTime * 0.9 + ph * 0.5 + 1.3)) / 1.5;\n"
-        "        float gust = 0.7 + 0.3 * sin(uTime * 0.35 + dot(p.xz, vec2(0.08, 0.05)));\n"
+        "        float s = (sin(uSwayA.x + ph) + 0.5 * sin(uSwayA.y + ph * 0.5 + 1.3)) / 1.5;\n"
+        "        float gust = 0.7 + 0.3 * sin(uSwayA.z + dot(p.xz, vec2(0.08, 0.05)));\n"
         "        float d = w * 0.14 * gust * (0.35 + 0.65 * s);\n"
         "        p.x += uWind.x * d;\n"
         "        p.z += uWind.y * d;\n"
         "        float w2 = w * w;\n"
-        "        float s2 = sin(uTime * 2.3 + ph * 1.9 + 0.7) * 0.6 + sin(uTime * 3.7 + ph * 0.8) * 0.4;\n"
+        "        float s2 = sin(uSwayA.w + ph * 1.9 + 0.7) * 0.6 + sin(uSwayB + ph * 0.8) * 0.4;\n"
         "        p.x += -uWind.y * (w2 * 0.06 * gust * s2);\n"
         "        p.z +=  uWind.x * (w2 * 0.06 * gust * s2);\n"
         "        p.y -= w2 * 0.02 * (0.5 + 0.5 * s);\n"
@@ -4365,7 +4400,8 @@ static void InitTreeSwayShader(void)
             sTreeShaderProg = prog;
             sTreeShaderUMvp = glGetUniformLocation(prog, "uMvp");
             sTreeShaderUChunkDelta = glGetUniformLocation(prog, "uChunkDelta");
-            sTreeShaderUTime = glGetUniformLocation(prog, "uTime");
+            sTreeShaderUSwayA = glGetUniformLocation(prog, "uSwayA");
+            sTreeShaderUSwayB = glGetUniformLocation(prog, "uSwayB");
             sTreeShaderUWind = glGetUniformLocation(prog, "uWind");
             sTreeShaderUPlayerXZ = glGetUniformLocation(prog, "uPlayerXZ");
             sTreeShaderUTex = glGetUniformLocation(prog, "uTex");
@@ -4910,7 +4946,10 @@ typedef struct
     bool underground;
     bool liveChanged;
     VoxelLight light;
-    float seconds;                      // atmosphere animation clock
+    double clock;                       // atmosphere animation clock, seconds (frozen under menus)
+    float seconds;                      // clock as float, for terms whose speeds keep its error small
+    float swayPhase[5];                 // foliage sway phases, radians (Frame_DeriveClock)
+    VoxelHd2dShaftClock shaftClock[2];  // the shafts' wrapped animation, sun then moon pass
     float nightGlow;                    // lamp and window light, 0..1 (0 indoors, by day, in battle)
     VoxelChunkSlot *visible[MAX_CHUNKS];
     int32_t visibleCount;
@@ -5163,6 +5202,11 @@ static void Frame_FollowCamera(VoxelFrame *const f)
             VitaPerf_SubBegin(VITA_PERF_T_MAP_SHIFT);
             ShiftChunkCoordinates(shiftTilesX, shiftTilesY);
             VitaPerf_SubEnd(VITA_PERF_T_MAP_SHIFT);
+            // Coordinates gained shiftTiles; the anchor loses them so coordinate + anchor, the
+            // frame the atmosphere wraps on, is the same before and after the crossing.
+            sAtmoAnchorX -= shiftTilesX;
+            sAtmoAnchorZ -= shiftTilesY;
+            SurfaceFx_ShiftCoordinates(shiftTilesX, shiftTilesY);
         }
         else if (mapChanged)
         {
@@ -5644,7 +5688,7 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
     static uint64_t sVoxelAtmosphereStart = 0;
     if (sVoxelAtmosphereStart == 0)
         sVoxelAtmosphereStart = SDL_GetPerformanceCounter();
-    f->seconds = (float)((double)(SDL_GetPerformanceCounter() - sVoxelAtmosphereStart) / (double)SDL_GetPerformanceFrequency());
+    f->clock = (double)(SDL_GetPerformanceCounter() - sVoxelAtmosphereStart) / (double)SDL_GetPerformanceFrequency();
     f->hd2dPreset = GetHd2dPreset();
     f->hd2dMarkedGrade = Hd2dPost(f->hd2dPreset);
     {
@@ -5660,7 +5704,7 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
     static VoxelLight sSmoothedLight;
     static float sSmoothedFog = 0.0f;
     static float sSmoothedWeather = 0.0f;
-    static float sPrevAtmosSec = 0.0f;
+    static double sPrevAtmosClock = 0.0;
 
     if (!sAtmosSmoothReady || f->fadeAmount >= 0.99f || f->indoor != sSmoothedIndoor)
     {
@@ -5672,7 +5716,7 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
     }
     else
     {
-        float dt = f->seconds - sPrevAtmosSec;
+        float dt = (float)(f->clock - sPrevAtmosClock);
         if (dt < 0.0f) dt = 0.0f;
         if (dt > 0.10f) dt = 0.10f;
         const float k = 1.0f - expf(-dt / 0.40f);
@@ -5691,10 +5735,26 @@ static void Frame_ReadAtmosphere(VoxelFrame *const f)
         sSmoothedFog              += (targetFogDensity       - sSmoothedFog)              * k;
         sSmoothedWeather          += (targetWeatherAmt       - sSmoothedWeather)          * k;
     }
-    sPrevAtmosSec = f->seconds;
+    sPrevAtmosClock = f->clock;
     f->light = sSmoothedLight;
     f->fogDensity = sSmoothedFog;
     f->weatherAmount = sSmoothedWeather;
+}
+
+// Everything animated reads the clock through what this derives, once per frame and after the
+// menu freeze. Every shader runs in half precision (vglUseLowPrecision in MainThread_Boot), so the
+// shaders get phases wrapped here in double, never the raw clock, which would stop resolving a
+// frame's step within minutes.
+static void Frame_DeriveClock(VoxelFrame *const f)
+{
+    // The foliage sway's speeds, in the order of uSwayA.xyzw then uSwayB (InitTreeSwayShader).
+    static const double kSwaySpeed[5] = { 1.7, 0.9, 0.35, 2.3, 3.7 };
+    f->seconds = (float)f->clock;
+    for (int32_t i = 0; i < 5; ++i)
+        f->swayPhase[i] = (float)AtmoWrapD(f->clock * kSwaySpeed[i], ATMO_TWO_PI);
+    // The shafts move slower by night (pass 1).
+    VoxelHd2dShader_ShaftClockAt(f->clock, 1.0f, &f->shaftClock[0]);
+    VoxelHd2dShader_ShaftClockAt(f->clock, 0.45f, &f->shaftClock[1]);
 }
 
 // Whether a visible chunk must be rebuilt. `urgent`: drawn as it is, the chunk would be wrong,
@@ -6763,7 +6823,8 @@ static void Pass_Trees(const VoxelFrame *const f)
 
         glUseProgram(sTreeShaderProg);
         glUniformMatrix4fv(sTreeShaderUMvp, 1, GL_FALSE, sViewState.mvp);
-        glUniform1f(sTreeShaderUTime, f->seconds);
+        glUniform4fv(sTreeShaderUSwayA, 1, f->swayPhase);
+        glUniform1f(sTreeShaderUSwayB, f->swayPhase[4]);
         glUniform2f(sTreeShaderUWind, 0.85f, 0.52f);
         glUniform2f(sTreeShaderUPlayerXZ, sCamera.targetX, sCamera.targetZ);
         glUniform1i(sTreeShaderUTex, 0);
@@ -7370,6 +7431,24 @@ static inline float SurfaceFx_Rand01(void)
     return (float)((sSurfaceFxRng >> 8) & 0xFFFFu) * (1.0f / 65536.0f);
 }
 
+// Called by the crossing itself, not by the pass: a crossing frame can end before the passes
+// (full fade, Fly cloud frame), and the effects must not stay in the old map's coordinates.
+static void SurfaceFx_ShiftCoordinates(const int32_t shiftX, const int32_t shiftZ)
+{
+    const float sx = (float)shiftX;
+    const float sz = (float)shiftZ;
+    for (int32_t i = 0; i < SURFACE_FX_CAP; ++i)
+    {
+        sSurfaceFx[i].wx += sx;
+        sSurfaceFx[i].wz += sz;
+    }
+    if (sLastGrassPlayerX != 0x7FFFFFFF)
+    {
+        sLastGrassPlayerX += shiftX;
+        sLastGrassPlayerZ += shiftZ;
+    }
+}
+
 static void DrawSurfaceFx(const VoxelFrame *const f)
 {
     if (VitaPerf_PassSkipped(VITA_PERF_PASS_SURFACEFX))
@@ -7377,7 +7456,9 @@ static void DrawSurfaceFx(const VoxelFrame *const f)
     if (f->indoor || f->inBattle3D || f->hd2dPreset == HD2D_PRESET_OFF)
         return;
 
-    if (f->crossed || f->mapChanged)
+    // A crossing already moved the live effects (SurfaceFx_ShiftCoordinates); a warp lands
+    // somewhere else behind a fade, so they are dropped.
+    if (f->mapChanged && !f->crossed)
     {
         for (int32_t i = 0; i < SURFACE_FX_CAP; ++i)
             sSurfaceFx[i].age = sSurfaceFx[i].life;
@@ -7772,6 +7853,8 @@ static void DrawWorldRays(const float strength, const float seconds, const bool 
     const float spanZ = 22.0f;
     const float ox = sCamera.targetX - 0.5f * spanX;
     const float oz = sCamera.targetZ - 0.72f * spanZ;
+    const float anchoredX = sCamera.targetX + AtmoAnchorWrap(sAtmoAnchorX, (int32_t)spanX);
+    const float anchoredZ = sCamera.targetZ + AtmoAnchorWrap(sAtmoAnchorZ, (int32_t)spanZ);
     const uint8_t r = isMoon ? 165u : 255u;
     const uint8_t g = isMoon ? 195u : 235u;
     const uint8_t b = isMoon ? 255u : 176u;
@@ -7780,8 +7863,8 @@ static void DrawWorldRays(const float strength, const float seconds, const bool 
     for (int32_t i = 0; i < 10; ++i)
     {
         const float drift = 0.28f * sinf(seconds * 0.42f + kShafts[i].phase);
-        const float relX = kShafts[i].x + drift - sCamera.targetX;
-        const float relZ = kShafts[i].z - sCamera.targetZ;
+        const float relX = kShafts[i].x + drift - anchoredX;
+        const float relZ = kShafts[i].z - anchoredZ;
         const float lx = relX - floorf(relX / spanX) * spanX;
         const float lz = relZ - floorf(relZ / spanZ) * spanZ;
         const float edgeX = fminf(lx, spanX - lx) * 0.35f;
@@ -7874,7 +7957,7 @@ static void DrawWorldRays(const float strength, const float seconds, const bool 
 }
 
 // High-altitude cloud wisps for the 3D Fly cinematic (independent of DrawFogBanks terrain cache).
-static void DrawCloudWisps(const VoxelFlyFrame *const fly, const float seconds)
+static void DrawCloudWisps(const VoxelFlyFrame *const fly, const double clock)
 {
     const float strength = Voxel_ClampF(fly->wisps, 0.0f, 1.0f);
     if (!sFogTex || strength <= 0.005f)
@@ -7908,8 +7991,13 @@ static void DrawCloudWisps(const VoxelFlyFrame *const fly, const float seconds)
     for (uint32_t b = 0u; b < 2u; ++b)
     {
         const float wy = sCamera.ground + kBanks[b].height;
-        const float driftX = -fly->dirX * wispSpeed * kBanks[b].speedScale * seconds;
-        const float driftZ = -fly->dirZ * wispSpeed * kBanks[b].speedScale * seconds;
+        // Wrapped to the texture period: the UVs stay small (they are interpolated in half precision).
+        const double period = (double)kBanks[b].period;
+        const double speed = (double)(wispSpeed * kBanks[b].speedScale);
+        const float driftX = (float)AtmoWrapD(-(double)fly->dirX * speed * clock, period)
+                           + AtmoAnchorWrap(sAtmoAnchorX, (int32_t)kBanks[b].period);
+        const float driftZ = (float)AtmoWrapD(-(double)fly->dirZ * speed * clock, period)
+                           + AtmoAnchorWrap(sAtmoAnchorZ, (int32_t)kBanks[b].period);
         const float invP = 1.0f / kBanks[b].period;
         const float baseAlpha = strength * kBanks[b].alpha;
         uint32_t vOut = 0u;
@@ -7981,15 +8069,15 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
             uint8_t fr = underground ? 228 : 238;
             uint8_t fg = underground ? 236 : 244;
             uint8_t fb = underground ? 250 : 252;
-            DrawFogBanks(sFogBanks, fogDensity, fr, fg, fb, seconds);
+            DrawFogBanks(sFogBanks, fogDensity, fr, fg, fb, f->clock);
         }
         if (weather == VOXEL_WEATHER_SAND && weatherAmount > 0.005f)
         {
-            DrawFogBanks(sSandBanks, weatherAmount, 224, 190, 136, seconds);
+            DrawFogBanks(sSandBanks, weatherAmount, 224, 190, 136, f->clock);
         }
         if (f->fly.active && f->fly.frame.wisps > 0.005f)
         {
-            DrawCloudWisps(&f->fly.frame, seconds);
+            DrawCloudWisps(&f->fly.frame, f->clock);
         }
 
         // ---- PASS 5.6: 3D Sunlit Dust Motes & Night Fireflies ----
@@ -8038,7 +8126,7 @@ static void Pass_Atmosphere3D(const VoxelFrame *const f)
 
             if (wKind != NULL)
             {
-                DrawWeather(wKind, weatherAmount, bolt, seconds, f->hd2dPreset);
+                DrawWeather(wKind, weatherAmount, bolt, f->clock, f->hd2dPreset);
             }
         }
     }
@@ -8264,9 +8352,6 @@ static void ShaftPasses(const VoxelFrame *const f, ShaftPass out[2])
         out[k].on = out[k].amt > 0.005f;
 }
 
-// The shafts' animation clock and motion per pass (VoxelHd2dShader_ShaftLut / _Shafts).
-#define SHAFT_TIME(f) fmodf((f)->seconds, 62.83185f)
-#define SHAFT_MOTION(isDay) ((isDay) ? 1.0f : 0.45f)
 
 static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
 {
@@ -8407,7 +8492,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                 VoxelHd2dShader_BeginShaftLut((uint32_t)pass);
                 VitaPerf_GpuScene(VITA_PERF_GPU_BLOOM);
                 VoxelHd2dShader_ShaftLut((uint32_t)pass, shaftPasses[pass].path.dx, shaftPasses[pass].path.dy,
-                                         SHAFT_TIME(f), aspect, hd2dHigh ? 2.0f : 1.0f, SHAFT_MOTION(pass == 0));
+                                         &f->shaftClock[pass], aspect, hd2dHigh ? 2.0f : 1.0f);
                 sFrameDrawCalls++;
                 sFrameVertCount += 4u;
             }
@@ -8535,8 +8620,8 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                     glBlendFunc(GL_ONE, GL_ONE);
                     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
                     glDisableClientState(GL_VERTEX_ARRAY);
-                    VoxelHd2dShader_Shafts((uint32_t)pass, p.dx, p.dy, lenExp, SHAFT_TIME(f), aspect,
-                                           SHAFT_MOTION(isDay), col[0] * gain, col[1] * gain, col[2] * gain);
+                    VoxelHd2dShader_Shafts((uint32_t)pass, p.dx, p.dy, lenExp, &f->shaftClock[pass], aspect,
+                                           col[0] * gain, col[1] * gain, col[2] * gain);
                     glEnableClientState(GL_VERTEX_ARRAY);
                     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
                     sFrameDrawCalls++;
@@ -9478,17 +9563,17 @@ bool VoxelRenderer_RenderFrame(void)
     Frame_ReadAtmosphere(&f);
     {
         static bool sPauseFrozenActive = false;
-        static float sPauseFrozenSeconds = 0.0f;
+        static double sPauseFrozenClock = 0.0;
         if (freezeMenuHd2d)
         {
             if (!sPauseFrozenActive)
             {
-                sPauseFrozenSeconds = f.seconds;
+                sPauseFrozenClock = f.clock;
                 sPauseFrozenActive = true;
             }
             else
             {
-                f.seconds = sPauseFrozenSeconds;
+                f.clock = sPauseFrozenClock;
             }
         }
         else
@@ -9496,6 +9581,7 @@ bool VoxelRenderer_RenderFrame(void)
             sPauseFrozenActive = false;
         }
     }
+    Frame_DeriveClock(&f);
     Frame_SelectChunks(&f);
     if (f.fly.active && f.fly.frame.whiteout >= 0.99f)
     {

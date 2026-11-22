@@ -45,11 +45,11 @@ static GLint sBUScene = -1, sBUThresh = -1, sBUUvScale = -1, sBUGain = -1;
 typedef struct
 {
     GLuint prog;
-    GLint uvScale, aRange, shift, t;
+    GLint uvScale, aRange, shift, breath;
 } ShaftLutProgram;
 static ShaftLutProgram sShaftLut[SHAFT_PROGRAMS];   // 1 and 2 layers
 static GLuint sShaftProg = 0;                       // the full-screen pass
-static GLint sShaftLutTexU = -1, sShaftLutMap = -1, sShaftT = -1, sShaftLen = -1, sShaftCol = -1;
+static GLint sShaftLutTexU = -1, sShaftLutMap = -1, sShaftDust = -1, sShaftLen = -1, sShaftCol = -1;
 static GLuint sShaftLutTex[SHAFT_LUTS], sShaftLutFbo[SHAFT_LUTS];
 static bool sShaftReady = false;
 
@@ -180,23 +180,27 @@ static const char kBrightFs[] =
 
 // Procedural HD-2D light shafts at quarter-res (adapted from bravely-emerald kShaftFs), in two steps.
 // 1. The beam profile clamp(acc * 0.78) across the beams, one texel per sample of a: the original
-//    per-pixel code (same hashes, same half precision, so the same beams), stored over two 8-bit
+//    per-pixel code (same hashes, same half precision), stored over two 8-bit
 //    channels (value = r + g / 255) so the row keeps more than 8 bits through the bilinear read.
+//    The time terms come wrapped from the CPU (VoxelHd2dShaftClock): a layer's position is
+//    a * scale + fraction, small in magnitude, and its beam index (cell + base) mod SHAFT_CELLS,
+//    so the pattern repeats every SHAFT_CELLS cells and the wrap of the base is seamless.
 #define SHAFT_LUT_FS_HEAD \
     "precision mediump float;\n" \
     "uniform vec2 uARange;\n" \
-    "uniform vec2 uShift;\n" \
-    "uniform float uT;\n" \
+    "uniform vec4 uShift;\n" \
+    "uniform vec2 uBreath;\n" \
     "varying vec2 vT0;\n" \
     "float hh(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 437.5453); }\n" \
-    "float Layer(float pos, float fi, float speed, float weight) {\n" \
+    "float Layer(float pos, float base, float fi, float phase, float weight) {\n" \
     "    float cell = floor(pos);\n" \
     "    float fr = pos - cell;\n" \
-    "    float h1 = hh(vec2(cell, fi));\n" \
-    "    float h2 = hh(vec2(cell + 7.0, fi * 3.0));\n" \
+    "    float id = mod(cell + base, 16.0);\n" \
+    "    float h1 = hh(vec2(id, fi));\n" \
+    "    float h2 = hh(vec2(id + 7.0, fi * 3.0));\n" \
     "    float width = 0.06 + 0.14 * h2;\n" \
     "    float prof = step(0.40, h1) * (1.0 - smoothstep(0.0, width, abs(fr - (0.25 + 0.5 * h1))));\n" \
-    "    float breath = 0.55 + 0.45 * sin(uT * speed + h1 * 6.2831);\n" \
+    "    float breath = 0.55 + 0.45 * sin(phase + h1 * 6.2831);\n" \
     "    return prof * breath * weight;\n" \
     "}\n" \
     "void main() {\n" \
@@ -208,12 +212,13 @@ static const char kBrightFs[] =
     "    gl_FragColor = vec4(hi, (v - hi) * 255.0, 0.0, 1.0);\n" \
     "}\n"
 
-// Layer i: pos = a * (1.1 + 0.55 i) + shift_i, speed 0.40 + 0.21 i, weight 1 - 0.07 i.
+// Layer i: pos = a * (1.1 + 0.55 i) + shift_i, weight 1 - 0.07 i (speeds: VoxelHd2dShader_ShaftClockAt).
 static const char kShaftLutFs1[] = SHAFT_LUT_FS_HEAD
-    "    float acc = Layer(a * 1.1 + uShift.x, 0.0, 0.40, 1.0);\n"
+    "    float acc = Layer(a * 1.1 + uShift.x, uShift.z, 0.0, uBreath.x, 1.0);\n"
     SHAFT_LUT_FS_TAIL;
 static const char kShaftLutFs2[] = SHAFT_LUT_FS_HEAD
-    "    float acc = Layer(a * 1.1 + uShift.x, 0.0, 0.40, 1.0) + Layer(a * 1.65 + uShift.y, 1.0, 0.61, 0.93);\n"
+    "    float acc = Layer(a * 1.1 + uShift.x, uShift.z, 0.0, uBreath.x, 1.0)"
+    " + Layer(a * 1.65 + uShift.y, uShift.w, 1.0, uBreath.y, 0.93);\n"
     SHAFT_LUT_FS_TAIL;
 
 // 2. The full-screen pass: the profile read at a (linear in screen position, so a varying: a
@@ -233,7 +238,7 @@ static const char kShaftVs[] =
 static const char kShaftFs[] =
     "precision mediump float;\n"
     "uniform sampler2D uLut;\n"
-    "uniform float uT;\n"
+    "uniform float uDust;\n"
     "uniform float uLen;\n"
     "uniform vec3 uCol;\n"
     "varying vec2 vUv;\n"
@@ -245,7 +250,7 @@ static const char kShaftFs[] =
     "    float dust = 0.0;\n"
     "    if (beam > 0.0) {\n"
     "        float cellHash = hh(floor(vUv * vec2(120.0, 68.0)));\n"
-    "        float mote = 0.5 + 0.5 * sin(uT * 2.8 + cellHash * 6.2831);\n"
+    "        float mote = 0.5 + 0.5 * sin(uDust + cellHash * 6.2831);\n"
     "        dust = step(0.96, cellHash) * mote * beam * 1.1;\n"
     "    }\n"
     "    gl_FragColor = vec4(uCol * (beam + dust), 1.0);\n"
@@ -415,7 +420,7 @@ static bool InitShaftLut(ShaftLutProgram *const p, const char *const fsSrc)
     p->uvScale = glGetUniformLocation(p->prog, "uUvScale");   // kTapVs
     p->aRange = glGetUniformLocation(p->prog, "uARange");
     p->shift  = glGetUniformLocation(p->prog, "uShift");
-    p->t      = glGetUniformLocation(p->prog, "uT");
+    p->breath = glGetUniformLocation(p->prog, "uBreath");
     return true;
 }
 
@@ -494,7 +499,7 @@ bool VoxelHd2dShader_Init(void)
     {
         sShaftLutTexU = glGetUniformLocation(sShaftProg, "uLut");
         sShaftLutMap  = glGetUniformLocation(sShaftProg, "uLutMap");
-        sShaftT       = glGetUniformLocation(sShaftProg, "uT");
+        sShaftDust    = glGetUniformLocation(sShaftProg, "uDust");
         sShaftLen     = glGetUniformLocation(sShaftProg, "uLen");
         sShaftCol     = glGetUniformLocation(sShaftProg, "uCol");
         sShaftReady = true;
@@ -653,18 +658,44 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
     glUseProgram(0);
 }
 
-// The frame of one shafts pass: a = uv . perp over the screen (uv in 0..1), its range from the
-// corners, and the layers' shifts. False when the direction has no beams to draw.
+// The beam index period of SHAFT_LUT_FS_HEAD (mod(cell + base, 16.0)).
+#define SHAFT_CELLS 16.0
+#define SHAFT_TWO_PI 6.283185307179586
+
+// x reduced to [0, period), in double: the products of a long session's clock keep their
+// fractions, and the wrapped value fits half precision in the shader.
+static double ShaftWrap(const double x, const double period)
+{
+    return x - floor(x / period) * period;
+}
+
+void VoxelHd2dShader_ShaftClockAt(const double timeSec, const float motion, VoxelHd2dShaftClock *const out)
+{
+    const double t = timeSec * (double)motion;
+    // Layer i: pos = a * (1.1 + 0.55 i) + 1.73 i + t * sign_i * (0.035 + 0.016 i), sign +1 then -1;
+    // breathing speed 0.40 + 0.21 i; dust twinkle 2.8.
+    const double s0 = ShaftWrap(t * 0.035, SHAFT_CELLS);
+    const double s1 = ShaftWrap(1.73 - t * 0.051, SHAFT_CELLS);
+    const double base0 = floor(s0);
+    const double base1 = floor(s1);
+    out->shift[0] = (float)(s0 - base0);
+    out->shift[1] = (float)(s1 - base1);
+    out->shift[2] = (float)base0;
+    out->shift[3] = (float)base1;
+    out->breath[0] = (float)ShaftWrap(t * 0.40, SHAFT_TWO_PI);
+    out->breath[1] = (float)ShaftWrap(t * 0.61, SHAFT_TWO_PI);
+    out->dust = (float)ShaftWrap(t * 2.8, SHAFT_TWO_PI);
+}
+
+// The frame of one shafts pass: a = uv . perp over the screen (uv in 0..1) and its range from the
+// corners. False when the direction has no beams to draw.
 typedef struct
 {
     float perpX, perpY;
     float aMin, aMax;
-    float shift0, shift1;
-    float t;
 } ShaftFrame;
 
-static bool ShaftFrameOf(const float dirX, const float dirY, const float timeSec, const float aspect,
-                         const float motion, ShaftFrame *const out)
+static bool ShaftFrameOf(const float dirX, const float dirY, const float aspect, ShaftFrame *const out)
 {
     // normalize(uDir) of the original shader, once.
     const float dirLen = sqrtf(dirX * dirX + dirY * dirY);
@@ -682,13 +713,7 @@ static bool ShaftFrameOf(const float dirX, const float dirY, const float timeSec
         out->aMin = fminf(out->aMin, corners[k]);
         out->aMax = fmaxf(out->aMax, corners[k]);
     }
-    if (out->aMax - out->aMin < 1e-6f)
-        return false;
-    out->t = timeSec * motion;
-    // Layer i: pos = a * (1.1 + 0.55 i) + 1.73 i + t * sign_i * (0.035 + 0.016 i), sign +1 then -1.
-    out->shift0 = out->t * 0.035f;
-    out->shift1 = 1.73f - out->t * 0.051f;
-    return true;
+    return out->aMax - out->aMin >= 1e-6f;
 }
 
 void VoxelHd2dShader_BeginShaftLut(const uint32_t pass)
@@ -699,30 +724,30 @@ void VoxelHd2dShader_BeginShaftLut(const uint32_t pass)
     glViewport(0, 0, SHAFT_LUT_W, SHAFT_LUT_H);
 }
 
-void VoxelHd2dShader_ShaftLut(const uint32_t pass, const float dirX, const float dirY, const float timeSec,
-                              const float aspect, const float layers, const float motion)
+void VoxelHd2dShader_ShaftLut(const uint32_t pass, const float dirX, const float dirY,
+                              const VoxelHd2dShaftClock *const clock, const float aspect, const float layers)
 {
     ShaftFrame fr;
-    if (!sShaftReady || pass >= SHAFT_LUTS || !ShaftFrameOf(dirX, dirY, timeSec, aspect, motion, &fr))
+    if (!sShaftReady || pass >= SHAFT_LUTS || clock == NULL || !ShaftFrameOf(dirX, dirY, aspect, &fr))
         return;
     const ShaftLutProgram *const p = &sShaftLut[(layers >= 1.5f) ? 1 : 0];
 
     // The quad's x runs across a's range: texel i holds a at (i + 0.5) / W of it.
     glUseProgram(p->prog);
     glUniform2f(p->aRange, fr.aMin, fr.aMax);
-    glUniform2f(p->shift, fr.shift0, fr.shift1);
-    glUniform1f(p->t, fr.t);
+    glUniform4fv(p->shift, 1, clock->shift);
+    glUniform2fv(p->breath, 1, clock->breath);
     glUniform2f(p->uvScale, 1.0f, 1.0f);   // kTapVs: vT0 = aUv
     DrawQuad();
     glUseProgram(0);
 }
 
 void VoxelHd2dShader_Shafts(const uint32_t pass, const float dirX, const float dirY, const float lenExp,
-                            const float timeSec, const float aspect, const float motion,
+                            const VoxelHd2dShaftClock *const clock, const float aspect,
                             const float colR, const float colG, const float colB)
 {
     ShaftFrame fr;
-    if (!sShaftReady || pass >= SHAFT_LUTS || !ShaftFrameOf(dirX, dirY, timeSec, aspect, motion, &fr))
+    if (!sShaftReady || pass >= SHAFT_LUTS || clock == NULL || !ShaftFrameOf(dirX, dirY, aspect, &fr))
         return;
     // The profile's texture coordinate: (a - aMin) / (aMax - aMin), a = uv . perp.
     const float inv = 1.0f / (fr.aMax - fr.aMin);
@@ -732,7 +757,7 @@ void VoxelHd2dShader_Shafts(const uint32_t pass, const float dirX, const float d
     glBindTexture(GL_TEXTURE_2D, sShaftLutTex[pass]);
     glUniform1i(sShaftLutTexU, 0);
     glUniform3f(sShaftLutMap, fr.perpX * inv, fr.perpY * inv, -fr.aMin * inv);
-    glUniform1f(sShaftT, fr.t);
+    glUniform1f(sShaftDust, clock->dust);
     glUniform1f(sShaftLen, lenExp);
     glUniform3f(sShaftCol, colR, colG, colB);
     DrawQuad();

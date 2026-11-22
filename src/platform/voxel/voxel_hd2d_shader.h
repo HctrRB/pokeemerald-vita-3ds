@@ -35,12 +35,23 @@ void VoxelHd2dShader_BrightPass(GLuint sceneTex, float uMax, float vMax, float t
 // bloom target is bound: VoxelHd2dShader_BeginShaftLut binds the pass's own small target and
 // VoxelHd2dShader_ShaftLut evaluates its beam profile into it. Then, in the 240x136 bloom target,
 // VoxelHd2dShader_Shafts draws the pass over the screen (additive blending is the caller's). The
-// direction, time, aspect and motion must be the same in both calls.
+// direction, clock and aspect must be the same in both calls.
+//
+// The shafts' animation at one moment, wrapped on the CPU: the shaders run in half precision, so
+// they never see the raw clock. Filled once per frame and pass by VoxelHd2dShader_ShaftClockAt.
+typedef struct
+{
+    float shift[4];     // the layers' shifts: fractions (0..1), then whole-cell bases (0..15)
+    float breath[2];    // the layers' breathing phases, radians
+    float dust;         // the dust motes' twinkle phase, radians
+} VoxelHd2dShaftClock;
+
+void VoxelHd2dShader_ShaftClockAt(double timeSec, float motion, VoxelHd2dShaftClock *out);
 void VoxelHd2dShader_BeginShaftLut(uint32_t pass);
-void VoxelHd2dShader_ShaftLut(uint32_t pass, float dirX, float dirY, float timeSec,
-                              float aspect, float layers, float motion);
-void VoxelHd2dShader_Shafts(uint32_t pass, float dirX, float dirY, float lenExp, float timeSec,
-                            float aspect, float motion,
+void VoxelHd2dShader_ShaftLut(uint32_t pass, float dirX, float dirY, const VoxelHd2dShaftClock *clock,
+                              float aspect, float layers);
+void VoxelHd2dShader_Shafts(uint32_t pass, float dirX, float dirY, float lenExp,
+                            const VoxelHd2dShaftClock *clock, float aspect,
                             float colR, float colG, float colB);
 
 // Runs the single-pass 960x544 Uber-Composite (DoF + Battle Dim + Bloom + Reference Split-Tone/S-Curve + Vignette).
