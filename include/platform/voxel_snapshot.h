@@ -18,6 +18,10 @@ typedef struct {
     u8 extPalettes[MAX_SPRITES];        // GetSpriteExtPalette, 0xFF without one
     u16 tileTags[MAX_SPRITES];          // GetSpriteTileTagByTileStart of affine sprites, else 0xFFFF
     u64 visibleWild;                    // bit n: sprite n is a visible wild Pokemon
+    // VisibleWild_SpriteTile of each visible wild Pokemon's sprite (map tile without MAP_OFFSET,
+    // 1/16 tile): the 3D view places it there, not from the player's picture
+    s16 wildX16[MAX_SPRITES];
+    s16 wildY16[MAX_SPRITES];
     u64 weatherSprites;                 // bit n: sprite n is drawn by the weather (CtrSprite_IsVoxelWeather)
     u64 cloudSprites;                   // bit n: sprite n is a cloud (CtrSprite_IsVoxelCloud)
     u64 healSprites;                    // bit n: sprite n is a ball of the Pokecenter's healing machine

@@ -233,6 +233,7 @@ static float ObjectDeck(const struct ObjectEvent *obj, float worldX, float world
 bool8 PortDoor_Get(s16 *x, s16 *y, u8 *width, const u8 **tiles, const u8 **palettes);
 bool8 PortDoor_GetTwin(s16 *x, s16 *y);      /* field_door.c */
 bool8 VisibleWild_IsSprite(u8 spriteId);     /* wild_encounter.c (weak default below) */
+bool8 VisibleWild_SpriteTile(u8 spriteId, s16 *x16, s16 *y16);   /* wild_encounter.c (weak default below) */
 
 /* Core 1: the entities of the game frame being captured (GameFrame_CaptureAndPublish). */
 void VoxelEntities_Capture(VoxelEntitySnapshot *snap, const VoxelEntitySnapshot *previous, bool8 keepPrevious)
@@ -261,7 +262,8 @@ void VoxelEntities_Capture(VoxelEntitySnapshot *snap, const VoxelEntitySnapshot 
         snap->extPalettes[id] = sprite->inUse ? GetSpriteExtPalette(sprite) : 0xFF;
         snap->tileTags[id] = sprite->inUse && (sprite->oam.affineMode & ST_OAM_AFFINE_ON_MASK)
                            ? GetSpriteTileTagByTileStart(sprite->sheetTileStart) : 0xFFFF;
-        if (sprite->inUse && VisibleWild_IsSprite((u8)id))
+        if (sprite->inUse && VisibleWild_IsSprite((u8)id)
+         && VisibleWild_SpriteTile((u8)id, &snap->wildX16[id], &snap->wildY16[id]))
             snap->visibleWild |= (u64)1 << id;
         // The weather keeps its own sprites' addresses: told apart here, where they are gSprites'
         if (sprite->inUse && CtrSprite_IsVoxelWeather(sprite))
@@ -1534,6 +1536,8 @@ typedef struct
     bool cloud;              /* a cloud, laid on the water (EmitCloud) */
     bool gate;               /* a rotating gate, turned on the ground (EmitTurnedDecal) */
     bool heal;               /* a ball of the Pokecenter's healing machine (VOXEL_HEAL_BALL_LIFT) */
+    bool wild;               /* a visible wild Pokemon, standing at (wildX, wildZ) */
+    float wildX, wildZ;      /* the middle of its tile, world */
     int32_t shiftX, shiftY;  /* takes a screen sprite's x, y to the object sprites' frame (a heal ball) */
 } VoxelEffectCard;
 
@@ -1574,6 +1578,14 @@ static bool IsDecal(const struct SpriteTemplate *template)
 bool8 __attribute__((weak)) VisibleWild_IsSprite(u8 spriteId)
 {
     (void)spriteId;
+    return FALSE;
+}
+
+bool8 __attribute__((weak)) VisibleWild_SpriteTile(u8 spriteId, s16 *x16, s16 *y16)
+{
+    (void)spriteId;
+    (void)x16;
+    (void)y16;
     return FALSE;
 }
 
@@ -1891,8 +1903,14 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
             effect->shiftX = heal ? -snap->spriteCoordOffsetX : 0;
             effect->shiftY = heal ? -snap->spriteCoordOffsetY : 0;
             /* A visible wild Pokemon stands on its own tile, never on an object:
-             * a tile south of the player, owned by it, it sank under the ground. */
-            effect->owner = effect->decal || effect->tile || effect->heal || SnapIsVisibleWild(id)
+             * a tile south of the player, owned by it, it sank under the ground.
+             * Placed from that tile, not from the player's picture: Fly carries
+             * the player on the screen and warps hide it, and every wild
+             * Pokemon placed from it was dropped until the player came back. */
+            effect->wild = SnapIsVisibleWild(id);
+            effect->wildX = (float)snap->wildX16[id] / VOXEL_PIXELS_PER_TILE + (float)snapOffX + 0.5f;
+            effect->wildZ = (float)snap->wildY16[id] / VOXEL_PIXELS_PER_TILE + (float)snapOffY + 0.5f;
+            effect->owner = effect->decal || effect->tile || effect->heal || effect->wild
                           ? -1 : EffectOwner(sprite, objects);
             effect->front = effect->owner < 0 || DrawnOver(sprite, objects[effect->owner].sprite);
 
@@ -1918,6 +1936,11 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
                     continue;
                 inRange = fabsf(cx - camera->targetX) <= VOXEL_EFFECT_RANGE
                        && fabsf(cz - camera->targetZ) <= VOXEL_EFFECT_RANGE;
+            }
+            else if (effect->wild)
+            {
+                inRange = fabsf(effect->wildX - camera->targetX) <= VOXEL_EFFECT_RANGE
+                       && fabsf(effect->wildZ - camera->targetZ) <= VOXEL_EFFECT_RANGE;
             }
             else if (effect->owner >= 0 && !effect->surf)
             {
@@ -2095,6 +2118,24 @@ uint32_t VoxelEntities_Emit(VoxelBuilder *builder, uint16_t *atlas, const VoxelC
             if (fabsf(cx - camera->targetX) > 24.0f || fabsf(cz - camera->targetZ) > 24.0f)
                 continue;
             EmitDecal(builder, &sSlots[effect->slot], effect->slot, cx, cz, 0.0f, shade);
+            continue;
+        }
+        if (effect->wild)
+        {
+            /* The player's light and deck, as when it was placed from the player;
+             * with the player off the map (Fly, a warp), the last ones seen. */
+            static float sWildShade = 1.0f;
+
+            reference = snap->playerObjectEventId < OBJECT_EVENTS_COUNT
+                      ? &objects[snap->playerObjectEventId] : NULL;
+            if (reference != NULL && reference->drawn)
+                sWildShade = reference->shade;
+            if (fabsf(effect->wildX - camera->targetX) > 24.0f || fabsf(effect->wildZ - camera->targetZ) > 24.0f)
+                continue;
+            EmitBillboard(builder, &sSlots[effect->slot], effect->slot,
+                          effect->wildX + sprite->x2 / VOXEL_PIXELS_PER_TILE, effect->wildZ, 0.0f, 0.0f,
+                          -sprite->y2 * pixel, reference != NULL && reference->drawn ? reference->deck : 0.0f,
+                          rightX, rightZ, stretch, sWildShade, SpriteScale(sprite), false);
             continue;
         }
         if (effect->owner >= 0)

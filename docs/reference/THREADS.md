@@ -77,7 +77,8 @@ The fix is a boundary, not a patch:
   `GameFrame` (`GameFrame_CaptureAndPublish`): each module fills its own part -
   `VoxelWorld_CaptureField` (map, player tile, layout swaps, weather, fade),
   `VoxelBattle_Capture` (flags, HP, the move's type, shadows), `VoxelEntities_Capture` (objects,
-  every sprite by id with its palette, tile tag, wild / weather / cloud bits, doors),
+  every sprite by id with its palette, tile tag, wild / weather / cloud bits, doors, and the
+  tile of each visible wild Pokémon, which the 3D view places it on, not from the player),
   `CaptureOverlay` and `VitaStage_CaptureFrame` (what the 2D layer shows, palettes). With the 3D
   field off only the 2D frame's part is captured.
 - **One pin per rendered frame.** `MainThread_Run` pins the latest frame at the top of each

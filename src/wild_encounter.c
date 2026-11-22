@@ -1640,7 +1640,12 @@ static void VisibleStartBattle(struct VisibleWild *v)
     BattleSetup_StartWildBattle();
 }
 
-static void VisibleMove(struct VisibleWild *v, s16 px, s16 py, bool8 inWater)
+/*
+ * One wandering step. `playerStill`: the player stands on (px, py), not between tiles. A
+ * walking player holds both the tile it left (ppx, ppy) and the one it is entering, and is
+ * never marked to be attacked: the mark would be answered after the step, tiles away.
+ */
+static void VisibleMove(struct VisibleWild *v, s16 px, s16 py, s16 ppx, s16 ppy, bool8 inWater, bool8 playerStill)
 {
     static const s8 sSteps[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
     u32 dir;
@@ -1665,10 +1670,17 @@ static void VisibleMove(struct VisibleWild *v, s16 px, s16 py, bool8 inWater)
     ty = v->y + sSteps[dir][1];
     if (tx == px && ty == py)
     {
-        if (v->water == inWater)
+        if (!playerStill)
+            v->idle = 30;
+        else if (v->water == inWater)
             v->idle = 0xFFFF;
         else
             v->idle = 60;
+        return;
+    }
+    if (!playerStill && tx == ppx && ty == ppy)
+    {
+        v->idle = 30;
         return;
     }
     if (!VisibleTileFits(tx, ty, v->water) || VisibleAt(tx, ty, v) != NULL)
@@ -1719,6 +1731,28 @@ bool8 VisibleWild_IsSprite(u8 spriteId)
 {
     return spriteId < MAX_SPRITES && gSprites[spriteId].inUse
         && gSprites[spriteId].data[7] == VW_MAGIC;
+}
+
+/* Where VisiblePlace stands sprite `spriteId`, on the map without MAP_OFFSET, in 1/16 tile.
+ * The 3D view places it from this instead of from the player's picture, which is not on the
+ * map while Fly carries the player or a warp hides it. */
+bool8 VisibleWild_SpriteTile(u8 spriteId, s16 *x16, s16 *y16)
+{
+    u32 i;
+
+    for (i = 0; i < VW_POOL_MAX; i++)
+    {
+        const struct VisibleWild *v = &sVisible[i];
+        s16 step;
+
+        if (!v->active || v->spriteId != spriteId)
+            continue;
+        step = v->progress / 2;
+        *x16 = (v->x - MAP_OFFSET) * 16 + v->dx * step;
+        *y16 = (v->y - MAP_OFFSET) * 16 + v->dy * step;
+        return TRUE;
+    }
+    return FALSE;
 }
 
 static void VisibleStreamSprites(s16 px, s16 py, u32 most, bool8 settled)
@@ -1808,7 +1842,12 @@ static void VisibleStreamSprites(s16 px, s16 py, u32 most, bool8 settled)
         sVisibleFromWarp = FALSE;
 }
 
-static void VisibleUpdateActive(s16 px, s16 py, bool8 inWater, bool8 idle)
+/*
+ * `live`: no script or field lock - they wander, also while the player walks (Emerald 3DS froze
+ * them then). `idle`: live with the player standing still - only then do they attack, at once,
+ * never later. (ppx, ppy): the tile the player is leaving.
+ */
+static void VisibleUpdateActive(s16 px, s16 py, s16 ppx, s16 ppy, bool8 inWater, bool8 live, bool8 idle)
 {
     u32 i;
 
@@ -1834,12 +1873,13 @@ static void VisibleUpdateActive(s16 px, s16 py, bool8 inWater, bool8 idle)
                 continue;
             }
         }
-        else if (idle)
+        else if (live)
         {
-            bool8 touched = v->idle == 0xFFFF
-                || (v->x == px && v->y == py && !v->progress);
+            /* The mark to attack (VisibleMove) stands only beside a player still standing there. */
+            bool8 marked = v->idle == 0xFFFF && idle && VW_ABS(v->x - px) + VW_ABS(v->y - py) == 1;
+            bool8 touched = marked || (idle && v->x == px && v->y == py && !v->progress);
 
-            if (touched && v->water == inWater && (v->idle != 0xFFFF || IsWildLevelAllowedByRepel(v->level)))
+            if (touched && v->water == inWater && (!marked || IsWildLevelAllowedByRepel(v->level)))
             {
                 VisibleStartBattle(v);
                 return;
@@ -1847,7 +1887,7 @@ static void VisibleUpdateActive(s16 px, s16 py, bool8 inWater, bool8 idle)
             if (v->idle == 0xFFFF)
                 v->idle = 60;
             if (v->x >= 0 && v->x < gBackupMapLayout.width && v->y >= 0 && v->y < gBackupMapLayout.height)
-                VisibleMove(v, px, py, inWater);
+                VisibleMove(v, px, py, ppx, ppy, inWater, idle);
             if (v->shiny && ++v->sparkle >= 40)
             {
                 v->sparkle = 0;
@@ -1937,7 +1977,8 @@ void VisibleWild_Update(void)
         sVisibleRetry--;
 
     VisibleStreamSprites(player->currentCoords.x, player->currentCoords.y, most, settled);
-    VisibleUpdateActive(player->currentCoords.x, player->currentCoords.y, inWater, idle);
+    VisibleUpdateActive(player->currentCoords.x, player->currentCoords.y,
+                        player->previousCoords.x, player->previousCoords.y, inWater, canSpawn, idle);
     VisibleRespawnTick(headerId, canSpawn, settled, percent);
 }
 

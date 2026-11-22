@@ -41,5 +41,6 @@ void VisibleWild_Update(void);
 void VisibleWild_CameraShift(s16 dx, s16 dy);
 bool8 VisibleWild_StepOnto(void);
 bool8 VisibleWild_IsSprite(u8 spriteId);
+bool8 VisibleWild_SpriteTile(u8 spriteId, s16 *x16, s16 *y16);
 
 #endif // GUARD_WILD_ENCOUNTER_H
