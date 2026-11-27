@@ -40,7 +40,13 @@ did (VBlank, DMA, timers, sound mixing, flash saves, the real-time clock).
 **The game side / platform side split** is made by `CMakeLists.txt` (`PLATFORM_SIDE_REGEX`):
 every `src/**/*.c` that does not match it is game side, including `src/platform/bios.c`, `dma.c`
 and `cgb_audio.c`. The game side is linked first into `game_combined.o`, whose `.data`/`.bss`
-become `gamedata`/`gamebss` so that `vita_reset.c` can restore a power-on copy of them. The same
+become `gamedata`/`gamebss` so that `vita_reset.c` can restore a power-on copy of them. That
+restore puts the game side's pointers back to their boot values without freeing what they point
+to, so game-side code that keeps heap memory frees it in `SoftReset` first
+(`FollowerMon_ReleaseAll`). The ROM tables the game reads (`gBattleMoves`, `gItems`,
+`gSpeciesNames`, `gSpeciesInfo`) are their const definitions (`gBattleMoves_ROM` and the like)
+under the pret names, never copies in `gamebss`: at the end of the RW segment an out-of-range
+index would fault. The same
 split is what `tools/core_boundary` checks: Core 0 and Core 2 may not reach the game side's code
 or writable state except as [THREADS.md](THREADS.md) allows.
 
@@ -55,7 +61,8 @@ only time Core 0 may set up game state):
    `ModManager_Init`.
 2. Reads `pokeemerald.cfg` and the save file of the chosen slot.
 3. Initialises vitaGL with `vglInitWithCustomSizes` at 960×544 (pool sizes: the call in
-   `MainThread_Boot`).
+   `MainThread_Boot`). If it fails, an SDL message box says why (`GraphicsFailureText`: missing
+   `libshacccg.suprx`, or not enough memory) and the boot stops.
 4. `VoxelRenderer_Init()`, the platform settings, the GBA frame textures and `Ui_Init()` decode the
    heavy assets once.
 5. Starts audio (48 kHz stereo, `cgb_audio_init` and the SDL device).
