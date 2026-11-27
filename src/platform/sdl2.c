@@ -449,6 +449,29 @@ static void RenderGameTexture(void)
  *  - MainThread_Run: Core 0's steady state, alongside the game on Core 1. It sees the game
  *    only through what Core 1 publishes; tools/core_boundary checks every path from it.
  */
+#ifdef PLATFORM_VITA
+static bool FileExists(const char *path)
+{
+    FILE *const f = fopen(path, "rb");
+    if (f == NULL)
+        return false;
+    fclose(f);
+    return true;
+}
+
+// Why vitaGL did not start, for the player. Only read after it failed, so a path it finds by
+// other means never stops a boot that would have worked. The two paths are the ones vitashark
+// and vitaGL try.
+static const char *GraphicsFailureText(void)
+{
+    if (!FileExists("ur0:data/libshacccg.suprx") && !FileExists("ur0:data/external/libshacccg.suprx"))
+        return "The graphics could not start: the shader compiler ur0:data/libshacccg.suprx is "
+               "missing.\n\nRun ShaRKBR33D once to extract it, then start the game again.";
+    return "The graphics could not start: not enough video memory.\n\nDisable overclock, overlay "
+           "or memory plugins in ur0:tai/config.txt, reboot the console and start the game again.";
+}
+#endif
+
 static bool MainThread_Boot(void)
 {
     VitaPlatform_Init();
@@ -485,6 +508,10 @@ static bool MainThread_Boot(void)
     if (!vglInitWithCustomSizes(8 * 1024 * 1024, 960, 544, 64 * 1024 * 1024, 88 * 1024 * 1024, 8 * 1024 * 1024, 0, SCE_GXM_MULTISAMPLE_NONE))
     {
         VITA_LOG("vglInitWithCustomSizes failed!\n");
+        // Going on crashes in SceGxm at the first GL call (issue #10): say why and quit instead.
+        // SDL's Vita message box brings up its own minimal GXM for the dialog.
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Pokemon Emerald", GraphicsFailureText(), NULL);
+        return false;
     }
     else
     {
