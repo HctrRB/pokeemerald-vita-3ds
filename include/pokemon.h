@@ -376,12 +376,14 @@ extern u8 gEnemyPartyCount;
 extern struct Pokemon gEnemyParty[PARTY_SIZE];
 extern struct SpriteTemplate gMultiuseSpriteTemplate;
 
-extern struct BattleMove gBattleMoves[];
 extern const struct BattleMove gBattleMoves_ROM[];
+// The game reads the const ROM table under its pret name (an asm label, no copy): out-of-range
+// indexes then land in mapped memory as on the GBA, not past the end of the RW segment.
+extern const struct BattleMove gBattleMoves[] __asm__("gBattleMoves_ROM");
 extern const u8 gFacilityClassToPicIndex[];
 extern const u8 gFacilityClassToTrainerClass[];
-extern struct SpeciesInfo gSpeciesInfo[NUM_SPECIES];
 extern const struct SpeciesInfo gSpeciesInfo_ROM[NUM_SPECIES];
+extern const struct SpeciesInfo gSpeciesInfo[NUM_SPECIES] __asm__("gSpeciesInfo_ROM"); // see gBattleMoves
 extern const u8 *const gItemEffectTable[];
 extern const u32 gExperienceTables[][MAX_LEVEL + 1];
 extern const u16 *const gLevelUpLearnsets[];

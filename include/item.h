@@ -31,8 +31,10 @@ struct BagPocket
     u8 capacity;
 };
 
-extern struct Item gItems[ITEMS_COUNT];
 extern const struct Item gItems_ROM[ITEMS_COUNT];
+// The game reads the const ROM table under its pret name (an asm label, no copy): out-of-range
+// indexes then land in mapped memory as on the GBA, not past the end of the RW segment.
+extern const struct Item gItems[ITEMS_COUNT] __asm__("gItems_ROM");
 extern struct BagPocket gBagPockets[];
 
 void ApplyNewEncryptionKeyToBagItems(u32 newKey);

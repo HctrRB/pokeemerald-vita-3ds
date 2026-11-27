@@ -136,8 +136,10 @@ extern const struct CompressedSpriteSheet gMonFrontPicTable[];
 
 extern const struct Trainer gTrainers[];
 extern const u8 gTrainerClassNames[][13];
-extern u8 gSpeciesNames[][POKEMON_NAME_LENGTH + 1];
 extern const u8 gSpeciesNames_ROM[][POKEMON_NAME_LENGTH + 1];
+// The game reads the const ROM table under its pret name (an asm label, no copy): out-of-range
+// indexes then land in mapped memory as on the GBA, not past the end of the RW segment.
+extern const u8 gSpeciesNames[][POKEMON_NAME_LENGTH + 1] __asm__("gSpeciesNames_ROM");
 extern const u8 gMoveNames[MOVES_COUNT][MOVE_NAME_LENGTH + 1];
 
 #endif // GUARD_DATA_H

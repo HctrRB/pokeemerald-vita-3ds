@@ -16,11 +16,6 @@
 #include "malloc.h"
 
 struct WildPokemonHeader *gWildMonHeaders = NULL;
-extern const u8 gSpeciesNames_ROM[][POKEMON_NAME_LENGTH + 1];
-u8 gSpeciesNames[NUM_SPECIES][POKEMON_NAME_LENGTH + 1];
-struct SpeciesInfo gSpeciesInfo[NUM_SPECIES];
-struct BattleMove gBattleMoves[MOVES_COUNT];
-struct Item gItems[ITEMS_COUNT];
 
 static bool sRAMShadowsInitialized = false;
 
@@ -36,17 +31,18 @@ static void InitRAMShadows(void) {
     numWildHeaders++; // Include the terminator
 
     gWildMonHeaders = malloc(numWildHeaders * sizeof(struct WildPokemonHeader));
+    // Nothing writes the table yet: without the copy, the game reads the ROM one unchanged.
+    if (gWildMonHeaders == NULL)
+    {
+        gWildMonHeaders = (struct WildPokemonHeader *)gWildMonHeaders_ROM;
+        return;
+    }
     memcpy(gWildMonHeaders, gWildMonHeaders_ROM, numWildHeaders * sizeof(struct WildPokemonHeader));
-
-    memcpy(gSpeciesInfo, gSpeciesInfo_ROM, sizeof(gSpeciesInfo));
-    memcpy(gSpeciesNames, gSpeciesNames_ROM, sizeof(gSpeciesNames));
-    memcpy(gBattleMoves, gBattleMoves_ROM, sizeof(gBattleMoves));
-    memcpy(gItems, gItems_ROM, sizeof(gItems));
 }
 
-// Initializes mutable RAM shadow copies of the ROM lookup tables (wild encounter headers,
-// species info, names, moves, and items) at boot for runtime features such as time-of-day
-// encounters. Pass-through hooks preserve vanilla lookups without dynamic JSON loading.
+// Initializes the mutable RAM copy of the wild encounter headers at boot. Species info, names,
+// moves and items are read from their const ROM tables (see gBattleMoves in pokemon.h).
+// Pass-through hooks preserve vanilla lookups without dynamic JSON loading.
 void ModManager_Init(void) { InitRAMShadows(); }
 const struct Trainer *ModManager_GetTrainer(u16 trainerId) { return &gTrainers[trainerId]; }
 bool8 ModManager_GetTrainerFrontPicOverride(u16 trainerPicId, void *destBuffer) { (void)trainerPicId; (void)destBuffer; return FALSE; }
