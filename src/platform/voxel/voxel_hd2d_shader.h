@@ -50,9 +50,38 @@ void VoxelHd2dShader_ShaftClockAt(double timeSec, float motion, VoxelHd2dShaftCl
 void VoxelHd2dShader_BeginShaftLut(uint32_t pass);
 void VoxelHd2dShader_ShaftLut(uint32_t pass, float dirX, float dirY, const VoxelHd2dShaftClock *clock,
                               float aspect, float layers);
+
+// Where VoxelHd2dShader_Shafts reads a pass's profile: the texture, the scale from the profile's
+// SHAFT_LUT_W texels to its texture coordinate, and the row's v.
+typedef struct
+{
+    GLuint tex;
+    float uScale;
+    float v;
+} VoxelHd2dShaftSource;
+
+// The profile in the pass's own target (after VoxelHd2dShader_BeginShaftLut + _ShaftLut).
+void VoxelHd2dShader_ShaftSourceOwn(uint32_t pass, VoxelHd2dShaftSource *out);
+// HIGH: the profile drawn as 2 rows of a band of the bound target (tex, texW x texH, band from row
+// bandY, 32 rows for both passes), without a target of its own; out says where it was drawn
+// (tex 0 when nothing was). Sets the viewport.
+void VoxelHd2dShader_ShaftLutBand(uint32_t pass, float dirX, float dirY, const VoxelHd2dShaftClock *clock,
+                                  float aspect, float layers, GLuint tex, int32_t texW, int32_t texH,
+                                  int32_t bandY, VoxelHd2dShaftSource *out);
 void VoxelHd2dShader_Shafts(uint32_t pass, float dirX, float dirY, float lenExp,
                             const VoxelHd2dShaftClock *clock, float aspect,
-                            float colR, float colG, float colB);
+                            float colR, float colG, float colB, const VoxelHd2dShaftSource *src);
+
+// HIGH's bloom source as a band of a larger half-resolution target (VoxelHd2dShader_BandReady):
+// the bright pass read straight from the full-resolution scene (4 bilinear taps one texel around
+// each quarter-size pixel: the 4x4 box the downsample gave, then the overlay), and the 8-tap bloom
+// blur over that band (origin and size in texture coordinates; texel = one texel of tex), its taps
+// clamped to the band as CLAMP_TO_EDGE did on the bloom's own target.
+bool VoxelHd2dShader_BandReady(void);
+void VoxelHd2dShader_BrightPassBox4(GLuint sceneTex, float uMax, float vMax, float texelX, float texelY,
+                                    const float overlay[4], float threshold, float gain);
+bool VoxelHd2dShader_Kawase8Band(GLuint tex, float u0, float v0, float uSize, float vSize,
+                                 float texelX, float texelY);
 
 // Runs the single-pass 960x544 Uber-Composite (DoF + Battle Dim + Bloom + Reference Split-Tone/S-Curve + Vignette).
 void VoxelHd2dShader_Composite(GLuint sceneTex, GLuint blurTex, GLuint bloomTex,

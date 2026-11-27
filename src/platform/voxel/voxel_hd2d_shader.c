@@ -19,6 +19,7 @@ static bool sShaderReady = false;
 // The unit quad every post pass draws (DrawQuad): position and texture coordinate alike.
 static const float kQuad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 static GLuint sQuadVbo = 0;
+static void DrawQuad(void);
 
 // 4-tap box: downsample fallback, wide blur and the Kawase passes.
 static GLuint sCopyProg = 0;
@@ -58,7 +59,7 @@ typedef struct
 } ShaftLutProgram;
 static ShaftLutProgram sShaftLut[SHAFT_PROGRAMS];   // 1 and 2 layers
 static GLuint sShaftProg = 0;                       // the full-screen pass
-static GLint sShaftLutTexU = -1, sShaftLutMap = -1, sShaftDust = -1, sShaftLen = -1, sShaftCol = -1;
+static GLint sShaftLutTexU = -1, sShaftLutMap = -1, sShaftLutV = -1, sShaftDust = -1, sShaftLen = -1, sShaftCol = -1;
 static GLuint sShaftLutTex[SHAFT_LUTS], sShaftLutFbo[SHAFT_LUTS];
 static bool sShaftReady = false;
 
@@ -72,6 +73,90 @@ typedef struct
     GLint tint0, tint1, curve;
 } CompositeProgram;
 static CompositeProgram sCompField, sCompBattle;
+
+// HIGH's bloom source drawn as a band of the half-resolution target (VoxelHd2dShader_BrightPassBox4,
+// VoxelHd2dShader_Kawase8Band).
+static GLuint sBright4Prog = 0;
+static GLint sB4Scene = -1, sB4UvScale = -1, sB4Texel = -1, sB4Overlay = -1, sB4Thresh = -1, sB4Gain = -1;
+static GLuint sKawaseBandProg = 0;
+static GLint sKBScene = -1, sKBOrigin = -1, sKBUvScale = -1, sKBInner = -1, sKBOuter = -1, sKBClamp = -1;
+static bool sBandReady = false;
+
+// The bright pass read straight from the full-resolution scene: at a quarter-size pixel, the 4
+// bilinear taps one texel around its centre are the 4x4 box it got through the downsample, then
+// the overlay the downsample applies and the same luminance ramp as kBrightFs.
+static const char kBright4Fs[] =
+    "precision mediump float;\n"
+    "uniform sampler2D uScene;\n"
+    "uniform vec4 uOverlay;\n"
+    "uniform float uThreshold;\n"
+    "uniform float uGain;\n"
+    "varying vec2 vT0;\n"
+    "varying vec2 vT1;\n"
+    "varying vec2 vT2;\n"
+    "varying vec2 vT3;\n"
+    "void main() {\n"
+    "    vec3 c = texture2D(uScene, vT0).rgb + texture2D(uScene, vT1).rgb;\n"
+    "    c += texture2D(uScene, vT2).rgb + texture2D(uScene, vT3).rgb;\n"
+    "    c = mix(c * 0.25, uOverlay.rgb, uOverlay.a);\n"
+    "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n"
+    "    float k = clamp((l - uThreshold) / max(1.0 - uThreshold, 0.05), 0.0, 1.0);\n"
+    "    gl_FragColor = vec4(c * (k * (0.75 + 0.25 * k) * uGain), 1.0);\n"
+    "}\n";
+
+// The 8-tap bloom blur of kKawaseFs over a band of a larger texture. Each tap is clamped to the
+// band's texel centres, which is what CLAMP_TO_EDGE did at the edges of the bloom's own target.
+static const char kKawaseBandVs[] =
+    "attribute vec2 aPos;\n"
+    "attribute vec2 aUv;\n"
+    "uniform vec2 uOrigin;\n"
+    "uniform vec2 uUvScale;\n"
+    "uniform vec2 uInner;\n"
+    "uniform vec2 uOuter;\n"
+    "varying vec2 vT0;\n"
+    "varying vec2 vT1;\n"
+    "varying vec2 vT2;\n"
+    "varying vec2 vT3;\n"
+    "varying vec2 vT4;\n"
+    "varying vec2 vT5;\n"
+    "varying vec2 vT6;\n"
+    "varying vec2 vT7;\n"
+    "void main() {\n"
+    "    vec2 uv = uOrigin + aUv * uUvScale;\n"
+    "    vT0 = uv + vec2(-uInner.x, -uInner.y);\n"
+    "    vT1 = uv + vec2(uInner.x, -uInner.y);\n"
+    "    vT2 = uv + vec2(-uInner.x, uInner.y);\n"
+    "    vT3 = uv + vec2(uInner.x, uInner.y);\n"
+    "    vT4 = uv + vec2(-uOuter.x, -uOuter.y);\n"
+    "    vT5 = uv + vec2(uOuter.x, -uOuter.y);\n"
+    "    vT6 = uv + vec2(-uOuter.x, uOuter.y);\n"
+    "    vT7 = uv + vec2(uOuter.x, uOuter.y);\n"
+    "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
+    "}\n";
+
+static const char kKawaseBandFs[] =
+    "precision mediump float;\n"
+    "uniform sampler2D uScene;\n"
+    "uniform vec4 uClamp;\n"
+    "varying vec2 vT0;\n"
+    "varying vec2 vT1;\n"
+    "varying vec2 vT2;\n"
+    "varying vec2 vT3;\n"
+    "varying vec2 vT4;\n"
+    "varying vec2 vT5;\n"
+    "varying vec2 vT6;\n"
+    "varying vec2 vT7;\n"
+    "void main() {\n"
+    "    vec3 c = texture2D(uScene, clamp(vT0, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    c += texture2D(uScene, clamp(vT1, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    c += texture2D(uScene, clamp(vT2, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    c += texture2D(uScene, clamp(vT3, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    c += texture2D(uScene, clamp(vT4, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    c += texture2D(uScene, clamp(vT5, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    c += texture2D(uScene, clamp(vT6, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    c += texture2D(uScene, clamp(vT7, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    gl_FragColor = vec4(c * 0.125, 1.0);\n"
+    "}\n";
 
 // HIGH's packed composite (VoxelHd2dShader_Pack, VoxelHd2dShader_CompositePacked*).
 typedef struct
@@ -410,10 +495,11 @@ static const char kShaftVs[] =
     "attribute vec2 aPos;\n"
     "attribute vec2 aUv;\n"
     "uniform vec3 uLutMap;\n"
+    "uniform float uLutV;\n"
     "varying vec2 vUv;\n"
     "varying vec2 vLut;\n"
     "void main() {\n"
-    "    vLut = vec2(aUv.x * uLutMap.x + aUv.y * uLutMap.y + uLutMap.z, 0.5);\n"
+    "    vLut = vec2(aUv.x * uLutMap.x + aUv.y * uLutMap.y + uLutMap.z, uLutV);\n"
     "    vUv = aUv;\n"
     "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
     "}\n";
@@ -790,6 +876,7 @@ bool VoxelHd2dShader_Init(void)
     {
         sShaftLutTexU = glGetUniformLocation(sShaftProg, "uLut");
         sShaftLutMap  = glGetUniformLocation(sShaftProg, "uLutMap");
+        sShaftLutV    = glGetUniformLocation(sShaftProg, "uLutV");
         sShaftDust    = glGetUniformLocation(sShaftProg, "uDust");
         sShaftLen     = glGetUniformLocation(sShaftProg, "uLen");
         sShaftCol     = glGetUniformLocation(sShaftProg, "uCol");
@@ -797,6 +884,26 @@ bool VoxelHd2dShader_Init(void)
         VITA_LOG("[HD2D SHADER] Procedural light shafts compiled successfully.\n");
     }
     sPackReady = sShaderReady && InitPacked();
+    sBright4Prog = LinkProgram(kCopyVs, kBright4Fs);
+    sKawaseBandProg = LinkProgram(kKawaseBandVs, kKawaseBandFs);
+    if (sBright4Prog && sKawaseBandProg)
+    {
+        sB4Scene   = glGetUniformLocation(sBright4Prog, "uScene");
+        sB4UvScale = glGetUniformLocation(sBright4Prog, "uUvScale");   // kCopyVs
+        sB4Texel   = glGetUniformLocation(sBright4Prog, "uTexel");     // kCopyVs
+        sB4Overlay = glGetUniformLocation(sBright4Prog, "uOverlay");
+        sB4Thresh  = glGetUniformLocation(sBright4Prog, "uThreshold");
+        sB4Gain    = glGetUniformLocation(sBright4Prog, "uGain");
+        sKBScene   = glGetUniformLocation(sKawaseBandProg, "uScene");
+        sKBOrigin  = glGetUniformLocation(sKawaseBandProg, "uOrigin");
+        sKBUvScale = glGetUniformLocation(sKawaseBandProg, "uUvScale");
+        sKBInner   = glGetUniformLocation(sKawaseBandProg, "uInner");
+        sKBOuter   = glGetUniformLocation(sKawaseBandProg, "uOuter");
+        sKBClamp   = glGetUniformLocation(sKawaseBandProg, "uClamp");
+        sBandReady = sShaderReady && sShaftReady;
+    }
+    if (!sBandReady)
+        VITA_LOG("[HD2D SHADER] Band passes not available, HIGH keeps the separate bloom and shaft targets\n");
     if (!sPackReady)
         VITA_LOG("[HD2D SHADER] Packed composite not available, HIGH uses the full composite\n");
 #endif
@@ -806,6 +913,50 @@ bool VoxelHd2dShader_Init(void)
 bool VoxelHd2dShader_PackReady(void)
 {
     return sPackReady;
+}
+
+bool VoxelHd2dShader_BandReady(void)
+{
+    return sBandReady;
+}
+
+void VoxelHd2dShader_BrightPassBox4(const GLuint sceneTex, const float uMax, const float vMax,
+                                    const float texelX, const float texelY, const float overlay[4],
+                                    const float threshold, const float gain)
+{
+    if (!sBandReady)
+        return;
+    glUseProgram(sBright4Prog);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sceneTex);
+    glUniform1i(sB4Scene, 0);
+    glUniform2f(sB4UvScale, uMax, vMax);
+    glUniform2f(sB4Texel, texelX, texelY);
+    glUniform4fv(sB4Overlay, 1, overlay);
+    glUniform1f(sB4Thresh, threshold);
+    glUniform1f(sB4Gain, gain);
+    DrawQuad();
+    glUseProgram(0);
+}
+
+bool VoxelHd2dShader_Kawase8Band(const GLuint tex, const float u0, const float v0, const float uSize, const float vSize,
+                                 const float texelX, const float texelY)
+{
+    if (!sBandReady)
+        return false;
+    glUseProgram(sKawaseBandProg);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glUniform1i(sKBScene, 0);
+    glUniform2f(sKBOrigin, u0, v0);
+    glUniform2f(sKBUvScale, uSize, vSize);
+    glUniform2f(sKBInner, 1.25f * texelX, 1.25f * texelY);
+    glUniform2f(sKBOuter, 4.25f * texelX, 4.25f * texelY);
+    glUniform4f(sKBClamp, u0 + 0.5f * texelX, v0 + 0.5f * texelY,
+                u0 + uSize - 0.5f * texelX, v0 + vSize - 0.5f * texelY);
+    DrawQuad();
+    glUseProgram(0);
+    return true;
 }
 
 bool VoxelHd2dShader_Ready(void)
@@ -1187,21 +1338,70 @@ void VoxelHd2dShader_ShaftLut(const uint32_t pass, const float dirX, const float
     glUseProgram(0);
 }
 
-void VoxelHd2dShader_Shafts(const uint32_t pass, const float dirX, const float dirY, const float lenExp,
-                            const VoxelHd2dShaftClock *const clock, const float aspect,
-                            const float colR, const float colG, const float colB)
+void VoxelHd2dShader_ShaftSourceOwn(const uint32_t pass, VoxelHd2dShaftSource *const out)
+{
+    if (out == NULL)
+        return;
+    out->tex = (pass < SHAFT_LUTS) ? sShaftLutTex[pass] : 0;
+    out->uScale = 1.0f;
+    out->v = 0.5f;   // the boundary of the two middle rows (SHAFT_LUT_DRAW_Y)
+}
+
+// The profile of a pass as 2 rows in a band of the bound target, which must be at least
+// SHAFT_LUT_W + 2 texels wide: the same texels 0..W-1 as its own target (the same a at each), and
+// two more past the end of a's range so the bilinear read of the last one does not take a texel
+// it never wrote (its own target clamped there).
+#define SHAFT_BAND_ROW(pass) (7 + 16 * (int32_t)(pass))
+#define SHAFT_BAND_DRAW_W (SHAFT_LUT_W + 2u)
+
+void VoxelHd2dShader_ShaftLutBand(const uint32_t pass, const float dirX, const float dirY,
+                                  const VoxelHd2dShaftClock *const clock, const float aspect, const float layers,
+                                  const GLuint tex, const int32_t texW, const int32_t texH, const int32_t bandY,
+                                  VoxelHd2dShaftSource *const out)
 {
     ShaftFrame fr;
-    if (!sShaftReady || pass >= SHAFT_LUTS || clock == NULL || !ShaftFrameOf(dirX, dirY, aspect, &fr))
+    if (out != NULL)
+        out->tex = 0;
+    if (!sShaftReady || pass >= SHAFT_LUTS || clock == NULL || out == NULL || texW < (int32_t)SHAFT_BAND_DRAW_W
+     || !ShaftFrameOf(dirX, dirY, aspect, &fr))
         return;
-    // The profile's texture coordinate: (a - aMin) / (aMax - aMin), a = uv . perp.
-    const float inv = 1.0f / (fr.aMax - fr.aMin);
+    const ShaftLutProgram *const p = &sShaftLut[(layers >= 1.5f) ? 1 : 0];
+    const int32_t rowY = bandY + SHAFT_BAND_ROW(pass);
+    const float aEnd = fr.aMin + (fr.aMax - fr.aMin) * ((float)SHAFT_BAND_DRAW_W / (float)SHAFT_LUT_W);
+
+    glViewport(0, rowY, (GLsizei)SHAFT_BAND_DRAW_W, (GLsizei)SHAFT_LUT_DRAW_H);
+    glUseProgram(p->prog);
+    glUniform2f(p->aRange, fr.aMin, aEnd);
+    glUniform4fv(p->shift, 1, clock->shift);
+    glUniform2fv(p->breath, 1, clock->breath);
+    glUniform2f(p->uvScale, 1.0f, 1.0f);   // kTapVs: vT0 = aUv
+    DrawQuad();
+    glUseProgram(0);
+
+    out->tex = tex;
+    out->uScale = (float)SHAFT_LUT_W / (float)texW;
+    out->v = (float)(rowY + 1) / (float)texH;   // the boundary of the two rows drawn
+}
+
+void VoxelHd2dShader_Shafts(const uint32_t pass, const float dirX, const float dirY, const float lenExp,
+                            const VoxelHd2dShaftClock *const clock, const float aspect,
+                            const float colR, const float colG, const float colB,
+                            const VoxelHd2dShaftSource *const src)
+{
+    ShaftFrame fr;
+    if (!sShaftReady || pass >= SHAFT_LUTS || clock == NULL || src == NULL || src->tex == 0
+     || !ShaftFrameOf(dirX, dirY, aspect, &fr))
+        return;
+    // The profile's texture coordinate: (a - aMin) / (aMax - aMin) across its SHAFT_LUT_W texels,
+    // a = uv . perp; scaled when the profile sits in a wider texture.
+    const float inv = src->uScale / (fr.aMax - fr.aMin);
 
     glUseProgram(sShaftProg);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, sShaftLutTex[pass]);
+    glBindTexture(GL_TEXTURE_2D, src->tex);
     glUniform1i(sShaftLutTexU, 0);
     glUniform3f(sShaftLutMap, fr.perpX * inv, fr.perpY * inv, -fr.aMin * inv);
+    glUniform1f(sShaftLutV, src->v);
     glUniform1f(sShaftDust, clock->dust);
     glUniform1f(sShaftLen, lenExp);
     glUniform3f(sShaftCol, colR, colG, colB);
