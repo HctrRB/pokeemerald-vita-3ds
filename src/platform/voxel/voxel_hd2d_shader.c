@@ -16,6 +16,10 @@
 static bool sTriedInit = false;
 static bool sShaderReady = false;
 
+// The unit quad every post pass draws (DrawQuad): position and texture coordinate alike.
+static const float kQuad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+static GLuint sQuadVbo = 0;
+
 // 4-tap box: downsample fallback, wide blur and the Kawase passes.
 static GLuint sCopyProg = 0;
 static GLint sCopyScene = -1, sCopyUvScale = -1, sCopyTexel = -1;
@@ -41,6 +45,11 @@ static GLint sBUScene = -1, sBUThresh = -1, sBUUvScale = -1, sBUGain = -1;
 // ignores y) and the quad reads the middle one. A 1-pixel-high render target drew nothing on the
 // Vita (the shafts vanished at every hour).
 #define SHAFT_LUT_H 32u
+// The profile is drawn only over the two middle rows, the pair the shafts' bilinear read at v = 0.5
+// blends (it is the middle pair whichever way vitaGL orients the rows). The other rows are never
+// read: shading all 32 ran the costly per-pixel shaft code 16 times for nothing.
+#define SHAFT_LUT_DRAW_Y (SHAFT_LUT_H / 2u - 1u)
+#define SHAFT_LUT_DRAW_H 2u
 #define SHAFT_LUTS 2u
 typedef struct
 {
@@ -60,7 +69,7 @@ typedef struct
     GLint scene, blur, bloom;
     GLint sceneUv, blurUv, bloomUv, dofRamp;
     GLint post, dofAlpha, battle, overlay;
-    GLint tint0, tint1;
+    GLint tint0, tint1, curve;
 } CompositeProgram;
 static CompositeProgram sCompField, sCompBattle;
 
@@ -283,7 +292,9 @@ static const char kCompVs[] =
 // (blurred bands included) gets the grade and the vignette. The split-tone and saturation
 //   mix(c, mix(vec3(l), c * mix(shadowTint, highTint, tl), saturation), grade)
 // reduce to c * (uTint0 + tl * uTint1) + uPost.y * l, every factor fixed for the frame
-// (VoxelHd2dShader_Composite). uPost: bloom, that luma factor, S-curve, vignette. uDofAlpha:
+// (VoxelHd2dShader_Composite). The S-curve c + k * (c*c*(3 - 2c) - c) is the cubic
+// c * (uCurve.x + c * (uCurve.y + c * uCurve.z)) with uCurve = (1 - k, 3k, -2k): three
+// multiply-adds instead of five operations. uPost: bloom, that luma factor, unused, vignette. uDofAlpha:
 // top and bottom band alpha. uOverlay: the night / fade layer the world scene leaves to this
 // pass. The field program needs no final clamp: after the clamped grade, the S-curve and the
 // vignette keep every channel in [0, 1]. The battle variant adds uBattle: back blur,
@@ -298,6 +309,7 @@ static const char kCompVs[] =
     "uniform vec4 uOverlay;\n" \
     "uniform vec3 uTint0;\n" \
     "uniform vec3 uTint1;\n" \
+    "uniform vec3 uCurve;\n" \
     "varying vec2 vScene;\n" \
     "varying vec2 vBlur;\n" \
     "varying vec2 vBloom;\n" \
@@ -313,10 +325,9 @@ static const char kCompVs[] =
 #define COMP_FS_GRADE \
     "    c += texture2D(uBloom, vBloom).rgb * uPost.x;\n" \
     "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n" \
-    "    float tl = clamp((l - 0.15) * 1.6667, 0.0, 1.0);\n" \
+    "    float tl = clamp(l * 1.6667 - 0.250005, 0.0, 1.0);\n" \
     "    c = clamp(c * (uTint0 + tl * uTint1) + uPost.y * l, 0.0, 1.0);\n" \
-    "    vec3 sc = c * c * (3.0 - 2.0 * c);\n" \
-    "    c += uPost.z * (sc - c);\n" \
+    "    c *= uCurve.x + c * (uCurve.y + c * uCurve.z);\n" \
     "    float vd = dot(vVig, vVig);\n" \
     "    c *= 1.0 - clamp(vd - 0.12, 0.0, 0.80) * uPost.w;\n"
 
@@ -409,6 +420,7 @@ static bool InitComposite(CompositeProgram *const p, const char *const fsSrc)
     p->overlay    = glGetUniformLocation(p->prog, "uOverlay");
     p->tint0      = glGetUniformLocation(p->prog, "uTint0");
     p->tint1      = glGetUniformLocation(p->prog, "uTint1");
+    p->curve      = glGetUniformLocation(p->prog, "uCurve");
     return true;
 }
 
@@ -464,6 +476,18 @@ bool VoxelHd2dShader_Init(void)
     sTriedInit = true;
 
 #ifdef PLATFORM_VITA
+    // Filled once and never rewritten (rewriting a vitaGL buffer the GPU still reads copies it).
+    glGenBuffers(1, &sQuadVbo);
+    if (sQuadVbo != 0)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, sQuadVbo);
+        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)sizeof(kQuad), kQuad, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+    else
+    {
+        VITA_LOG("[HD2D SHADER] Quad buffer not created, post passes draw from a client array\n");
+    }
     sCopyProg   = LinkProgram(kCopyVs, kCopyFs);
     sKawaseProg = LinkProgram(kKawaseVs, kKawaseFs);
     if (sKawaseProg)
@@ -520,17 +544,24 @@ bool VoxelHd2dShader_ShaftsReady(void)
 }
 
 // One full-screen quad with the current program; attribute 0 = position, 1 = texture coordinate.
+// It comes from sQuadVbo, filled once at init: client arrays are copied into vitaGL's pool on
+// every draw. Without the buffer (creation failed) the client array is used as before. The array
+// buffer binding is put back to 0, as the fixed-function draws around these passes expect.
 static void DrawQuad(void)
 {
-    static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
+    const void *const base = (sQuadVbo != 0) ? NULL : (const void *)kQuad;
 
+    if (sQuadVbo != 0)
+        glBindBuffer(GL_ARRAY_BUFFER, sQuadVbo);
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, quad);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, quad);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, base);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, base);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glDisableVertexAttribArray(1);
     glDisableVertexAttribArray(0);
+    if (sQuadVbo != 0)
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 bool VoxelHd2dShader_Kawase8(const GLuint sceneTex, const float uMax, const float vMax,
@@ -641,7 +672,8 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
     glUniform2f(p->blurUv,  uBlurMax,  vBlurMax);
     glUniform2f(p->bloomUv, uBloomMax, vBloomMax);
     glUniform3f(p->dofRamp, yTop, yBot, invSlope);
-    glUniform4f(p->post,     bloomAmt, lumaAmt, curveAmt, vignetteAmt);
+    glUniform4f(p->post,     bloomAmt, lumaAmt, 0.0f, vignetteAmt);
+    glUniform3f(p->curve,    1.0f - curveAmt, 3.0f * curveAmt, -2.0f * curveAmt);
     glUniform2f(p->dofAlpha, topAlpha, botAlpha);
     glUniform4fv(p->overlay, 1, overlay);
     if (battle)
@@ -721,7 +753,7 @@ void VoxelHd2dShader_BeginShaftLut(const uint32_t pass)
     if (pass >= SHAFT_LUTS)
         return;
     glBindFramebuffer(GL_FRAMEBUFFER, sShaftLutFbo[pass]);
-    glViewport(0, 0, SHAFT_LUT_W, SHAFT_LUT_H);
+    glViewport(0, (GLint)SHAFT_LUT_DRAW_Y, SHAFT_LUT_W, SHAFT_LUT_DRAW_H);
 }
 
 void VoxelHd2dShader_ShaftLut(const uint32_t pass, const float dirX, const float dirY,
