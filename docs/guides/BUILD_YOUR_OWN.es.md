@@ -86,6 +86,16 @@ otros archivos del juego, el script los descarga solo.
 3. El juego aparece como **Emerald Vita**. Las partidas y los ajustes se guardan en
    `ux0:data/POKEVITA/`.
 
+El juego necesita el compilador de shaders de la Vita, `ur0:data/libshacccg.suprx`. Si no lo
+tienes, ejecuta una vez [ShaRKBR33D](https://github.com/Rinnegatamante/ShaRKBR33D): extrae el
+archivo por ti. Si los gráficos no pueden arrancar, el juego dice por qué en un mensaje (en
+inglés) y se cierra:
+
+| Mensaje | Solución |
+|---|---|
+| `the shader compiler ur0:data/libshacccg.suprx is missing` | Ejecuta ShaRKBR33D una vez y vuelve a abrir el juego. |
+| `not enough video memory` | Desactiva los plugins de overclock, overlay o memoria en `ur0:tai/config.txt`, reinicia la consola y vuelve a abrir el juego. |
+
 Si quieres tu propio arte en el LiveArea, ponlo en `vita/sce_sys_custom/` con los mismos nombres
 que en `vita/sce_sys/` (PNG indexados de 8 bits); se usa en lugar de las imágenes neutras.
 

@@ -221,7 +221,8 @@ PS Vita with HENkaku or Ensō. Nothing else has to be installed by hand:
    the ROM), and builds everything. The first run takes 20–40 minutes.
 3. **Install `EmeraldVita.vpk`** with VitaShell (*Enable unsafe homebrew* on in HENkaku
    settings). The game appears as **Emerald Vita** (title ID `PKEM00001`); saves and settings
-   live in `ux0:data/POKEVITA/`.
+   live in `ux0:data/POKEVITA/`. It needs the shader compiler `ur0:data/libshacccg.suprx`: if
+   you do not have it, run [ShaRKBR33D](https://github.com/Rinnegatamante/ShaRKBR33D) once.
 
 To update: `git pull` and run `build_all.bat` again (the ROM is only asked for the first time;
 game files a new version needs are downloaded by themselves). The manual steps are in the guide
