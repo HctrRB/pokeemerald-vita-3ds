@@ -653,6 +653,10 @@ static void __attribute__((noinline)) MainThread_Run(void)
             lastGameTime = curGameTime;
 
             accumulator += deltaTime;
+            // The measuring build's unpaced bench step draws as fast as the GPU takes frames (the
+            // game frame repeats; the player stands still): no wait for the next tick.
+            if (VitaPerf_BenchUnpaced() && accumulator < dt)
+                accumulator = dt;
 
             // Sleep Core 0 cleanly in kernel wait state until the next 60 Hz tick is due (eliminates 97% spin-wait)
             if (accumulator < dt)
@@ -715,7 +719,7 @@ static void __attribute__((noinline)) MainThread_Run(void)
                 {
                     const double perfPresentStart = PerfNowMs();
 #ifdef PLATFORM_VITA
-                    eglSwapInterval(NULL, is30FpsLocked ? 2 : 1);
+                    eglSwapInterval(NULL, VitaPerf_BenchUnpaced() ? 0 : (is30FpsLocked ? 2 : 1));
 #endif
 #ifdef VOXEL_SUPPORTED
                     VoxelRenderer_SwapBuffers();

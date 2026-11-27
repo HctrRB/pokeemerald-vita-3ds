@@ -168,8 +168,9 @@ static bool sSceneFresh = false;
 
 #ifdef VITA_GPU_PROBE
 // The automatic bench: when the player stands still in the 3D field for BENCH_STILL_FRAMES, it
-// measures HIGH, then HIGH with one pass switched off at a time, then MED, LOW and OFF. HIGH
-// comes first because it is what is being optimised, and OFF last because switching between OFF
+// measures HIGH unpaced (BENCH_STEP_UNPACED: no probes, no vsync, the real pipelined GPU frame in
+// frame_ms), HIGH with the probes, then HIGH with one pass switched off at a time, then MED, LOW
+// and OFF. HIGH comes first because it is what is being optimised, and OFF last because switching between OFF
 // and LOW turns the relief on or off, which rebuilds the atlas and the chunks (a ~0.7 s freeze).
 // Each step waits for BENCH_SETTLE_FRAMES calm frames (no events, no holes), then keeps
 // BENCH_MEASURE_FRAMES frames marked bench_measured. Moving, a menu, a fade, a battle, Fly or fast
@@ -178,8 +179,11 @@ static bool sSceneFresh = false;
 #define BENCH_SETTLE_FRAMES 20u
 #define BENCH_MEASURE_FRAMES 60u
 #define BENCH_STEP_MAX_FRAMES 400u
-// Step 0: HIGH. Steps 1..VITA_PERF_PASS_COUNT: HIGH without one pass. Then MED, LOW, OFF.
-#define BENCH_LOWER_FIRST (1u + (uint32_t)VITA_PERF_PASS_COUNT)
+// Step 0: HIGH unpaced. Step 1: HIGH. Steps 2..VITA_PERF_PASS_COUNT + 1: HIGH without one pass.
+// Then MED, LOW, OFF.
+#define BENCH_STEP_UNPACED 0
+#define BENCH_MASK_FIRST 2
+#define BENCH_LOWER_FIRST ((uint32_t)BENCH_MASK_FIRST + (uint32_t)VITA_PERF_PASS_COUNT)
 #define BENCH_STEPS (BENCH_LOWER_FIRST + (uint32_t)VOXEL_HD2D_HIGH)
 // Below this, in tiles, the player has not moved.
 #define BENCH_STILL_EPSILON 0.01f
@@ -222,16 +226,25 @@ static const char *const kPassNames[VITA_PERF_PASS_COUNT] = {
     [VITA_PERF_PASS_KAWASE] = "kawase",
     [VITA_PERF_PASS_BLOOM] = "bloom",
     [VITA_PERF_PASS_BLUR] = "blur",
+    [VITA_PERF_PASS_GROUND] = "ground",
+    [VITA_PERF_PASS_CUTOUTS] = "cutouts",
+    [VITA_PERF_PASS_TREECORES] = "treecores",
+    [VITA_PERF_PASS_TREESTRIPS] = "treestrips",
+    [VITA_PERF_PASS_SWAY] = "sway",
+    [VITA_PERF_PASS_BUILDINGS] = "buildings",
+    [VITA_PERF_PASS_WORLDPIXELS] = "worldpixels",
 };
+// Every pass has a bit of the uint32_t mask.
+_Static_assert(VITA_PERF_PASS_COUNT <= 32, "VitaPerfPass does not fit the probe mask");
 
 static bool BenchMaskStep(const int32_t step)
 {
-    return step >= 1 && step < (int32_t)BENCH_LOWER_FIRST;
+    return step >= BENCH_MASK_FIRST && step < (int32_t)BENCH_LOWER_FIRST;
 }
 
 static uint32_t BenchMask(void)
 {
-    return BenchMaskStep(sBenchStep) ? (1u << (uint32_t)(sBenchStep - 1)) : 0u;
+    return BenchMaskStep(sBenchStep) ? (1u << (uint32_t)(sBenchStep - BENCH_MASK_FIRST)) : 0u;
 }
 
 int32_t VitaPerf_BenchLevel(void)
@@ -252,6 +265,11 @@ float VitaPerf_BenchProgress(void)
     return ((float)sBenchStep + stepDone) / (float)BENCH_STEPS;
 }
 
+bool VitaPerf_BenchUnpaced(void)
+{
+    return sBenchStep == BENCH_STEP_UNPACED;
+}
+
 bool VitaPerf_PassSkipped(const VitaPerfPass pass)
 {
     return sBenchStep >= 0 && (uint32_t)pass < VITA_PERF_PASS_COUNT && (BenchMask() & (1u << pass)) != 0u;
@@ -259,6 +277,12 @@ bool VitaPerf_PassSkipped(const VitaPerfPass pass)
 
 void VitaPerf_GpuScene(const VitaPerfGpuScene next)
 {
+    // The unpaced step measures the frame without the probes' sync (gpu_* columns stay 0).
+    if (VitaPerf_BenchUnpaced())
+    {
+        sGpuScene = VITA_PERF_GPU_NONE;
+        return;
+    }
     const double start = VitaPerf_NowMs();
 #ifdef PLATFORM_VITA
     glFinish();
@@ -644,7 +668,7 @@ static void BenchAdvance(const bool measured)
         BenchStartStep(sBenchStep + 1);
         if (sSummaryFile != NULL && BenchMaskStep(sBenchStep))
             fprintf(sSummaryFile, "[BENCH] run %u step %d: HIGH without %s\n", sBenchRun, sBenchStep,
-                    kPassNames[sBenchStep - 1]);
+                    kPassNames[sBenchStep - BENCH_MASK_FIRST]);
         else if (sSummaryFile != NULL)
             fprintf(sSummaryFile, "[BENCH] run %u step %d: level %d\n", sBenchRun, sBenchStep,
                     (int)VitaPerf_BenchLevel());
@@ -665,8 +689,11 @@ static void BenchAdvance(const bool measured)
     if (++sBenchStill < BENCH_STILL_FRAMES)
         return;
     sBenchRun++;
-    BenchStartStep(0);
+    BenchStartStep(BENCH_STEP_UNPACED);
     BenchLog("started");
+    if (sSummaryFile != NULL)
+        fprintf(sSummaryFile, "[BENCH] run %u step %d: HIGH unpaced (no probes, no vsync)\n", sBenchRun,
+                BENCH_STEP_UNPACED);
 }
 #endif // VITA_GPU_PROBE
 

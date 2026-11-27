@@ -166,6 +166,14 @@ typedef enum
     VITA_PERF_PASS_KAWASE,      // the bloom blur (VoxelHd2dShader_Kawase8)
     VITA_PERF_PASS_BLOOM,       // the whole bloom target (bright pass, sky bloom, shafts, Kawase)
     VITA_PERF_PASS_BLUR,        // the wide blur level
+    VITA_PERF_PASS_GROUND,      // Pass_Ground's opaque spans (ground and relief)
+    VITA_PERF_PASS_CUTOUTS,     // Pass_Ground's alpha-tested cliff cutouts
+    VITA_PERF_PASS_TREECORES,   // Pass_Trees' opaque tree cores and ground plates
+    VITA_PERF_PASS_TREESTRIPS,  // Pass_Trees' alpha-tested tree edges
+    VITA_PERF_PASS_SWAY,        // Pass_Trees' swaying foliage (GLSL, discard)
+    VITA_PERF_PASS_BUILDINGS,   // Pass_Buildings, every page
+    VITA_PERF_PASS_WORLDPIXELS, // the world scene's pixels: drawn through an 8x8 scissor, so only
+                                // its vertex and tiling work is left
     VITA_PERF_PASS_COUNT
 } VitaPerfPass;
 
@@ -193,11 +201,16 @@ bool VitaPerf_PassSkipped(VitaPerfPass pass);
 int32_t VitaPerf_BenchLevel(void);
 // How far the run under way is, 0..1, or a negative value with no run (the on-screen bar).
 float VitaPerf_BenchProgress(void);
+// True during the bench step that measures the real GPU frame: no probes, the swap does not wait
+// for vsync and the presentation loop does not wait for the next 60 Hz tick, so the frame period
+// (frame_ms) is the pipelined GPU time.
+bool VitaPerf_BenchUnpaced(void);
 #else
 static inline void VitaPerf_GpuScene(const VitaPerfGpuScene next) { (void)next; }
 static inline bool VitaPerf_PassSkipped(const VitaPerfPass pass) { (void)pass; return false; }
 static inline int32_t VitaPerf_BenchLevel(void) { return -1; }
 static inline float VitaPerf_BenchProgress(void) { return -1.0f; }
+static inline bool VitaPerf_BenchUnpaced(void) { return false; }
 #endif
 
 // Core 1 (AgbMain GBA Simulation) Stage Markers

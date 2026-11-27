@@ -6688,6 +6688,8 @@ static void Pass_Ground(const VoxelFrame *const f)
     const int32_t visibleChunkCount = f->visibleCount;
     for (uint32_t cutPass = 0; cutPass < 2u; cutPass++)
     {
+        if (VitaPerf_PassSkipped((cutPass == 0u) ? VITA_PERF_PASS_GROUND : VITA_PERF_PASS_CUTOUTS))
+            continue;
         if (cutPass == 1u)
         {
             glEnable(GL_ALPHA_TEST);
@@ -6768,7 +6770,8 @@ static void Pass_Trees(const VoxelFrame *const f)
     // 2A-0: Opaque tree cores & ground plates with GL_ALPHA_TEST OFF so SGX543 HSR rejects hidden trees
     glDisable(GL_ALPHA_TEST);
 
-    for (int32_t i = 0; i < visibleChunkCount; i++)
+    const bool drawCores = !VitaPerf_PassSkipped(VITA_PERF_PASS_TREECORES);
+    for (int32_t i = 0; drawCores && i < visibleChunkCount; i++)
     {
         const VoxelChunkSlot *const chunk = visibleChunks[i];
         if (chunk->treeOpaqueCount == 0u) continue;
@@ -6786,6 +6789,7 @@ static void Pass_Trees(const VoxelFrame *const f)
     glEnable(GL_ALPHA_TEST);
     glAlphaFunc(GL_GREATER, 0.0f);
 
+    const bool drawStrips = !VitaPerf_PassSkipped(VITA_PERF_PASS_TREESTRIPS);
     for (int32_t i = 0; i < visibleChunkCount; i++)
     {
         const VoxelChunkSlot *const chunk = visibleChunks[i];
@@ -6793,7 +6797,7 @@ static void Pass_Trees(const VoxelFrame *const f)
         const uint32_t endVert = useSwayShader ? chunk->treeStaticCount : chunk->treeCount;
         if (useSwayShader && chunk->treeCount > chunk->treeStaticCount)
             hasSway = true;
-        if (endVert <= chunk->treeOpaqueCount) continue;
+        if (!drawStrips || endVert <= chunk->treeOpaqueCount) continue;
 
         glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
         glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
@@ -6806,7 +6810,7 @@ static void Pass_Trees(const VoxelFrame *const f)
     }
 
     // 2B: Swaying tall grass, ash grass & flowers only (no static tree crowns in shader)
-    if (useSwayShader && hasSway)
+    if (useSwayShader && hasSway && !VitaPerf_PassSkipped(VITA_PERF_PASS_SWAY))
     {
         if (sAppliedOffsetX != 0.0f || sAppliedOffsetZ != 0.0f)
         {
@@ -6862,6 +6866,8 @@ static void Pass_Trees(const VoxelFrame *const f)
 // alpha testing was left on.
 static bool Pass_Buildings(const VoxelFrame *const f)
 {
+    if (VitaPerf_PassSkipped(VITA_PERF_PASS_BUILDINGS))
+        return false;
     VoxelChunkSlot *const *const visibleChunks = f->visible;
     const int32_t visibleChunkCount = f->visibleCount;
     int32_t activeBuildingPages[32];
@@ -9599,6 +9605,14 @@ bool VoxelRenderer_RenderFrame(void)
     if (f.drawFade < 0.99f)
     {
         Pass_SetupWorld3D();
+        // Measuring build: the world scene through an 8x8 scissor leaves its vertex and tiling
+        // work without its pixels (the clear before it is not cut).
+        const bool worldPixelsCut = VitaPerf_PassSkipped(VITA_PERF_PASS_WORLDPIXELS);
+        if (worldPixelsCut)
+        {
+            glEnable(GL_SCISSOR_TEST);
+            glScissor(0, 0, 8, 8);
+        }
 
         // Chunk VBOs (passes 1-3) are drawn with their crossing offsets.
         ChunkOffsets_Begin();
@@ -9627,6 +9641,8 @@ bool VoxelRenderer_RenderFrame(void)
         Pass_NightLamps(&f);
         Pass_Atmosphere3D(&f);
         Pass_Atmosphere2D(&f);
+        if (worldPixelsCut)
+            glDisable(GL_SCISSOR_TEST);
         VitaPerf_MarkDraw3DEnd(sFrameDrawCalls, sFrameVertCount);
         VoxelFly_NotifyFrameDrawn(f.fly.warpVersion);
     }
