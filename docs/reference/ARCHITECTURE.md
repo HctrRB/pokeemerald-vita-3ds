@@ -60,9 +60,10 @@ only time Core 0 may set up game state):
    crossbar clocks, reads the extras (`VitaExtras_Init`, `settings.txt`). Then `VitaPerf_Init` and
    `ModManager_Init`.
 2. Reads `pokeemerald.cfg` and the save file of the chosen slot.
-3. Initialises vitaGL with `vglInitWithCustomSizes` at 960×544 (pool sizes: the call in
-   `MainThread_Boot`). If it fails, an SDL message box says why (`GraphicsFailureText`: missing
-   `libshacccg.suprx`, or not enough memory) and the boot stops.
+3. Checks that the shader compiler `libshacccg.suprx` is installed (`ShaderCompilerPresent`; if
+   not, an SDL message box says so and the boot stops), then initialises vitaGL with
+   `vglInitWithCustomSizes` at 960×544 (pool sizes: the call in `MainThread_Boot`). Its return
+   value only says whether the resolution was clamped, not whether vitaGL started.
 4. `VoxelRenderer_Init()`, the platform settings, the GBA frame textures and `Ui_Init()` decode the
    heavy assets once.
 5. Starts audio (48 kHz stereo, `cgb_audio_init` and the SDL device).

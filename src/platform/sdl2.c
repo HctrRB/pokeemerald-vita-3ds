@@ -459,16 +459,12 @@ static bool FileExists(const char *path)
     return true;
 }
 
-// Why vitaGL did not start, for the player. Only read after it failed, so a path it finds by
-// other means never stops a boot that would have worked. The two paths are the ones vitashark
-// and vitaGL try.
-static const char *GraphicsFailureText(void)
+// The renderer compiles its shaders at runtime, so without the console's shader compiler the first
+// GL call crashes inside SceGxm (issue #10). These are the only two paths vitashark and vitaGL load
+// it from (strings in libvitashark.a / libvitaGL.a).
+static bool ShaderCompilerPresent(void)
 {
-    if (!FileExists("ur0:data/libshacccg.suprx") && !FileExists("ur0:data/external/libshacccg.suprx"))
-        return "The graphics could not start: the shader compiler ur0:data/libshacccg.suprx is "
-               "missing.\n\nRun ShaRKBR33D once to extract it, then start the game again.";
-    return "The graphics could not start: not enough video memory.\n\nDisable overclock, overlay "
-           "or memory plugins in ur0:tai/config.txt, reboot the console and start the game again.";
+    return FileExists("ur0:data/libshacccg.suprx") || FileExists("ur0:data/external/libshacccg.suprx");
 }
 #endif
 
@@ -492,6 +488,14 @@ static bool MainThread_Boot(void)
     // Initialize hardware accelerated OpenGL via vitaGL
 #ifdef PLATFORM_VITA
     VITA_LOG("Initializing vitaGL with custom right-sized memory pools...\n");
+    if (!ShaderCompilerPresent())
+    {
+        // SDL's Vita message box brings up its own minimal GXM for the dialog.
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Pokemon Emerald",
+                                 "The shader compiler ur0:data/libshacccg.suprx is missing.\n\n"
+                                 "Run ShaRKBR33D once to extract it, then start the game again.", NULL);
+        return false;
+    }
     vglSetupGarbageCollector(127, SCE_KERNEL_CPU_MASK_USER_2);
     vglSetupRuntimeShaderCompiler(SHARK_OPT_FAST, GL_TRUE, GL_FALSE, GL_TRUE);
     vglUseLowPrecision(GL_TRUE);
@@ -505,18 +509,14 @@ static bool MainThread_Boot(void)
     // 1 s per retry (gpu_utils.c, gpu_alloc_mapped_aligned_unsafe_for_gpu). 40 MB of RAM hold
     // the whole circular pool plus vitaGL's ~2.5 MB of other buffers; 88 MB of CDRAM of the
     // 112 MB the console gives the app (user measurement 2026-11-14: 64/112 in use before).
-    if (!vglInitWithCustomSizes(8 * 1024 * 1024, 960, 544, 64 * 1024 * 1024, 88 * 1024 * 1024, 8 * 1024 * 1024, 0, SCE_GXM_MULTISAMPLE_NONE))
-    {
-        VITA_LOG("vglInitWithCustomSizes failed!\n");
-        // Going on crashes in SceGxm at the first GL call (issue #10): say why and quit instead.
-        // SDL's Vita message box brings up its own minimal GXM for the dialog.
-        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Pokemon Emerald", GraphicsFailureText(), NULL);
-        return false;
-    }
-    else
-    {
-        VITA_LOG("vglInitWithCustomSizes succeeded (8MB pool, 64MB RAM, 88MB CDRAM, 8MB PHYCONT)\n");
-    }
+    // Not a success flag: the installed vitaGL returns GL_TRUE only when it had to shrink the
+    // requested resolution to sceDisplayGetMaximumFrameBufResolution, and GL_FALSE on a normal
+    // 960x544 start (checked in the disassembly of libvitaGL.a, vgl.o). It reports nothing else.
+    const GLboolean clamped = vglInitWithCustomSizes(8 * 1024 * 1024, 960, 544, 64 * 1024 * 1024, 88 * 1024 * 1024,
+                                                     8 * 1024 * 1024, 0, SCE_GXM_MULTISAMPLE_NONE);
+    VITA_LOG("vitaGL started (8MB pool, 64MB RAM, 88MB CDRAM, 8MB PHYCONT)%s\n",
+             clamped ? ", resolution clamped to the display maximum" : "");
+    (void)clamped;   // VITA_LOG is empty without VITA_LOGGING
     VitaPerf_LogMemory("after vglInit");
 #endif
 #ifdef VOXEL_SUPPORTED

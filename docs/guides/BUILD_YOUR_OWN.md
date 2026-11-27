@@ -84,14 +84,10 @@ game files, the script downloads them by itself.
    HENkaku settings).
 3. The game shows up as **Emerald Vita**. Saves and settings live in `ux0:data/POKEVITA/`.
 
-The game needs the Vita's shader compiler, `ur0:data/libshacccg.suprx`. If it is missing, run
-[ShaRKBR33D](https://github.com/Rinnegatamante/ShaRKBR33D) once: it extracts the file for you. If
-the graphics cannot start, the game says why in a message and closes:
-
-| Message | Fix |
-|---|---|
-| `the shader compiler ur0:data/libshacccg.suprx is missing` | Run ShaRKBR33D once, then start the game again. |
-| `not enough video memory` | Disable overclock, overlay or memory plugins in `ur0:tai/config.txt`, reboot the console and start the game again. |
+The game needs the Vita's shader compiler, `ur0:data/libshacccg.suprx`. If it is missing, the
+game says so in a message (`The shader compiler ur0:data/libshacccg.suprx is missing`) and closes:
+run [ShaRKBR33D](https://github.com/Rinnegatamante/ShaRKBR33D) once, it extracts the file for you,
+then start the game again.
 
 Your own LiveArea art can go in `vita/sce_sys_custom/` with the same file names as
 `vita/sce_sys/` (8-bit indexed PNGs); it is used instead of the neutral images.
