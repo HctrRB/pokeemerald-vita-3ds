@@ -102,7 +102,9 @@ so its frame rate is lower.
   CPU is far ahead, so its `frame_ms` is the real pipelined GPU frame, the number to compare with
   16.7 ms (the picture may tear during that step). The world masks split the base geometry (ground,
   cutouts, tree cores, tree edges, sway, buildings); `worldpixels` draws the world scene through an
-  8×8 scissor, leaving its vertex and tiling cost. OFF comes last because switching between OFF
+  8×8 scissor, leaving its vertex and tiling cost. `compgrade` and `compreads` are the composite
+  ladder of HIGH: its two reads without the grade, then one read of the scene. In HIGH the `blur`
+  mask has no effect: the blur target holds the packed composite input (`gpu_blur_ms` is that pass). OFF comes last because switching between OFF
   and LOW turns the relief on or off, which rebuilds the atlas and the chunks (a ~0.7 s freeze). The
   level is imposed through `VitaPerf_BenchLevel`; the saved option is not touched and comes back at
   the end. Each step waits for `BENCH_SETTLE_FRAMES` calm frames and keeps `BENCH_MEASURE_FRAMES`

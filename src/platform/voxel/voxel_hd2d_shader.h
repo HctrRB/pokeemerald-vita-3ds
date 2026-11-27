@@ -65,4 +65,53 @@ void VoxelHd2dShader_Composite(GLuint sceneTex, GLuint blurTex, GLuint bloomTex,
                                 float bumpOffsetX, float bumpOffsetY, float bumpStrength,
                                 const float shadowTint[3], const float highTint[3], const float overlay[4]);
 
+// HIGH's packed composite. Everything of the composite that is not full resolution - the DoF
+// blur and its weight, the night / fade overlay, the bloom, the battle's back blur and dim - is
+// worked out at half resolution by VoxelHd2dShader_Pack into one RGBA8 image: alpha = the
+// weight the full-resolution scene keeps, rgb = what is added to it. The full-resolution pass is
+// then scene * alpha + rgb followed by the grade (VoxelHd2dShader_CompositePacked); in a 3D
+// battle the scene's weight is 0 and only the packed image is read
+// (VoxelHd2dShader_CompositePackedBattle).
+typedef struct
+{
+    GLuint srcTex;           // the half-resolution image the DoF blur is taken from
+    float srcU, srcV;        // its extent in texture coordinates
+    float texelX, texelY;    // one blur step in srcTex coordinates
+    GLuint bloomTex;         // the blurred bloom (any texture when bloomAmt is 0)
+    float bloomU, bloomV;
+    float bloomAmt;
+    float uvTop, uvBot;      // where the DoF bands start, in texture y (1 = top of the screen)
+    float topAlpha, botAlpha;
+    float minBlur;           // floor of the DoF weight: 1 in a 3D battle (the backdrop blurred whole)
+    float dim;               // 1 - the battle's back dim; 1 on the field
+    float overlay[4];        // night / fade layer (rgb, alpha)
+} VoxelHd2dPack;
+
+// The grade of the composite (split-tone, saturation, S-curve, vignette), as the caller decides it.
+typedef struct
+{
+    float gradeAmt, saturation, curveAmt, vignetteAmt;
+    float shadowTint[3], highTint[3];
+} VoxelHd2dGrade;
+
+// What the field composite draws. READS and COPY exist for the measuring build's bench only: the
+// composite's two reads without the grade, and a single read of the scene.
+typedef enum
+{
+    VOXEL_HD2D_COMP_FULL,
+    VOXEL_HD2D_COMP_READS,
+    VOXEL_HD2D_COMP_COPY,
+} VoxelHd2dCompVariant;
+
+bool VoxelHd2dShader_PackReady(void);
+// Into the bound half-resolution target, over its viewport.
+void VoxelHd2dShader_Pack(const VoxelHd2dPack *pack);
+// Into the bound full-resolution target: scene * pack.a + pack.rgb, graded.
+void VoxelHd2dShader_CompositePacked(GLuint sceneTex, float sceneU, float sceneV,
+                                     GLuint packTex, float packU, float packV,
+                                     const VoxelHd2dGrade *grade, VoxelHd2dCompVariant variant);
+// The 3D battle's: the packed image alone, graded, with the low-HP edge (0 = none).
+void VoxelHd2dShader_CompositePackedBattle(GLuint packTex, float packU, float packV,
+                                           const VoxelHd2dGrade *grade, float lowHpEdge);
+
 #endif // VOXEL_HD2D_SHADER_H

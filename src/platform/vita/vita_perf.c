@@ -233,6 +233,8 @@ static const char *const kPassNames[VITA_PERF_PASS_COUNT] = {
     [VITA_PERF_PASS_SWAY] = "sway",
     [VITA_PERF_PASS_BUILDINGS] = "buildings",
     [VITA_PERF_PASS_WORLDPIXELS] = "worldpixels",
+    [VITA_PERF_PASS_COMPGRADE] = "compgrade",
+    [VITA_PERF_PASS_COMPREADS] = "compreads",
 };
 // Every pass has a bit of the uint32_t mask.
 _Static_assert(VITA_PERF_PASS_COUNT <= 32, "VitaPerfPass does not fit the probe mask");

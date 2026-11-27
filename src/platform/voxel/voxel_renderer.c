@@ -8359,6 +8359,91 @@ static void ShaftPasses(const VoxelFrame *const f, ShaftPass out[2])
 }
 
 
+// The HD-2D composite's parameters for the frame (grade, DoF bands, bloom, battle terms, overlay).
+// Worked out before the post targets are drawn: HIGH's pack pass needs them ahead of the composite.
+typedef struct
+{
+    float shadowTint[3], highTint[3];
+    float uvTop, uvBot, topAlpha, botAlpha;
+    float bloomAmt, gradeAmt, saturation, curveAmt, vignetteAmt;
+    float backBlur, backDim;
+    float overlay[4];
+    float lowHpPulse;
+} PostCompose;
+
+static void PostComposeOf(const VoxelFrame *const f, const bool hd2dHigh, const bool dofEnabled,
+                          const bool haveBloom, PostCompose *const out)
+{
+    // Stronger HD-2D split-tone tints + saturation + S-curve (requested more aggressive grading)
+    static const float kShadowTint[3][3] = {
+        { 0.84f, 0.89f, 1.12f }, // Day (crisp cool indigo shadows)
+        { 0.96f, 0.82f, 1.14f }, // Dusk (deep violet shadows)
+        { 0.50f, 0.58f, 0.96f }, // Night (deep midnight blue shadows)
+    };
+    static const float kHighTint[3][3] = {
+        { 1.03f, 0.99f, 0.88f }, // Day (warm golden highlights)
+        { 1.08f, 0.92f, 0.74f }, // Dusk (sunset amber)
+        { 0.72f, 0.78f, 0.96f }, // Night (darker ambient so lamps & bloom pop)
+    };
+    static const float kLutCurve[3] = { 0.16f, 0.24f, 0.12f };
+
+    // The day/night grade weights of the frame's state (indoors: day).
+    const VitaDayNightState *const dnState = VitaDayNight_State();
+    const float glow  = f->indoor ? 0.0f : dnState->light.glow;
+    const float dusk  = f->indoor ? 0.0f : dnState->dusk;
+    const float night = f->indoor ? 0.0f : dnState->night;
+    const float day   = f->indoor ? 1.0f : dnState->day;
+    const float sum   = 1.0f;
+
+    for (int32_t k = 0; k < 3; ++k)
+    {
+        out->shadowTint[k] = (kShadowTint[0][k] * day + kShadowTint[1][k] * dusk + kShadowTint[2][k] * night) / sum;
+        out->highTint[k]   = (kHighTint[0][k]   * day + kHighTint[1][k]   * dusk + kHighTint[2][k]   * night) / sum;
+    }
+    const float baseCurve = (kLutCurve[0] * day + kLutCurve[1] * dusk + kLutCurve[2] * night) / sum;
+
+    float yTop = f->playerScreenY - (hd2dHigh ? 0.11f : 0.16f);
+    float yBot = f->playerScreenY + (hd2dHigh ? 0.15f : 0.16f);
+    if (yTop < 0.16f) yTop = 0.16f;
+    if (yTop > 0.46f) yTop = 0.46f;
+    if (yBot < 0.58f) yBot = 0.58f;
+    if (yBot > 0.88f) yBot = 0.88f;
+    // In shader vUv.y=1 is top, vUv.y=0 is bottom -> invert screen-down Y
+    out->uvTop = 1.0f - yTop;
+    out->uvBot = 1.0f - yBot;
+    const float indoorScale = f->indoor ? 0.62f : 1.0f;
+    out->topAlpha = dofEnabled ? ((hd2dHigh ? 0.82f : VOXEL_DOF_TOP_ALPHA) * indoorScale) : 0.0f;
+    out->botAlpha = dofEnabled ? ((hd2dHigh ? 0.55f : VOXEL_DOF_BOTTOM_ALPHA) * indoorScale) : 0.0f;
+
+    const bool marked      = f->hd2dMarkedGrade;
+    const float nightBlend = Voxel_ClampF(glow * 4.0f, 0.0f, 1.0f);
+    const float outBloom   = hd2dHigh
+                           ? (0.96f + (1.15f - 0.96f) * nightBlend)
+                           : (0.32f + (0.34f - 0.32f) * nightBlend);
+    out->bloomAmt    = haveBloom ? (f->indoor ? (hd2dHigh ? 0.42f : 0.18f) : outBloom) : 0.0f;
+    out->gradeAmt    = marked ? (hd2dHigh ? 1.00f : 0.85f) : 0.25f;
+    out->saturation  = marked ? (hd2dHigh ? 1.16f : 1.10f) : 1.02f;
+    out->curveAmt    = marked ? (baseCurve * (hd2dHigh ? 1.15f : 0.85f)) : (baseCurve * 0.35f);
+    out->vignetteAmt = marked ? (hd2dHigh ? 0.28f : 0.16f) : 0.08f;
+    out->backBlur    = f->inBattle3D ? 1.0f : 0.0f;
+    out->backDim     = f->inBattle3D ? (hd2dHigh ? 0.45f : 0.35f) : 0.0f;
+
+    // The overlay is the scene's last layer: the composite applies it to the full-res scene.
+    // In a 3D battle the backdrop comes from the blur, which the downsample already covered.
+    AtmosphereOverlay(f, out->overlay);
+    if (f->inBattle3D)
+        out->overlay[3] = 0.0f;
+
+    out->lowHpPulse = 0.0f;
+    const GameFrameBattle *const battle = &GameFrame_Get()->battle;
+    if (f->inBattle3D && battle->maxHp[0] > 0u && battle->hp[0] > 0u)
+    {
+        const float hpRatio = (float)battle->hp[0] / (float)battle->maxHp[0];
+        if (hpRatio < 0.25f)
+            out->lowHpPulse = (0.45f + 0.55f * sinf(f->seconds * 6.5f)) * (1.0f - hpRatio * 4.0f);
+    }
+}
+
 static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
 {
     const int32_t renderW = f->renderW;
@@ -8382,6 +8467,11 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
                          && !VitaPerf_PassSkipped(VITA_PERF_PASS_BLUR);
     const bool bloomReady = hd2dOn && (pt->bloomFboA != 0 && pt->bloomFboB != 0)
                          && !VitaPerf_PassSkipped(VITA_PERF_PASS_BLOOM);
+    // HIGH packs everything of the composite that is not full resolution into the blur target,
+    // after the bloom (VoxelHd2dShader_Pack); that pass replaces the wide blur below.
+    const bool packPath = hd2dHigh && VoxelHd2dShader_PackReady() && pt->blurFbo != 0;
+    const float uBl = (float)(renderW / 4) / (float)VOXEL_BLOOM_FBO_W;
+    const float vBl = (float)(renderH / 4) / (float)VOXEL_BLOOM_FBO_H;
     static const float quad[8] = { 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f };
 
     glDisable(GL_DEPTH_TEST);
@@ -8440,7 +8530,7 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     }
 
     // 2. Wider blur -> pt->blurTex (480x272): only for the DoF bands (not in HD-2D LOW) and the 3D battle backdrop.
-    if (useBlurFbo)
+    if (useBlurFbo && !packPath)
     {
         const float blurStep = hd2dHigh ? 1.55f : 1.0f;
         glBindFramebuffer(GL_FRAMEBUFFER, pt->blurFbo);
@@ -8709,6 +8799,48 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         VitaPerf_SubEnd(VITA_PERF_T_POST_BLOOM);
     }
 
+    const bool shaderComposite = hd2dOn && VoxelHd2dShader_Ready();
+    PostCompose pc;
+    if (shaderComposite)
+        PostComposeOf(f, hd2dHigh, dofEnabled, activeBloomTex != 0, &pc);
+
+    // 2.7 HIGH: the pack pass into the blur target. The 4-tap blur of the downsample, the DoF
+    // weight, the overlay, the bloom and the battle's back blur and dim, folded into what the
+    // full-resolution scene keeps and what is added to it.
+    if (shaderComposite && packPath)
+    {
+        VitaPerf_SubBegin(VITA_PERF_T_POST_DOF);
+        glBindFramebuffer(GL_FRAMEBUFFER, pt->blurFbo);
+        VitaPerf_GpuScene(VITA_PERF_GPU_BLUR);
+        glViewport(0, 0, scratchW, scratchH);
+        glDisable(GL_BLEND);
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
+        VoxelHd2dPack pk;
+        pk.srcTex = pt->scratchColorTex;
+        pk.srcU = uS;
+        pk.srcV = vS;
+        pk.texelX = 1.55f / (float)VOXEL_SCRATCH_FBO_W;
+        pk.texelY = 1.55f / (float)VOXEL_SCRATCH_FBO_H;
+        pk.bloomTex = (activeBloomTex != 0) ? activeBloomTex : pt->scratchColorTex;
+        pk.bloomU = uBl;
+        pk.bloomV = vBl;
+        pk.bloomAmt = pc.bloomAmt;
+        pk.uvTop = pc.uvTop;
+        pk.uvBot = pc.uvBot;
+        pk.topAlpha = pc.topAlpha;
+        pk.botAlpha = pc.botAlpha;
+        pk.minBlur = pc.backBlur;
+        pk.dim = 1.0f - pc.backDim;
+        memcpy(pk.overlay, pc.overlay, sizeof(pk.overlay));
+        VoxelHd2dShader_Pack(&pk);
+        glEnableClientState(GL_VERTEX_ARRAY);
+        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+        sFrameDrawCalls++;
+        sFrameVertCount += 4u;
+        VitaPerf_SubEnd(VITA_PERF_T_POST_DOF);
+    }
+
     VitaPerf_SubBegin(VITA_PERF_T_POST_COMPOSITE);
     // 3. Final composite to targetFbo (0 = screen, sMenuBgFbo = menu freeze capture)
     glBindFramebuffer(GL_FRAMEBUFFER, targetFbo);
@@ -8720,100 +8852,51 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    if (hd2dOn && VoxelHd2dShader_Ready())
+    if (shaderComposite)
     {
-        // Stronger HD-2D split-tone tints + saturation + S-curve (requested more aggressive grading)
-        static const float kShadowTint[3][3] = {
-            { 0.84f, 0.89f, 1.12f }, // Day (crisp cool indigo shadows)
-            { 0.96f, 0.82f, 1.14f }, // Dusk (deep violet shadows)
-            { 0.50f, 0.58f, 0.96f }, // Night (deep midnight blue shadows)
-        };
-        static const float kHighTint[3][3] = {
-            { 1.03f, 0.99f, 0.88f }, // Day (warm golden highlights)
-            { 1.08f, 0.92f, 0.74f }, // Dusk (sunset amber)
-            { 0.72f, 0.78f, 0.96f }, // Night (darker ambient so lamps & bloom pop)
-        };
-        static const float kLutCurve[3] = { 0.16f, 0.24f, 0.12f };
-
-        // The day/night grade weights of the frame's state (indoors: day).
-        const VitaDayNightState *const dnState = VitaDayNight_State();
-        const float glow  = f->indoor ? 0.0f : dnState->light.glow;
-        const float dusk  = f->indoor ? 0.0f : dnState->dusk;
-        const float night = f->indoor ? 0.0f : dnState->night;
-        const float day   = f->indoor ? 1.0f : dnState->day;
-        const float sum   = 1.0f;
-
-        float shadowTint[3], highTint[3];
-        for (int32_t k = 0; k < 3; ++k)
-        {
-            shadowTint[k] = (kShadowTint[0][k] * day + kShadowTint[1][k] * dusk + kShadowTint[2][k] * night) / sum;
-            highTint[k]   = (kHighTint[0][k]   * day + kHighTint[1][k]   * dusk + kHighTint[2][k]   * night) / sum;
-        }
-        const float baseCurve = (kLutCurve[0] * day + kLutCurve[1] * dusk + kLutCurve[2] * night) / sum;
-
-        float yTop = f->playerScreenY - (hd2dHigh ? 0.11f : 0.16f);
-        float yBot = f->playerScreenY + (hd2dHigh ? 0.15f : 0.16f);
-        if (yTop < 0.16f) yTop = 0.16f;
-        if (yTop > 0.46f) yTop = 0.46f;
-        if (yBot < 0.58f) yBot = 0.58f;
-        if (yBot > 0.88f) yBot = 0.88f;
-        // In shader vUv.y=1 is top, vUv.y=0 is bottom -> invert screen-down Y
-        const float uvTop = 1.0f - yTop;
-        const float uvBot = 1.0f - yBot;
-        const float indoorScale = f->indoor ? 0.62f : 1.0f;
-        const float topAlpha = dofEnabled ? ((hd2dHigh ? 0.82f : VOXEL_DOF_TOP_ALPHA) * indoorScale) : 0.0f;
-        const float botAlpha = dofEnabled ? ((hd2dHigh ? 0.55f : VOXEL_DOF_BOTTOM_ALPHA) * indoorScale) : 0.0f;
-
-        const bool marked       = f->hd2dMarkedGrade;
-        const float nightBlend  = Voxel_ClampF(glow * 4.0f, 0.0f, 1.0f);
-        const float outBloom    = hd2dHigh
-                                ? (0.96f + (1.15f - 0.96f) * nightBlend)
-                                : (0.32f + (0.34f - 0.32f) * nightBlend);
-        const float bloomAmt    = (activeBloomTex != 0)
-                                ? (f->indoor ? (hd2dHigh ? 0.42f : 0.18f) : outBloom)
-                                : 0.0f;
-        const float gradeAmt    = marked ? (hd2dHigh ? 1.00f : 0.85f) : 0.25f;
-        const float saturation  = marked ? (hd2dHigh ? 1.16f : 1.10f) : 1.02f;
-        const float curveAmt    = marked ? (baseCurve * (hd2dHigh ? 1.15f : 0.85f)) : (baseCurve * 0.35f);
-        const float vignetteAmt = marked ? (hd2dHigh ? 0.28f : 0.16f) : 0.08f;
-        const float backBlur    = f->inBattle3D ? 1.0f : 0.0f;
-        const float backDim     = f->inBattle3D ? (hd2dHigh ? 0.45f : 0.35f) : 0.0f;
-
-        const float uB = (float)(renderW / 4) / (float)VOXEL_BLOOM_FBO_W;
-        const float vB = (float)(renderH / 4) / (float)VOXEL_BLOOM_FBO_H;
-        const GLuint sceneOrBattleTex = f->inBattle3D ? (useBlurFbo ? pt->blurTex : pt->scratchColorTex) : pt->dioramaActiveTex;
-        const float uMain = f->inBattle3D ? uS : uMax;
-        const float vMain = f->inBattle3D ? vS : vMax;
-
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
         glDisable(GL_BLEND);
 
-        // The overlay is the scene's last layer: the composite applies it to the full-res scene.
-        // In a 3D battle the backdrop comes from the blur, which the downsample already covered.
-        float compOverlay[4];
-        AtmosphereOverlay(f, compOverlay);
-        if (f->inBattle3D)
-            compOverlay[3] = 0.0f;
-
-        float lowHpPulse = 0.0f;
-        const GameFrameBattle *const battle = &GameFrame_Get()->battle;
-        if (f->inBattle3D && battle->maxHp[0] > 0u && battle->hp[0] > 0u)
+        if (packPath)
         {
-            const float hpRatio = (float)battle->hp[0] / (float)battle->maxHp[0];
-            if (hpRatio < 0.25f)
-                lowHpPulse = (0.45f + 0.55f * sinf(f->seconds * 6.5f)) * (1.0f - hpRatio * 4.0f);
+            VoxelHd2dGrade grade;
+            grade.gradeAmt = pc.gradeAmt;
+            grade.saturation = pc.saturation;
+            grade.curveAmt = pc.curveAmt;
+            grade.vignetteAmt = pc.vignetteAmt;
+            memcpy(grade.shadowTint, pc.shadowTint, sizeof(grade.shadowTint));
+            memcpy(grade.highTint, pc.highTint, sizeof(grade.highTint));
+            if (f->inBattle3D)
+            {
+                VoxelHd2dShader_CompositePackedBattle(pt->blurTex, uS, vS, &grade, pc.lowHpPulse);
+            }
+            else
+            {
+                // The measuring build's composite ladder (bench masks): the reads without the
+                // grade, then a single read of the scene.
+                const VoxelHd2dCompVariant variant = VitaPerf_PassSkipped(VITA_PERF_PASS_COMPREADS)
+                    ? VOXEL_HD2D_COMP_COPY
+                    : (VitaPerf_PassSkipped(VITA_PERF_PASS_COMPGRADE) ? VOXEL_HD2D_COMP_READS : VOXEL_HD2D_COMP_FULL);
+                VoxelHd2dShader_CompositePacked(pt->dioramaActiveTex, uMax, vMax, pt->blurTex, uS, vS,
+                                                &grade, variant);
+            }
         }
-
-        VoxelHd2dShader_Composite(sceneOrBattleTex,
-                                  useBlurFbo ? pt->blurTex : pt->scratchColorTex,
-                                  (activeBloomTex != 0) ? activeBloomTex : pt->scratchColorTex,
-                                  uMain, vMain, uS, vS, uB, vB,
-                                  uvTop, uvBot, topAlpha, botAlpha,
-                                  bloomAmt, gradeAmt, curveAmt, vignetteAmt,
-                                  saturation, backBlur, backDim,
-                                  0.0f, 0.0f, lowHpPulse,
-                                  shadowTint, highTint, compOverlay);
+        else
+        {
+            const GLuint sceneOrBattleTex = f->inBattle3D ? (useBlurFbo ? pt->blurTex : pt->scratchColorTex) : pt->dioramaActiveTex;
+            const float uMain = f->inBattle3D ? uS : uMax;
+            const float vMain = f->inBattle3D ? vS : vMax;
+            VoxelHd2dShader_Composite(sceneOrBattleTex,
+                                      useBlurFbo ? pt->blurTex : pt->scratchColorTex,
+                                      (activeBloomTex != 0) ? activeBloomTex : pt->scratchColorTex,
+                                      uMain, vMain, uS, vS, uBl, vBl,
+                                      pc.uvTop, pc.uvBot, pc.topAlpha, pc.botAlpha,
+                                      pc.bloomAmt, pc.gradeAmt, pc.curveAmt, pc.vignetteAmt,
+                                      pc.saturation, pc.backBlur, pc.backDim,
+                                      0.0f, 0.0f, pc.lowHpPulse,
+                                      pc.shadowTint, pc.highTint, pc.overlay);
+        }
 
         sFrameDrawCalls++;
         sFrameVertCount += 4u;

@@ -73,6 +73,180 @@ typedef struct
 } CompositeProgram;
 static CompositeProgram sCompField, sCompBattle;
 
+// HIGH's packed composite (VoxelHd2dShader_Pack, VoxelHd2dShader_CompositePacked*).
+typedef struct
+{
+    GLuint prog;
+    GLint src, bloom, uvScale, texel, bloomUv, dofRamp, dofAlpha, overlay, mix;
+} PackProgram;
+static PackProgram sPack;
+
+typedef struct
+{
+    GLuint prog;
+    GLint scene, pack, sceneUv, packUv, vig;
+    GLint tint0, tint1, luma, curve, edge;
+} PackedCompositeProgram;
+static PackedCompositeProgram sCompPacked;        // field: scene + pack, graded, grid vignette
+static PackedCompositeProgram sCompPackedReads;   // bench: the same reads, no grade
+static PackedCompositeProgram sCompPackedBattle;  // 3D battle: pack only, per-pixel vignette, edge
+static bool sPackReady = false;
+
+// The field composite is drawn as a grid of COMP_GRID_X x COMP_GRID_Y quads so the vignette, a
+// function of the screen position only, comes from the vertices: one multiply per pixel instead of
+// the distance, clamp and scale. The cells are wide (60 x 60 px), not the screen-spanning slivers
+// the SGX sets up again in every tile they touch. Linear between vertices, it departs from the
+// per-pixel vignette by about 0.1 % of brightness.
+#define COMP_GRID_X 16u
+#define COMP_GRID_Y 9u
+#define COMP_GRID_VERTS ((COMP_GRID_X + 1u) * (COMP_GRID_Y + 1u))
+#define COMP_GRID_INDICES (COMP_GRID_X * COMP_GRID_Y * 6u)
+static float sGridVerts[COMP_GRID_VERTS * 2u];
+static uint16_t sGridIndices[COMP_GRID_INDICES];
+static GLuint sGridVbo = 0, sGridIbo = 0;
+
+// The pack pass (half resolution): the 4-tap DoF blur of the downsample, the DoF weight from its
+// two ramps, the overlay and the bloom, folded into what the full-resolution scene keeps (alpha)
+// and what is added to it (rgb). From the composite it replaces:
+//   c = mix(scene, overlay, overlay.a); c = mix(c, blur, w) * dim; c += bloom * k
+//   = scene * (1 - overlay.a) * (1 - w) * dim + [overlay * overlay.a * (1 - w) + blur * w] * dim + bloom * k
+// uMix: the weight's floor (back blur in a 3D battle), the dim (1 - back dim), the bloom amount.
+static const char kPackVs[] =
+    "attribute vec2 aPos;\n"
+    "attribute vec2 aUv;\n"
+    "uniform vec2 uUvScale;\n"
+    "uniform vec2 uTexel;\n"
+    "uniform vec2 uBloomUv;\n"
+    "uniform vec3 uDofRamp;\n"
+    "varying vec2 vT0;\n"
+    "varying vec2 vT1;\n"
+    "varying vec2 vT2;\n"
+    "varying vec2 vT3;\n"
+    "varying vec2 vBloom;\n"
+    "varying vec2 vDof;\n"
+    "void main() {\n"
+    "    vec2 uv = aUv * uUvScale;\n"
+    "    vT0 = uv + vec2(-uTexel.x, -uTexel.y);\n"
+    "    vT1 = uv + vec2(uTexel.x, -uTexel.y);\n"
+    "    vT2 = uv + vec2(-uTexel.x, uTexel.y);\n"
+    "    vT3 = uv + vec2(uTexel.x, uTexel.y);\n"
+    "    vBloom = aUv * uBloomUv;\n"
+    "    vDof = vec2((aUv.y - uDofRamp.x) * uDofRamp.z, (uDofRamp.y - aUv.y) * uDofRamp.z);\n"
+    "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
+    "}\n";
+
+static const char kPackFs[] =
+    "precision mediump float;\n"
+    "uniform sampler2D uSrc;\n"
+    "uniform sampler2D uBloom;\n"
+    "uniform vec2 uDofAlpha;\n"
+    "uniform vec4 uOverlay;\n"
+    "uniform vec3 uMix;\n"
+    "varying vec2 vT0;\n"
+    "varying vec2 vT1;\n"
+    "varying vec2 vT2;\n"
+    "varying vec2 vT3;\n"
+    "varying vec2 vBloom;\n"
+    "varying vec2 vDof;\n"
+    "void main() {\n"
+    "    vec3 b = texture2D(uSrc, vT0).rgb + texture2D(uSrc, vT1).rgb;\n"
+    "    b += texture2D(uSrc, vT2).rgb + texture2D(uSrc, vT3).rgb;\n"
+    "    vec2 t = clamp(vDof, 0.0, 1.0);\n"
+    "    float w = max(max(smoothstep(0.0, 1.0, t.x) * uDofAlpha.x, smoothstep(0.0, 1.0, t.y) * uDofAlpha.y), uMix.x);\n"
+    "    float keep = (1.0 - w) * uMix.y;\n"
+    "    vec3 add = uOverlay.rgb * (uOverlay.a * keep) + b * (0.25 * w * uMix.y);\n"
+    "    add += texture2D(uBloom, vBloom).rgb * uMix.z;\n"
+    "    gl_FragColor = vec4(add, (1.0 - uOverlay.a) * keep);\n"
+    "}\n";
+
+// Field composite, drawn over the grid: uVig scales the vignette worked out per vertex.
+static const char kCompGridVs[] =
+    "attribute vec2 aPos;\n"
+    "attribute vec2 aUv;\n"
+    "uniform vec2 uSceneUv;\n"
+    "uniform vec2 uPackUv;\n"
+    "uniform float uVig;\n"
+    "varying vec2 vScene;\n"
+    "varying vec2 vPack;\n"
+    "varying float vVig;\n"
+    "void main() {\n"
+    "    vScene = aUv * uSceneUv;\n"
+    "    vPack = aUv * uPackUv;\n"
+    "    vec2 d = (aUv - 0.5) * vec2(1.7647, 1.0);\n"
+    "    vVig = 1.0 - clamp(dot(d, d) - 0.12, 0.0, 0.80) * uVig;\n"
+    "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
+    "}\n";
+
+// The grade of COMP_FS_GRADE without the bloom (already in the pack) and without the vignette.
+#define PACKED_FS_GRADE \
+    "    float l = dot(c, vec3(0.299, 0.587, 0.114));\n" \
+    "    float tl = clamp(l * 1.6667 - 0.250005, 0.0, 1.0);\n" \
+    "    c = clamp(c * (uTint0 + tl * uTint1) + uLuma * l, 0.0, 1.0);\n" \
+    "    c *= uCurve.x + c * (uCurve.y + c * uCurve.z);\n"
+
+#define PACKED_FS_GRADE_UNIFORMS \
+    "uniform vec3 uTint0;\n" \
+    "uniform vec3 uTint1;\n" \
+    "uniform float uLuma;\n" \
+    "uniform vec3 uCurve;\n"
+
+static const char kCompPackedFs[] =
+    "precision mediump float;\n"
+    "uniform sampler2D uScene;\n"
+    "uniform sampler2D uPack;\n"
+    PACKED_FS_GRADE_UNIFORMS
+    "varying vec2 vScene;\n"
+    "varying vec2 vPack;\n"
+    "varying float vVig;\n"
+    "void main() {\n"
+    "    vec4 p = texture2D(uPack, vPack);\n"
+    "    vec3 c = texture2D(uScene, vScene).rgb * p.a + p.rgb;\n"
+    PACKED_FS_GRADE
+    "    gl_FragColor = vec4(c * vVig, 1.0);\n"
+    "}\n";
+
+static const char kCompPackedReadsFs[] =
+    "precision mediump float;\n"
+    "uniform sampler2D uScene;\n"
+    "uniform sampler2D uPack;\n"
+    "varying vec2 vScene;\n"
+    "varying vec2 vPack;\n"
+    "void main() {\n"
+    "    vec4 p = texture2D(uPack, vPack);\n"
+    "    gl_FragColor = vec4(texture2D(uScene, vScene).rgb * p.a + p.rgb, 1.0);\n"
+    "}\n";
+
+// 3D battle: the scene's weight is 0 (the backdrop is blurred whole), so only the pack is read;
+// the per-pixel vignette stays, as the low-HP edge needs the same distance.
+static const char kCompPackedBattleVs[] =
+    "attribute vec2 aPos;\n"
+    "attribute vec2 aUv;\n"
+    "uniform vec2 uPackUv;\n"
+    "varying vec2 vPack;\n"
+    "varying vec2 vVig;\n"
+    "void main() {\n"
+    "    vPack = aUv * uPackUv;\n"
+    "    vVig = (aUv - 0.5) * vec2(1.7647, 1.0);\n"
+    "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
+    "}\n";
+
+static const char kCompPackedBattleFs[] =
+    "precision mediump float;\n"
+    "uniform sampler2D uPack;\n"
+    PACKED_FS_GRADE_UNIFORMS
+    "uniform vec2 uEdge;\n"
+    "varying vec2 vPack;\n"
+    "varying vec2 vVig;\n"
+    "void main() {\n"
+    "    vec3 c = texture2D(uPack, vPack).rgb;\n"
+    PACKED_FS_GRADE
+    "    float vd = dot(vVig, vVig);\n"
+    "    c *= 1.0 - clamp(vd - 0.12, 0.0, 0.80) * uEdge.x;\n"
+    "    float edge = clamp(vd - 0.16, 0.0, 0.85) * uEdge.y;\n"
+    "    c = mix(c, c * vec3(1.0, 0.35, 0.30) + vec3(0.24, 0.0, 0.02), edge);\n"
+    "    gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);\n"
+    "}\n";
+
 static const char kCopyVs[] =
     "attribute vec2 aPos;\n"
     "attribute vec2 aUv;\n"
@@ -469,6 +643,99 @@ static bool InitShaftTarget(void)
     return true;
 }
 
+static bool InitPackedComposite(PackedCompositeProgram *const p, const char *const vsSrc, const char *const fsSrc)
+{
+    p->prog = LinkProgram(vsSrc, fsSrc);
+    if (p->prog == 0)
+        return false;
+    p->scene   = glGetUniformLocation(p->prog, "uScene");    // -1 in the battle program
+    p->pack    = glGetUniformLocation(p->prog, "uPack");
+    p->sceneUv = glGetUniformLocation(p->prog, "uSceneUv");  // -1 in the battle program
+    p->packUv  = glGetUniformLocation(p->prog, "uPackUv");
+    p->vig     = glGetUniformLocation(p->prog, "uVig");      // -1 in the reads and battle programs
+    p->tint0   = glGetUniformLocation(p->prog, "uTint0");    // -1 in the reads program, as below
+    p->tint1   = glGetUniformLocation(p->prog, "uTint1");
+    p->luma    = glGetUniformLocation(p->prog, "uLuma");
+    p->curve   = glGetUniformLocation(p->prog, "uCurve");
+    p->edge    = glGetUniformLocation(p->prog, "uEdge");     // battle program only
+    return true;
+}
+
+// The composite grid (COMP_GRID_X x COMP_GRID_Y quads over 0..1), in static buffers. With either
+// buffer missing the grid is drawn from the client arrays.
+static void InitCompositeGrid(void)
+{
+    uint32_t v = 0;
+    for (uint32_t y = 0; y <= COMP_GRID_Y; ++y)
+    {
+        for (uint32_t x = 0; x <= COMP_GRID_X; ++x)
+        {
+            sGridVerts[v++] = (float)x / (float)COMP_GRID_X;
+            sGridVerts[v++] = (float)y / (float)COMP_GRID_Y;
+        }
+    }
+    uint32_t i = 0;
+    for (uint32_t y = 0; y < COMP_GRID_Y; ++y)
+    {
+        for (uint32_t x = 0; x < COMP_GRID_X; ++x)
+        {
+            const uint16_t a = (uint16_t)(y * (COMP_GRID_X + 1u) + x);
+            const uint16_t b = (uint16_t)(a + 1u);
+            const uint16_t c = (uint16_t)(a + COMP_GRID_X + 1u);
+            const uint16_t d = (uint16_t)(c + 1u);
+            sGridIndices[i++] = a;
+            sGridIndices[i++] = b;
+            sGridIndices[i++] = d;
+            sGridIndices[i++] = a;
+            sGridIndices[i++] = d;
+            sGridIndices[i++] = c;
+        }
+    }
+
+    glGenBuffers(1, &sGridVbo);
+    glGenBuffers(1, &sGridIbo);
+    if (sGridVbo == 0 || sGridIbo == 0)
+    {
+        if (sGridVbo != 0)
+            glDeleteBuffers(1, &sGridVbo);
+        if (sGridIbo != 0)
+            glDeleteBuffers(1, &sGridIbo);
+        sGridVbo = 0;
+        sGridIbo = 0;
+        VITA_LOG("[HD2D SHADER] Composite grid buffers not created, drawn from client arrays\n");
+        return;
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, sGridVbo);
+    glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)sizeof(sGridVerts), sGridVerts, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sGridIbo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)sizeof(sGridIndices), sGridIndices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+// The packed composite's programs. False leaves HIGH on the unpacked composite.
+static bool InitPacked(void)
+{
+    sPack.prog = LinkProgram(kPackVs, kPackFs);
+    if (sPack.prog == 0)
+        return false;
+    sPack.src      = glGetUniformLocation(sPack.prog, "uSrc");
+    sPack.bloom    = glGetUniformLocation(sPack.prog, "uBloom");
+    sPack.uvScale  = glGetUniformLocation(sPack.prog, "uUvScale");
+    sPack.texel    = glGetUniformLocation(sPack.prog, "uTexel");
+    sPack.bloomUv  = glGetUniformLocation(sPack.prog, "uBloomUv");
+    sPack.dofRamp  = glGetUniformLocation(sPack.prog, "uDofRamp");
+    sPack.dofAlpha = glGetUniformLocation(sPack.prog, "uDofAlpha");
+    sPack.overlay  = glGetUniformLocation(sPack.prog, "uOverlay");
+    sPack.mix      = glGetUniformLocation(sPack.prog, "uMix");
+    if (!InitPackedComposite(&sCompPacked, kCompGridVs, kCompPackedFs)
+     || !InitPackedComposite(&sCompPackedReads, kCompGridVs, kCompPackedReadsFs)
+     || !InitPackedComposite(&sCompPackedBattle, kCompPackedBattleVs, kCompPackedBattleFs))
+        return false;
+    InitCompositeGrid();
+    return true;
+}
+
 bool VoxelHd2dShader_Init(void)
 {
     if (sTriedInit)
@@ -529,8 +796,16 @@ bool VoxelHd2dShader_Init(void)
         sShaftReady = true;
         VITA_LOG("[HD2D SHADER] Procedural light shafts compiled successfully.\n");
     }
+    sPackReady = sShaderReady && InitPacked();
+    if (!sPackReady)
+        VITA_LOG("[HD2D SHADER] Packed composite not available, HIGH uses the full composite\n");
 #endif
     return sShaderReady;
+}
+
+bool VoxelHd2dShader_PackReady(void)
+{
+    return sPackReady;
 }
 
 bool VoxelHd2dShader_Ready(void)
@@ -626,6 +901,31 @@ void VoxelHd2dShader_BrightPass(const GLuint sceneTex, const float uMax, const f
     glUseProgram(0);
 }
 
+// The grade's per-frame factors (COMP_FS_HEAD): c * (tint0 + tl * tint1) + luma * l, and the
+// S-curve's cubic.
+typedef struct
+{
+    float tint0[3], tint1[3];
+    float luma;
+    float curve[3];
+} GradeFactors;
+
+static void GradeFactorsOf(const float gradeAmt, const float saturation, const float curveAmt,
+                           const float shadowTint[3], const float highTint[3], GradeFactors *const out)
+{
+    const float keep = 1.0f - gradeAmt;
+    const float chroma = gradeAmt * saturation;
+    for (int32_t k = 0; k < 3; ++k)
+    {
+        out->tint0[k] = keep + chroma * shadowTint[k];
+        out->tint1[k] = chroma * (highTint[k] - shadowTint[k]);
+    }
+    out->luma = gradeAmt * (1.0f - saturation);
+    out->curve[0] = 1.0f - curveAmt;
+    out->curve[1] = 3.0f * curveAmt;
+    out->curve[2] = -2.0f * curveAmt;
+}
+
 void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, const GLuint bloomTex,
                                 const float uSceneMax, const float vSceneMax,
                                 const float uBlurMax, const float vBlurMax,
@@ -639,16 +939,8 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
     if (!sShaderReady) return;
     (void)bumpOffsetX; (void)bumpOffsetY;
 
-    // The grade's per-frame factors (COMP_FS_HEAD).
-    const float keep = 1.0f - gradeAmt;
-    const float chroma = gradeAmt * saturation;
-    float tint0[3], tint1[3];
-    for (int32_t k = 0; k < 3; ++k)
-    {
-        tint0[k] = keep + chroma * shadowTint[k];
-        tint1[k] = chroma * (highTint[k] - shadowTint[k]);
-    }
-    const float lumaAmt = gradeAmt * (1.0f - saturation);
+    GradeFactors gf;
+    GradeFactorsOf(gradeAmt, saturation, curveAmt, shadowTint, highTint, &gf);
 
     // The field never has the battle terms: they would cost every pixel for a no-op.
     const bool battle = (backBlur > 0.0f || backDim > 0.0f || bumpStrength > 0.0f);
@@ -672,14 +964,14 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
     glUniform2f(p->blurUv,  uBlurMax,  vBlurMax);
     glUniform2f(p->bloomUv, uBloomMax, vBloomMax);
     glUniform3f(p->dofRamp, yTop, yBot, invSlope);
-    glUniform4f(p->post,     bloomAmt, lumaAmt, 0.0f, vignetteAmt);
-    glUniform3f(p->curve,    1.0f - curveAmt, 3.0f * curveAmt, -2.0f * curveAmt);
+    glUniform4f(p->post,     bloomAmt, gf.luma, 0.0f, vignetteAmt);
+    glUniform3fv(p->curve,   1, gf.curve);
     glUniform2f(p->dofAlpha, topAlpha, botAlpha);
     glUniform4fv(p->overlay, 1, overlay);
     if (battle)
         glUniform3f(p->battle, backBlur, 1.0f - backDim, bumpStrength);
-    glUniform3fv(p->tint0, 1, tint0);
-    glUniform3fv(p->tint1, 1, tint1);
+    glUniform3fv(p->tint0, 1, gf.tint0);
+    glUniform3fv(p->tint1, 1, gf.tint1);
     DrawQuad();
 
     glActiveTexture(GL_TEXTURE2);
@@ -687,6 +979,127 @@ void VoxelHd2dShader_Composite(const GLuint sceneTex, const GLuint blurTex, cons
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE0);
+    glUseProgram(0);
+}
+
+void VoxelHd2dShader_Pack(const VoxelHd2dPack *const pk)
+{
+    if (!sPackReady || pk == NULL)
+        return;
+    // The DoF ramps start at the band edges and reach full blur over 1 / 2.8 of the screen; no
+    // top band when it would start at the very top (as the full composite).
+    const float invSlope = (pk->uvTop < 0.98f) ? 2.8f : 0.0f;
+
+    glUseProgram(sPack.prog);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, pk->srcTex);
+    glUniform1i(sPack.src, 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, pk->bloomTex);
+    glUniform1i(sPack.bloom, 1);
+    glUniform2f(sPack.uvScale, pk->srcU, pk->srcV);
+    glUniform2f(sPack.texel, pk->texelX, pk->texelY);
+    glUniform2f(sPack.bloomUv, pk->bloomU, pk->bloomV);
+    glUniform3f(sPack.dofRamp, pk->uvTop, pk->uvBot, invSlope);
+    glUniform2f(sPack.dofAlpha, pk->topAlpha, pk->botAlpha);
+    glUniform4fv(sPack.overlay, 1, pk->overlay);
+    glUniform3f(sPack.mix, pk->minBlur, pk->dim, pk->bloomAmt);
+    DrawQuad();
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glUseProgram(0);
+}
+
+static void SetPackedGrade(const PackedCompositeProgram *const p, const VoxelHd2dGrade *const g)
+{
+    GradeFactors gf;
+    GradeFactorsOf(g->gradeAmt, g->saturation, g->curveAmt, g->shadowTint, g->highTint, &gf);
+    glUniform3fv(p->tint0, 1, gf.tint0);
+    glUniform3fv(p->tint1, 1, gf.tint1);
+    glUniform1f(p->luma, gf.luma);
+    glUniform3fv(p->curve, 1, gf.curve);
+}
+
+// The composite grid with the current program; attribute 0 = position, 1 = texture coordinate.
+// The array and index buffer bindings are put back to 0.
+static void DrawCompositeGrid(void)
+{
+    const bool buffers = (sGridVbo != 0 && sGridIbo != 0);
+    const void *const verts = buffers ? NULL : (const void *)sGridVerts;
+    const void *const indices = buffers ? NULL : (const void *)sGridIndices;
+
+    if (buffers)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, sGridVbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sGridIbo);
+    }
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, verts);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, verts);
+    glDrawElements(GL_TRIANGLES, (GLsizei)COMP_GRID_INDICES, GL_UNSIGNED_SHORT, indices);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(0);
+    if (buffers)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+}
+
+void VoxelHd2dShader_CompositePacked(const GLuint sceneTex, const float sceneU, const float sceneV,
+                                     const GLuint packTex, const float packU, const float packV,
+                                     const VoxelHd2dGrade *const grade, const VoxelHd2dCompVariant variant)
+{
+    if (!sPackReady || grade == NULL)
+        return;
+    if (variant == VOXEL_HD2D_COMP_COPY)
+    {
+        static const float kNoOverlay[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+        VoxelHd2dShader_Downsample(sceneTex, sceneU, sceneV, kNoOverlay);
+        return;
+    }
+    const PackedCompositeProgram *const p = (variant == VOXEL_HD2D_COMP_READS) ? &sCompPackedReads : &sCompPacked;
+
+    glUseProgram(p->prog);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sceneTex);
+    glUniform1i(p->scene, 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, packTex);
+    glUniform1i(p->pack, 1);
+    glUniform2f(p->sceneUv, sceneU, sceneV);
+    glUniform2f(p->packUv, packU, packV);
+    if (p == &sCompPacked)
+    {
+        glUniform1f(p->vig, grade->vignetteAmt);
+        SetPackedGrade(p, grade);
+    }
+    DrawCompositeGrid();
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glUseProgram(0);
+}
+
+void VoxelHd2dShader_CompositePackedBattle(const GLuint packTex, const float packU, const float packV,
+                                           const VoxelHd2dGrade *const grade, const float lowHpEdge)
+{
+    if (!sPackReady || grade == NULL)
+        return;
+    const PackedCompositeProgram *const p = &sCompPackedBattle;
+
+    glUseProgram(p->prog);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, packTex);
+    glUniform1i(p->pack, 0);
+    glUniform2f(p->packUv, packU, packV);
+    glUniform2f(p->edge, grade->vignetteAmt, lowHpEdge);
+    SetPackedGrade(p, grade);
+    DrawQuad();
     glUseProgram(0);
 }
 

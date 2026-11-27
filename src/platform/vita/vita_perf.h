@@ -174,6 +174,8 @@ typedef enum
     VITA_PERF_PASS_BUILDINGS,   // Pass_Buildings, every page
     VITA_PERF_PASS_WORLDPIXELS, // the world scene's pixels: drawn through an 8x8 scissor, so only
                                 // its vertex and tiling work is left
+    VITA_PERF_PASS_COMPGRADE,   // HIGH's composite without its grade: only its two reads
+    VITA_PERF_PASS_COMPREADS,   // HIGH's composite as a single read of the scene
     VITA_PERF_PASS_COUNT
 } VitaPerfPass;
 
