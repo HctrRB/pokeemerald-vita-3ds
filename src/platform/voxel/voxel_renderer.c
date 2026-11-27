@@ -6717,73 +6717,74 @@ static void Pass_SetupWorld3D(void)
     glEnableClientState(GL_COLOR_ARRAY);
 }
 
-// Pass 1: ground and relief (cutouts false, opaque), or the cliff cutouts (alpha-tested), each
-// in its phase of the world scene (VoxelRenderer_RenderFrame).
-static void Pass_Ground(const VoxelFrame *const f, const bool cutouts)
+// Pass 1: ground and relief, opaque first (early-Z / HSR), then cliff cutouts.
+static void Pass_Ground(const VoxelFrame *const f)
 {
     VoxelChunkSlot *const *const visibleChunks = f->visible;
     const int32_t visibleChunkCount = f->visibleCount;
-    const uint32_t cutPass = cutouts ? 1u : 0u;
-    if (VitaPerf_PassSkipped(cutouts ? VITA_PERF_PASS_CUTOUTS : VITA_PERF_PASS_GROUND))
-        return;
-    if (cutouts)
+    for (uint32_t cutPass = 0; cutPass < 2u; cutPass++)
     {
-        glEnable(GL_ALPHA_TEST);
-        glAlphaFunc(GL_GREATER, 0.0f);
-    }
-    for (int32_t aSlot = 0; aSlot < VOXEL_ATLAS_SLOTS; aSlot++)
-    {
-        if (!sAtlasSlots[aSlot].valid)
+        if (VitaPerf_PassSkipped((cutPass == 0u) ? VITA_PERF_PASS_GROUND : VITA_PERF_PASS_CUTOUTS))
             continue;
-
-        for (uint32_t page = 0; page < sAtlasSlots[aSlot].pageCount; page++)
+        if (cutPass == 1u)
         {
-            const GLuint tex = sAtlasSlots[aSlot].tex[page];
-            if (!tex)
+            glEnable(GL_ALPHA_TEST);
+            glAlphaFunc(GL_GREATER, 0.0f);
+        }
+
+        for (int32_t aSlot = 0; aSlot < VOXEL_ATLAS_SLOTS; aSlot++)
+        {
+            if (!sAtlasSlots[aSlot].valid)
                 continue;
 
-            bool bound = false;
-            GLuint lastVbo = 0;
-
-            for (int32_t i = 0; i < visibleChunkCount; i++)
+            for (uint32_t page = 0; page < sAtlasSlots[aSlot].pageCount; page++)
             {
-                const VoxelChunkSlot *const chunk = visibleChunks[i];
-                if (!(chunk->usedAtlasMask & (1u << aSlot)))
+                const GLuint tex = sAtlasSlots[aSlot].tex[page];
+                if (!tex)
                     continue;
 
-                for (uint8_t sp = 0; sp < chunk->groundSpanCount; sp++)
+                bool bound = false;
+                GLuint lastVbo = 0;
+
+                for (int32_t i = 0; i < visibleChunkCount; i++)
                 {
-                    const VoxelChunkGroundSpan *const span = &chunk->groundSpans[sp];
-                    if (span->atlasSlot != (uint8_t)aSlot || span->page != (uint8_t)page
-                     || span->isCutout != (uint8_t)cutPass || span->vertCount == 0)
+                    const VoxelChunkSlot *const chunk = visibleChunks[i];
+                    if (!(chunk->usedAtlasMask & (1u << aSlot)))
                         continue;
 
-                    if (!bound)
+                    for (uint8_t sp = 0; sp < chunk->groundSpanCount; sp++)
                     {
-                        glBindTexture(GL_TEXTURE_2D, tex);
-                        bound = true;
-                    }
+                        const VoxelChunkGroundSpan *const span = &chunk->groundSpans[sp];
+                        if (span->atlasSlot != (uint8_t)aSlot || span->page != (uint8_t)page
+                         || span->isCutout != (uint8_t)cutPass || span->vertCount == 0)
+                            continue;
 
-                    if (lastVbo != chunk->vbo)
-                    {
-                        glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
-                        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
-                        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
-                        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
-                        lastVbo = chunk->vbo;
-                    }
+                        if (!bound)
+                        {
+                            glBindTexture(GL_TEXTURE_2D, tex);
+                            bound = true;
+                        }
 
-                    ChunkOffsets_Apply(chunk);
-                    glDrawArrays(GL_TRIANGLES, (GLint)span->firstVert, (GLsizei)span->vertCount);
+                        if (lastVbo != chunk->vbo)
+                        {
+                            glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
+                            glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
+                            glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
+                            glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
+                            lastVbo = chunk->vbo;
+                        }
+
+                        ChunkOffsets_Apply(chunk);
+                        glDrawArrays(GL_TRIANGLES, (GLint)span->firstVert, (GLsizei)span->vertCount);
+                    }
                 }
             }
         }
     }
 }
 
-// Pass 2: trees, tall grass and flowers (tree atlas), from the chunk VBOs: the opaque cores
-// (alphaPhase false), or the alpha-tested edges and the swaying foliage.
-static void Pass_Trees(const VoxelFrame *const f, const bool alphaPhase)
+// Pass 2: trees, tall grass and flowers (tree atlas), from the chunk VBOs.
+static void Pass_Trees(const VoxelFrame *const f)
 {
     VoxelChunkSlot *const *const visibleChunks = f->visible;
     const int32_t visibleChunkCount = f->visibleCount;
@@ -6805,7 +6806,7 @@ static void Pass_Trees(const VoxelFrame *const f, const bool alphaPhase)
     // 2A-0: Opaque tree cores & ground plates with GL_ALPHA_TEST OFF so SGX543 HSR rejects hidden trees
     glDisable(GL_ALPHA_TEST);
 
-    const bool drawCores = !alphaPhase && !VitaPerf_PassSkipped(VITA_PERF_PASS_TREECORES);
+    const bool drawCores = !VitaPerf_PassSkipped(VITA_PERF_PASS_TREECORES);
     for (int32_t i = 0; drawCores && i < visibleChunkCount; i++)
     {
         const VoxelChunkSlot *const chunk = visibleChunks[i];
@@ -6819,9 +6820,6 @@ static void Pass_Trees(const VoxelFrame *const f, const bool alphaPhase)
         ChunkOffsets_Apply(chunk);
         glDrawArrays(GL_TRIANGLES, (GLint)chunk->treeFirstVert, (GLsizei)chunk->treeOpaqueCount);
     }
-
-    if (!alphaPhase)
-        return;
 
     // 2A-1: Alpha-tested tree edges (and all foliage when sway shader is off)
     glEnable(GL_ALPHA_TEST);
@@ -6900,10 +6898,9 @@ static void Pass_Trees(const VoxelFrame *const f, const bool alphaPhase)
     }
 }
 
-// Pass 3: buildings and indoor furniture, one building page at a time: the opaque pages
-// (alphaPhase false) or the pages that need alpha testing. Returns whether alpha testing was
-// left on.
-static bool Pass_Buildings(const VoxelFrame *const f, const bool alphaPhase)
+// Pass 3: buildings and indoor furniture, one building page at a time. Returns whether
+// alpha testing was left on.
+static bool Pass_Buildings(const VoxelFrame *const f)
 {
     if (VitaPerf_PassSkipped(VITA_PERF_PASS_BUILDINGS))
         return false;
@@ -6933,53 +6930,57 @@ static bool Pass_Buildings(const VoxelFrame *const f, const bool alphaPhase)
         }
     }
 
-    // The opaque pages with GL_ALPHA_TEST off (SGX543 hidden-surface removal), the cutout pages
-    // with it on, each in its phase of the world scene.
+    // Two clean passes for PowerVR SGX543MP4+ TBDR HSR: opaque building pages first
+    // (GL_ALPHA_TEST OFF), then cutout pages (GL_ALPHA_TEST ON).
     bool buildingAlphaEnabled = false;
     glDisable(GL_ALPHA_TEST);
-    const bool wantAlpha = alphaPhase;
-    for (int32_t ap = 0; ap < activeBuildingPageCount; ap++)
+
+    for (uint32_t alphaPass = 0u; alphaPass < 2u; alphaPass++)
     {
-        const int32_t p = activeBuildingPages[ap];
-        if (p < 0 || p >= VOXEL_MAX_BUILDING_PAGES) continue;
-        const GLuint bTex = RequestOrLoadBuildingPage(p, sSyncBuildingLoads);
-        if (!bTex) continue;
-
-        const bool pageNeedsAlpha = (sBuildingPageHasAlpha[p] == 2u);
-        if (pageNeedsAlpha != wantAlpha)
-            continue;
-
-        if (wantAlpha && !buildingAlphaEnabled)
+        const bool wantAlpha = (alphaPass == 1u);
+        for (int32_t ap = 0; ap < activeBuildingPageCount; ap++)
         {
-            glEnable(GL_ALPHA_TEST);
-            glAlphaFunc(GL_GREATER, 0.0f);
-            buildingAlphaEnabled = true;
-        }
+            const int32_t p = activeBuildingPages[ap];
+            if (p < 0 || p >= VOXEL_MAX_BUILDING_PAGES) continue;
+            const GLuint bTex = RequestOrLoadBuildingPage(p, sSyncBuildingLoads);
+            if (!bTex) continue;
 
-        glBindTexture(GL_TEXTURE_2D, bTex);
+            const bool pageNeedsAlpha = (sBuildingPageHasAlpha[p] == 2u);
+            if (pageNeedsAlpha != wantAlpha)
+                continue;
 
-        GLuint lastVbo = 0;
-        for (int32_t i = 0; i < visibleChunkCount; i++)
-        {
-            const VoxelChunkSlot *const chunk = visibleChunks[i];
-
-            for (uint8_t sp = 0; sp < chunk->buildingSpanCount; sp++)
+            if (wantAlpha && !buildingAlphaEnabled)
             {
-                const VoxelChunkBuildingSpan *const bspan = &chunk->buildingSpans[sp];
-                if (bspan->page != (int16_t)p || bspan->vertCount == 0)
-                    continue;
+                glEnable(GL_ALPHA_TEST);
+                glAlphaFunc(GL_GREATER, 0.0f);
+                buildingAlphaEnabled = true;
+            }
 
-                if (lastVbo != chunk->vbo)
+            glBindTexture(GL_TEXTURE_2D, bTex);
+
+            GLuint lastVbo = 0;
+            for (int32_t i = 0; i < visibleChunkCount; i++)
+            {
+                const VoxelChunkSlot *const chunk = visibleChunks[i];
+
+                for (uint8_t sp = 0; sp < chunk->buildingSpanCount; sp++)
                 {
-                    glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
-                    glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
-                    glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
-                    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
-                    lastVbo = chunk->vbo;
-                }
+                    const VoxelChunkBuildingSpan *const bspan = &chunk->buildingSpans[sp];
+                    if (bspan->page != (int16_t)p || bspan->vertCount == 0)
+                        continue;
 
-                ChunkOffsets_Apply(chunk);
-                glDrawArrays(GL_TRIANGLES, (GLint)(chunk->buildingFirstVert + bspan->firstVert), (GLsizei)bspan->vertCount);
+                    if (lastVbo != chunk->vbo)
+                    {
+                        glBindBuffer(GL_ARRAY_BUFFER, chunk->vbo);
+                        glVertexPointer(3, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, x));
+                        glTexCoordPointer(2, GL_FLOAT, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, u));
+                        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VoxelGlVertex), (const void *)offsetof(VoxelGlVertex, r));
+                        lastVbo = chunk->vbo;
+                    }
+
+                    ChunkOffsets_Apply(chunk);
+                    glDrawArrays(GL_TRIANGLES, (GLint)(chunk->buildingFirstVert + bspan->firstVert), (GLsizei)bspan->vertCount);
+                }
             }
         }
     }
@@ -9871,16 +9872,9 @@ bool VoxelRenderer_RenderFrame(void)
         // Chunk VBOs (passes 1-3) are drawn with their crossing offsets.
         ChunkOffsets_Begin();
         VitaPerf_MarkDraw3DStart();
-        // Every opaque draw before any alpha-tested one: the SGX543's hidden-surface removal
-        // resolves the opaque geometry first, and alpha-tested fragments (discard) behind it are
-        // never shaded. Depth decides the image, so the order does not change it (except for
-        // exactly coplanar surfaces of the two kinds).
-        Pass_Ground(&f, false);
-        Pass_Trees(&f, false);
-        (void)Pass_Buildings(&f, false);
-        Pass_Ground(&f, true);
-        Pass_Trees(&f, true);
-        const bool buildingAlphaEnabled = Pass_Buildings(&f, true);
+        Pass_Ground(&f);
+        Pass_Trees(&f);
+        const bool buildingAlphaEnabled = Pass_Buildings(&f);
         ChunkOffsets_End();
 
         // Unbind VBO so following passes can use standard client-side arrays

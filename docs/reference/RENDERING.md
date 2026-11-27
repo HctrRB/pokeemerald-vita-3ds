@@ -74,10 +74,7 @@ Per frame (`VoxelRenderer_RenderFrame`):
    handed to the worker: each of those frames waits for it before touching the atlas. Without
    the worker those builds run on Core 0 when the frame has room. Warm-up and faded frames
    build on Core 0 without limit. Chunks drawn this frame or the previous one are never evicted.
-6. **Passes**, each batched into few draw calls. Passes 1–3 run in two phases: every opaque draw
-   (1A, 2A-0, the opaque building pages) first, then every alpha-tested one (1B, 2A-1, 2B, the
-   cutout building pages), so the SGX543 resolves the opaque geometry before any fragment that
-   can be discarded (`Pass_Ground`, `Pass_Trees`, `Pass_Buildings` take the phase):
+6. **Passes**, each batched into few draw calls:
 
 | Pass | Content | Notes |
 |---|---|---|
