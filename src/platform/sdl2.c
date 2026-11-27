@@ -53,6 +53,7 @@
 #include "platform/vita_extras.h"
 #include "field_effect.h"
 #include "constants/field_effects.h"
+#include "follower_mon.h"
 
 SDL_Thread *mainLoopThread;
 SDL_Window *sdlWindow;
@@ -1466,6 +1467,9 @@ void SoftReset(u32 resetFlags)
 #ifdef VOXEL_SUPPORTED
         VoxelFlyGame_OnReset();
 #endif
+        // The restore below sets the follower's heap pointers back to NULL without freeing what
+        // they hold: without this, each reset leaks 16-430 KB of sprite sheets and texts.
+        FollowerMon_ReleaseAll();
         const bool restored = VitaReset_RestoreBootSnapshot();
         if (restored)
         {
