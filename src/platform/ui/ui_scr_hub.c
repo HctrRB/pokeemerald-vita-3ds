@@ -285,7 +285,7 @@ static void EntryIcon(uint8_t e, int32_t x, int32_t y)
     switch (e)
     {
     case HUB_DEX:      UiDraw_Sprite(UI_SPR_BALL_POKE, x + 4, y + 4, 2); break;
-    case HUB_MON:      if (UiGame_Mon(0, &lead)) UiSpr_MonIcon(lead.species, (uint8_t)((sFrame / 16) & 1), x, y, 1); break;
+    case HUB_MON:      if (UiGame_Mon(0, &lead)) UiSpr_MonIconOf(lead.species, lead.personality, (uint8_t)((sFrame / 16) & 1), x, y, 1); break;
     case HUB_BAG:      UiDraw_Sprite(UI_SPR_START_BAG, x, y, 1); break;
     case HUB_NAV:      UiDraw_Sprite(UI_SPR_START_POKENAV, x, y, 1); break;
     case HUB_CARD:     UiDraw_Sprite(UiGame_PlayerIsMale() ? UI_SPR_HEAD_BRENDAN : UI_SPR_HEAD_MAY, x + 4, y + 4, 2); break;
@@ -398,7 +398,7 @@ static void BuildParty(void)
         UiGame_Mon(i, &m);
         const int32_t y = y0 + 6 + i * 36;
         UiW_Row(22, y, 320, 36, i == 0, i);
-        UiSpr_MonIcon(m.species, (uint8_t)((sFrame / 16) & 1), 26, y + 2 - 4, 1);
+        UiSpr_MonIconOf(m.species, m.personality, (uint8_t)((sFrame / 16) & 1), 26, y + 2 - 4, 1);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 62, y + 2, m.name, i == 0 ? UI_COL_SELECT_INK : UI_COL_INK);
         if (m.egg)
             continue;
@@ -631,7 +631,7 @@ static void BuildGbaHub(void)
         else
             UiW_Bevel(mx, my, 204, 42, 4, UI_RGBA(16, 24, 28, 255), UI_RGBA(48, 104, 128, 255), UI_RGBA(48, 104, 128, 255),
                       2, UI_RGBA(110, 192, 216, 255), UI_RGBA(20, 48, 64, 255), 0);
-        UiSpr_MonIcon(m.species, (uint8_t)((sFrame / 16) & 1), mx + 4, my + 2, 1);
+        UiSpr_MonIconOf(m.species, m.personality, (uint8_t)((sFrame / 16) & 1), mx + 4, my + 2, 1);
         UiDraw_PushClip(mx + 38, my + 2, 114, 26);
         UiW_GbaText(UI_FACE_VT323, 24, mx + 38, my + 3, m.name, C_WHITE, UI_GBA_SHAD_DARK);
         UiDraw_PopClip();
@@ -731,7 +731,7 @@ static void BuildGbaSavePopup(void)
             UiGame_Mon(i, &m);
             UiW_Bevel(sx, sy, 70, 54, 4, UI_RGBA(16, 24, 28, 255), UI_RGBA(48, 104, 128, 255), UI_RGBA(48, 104, 128, 255),
                       1, UI_RGBA(110, 192, 216, 255), UI_RGBA(20, 48, 64, 255), 0);
-            UiSpr_MonIcon(m.species, (uint8_t)((sFrame / 16) & 1), sx + 19, sy + 2, 1);
+            UiSpr_MonIconOf(m.species, m.personality, (uint8_t)((sFrame / 16) & 1), sx + 19, sy + 2, 1);
             if (!m.egg)
             {
                 snprintf(buf, sizeof(buf), UI_TR("Lv%u"), (unsigned)m.level);

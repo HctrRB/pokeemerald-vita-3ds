@@ -19,6 +19,7 @@
 #include "decompress.h"
 #include "graphics.h"
 #include "item_icon.h"
+#include "pokemon.h"
 #include "pokemon_icon.h"
 #include "constants/species.h"
 #include "constants/trainers.h"
@@ -230,7 +231,7 @@ static void ComposePopup(int32_t key)
 #define UI_SPR_IDLE_TICKS 4        // a cell is reusable after this many ticks without being drawn (triple-buffered draw lists)
 
 enum { KIND_MON_ICON = 1, KIND_MON_FRONT, KIND_MON_FRONT_SHINY, KIND_ITEM, KIND_FOOTPRINT, KIND_TRAINER, KIND_WALLPAPER, KIND_POPUP, KIND_DECOR, KIND_MAIL,
-       KIND_POKEBLOCK, KIND_POKEBLOCK_CASE, KIND_FRONTIER_MAP };
+       KIND_POKEBLOCK, KIND_POKEBLOCK_CASE, KIND_FRONTIER_MAP, KIND_SPINDA_FRONT, KIND_SPINDA_FRONT_SHINY };
 #define PIC_PARTS_X 4              // a 240 x 160 picture in 4 x 3 cells of 64 x 64
 
 // POKéBLOCK colours (PBLOCK_CLR_RED..GOLD = 1..14): pokeblock_feed.c's sPokeblocksPals
@@ -247,6 +248,10 @@ static uint32_t sCellUsed[UI_CELL_COUNT_MAX];      // tick of the last list that
 static uint32_t sCellUpload[UI_CELL_COUNT_MAX];    // ring head index (sHead + 1) of the cell's latest upload
 static uint32_t sTick;
 static uint32_t sDecodes, sDecodesLast;
+// A Spinda's spots come from all 32 bits of its personality, more than a cell key holds: the key
+// carries a 16-bit fold of it and the draw call leaves the whole value here for Decode, which only
+// runs inside that call. Two Spinda with the same fold share a cell (a cosmetic 1-in-65536 case).
+static uint32_t sDecodePersonality;
 #ifdef VITA_TELEMETRY
 static uint32_t sStarved, sPeakLive;              // since boot: lookups with no cell to give, most cells drawn at once
 #endif
@@ -303,11 +308,13 @@ static bool Decode(uint32_t key, uint16_t *dst)
     {
     case KIND_MON_ICON:
     {
-        if (id == SPECIES_NONE || id > SPECIES_EGG)
+        // Unown's letters have their own icon ids past SPECIES_EGG (GetIconSpecies) but Unown's
+        // palette, which GetValidMonIconPalettePtr only gives for the base species
+        if (id == SPECIES_NONE || id > SPECIES_UNOWN_QMARK)
             return false;
         // 32x64: frame 0 at the top, frame 1 below (the two-frame party bounce)
         const uint8_t *tiles = gMonIconTable[id];
-        const uint16_t *pal = GetValidMonIconPalettePtr(id);
+        const uint16_t *pal = GetValidMonIconPalettePtr(id >= SPECIES_UNOWN_B ? SPECIES_UNOWN : id);
         if (tiles == NULL || pal == NULL)
             return false;
         Tiles4bpp(dst, 0, 0, tiles, 4, 4, pal);
@@ -316,15 +323,23 @@ static bool Decode(uint32_t key, uint16_t *dst)
     }
     case KIND_MON_FRONT:
     case KIND_MON_FRONT_SHINY:
+    case KIND_SPINDA_FRONT:
+    case KIND_SPINDA_FRONT_SHINY:
     {
-        if (id == SPECIES_NONE || id > SPECIES_EGG)
+        const bool spinda = kind == KIND_SPINDA_FRONT || kind == KIND_SPINDA_FRONT_SHINY;
+        const uint16_t pic = spinda ? SPECIES_SPINDA : id;   // Unown letters: pic ids past SPECIES_EGG
+        if (pic == SPECIES_NONE || pic > SPECIES_UNOWN_QMARK)
             return false;
+        const uint16_t base = pic >= SPECIES_UNOWN_B ? SPECIES_UNOWN : pic;
+        const bool shiny = kind == KIND_MON_FRONT_SHINY || kind == KIND_SPINDA_FRONT_SHINY;
         static uint8_t tiles[(UI_CELL * UI_CELL / 2) * UI_MON_PIC_MAX_FRAMES];
         static uint16_t pal[16 * 16];
-        const u32 *picLz = gMonStillFrontPicTable[id].data;
-        const u32 *palLz = (kind == KIND_MON_FRONT_SHINY ? gMonShinyPaletteTable : gMonPaletteTable)[id].data;
+        const u32 *picLz = gMonStillFrontPicTable[pic].data;
+        const u32 *palLz = (shiny ? gMonShinyPaletteTable : gMonPaletteTable)[base].data;
         if (!UnpackLz(picLz, tiles, sizeof(tiles)) || !UnpackLz(palLz, pal, sizeof(pal)))
             return false;
+        if (spinda)
+            DrawSpindaSpots(SPECIES_SPINDA, sDecodePersonality, tiles, TRUE);
         Tiles4bpp(dst, 0, 0, tiles, 8, 8, pal);
         return true;
     }
@@ -520,6 +535,30 @@ bool UiSpr_MonFront(uint16_t species, bool shiny, int32_t x, int32_t y, int32_t 
     if (species == SPECIES_NONE || species > SPECIES_EGG)
         return false;
     return DrawCell(KEY(shiny ? KIND_MON_FRONT_SHINY : KIND_MON_FRONT, species), 0, 0, 64, 64, x, y, scale, 0xFFFFFFFFu);
+}
+
+// A party or box Pokemon's own icon: its Unown letter
+bool UiSpr_MonIconOf(uint16_t species, uint32_t personality, uint8_t frame, int32_t x, int32_t y, int32_t scale)
+{
+    if (species == SPECIES_NONE || species > SPECIES_EGG)
+        return false;
+    return DrawCell(KEY(KIND_MON_ICON, GetIconSpecies(species, personality)), 0, (frame & 1) ? 32 : 0, 32, 32,
+                    x, y, scale, 0xFFFFFFFFu);
+}
+
+// A party or box Pokemon's own picture: its Unown letter, its Spinda spots
+bool UiSpr_MonFrontOf(uint16_t species, uint32_t personality, bool shiny, int32_t x, int32_t y, int32_t scale)
+{
+    if (species == SPECIES_NONE || species > SPECIES_EGG)
+        return false;
+    if (species == SPECIES_SPINDA)
+    {
+        sDecodePersonality = personality;
+        return DrawCell(KEY(shiny ? KIND_SPINDA_FRONT_SHINY : KIND_SPINDA_FRONT, (personality ^ (personality >> 16)) & 0xFFFFu),
+                        0, 0, 64, 64, x, y, scale, 0xFFFFFFFFu);
+    }
+    return DrawCell(KEY(shiny ? KIND_MON_FRONT_SHINY : KIND_MON_FRONT, GetIconSpecies(species, personality)), 0, 0, 64, 64,
+                    x, y, scale, 0xFFFFFFFFu);
 }
 
 bool UiSpr_ItemIcon(uint16_t itemId, int32_t x, int32_t y, int32_t scale)

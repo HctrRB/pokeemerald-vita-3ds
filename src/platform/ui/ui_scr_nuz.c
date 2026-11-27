@@ -159,7 +159,7 @@ static void Build(void)
         {
             UiMon m;
             UiGame_Mon(i, &m);
-            UiSpr_MonIcon(m.species, 0, LIST_X + 24, y + 2, 1);
+            UiSpr_MonIconOf(m.species, m.personality, 0, LIST_X + 24, y + 2, 1);
             UiText_Draw(UI_FACE_VT323, UI_BODY_PX, LIST_X + 64, y + 4, m.name, ink);
             if (!m.egg)
             {

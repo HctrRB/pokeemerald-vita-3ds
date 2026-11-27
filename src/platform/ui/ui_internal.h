@@ -186,6 +186,9 @@ int32_t UiText_DrawMid(uint8_t face, uint8_t px, int32_t x, int32_t boxY, int32_
 // can show up a tick late; the calls return false when nothing was drawn this tick.
 bool UiSpr_MonIcon(uint16_t species, uint8_t frame, int32_t x, int32_t y, int32_t scale);   // 32x32
 bool UiSpr_MonFront(uint16_t species, bool shiny, int32_t x, int32_t y, int32_t scale);      // 64x64
+// The same for one Pokemon (party, box): its Unown letter and Spinda spots from its personality
+bool UiSpr_MonIconOf(uint16_t species, uint32_t personality, uint8_t frame, int32_t x, int32_t y, int32_t scale);
+bool UiSpr_MonFrontOf(uint16_t species, uint32_t personality, bool shiny, int32_t x, int32_t y, int32_t scale);
 bool UiSpr_ItemIcon(uint16_t itemId, int32_t x, int32_t y, int32_t scale);                   // 24x24
 bool UiSpr_Footprint(uint16_t species, int32_t x, int32_t y, int32_t scale, uint32_t rgba);  // 16x16, tinted
 bool UiSpr_Wallpaper(uint8_t wallpaperId, int32_t x, int32_t y, int32_t scale);              // PC box wallpaper, 160x144

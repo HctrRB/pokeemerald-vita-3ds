@@ -241,7 +241,7 @@ static void DrawMonPanel(const char *name)
     const uint16_t species = UiGame_SafeSpecies(GetMonData(sMon, MON_DATA_SPECIES));
     UiW_Panel(16, 60, 300, 272);
     UiW_Inset(30, 74, 272, 176);
-    UiSpr_MonFront(species, IsMonShiny(sMon), 30 + (272 - 128) / 2, 74 + (176 - 128) / 2, 2);
+    UiSpr_MonFrontOf(species, GetMonData(sMon, MON_DATA_PERSONALITY), IsMonShiny(sMon), 30 + (272 - 128) / 2, 74 + (176 - 128) / 2, 2);
     snprintf(buf, sizeof(buf), UI_TR("%s Lv%u"), name, (unsigned)GetMonData(sMon, MON_DATA_LEVEL));
     UiText_Draw(UI_FACE_PS2P, 16, 30, 262, buf, UI_COL_INK);
     UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + gSpeciesInfo[species].types[0]), 30, 290, 2);

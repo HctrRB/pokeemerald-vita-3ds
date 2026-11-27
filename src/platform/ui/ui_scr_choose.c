@@ -480,7 +480,7 @@ static void Build(void)
         const bool on = i == sList.sel;
         UiW_Row(CARD_X, y, CARD_W, CARD_H - 2, on, i);
         const uint8_t f = (uint8_t)((sFrame / (on ? 8 : 16)) & 1);
-        UiSpr_MonIcon(m.species, f, CARD_X + 8, y + 14 - (f ? 3 : 0), 1);
+        UiSpr_MonIconOf(m.species, m.personality, f, CARD_X + 8, y + 14 - (f ? 3 : 0), 1);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, CARD_X + 52, y, m.name, on ? UI_COL_SELECT_INK : UI_COL_INK);
         if (!m.egg)
         {

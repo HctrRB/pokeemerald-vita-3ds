@@ -36,6 +36,7 @@ typedef struct
     uint8_t level, gender;     // gender: MON_MALE / MON_FEMALE / MON_GENDERLESS
     uint16_t hp, maxHp, item;
     uint32_t status;
+    uint32_t personality;      // Unown letter, Spinda spots
     char name[24];
 } UiMon;
 

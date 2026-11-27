@@ -36,7 +36,7 @@ static void DrawCard(int32_t slot, int32_t y, bool on, const char *tag, bool tag
     UiW_Row(x, y, CARD_W, CARD_H - 2, on, slot);
     const uint32_t ink = on ? UI_COL_SELECT_INK : UI_COL_INK;
     const uint8_t frame = (uint8_t)((sFrame / (on ? 8 : 16)) & 1);
-    UiSpr_MonIcon(m.species, frame, x + 8, y + 14 - (frame ? 3 : 0), 1);
+    UiSpr_MonIconOf(m.species, m.personality, frame, x + 8, y + 14 - (frame ? 3 : 0), 1);
     if (m.item != ITEM_NONE)
         UiDraw_Sprite(ItemIsMail(m.item) ? UI_SPR_HOLD_MAIL : UI_SPR_HOLD_ITEM, x + 30, y + 40, 2);
     const int32_t nw = UiText_Draw(UI_FACE_VT323, UI_BODY_PX, x + 52, y, m.name, ink);
@@ -635,7 +635,7 @@ static void BuildInfo(int32_t slot)
     char buf[64];
     // Boxes: sprite, identity, then one box per data row
     UiW_Inset(364, 76, 140, 140);
-    UiSpr_MonFront(m.species, m.shiny, 370, 82, 2);
+    UiSpr_MonFrontOf(m.species, m.personality, m.shiny, 370, 82, 2);
     UiW_Inset(512, 76, 416, 140);
     UiText_Draw(UI_FACE_PS2P, 16, 520, 84, m.name, UI_COL_INK);
     if (m.egg)
@@ -810,9 +810,9 @@ static void DrawGbaPartySlot(int32_t slot, bool sel, bool mark, const char *tag,
         UiDraw_Sprite(UI_SPR_BALL_POKE, x + 10, y + (h - 12) / 2, 1);
 
     if (lead)
-        UiSpr_MonIcon(m.species, frame, x + 28, y + 8 - (frame ? 3 : 0), 2);
+        UiSpr_MonIconOf(m.species, m.personality, frame, x + 28, y + 8 - (frame ? 3 : 0), 2);
     else
-        UiSpr_MonIcon(m.species, frame, x + 32, y + 12 - (frame ? 2 : 0), 1);
+        UiSpr_MonIconOf(m.species, m.personality, frame, x + 32, y + 12 - (frame ? 2 : 0), 1);
 
     const int32_t textX = lead ? x + 102 : x + 74;
     // Room for the gender sign and the shiny star after the name: 6 px of gap, 28 px each (14 px at x2)
@@ -891,7 +891,7 @@ static void BuildGbaInspectPanel(int32_t slot)
         UiDraw_Rect(594 + g, 102, 1, 78, UI_RGBA(180, 196, 212, 90));
         UiDraw_Rect(594, 102 + g, 78, 1, UI_RGBA(180, 196, 212, 90));
     }
-    UiSpr_MonFront(m.species, m.shiny, 601, 109, 1);
+    UiSpr_MonFrontOf(m.species, m.personality, m.shiny, 601, 109, 1);
 
     const int32_t maxNameW = 204;
     UiDraw_PushClip(684, 98, maxNameW, 30);
@@ -994,7 +994,7 @@ static void BuildGbaSummary(void)
     UiDraw_Sprite(UI_SPR_BALL_POKE, 34, 112, 2);
     if (!m.egg)
         UiKit_GenderShiny(62, 110, m.gender, m.shiny);
-    UiSpr_MonFront(m.species, m.shiny, 24 + (306 - 128) / 2, 104 + 12, 2);
+    UiSpr_MonFrontOf(m.species, m.personality, m.shiny, 24 + (306 - 128) / 2, 104 + 12, 2);
     if (!m.egg)
     {
         UiDraw_Sprite((uint16_t)(UI_SPR_TYPE_FIRST + s.types[0]), 32, 218, 2);

@@ -334,6 +334,7 @@ bool UiGame_Mon(int32_t slot, UiMon *out)
     out->shiny = !out->egg && IsMonShiny(mon);
     out->gender = out->egg ? MON_GENDERLESS : GetMonGender(mon);
     out->status = GetMonData(mon, MON_DATA_STATUS);
+    out->personality = GetMonData(mon, MON_DATA_PERSONALITY);
     u8 nick[POKEMON_NAME_LENGTH + 1];
     GetMonData(mon, MON_DATA_NICKNAME, nick);
     nick[POKEMON_NAME_LENGTH] = EOS;

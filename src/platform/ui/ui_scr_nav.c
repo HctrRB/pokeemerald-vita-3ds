@@ -515,7 +515,7 @@ void UiCond_PartyListGba(int32_t sel)
         else
             UiW_GbaBox(22, y + 1, 276, 52, 4, UI_RGBA(184, 190, 176, 255),
                        UI_RGBA(244, 245, 236, 255), UI_RGBA(244, 245, 236, 255), UI_GBA_SHAD_LIGHT, 0);
-        UiSpr_MonIcon(m.species, 0, 42, y + 11, 1);
+        UiSpr_MonIconOf(m.species, m.personality, 0, 42, y + 11, 1);
         UiW_GbaTextMid(UI_FACE_VT323, 28, 82, y, 54, m.name, UI_RGBA(49, 49, 49, 255), UI_GBA_SHAD_LIGHT);
     }
 }
@@ -904,7 +904,7 @@ void UiCond_PartyList(int32_t sel)
         const int32_t y = 66 + i * 44;
         const bool on = i == sel;
         UiW_Row(22, y, 288, 44, on, i);
-        UiSpr_MonIcon(m.species, 0, 30, y + 4, 1);
+        UiSpr_MonIconOf(m.species, m.personality, 0, 30, y + 4, 1);
         UiText_Draw(UI_FACE_VT323, UI_BODY_PX, 68, y + 6, m.name, on ? UI_COL_SELECT_INK : UI_COL_INK);
     }
 }
@@ -1177,7 +1177,7 @@ static void FlyBuild(void)
         UiGame_Mon(sFlySlot, &m);
         UiDraw_Frame(628, 112, 306, 108, 2, UI_RGBA(184, 190, 176, 255));
         UiDraw_Rect(630, 114, 302, 104, UI_RGBA(244, 245, 236, 255));
-        UiSpr_MonIcon(m.species, (uint8_t)((sFrame / 8) & 1), 640, 134, 1);
+        UiSpr_MonIconOf(m.species, m.personality, (uint8_t)((sFrame / 8) & 1), 640, 134, 1);
         snprintf(buf, sizeof(buf), UI_TR("%s will use FLY"), m.name);
         UiW_TextWrapped(684, 128, 236, 28, buf, UI_RGBA(49, 49, 49, 255), 3);
         UiW_GbaSectionStrip(628, 236, 306, 26, UI_GBA_TAG_GREEN, UI_TR("MAP GUIDE"), NULL);
@@ -1197,7 +1197,7 @@ static void FlyBuild(void)
     UiW_Panel(704, 192, 240, 200);
     UiMon m;
     UiGame_Mon(sFlySlot, &m);
-    UiSpr_MonIcon(m.species, (uint8_t)((sFrame / 8) & 1), 720, 210, 1);
+    UiSpr_MonIconOf(m.species, m.personality, (uint8_t)((sFrame / 8) & 1), 720, 210, 1);
     snprintf(buf, sizeof(buf), UI_TR("%s will FLY"), m.name);
     UiW_TextWrapped(760, 210, 176, 30, buf, UI_COL_INK, 2);
     UiW_TextWrapped(720, 280, 216, 30, UI_TR("Green frames: towns you can fly to."), UI_COL_INK_SOFT, 3);

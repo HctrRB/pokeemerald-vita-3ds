@@ -56,6 +56,7 @@ static const char *const sTabs[PAGE_COUNT] = { UI_N("ABC"), "abc", "?!:" };
 static uint8_t sTemplate, sMax;
 static uint8_t *sDest;
 static uint16_t sSpecies, sGender;
+static uint32_t sPersonality;   // the named Pokemon's Unown letter / Spinda spots
 static void (*sReturn)(void);
 static uint8_t sText[MAX_CHARS + 1];
 static int32_t sLen, sPage, sCx, sCy;
@@ -178,7 +179,6 @@ static void SetPage(int32_t page)
 
 bool Ui_OpenNaming(uint8_t templateNum, uint8_t *destBuffer, uint16_t species, uint16_t gender, uint32_t personality, void (*returnCallback)(void))
 {
-    (void)personality;
     if (!Ui_IsEnabled() || Ui_IsOpen() || destBuffer == NULL)
         return false;
     sTemplate = templateNum;
@@ -190,6 +190,7 @@ bool Ui_OpenNaming(uint8_t templateNum, uint8_t *destBuffer, uint16_t species, u
     sDest = destBuffer;
     sSpecies = species;
     sGender = gender;
+    sPersonality = personality;
     sReturn = returnCallback;
     memset(sText, EOS, sizeof(sText));
     sLen = 0;
@@ -305,7 +306,7 @@ static void Build(void)
     UiText_Draw(UI_FACE_PS2P, 16, 32, 78, head, UI_COL_INK);
     UiW_Inset(42, 112, 192, 192);
     if (sTemplate == NAMING_SCREEN_CAUGHT_MON || sTemplate == NAMING_SCREEN_NICKNAME)
-        UiSpr_MonFront(sSpecies, false, 74, 144, 2);
+        UiSpr_MonFrontOf(sSpecies, sPersonality, false, 74, 144, 2);
     else if (sTemplate == NAMING_SCREEN_PLAYER)
         UiSpr_Trainer(UiGame_PlayerIsMale() ? TRAINER_PIC_BRENDAN : TRAINER_PIC_MAY, 74, 144, 2);
     else

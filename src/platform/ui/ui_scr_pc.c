@@ -896,7 +896,7 @@ static void DrawDetail(void)
     }
     const bool egg = GetBoxMonData(bm, MON_DATA_IS_EGG);
     const uint16_t species = (uint16_t)GetBoxMonData(bm, MON_DATA_SPECIES_OR_EGG);
-    UiSpr_MonFront(species, !egg && IsShinyOtIdPersonality(GetBoxMonData(bm, MON_DATA_OT_ID), GetBoxMonData(bm, MON_DATA_PERSONALITY)), 570, 82, 2);
+    UiSpr_MonFrontOf(species, GetBoxMonData(bm, MON_DATA_PERSONALITY), !egg && IsShinyOtIdPersonality(GetBoxMonData(bm, MON_DATA_OT_ID), GetBoxMonData(bm, MON_DATA_PERSONALITY)), 570, 82, 2);
     char name[16], buf[64];
     MonName(bm, name, sizeof(name));
     const int32_t nw = gba ? UiW_GbaText(UI_FACE_VT323, UI_BODY_PX, 716, 76, name, ink, sh)
@@ -1019,7 +1019,7 @@ static void Build(void)
         {
             struct Pokemon *mon = &gPlayerParty[i];
             const uint8_t f = (uint8_t)((sFrame / (on ? 8 : 16)) & 1);
-            UiSpr_MonIcon((uint16_t)GetMonData(mon, MON_DATA_SPECIES_OR_EGG), f, PARTY_X + 30, y + 8 - (f ? 2 : 0), 1);
+            UiSpr_MonIconOf((uint16_t)GetMonData(mon, MON_DATA_SPECIES_OR_EGG), GetMonData(mon, MON_DATA_PERSONALITY), f, PARTY_X + 30, y + 8 - (f ? 2 : 0), 1);
             if (sMode == MODE_ITEMS && GetMonData(mon, MON_DATA_HELD_ITEM))
                 UiSpr_ItemIcon((uint16_t)GetMonData(mon, MON_DATA_HELD_ITEM), PARTY_X + 62, y + 22, 1);
             if (!GetMonData(mon, MON_DATA_IS_EGG))
@@ -1090,7 +1090,7 @@ static void Build(void)
         if (GetBoxMonData(bm, MON_DATA_SPECIES) == SPECIES_NONE)
             continue;
         const uint8_t f = (uint8_t)(on ? (sFrame / 8) & 1 : 0);
-        UiSpr_MonIcon((uint16_t)GetBoxMonData(bm, MON_DATA_SPECIES_OR_EGG), f, x + 8, y + 6 - (f ? 2 : 0), 1);
+        UiSpr_MonIconOf((uint16_t)GetBoxMonData(bm, MON_DATA_SPECIES_OR_EGG), GetBoxMonData(bm, MON_DATA_PERSONALITY), f, x + 8, y + 6 - (f ? 2 : 0), 1);
         if (sMode == MODE_ITEMS && GetBoxMonData(bm, MON_DATA_HELD_ITEM))
             UiSpr_ItemIcon((uint16_t)GetBoxMonData(bm, MON_DATA_HELD_ITEM), x + 26, y + 22, 1);
     }
@@ -1117,7 +1117,7 @@ static void Build(void)
     {
         const int32_t hx = sArea == AREA_PARTY ? PARTY_X + 100 : sArea == AREA_BOX ? GRID_X + (sPos % 6) * CELL_W + 20 : WALL_X + 140;
         const int32_t hy = sArea == AREA_PARTY ? PARTY_Y + sPartyPos * SLOT_H - 26 : sArea == AREA_BOX ? GRID_Y + (sPos / 6) * CELL_H - 30 : WALL_Y + 20;
-        UiSpr_MonIcon((uint16_t)GetMonData(&sHeld, MON_DATA_SPECIES_OR_EGG), (uint8_t)((sFrame / 8) & 1), hx, hy, 1);
+        UiSpr_MonIconOf((uint16_t)GetMonData(&sHeld, MON_DATA_SPECIES_OR_EGG), GetMonData(&sHeld, MON_DATA_PERSONALITY), (uint8_t)((sFrame / 8) & 1), hx, hy, 1);
     }
     if (sHeldItem != ITEM_NONE)
     {
