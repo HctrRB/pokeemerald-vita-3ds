@@ -990,10 +990,14 @@ u32 TryWriteSpecialSaveSector(u8 sector, u8 *src)
         savData[i] = src[i];
 #ifdef PORTABLE
     if (ProgramFlashSector_DUMMY(sector, savDataBuffer) != 0)
+        return SAVE_STATUS_ERROR;
+    // The sector only reached the RAM image: store it now, or a recorded battle is lost on the
+    // next soft reset or when the app is closed before a full save.
+    Platform_StoreSaveFile();
 #else
     if (ProgramFlashSectorAndVerify(sector, savDataBuffer) != 0)
-#endif
         return SAVE_STATUS_ERROR;
+#endif
     return SAVE_STATUS_OK;
 }
 

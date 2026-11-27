@@ -909,11 +909,12 @@ static void StoreSaveFile()
 {
     if (sSaveFile != NULL)
     {
-        fseek(sSaveFile, 0, SEEK_SET);
-        fwrite(FLASH_BASE, 1, sizeof(FLASH_BASE), sSaveFile);
         // Vita apps are usually killed from LiveArea rather than closed, so never leave
         // a save sitting in the stdio buffer.
-        fflush(sSaveFile);
+        if (fseek(sSaveFile, 0, SEEK_SET) != 0
+         || fwrite(FLASH_BASE, 1, sizeof(FLASH_BASE), sSaveFile) != sizeof(FLASH_BASE)
+         || fflush(sSaveFile) != 0)
+            VITA_LOG("Writing the save file failed: %s\n", sSavePath);
     }
 }
 
@@ -925,23 +926,16 @@ void Platform_StoreSaveFile(void)
 void Platform_ReadFlash(u16 sectorNum, u32 offset, u8 *dest, u32 size)
 {
     DBGPRINTF("ReadFlash(sectorNum=0x%04X,offset=0x%08X,size=0x%02X)\n",sectorNum,offset,size);
-    FILE * savefile = fopen(sSavePath, "r+b");
-    if (savefile == NULL)
+    // FLASH_BASE is the save: ReadSaveFile loads the whole file into it whenever the save path is
+    // set (boot, reset), and every write lands there first. Reading the file instead returned stale
+    // data for sectors written but not yet stored.
+    const uint32_t start = ((uint32_t)sectorNum << gFlash->sector.shift) + offset;
+    if (start > sizeof(FLASH_BASE) || size > sizeof(FLASH_BASE) - start)
     {
-        VITA_LOG("Error opening save file: %s\n", sSavePath);
+        memset(dest, 0xFF, size);   // erased flash: the game reads it as an empty sector
         return;
     }
-    if (fseek(savefile, (sectorNum << gFlash->sector.shift) + offset, SEEK_SET))
-    {
-        fclose(savefile);
-        return;
-    }
-    if (fread(dest, 1, size, savefile) != size)
-    {
-        fclose(savefile);
-        return;
-    }
-    fclose(savefile);
+    memcpy(dest, &FLASH_BASE[start], size);
 }
 
 void Platform_QueueAudio(float *audioBuffer, u32 bufferSizeBytes)
