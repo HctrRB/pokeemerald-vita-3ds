@@ -150,9 +150,12 @@ static GLuint sWeatherAtlasTex = 0;
 #define VOXEL_BLOOM_FBO_H   136
 // HIGH's half-resolution target with the bloom source as a band above the downsample
 // (rows VOXEL_BLOOM_BAND_Y up), so the bright pass, sky bloom and shafts are drawn in the
-// downsample's scene instead of a 240x136 target of their own.
-#define VOXEL_BAND_TEX_H    (VOXEL_SCRATCH_FBO_H + VOXEL_BLOOM_FBO_H)
-#define VOXEL_BLOOM_BAND_Y  VOXEL_SCRATCH_FBO_H
+// downsample's scene instead of a 240x136 target of their own. Between them, VOXEL_BAND_GAP rows
+// repeat the downsample's top row: the wide blur's taps reach about 2 texels past it, and there
+// they must read what the clamp of the downsample's own target gave, not the bloom.
+#define VOXEL_BAND_GAP      4
+#define VOXEL_BLOOM_BAND_Y  (VOXEL_SCRATCH_FBO_H + VOXEL_BAND_GAP)
+#define VOXEL_BAND_TEX_H    (VOXEL_BLOOM_BAND_Y + VOXEL_BLOOM_FBO_H)
 #define VOXEL_POST_TARGET_BUFFERS 2u
 
 // Double-buffered post-processing targets prevent Core 0 from stalling in vitaGL/SceGxm
@@ -8693,6 +8696,15 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         AtmosphereOverlay(f, overlay);
         if (!battleHalf)
             VoxelHd2dShader_Downsample(pt->dioramaActiveTex, uMax, vMax, overlay);
+        if (bandPath && !battleHalf)
+        {
+            // The downsample's top row again in the gap: the same tap at the same v.
+            glViewport(0, scratchH, scratchW, VOXEL_BAND_GAP);
+            VoxelHd2dShader_DownsampleRow(pt->dioramaActiveTex, uMax,
+                                          vMax * ((float)scratchH - 0.5f) / (float)scratchH, overlay);
+            sFrameDrawCalls++;
+            sFrameVertCount += 4u;
+        }
         if (bandPath)
         {
             // The bloom source in the band, from the scene still filtered: the bright pass, then
@@ -8971,6 +8983,9 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         pk.minBlur = pc.backBlur;
         pk.dim = 1.0f - pc.backDim;
         memcpy(pk.overlay, pc.overlay, sizeof(pk.overlay));
+        pk.clampSrc = battleHalf;
+        pk.srcTexelX = 1.0f / (float)VOXEL_DIORAMA_FBO_W;
+        pk.srcTexelY = 1.0f / (float)VOXEL_DIORAMA_TEX_H;
         if (battleHalf)
         {
             AtmosphereOverlay(f, pk.srcOverlay);

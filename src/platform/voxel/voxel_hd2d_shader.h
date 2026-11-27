@@ -28,6 +28,11 @@ bool VoxelHd2dShader_Kawase8(GLuint sceneTex, float uMax, float vMax, float texe
 // (rgb, alpha) the world scene left to the post pass.
 void VoxelHd2dShader_Downsample(GLuint sceneTex, float uMax, float vMax, const float overlay[4]);
 
+// The downsample's tap with v fixed at vRow, over the viewport: rows that repeat one row of the
+// downsample (HIGH writes its top row again above it, so the blur taps that cross that edge read
+// what CLAMP_TO_EDGE gave on the downsample's own target).
+void VoxelHd2dShader_DownsampleRow(GLuint sceneTex, float uMax, float vRow, const float overlay[4]);
+
 // Runs the 240x136 luminance bright-pass into the currently bound bloom FBO.
 void VoxelHd2dShader_BrightPass(GLuint sceneTex, float uMax, float vMax, float threshold, float gain);
 
@@ -116,6 +121,9 @@ typedef struct
     float overlay[4];        // night / fade layer (rgb, alpha)
     float srcOverlay[4];     // the same layer applied to srcTex first: when it is the 3D battle stage
                              // itself, not a downsample that already has it (alpha 0 otherwise)
+    bool clampSrc;           // srcTex holds the image in its lower left among texels that are not
+                             // the image's: the blur taps are clamped to [0, srcU] x [0, srcV]
+    float srcTexelX, srcTexelY;  // one texel of srcTex (for the clamp)
 } VoxelHd2dPack;
 
 // The grade of the composite (split-tone, saturation, S-curve, vignette), as the caller decides it.

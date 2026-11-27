@@ -32,6 +32,9 @@ static GLint sKawaseScene = -1, sKawaseUvScale = -1, sKawaseInner = -1, sKawaseO
 // One bilinear tap: the 2x2 downsample, with the night / fade overlay (uOverlay) applied.
 static GLuint sTapProg = 0;
 static GLint sTapScene = -1, sTapUvScale = -1, sTapOverlay = -1;
+// The same tap with v fixed (VoxelHd2dShader_DownsampleRow).
+static GLuint sTapRowProg = 0;
+static GLint sTapRowScene = -1, sTapRowUv = -1, sTapRowOverlay = -1;
 
 static GLuint sBrightProg = 0;
 static GLint sBUScene = -1, sBUThresh = -1, sBUUvScale = -1, sBUGain = -1;
@@ -165,6 +168,11 @@ typedef struct
     GLint src, bloom, uvScale, texel, bloomUv, dofRamp, dofAlpha, overlay, srcOverlay, mix;
 } PackProgram;
 static PackProgram sPack;
+// The same pass with its blur taps clamped to the source's texel centres (uClamp: min, max), for a
+// source inside a larger texture whose other texels are not the image's (the half-size battle
+// stage): what CLAMP_TO_EDGE did on the downsample's own target. Dependent reads, at half size.
+static PackProgram sPackClamp;
+static GLint sPackClampRect = -1;
 
 typedef struct
 {
@@ -239,6 +247,35 @@ static const char kPackFs[] =
     "void main() {\n"
     "    vec3 b = texture2D(uSrc, vT0).rgb + texture2D(uSrc, vT1).rgb;\n"
     "    b += texture2D(uSrc, vT2).rgb + texture2D(uSrc, vT3).rgb;\n"
+    "    vec2 t = clamp(vDof, 0.0, 1.0);\n"
+    "    float w = max(max(smoothstep(0.0, 1.0, t.x) * uDofAlpha.x, smoothstep(0.0, 1.0, t.y) * uDofAlpha.y), uMix.x);\n"
+    "    float keep = (1.0 - w) * uMix.y;\n"
+    "    b = mix(b * 0.25, uSrcOverlay.rgb, uSrcOverlay.a);\n"
+    "    vec3 add = uOverlay.rgb * (uOverlay.a * keep) + b * (w * uMix.y);\n"
+    "    add += texture2D(uBloom, vBloom).rgb * uMix.z;\n"
+    "    gl_FragColor = vec4(add, (1.0 - uOverlay.a) * keep);\n"
+    "}\n";
+
+static const char kPackClampFs[] =
+    "precision mediump float;\n"
+    "uniform sampler2D uSrc;\n"
+    "uniform sampler2D uBloom;\n"
+    "uniform vec2 uDofAlpha;\n"
+    "uniform vec4 uOverlay;\n"
+    "uniform vec4 uSrcOverlay;\n"
+    "uniform vec3 uMix;\n"
+    "uniform vec4 uClamp;\n"
+    "varying vec2 vT0;\n"
+    "varying vec2 vT1;\n"
+    "varying vec2 vT2;\n"
+    "varying vec2 vT3;\n"
+    "varying vec2 vBloom;\n"
+    "varying vec2 vDof;\n"
+    "void main() {\n"
+    "    vec3 b = texture2D(uSrc, clamp(vT0, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    b += texture2D(uSrc, clamp(vT1, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    b += texture2D(uSrc, clamp(vT2, uClamp.xy, uClamp.zw)).rgb;\n"
+    "    b += texture2D(uSrc, clamp(vT3, uClamp.xy, uClamp.zw)).rgb;\n"
     "    vec2 t = clamp(vDof, 0.0, 1.0);\n"
     "    float w = max(max(smoothstep(0.0, 1.0, t.x) * uDofAlpha.x, smoothstep(0.0, 1.0, t.y) * uDofAlpha.y), uMix.x);\n"
     "    float keep = (1.0 - w) * uMix.y;\n"
@@ -425,6 +462,17 @@ static const char kTapVs[] =
     "varying vec2 vT0;\n"
     "void main() {\n"
     "    vT0 = aUv * uUvScale;\n"
+    "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
+    "}\n";
+
+// kTapVs with v fixed at uUv.y: every row of the quad samples the same scene row.
+static const char kTapRowVs[] =
+    "attribute vec2 aPos;\n"
+    "attribute vec2 aUv;\n"
+    "uniform vec2 uUv;\n"
+    "varying vec2 vT0;\n"
+    "void main() {\n"
+    "    vT0 = vec2(aUv.x * uUv.x, uUv.y);\n"
     "    gl_Position = vec4(aPos * 2.0 - 1.0, 0.0, 1.0);\n"
     "}\n";
 
@@ -804,21 +852,35 @@ static void InitCompositeGrid(void)
 }
 
 // The packed composite's programs. False leaves HIGH on the unpacked composite.
+static bool InitPackProgram(PackProgram *const p, const char *const fsSrc)
+{
+    p->prog = LinkProgram(kPackVs, fsSrc);
+    if (p->prog == 0)
+        return false;
+    p->src        = glGetUniformLocation(p->prog, "uSrc");
+    p->bloom      = glGetUniformLocation(p->prog, "uBloom");
+    p->uvScale    = glGetUniformLocation(p->prog, "uUvScale");
+    p->texel      = glGetUniformLocation(p->prog, "uTexel");
+    p->bloomUv    = glGetUniformLocation(p->prog, "uBloomUv");
+    p->dofRamp    = glGetUniformLocation(p->prog, "uDofRamp");
+    p->dofAlpha   = glGetUniformLocation(p->prog, "uDofAlpha");
+    p->overlay    = glGetUniformLocation(p->prog, "uOverlay");
+    p->srcOverlay = glGetUniformLocation(p->prog, "uSrcOverlay");
+    p->mix        = glGetUniformLocation(p->prog, "uMix");
+    return true;
+}
+
 static bool InitPacked(void)
 {
-    sPack.prog = LinkProgram(kPackVs, kPackFs);
-    if (sPack.prog == 0)
+    if (!InitPackProgram(&sPack, kPackFs) || !InitPackProgram(&sPackClamp, kPackClampFs))
         return false;
-    sPack.src      = glGetUniformLocation(sPack.prog, "uSrc");
-    sPack.bloom    = glGetUniformLocation(sPack.prog, "uBloom");
-    sPack.uvScale  = glGetUniformLocation(sPack.prog, "uUvScale");
-    sPack.texel    = glGetUniformLocation(sPack.prog, "uTexel");
-    sPack.bloomUv  = glGetUniformLocation(sPack.prog, "uBloomUv");
-    sPack.dofRamp  = glGetUniformLocation(sPack.prog, "uDofRamp");
-    sPack.dofAlpha = glGetUniformLocation(sPack.prog, "uDofAlpha");
-    sPack.overlay  = glGetUniformLocation(sPack.prog, "uOverlay");
-    sPack.srcOverlay = glGetUniformLocation(sPack.prog, "uSrcOverlay");
-    sPack.mix      = glGetUniformLocation(sPack.prog, "uMix");
+    sPackClampRect = glGetUniformLocation(sPackClamp.prog, "uClamp");
+    sTapRowProg = LinkProgram(kTapRowVs, kTapFs);
+    if (sTapRowProg == 0)
+        return false;
+    sTapRowScene   = glGetUniformLocation(sTapRowProg, "uScene");
+    sTapRowUv      = glGetUniformLocation(sTapRowProg, "uUv");
+    sTapRowOverlay = glGetUniformLocation(sTapRowProg, "uOverlay");
     if (!InitPackedComposite(&sCompPacked, kCompGridVs, kCompPackedFs)
      || !InitPackedComposite(&sCompPackedReads, kCompGridVs, kCompPackedReadsFs)
      || !InitPackedComposite(&sCompPackedBattle, kCompPackedBattleVs, kCompPackedBattleFs))
@@ -1042,6 +1104,20 @@ void VoxelHd2dShader_Downsample(const GLuint sceneTex, const float uMax, const f
     glUseProgram(0);
 }
 
+void VoxelHd2dShader_DownsampleRow(const GLuint sceneTex, const float uMax, const float vRow, const float overlay[4])
+{
+    if (!sPackReady) return;
+
+    glUseProgram(sTapRowProg);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sceneTex);
+    glUniform1i(sTapRowScene, 0);
+    glUniform2f(sTapRowUv, uMax, vRow);
+    glUniform4fv(sTapRowOverlay, 1, overlay);
+    DrawQuad();
+    glUseProgram(0);
+}
+
 void VoxelHd2dShader_BrightPass(const GLuint sceneTex, const float uMax, const float vMax, const float threshold, const float gain)
 {
     if (!sShaderReady) return;
@@ -1145,22 +1221,26 @@ void VoxelHd2dShader_Pack(const VoxelHd2dPack *const pk)
     // The DoF ramps start at the band edges and reach full blur over 1 / 2.8 of the screen; no
     // top band when it would start at the very top (as the full composite).
     const float invSlope = (pk->uvTop < 0.98f) ? 2.8f : 0.0f;
+    const PackProgram *const p = pk->clampSrc ? &sPackClamp : &sPack;
 
-    glUseProgram(sPack.prog);
+    glUseProgram(p->prog);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, pk->srcTex);
-    glUniform1i(sPack.src, 0);
+    glUniform1i(p->src, 0);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, pk->bloomTex);
-    glUniform1i(sPack.bloom, 1);
-    glUniform2f(sPack.uvScale, pk->srcU, pk->srcV);
-    glUniform2f(sPack.texel, pk->texelX, pk->texelY);
-    glUniform2f(sPack.bloomUv, pk->bloomU, pk->bloomV);
-    glUniform3f(sPack.dofRamp, pk->uvTop, pk->uvBot, invSlope);
-    glUniform2f(sPack.dofAlpha, pk->topAlpha, pk->botAlpha);
-    glUniform4fv(sPack.overlay, 1, pk->overlay);
-    glUniform4fv(sPack.srcOverlay, 1, pk->srcOverlay);
-    glUniform3f(sPack.mix, pk->minBlur, pk->dim, pk->bloomAmt);
+    glUniform1i(p->bloom, 1);
+    glUniform2f(p->uvScale, pk->srcU, pk->srcV);
+    glUniform2f(p->texel, pk->texelX, pk->texelY);
+    glUniform2f(p->bloomUv, pk->bloomU, pk->bloomV);
+    glUniform3f(p->dofRamp, pk->uvTop, pk->uvBot, invSlope);
+    glUniform2f(p->dofAlpha, pk->topAlpha, pk->botAlpha);
+    glUniform4fv(p->overlay, 1, pk->overlay);
+    glUniform4fv(p->srcOverlay, 1, pk->srcOverlay);
+    glUniform3f(p->mix, pk->minBlur, pk->dim, pk->bloomAmt);
+    if (pk->clampSrc)
+        glUniform4f(sPackClampRect, 0.5f * pk->srcTexelX, 0.5f * pk->srcTexelY,
+                    pk->srcU - 0.5f * pk->srcTexelX, pk->srcV - 0.5f * pk->srcTexelY);
     DrawQuad();
 
     glActiveTexture(GL_TEXTURE1);

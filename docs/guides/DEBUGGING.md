@@ -104,7 +104,10 @@ so its frame rate is lower.
   cutouts, tree cores, tree edges, sway, buildings); `worldpixels` draws the world scene through an
   8×8 scissor, leaving its vertex and tiling cost. `compgrade` and `compreads` are the composite
   ladder of HIGH: its two reads without the grade, then one read of the scene. In HIGH the `blur`
-  mask has no effect: the blur target holds the packed composite input (`gpu_blur_ms` is that pass). OFF comes last because switching between OFF
+  mask has no effect: the blur target holds the packed composite input (`gpu_blur_ms` is that pass).
+  In HIGH the shaft profiles are part of `gpu_world_ms` and the bloom source of `gpu_down_ms`
+  (bands of those targets), so `gpu_bloom_ms` stays 0 and `gpu_kawase_ms` is the bloom blur; in a
+  3D battle there is no downsample, `gpu_down_ms` is the bloom source alone. OFF comes last because switching between OFF
   and LOW turns the relief on or off, which rebuilds the atlas and the chunks (a ~0.7 s freeze). The
   level is imposed through `VitaPerf_BenchLevel`; the saved option is not touched and comes back at
   the end. Each step waits for `BENCH_SETTLE_FRAMES` calm frames and keeps `BENCH_MEASURE_FRAMES`
