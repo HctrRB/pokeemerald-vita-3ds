@@ -4977,6 +4977,10 @@ typedef struct
     int32_t holesLeft;                  // visible chunks still awaiting build (Core 2)
     VoxelFrameGrade grade;
     int32_t renderW, renderH;
+    // The world scene's viewport: renderW x renderH, or half of each for a 3D battle in HIGH
+    // (battleHalf: the stage is blurred whole, so it is drawn at the size it survives at).
+    int32_t worldW, worldH;
+    bool battleHalf;
     bool dioramaActive;                 // the 3D scene goes to the FBO for the depth of field
     Hd2dPreset hd2dPreset;              // 0=OFF, 1=LOW (60 FPS), 2=HIGH (30 FPS)
     bool hd2dMarkedGrade;               // true=HD-2D cinematic grading, false=GBA faithful
@@ -6583,10 +6587,15 @@ static void Frame_BeginPasses(VoxelFrame *const f, const GLuint defaultTargetFbo
     const bool dioramaActive = sDioramaFboReady && (fadeAmount < 0.99f)
                              && (hd2dOn || (dioramaSetting && !isIndoor));
 
+    bool battleHalf = false;
     if (dioramaActive)
     {
         sPostTargetIndex ^= 1u;
         PostRenderTargets *const pt = &sPostTargets[sPostTargetIndex];
+        // A 3D battle in HIGH: the stage is drawn at half size in the scene target's lower left and
+        // read from there by the post pass (Pass_DepthOfField), with no downsample.
+        battleHalf = f->inBattle3D && f->hd2dPreset == HD2D_PRESET_HIGH && pt->bandFbo != 0
+                  && VoxelHd2dShader_PackReady() && VoxelHd2dShader_BandReady();
         glBindFramebuffer(GL_FRAMEBUFFER, pt->dioramaFbo);
         const GLuint wantTex = (f->hd2dPreset == HD2D_PRESET_HIGH) ? pt->dioramaColorTex : pt->dioramaColorTexFast;
         if (wantTex != 0 && wantTex != pt->dioramaActiveTex)
@@ -6620,7 +6629,10 @@ static void Frame_BeginPasses(VoxelFrame *const f, const GLuint defaultTargetFbo
     }
 
     // 8. OpenGL Setup & Hardware Render Passes
-    glViewport(0, 0, renderW, renderH);
+    f->battleHalf = battleHalf;
+    f->worldW = battleHalf ? renderW / 2 : renderW;
+    f->worldH = battleHalf ? renderH / 2 : renderH;
+    glViewport(0, 0, f->worldW, f->worldH);
 
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(sViewState.proj);
@@ -8206,7 +8218,7 @@ static void Pass_Atmosphere2D(const VoxelFrame *const f)
         0.0f, 1.0f
     };
 
-    glViewport(0, 0, VitaPlatform_GetRenderWidth(), VitaPlatform_GetRenderHeight());
+    glViewport(0, 0, f->worldW, f->worldH);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0.0, 1.0, 1.0, 0.0, -1.0, 1.0);
@@ -8616,6 +8628,11 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
     const bool bandPath = packPath && bloomReady && pt->bandFbo != 0 && VoxelHd2dShader_BandReady()
                        && pt->dioramaActiveTex == pt->dioramaColorTex
                        && !VitaPerf_PassSkipped(VITA_PERF_PASS_KAWASE);
+    // A 3D battle in HIGH drew its stage at half size in the scene target (Frame_BeginPasses): it
+    // is the blur's source as it is, there is no downsample.
+    const bool battleHalf = f->battleHalf && packPath;
+    const float uHalf = (float)f->worldW / (float)VOXEL_DIORAMA_FBO_W;
+    const float vHalf = (float)f->worldH / (float)VOXEL_DIORAMA_TEX_H;
     const GLuint downFbo = bandPath ? pt->bandFbo : pt->scratchFbo;
     const GLuint downTex = bandPath ? pt->bandTex : pt->scratchColorTex;
     const float vDown = bandPath ? (float)scratchH / (float)VOXEL_BAND_TEX_H : vS;
@@ -8675,7 +8692,8 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         float overlay[4];
         AtmosphereOverlay(f, overlay);
-        VoxelHd2dShader_Downsample(pt->dioramaActiveTex, uMax, vMax, overlay);
+        if (!battleHalf)
+            VoxelHd2dShader_Downsample(pt->dioramaActiveTex, uMax, vMax, overlay);
         if (bandPath)
         {
             // The bloom source in the band, from the scene still filtered: the bright pass, then
@@ -8683,8 +8701,11 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
             sFrameDrawCalls++;
             sFrameVertCount += 4u;
             glViewport(0, VOXEL_BLOOM_BAND_Y, bloomW, bloomH);
-            VoxelHd2dShader_BrightPassBox4(pt->dioramaActiveTex, uMax, vMax,
-                                           1.0f / (float)VOXEL_DIORAMA_FBO_W, 1.0f / (float)VOXEL_DIORAMA_TEX_H,
+            // From the half-size battle stage the taps sit half a texel around each pixel: the
+            // texels themselves, the 2x2 box one tap of the downsample gave.
+            const float tapStep = battleHalf ? 0.5f : 1.0f;
+            VoxelHd2dShader_BrightPassBox4(pt->dioramaActiveTex, battleHalf ? uHalf : uMax, battleHalf ? vHalf : vMax,
+                                           tapStep / (float)VOXEL_DIORAMA_FBO_W, tapStep / (float)VOXEL_DIORAMA_TEX_H,
                                            overlay, brightThresh, brightGain);
             glEnableClientState(GL_VERTEX_ARRAY);
             glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -8935,11 +8956,11 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
         VoxelHd2dPack pk;
-        pk.srcTex = downTex;
-        pk.srcU = uS;
-        pk.srcV = vDown;
-        pk.texelX = 1.55f / (float)VOXEL_SCRATCH_FBO_W;
-        pk.texelY = 1.55f * downTexelY;
+        pk.srcTex = battleHalf ? pt->dioramaActiveTex : downTex;
+        pk.srcU = battleHalf ? uHalf : uS;
+        pk.srcV = battleHalf ? vHalf : vDown;
+        pk.texelX = 1.55f / (float)(battleHalf ? VOXEL_DIORAMA_FBO_W : VOXEL_SCRATCH_FBO_W);
+        pk.texelY = 1.55f * (battleHalf ? 1.0f / (float)VOXEL_DIORAMA_TEX_H : downTexelY);
         pk.bloomTex = (activeBloomTex != 0) ? activeBloomTex : pt->scratchColorTex;
         pk.bloomU = uBl;
         pk.bloomV = vBl;
@@ -8951,7 +8972,25 @@ static void Pass_DepthOfField(const VoxelFrame *const f, const GLuint targetFbo)
         pk.minBlur = pc.backBlur;
         pk.dim = 1.0f - pc.backDim;
         memcpy(pk.overlay, pc.overlay, sizeof(pk.overlay));
+        if (battleHalf)
+        {
+            AtmosphereOverlay(f, pk.srcOverlay);
+            // The stage is read between its texels, as the downsample's own target was.
+            glBindTexture(GL_TEXTURE_2D, pt->dioramaActiveTex);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        }
+        else
+        {
+            memset(pk.srcOverlay, 0, sizeof(pk.srcOverlay));
+        }
         VoxelHd2dShader_Pack(&pk);
+        if (battleHalf)
+        {
+            glBindTexture(GL_TEXTURE_2D, pt->dioramaActiveTex);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        }
         glEnableClientState(GL_VERTEX_ARRAY);
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
         sFrameDrawCalls++;

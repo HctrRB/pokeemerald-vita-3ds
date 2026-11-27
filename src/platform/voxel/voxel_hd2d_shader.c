@@ -162,7 +162,7 @@ static const char kKawaseBandFs[] =
 typedef struct
 {
     GLuint prog;
-    GLint src, bloom, uvScale, texel, bloomUv, dofRamp, dofAlpha, overlay, mix;
+    GLint src, bloom, uvScale, texel, bloomUv, dofRamp, dofAlpha, overlay, srcOverlay, mix;
 } PackProgram;
 static PackProgram sPack;
 
@@ -196,6 +196,8 @@ static GLuint sGridVbo = 0, sGridIbo = 0;
 //   c = mix(scene, overlay, overlay.a); c = mix(c, blur, w) * dim; c += bloom * k
 //   = scene * (1 - overlay.a) * (1 - w) * dim + [overlay * overlay.a * (1 - w) + blur * w] * dim + bloom * k
 // uMix: the weight's floor (back blur in a 3D battle), the dim (1 - back dim), the bloom amount.
+// uSrcOverlay: the overlay the downsample would have applied to the blur's source, when the source
+// is the half-resolution 3D battle stage itself (alpha 0 otherwise: the downsample has it).
 static const char kPackVs[] =
     "attribute vec2 aPos;\n"
     "attribute vec2 aUv;\n"
@@ -226,6 +228,7 @@ static const char kPackFs[] =
     "uniform sampler2D uBloom;\n"
     "uniform vec2 uDofAlpha;\n"
     "uniform vec4 uOverlay;\n"
+    "uniform vec4 uSrcOverlay;\n"
     "uniform vec3 uMix;\n"
     "varying vec2 vT0;\n"
     "varying vec2 vT1;\n"
@@ -239,7 +242,8 @@ static const char kPackFs[] =
     "    vec2 t = clamp(vDof, 0.0, 1.0);\n"
     "    float w = max(max(smoothstep(0.0, 1.0, t.x) * uDofAlpha.x, smoothstep(0.0, 1.0, t.y) * uDofAlpha.y), uMix.x);\n"
     "    float keep = (1.0 - w) * uMix.y;\n"
-    "    vec3 add = uOverlay.rgb * (uOverlay.a * keep) + b * (0.25 * w * uMix.y);\n"
+    "    b = mix(b * 0.25, uSrcOverlay.rgb, uSrcOverlay.a);\n"
+    "    vec3 add = uOverlay.rgb * (uOverlay.a * keep) + b * (w * uMix.y);\n"
     "    add += texture2D(uBloom, vBloom).rgb * uMix.z;\n"
     "    gl_FragColor = vec4(add, (1.0 - uOverlay.a) * keep);\n"
     "}\n";
@@ -813,6 +817,7 @@ static bool InitPacked(void)
     sPack.dofRamp  = glGetUniformLocation(sPack.prog, "uDofRamp");
     sPack.dofAlpha = glGetUniformLocation(sPack.prog, "uDofAlpha");
     sPack.overlay  = glGetUniformLocation(sPack.prog, "uOverlay");
+    sPack.srcOverlay = glGetUniformLocation(sPack.prog, "uSrcOverlay");
     sPack.mix      = glGetUniformLocation(sPack.prog, "uMix");
     if (!InitPackedComposite(&sCompPacked, kCompGridVs, kCompPackedFs)
      || !InitPackedComposite(&sCompPackedReads, kCompGridVs, kCompPackedReadsFs)
@@ -1154,6 +1159,7 @@ void VoxelHd2dShader_Pack(const VoxelHd2dPack *const pk)
     glUniform3f(sPack.dofRamp, pk->uvTop, pk->uvBot, invSlope);
     glUniform2f(sPack.dofAlpha, pk->topAlpha, pk->botAlpha);
     glUniform4fv(sPack.overlay, 1, pk->overlay);
+    glUniform4fv(sPack.srcOverlay, 1, pk->srcOverlay);
     glUniform3f(sPack.mix, pk->minBlur, pk->dim, pk->bloomAmt);
     DrawQuad();
 

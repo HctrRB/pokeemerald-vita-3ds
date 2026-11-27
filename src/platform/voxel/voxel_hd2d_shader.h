@@ -114,6 +114,8 @@ typedef struct
     float minBlur;           // floor of the DoF weight: 1 in a 3D battle (the backdrop blurred whole)
     float dim;               // 1 - the battle's back dim; 1 on the field
     float overlay[4];        // night / fade layer (rgb, alpha)
+    float srcOverlay[4];     // the same layer applied to srcTex first: when it is the 3D battle stage
+                             // itself, not a downsample that already has it (alpha 0 otherwise)
 } VoxelHd2dPack;
 
 // The grade of the composite (split-tone, saturation, S-curve, vignette), as the caller decides it.
