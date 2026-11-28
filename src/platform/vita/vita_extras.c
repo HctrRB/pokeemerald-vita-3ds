@@ -109,6 +109,16 @@ static inline int32_t LookupFastId(const char *key)
     return -1;
 }
 
+// What the code reads for a setting. The HD-2D option is OFF / ON in the menu and the file; the
+// renderer reads a VOXEL_HD2D_* level, and ON is HIGH (LOW and MED are left to the measuring
+// build's bench, VitaPerf_BenchLevel).
+static int32_t FastValueOf(int32_t fastId, int32_t value)
+{
+    if (fastId == FAST_EXTRA_VOXEL_HD2D)
+        return value != 0 ? VOXEL_HD2D_HIGH : VOXEL_HD2D_OFF;
+    return value;
+}
+
 static void SyncFastExtras(void)
 {
     for (uint32_t i = 0; i < FAST_EXTRA_COUNT; i++)
@@ -118,7 +128,7 @@ static void SyncFastExtras(void)
     {
         const int32_t fastId = LookupFastId(sSettings[i].key);
         if (fastId >= 0)
-            sFastSettings[fastId] = sSettings[i].value;
+            sFastSettings[fastId] = FastValueOf(fastId, sSettings[i].value);
     }
 }
 
@@ -138,8 +148,6 @@ static const char *const sFilterValues[] = { UI_N("NEAREST"), UI_N("BILINEAR"), 
 // Order = UI_THEME_* (src/platform/ui/ui_internal.h); GBA is the default
 static const char *const sUiThemeValues[] = { UI_N("GBA"), UI_N("RED"), UI_N("EMERALD"), UI_N("CRYSTAL"), UI_N("TROPICAL"), UI_N("ROYAL"), NULL };
 static const char *const sVoxelFpsValues[] = { UI_N("30 FPS"), UI_N("60 FPS"), NULL };
-// Order = VOXEL_HD2D_* (include/platform/vita_extras.h)
-static const char *const sVoxelHd2dValues[] = { UI_N("OFF"), UI_N("LOW"), UI_N("MED"), UI_N("HIGH"), NULL };
 static const char *const sVoxelFovValues[] = { UI_N("35 DEG"), UI_N("25 DEG"), NULL };
 static const char *const sLevel0To10Values[] = { UI_N("0 (OFF)"), "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", NULL };
 static const char *const sSaveSlotValues[] = { UI_N("SLOT 1"), UI_N("SLOT 2"), UI_N("SLOT 3"), NULL };
@@ -285,7 +293,7 @@ const VitaExtra gVitaExtras[] = {
     // ---- [GRAPHICS] ----
     { VITA_TAB_GRAPHICS, UI_N("RENDERER"),  UI_N("3D VOXEL DIORAMA"),  "voxel_3d",         2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_GRAPHICS, UI_N("RENDERER"),  UI_N("FRAMERATE"),         "voxel_fps",        2, 0, sVoxelFpsValues,    NULL, NULL, NULL },
-    { VITA_TAB_GRAPHICS, UI_N("RENDERER"),  UI_N("HD-2D"),             "voxel_hd2d",       VOXEL_HD2D_COUNT, VOXEL_HD2D_HIGH, sVoxelHd2dValues, NULL, NULL, NULL },
+    { VITA_TAB_GRAPHICS, UI_N("RENDERER"),  UI_N("HD-2D"),             "voxel_hd2d",       2, 1, gVitaExtrasOffOn,   NULL, NULL, NULL },
     { VITA_TAB_GRAPHICS, UI_N("RENDERER"),  UI_N("CAMERA ANGLE"),      "voxel_fov",        2, 0, sVoxelFovValues,    NULL, NULL, NULL },
     { VITA_TAB_GRAPHICS, UI_N("HD-2D EFFECTS"), UI_N("WORLD BLOOM"),   "voxel_bloom",     11, 10, sLevel0To10Values,  NULL, NULL, NULL },
     { VITA_TAB_GRAPHICS, UI_N("HD-2D EFFECTS"), UI_N("LIGHT SHAFTS"),  "voxel_shafts",    11, 5,  sLevel0To10Values,  NULL, NULL, NULL },
@@ -408,11 +416,15 @@ void VitaExtras_Init(void)
             // Retired keys, read by nothing: dropped so they are not saved again.
             if (strcmp(key, "hd2d_mode") == 0 || strcmp(key, "voxel_grade") == 0 || strcmp(key, "voxel_res") == 0)
                 continue;
+            if (strcmp(key, "voxel_hd2d") == 0)
+            {
+                // Files from before the OFF / ON option hold OFF, LOW, MED or HIGH (0-3): any level is ON.
+                hd2dRead = true;
+                val = val != 0;
+            }
             const int32_t idx = FindSettingIndex(key, true);
             if (idx >= 0)
                 sSettings[idx].value = val;
-            if (strcmp(key, "voxel_hd2d") == 0)
-                hd2dRead = true;
         }
     }
     fclose(f);
@@ -424,7 +436,7 @@ void VitaExtras_Init(void)
         const int32_t fpsIdx = FindSettingIndex("voxel_fps", false);
         const int32_t hd2dIdx = FindSettingIndex("voxel_hd2d", true);
         if (hd2dIdx >= 0)
-            sSettings[hd2dIdx].value = (fpsIdx >= 0 && sSettings[fpsIdx].value != 0) ? VOXEL_HD2D_OFF : VOXEL_HD2D_HIGH;
+            sSettings[hd2dIdx].value = (fpsIdx >= 0 && sSettings[fpsIdx].value != 0) ? 0 : 1;
     }
 
     SyncFastExtras();
@@ -481,7 +493,7 @@ void VitaExtras_Set(const char *key, int32_t value)
     sSettings[idx].value = value;
     const int32_t fastId = LookupFastId(key);
     if (fastId >= 0)
-        sFastSettings[fastId] = value;
+        sFastSettings[fastId] = FastValueOf(fastId, value);
     if (isClockOrDayNight)
         VitaDayNight_Update();
     VitaExtras_Save();

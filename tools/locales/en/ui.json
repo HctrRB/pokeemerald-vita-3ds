@@ -1355,7 +1355,7 @@
   "Give up the BATTLE PYRAMID challenge.": [
    "src/platform/ui/ui_scr_hub.c"
   ],
-  "Glow of bright parts of the world (0 = off). Needs HD-2D MED or HIGH.": [
+  "Glow of bright parts of the world (0 = off). Needs HD-2D ON.": [
    "src/platform/ui/ui_scr_options.c"
   ],
   "Go to OK": [
@@ -1398,9 +1398,6 @@
    "src/platform/ui/ui_scr_party.c"
   ],
   "HGSS FOLLOWER": [
-   "src/platform/vita/vita_extras.c"
-  ],
-  "HIGH": [
    "src/platform/vita/vita_extras.c"
   ],
   "HM": [
@@ -1728,12 +1725,6 @@
   "LOCKED": [
    "src/platform/ui/ui_scr_card.c"
   ],
-  "LOW": [
-   "src/platform/vita/vita_extras.c"
-  ],
-  "LOW: sway, relief, particles. MED/HIGH: + bloom, shafts, grade.": [
-   "src/platform/ui/ui_scr_options.c"
-  ],
   "LV": [
    "src/platform/ui/ui_scr_pokeblock.c"
   ],
@@ -1830,9 +1821,6 @@
    "src/platform/vita/vita_extras.c"
   ],
   "MECHANICS": [
-   "src/platform/vita/vita_extras.c"
-  ],
-  "MED": [
    "src/platform/vita/vita_extras.c"
   ],
   "MENU": [
@@ -2649,6 +2637,9 @@
   "Release this POKéMON?": [
    "src/platform/ui/ui_scr_pc.c"
   ],
+  "Relief, sway, particles, bloom, light shafts and colour grade.": [
+   "src/platform/ui/ui_scr_options.c"
+  ],
   "Remap": [
    "src/platform/ui/ui_scr_options.c"
   ],
@@ -3008,10 +2999,10 @@
   "Stats and moves are unknown while inside the EGG.": [
    "src/platform/ui/ui_scr_party.c"
   ],
-  "Sun and moon light shafts (5 = normal). Needs HD-2D MED or HIGH.": [
+  "Sun and moon light shafts (5 = normal). Needs HD-2D ON.": [
    "src/platform/ui/ui_scr_options.c"
   ],
-  "Sun and moon sky glow (5 = normal). Needs HD-2D MED or HIGH.": [
+  "Sun and moon sky glow (5 = normal). Needs HD-2D ON.": [
    "src/platform/ui/ui_scr_options.c"
   ],
   "Super Rank": [

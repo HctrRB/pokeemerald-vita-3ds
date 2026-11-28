@@ -96,7 +96,8 @@ so its frame rate is lower.
   depth. Without the post pass the whole frame is `gpu_world_ms`.
 - **Automatic bench.** Standing still in the 3D field for `BENCH_STILL_FRAMES` frames starts a run
   (`[BENCH]` lines in `perf_summary.txt`): HIGH unpaced (`BENCH_STEP_UNPACED`), HIGH, then HIGH with
-  one `VitaPerfPass` switched off at a time (`VitaPerf_PassSkipped`), then MED, LOW and OFF. The
+  one `VitaPerfPass` switched off at a time (`VitaPerf_PassSkipped`), then MED, LOW and OFF (MED and
+  LOW are only reachable here: the player's option is OFF / ON). The
   unpaced step (`VitaPerf_BenchUnpaced`) runs without the probes (its `gpu_*` columns are 0), with
   the swap not waiting for vsync and the presentation loop not waiting for the next 60 Hz tick: the
   CPU is far ahead, so its `frame_ms` is the real pipelined GPU frame, the number to compare with

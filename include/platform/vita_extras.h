@@ -70,12 +70,13 @@ typedef enum
     FAST_EXTRA_UI_THEME,       // colour theme of the new UI menus (UI_THEME_*)
     FAST_EXTRA_VISIBLE_WILD,
     FAST_EXTRA_ENCOUNTER_RATE,
-    FAST_EXTRA_VOXEL_HD2D,     // VOXEL_HD2D_*: 0 = OFF, 1 = LOW, 2 = MED, 3 = HIGH (key voxel_hd2d)
+    FAST_EXTRA_VOXEL_HD2D,     // VOXEL_HD2D_* level: OFF, or HIGH for the option's ON (key voxel_hd2d, 0 / 1)
     FAST_EXTRA_VOXEL_FOV,      // camera pitch: 0 = 35 deg, 1 = 25 deg (telephoto diorama)
     FAST_EXTRA_COUNT
 } FastExtraId;
 
-// GRAPHICS -> HD-2D (voxel_hd2d). Independent of the framerate.
+// The renderer's HD-2D levels. The GRAPHICS -> HD-2D option (voxel_hd2d) is OFF / ON, ON being HIGH;
+// LOW and MED are only reached by the measuring build's bench. Independent of the framerate.
 enum
 {
     VOXEL_HD2D_OFF = 0,  // classic renderer

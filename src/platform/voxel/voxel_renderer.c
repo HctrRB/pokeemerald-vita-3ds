@@ -195,7 +195,8 @@ static int32_t sMenuBgBloom = 10;
 static int32_t sMenuBgSkyBloom = 5;
 static int32_t sMenuBgShafts = 5;
 
-// GRAPHICS -> HD-2D (voxel_hd2d), independent of the framerate:
+// The HD-2D level, independent of the framerate. GRAPHICS -> HD-2D (voxel_hd2d) offers OFF and ON
+// (= HIGH); LOW and MED stay for the measuring build's bench:
 //   OFF  classic renderer;
 //   LOW  the world's HD-2D effects (relief, sway, flowers, particles, fireflies, surface FX), no post;
 //   MED  + the post pass at its light settings (RGBA5551 scene, no wide blur, softer bloom/grade);

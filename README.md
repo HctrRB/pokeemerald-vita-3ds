@@ -57,7 +57,7 @@ The full list is under [Features](#features).
 - Voxel overworld built live from the game's maps: sun and shadows, day/night cycle with lit
   windows and night street lamps, weather, water reflections, 3D buildings and trees. 30 or 60 FPS
   (OPTIONS > GRAPHICS), plus classic 2D mode.
-- **HD-2D mode** (OPTIONS > GRAPHICS, OFF / LOW / MED / HIGH, independent of the framerate): tilt-shift depth of field, bloom and light emitters, split-tone
+- **HD-2D mode** (OPTIONS > GRAPHICS, OFF / ON, independent of the framerate): tilt-shift depth of field, bloom and light emitters, split-tone
   colour grading and vignette, street lamp / cave lantern point lights, dynamic sun/moon light
   shafts, night fireflies, swaying foliage, 16×16 Sobel tile relief, soft contact shadows, HD-2D
   rain and adjustable camera angle (including 25°).
@@ -110,8 +110,8 @@ multiplier, Nuzlocke rules, field HM shortcuts, button remapping.
 Performance: the game sets the Vita's clocks itself (CPU 444 MHz, GPU 222 MHz; disable overclock
 plugins for it, the game needs these clocks). At those clocks HD-2D **HIGH** holds an almost steady
 **60 FPS** in most places (OPTIONS > GRAPHICS > FRAMERATE 60); the 3D world runs at 30 FPS by
-default, which leaves the most headroom. HD-2D **LOW** holds **60 FPS**; HD-2D **MED** is
-experimental.
+default, which leaves the most headroom. HD-2D is **OFF** or **ON**, ON being the full HIGH look
+(the LOW and MED levels of earlier releases are gone from the options).
 
 ### Not yet tested on a PS Vita
 
@@ -142,7 +142,7 @@ is already checked: [docs/guides/UI_HARDWARE_TESTS.md](docs/guides/UI_HARDWARE_T
   field and in battle, and the full-bag steps on leaving (toss from the bag, take or toss held
   items); the Battle Frontier and Battle Tents half-party choice.
 - The battle fixes for Wally's battle (#8) and Gyms 6 and 7 (Natural Cure, double battle targets).
-- The GRAPHICS tab (each HD-2D level with 30 and 60 FPS) and the night street lamps.
+- The GRAPHICS tab (HD-2D OFF and ON with 30 and 60 FPS) and the night street lamps.
 - The Flash darkness in 3D (Dewford Gym, Battle Pyramid), and the battle HUD in the Battle Palace
   and Battle Arena.
 - The menu themes on every screen, and the mirrored dialogue boxes in 2D evolution, egg-hatch and
